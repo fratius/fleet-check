@@ -7,8 +7,8 @@ import { getFunctions, type Functions } from 'firebase/functions';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
-/** Region of the Cloud Functions (Frankfurt, same as Firestore and Storage). */
-export const REGION = 'europe-west3';
+/** Region of the Cloud Functions: Iowa, next to the US Firestore database and Storage bucket. */
+export const REGION = 'us-central1';
 
 function readConfig(): FirebaseOptions | null {
   const extra = (Constants.expoConfig?.extra || {}) as { firebase?: FirebaseOptions };

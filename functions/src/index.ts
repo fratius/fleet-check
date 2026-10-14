@@ -11,7 +11,8 @@ import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from '
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
 
 initializeApp();
-setGlobalOptions({ region: 'europe-west3', maxInstances: 10 });
+// Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
+setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const db = () => getFirestore();

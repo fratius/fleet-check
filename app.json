@@ -70,7 +70,21 @@
       "policy": "sdkVersion"
     },
     "extra": {
-      "firebase": {}
+      "firebase": {
+        "apiKey": "AIzaSyCWD8rNoaOyYtHCRhfBO-1AgbhdZVEdAPY",
+        "authDomain": "fleet-check-2aa34.firebaseapp.com",
+        "projectId": "fleet-check-2aa34",
+        "storageBucket": "fleet-check-2aa34.firebasestorage.app",
+        "messagingSenderId": "812447072608",
+        "appId": "1:812447072608:web:afa74b20ad53c093c09e05"
+      },
+      "eas": {
+        "projectId": "a73c29a2-b492-4320-822e-fb6dabc2ab99"
+      }
+    },
+    "owner": "fratius-org",
+    "updates": {
+      "url": "https://u.expo.dev/a73c29a2-b492-4320-822e-fb6dabc2ab99"
     }
   }
 }

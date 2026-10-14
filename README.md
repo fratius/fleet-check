@@ -7,25 +7,23 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI decides: damage, dirt, reflection or nothing. Every step records its time and real cost.
 - **Companies:** each company sees only its own fleet. Fleet managers invite drivers with a 6-letter code.
 
-## Set it up (about 30 minutes, once)
+## Set it up (once)
 
-You need four accounts: GitHub (this repo), Firebase (Google), Anthropic and Expo. Keys go into GitHub secrets only. Never paste them into a chat, an issue or a file.
+You need four accounts: GitHub (this repo), Firebase (Google), Anthropic and Expo. Keys go into GitHub secrets only. Never paste them into a chat, an issue or a file. The Firebase web config and the Expo project ID in `app.json` are public identifiers, not secrets.
 
 ### 1. Firebase project
 
-At [console.firebase.google.com](https://console.firebase.google.com):
+At [console.firebase.google.com](https://console.firebase.google.com), in project `fleet-check-2aa34`:
 
-1. **Create a project.** Google Analytics isn't needed.
-2. **Upgrade to Blaze** (pay as you go), bottom left. The AI functions and photo storage need it. Testing stays within the free allowance apart from small storage costs. Set a budget alert at, say, $10.
-3. **Build > Authentication > Get started > Email/Password > Enable.**
-4. **Build > Firestore Database > Create database.** Location `europe-west3 (Frankfurt)`, start in production mode.
-5. **Build > Storage > Get started.** Same location, production mode.
-6. **Build > Hosting > Get started.** Click through. You don't need to run the commands it shows.
+1. **Upgrade to Blaze** (pay as you go). The AI functions and photo storage need it. Set a budget alert at, say, $10.
+2. **Build > Authentication > Get started > Email/Password > Enable.**
+3. **Build > Firestore Database** and **Build > Storage**: created, in the US. The functions run in `us-central1` to sit next to them. If you ever move the data to Europe, change `REGION` in `src/lib/firebase.ts` and `functions/src/index.ts`.
+4. **Build > Hosting > Get started.** Click through. You don't need to run the commands it shows.
 
 ### 2. Let GitHub deploy to Firebase
 
 1. In Firebase: **Project settings (gear) > Service accounts > Generate new private key.** A JSON file downloads.
-2. Open [Google Cloud IAM](https://console.cloud.google.com/iam-admin/iam) for the same project. Find the account named `firebase-adminsdk-…`, click the pencil, **Add another role > Owner**, Save. The default roles can't deploy functions. Owner is broad, so keep this project for Fleet Check only.
+2. Open [Google Cloud IAM for fleet-check-2aa34](https://console.cloud.google.com/iam-admin/iam?project=fleet-check-2aa34). Find the account named `firebase-adminsdk-…`, click the pencil, **Add another role > Owner**, Save. The default roles can't deploy functions. Owner is broad, so keep this project for Fleet Check only.
 3. In this GitHub repo: **Settings > Secrets and variables > Actions > New repository secret.** Name `FIREBASE_SERVICE_ACCOUNT`, value: the whole JSON file. Then delete the file from your computer.
 
 ### 3. Anthropic key (the AI)
@@ -33,23 +31,19 @@ At [console.firebase.google.com](https://console.firebase.google.com):
 1. At [console.anthropic.com](https://console.anthropic.com): **API keys > Create key**. Add some credit under Billing and set a monthly spend limit.
 2. GitHub secret `ANTHROPIC_API_KEY` with the key.
 
-### 4. Expo (the phone app)
+### 4. Deploy
 
-1. Sign up at [expo.dev](https://expo.dev) (free).
-2. **Account settings > Access tokens > Create.**
-3. GitHub secret `EXPO_TOKEN` with the token.
+**Actions > Deploy > Run workflow.** It also runs on every push to `main` and takes 5 to 10 minutes. The run's **Summary** shows the web link: `https://fleet-check-2aa34.web.app`.
 
-### 5. Deploy
+### 5. Open it on your phone
 
-**Actions > Deploy > Run workflow.** It also runs on every push to `main`. It takes 5 to 10 minutes. Open the finished run: the **Summary** shows the web link and two QR codes.
-
-### 6. Open it on your phone
+The phone app is published by Expo on every push to `main` (`.eas/workflows/publish-update.yml`, through the GitHub connection on the Expo project, so no Expo token is needed). Progress is under **Workflows** on the project page at expo.dev.
 
 1. Install **Expo Go** from the App Store or Google Play.
-2. Scan the **Always the latest version** QR code with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps it in its list, and you get each new version when you reopen it.
+2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:57.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
 3. Create an account. The first person creates the company and becomes its fleet manager. The invite code for drivers is on the **Account** tab.
 
-The web app is at `https://<your-project-id>.web.app`, with the same login and data.
+Sign-up only works after step 4 has run once, because that deploys the database rules.
 
 ## What the AI costs
 
@@ -69,7 +63,7 @@ These are estimates. Every run stores the token counts the API reported and the 
 Phone or web (Expo, React Native)        Firebase
   camera with frame outlines   ──photos──▶ Storage   orgs/{company}/…
   fleet, walk-arounds, checks  ◀─sync───▶ Firestore orgs/{company}/…
-  "Check for damage"           ──call───▶ Functions (europe-west3) ──▶ Claude API
+  "Check for damage"           ──call───▶ Functions (us-central1) ──▶ Claude API
 ```
 
 - The API key stays on the server (Secret Manager). The app calls three functions: `identifyVehicle`, `findDamage` and `checkSpot`.

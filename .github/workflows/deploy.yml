@@ -1,12 +1,11 @@
-# Deploys everything on every push to main, or by hand from the Actions tab (Run workflow).
+# Deploys the Firebase side on every push to main, or by hand from the Actions tab (Run workflow).
 #   backend: Firestore and Storage rules, and the AI functions (with the Anthropic key from GitHub secrets)
 #   web:     the web app on Firebase Hosting
-#   phone:   an update that opens in Expo Go on iPhone and Android
+# The phone app is published by Expo itself: see .eas/workflows/publish-update.yml.
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
 #   ANTHROPIC_API_KEY         key from console.anthropic.com
-#   EXPO_TOKEN                access token from expo.dev (Account settings > Access tokens)
 name: Deploy
 
 on:
@@ -22,55 +21,22 @@ env:
   FIREBASE_TOOLS: firebase-tools@15.33.0
 
 jobs:
-  config:
-    name: Read Firebase settings
-    runs-on: ubuntu-latest
-    outputs:
-      project: ${{ steps.cfg.outputs.project }}
-      webconfig: ${{ steps.cfg.outputs.webconfig }}
-    steps:
-      - name: Check the secret is there
-        env:
-          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          if [ -z "$SA" ]; then
-            echo "::error title=Missing secret::Add FIREBASE_SERVICE_ACCOUNT under Settings > Secrets and variables > Actions. See README, step 2."
-            exit 1
-          fi
-      - uses: google-github-actions/auth@v3
-        id: auth
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - name: Get or create the web app config
-        id: cfg
-        env:
-          PROJECT: ${{ steps.auth.outputs.project_id }}
-        run: |
-          set -euo pipefail
-          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
-          APP_ID=$(fb apps:list WEB --json | jq -r '.result[0].appId // empty')
-          if [ -z "$APP_ID" ]; then
-            echo "No web app in the Firebase project yet, creating one."
-            APP_ID=$(fb apps:create WEB "Fleet Check" --json | jq -r '.result.appId')
-          fi
-          CFG=$(fb apps:sdkconfig WEB "$APP_ID" --json | jq -c '.result.sdkConfig | {apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId}')
-          echo "$CFG" | jq -e '.apiKey and .projectId and .appId' > /dev/null
-          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
-          echo "webconfig=$CFG" >> "$GITHUB_OUTPUT"
-          echo "Firebase project: $PROJECT, web app: $APP_ID"
-
   backend:
     name: Rules and AI functions
-    needs: config
     runs-on: ubuntu-latest
-    env:
-      PROJECT: ${{ needs.config.outputs.project }}
     steps:
+      - name: Check the secrets are there
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          ok=1
+          [ -n "$SA" ] || { echo "::error title=Missing secret::Add FIREBASE_SERVICE_ACCOUNT under Settings > Secrets and variables > Actions. See README, step 2."; ok=0; }
+          [ -n "$KEY" ] || { echo "::error title=Missing secret::Add ANTHROPIC_API_KEY under Settings > Secrets and variables > Actions. See README, step 3."; ok=0; }
+          [ "$ok" = 1 ]
       - uses: actions/checkout@v7
       - uses: google-github-actions/auth@v3
+        id: auth
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       - uses: actions/setup-node@v7
@@ -79,6 +45,8 @@ jobs:
       - name: Install and build the functions
         run: npm ci --prefix functions && npm --prefix functions run build
       - name: Turn on the Google Cloud services the functions need
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
         run: |
           set -euo pipefail
           gcloud config set project "$PROJECT" --quiet
@@ -91,13 +59,10 @@ jobs:
             || echo "::warning::Couldn't give the build role to the compute service account. If the functions deploy fails with a build permission error, give ${NUM}-compute@developer.gserviceaccount.com the Cloud Build Service Account role."
       - name: Store the Anthropic key in Secret Manager
         env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
           KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "$KEY" ]; then
-            echo "::error title=Missing secret::Add ANTHROPIC_API_KEY under Settings > Secrets and variables > Actions. See README, step 3."
-            exit 1
-          fi
           fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
           CUR=$(fb functions:secrets:access ANTHROPIC_API_KEY 2>/dev/null || true)
           if [ "$CUR" != "$KEY" ]; then
@@ -110,15 +75,19 @@ jobs:
             echo "Anthropic key unchanged."
           fi
       - name: Deploy rules and functions
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
         run: npx -y "$FIREBASE_TOOLS" deploy --only firestore,storage,functions --project "$PROJECT" --non-interactive --force
 
   web:
     name: Web app
-    needs: config
     runs-on: ubuntu-latest
-    env:
-      PROJECT: ${{ needs.config.outputs.project }}
     steps:
+      - name: Check the secret is there
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          [ -n "$SA" ] || { echo "::error title=Missing secret::Add FIREBASE_SERVICE_ACCOUNT under Settings > Secrets and variables > Actions. See README, step 2."; exit 1; }
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
@@ -126,13 +95,14 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Build the web app
-        env:
-          FIREBASE_WEB_CONFIG: ${{ needs.config.outputs.webconfig }}
         run: npx expo export -p web --clear
       - uses: google-github-actions/auth@v3
+        id: auth
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       - name: Deploy to Firebase Hosting
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
         run: |
           if ! npx -y "$FIREBASE_TOOLS" deploy --only hosting --project "$PROJECT" --non-interactive; then
             echo "::error title=Hosting::Deploy failed. If it says it can't find the default site, open Hosting in the Firebase console, click Get started, then run this workflow again."
@@ -140,57 +110,3 @@ jobs:
           fi
           echo "### Web app" >> "$GITHUB_STEP_SUMMARY"
           echo "https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
-
-  phone:
-    name: Phone app (Expo Go)
-    needs: config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check the secret is there
-        env:
-          T: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          if [ -z "$T" ]; then
-            echo "::error title=Missing secret::Add EXPO_TOKEN under Settings > Secrets and variables > Actions. See README, step 4."
-            exit 1
-          fi
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - name: Link the Expo project
-        run: |
-          set -euo pipefail
-          PID=$(jq -r '.expo.extra.eas.projectId // empty' app.json)
-          if [ -z "$PID" ]; then
-            PID=$(eas init --non-interactive --force --json | jq -r '.projectId')
-          fi
-          echo "EAS_PROJECT_ID=$PID" >> "$GITHUB_ENV"
-          echo "Expo project: $PID"
-      - name: Publish the update
-        env:
-          FIREBASE_WEB_CONFIG: ${{ needs.config.outputs.webconfig }}
-          MSG: ${{ github.event.head_commit.message || 'Manual deploy' }}
-        run: |
-          set -euo pipefail
-          eas update --clear-cache --channel main --message "$(printf '%s' "$MSG" | head -n1 | cut -c1-100)" --environment production --non-interactive --json > "$RUNNER_TEMP/update.json"
-          GROUP=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")
-          RUNTIME=$(jq -r '.[0].runtimeVersion' "$RUNNER_TEMP/update.json")
-          STABLE="https://qr.expo.dev/eas-update?projectId=$EAS_PROJECT_ID&runtimeVersion=$RUNTIME&channel=main"
-          THIS="https://qr.expo.dev/eas-update?projectId=$EAS_PROJECT_ID&groupId=$GROUP"
-          {
-            echo "### Phone app"
-            echo "Scan with the iPhone camera (or the Expo Go app on Android). Expo Go must be installed."
-            echo ""
-            echo "| Always the latest version | This version only |"
-            echo "|---|---|"
-            echo "| ![latest]($STABLE) | ![this]($THIS) |"
-            echo ""
-            echo "Update page: https://expo.dev/projects/$EAS_PROJECT_ID/updates/$GROUP"
-          } >> "$GITHUB_STEP_SUMMARY"
