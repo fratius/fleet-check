@@ -1,42 +1,76 @@
 {
   "expo": {
-    "name": "fleet-check",
+    "name": "Fleet Check",
     "slug": "fleet-check",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fleetcheck",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fleetcheck.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
+        "NSPhotoLibraryUsageDescription": "Fleet Check opens your photos so you can check vehicle pictures you already took."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#E2FF1C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.fleetcheck.app"
     },
     "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "name": "Fleet Check",
+      "themeColor": "#000000",
+      "backgroundColor": "#ECEEF1"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#ECEEF1",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#111316"
+          }
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fleet Check opens your photos so you can check vehicle pictures you already took.",
+          "cameraPermission": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "extra": {
+      "firebase": {}
     }
   }
 }

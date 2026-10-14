@@ -1,0 +1,53 @@
+rules_version = '2';
+
+// Companies (orgs) are separate: people only see the company they belong to.
+// Fleet managers are members with role "admin"; drivers have role "driver".
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function member(orgId) { return signedIn() && exists(/databases/$(database)/documents/orgs/$(orgId)/members/$(me())); }
+    function admin(orgId) { return member(orgId) && get(/databases/$(database)/documents/orgs/$(orgId)/members/$(me())).data.role == 'admin'; }
+
+    // Which company a person belongs to.
+    match /users/{uid} {
+      allow read, write: if signedIn() && uid == me();
+    }
+
+    // Invite codes: anyone signed in can look up a code they were given, never list them.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow create: if admin(request.resource.data.orgId);
+      allow delete: if admin(resource.data.orgId);
+    }
+
+    match /orgs/{orgId} {
+      allow read: if member(orgId);
+      allow create: if signedIn() && request.resource.data.createdBy == me();
+      allow update: if admin(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+
+      match /members/{uid} {
+        allow read: if member(orgId);
+        // The person who created the company becomes its first fleet manager.
+        allow create: if signedIn() && uid == me() && request.resource.data.role == 'admin'
+          && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
+        // Joining with an invite code makes you a driver.
+        allow create: if signedIn() && uid == me() && request.resource.data.role == 'driver'
+          && request.resource.data.inviteCode is string
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode))
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.orgId == orgId;
+        // Fleet managers change roles; nobody changes their own role.
+        allow update: if admin(orgId) && uid != me() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+          && request.resource.data.role in ['admin', 'driver'];
+        allow delete: if admin(orgId) || uid == me();
+      }
+
+      // Fleet data. Type scans and damage checks are written by the server; people add feedback.
+      match /{coll}/{docId} {
+        allow read: if member(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
+        allow create, update: if member(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
+        allow delete: if admin(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// Photos live under orgs/{orgId}/... and only that company's members can see or add them.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function member(orgId) {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid));
+    }
+
+    match /orgs/{orgId}/{rest=**} {
+      allow read: if member(orgId);
+      allow create: if member(orgId)
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 15 * 1024 * 1024;
+    }
+  }
+}

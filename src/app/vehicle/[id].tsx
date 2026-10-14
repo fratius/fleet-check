@@ -1,0 +1,162 @@
+import * as ImagePicker from 'expo-image-picker';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, View, useWindowDimensions } from 'react-native';
+
+import { FramesPanel } from '@/components/frames';
+import { BackBar } from '@/components/nav';
+import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, silhouetteSVG, type RearKind } from '@/lib/frames';
+import { useSession } from '@/lib/session';
+import type { Vehicle } from '@/lib/types';
+import { saveWalk } from '@/lib/walks';
+
+export default function VehicleScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const s = useSession();
+  const c = useColors();
+  const { width } = useWindowDimensions();
+  const v = s.vehicles.find((x) => x.id === id);
+  const [editing, setEditing] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  if (!v || !CLS[v.cls]) {
+    return <Screen><BackBar title="Fleet" /><Card dashed><T v="hint">{s.loaded.vehicles ? 'This vehicle isn\'t in the fleet any more.' : 'Loading…'}</T></Card></Screen>;
+  }
+  const sp = makeSpec(v.cls, v);
+  const frames = buildFrames(sp);
+  const walks = s.walks.filter((w) => w.vehicleId === v.id);
+  const checks = s.checks.filter((k) => k.vehicleId === v.id);
+  const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
+  const est = Math.max(1, Math.round((frames.length * perPhoto) / 60000));
+  const makeModel = [v.make, v.model].filter(Boolean).join(' ');
+  const heroW = Math.min(width - 68, 560);
+  const heroH = heroW * ((sp.H * 100 + 26) / (sp.L * 100 + 40));
+
+  const checkLibrary = async () => {
+    setErr(null);
+    try {
+      const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 12, quality: 1, orderedSelection: true });
+      if (r.canceled || !r.assets.length) return;
+      const assets = r.assets.slice(0, 12).sort((a, b) => (a.fileName || '').localeCompare(b.fileName || '', undefined, { numeric: true }));
+      const shots = assets.map((a, i) => ({ n: i + 1, label: `Photo ${i + 1}${a.fileName ? ' (' + a.fileName + ')' : ''}`, uri: a.uri, w: a.width, h: a.height, takenAt: Date.now() }));
+      setBusy('Uploading 0 of ' + shots.length);
+      const walkId = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, { source: 'library', frames: shots.length, skipped: 0, retakes: 0, totalMs: null },
+        (d, t) => setBusy(`Uploading ${d} of ${t}`));
+      setBusy(null);
+      router.push({ pathname: '/check/[id]', params: { id: 'new', walk: walkId } });
+    } catch { setBusy(null); setErr('Couldn\'t upload the photos. Check the connection and try again.'); }
+  };
+
+  return (
+    <Screen>
+      <BackBar title="Fleet" />
+      <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingTop: 20, paddingBottom: 10, alignItems: 'center' }}>
+        <Svg xml={silhouetteSVG(sp, heroW, true, c.ink2)} width={heroW} height={heroH} />
+      </View>
+      <View style={{ gap: 6 }}>
+        <T v="h1">{v.name}</T>
+        <Row><Plate text={v.plate} /><T v="hint">{CLS[v.cls].name}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}</T></Row>
+        <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
+      </View>
+
+      <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
+        <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
+        <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <T v="h2">Damage checks</T>
+        {s.mode === 'firebase' ? (
+          <>
+            <T v="hint">Run one from a walk-around below, or check photos you already have.</T>
+            <Button title={busy || 'Check photos from your library'} loading={!!busy} disabled={!!busy} onPress={checkLibrary} />
+          </>
+        ) : <T v="hint">Damage checks need the Firebase backend.</T>}
+        {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+        {checks.slice(0, 6).map((k) => {
+          const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
+          return (
+            <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
+              <T v="h3">{k.spots.length} spot{k.spots.length === 1 ? '' : 's'}, {dmg} damage</T>
+              <T v="hint">{[`${k.photos} photos`, k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', k.pass2 ? `close-ups in ${secs(k.pass2.ms)}` : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)), fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={{ gap: 8 }}>
+        <T v="h2">Walk-arounds</T>
+        {!walks.length ? <T v="hint">No walk-around yet. Start one above.</T> : null}
+        {walks.slice(0, 8).map((w) => (
+          <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
+            <T v="h3">{fmtWhen(w.createdAt)}</T>
+            <T v="hint">{[`${w.taken} of ${w.frames} photos`, w.totalMs ? mmss(w.totalMs) : '', w.source === 'library' ? 'from library' : `${w.retakes} retake${w.retakes === 1 ? '' : 's'}`].filter(Boolean).join(', ')}</T>
+          </Pressable>
+        ))}
+      </View>
+
+      <FramesPanel sp={sp} title="Frames for this vehicle" />
+
+      {editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
+        <Row>
+          <Button title="Edit details" onPress={() => setEditing(true)} />
+          {s.member?.role === 'admin' ? (
+            <Button v="danger" title={armed ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
+              if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
+              try { await s.store!.vehicles.remove(v.id); router.replace('/'); } catch { setErr('Couldn\'t remove the vehicle.'); }
+            }} />
+          ) : null}
+        </Row>
+      )}
+      {s.mode === 'local' ? <Notice text="Saved on this phone only until Firebase is connected." /> : null}
+    </Screen>
+  );
+}
+
+function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
+  const s = useSession();
+  const c = useColors();
+  const [name, setName] = useState(v.name);
+  const [plate, setPlate] = useState(v.plate || '');
+  const [cls, setCls] = useState(v.cls);
+  const sl = v.slideL === 'yes' && v.slideR === 'yes' ? 'both' : v.slideL === 'yes' ? 'left' : v.slideR === 'yes' ? 'right' : v.slideL === 'no' && v.slideR === 'no' ? 'none' : 'unknown';
+  const [slide, setSlide] = useState(sl);
+  const [rear, setRear] = useState<RearKind>(v.rear !== 'unknown' ? (v.rear as RearKind) : CLS[v.cls].rear);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    if (!name.trim()) { setErr('Give the vehicle a name.'); return; }
+    const sd = ({ right: ['no', 'yes'], left: ['yes', 'no'], both: ['yes', 'yes'], none: ['no', 'no'], unknown: ['unknown', 'unknown'] } as const)[slide as 'right'];
+    const vans = !!SLIDE_BODIES[CLS[cls].body];
+    setBusy(true);
+    try {
+      await s.store!.vehicles.update(v.id, {
+        name: name.trim().slice(0, 60), plate: plate.trim().toUpperCase().slice(0, 14), cls, rear,
+        slideL: vans ? sd[0] : 'no', slideR: vans ? sd[1] : 'no',
+        ...(CLS[cls].body !== CLS[v.cls].body ? { roof: 'unknown' as const } : {}),
+      });
+      onDone();
+    } catch { setErr('Couldn\'t save the changes.'); } finally { setBusy(false); }
+  };
+  return (
+    <Card>
+      <T v="h2">Edit vehicle</T>
+      <Field label="Name" value={name} onChangeText={setName} maxLength={60} />
+      <Field label="Number plate" hint="optional" value={plate} onChangeText={(t) => setPlate(t.toUpperCase())} autoCapitalize="characters" maxLength={14} />
+      <T v="medium">Type</T>
+      <Row>{CLASSES.map((k) => <Chip key={k.id} text={k.name} on={k.id === cls} onPress={() => { setCls(k.id); if (CLS[k.id].body !== CLS[cls].body) { setRear(k.rear); setSlide('unknown'); } }} />)}</Row>
+      <T v="hint">Changing the type changes the photo frames.</T>
+      {SLIDE_BODIES[CLS[cls].body] ? (
+        <><T v="medium">Sliding doors</T>
+          <Row>{([['right', 'Right side'], ['left', 'Left side'], ['both', 'Both sides'], ['none', 'None'], ['unknown', 'Not sure']] as const).map(([k, t]) => <Chip key={k} text={t} on={slide === k} onPress={() => setSlide(k)} />)}</Row></>
+      ) : null}
+      <T v="medium">Rear</T>
+      <Row>{(Object.keys(REAR_PILL) as RearKind[]).map((k) => <Chip key={k} text={REAR_PILL[k]} on={rear === k} onPress={() => setRear(k)} />)}</Row>
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+      <Row><Button v="primary" title="Save changes" loading={busy} onPress={save} /><Button v="link" title="Cancel" onPress={onDone} /></Row>
+    </Card>
+  );
+}
