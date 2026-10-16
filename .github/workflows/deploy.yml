@@ -1,11 +1,12 @@
-# Deploys the Firebase side on every push to main, or by hand from the Actions tab (Run workflow).
+# Deploys everything on every push to main, or by hand from the Actions tab (Run workflow).
 #   backend: Firestore and Storage rules, and the AI functions (with the Anthropic key from GitHub secrets)
 #   web:     the web app on Firebase Hosting
-# The phone app is published by Expo itself: see .eas/workflows/publish-update.yml.
+#   phone:   an update on the "main" channel that opens in Expo Go
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
 #   ANTHROPIC_API_KEY         key from console.anthropic.com
+#   EXPO_TOKEN                personal access token from expo.dev/settings/access-tokens
 name: Deploy
 
 on:
@@ -23,7 +24,7 @@ env:
 jobs:
   backend:
     name: Rules and AI functions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check the secrets are there
         env:
@@ -81,7 +82,7 @@ jobs:
 
   web:
     name: Web app
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check the secret is there
         env:
@@ -91,7 +92,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - name: Build the web app
@@ -110,3 +111,57 @@ jobs:
           fi
           echo "### Web app" >> "$GITHUB_STEP_SUMMARY"
           echo "https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
+
+  phone:
+    name: Phone app (Expo Go)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the secret is there
+        id: token
+        env:
+          T: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$T" ]; then
+            echo "::warning title=Phone app not published::Add EXPO_TOKEN under Settings > Secrets and variables > Actions (create it at https://expo.dev/settings/access-tokens), then run Deploy again."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.token.outputs.ok == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.token.outputs.ok == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: steps.token.outputs.ok == 'true'
+      - uses: expo/expo-github-action@v8
+        if: steps.token.outputs.ok == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Publish the update
+        if: steps.token.outputs.ok == 'true'
+        env:
+          MSG: ${{ github.event.head_commit.message || 'Manual deploy' }}
+        run: |
+          set -euo pipefail
+          eas update --clear-cache --channel main --platform all --environment production --non-interactive --json \
+            --message "$(printf '%s' "$MSG" | head -n1 | cut -c1-100)" > "$RUNNER_TEMP/update.json"
+          PID=$(jq -r '.expo.extra.eas.projectId' app.json)
+          GROUP=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")
+          RUNTIME=$(jq -r '.[0].runtimeVersion' "$RUNNER_TEMP/update.json")
+          LATEST="https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=$RUNTIME&channel=main"
+          THIS="https://qr.expo.dev/eas-update?projectId=$PID&groupId=$GROUP"
+          echo "::notice title=Phone app published::runtime $RUNTIME, update group $GROUP. QR for the latest version: $LATEST"
+          {
+            echo "### Phone app"
+            echo "Scan with the iPhone camera (or in Expo Go on Android). Expo Go must be installed and up to date."
+            echo ""
+            echo "| Always the latest version | This version only |"
+            echo "|---|---|"
+            echo "| ![latest]($LATEST) | ![this]($THIS) |"
+            echo ""
+            echo "Update page: https://expo.dev/projects/$PID/updates/$GROUP"
+          } >> "$GITHUB_STEP_SUMMARY"

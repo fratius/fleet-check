@@ -31,19 +31,24 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 1. At [console.anthropic.com](https://console.anthropic.com): **API keys > Create key**. Add some credit under Billing and set a monthly spend limit.
 2. GitHub secret `ANTHROPIC_API_KEY` with the key.
 
-### 4. Deploy
+### 4. Expo token (the phone app)
 
-**Actions > Deploy > Run workflow.** It also runs on every push to `main` and takes 5 to 10 minutes. The run's **Summary** shows the web link: `https://fleet-check-2aa34.web.app`.
+1. Signed in at expo.dev, open [Access tokens](https://expo.dev/settings/access-tokens) and click **Create token**. Any name works.
+2. GitHub secret `EXPO_TOKEN` with the token.
 
-### 5. Open it on your phone
+### 5. Deploy
 
-The phone app is published by Expo on every push to `main` (`.eas/workflows/publish-update.yml`, through the GitHub connection on the Expo project, so no Expo token is needed). Progress is under **Workflows** on the project page at expo.dev.
+**Actions > Deploy > Run workflow.** It also runs on every push to `main` and takes 5 to 10 minutes. The run's **Summary** shows the web link (`https://fleet-check-2aa34.web.app`) and the QR codes for the phone.
 
-1. Install **Expo Go** from the App Store or Google Play.
-2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:57.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
+### 6. Open it on your phone
+
+1. Install **Expo Go** from the App Store or Google Play, or update it if you have it. The app is built on Expo SDK 58, and Expo Go from the App Store only opens the newest SDK.
+2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:58.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
 3. Create an account. The first person creates the company and becomes its fleet manager. The invite code for drivers is on the **Account** tab.
 
-Sign-up only works after step 4 has run once, because that deploys the database rules.
+The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
+
+When Expo releases a new SDK, Expo Go moves to it and stops opening this app until the project is upgraded.
 
 ## What the AI costs
 
@@ -78,7 +83,7 @@ npm install
 npx expo start          # press w for the web, or scan the QR code with Expo Go on the same Wi-Fi
 ```
 
-Without Firebase settings the app runs in **test mode**: no sign-in, data stays on the device, AI checks are off. Fleet, frames and the camera all work. To use the real backend locally, export `FIREBASE_WEB_CONFIG` with the web app config JSON from Firebase project settings and start with `npx expo start --clear` (the config is baked in when the app is bundled).
+The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 npx expo start --clear` for **test mode** instead: no sign-in, data stays on the device, AI checks are off. Fleet, frames and the camera all work.
 
 Checks before pushing: `npm run typecheck`.
 
