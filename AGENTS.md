@@ -8,3 +8,5 @@
 - Model ids and prices are in two places: `functions/src/models.ts` and `src/lib/types.ts`. Change both.
 - Before pushing: `npm run typecheck` and `npx expo export -p web`.
 - Expo Go only opens one SDK. Match the SDK to the Expo Go version in the iOS App Store (check its version in Expo Go's settings), not to the newest SDK on npm: iOS Expo Go can lag weeks behind a release. Upgrade with `npm install expo@~NN` then `npx expo install --fix`.
+- Roles: app creator (sign-in claim `creator`, set by `functions/scripts/set-creators.cjs` in Deploy), owner, manager, driver (member doc `role`, `stationIds`). Managers and drivers only query their stations (`where('stationId','in', …)`); the rules check it. Every van, walk-around and check carries a `stationId`.
+- Change `firestore.rules` together with `tests/rules.test.mjs`. Deploy stops if the rules tests fail.

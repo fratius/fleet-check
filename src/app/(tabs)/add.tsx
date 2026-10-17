@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { FramesPanel } from '@/components/frames';
+import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, Field, Notice, Photo, Pill, Row, Screen, Segmented, T, secs, useColors } from '@/components/ui';
 import { CLASSES, CLS, attrPills, defaultAttrs, makeSpec, type VehicleAttrs } from '@/lib/frames';
 import { newId, prepare, upload } from '@/lib/images';
@@ -29,6 +30,10 @@ export default function AddVehicle() {
   const [nameErr, setNameErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const aiOn = s.mode === 'firebase';
+  // Stations this person can add vans to: every station for owners, their own for managers.
+  const canAddTo = s.mode === 'local' ? s.stations : s.myStations.filter((st) => s.runs(st.id));
+  const [stationPick, setStationPick] = useState<string | null>(null);
+  const stationId = stationPick && canAddTo.some((st) => st.id === stationPick) ? stationPick : canAddTo[0]?.id || null;
 
   const suggest = (base: string) => {
     let n = base, k = 2;
@@ -68,7 +73,7 @@ export default function AddVehicle() {
       }));
       const uploadMs = Date.now() - t0;
       setBusy('Identifying');
-      const r = await ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier });
+      const r = await ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId });
       setRes({ ...r, uploadMs, totalMs: Date.now() - t0 });
       setPicking(false);
       if (r.scan.predicted && CLS[r.scan.predicted]) {
@@ -96,13 +101,14 @@ export default function AddVehicle() {
   const save = async () => {
     if (!cls) return;
     if (!name.trim()) { setNameErr('Give the vehicle a name, for example its model or fleet number.'); return; }
+    if (!stationId) { setErr('Add a station under People first.'); return; }
     setSaving(true);
     try {
       const fromScan = res?.scan.predicted ? res.scan : null;
       const id = await s.store!.vehicles.add({
         name: name.trim().slice(0, 60), plate: plate.trim().toUpperCase().slice(0, 14), cls,
         roof: attrs.roof, slideL: attrs.slideL, slideR: attrs.slideR, rear: attrs.rear,
-        make: fromScan?.vMake ?? null, model: fromScan?.vModel ?? null, scanId: fromScan?.id ?? null,
+        make: fromScan?.vMake ?? null, model: fromScan?.vModel ?? null, scanId: fromScan?.id ?? null, stationId,
         createdAt: Date.now(), createdBy: s.user?.uid ?? null,
       });
       setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setNameTouched(false); setAttrs(defaultAttrs());
@@ -116,6 +122,7 @@ export default function AddVehicle() {
   const conf = sc?.confidence;
   return (
     <Screen>
+      <BackBar title="Fleet" />
       <View style={{ gap: 4 }}>
         <T v="h1">Add vehicle</T>
         <T v="hint">Scan it and the app picks its type, or pick the type yourself.</T>
@@ -181,7 +188,10 @@ export default function AddVehicle() {
             <Row>{attrPills(sp, attrs, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
             <Field label="Name" value={name} error={nameErr} onChangeText={(t) => { setName(t); setNameTouched(true); setNameErr(null); }} maxLength={60} />
             <Field label="Number plate" hint="optional" value={plate} onChangeText={(t) => setPlate(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={14} />
-            <Button v="primary" wide title="Save to the fleet" loading={saving} onPress={save} />
+            {canAddTo.length > 1 ? (
+              <><T v="medium">Station</T><Row>{canAddTo.map((st) => <Chip key={st.id} text={st.name} on={st.id === stationId} onPress={() => setStationPick(st.id)} />)}</Row></>
+            ) : canAddTo.length === 1 ? <T v="hint">Station: {canAddTo[0].name}</T> : <T v="hint" color={c.alert}>You aren&apos;t managing a station yet.</T>}
+            <Button v="primary" wide title="Save to the fleet" loading={saving} disabled={!stationId} onPress={save} />
           </Card>
           <FramesPanel sp={sp} title="Frames for this type" />
         </>

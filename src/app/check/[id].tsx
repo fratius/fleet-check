@@ -2,14 +2,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Image } from 'expo-image';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
 import { BackBar } from '@/components/nav';
-import { Button, Card, F, MARKER, Photo, Pill, Row, Screen, T, ZoomPhoto, cap, secs, usd, useColors, type PillV } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
-import { TIER_NAME, type Check, type Usage, type VerdictKind } from '@/lib/types';
+import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
 
 const VERDICT: Record<VerdictKind, [string, PillV]> = {
   damage: ['Damage', 'bad'], dirt: ['Dirt or residue', 'good'], reflection: ['Reflection', 'good'], no_damage: ['No damage', 'good'],
@@ -75,12 +75,12 @@ function CheckView({ id }: { id: string }) {
   const [run, setRun] = useState<{ done: number; total: number; t0: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   useTicker(phase === 'running');
 
   if (!k) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">{s.loaded.checks ? 'This check was deleted.' : 'Loading…'}</T></Card></Screen>;
   const n = k.spots.length;
   const checked = k.spots.some((p) => p.verdict);
-  const noteVal = note ?? k.missedNote ?? '';
 
   const shot = async (spot: number, slot: number) => {
     setErr(null);
@@ -97,7 +97,7 @@ function CheckView({ id }: { id: string }) {
 
   const runPass2 = async (L: Local = local) => {
     const todo = k.spots.map((_, j) => j).filter((j) => (L[j] || []).some(Boolean));
-    if (!todo.length) { await s.store!.checks.update(k.id, { spots: k.spots.map((p) => p.verdict ? p : { ...p, verdict: { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', ms: null, closeupBox: null } }) }); setPhase('list'); return; }
+    if (!todo.length) { setPhase('list'); return; }
     setPhase('running'); setErr(null);
     setRun({ done: 0, total: todo.length, t0: Date.now() });
     const queue = todo.slice();
@@ -116,10 +116,6 @@ function CheckView({ id }: { id: string }) {
     await Promise.all([worker(), worker()]);
     setPhase('list');
     if (!failed) setLocal({});
-  };
-
-  const feedback = async (j: number, v: 'right' | 'wrong' | null) => {
-    try { await s.store!.checks.update(k.id, { spots: k.spots.map((p, m) => (m === j ? { ...p, feedback: v } : p)) }); } catch { setErr('Couldn\'t save your answer.'); }
   };
 
   if (phase === 'running' && run) {
@@ -166,25 +162,68 @@ function CheckView({ id }: { id: string }) {
     );
   }
 
+  const status = k.status || (checked ? 'submitted' : 'checking');
+  const reviewer = s.runs(k.stationId);
+  const decisions = k.review?.decisions || {};
+  const manual = k.review?.manual || [];
+  const decidedAll = k.spots.every((_, j) => decisions[String(j)]);
+  const approved = k.spots.filter((_, j) => decisions[String(j)]?.damage).length + manual.length;
   const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
   const cleared = k.spots.filter((p) => ['dirt', 'reflection', 'no_damage'].includes(p.verdict?.verdict || '')).length;
   const open = n - dmg - cleared;
+
+  const saveReview = async (patch: Partial<Review>, finish?: 'reviewed' | 'submitted') => {
+    setErr(null);
+    const base: Review = k.review || { decisions: {}, manual: [], by: null, byName: null, at: null };
+    const next: Review = { ...base, ...patch };
+    const fields: Partial<Check> & { reviewedAt?: number | null } = { review: next };
+    if (finish === 'reviewed') { next.by = s.user?.uid || null; next.byName = s.user?.name || null; next.at = Date.now(); fields.status = 'reviewed'; fields.reviewedAt = Date.now(); }
+    if (finish === 'submitted') fields.status = 'submitted';
+    try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr('Couldn\'t save the review. Check the connection and try again.'); }
+  };
+  const decide = (j: number, damage: boolean | null) => {
+    const d = { ...decisions };
+    if (damage == null) delete d[String(j)];
+    else d[String(j)] = { damage, note: '', by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now() };
+    return saveReview({ decisions: d });
+  };
+  const submit = async () => {
+    setErr(null); setSending(true);
+    try { await ai.submitCheck({ orgId: s.store!.orgId, checkId: k.id, missedNote: (note ?? k.missedNote ?? '').trim() }); setNote(null); }
+    catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t send it. Check the connection and try again.'); }
+    finally { setSending(false); }
+  };
+
+  const title = status === 'reviewed' ? (approved ? `${approved} damage${approved === 1 ? '' : 's'} approved` : 'No damage approved')
+    : !n ? 'No damage found'
+      : status === 'submitted' ? (reviewer ? `Review ${n} spot${n === 1 ? '' : 's'}` : 'Sent to the fleet manager')
+        : checked ? (dmg ? `${dmg} possible damage${dmg === 1 ? '' : 's'}` : 'No damage in the close-ups') : `${n} spot${n === 1 ? '' : 's'} to check`;
+  const sub = status === 'reviewed' ? `Reviewed by ${k.review?.byName || 'the fleet manager'}${k.review?.at ? ', ' + fmtWhen(k.review.at) : ''}. This is the final word on this van's damage.`
+    : status === 'submitted' ? (reviewer ? 'Look at each spot and decide: damage or not. Your decision is final and goes on the van\'s record.' : `Sent ${k.submittedAt ? fmtWhen(k.submittedAt) : ''}. The fleet manager approves or rejects each spot.`)
+      : !n ? 'Nothing in these photos looked like damage. Small chips and dents can still be there.'
+        : checked ? `${cleared} cleared as dirt, reflection or no damage.${open ? ` ${open} still open.` : ''} Send it to the fleet manager when you're done.`
+          : 'These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.';
+
   return (
     <Screen>
       <BackBar title={k.vehicleName} onPress={() => router.replace(`/vehicle/${k.vehicleId}`)} />
       <View style={{ gap: 6 }}>
-        <T v="hint">Damage check, {k.vehicleName}</T>
-        <T v="h1">{!n ? 'No damage found' : checked ? (dmg ? `${dmg} damage${dmg === 1 ? '' : 's'} confirmed` : 'No damage confirmed') : `${n} spot${n === 1 ? '' : 's'} to check`}</T>
-        <T>{!n ? 'Nothing in these photos looked like damage. Small chips and dents can still be there.'
-          : checked ? `${cleared} cleared as dirt, reflection or no damage.${open ? ` ${open} still open.` : ''}`
-            : 'These might be damage, dirt or reflections. Close-ups of each spot will tell.'}</T>
+        <T v="hint">Damage check, {k.vehicleName}{k.createdByName ? `, by ${k.createdByName}` : ''}, {fmtWhen(k.createdAt)}</T>
+        <T v="h1">{title}</T>
+        <T>{sub}</T>
+        <Row>
+          <Pill v={status === 'reviewed' ? 'solid' : status === 'submitted' ? 'amber' : 'muted'} text={status === 'reviewed' ? 'Reviewed' : status === 'submitted' ? 'Waiting for review' : 'Close-ups pending'} />
+          {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
+        </Row>
       </View>
-      <CostPanel k={k} />
-      {n > 0 && !checked ? <Button v="primary" wide title={`Take close-ups of ${n} spot${n === 1 ? '' : 's'}`} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
-      {n > 0 && checked && open > 0 ? <Button title="Take more close-ups" onPress={() => { setI(k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped')); setPhase('capture'); }} /> : null}
+      {s.staff ? <CostPanel k={k} /> : null}
+      {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={`Take close-ups of ${n} spot${n === 1 ? '' : 's'}`} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
+      {status === 'checking' && n > 0 && checked && open > 0 ? <Button title="Take more close-ups" onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+      {k.missedNote && status !== 'checking' ? <Notice text={`Note from ${k.createdByName || 'the driver'}: ${k.missedNote}`} /> : null}
       {k.spots.map((p, j) => {
         const v = p.verdict;
+        const d = decisions[String(j)];
         return (
           <Card key={j}>
             <Row>
@@ -194,10 +233,10 @@ function CheckView({ id }: { id: string }) {
               <T v="h3" style={{ flex: 1 }}>{cap(p.panel)}</T>
             </Row>
             <Row>
-              {v ? <Pill v={VERDICT[v.verdict][1]} text={VERDICT[v.verdict][0]} /> : <Pill v={p.conf >= 0.6 ? 'bad' : 'amber'} text={`${p.conf >= 0.6 ? 'Likely' : 'Possible'}, ${Math.round(p.conf * 100)}%`} />}
+              {v ? <Pill v={VERDICT[v.verdict][1]} text={`AI: ${VERDICT[v.verdict][0].toLowerCase()}`} /> : <Pill v={p.conf >= 0.6 ? 'bad' : 'amber'} text={`${p.conf >= 0.6 ? 'Likely' : 'Possible'}, ${Math.round(p.conf * 100)}%`} />}
               <Pill text={`${cap(v?.verdict === 'damage' ? v.type || p.type : p.type)}${(v?.sizeCm || p.sizeCm) ? `, about ${v?.sizeCm || p.sizeCm} cm` : ''}`} />
               {v?.severity ? <Pill text={v.severity === 'repair' ? 'Bodyshop repair' : 'Cosmetic'} /> : null}
-              {v?.ms ? <Pill v="muted" text={secs(v.ms)} /> : null}
+              {v?.ms && s.staff ? <Pill v="muted" text={secs(v.ms)} /> : null}
             </Row>
             {v?.reason ? <T>{v.reason}</T> : !v && p.mightBe ? <T v="hint">Could also be {p.mightBe}.</T> : null}
             {/* Flex 16 : 9 makes the 4:3 crop and the 3:4 close-ups the same height. Tap any photo to see it full screen. */}
@@ -216,26 +255,90 @@ function CheckView({ id }: { id: string }) {
                 );
               })}
             </View>
-            {v && v.verdict !== 'skipped' ? (
+            {reviewer && status !== 'checking' ? (
+              <View style={{ gap: 8, borderTopWidth: 2, borderColor: c.ink, paddingTop: 10 }}>
+                <T v="medium">Your decision</T>
+                <Row>
+                  <Button small v={d?.damage === true ? 'primary' : 'secondary'} title="Damage" onPress={() => decide(j, d?.damage === true ? null : true)} />
+                  <Button small v={d?.damage === false ? 'primary' : 'secondary'} title="Not damage" onPress={() => decide(j, d?.damage === false ? null : false)} />
+                  {d ? <T v="small">{d.byName}, {fmtWhen(d.at)}</T> : null}
+                </Row>
+              </View>
+            ) : d ? (
               <Row style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
-                <T v="hint">Is this right?</T>
-                {p.feedback ? <><Pill v={p.feedback === 'right' ? 'good' : 'bad'} text={`Marked ${p.feedback}`} /><Button v="link" small title="Change" onPress={() => feedback(j, null)} /></>
-                  : <><Button small title="Right" onPress={() => feedback(j, 'right')} /><Button small title="Wrong" onPress={() => feedback(j, 'wrong')} /></>}
+                <Pill v={d.damage ? 'bad' : 'good'} text={d.damage ? 'Approved damage' : 'Not damage'} />
+                <T v="small">Decided by {d.byName}</T>
               </Row>
             ) : null}
           </Card>
         );
       })}
       {k.notVisible?.length ? <T v="hint">Not visible in these photos: {k.notVisible.join('; ')}.</T> : null}
-      <Card>
-        <T v="h3">Damage it missed</T>
-        <T v="hint">Where it is and what it is. This is how we measure what the AI misses.</T>
-        <TextInput multiline value={noteVal} onChangeText={setNote} placeholder="For example: dent in the right rear door, 3 cm, below the handle" placeholderTextColor={c.ink2}
-          style={{ minHeight: 80, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 10, fontFamily: F.body, fontSize: 16, color: c.ink, textAlignVertical: 'top' }} />
-        <Row><Button small title={note == null || note === k.missedNote ? 'Saved' : 'Save note'} disabled={note == null || note === k.missedNote}
-          onPress={async () => { try { await s.store!.checks.update(k.id, { missedNote: (note || '').trim().slice(0, 500) }); setNote(null); } catch { setErr('Couldn\'t save the note.'); } }} /></Row>
-      </Card>
+
+      {manual.length || (reviewer && status !== 'checking') ? (
+        <Card>
+          <T v="h3">Damage the AI missed{manual.length ? ` (${manual.length})` : ''}</T>
+          {manual.map((m, x) => (
+            <Row key={x} style={{ borderTopWidth: x ? 1 : 0, borderColor: c.rule, paddingTop: x ? 8 : 0 }}>
+              <View style={{ flex: 1, minWidth: 160 }}>
+                <T v="medium">{cap(m.panel)}, {m.type}</T>
+                {m.note ? <T v="small">{m.note}</T> : null}
+                <T v="small">Added by {m.byName}</T>
+              </View>
+              {reviewer ? <Button small v="link" title="Remove" onPress={() => saveReview({ manual: manual.filter((_, y) => y !== x) })} /> : null}
+            </Row>
+          ))}
+          {reviewer && status !== 'checking' ? <AddManual onAdd={(m) => saveReview({ manual: [...manual, { ...m, by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now() }] })} /> : null}
+          <T v="small">Missed damage is also how we measure what the AI misses.</T>
+        </Card>
+      ) : null}
+
+      {status === 'checking' ? (
+        <Card>
+          <T v="h3">Send to the fleet manager</T>
+          <T v="hint">Anything the AI missed? Where it is and what it is.</T>
+          <TextInput multiline value={note ?? k.missedNote ?? ''} onChangeText={setNote} placeholder="For example: dent in the right rear door, 3 cm, below the handle" placeholderTextColor={c.ink2}
+            style={{ minHeight: 70, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 10, fontFamily: F.body, fontSize: 16, color: c.ink, textAlignVertical: 'top' }} />
+          {n > 0 && open > 0 ? <T v="small">{open} spot{open === 1 ? ' has' : 's have'} no close-up yet. You can still send it; the manager decides from the photos.</T> : null}
+          <Button v="primary" wide title={reviewer ? 'Done with close-ups' : 'Send to the fleet manager'} loading={sending} onPress={submit} />
+        </Card>
+      ) : null}
+
+      {reviewer && status === 'submitted' ? (
+        <Card>
+          <T v="h3">Finish the review</T>
+          <T v="hint">{decidedAll ? `${approved} damage${approved === 1 ? '' : 's'} will go on the van's record.` : `Decide every spot first: ${k.spots.filter((_, j) => !decisions[String(j)]).length} left.`}</T>
+          <Button v="primary" wide title="Finish review" disabled={!decidedAll} onPress={() => saveReview({}, 'reviewed')} />
+        </Card>
+      ) : null}
+      {reviewer && status === 'reviewed' ? <Button title="Change the review" onPress={() => saveReview({}, 'submitted')} /> : null}
     </Screen>
+  );
+}
+
+const DAMAGE_TYPES = ['scratch', 'scuff', 'dent', 'chip', 'crack', 'broken part', 'kerbed rim', 'other'];
+function AddManual({ onAdd }: { onAdd: (m: { panel: string; type: string; note: string }) => Promise<void> }) {
+  const c = useColors();
+  const [open, setOpen] = useState(false);
+  const [panel, setPanel] = useState('');
+  const [type, setType] = useState('dent');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (!open) return <Button small title="Add damage the AI missed" onPress={() => setOpen(true)} />;
+  return (
+    <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+      <Field label="Where" value={panel} onChangeText={setPanel} placeholder="For example: right rear door, below the handle" />
+      <Row>{DAMAGE_TYPES.map((t) => <Chip key={t} text={cap(t)} on={type === t} onPress={() => setType(t)} />)}</Row>
+      <Field label="Note" hint="optional" value={note} onChangeText={setNote} placeholder="Size, how it looks" />
+      <Row>
+        <Button small v="primary" title="Add" loading={busy} disabled={!panel.trim()} onPress={async () => {
+          setBusy(true);
+          await onAdd({ panel: panel.trim().slice(0, 80), type, note: note.trim().slice(0, 300) });
+          setBusy(false); setOpen(false); setPanel(''); setNote('');
+        }} />
+        <Button small v="link" title="Cancel" onPress={() => setOpen(false)} />
+      </Row>
+    </View>
   );
 }
 

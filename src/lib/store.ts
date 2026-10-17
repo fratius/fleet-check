@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, setDoc, updateDoc,
+  collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Check, IdentifyResult, Scan, Spot, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
+import type { Check, IdentifyResult, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -16,12 +16,20 @@ export interface Coll<T extends { id: string }> {
 }
 
 /* ---------- Firestore ---------- */
-function fsColl<T extends { id: string }>(orgId: string, name: string): Coll<T> {
+/**
+ * A company collection. With `stations`, only records of those stations are read: managers and
+ * drivers may only query their own stations (the rules check it), owners read everything.
+ */
+function fsColl<T extends { id: string }>(orgId: string, name: string, stations: string[] | null = null): Coll<T> {
   const f = fb()!;
   const base = collection(f.db, 'orgs', orgId, name);
   return {
     subscribe(cb, onError) {
-      return onSnapshot(query(base, orderBy('createdAt', 'desc'), limit(500)),
+      if (stations && !stations.length) { cb([]); return () => {}; }
+      const q = stations
+        ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
+        : query(base, orderBy('createdAt', 'desc'), limit(500));
+      return onSnapshot(q,
         (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)),
         (e) => onError?.(e));
     },
@@ -40,7 +48,8 @@ function stripUndefined<T extends object>(o: T): T {
 
 /* ---------- this phone only (no Firebase config yet) ---------- */
 const memo = new Map<string, Coll<any>>();
-function localColl<T extends { id: string } & { createdAt: number }>(name: string): Coll<T> {
+export const LOCAL_STATION = 'local';
+function localColl<T extends { id: string } & { createdAt: number }>(name: string, seed: T[] = []): Coll<T> {
   const hit = memo.get(name);
   if (hit) return hit as Coll<T>;
   const key = 'fc.local.' + name;
@@ -48,7 +57,8 @@ function localColl<T extends { id: string } & { createdAt: number }>(name: strin
   const subs = new Set<(r: T[]) => void>();
   const load = async () => {
     if (rows) return rows;
-    try { rows = JSON.parse((await AsyncStorage.getItem(key)) || '[]') as T[]; } catch { rows = []; }
+    try { rows = JSON.parse((await AsyncStorage.getItem(key)) || 'null') as T[] | null; } catch { rows = null; }
+    if (!rows) rows = seed.slice();
     return rows;
   };
   const save = async () => {
@@ -69,19 +79,21 @@ function localColl<T extends { id: string } & { createdAt: number }>(name: strin
 export interface Store {
   mode: 'firebase' | 'local';
   orgId: string;
+  stations: Coll<Station>;
   vehicles: Coll<Vehicle>;
   walks: Coll<Walkaround>;
   checks: Coll<Check>;
   scans: Coll<Scan>;
 }
 
-export function makeStore(orgId: string | null): Store {
+/** `scope`: the stations this person may read, or null for everything (owner, app creator). */
+export function makeStore(orgId: string | null, scope: string[] | null = null): Store {
   if (fb() && orgId) {
-    return { mode: 'firebase', orgId, vehicles: fsColl(orgId, 'vehicles'), walks: fsColl(orgId, 'walkarounds'),
-      checks: fsColl(orgId, 'checks'), scans: fsColl(orgId, 'scans') };
+    return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
+      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans') };
   }
-  return { mode: 'local', orgId: 'local', vehicles: localColl('vehicles'), walks: localColl('walkarounds'),
-    checks: localColl('checks'), scans: localColl('scans') };
+  return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
+    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans') };
 }
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
@@ -118,7 +130,9 @@ export function aiMessage(code: string, raw?: string): string {
 }
 
 export const ai = {
-  identify: call<{ orgId: string; scanId: string; paths: string[]; tier: Tier }, IdentifyResult>('identifyVehicle', 130000),
+  identify: call<{ orgId: string; scanId: string; paths: string[]; tier: Tier; stationId: string | null }, IdentifyResult>('identifyVehicle', 130000),
   findDamage: call<{ orgId: string; walkId: string; tier: Tier }, { checkId: string; spots: Spot[]; notVisible: string[]; usage: Usage; model: string }>('findDamage', 310000),
+  submitCheck: call<{ orgId: string; checkId: string; missedNote: string }, { ok: boolean }>('submitCheck', 40000),
+  setupStations: call<{ orgId: string }, { done: boolean; stationId?: string }>('setupStations', 130000),
   checkSpot: call<{ orgId: string; checkId: string; spot: number; closeups: string[]; tier: Tier }, { verdict: Verdict; usage: Usage; model: string }>('checkSpot'),
 };

@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native';
 import { Card, Pill, Row, Screen, Segmented, Stat, Stats, T, cap, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { CLS } from '@/lib/frames';
 import { useSession } from '@/lib/session';
-import { TIER_NAME, type Check, type Scan } from '@/lib/types';
+import { TIER_NAME, aiWasRight, type Check, type Scan } from '@/lib/types';
 
 type Tab = 'checks' | 'scans' | 'walks';
 
@@ -41,15 +41,18 @@ function Checks({ rows }: { rows: Check[] }) {
   if (!rows.length) return <Card dashed><T v="hint">No damage checks yet. Open a walk-around and tap Check for damage, or check photos from a vehicle page.</T></Card>;
   const spots = rows.flatMap((k) => k.spots);
   const judged = spots.filter((p) => p.verdict && p.verdict.verdict !== 'skipped');
-  const fb = spots.filter((p) => p.feedback);
-  const missed = rows.filter((k) => k.missedNote?.trim());
+  // Right or wrong, judged by the fleet manager's decision (or the older right/wrong buttons).
+  const judgedBy = (ks: Check[]) => ks.flatMap((k) => k.spots.map((_, i) => aiWasRight(k, i))).filter((x): x is boolean => x !== null);
+  const fb = judgedBy(rows);
+  const missedByAi = rows.reduce((n, k) => n + (k.review?.manual?.length || 0), 0);
+  const missed = rows.filter((k) => k.missedNote?.trim() || k.review?.manual?.length);
   const count = (v: string) => judged.filter((p) => p.verdict!.verdict === v).length;
   return (
     <>
       <Stats>
         <Stat value={String(spots.length)} label={`spots in ${rows.length} check${rows.length === 1 ? '' : 's'}`} />
         <Stat value={String(judged.length)} label="checked with close-ups" />
-        <Stat value={pct(fb.filter((p) => p.feedback === 'right').length, fb.length)} label={`right, of ${fb.length} you rated`} />
+        <Stat value={pct(fb.filter(Boolean).length, fb.length)} label={`right, of ${fb.length} decided by a manager`} />
       </Stats>
       {judged.length ? (
         <Card>
@@ -71,7 +74,7 @@ function Checks({ rows }: { rows: Check[] }) {
         const imgs1 = sum(p1.map((u) => u.images)), imgs2 = sum(p2.map((u) => u.images));
         const cost = sum(p1.map((u) => u.cost)) + sum(p2.map((u) => u.cost));
         const sp = ks.flatMap((k) => k.spots);
-        const rated = sp.filter((p) => p.feedback);
+        const rated = judgedBy(ks);
         return (
           <Card key={model}>
             <Row><T v="h3" style={{ flex: 1 }}>{shortModel(model)}</T><Pill text={`${ks.length} check${ks.length === 1 ? '' : 's'}`} /></Row>
@@ -80,17 +83,18 @@ function Checks({ rows }: { rows: Check[] }) {
               ['Find spots, per photo', secs(imgs1 ? sum(p1.map((u) => u.ms)) / imgs1 : null), usd(imgs1 ? sum(p1.map((u) => u.cost)) / imgs1 : null)],
               ['Close-up check, per spot', secs(median(p2.flatMap((u) => (u.calls ? [u.ms / u.calls] : [])))), usd(sum(p2.map((u) => u.calls)) ? sum(p2.map((u) => u.cost)) / sum(p2.map((u) => u.calls)) : null)],
               ['Cost per check, all in', usd(cost / ks.length), `${imgs1 + imgs2} images`],
-              ['Spots per check', (sp.length / ks.length).toFixed(1), `${pct(rated.filter((p) => p.feedback === 'right').length, rated.length)} right`],
+              ['Spots per check', (sp.length / ks.length).toFixed(1), `${pct(rated.filter(Boolean).length, rated.length)} right`],
             ]} />
           </Card>
         );
       })}
       {missed.length ? (
         <Card>
-          <T v="h3">Damage it missed</T>
+          <T v="h3">Damage it missed{missedByAi ? ` (${missedByAi} added by managers)` : ''}</T>
           {missed.slice(0, 20).map((k) => (
             <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 8, gap: 2 }}>
-              <T>{k.missedNote}</T>
+              {k.missedNote ? <T>{k.missedNote}</T> : null}
+              {(k.review?.manual || []).map((m, x) => <T key={x}>{m.panel}: {m.type}{m.note ? `, ${m.note}` : ''}</T>)}
               <T v="small">{k.vehicleName}, {fmtWhen(k.createdAt)}, {shortModel(k.model)}</T>
             </Pressable>
           ))}

@@ -4,8 +4,23 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 
 - **Fleet:** each vehicle gets photo frames that fit its body type (car to step van).
 - **Walk-around:** the camera shows the outline to line up for each photo.
-- **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI decides: damage, dirt, reflection or nothing. Every step records its time and real cost.
-- **Companies:** each company sees only its own fleet. Fleet managers invite drivers with a 6-letter code.
+- **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI suggests: damage, dirt, reflection or nothing. The fleet manager approves or rejects each spot; approved damage goes on the van's record. Every step records its time and real cost.
+- **Companies and stations:** each company sees only its own fleet, split into stations (operating areas). People join with 6-letter invite codes made per station and role.
+
+## Who can do what
+
+| | App creator | Fleet owner | Fleet manager | Driver |
+|---|---|---|---|---|
+| Sees | every company | all stations of their companies | their station | vans of their station |
+| Vans | everything | add, edit, move, remove | add, edit, remove at their station | scan |
+| People | everything | stations, managers, drivers, invite codes | drivers of their station, driver code | none |
+| Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
+| AI model and test log | everything | sets the model, sees the log | sees the log | none |
+
+- **App creator:** whoever signs up with an email listed in the GitHub variable `APP_CREATOR_EMAILS` (Settings > Secrets and variables > Actions > Variables, comma separated; `casian.colto@gmail.com` when the variable isn't set). Change it, run Deploy, then sign out and in.
+- **Fleet owners** can own several companies (Account > Join or create another company) and switch between them.
+- A company created before stations existed moves onto a "Main station" the first time its owner opens the app; rename it under People.
+- The rules are tested on every deploy (`tests/rules.test.mjs` on the Firestore emulator) before anything goes live.
 
 ## Set it up (once)
 
@@ -44,7 +59,7 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 
 1. Install **Expo Go** from the App Store or Google Play and sign in to it (person icon, top right) with the Expo account that owns `fratius-org`. Expo Go only opens this app for members of that account.
 2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:57.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
-3. Create an account. The first person creates the company and becomes its fleet manager. The invite code for drivers is on the **Account** tab.
+3. Create an account. Fleet owners create their company and first station; managers and drivers enter the invite code from the **People** tab.
 
 The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
 
@@ -83,19 +98,20 @@ npm install
 npx expo start          # press w for the web, or scan the QR code with Expo Go on the same Wi-Fi
 ```
 
-The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 npx expo start --clear` for **test mode** instead: no sign-in, data stays on the device, AI checks are off. Fleet, frames and the camera all work.
+The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 npx expo start --clear` for **test mode** instead: no sign-in, data stays on the device, AI checks are off. Fleet, frames and the camera all work. Add `FLEET_TEST_ROLE=manager` or `driver` to see the app as that role.
 
-Checks before pushing: `npm run typecheck`.
+Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` runs the Test workflow (rules on the emulator, type checks).
 
 ## Project layout
 
 ```
-src/app/            screens (expo-router): fleet, add vehicle, test log, account, vehicle, scan, walk-around, check
+src/app/            screens (expo-router): fleet, review, people, test log, account, add vehicle, vehicle, scan, walk-around, check
 src/components/     shared UI
 src/lib/frames.ts   vehicle classes, frame sets and outlines
 src/lib/            Firebase, data, session, image upload
 functions/src/      AI functions: prompts, image prep (sharp), Claude calls, cost
-firestore.rules     who can read and write what
+firestore.rules     who can read and write what (roles and stations)
+tests/              rules tests for the Firestore emulator
 storage.rules
 .github/workflows/  deploy
 ```

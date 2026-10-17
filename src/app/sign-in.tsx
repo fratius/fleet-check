@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
+import { AllCompanies } from '@/components/companies';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
 import { authMessage, useSession } from '@/lib/session';
 
@@ -13,7 +14,8 @@ export default function SignIn() {
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [code, setCode] = useState('');
-  const [orgMode, setOrgMode] = useState<'create' | 'join'>('create');
+  const [station, setStation] = useState('');
+  const [orgMode, setOrgMode] = useState<'create' | 'join'>('join');
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,26 +31,28 @@ export default function SignIn() {
         <View style={{ gap: 4, paddingTop: 12 }}>
           <T v="hint">Signed in as {s.user?.email}</T>
           <T v="h1">Your company</T>
-          <T>Create your company, or join one with the invite code your fleet manager gave you.</T>
+          <T>Drivers and fleet managers: enter the invite code you got from your manager or the fleet owner. Fleet owners: create your company.</T>
         </View>
-        <Segmented label="Company" value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['create', 'Create a company'], ['join', 'Join with a code']]} />
+        <Segmented label="Company" value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', 'Join with a code'], ['create', 'Create a company']]} />
         <Card>
           {orgMode === 'create' ? (
             <>
               <Field label="Company name" value={company} onChangeText={setCompany} autoCapitalize="words" placeholder="For example: Hart Logistics GmbH" />
-              <T v="hint">You become its admin. Drivers join with the invite code shown under Account.</T>
+              <Field label="First station" hint="you can add more later" value={station} onChangeText={setStation} autoCapitalize="characters" placeholder="For example: DXX1 Berlin" />
+              <T v="hint">You become the fleet owner. You add stations, fleet managers and drivers under People.</T>
               <Button v="primary" wide title="Create company" loading={busy}
-                onPress={() => company.trim() ? run(() => s.createOrg(company)) : setErr('Enter your company name.')} />
+                onPress={() => company.trim() ? run(() => s.createOrg(company, station)) : setErr('Enter your company name.')} />
             </>
           ) : (
             <>
               <Field label="Invite code" value={code} onChangeText={(t) => setCode(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={6} placeholder="6 letters and numbers" />
               <Button v="primary" wide title="Join company" loading={busy}
-                onPress={() => code.trim().length === 6 ? run(() => s.joinOrg(code)) : setErr('The invite code has 6 characters.')} />
+                onPress={() => code.trim().length === 6 ? run(async () => { await s.joinOrg(code); }) : setErr('The invite code has 6 characters.')} />
             </>
           )}
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         </Card>
+        {s.creator ? <AllCompanies /> : null}
         <Button v="link" title="Sign out" onPress={() => s.signOut()} />
       </Screen>
     );

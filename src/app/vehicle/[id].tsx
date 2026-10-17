@@ -8,7 +8,7 @@ import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, silhouetteSVG, type RearKind } from '@/lib/frames';
 import { useSession } from '@/lib/session';
-import type { Vehicle } from '@/lib/types';
+import { approvedDamage, type Check, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 
 export default function VehicleScreen() {
@@ -58,7 +58,7 @@ export default function VehicleScreen() {
       </View>
       <View style={{ gap: 6 }}>
         <T v="h1">{v.name}</T>
-        <Row><Plate text={v.plate} /><T v="hint">{CLS[v.cls].name}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}</T></Row>
+        <Row><Plate text={v.plate} /><T v="hint">{CLS[v.cls].name}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}{s.stations.length > 1 ? ', ' + s.stationName(v.stationId) : ''}</T></Row>
         <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
       </View>
 
@@ -66,6 +66,8 @@ export default function VehicleScreen() {
         <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
         <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
       </View>
+
+      <DamageRecord checks={checks} />
 
       <View style={{ gap: 8 }}>
         <T v="h2">Damage checks</T>
@@ -78,10 +80,14 @@ export default function VehicleScreen() {
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         {checks.slice(0, 6).map((k) => {
           const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
+          const approved = approvedDamage(k).length;
           return (
-            <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-              <T v="h3">{k.spots.length} spot{k.spots.length === 1 ? '' : 's'}, {dmg} damage</T>
-              <T v="hint">{[`${k.photos} photos`, k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', k.pass2 ? `close-ups in ${secs(k.pass2.ms)}` : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)), fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+            <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 4 }}>
+              <Row>
+                <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed' ? `${approved} approved damage${approved === 1 ? '' : 's'}` : `${k.spots.length} spot${k.spots.length === 1 ? '' : 's'}, ${dmg} damage by the AI`}</T>
+                <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? 'Reviewed' : k.status === 'submitted' ? 'Waiting for review' : 'Close-ups pending'} />
+              </Row>
+              <T v="hint">{[k.createdByName || '', `${k.photos} photos`, s.staff && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.staff ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
             </Pressable>
           );
         })}
@@ -100,10 +106,10 @@ export default function VehicleScreen() {
 
       <FramesPanel sp={sp} title="Frames for this vehicle" />
 
-      {editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
+      {!s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
           <Button title="Edit details" onPress={() => setEditing(true)} />
-          {s.member?.role === 'admin' ? (
+          {s.runs(v.stationId) ? (
             <Button v="danger" title={armed ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
               if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
               try { await s.store!.vehicles.remove(v.id); router.replace('/'); } catch { setErr('Couldn\'t remove the vehicle.'); }
@@ -127,6 +133,7 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const [rear, setRear] = useState<RearKind>(v.rear !== 'unknown' ? (v.rear as RearKind) : CLS[v.cls].rear);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [station, setStation] = useState(v.stationId || s.stations[0]?.id || '');
   const save = async () => {
     if (!name.trim()) { setErr('Give the vehicle a name.'); return; }
     const sd = ({ right: ['no', 'yes'], left: ['yes', 'no'], both: ['yes', 'yes'], none: ['no', 'no'], unknown: ['unknown', 'unknown'] } as const)[slide as 'right'];
@@ -135,6 +142,7 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
     try {
       await s.store!.vehicles.update(v.id, {
         name: name.trim().slice(0, 60), plate: plate.trim().toUpperCase().slice(0, 14), cls, rear,
+        ...(station && station !== v.stationId ? { stationId: station } : {}),
         slideL: vans ? sd[0] : 'no', slideR: vans ? sd[1] : 'no',
         ...(CLS[cls].body !== CLS[v.cls].body ? { roof: 'unknown' as const } : {}),
       });
@@ -153,10 +161,36 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
         <><T v="medium">Sliding doors</T>
           <Row>{([['right', 'Right side'], ['left', 'Left side'], ['both', 'Both sides'], ['none', 'None'], ['unknown', 'Not sure']] as const).map(([k, t]) => <Chip key={k} text={t} on={slide === k} onPress={() => setSlide(k)} />)}</Row></>
       ) : null}
+      {s.role === 'owner' && s.stations.length > 1 ? (
+        <><T v="medium">Station</T><Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={st.id === station} onPress={() => setStation(st.id)} />)}</Row></>
+      ) : null}
       <T v="medium">Rear</T>
       <Row>{(Object.keys(REAR_PILL) as RearKind[]).map((k) => <Chip key={k} text={REAR_PILL[k]} on={rear === k} onPress={() => setRear(k)} />)}</Row>
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title="Save changes" loading={busy} onPress={save} /><Button v="link" title="Cancel" onPress={onDone} /></Row>
     </Card>
+  );
+}
+
+/** The van's damage record: every damage a fleet manager approved, newest first. */
+function DamageRecord({ checks }: { checks: Check[] }) {
+  const c = useColors();
+  const rows = checks.filter((k) => k.status === 'reviewed').flatMap((k) => approvedDamage(k).map((d) => ({ ...d, k })));
+  return (
+    <View style={{ gap: 8 }}>
+      <T v="h2">Damage record</T>
+      {!rows.length ? <T v="hint">No approved damage. Damage goes on the record when a fleet manager approves it in a check.</T> : null}
+      {rows.map((d, i) => (
+        <Pressable key={d.k.id + i} onPress={() => router.push(`/check/${d.k.id}`)}
+          style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: c.paper, borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <T v="h3">{d.panel.charAt(0).toUpperCase() + d.panel.slice(1)}</T>
+            <T v="hint">{[d.type + (d.sizeCm ? `, about ${d.sizeCm} cm` : ''), d.spot == null ? 'added by the manager' : '', `approved ${fmtWhen(d.k.review?.at || d.k.createdAt)}`].filter(Boolean).join(', ')}</T>
+            {d.note ? <T v="small">{d.note}</T> : null}
+          </View>
+          <T v="h3" color={c.ink2}>›</T>
+        </Pressable>
+      ))}
+    </View>
   );
 }

@@ -5,7 +5,11 @@
 module.exports = ({ config }) => {
   const extra = { ...(config.extra || {}) };
   // FLEET_TEST_MODE=1 builds the app without Firebase, for testing on a computer with no backend.
-  if (process.env.FLEET_TEST_MODE === '1') delete extra.firebase;
+  if (process.env.FLEET_TEST_MODE === '1') {
+    delete extra.firebase;
+    // FLEET_TEST_ROLE=manager|driver shows test mode as that role.
+    if (process.env.FLEET_TEST_ROLE) extra.testRole = process.env.FLEET_TEST_ROLE;
+  }
   if (process.env.FIREBASE_WEB_CONFIG && !(extra.firebase && extra.firebase.apiKey)) {
     extra.firebase = JSON.parse(process.env.FIREBASE_WEB_CONFIG);
   }

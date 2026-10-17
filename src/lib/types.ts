@@ -207,6 +207,8 @@ export interface Org {
   createdAt?: number;
   /** Set once the company has stations and every van, walk-around and check belongs to one. */
   stationsReady?: boolean;
+  /** AI model for every check in the company, chosen by the owner. */
+  aiTier?: Tier;
 }
 
 export interface Member {
@@ -236,14 +238,15 @@ export interface Invite {
 export const roleOf = (m: Pick<Member, 'role'> | null | undefined): Role | null => (!m ? null : m.role === 'admin' ? 'owner' : m.role);
 
 /** A spot counts as approved damage when the manager said so. Before review, the AI verdict is only a suggestion. */
-export function approvedDamage(k: Check): { panel: string; type: string; sizeCm: number | null; note: string; spot: number | null }[] {
+export interface ApprovedDamage { panel: string; type: string; sizeCm: number | null; note: string; spot: number | null }
+export function approvedDamage(k: Check): ApprovedDamage[] {
   const r = k.review;
   if (!r || k.status !== 'reviewed') return [];
-  const out = k.spots.flatMap((p, i) => {
+  const out = k.spots.flatMap((p, i): ApprovedDamage[] => {
     const d = r.decisions?.[String(i)];
     return d?.damage ? [{ panel: p.panel, type: (p.verdict?.verdict === 'damage' && p.verdict.type) || p.type, sizeCm: p.verdict?.sizeCm ?? p.sizeCm, note: d.note, spot: i }] : [];
   });
-  return out.concat((r.manual || []).map((m) => ({ panel: m.panel, type: m.type, sizeCm: null, note: m.note, spot: null })));
+  return out.concat((r.manual || []).map((m): ApprovedDamage => ({ panel: m.panel, type: m.type, sizeCm: null, note: m.note, spot: null })));
 }
 
 /** Was the AI right about a spot, judged by the manager's decision (or the older right/wrong buttons)? */
