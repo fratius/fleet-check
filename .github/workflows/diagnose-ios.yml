@@ -1,0 +1,85 @@
+# Opens the published phone app in Expo Go on an iPhone simulator and saves what happens
+# (screenshots, device log, Expo server answers) to the diag-results branch.
+# Runs on pushes to diag/* branches or by hand. macOS minutes count 10x against the free allowance.
+name: Diagnose iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['diag/**']
+
+permissions:
+  contents: write
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Ask the Expo servers
+        run: |
+          mkdir -p out
+          PID=$(jq -r '.expo.extra.eas.projectId' app.json)
+          RT="exposdk:58.0.0"
+          echo "PID=$PID" >> "$GITHUB_ENV"
+          echo "RT=$RT" >> "$GITHUB_ENV"
+          {
+            echo "## QR code target"
+            curl -sS "https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=$RT&channel=main&format=url"; echo
+            for P in ios android; do
+              echo "## Update manifest for $P"
+              curl -sS -D - -H "expo-platform: $P" -H "expo-runtime-version: $RT" -H "expo-channel-name: main" \
+                -H "expo-protocol-version: 1" -H "accept: multipart/mixed,application/expo+json,application/json" \
+                "https://u.expo.dev/$PID" | head -c 4000; echo
+            done
+            echo "## Expo Go builds for SDK 58"
+            curl -sS https://exp.host/--/api/v2/versions | jq '(.data // .).sdkVersions["58.0.0"]'
+          } > out/report.txt 2>&1
+          cat out/report.txt
+
+      - name: Boot an iPhone simulator with Expo Go
+        run: |
+          set -x
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test("^iPhone"))] | last | .udid')
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          URL=$(curl -sS https://exp.host/--/api/v2/versions | jq -r '(.data // .).sdkVersions["58.0.0"].iosClientUrl')
+          echo "Expo Go simulator build: $URL" | tee -a out/report.txt
+          curl -sSL "$URL" -o expogo.tar.gz
+          mkdir -p Exponent.app && tar -xzf expogo.tar.gz -C Exponent.app
+          APP=$(find Exponent.app -maxdepth 2 -name "*.app" -type d | grep -v '^Exponent.app$' | head -1)
+          [ -n "$APP" ] || APP=Exponent.app
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl listapps "$UDID" | grep -i -A3 exponent | head -20 | tee -a out/report.txt
+
+      - name: Open the app from the QR code link
+        run: |
+          EXPURL=$(curl -sS "https://qr.expo.dev/eas-update?projectId=$PID&runtimeVersion=$RT&channel=main&format=url")
+          echo "Opening $EXPURL" | tee -a out/report.txt
+          xcrun simctl spawn "$UDID" log stream --style compact --level debug \
+            --predicate 'process == "Expo Go" OR process == "Exponent" OR eventMessage CONTAINS[c] "javascript" OR eventMessage CONTAINS[c] "ReactNativeJS"' > out/device-full.log 2>&1 &
+          LOG=$!
+          xcrun simctl launch "$UDID" host.exp.Exponent || true
+          sleep 10
+          xcrun simctl io "$UDID" screenshot out/1-expo-go-home.png
+          xcrun simctl openurl "$UDID" "$EXPURL"
+          sleep 15; xcrun simctl io "$UDID" screenshot out/2-after-15s.png
+          sleep 30; xcrun simctl io "$UDID" screenshot out/3-after-45s.png
+          sleep 45; xcrun simctl io "$UDID" screenshot out/4-after-90s.png
+          kill $LOG || true
+          grep -iE "error|exception|warn|javascript|ReactNativeJS|manifest|update|sdk" out/device-full.log | tail -400 > out/device.log || true
+          tail -300 out/device-full.log > out/device-tail.log
+          rm -f out/device-full.log
+
+      - name: Save the results to the diag-results branch
+        if: always()
+        run: |
+          cd out
+          git init -q
+          git checkout -q -b diag-results
+          git add -A
+          git -c user.name="diagnose" -c user.email="diagnose@users.noreply.github.com" commit -qm "iOS diagnose run ${{ github.run_id }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:diag-results
