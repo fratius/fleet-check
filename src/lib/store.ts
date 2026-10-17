@@ -6,7 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Check, IdentifyResult, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
+import type { Check, IdentifyResult, Invite, InvitePeek, JoinDetails, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -132,6 +132,11 @@ export function aiMessage(code: string, raw?: string): string {
 export const ai = {
   identify: call<{ orgId: string; scanId: string; paths: string[]; tier: Tier; stationId: string | null }, IdentifyResult>('identifyVehicle', 130000),
   findDamage: call<{ orgId: string; walkId: string; tier: Tier }, { checkId: string; spots: Spot[]; notVisible: string[]; usage: Usage; model: string }>('findDamage', 310000),
+  createInvite: call<{ orgId: string; role: 'manager' | 'driver'; stationId: string; count: number }, { invites: Invite[] }>('createInvite', 40000),
+  peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
+  acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
+  createDemoCompany: call<Record<string, never>, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
+  deleteDemoCompany: call<{ orgId: string }, { ok: boolean }>('deleteDemoCompany', 130000),
   submitCheck: call<{ orgId: string; checkId: string; missedNote: string }, { ok: boolean }>('submitCheck', 40000),
   setupStations: call<{ orgId: string }, { done: boolean; stationId?: string }>('setupStations', 130000),
   checkSpot: call<{ orgId: string; checkId: string; spot: number; closeups: string[]; tier: Tier }, { verdict: Verdict; usage: Usage; model: string }>('checkSpot'),

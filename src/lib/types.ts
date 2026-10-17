@@ -209,6 +209,8 @@ export interface Org {
   stationsReady?: boolean;
   /** AI model for every check in the company, chosen by the owner. */
   aiTier?: Tier;
+  /** A demo company full of made-up data. */
+  demo?: boolean;
 }
 
 export interface Member {
@@ -219,20 +221,41 @@ export interface Member {
   stationIds?: string[];
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  /** Amazon Transporter ID of a driver, if they gave it. */
+  transporterId?: string;
   joinedAt?: number;
+  /** A made-up person in a demo company. */
+  demo?: boolean;
 }
 
-/** An invite code: whoever enters it joins the company with this role at this station. */
+/** An invite link: one person can use it, within 24 hours, to join with this role at this station. */
 export interface Invite {
-  code: string;
+  token: string;
   orgId: string;
   orgName: string;
   role: 'manager' | 'driver';
   stationId: string;
   stationName: string;
   createdBy: string;
+  createdByName?: string;
   createdAt: number;
+  expiresAt: number;
+  usedBy: string | null;
+  usedByName: string | null;
+  usedAt: number | null;
 }
+export interface InvitePeek {
+  status: 'ok' | 'used' | 'expired' | 'missing' | 'mine';
+  orgName?: string;
+  role?: 'manager' | 'driver';
+  stationName?: string;
+  invitedBy?: string;
+  expiresAt?: number;
+}
+export interface JoinDetails { firstName: string; lastName: string; phone: string; transporterId: string }
 
 /** Normalised role: 'admin' is an owner. */
 export const roleOf = (m: Pick<Member, 'role'> | null | undefined): Role | null => (!m ? null : m.role === 'admin' ? 'owner' : m.role);

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Share, View } from 'react-native';
 
-import { Button, Card, Chip, Field, Notice, Pill, Row, Screen, T, useColors } from '@/components/ui';
-import { addStation, createInvite, deleteInvite, deleteStation, removeMember, renameStation, setMember, watchInvites, watchMembers } from '@/lib/people';
+import { Button, Card, Chip, Field, Notice, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { addStation, deleteInvite, deleteStation, inviteUrl, removeMember, renameStation, setMember, watchInvites, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
+import { AiError, ai } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Invite, type Member, type Station } from '@/lib/types';
 
 /**
- * Owners: stations, fleet managers and drivers of the whole company, and invite codes for both roles.
- * Managers: the drivers of their station and the driver invite code.
+ * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
+ * Managers: the drivers of their station and driver invite links.
  */
 export default function People() {
   const s = useSession();
@@ -19,7 +20,7 @@ export default function People() {
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
     const a = watchMembers(orgId, setMembers, () => setErr('Couldn\'t load the people of this company.'));
-    const b = watchInvites(orgId, setInvites, () => setErr('Couldn\'t load the invite codes.'));
+    const b = watchInvites(orgId, setInvites, () => setErr('Couldn\'t load the invite links.'));
     return () => { a(); b(); };
   }, [orgId, s.mode, s.staff]);
 
@@ -32,7 +33,7 @@ export default function People() {
     <Screen>
       <View style={{ gap: 4 }}>
         <T v="h1">People</T>
-        <T v="hint">{owner ? 'Stations, fleet managers and drivers of ' + s.org?.name + '. People join with an invite code.' : 'Drivers of your station. They join with the invite code below.'}</T>
+        <T v="hint">{owner ? 'Stations, fleet managers and drivers of ' + s.org?.name + '. People join with an invite link: one link per person, valid for 24 hours.' : 'Drivers of your station. Invite more with the links below: one link per person, valid for 24 hours.'}</T>
       </View>
       {err ? <Notice tone="bad" text={err} /> : null}
       {owner ? <Stations members={members || []} /> : null}
@@ -125,7 +126,7 @@ function StationRow({ st, first, vans, people }: { st: Station; first: boolean; 
   );
 }
 
-/** One station: its managers and drivers, and the codes to invite more. */
+/** One station: its managers and drivers, and the links to invite more. */
 function StationPeople({ station, members, invites }: { station: Station; members: Member[]; invites: Invite[] }) {
   const s = useSession();
   const owner = s.role === 'owner';
@@ -138,40 +139,63 @@ function StationPeople({ station, members, invites }: { station: Station; member
         <>
           <T v="h3">Fleet managers</T>
           {managers.length ? managers.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No fleet manager yet.</T>}
-          <CodeRow station={station} role="manager" invite={invites.find((i) => i.role === 'manager')} />
+          <InviteLinks station={station} role="manager" invites={invites.filter((i) => i.role === 'manager')} />
         </>
       ) : null}
       <T v="h3">Drivers</T>
       {drivers.length ? drivers.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No drivers yet.</T>}
-      <CodeRow station={station} role="driver" invite={invites.find((i) => i.role === 'driver')} />
+      <InviteLinks station={station} role="driver" invites={invites.filter((i) => i.role === 'driver')} />
     </Card>
   );
 }
 
-function CodeRow({ station, role, invite }: { station: Station; role: 'manager' | 'driver'; invite?: Invite }) {
+/**
+ * Invite links for one role at one station. Each link is for one person and works for 24 hours, so make
+ * as many as people you're inviting and send each one to a different person.
+ */
+function InviteLinks({ station, role, invites }: { station: Station; role: 'manager' | 'driver'; invites: Invite[] }) {
   const s = useSession();
   const c = useColors();
+  const [count, setCount] = useState(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const who = role === 'manager' ? 'fleet managers' : 'drivers';
+  const [, tick] = useState(0);
+  useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 60_000); return () => clearInterval(t); }, []);
+  const now = Date.now();
+  const open = invites.filter((i) => !i.usedBy && i.expiresAt > now);
+  const used = invites.filter((i) => i.usedBy).slice(0, 5);
+  const who = role === 'manager' ? 'fleet manager' : 'driver';
   const make = async () => {
     setBusy(true); setErr(null);
-    try {
-      if (invite) await deleteInvite(invite.code);
-      await createInvite(s.org!, station, role, s.user!.uid);
-    } catch { setErr('Couldn\'t make a code.'); } finally { setBusy(false); }
+    try { await ai.createInvite({ orgId: s.org!.id, role, stationId: station.id, count }); setCount(1); }
+    catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t make the links.'); } finally { setBusy(false); }
   };
+  const share = (i: Invite, n: number) => Share.share({
+    message: `You're invited to join ${s.org!.name} in Fleet Check as a ${who} at ${station.name}. Open this link on your phone to create your account (it works once, until ${fmtWhen(i.expiresAt)}): ${inviteUrl(i.token)}`,
+  }).catch(() => {});
   return (
-    <View style={{ gap: 6, backgroundColor: c.page, borderRadius: 4, padding: 10 }}>
-      <T v="small">Invite code for {who} at {station.name}</T>
-      {invite ? (
-        <Row>
-          <T v="big" selectable style={{ letterSpacing: 4, flex: 1 }}>{invite.code}</T>
-          <Button small title="Share" onPress={() => Share.share({ message: `Join ${s.org!.name} in Fleet Check as a ${role === 'manager' ? 'fleet manager' : 'driver'} at ${station.name}. Sign up in the app and enter the code ${invite.code}.` }).catch(() => {})} />
-          <Button small v="link" title="New code" loading={busy} onPress={make} />
-        </Row>
-      ) : <Button small v="primary" title={`Make a code for ${who}`} loading={busy} onPress={make} />}
-      {invite ? <T v="small">Anyone with this code can join as a {role === 'manager' ? 'fleet manager' : 'driver'} here. A new code stops the old one.</T> : null}
+    <View style={{ gap: 8, backgroundColor: c.page, borderRadius: 4, padding: 10 }}>
+      <T v="medium">Invite {role === 'manager' ? 'fleet managers' : 'drivers'}</T>
+      <T v="small">One link per person. A link works once and expires after 24 hours.</T>
+      {open.map((i, n) => (
+        <View key={i.token} style={{ gap: 4, borderTopWidth: n ? 1 : 0, borderColor: c.rule, paddingTop: n ? 8 : 0 }}>
+          <T v="small" selectable numberOfLines={1}>{inviteUrl(i.token)}</T>
+          <Row>
+            <Pill v="muted" text={`Until ${fmtWhen(i.expiresAt)}`} />
+            <Button small title="Share" onPress={() => share(i, n)} />
+            <Button small v="link" title="Cancel" onPress={() => deleteInvite(i.token).catch(() => setErr('Couldn\'t cancel the link.'))} />
+          </Row>
+        </View>
+      ))}
+      <Row>
+        <View style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden' }}>
+          <Button small v="link" title="–" onPress={() => setCount(Math.max(1, count - 1))} accessibilityLabel="Fewer links" />
+          <T v="h3" style={{ minWidth: 34, textAlign: 'center', alignSelf: 'center' }}>{count}</T>
+          <Button small v="link" title="+" onPress={() => setCount(Math.min(20, count + 1))} accessibilityLabel="More links" />
+        </View>
+        <Button small v="primary" title={count === 1 ? `Make a ${who} link` : `Make ${count} ${who} links`} loading={busy} onPress={make} />
+      </Row>
+      {used.length ? <T v="small">Used: {used.map((i) => `${i.usedByName || 'someone'} (${fmtWhen(i.usedAt)})`).join(', ')}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
   );
@@ -195,7 +219,7 @@ function PersonRow({ m, first }: { m: Member; first: boolean }) {
       <Pressable disabled={!canEdit && !canRemove} onPress={() => setOpen(!open)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
-          <T v="small" numberOfLines={1}>{m.email}</T>
+          <T v="small" numberOfLines={1}>{[m.phone, m.transporterId ? `TID ${m.transporterId}` : '', m.email].filter(Boolean).join(', ')}</T>
         </View>
         <Pill v={r === 'owner' ? 'solid' : 'default'} text={ROLE_NAME[r]} />
         {canEdit || canRemove ? <T v="h3" color={c.ink2}>{open ? '–' : '+'}</T> : null}

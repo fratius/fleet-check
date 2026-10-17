@@ -1,9 +1,11 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
+import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
 
@@ -39,6 +41,7 @@ export default function Account() {
 
       <MyCompanies />
       {s.mode === 'firebase' ? <AddCompany /> : null}
+      {s.mode === 'firebase' && (s.staff || s.creator) ? <Demo /> : null}
       {s.creator ? <AllCompanies /> : null}
 
       {s.staff ? (
@@ -98,11 +101,11 @@ function AddCompany() {
   return (
     <Card>
       <T v="h3">Another company</T>
-      <Segmented label="Another company" value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['join', 'Join with a code'], ['create', 'Create a company']]} />
+      <Segmented label="Another company" value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['join', 'Invite link'], ['create', 'Create a company']]} />
       {mode === 'join' ? (
         <>
-          <Field label="Invite code" value={code} onChangeText={(t) => setCode(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={6} />
-          <Button v="primary" title="Join company" loading={busy} onPress={() => (code.trim().length === 6 ? run(() => s.joinOrg(code)) : setErr('The invite code has 6 characters.'))} />
+          <Field label="Invite link" value={code} onChangeText={setCode} autoCapitalize="none" autoCorrect={false} placeholder="https://…/join/…" />
+          <Button v="primary" title="Continue" onPress={() => { const t = tokenFrom(code); if (t) router.push({ pathname: '/join/[token]', params: { token: t } }); else setErr('Paste the whole link you were sent.'); }} />
         </>
       ) : (
         <>
@@ -113,6 +116,37 @@ function AddCompany() {
       )}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Button v="link" small title="Cancel" onPress={() => setOpen(false)} />
+    </Card>
+  );
+}
+
+/** A demo company with made-up data to try the app with. */
+function Demo() {
+  const s = useSession();
+  const c = useColors();
+  const [busy, setBusy] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const inDemo = !!s.org?.demo;
+  const go = async (fn: () => Promise<void>) => { setBusy(true); setErr(null); try { await fn(); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); } };
+  return (
+    <Card dashed>
+      <T v="h3">Demo company</T>
+      {inDemo ? (
+        <>
+          <T v="hint">You're in the demo company. The people in it are made up and can't sign in; the photos are drawings and no AI was used. Removing it deletes everything in it.</T>
+          <Button v="danger" title={armed ? 'Tap again to remove the demo company' : 'Remove the demo company'} loading={busy} onPress={() => {
+            if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
+            go(() => s.removeDemo());
+          }} />
+        </>
+      ) : (
+        <>
+          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans and damage checks in every state, to try things without touching your real fleet.</T>
+          <Button title="Open the demo company" loading={busy} onPress={() => go(() => s.openDemo())} />
+        </>
+      )}
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </Card>
   );
 }

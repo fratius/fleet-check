@@ -9,6 +9,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColors } from '@/components/ui';
+import '@/lib/install';
 import { SessionProvider, useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -31,6 +32,8 @@ function Routes() {
       <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>
         <Stack.Screen name="sign-in" />
       </Stack.Protected>
+      {/* Invite links open here whether or not the person is signed in. */}
+      <Stack.Screen name="join/[token]" />
     </Stack>
   );
 }

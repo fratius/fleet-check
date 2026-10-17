@@ -9,7 +9,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { fb } from './firebase';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Check, type Invite, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Check, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -45,7 +45,12 @@ interface Session {
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string, name: string): Promise<void>;
   createOrg(company: string, station: string): Promise<void>;
-  joinOrg(code: string): Promise<Invite>;
+  /** Uses an invite link (one person, 24 hours) with the person's details. */
+  joinWithLink(token: string, details: JoinDetails): Promise<{ orgName: string; role: string; stationName: string }>;
+  /** Makes (or reopens) the person's demo company with made-up stations, people, vans and checks. */
+  openDemo(): Promise<void>;
+  /** Removes the open demo company. */
+  removeDemo(): Promise<void>;
   switchOrg(orgId: string): Promise<void>;
   resetPassword(email: string): Promise<void>;
   signOut(): Promise<void>;
@@ -69,7 +74,7 @@ export function authMessage(e: unknown): string {
     case 'auth/too-many-requests': return 'Too many attempts. Wait a minute, then try again.';
     case 'auth/network-request-failed': return 'No connection. Check your internet and try again.';
     case 'auth/operation-not-allowed': return 'Email sign-in isn\'t turned on in Firebase yet.';
-    case 'permission-denied': return (e as Error)?.message || 'You don\'t have access to that. Check the invite code.';
+    case 'permission-denied': return (e as Error)?.message || 'You don\'t have access to that.';
     default: return (e as Error)?.message || 'Something went wrong. Try again.';
   }
 }
@@ -91,6 +96,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [member, setMember] = useState<Member | null>(f ? null : LOCAL_MEMBER);
   const [localTier, setLocalTier] = useState<Tier>('default');
   const fbUser = useRef<User | null>(null);
+  const orgRef = useRef<Org | null>(null);
   const isCreator = useRef(false);
 
   useEffect(() => {
@@ -98,8 +104,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /** Reads the person's companies and opens `want` (or the one they had open last). */
+  // Several loads can overlap (sign-in, joining, switching); only the latest one may set the state.
+  const loadSeq = useRef(0);
   const load = useCallback(async (u: User, want?: string) => {
     const f2 = fb()!;
+    const my = ++loadSeq.current;
     const prof = await getDoc(doc(f2.db, 'users', u.uid));
     const p = (prof.exists() ? prof.data() : {}) as { orgIds?: string[]; orgId?: string };
     const ids = Array.from(new Set([...(p.orgIds || []), ...(p.orgId ? [p.orgId] : [])]));
@@ -110,6 +119,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         return { org: { id, ...(o.data() as Omit<Org, 'id'>) }, member: { uid: u.uid, ...(m.data() as Omit<Member, 'uid'>) } };
       } catch { return null; }
     }))).filter(Boolean) as { org: Org; member: Member }[];
+    if (my !== loadSeq.current) return;
     setCompanies(rows.map((r) => ({ id: r.org.id, name: r.org.name, role: roleOf(r.member)! })));
     const target = want || p.orgId;
     let pick = rows.find((r) => r.org.id === target) || rows[0] || null;
@@ -118,6 +128,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const o = await getDoc(doc(f2.db, 'orgs', target)).catch(() => null);
       if (o?.exists()) pick = { org: { id: target, ...(o.data() as Omit<Org, 'id'>) }, member: { uid: u.uid, role: 'owner', stationIds: [], email: u.email || '', name: u.displayName || 'App creator' } };
     }
+    if (my !== loadSeq.current) return;
     if (!pick) { setOrg(null); setMember(null); setStatus('needsOrg'); return; }
     setOrg(pick.org);
     setMember(pick.member);
@@ -159,21 +170,27 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await load(u, ref.id);
   }, [load]);
 
-  /** Joins the company of an invite code with the code's role and station. */
-  const joinOrg = useCallback(async (codeIn: string) => {
-    const f2 = fb()!, u = fbUser.current!;
-    const code = codeIn.trim().toUpperCase();
-    const inv = await getDoc(doc(f2.db, 'invites', code));
-    if (!inv.exists() || !inv.data().role) throw { code: 'permission-denied', message: 'No company uses this invite code. Check it with your fleet manager.' };
-    const i = inv.data() as Invite;
-    const already = await getDoc(doc(f2.db, 'orgs', i.orgId, 'members', u.uid)).catch(() => null);
-    if (already?.exists()) throw { code: 'permission-denied', message: `You're already in ${i.orgName}.` };
-    await setDoc(doc(f2.db, 'orgs', i.orgId, 'members', u.uid), {
-      role: i.role, stationIds: [i.stationId], email: u.email || '', name: displayName(u), joinedAt: Date.now(), inviteCode: code,
-    });
-    await setDoc(doc(f2.db, 'users', u.uid), { orgIds: arrayUnion(i.orgId), orgId: i.orgId, email: u.email || '', name: displayName(u) }, { merge: true });
-    await load(u, i.orgId);
-    return i;
+  const joinWithLink = useCallback(async (token: string, details: JoinDetails) => {
+    const u = fb()!.auth.currentUser || fbUser.current!;
+    const r = await ai.acceptInvite({ token, details });
+    // The server set the display name; refresh so the app shows it.
+    await u.reload().catch(() => {});
+    setUser({ uid: u.uid, email: u.email || '', name: u.displayName || [details.firstName, details.lastName].join(' ') });
+    await load(u, r.orgId);
+    return r;
+  }, [load]);
+
+  const openDemo = useCallback(async () => {
+    const u = fb()!.auth.currentUser || fbUser.current!;
+    const r = await ai.createDemoCompany({});
+    await load(u, r.orgId);
+  }, [load]);
+
+  const removeDemoFn = useCallback(async () => {
+    const u = fbUser.current!;
+    if (!orgRef.current?.demo) return;
+    setStatus('loading');
+    try { await ai.deleteDemoCompany({ orgId: orgRef.current.id }); } finally { await load(u).catch(() => setStatus('needsOrg')); }
   }, [load]);
 
   const switchOrg = useCallback(async (orgId: string) => {
@@ -186,6 +203,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = useCallback(async (email: string) => { await sendPasswordResetEmail(fb()!.auth, email.trim()); }, []);
   const signOut = useCallback(async () => { if (fb()) await fbSignOut(fb()!.auth); }, []);
 
+  orgRef.current = org;
   const role = roleOf(member);
   const tier: Tier = mode === 'local' ? localTier : (org?.aiTier || 'default');
   const setTier = useCallback(async (t: Tier) => {
@@ -254,7 +272,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value: Session = {
     status, mode, user, creator, companies, org, member, role, staff, myStations, stations, stationName, runs,
     store, vehicles, walks, checks, scans, loaded, dataError, tier, setTier,
-    signIn, signUp, createOrg, joinOrg, switchOrg, resetPassword, signOut,
+    signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

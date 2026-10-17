@@ -36,15 +36,11 @@ service cloud.firestore {
       allow read: if creator();
     }
 
-    // Invite codes: anyone signed in can look up a code they were given; nobody can list them.
-    match /invites/{code} {
+    // Invite links: made and used only by the server (createInvite, acceptInvite), one person each,
+    // valid for 24 hours. Owners and managers see the links of their company and can cancel them.
+    match /invites/{token} {
       allow get: if signedIn();
       allow list: if staff(resource.data.orgId);
-      allow create: if request.resource.data.code == code
-        && request.resource.data.createdBy == me()
-        && request.resource.data.role in ['manager', 'driver']
-        && (owner(request.resource.data.orgId)
-            || (request.resource.data.role == 'driver' && runs(request.resource.data.orgId, request.resource.data.stationId)));
       allow delete: if owner(resource.data.orgId)
         || (resource.data.role == 'driver' && runs(resource.data.orgId, resource.data.stationId));
     }
@@ -67,17 +63,14 @@ service cloud.firestore {
         // The person who created the company becomes its first owner.
         allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
-        // Joining with an invite code gives exactly the role and station of the code.
-        allow create: if signedIn() && uid == me()
-          && request.resource.data.inviteCode is string
-          && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode))
-          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.orgId == orgId
-          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.role == request.resource.data.role
-          && request.resource.data.stationIds == [get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.stationId];
-        // Owners change roles and stations of others; nobody changes their own.
+        // People join through invite links (the server adds them). Owners change roles and stations of others;
+        // nobody changes their own.
         allow update: if owner(orgId) && uid != me()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'stationIds'])
           && request.resource.data.role in ['owner', 'manager', 'driver'];
+        // Everyone keeps their own contact details up to date.
+        allow update: if signedIn() && uid == me()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'firstName', 'lastName', 'phone', 'transporterId']);
         // Owners remove anyone else; managers remove drivers of their station; anyone can leave.
         allow delete: if (owner(orgId) && uid != me())
           || (manager(orgId) && resource.data.role == 'driver' && resource.data.get('stationIds', []).hasAny(stationsOf(orgId)))

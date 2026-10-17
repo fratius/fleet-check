@@ -1,16 +1,13 @@
 import {
-  collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc, where,
+  collection, deleteDoc, doc, getCountFromServer, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 
 import { fb } from './firebase';
-import type { Invite, Member, Org, Role, Station } from './types';
+import type { Invite, Member, Org, Role } from './types';
 
-/** People, stations and invite codes of a company. Firestore only; test mode has none of this. */
+/** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
 const db = () => fb()!.db;
-const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-export const code6 = () => Array.from({ length: 6 }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join('');
-
 export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onError?: () => void) {
   return onSnapshot(collection(db(), 'orgs', orgId, 'members'),
     (snap) => cb(snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }))),
@@ -23,18 +20,19 @@ export function watchInvites(orgId: string, cb: (rows: Invite[]) => void, onErro
     () => onError?.());
 }
 
-export async function createInvite(org: Org, station: Station, role: 'manager' | 'driver', uid: string): Promise<Invite> {
-  for (let tries = 0; tries < 5; tries++) {
-    const code = code6();
-    const ref = doc(db(), 'invites', code);
-    if ((await getDoc(ref)).exists()) continue;
-    const inv: Invite = { code, orgId: org.id, orgName: org.name, role, stationId: station.id, stationName: station.name, createdBy: uid, createdAt: Date.now() };
-    await setDoc(ref, inv);
-    return inv;
-  }
-  throw new Error('Couldn\'t make a new code. Try again.');
+export const deleteInvite = (token: string) => deleteDoc(doc(db(), 'invites', token));
+
+/** The web address of an invite link. It opens the join page of the web app. */
+export function inviteUrl(token: string) {
+  const origin = typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? window.location.origin : `https://${fb()?.app.options.projectId}.web.app`;
+  return `${origin}/join/${token}`;
 }
-export const deleteInvite = (code: string) => deleteDoc(doc(db(), 'invites', code));
+/** The token from a pasted invite link (or the bare token). */
+export function tokenFrom(text: string) {
+  const t = text.trim();
+  const m = t.match(/join\/([A-Za-z0-9_-]{16,64})/);
+  return m ? m[1] : /^[A-Za-z0-9_-]{16,64}$/.test(t) ? t : null;
+}
 
 export const setMember = (orgId: string, uid: string, patch: { role?: Role; stationIds?: string[] }) => updateDoc(doc(db(), 'orgs', orgId, 'members', uid), patch);
 export const removeMember = (orgId: string, uid: string) => deleteDoc(doc(db(), 'orgs', orgId, 'members', uid));

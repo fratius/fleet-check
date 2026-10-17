@@ -5,7 +5,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Fleet:** each vehicle gets photo frames that fit its body type (car to step van).
 - **Walk-around:** the camera shows the outline to line up for each photo.
 - **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI suggests: damage, dirt, reflection or nothing. The fleet manager approves or rejects each spot; approved damage goes on the van's record. Every step records its time and real cost.
-- **Companies and stations:** each company sees only its own fleet, split into stations (operating areas). People join with 6-letter invite codes made per station and role.
+- **Companies and stations:** each company sees only its own fleet, split into stations (operating areas). People join with invite links made per station and role: one link per person, valid for 24 hours.
 
 ## Who can do what
 
@@ -13,7 +13,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 |---|---|---|---|---|
 | Sees | every company | all stations of their companies | their station | vans of their station |
 | Vans | everything | add, edit, move, remove | add, edit, remove at their station | scan |
-| People | everything | stations, managers, drivers, invite codes | drivers of their station, driver code | none |
+| People | everything | stations, managers, drivers, invite links | drivers of their station, driver links | none |
 | Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
 | AI model and test log | everything | sets the model, sees the log | sees the log | none |
 
@@ -21,6 +21,13 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Fleet owners** can own several companies (Account > Join or create another company) and switch between them.
 - A company created before stations existed moves onto a "Main station" the first time its owner opens the app; rename it under People.
 - The rules are tested on every deploy (`tests/rules.test.mjs` on the Firestore emulator) before anything goes live.
+- The full access model and the checklist for new features are in [ROLES.md](ROLES.md).
+
+## Try it with demo data
+
+**Account > Demo company > Open the demo company** (owners and managers; also on the first screen for new accounts) makes a separate company "Demo DSP (test data)": two stations, two fleet managers, eight drivers, twelve vans, walk-arounds and damage checks waiting for review, at the van and reviewed. The people are made up and can't sign in, the photos are drawings and no AI is used. Switch back to your real company under Account; remove the demo company there when you're done.
+
+To try the driver side yourself, make a driver link in the demo company and open it in a private browser window with another email address.
 
 ## Set it up (once)
 
@@ -59,7 +66,7 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 
 1. Install **Expo Go** from the App Store or Google Play and sign in to it (person icon, top right) with the Expo account that owns `fratius-org`. Expo Go only opens this app for members of that account.
 2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:57.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
-3. Create an account. Fleet owners create their company and first station; managers and drivers enter the invite code from the **People** tab.
+3. Create an account. Fleet owners create their company and first station. Managers and drivers open the invite link they were sent (made under **People**): it asks for their details, creates their account and shows how to put the app on the home screen.
 
 The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
 

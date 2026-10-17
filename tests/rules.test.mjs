@@ -39,8 +39,10 @@ beforeEach(async () => {
     await put(`orgs/${O}/checks/c1`, { vehicleId: 'v1', stationId: S1, status: 'submitted', spots: [], review: null, createdAt: 1 });
     await put(`orgs/${O}/checks/c2`, { vehicleId: 'v2', stationId: S2, status: 'submitted', spots: [], review: null, createdAt: 2 });
     await put(`orgs/${O}/scans/sc1`, { predicted: 'suv', verdict: null, actual: null, createdAt: 1 });
-    await put(`invites/DRV111`, { code: 'DRV111', orgId: O, orgName: 'DSP One', role: 'driver', stationId: S1, stationName: 'DXX1', createdBy: 'mgr1', createdAt: 1 });
-    await put(`invites/MGR222`, { code: 'MGR222', orgId: O, orgName: 'DSP One', role: 'manager', stationId: S2, stationName: 'DXX2', createdBy: 'own', createdAt: 1 });
+    const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
+    await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
+    await put(`invites/DRVLINK2xxxxxxxxxxxxxxxx`, { token: 'DRVLINK2xxxxxxxxxxxxxxxx', ...inv('driver', S2) });
+    await put(`invites/MGRLINK1xxxxxxxxxxxxxxxx`, { token: 'MGRLINK1xxxxxxxxxxxxxxxx', ...inv('manager', S2) });
   });
 });
 
@@ -88,16 +90,21 @@ describe('walk-arounds and checks', () => {
 });
 
 describe('people and invites', () => {
-  test('driver joins with a driver code', () => assertSucceeds(setDoc(doc(as('new1'), `orgs/${O}/members/new1`), { role: 'driver', stationIds: [S1], inviteCode: 'DRV111', name: 'N', email: 'n@x', joinedAt: 1 })));
-  test('a driver code cannot make you a manager', () => assertFails(setDoc(doc(as('new1'), `orgs/${O}/members/new1`), { role: 'manager', stationIds: [S1], inviteCode: 'DRV111', name: 'N', email: 'n@x' })));
-  test('a code cannot put you at another station', () => assertFails(setDoc(doc(as('new1'), `orgs/${O}/members/new1`), { role: 'driver', stationIds: [S2], inviteCode: 'DRV111', name: 'N', email: 'n@x' })));
-  test('nobody joins as owner with a code', () => assertFails(setDoc(doc(as('new1'), `orgs/${O}/members/new1`), { role: 'owner', stationIds: [], inviteCode: 'MGR222', name: 'N', email: 'n@x' })));
-  test('manager joins with a manager code', () => assertSucceeds(setDoc(doc(as('new2'), `orgs/${O}/members/new2`), { role: 'manager', stationIds: [S2], inviteCode: 'MGR222', name: 'N', email: 'n@x' })));
-  test('manager makes a driver code for their station', () => assertSucceeds(setDoc(doc(as('mgr1'), 'invites/ABC123'), { code: 'ABC123', orgId: O, orgName: 'DSP One', role: 'driver', stationId: S1, stationName: 'DXX1', createdBy: 'mgr1', createdAt: 2 })));
-  test('manager cannot make a manager code', () => assertFails(setDoc(doc(as('mgr1'), 'invites/ABC124'), { code: 'ABC124', orgId: O, orgName: 'DSP One', role: 'manager', stationId: S1, stationName: 'DXX1', createdBy: 'mgr1', createdAt: 2 })));
-  test('manager cannot make a code for another station', () => assertFails(setDoc(doc(as('mgr1'), 'invites/ABC125'), { code: 'ABC125', orgId: O, orgName: 'DSP One', role: 'driver', stationId: S2, stationName: 'DXX2', createdBy: 'mgr1', createdAt: 2 })));
-  test('owner makes a manager code', () => assertSucceeds(setDoc(doc(as('own'), 'invites/ABC126'), { code: 'ABC126', orgId: O, orgName: 'DSP One', role: 'manager', stationId: S2, stationName: 'DXX2', createdBy: 'own', createdAt: 2 })));
-  test('driver cannot make codes', () => assertFails(setDoc(doc(as('drv1'), 'invites/ABC127'), { code: 'ABC127', orgId: O, orgName: 'DSP One', role: 'driver', stationId: S1, stationName: 'DXX1', createdBy: 'drv1', createdAt: 2 })));
+  test('nobody adds themselves to a company from the app (only invite links on the server)', () => assertFails(setDoc(doc(as('new1'), `orgs/${O}/members/new1`), { role: 'driver', stationIds: [S1], name: 'N', email: 'n@x' })));
+  test('invite links cannot be made from the app', () => assertFails(setDoc(doc(as('own'), 'invites/NEWLINKxxxxxxxxxxxxxxxxx'), { orgId: O, role: 'driver', stationId: S1, createdBy: 'own', createdAt: 2, expiresAt: Date.now() + 1e9, usedBy: null })));
+  test('invite links cannot be marked used from the app', () => assertFails(updateDoc(doc(as('new1'), 'invites/DRVLINK1xxxxxxxxxxxxxxxx'), { usedBy: 'new1' })));
+  test('anyone signed in can look up a link they were sent', () => assertSucceeds(getDoc(doc(as('new1'), 'invites/DRVLINK1xxxxxxxxxxxxxxxx'))));
+  test('owner sees the links of the company', () => assertSucceeds(getDocs(query(collection(as('own'), 'invites'), where('orgId', '==', O)))));
+  test('manager sees the links of the company', () => assertSucceeds(getDocs(query(collection(as('mgr1'), 'invites'), where('orgId', '==', O)))));
+  test('driver cannot list links', () => assertFails(getDocs(query(collection(as('drv1'), 'invites'), where('orgId', '==', O)))));
+  test('owner of another company cannot list links', () => assertFails(getDocs(query(collection(as('own2'), 'invites'), where('orgId', '==', O)))));
+  test('manager cancels a driver link of their station', () => assertSucceeds(deleteDoc(doc(as('mgr1'), 'invites/DRVLINK1xxxxxxxxxxxxxxxx'))));
+  test('manager cannot cancel a link of another station', () => assertFails(deleteDoc(doc(as('mgr1'), 'invites/DRVLINK2xxxxxxxxxxxxxxxx'))));
+  test('manager cannot cancel a manager link', () => assertFails(deleteDoc(doc(as('mgr1'), 'invites/MGRLINK1xxxxxxxxxxxxxxxx'))));
+  test('owner cancels any link', () => assertSucceeds(deleteDoc(doc(as('own'), 'invites/MGRLINK1xxxxxxxxxxxxxxxx'))));
+  test('people update their own phone number', () => assertSucceeds(updateDoc(doc(as('drv1'), `orgs/${O}/members/drv1`), { phone: '+49 170 1', transporterId: 'A1' })));
+  test('people cannot change their own station', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/members/drv1`), { stationIds: [S2] })));
+  test('people cannot change someone else\'s details', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/members/drv2`), { phone: '1' })));
   test('driver cannot list people', () => assertFails(getDocs(collection(as('drv1'), `orgs/${O}/members`))));
   test('driver reads their own membership', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/members/drv1`))));
   test('manager lists people', () => assertSucceeds(getDocs(collection(as('mgr1'), `orgs/${O}/members`))));

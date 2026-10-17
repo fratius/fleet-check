@@ -1,11 +1,15 @@
+import { randomBytes } from 'node:crypto';
+
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { setGlobalOptions } from 'firebase-functions';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/https';
 import { defineSecret } from 'firebase-functions/params';
 
 import { ask } from './claude';
+import { createDemo, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
@@ -58,9 +62,9 @@ async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>):
   return { uid, name: d.name || tokenName, orgId, tier, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
 }
 /** Can this person work at this station? Owners and the app creator can work everywhere. */
-function needStation(w: Who, stationId: string | undefined | null) {
+function needStation(w: Who, stationId: string | undefined | null, message = 'This van belongs to another station.') {
   if (w.role === 'owner') return;
-  if (!stationId || !w.stationIds.includes(stationId)) throw new HttpsError('permission-denied', 'This van belongs to another station.');
+  if (!stationId || !w.stationIds.includes(stationId)) throw new HttpsError('permission-denied', message);
 }
 function needStaff(w: Who) {
   if (w.role === 'driver') throw new HttpsError('permission-denied', 'Only fleet managers and owners can do this.');
@@ -307,4 +311,101 @@ export const setupStations = onCall({ timeoutSeconds: 120 }, async (req) => {
   writer.update(org, { stationsReady: true, inviteCode: FieldValue.delete() });
   await writer.commit();
   return { done: true, stationId: mainId };
+});
+
+/* ---------- 6. Invite links: one person, one use, valid for 24 hours ---------- */
+const INVITE_HOURS = 24;
+const inviteToken = () => randomBytes(18).toString('base64url'); // 24 characters, not guessable
+
+/** Makes 1 to 20 invite links for one role at one station. */
+export const createInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  const role = req.data?.role === 'manager' ? 'manager' : req.data?.role === 'driver' ? 'driver' : null;
+  const stationId = String(req.data?.stationId || '');
+  const count = Math.max(1, Math.min(20, Math.round(Number(req.data?.count) || 1)));
+  if (!role || !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Pick a role and a station.');
+  // Owners invite fleet managers and drivers; managers invite drivers to their own station.
+  if (role === 'manager' && who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner can invite fleet managers.');
+  needStaff(who);
+  needStation(who, stationId, 'You can only invite drivers to your own station.');
+  const [org, station] = await Promise.all([db().doc(`orgs/${who.orgId}`).get(), db().doc(`orgs/${who.orgId}/stations/${stationId}`).get()]);
+  if (!org.exists || !station.exists) throw new HttpsError('not-found', 'Unknown station.');
+  const now = Date.now();
+  const batch = db().batch();
+  const invites = Array.from({ length: count }, () => {
+    const token = inviteToken();
+    const invite = {
+      token, orgId: who.orgId, orgName: String(org.data()?.name || ''), role, stationId, stationName: String(station.data()?.name || ''),
+      createdBy: who.uid, createdByName: who.name, createdAt: now, expiresAt: now + INVITE_HOURS * 3600_000,
+      usedBy: null, usedByName: null, usedAt: null,
+    };
+    batch.create(db().doc(`invites/${token}`), invite);
+    return invite;
+  });
+  await batch.commit();
+  return { invites };
+});
+
+/** What an invite link is for, shown before signing in. Needs no account: the link itself is the secret. */
+export const peekInvite = onCall({ timeoutSeconds: 15 }, async (req) => {
+  const token = String(req.data?.token || '');
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return { status: 'missing' };
+  const snap = await db().doc(`invites/${token}`).get();
+  if (!snap.exists) return { status: 'missing' };
+  const i = snap.data() as { orgName: string; role: string; stationName: string; createdByName?: string; expiresAt: number; usedBy: string | null };
+  const status = i.usedBy ? (i.usedBy === req.auth?.uid ? 'mine' : 'used') : Date.now() > i.expiresAt ? 'expired' : 'ok';
+  return { status, orgName: i.orgName, role: i.role, stationName: i.stationName, invitedBy: i.createdByName || '', expiresAt: i.expiresAt };
+});
+
+const clean = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, n) : '');
+
+/** Uses an invite link: the signed-in person joins with the link's role and station, with their details. */
+export const acceptInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in or create an account first.');
+  const token = String(req.data?.token || '');
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) throw new HttpsError('invalid-argument', 'This invite link isn\'t complete. Ask for a new one.');
+  const email = String(req.auth?.token?.email || '');
+  const d = (req.data?.details || {}) as Record<string, unknown>;
+  const firstName = clean(d.firstName, 40), lastName = clean(d.lastName, 40);
+  const phone = clean(d.phone, 30), transporterId = clean(d.transporterId, 20).toUpperCase();
+  const name = [firstName, lastName].filter(Boolean).join(' ') || String(req.auth?.token?.name || email.split('@')[0] || 'New member');
+  if (!firstName || !lastName) throw new HttpsError('invalid-argument', 'Enter your first and last name.');
+  if (phone && !/^[+0-9 ()/-]{6,30}$/.test(phone)) throw new HttpsError('invalid-argument', 'That phone number doesn\'t look right.');
+  const iref = db().doc(`invites/${token}`);
+  const out = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(iref);
+    if (!snap.exists) throw new HttpsError('not-found', 'This invite link doesn\'t exist or was cancelled. Ask for a new one.');
+    const i = snap.data() as { orgId: string; orgName: string; role: string; stationId: string; stationName: string; expiresAt: number; usedBy: string | null };
+    if (i.usedBy === uid) return { orgId: i.orgId, orgName: i.orgName, role: i.role, stationName: i.stationName, already: true };
+    if (i.usedBy) throw new HttpsError('failed-precondition', 'This invite link was already used. Each link works for one person; ask for a new one.');
+    if (Date.now() > i.expiresAt) throw new HttpsError('deadline-exceeded', 'This invite link has expired. Links work for 24 hours; ask for a new one.');
+    const mref = db().doc(`orgs/${i.orgId}/members/${uid}`);
+    const m = await tx.get(mref);
+    if (m.exists) throw new HttpsError('already-exists', `You're already in ${i.orgName}. Ask the fleet owner to change your role or station.`);
+    tx.create(mref, { role: i.role, stationIds: [i.stationId], email, name, firstName, lastName, phone, transporterId, joinedAt: Date.now(), invite: token });
+    tx.update(iref, { usedBy: uid, usedByName: name, usedAt: Date.now() });
+    tx.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(i.orgId), orgId: i.orgId, email, name, firstName, lastName, phone }, { merge: true });
+    return { orgId: i.orgId, orgName: i.orgName, role: i.role, stationName: i.stationName, already: false };
+  });
+  await getAuth().updateUser(uid, { displayName: name }).catch(() => {});
+  return out;
+});
+
+/* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
+export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in again, then try again.');
+  const email = String(req.auth?.token?.email || '');
+  const name = String(req.auth?.token?.name || email.split('@')[0] || 'You');
+  return createDemo(uid, name, email);
+});
+
+export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => {
+  const who = await guard(req);
+  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the owner can remove the demo company.');
+  const org = await db().doc(`orgs/${who.orgId}`).get();
+  if (!org.exists || org.data()?.demo !== true) throw new HttpsError('failed-precondition', 'Only a demo company can be removed this way.');
+  await deleteDemo(who.orgId);
+  return { ok: true };
 });

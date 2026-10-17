@@ -1,8 +1,10 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { AllCompanies } from '@/components/companies';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
+import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 
 export default function SignIn() {
@@ -19,6 +21,7 @@ export default function SignIn() {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   const run = async (fn: () => Promise<void>) => {
     setErr(null); setInfo(null); setBusy(true);
@@ -31,9 +34,9 @@ export default function SignIn() {
         <View style={{ gap: 4, paddingTop: 12 }}>
           <T v="hint">Signed in as {s.user?.email}</T>
           <T v="h1">Your company</T>
-          <T>Drivers and fleet managers: enter the invite code you got from your manager or the fleet owner. Fleet owners: create your company.</T>
+          <T>Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.</T>
         </View>
-        <Segmented label="Company" value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', 'Join with a code'], ['create', 'Create a company']]} />
+        <Segmented label="Company" value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', 'I have an invite link'], ['create', 'Create a company']]} />
         <Card>
           {orgMode === 'create' ? (
             <>
@@ -45,14 +48,20 @@ export default function SignIn() {
             </>
           ) : (
             <>
-              <Field label="Invite code" value={code} onChangeText={(t) => setCode(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={6} placeholder="6 letters and numbers" />
-              <Button v="primary" wide title="Join company" loading={busy}
-                onPress={() => code.trim().length === 6 ? run(async () => { await s.joinOrg(code); }) : setErr('The invite code has 6 characters.')} />
+              <Field label="Invite link" value={code} onChangeText={setCode} autoCapitalize="none" autoCorrect={false} placeholder="https://…/join/…" />
+              <Button v="primary" wide title="Continue" loading={busy}
+                onPress={() => { const t = tokenFrom(code); if (t) router.push({ pathname: '/join/[token]', params: { token: t } }); else setErr('Paste the whole link you were sent.'); }} />
+              <T v="small">Each link works for one person, for 24 hours.</T>
             </>
           )}
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         </Card>
         {s.creator ? <AllCompanies /> : null}
+        <Card dashed>
+          <T v="h3">Just looking?</T>
+          <T v="hint">Open a demo company with made-up stations, managers, drivers, vans and damage checks. It's yours alone and you can remove it any time.</T>
+          <Button title="Open a demo company" loading={demoBusy} onPress={async () => { setDemoBusy(true); setErr(null); try { await s.openDemo(); } catch (e) { setErr(authMessage(e)); } finally { setDemoBusy(false); } }} />
+        </Card>
         <Button v="link" title="Sign out" onPress={() => s.signOut()} />
       </Screen>
     );
