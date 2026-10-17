@@ -42,13 +42,13 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 
 ### 6. Open it on your phone
 
-1. Install **Expo Go** from the App Store or Google Play, or update it if you have it. The app is built on Expo SDK 58, and Expo Go from the App Store only opens the newest SDK.
-2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:58.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
+1. Install **Expo Go** from the App Store or Google Play and sign in to it (person icon, top right) with the Expo account that owns `fratius-org`. Expo Go only opens this app for members of that account.
+2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:57.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
 3. Create an account. The first person creates the company and becomes its fleet manager. The invite code for drivers is on the **Account** tab.
 
 The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
 
-When Expo releases a new SDK, Expo Go moves to it and stops opening this app until the project is upgraded.
+The app is built on Expo SDK 57 because that's what Expo Go in the App Store runs (57.0.9 in October 2026). Expo Go only opens one SDK, so upgrade the project only after the App Store version of Expo Go has moved to the new SDK.
 
 ## What the AI costs
 
