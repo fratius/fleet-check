@@ -1,52 +1,115 @@
 rules_version = '2';
 
-// Companies (orgs) are separate: people only see the company they belong to.
-// Fleet managers are members with role "admin"; drivers have role "driver".
+// Who can do what
+//   App creator  sign-in claim `creator`, set by the Deploy workflow from the APP_CREATOR_EMAILS variable.
+//                Reads and changes every company.
+//   Owner        member role "owner" (or "admin", its older name). Everything in the company.
+//   Manager      member role "manager". Vans, walk-arounds, checks and drivers of their stations; approves damage.
+//   Driver       member role "driver". Reads the vans of their stations and saves walk-arounds.
+// Type scans and damage checks are written by the server (Cloud Functions). Managers add the review.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function me() { return request.auth.uid; }
-    function member(orgId) { return signedIn() && exists(/databases/$(database)/documents/orgs/$(orgId)/members/$(me())); }
-    function admin(orgId) { return member(orgId) && get(/databases/$(database)/documents/orgs/$(orgId)/members/$(me())).data.role == 'admin'; }
+    function creator() { return signedIn() && request.auth.token.creator == true; }
+    function memberPath(orgId) { return /databases/$(database)/documents/orgs/$(orgId)/members/$(me()); }
+    function member(orgId) { return signedIn() && exists(memberPath(orgId)); }
+    function m(orgId) { return get(memberPath(orgId)).data; }
+    function owner(orgId) { return creator() || (member(orgId) && m(orgId).role in ['owner', 'admin']); }
+    function manager(orgId) { return member(orgId) && m(orgId).role == 'manager'; }
+    function staff(orgId) { return owner(orgId) || manager(orgId); }
+    function stationsOf(orgId) { return m(orgId).get('stationIds', []); }
+    // Can see or work on things at this station? Owners and the creator pass before the station is read,
+    // so records saved before stations existed stay visible to them.
+    function at(orgId, stationId) { return owner(orgId) || (member(orgId) && stationId in stationsOf(orgId)); }
+    // Manager of this station, or owner?
+    function runs(orgId, stationId) { return owner(orgId) || (manager(orgId) && stationId in stationsOf(orgId)); }
 
-    // Which company a person belongs to.
+    // Which companies a person belongs to, and which one they had open.
     match /users/{uid} {
-      allow read, write: if signedIn() && uid == me();
+      allow read: if (signedIn() && uid == me()) || creator();
+      allow write: if signedIn() && uid == me();
     }
 
-    // Invite codes: anyone signed in can look up a code they were given, never list them.
+    // Who the app creators are (written by the Deploy workflow).
+    match /platform/{doc} {
+      allow read: if creator();
+    }
+
+    // Invite codes: anyone signed in can look up a code they were given; nobody can list them.
     match /invites/{code} {
       allow get: if signedIn();
-      allow create: if admin(request.resource.data.orgId);
-      allow delete: if admin(resource.data.orgId);
+      allow list: if staff(resource.data.orgId);
+      allow create: if request.resource.data.code == code
+        && request.resource.data.createdBy == me()
+        && request.resource.data.role in ['manager', 'driver']
+        && (owner(request.resource.data.orgId)
+            || (request.resource.data.role == 'driver' && runs(request.resource.data.orgId, request.resource.data.stationId)));
+      allow delete: if owner(resource.data.orgId)
+        || (resource.data.role == 'driver' && runs(resource.data.orgId, resource.data.stationId));
     }
 
     match /orgs/{orgId} {
-      allow read: if member(orgId);
+      allow get: if member(orgId) || creator();
+      allow list: if creator();
       allow create: if signedIn() && request.resource.data.createdBy == me();
-      allow update: if admin(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if creator();
 
-      match /members/{uid} {
-        allow read: if member(orgId);
-        // The person who created the company becomes its first fleet manager.
-        allow create: if signedIn() && uid == me() && request.resource.data.role == 'admin'
-          && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
-        // Joining with an invite code makes you a driver.
-        allow create: if signedIn() && uid == me() && request.resource.data.role == 'driver'
-          && request.resource.data.inviteCode is string
-          && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode))
-          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.orgId == orgId;
-        // Fleet managers change roles; nobody changes their own role.
-        allow update: if admin(orgId) && uid != me() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
-          && request.resource.data.role in ['admin', 'driver'];
-        allow delete: if admin(orgId) || uid == me();
+      match /stations/{stationId} {
+        allow read: if member(orgId) || creator();
+        allow create, update, delete: if owner(orgId);
       }
 
-      // Fleet data. Type scans and damage checks are written by the server; people add feedback.
-      match /{coll}/{docId} {
-        allow read: if member(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
-        allow create, update: if member(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
-        allow delete: if admin(orgId) && coll in ['vehicles', 'walkarounds', 'checks', 'scans'];
+      match /members/{uid} {
+        allow get: if (signedIn() && uid == me()) || staff(orgId);
+        allow list: if staff(orgId);
+        // The person who created the company becomes its first owner.
+        allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
+          && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
+        // Joining with an invite code gives exactly the role and station of the code.
+        allow create: if signedIn() && uid == me()
+          && request.resource.data.inviteCode is string
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode))
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.orgId == orgId
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.role == request.resource.data.role
+          && request.resource.data.stationIds == [get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.stationId];
+        // Owners change roles and stations of others; nobody changes their own.
+        allow update: if owner(orgId) && uid != me()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'stationIds'])
+          && request.resource.data.role in ['owner', 'manager', 'driver'];
+        // Owners remove anyone else; managers remove drivers of their station; anyone can leave.
+        allow delete: if (owner(orgId) && uid != me())
+          || (manager(orgId) && resource.data.role == 'driver' && resource.data.get('stationIds', []).hasAny(stationsOf(orgId)))
+          || (signedIn() && uid == me() && !(resource.data.role in ['owner', 'admin']));
+      }
+
+      match /vehicles/{id} {
+        allow read: if at(orgId, resource.data.stationId);
+        allow create: if runs(orgId, request.resource.data.stationId);
+        allow update: if runs(orgId, resource.data.stationId) && runs(orgId, request.resource.data.stationId);
+        allow delete: if runs(orgId, resource.data.stationId);
+      }
+
+      match /walkarounds/{id} {
+        allow read: if at(orgId, resource.data.stationId);
+        allow create: if at(orgId, request.resource.data.stationId)
+          && (request.resource.data.createdBy == me() || creator());
+        allow delete: if runs(orgId, resource.data.stationId);
+      }
+
+      match /checks/{id} {
+        allow read: if at(orgId, resource.data.stationId);
+        // Only the review (and the status it sets) can be written from the app, and only by a manager of the station.
+        allow update: if runs(orgId, resource.data.stationId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['review', 'status', 'reviewedAt']);
+        allow delete: if owner(orgId);
+      }
+
+      match /scans/{id} {
+        allow read: if staff(orgId);
+        allow update: if staff(orgId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verdict', 'actual']);
       }
     }
   }

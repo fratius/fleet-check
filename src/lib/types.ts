@@ -24,9 +24,29 @@ export interface Vehicle {
   make: string | null;
   model: string | null;
   scanId: string | null;
+  /** The station (operating area) the van belongs to. Missing on vans saved before stations existed. */
+  stationId?: string;
   createdAt: number;
   createdBy: string | null;
 }
+
+/** An operating area of a company, such as an Amazon delivery station. */
+export interface Station {
+  id: string;
+  name: string;
+  code: string;
+  createdAt: number;
+}
+
+/**
+ * Who can do what:
+ * - creator: the app creator (a sign-in claim, not a company role); sees and manages every company
+ * - owner: owns the company; manages stations, managers, drivers and vans everywhere in it
+ * - manager: the same for their own station(s); has the final word on damage
+ * - driver: scans the vans of their station
+ */
+export type Role = 'owner' | 'manager' | 'driver';
+export const ROLE_NAME: Record<Role | 'creator', string> = { creator: 'App creator', owner: 'Fleet owner', manager: 'Fleet manager', driver: 'Driver' };
 
 /** A photo either still on this phone (uri) or uploaded (path in storage). */
 export interface Photo {
@@ -42,6 +62,7 @@ export interface Photo {
 export interface Walkaround {
   id: string;
   vehicleId: string;
+  stationId?: string;
   vehicleName: string;
   cls: string;
   source: 'camera' | 'library';
@@ -94,9 +115,45 @@ export interface Spot {
   markPath?: string | null;
 }
 
+/** The manager's final word on one spot. */
+export interface Decision {
+  damage: boolean;
+  note: string;
+  by: string;
+  byName: string;
+  at: number;
+}
+/** Damage the AI didn't mark, added by the manager during review. */
+export interface ManualDamage {
+  panel: string;
+  type: string;
+  note: string;
+  by: string;
+  byName: string;
+  at: number;
+}
+/**
+ * checking: AI spots found, the driver is taking close-ups
+ * submitted: the driver sent it to the manager
+ * reviewed: a manager approved or rejected every spot
+ */
+export type CheckStatus = 'checking' | 'submitted' | 'reviewed';
+export interface Review {
+  decisions: Record<string, Decision>;
+  manual: ManualDamage[];
+  by: string | null;
+  byName: string | null;
+  at: number | null;
+}
+
 export interface Check {
   id: string;
   vehicleId: string;
+  stationId?: string;
+  status?: CheckStatus;
+  createdByName?: string;
+  submittedAt?: number | null;
+  review?: Review | null;
   vehicleName: string;
   cls: string;
   walkId: string;
@@ -114,6 +171,7 @@ export interface Check {
 
 export interface Scan {
   id: string;
+  stationId?: string | null;
   createdAt: number;
   createdBy: string | null;
   tier: Tier;
@@ -145,13 +203,57 @@ export interface IdentifyResult {
 export interface Org {
   id: string;
   name: string;
-  inviteCode: string;
   createdBy: string;
+  createdAt?: number;
+  /** Set once the company has stations and every van, walk-around and check belongs to one. */
+  stationsReady?: boolean;
 }
 
 export interface Member {
   uid: string;
-  role: 'admin' | 'driver';
+  /** 'admin' is the role name before stations existed; it means owner. */
+  role: Role | 'admin';
+  /** Stations a manager or driver works at. Owners see every station. */
+  stationIds?: string[];
   email: string;
   name: string;
+  joinedAt?: number;
+}
+
+/** An invite code: whoever enters it joins the company with this role at this station. */
+export interface Invite {
+  code: string;
+  orgId: string;
+  orgName: string;
+  role: 'manager' | 'driver';
+  stationId: string;
+  stationName: string;
+  createdBy: string;
+  createdAt: number;
+}
+
+/** Normalised role: 'admin' is an owner. */
+export const roleOf = (m: Pick<Member, 'role'> | null | undefined): Role | null => (!m ? null : m.role === 'admin' ? 'owner' : m.role);
+
+/** A spot counts as approved damage when the manager said so. Before review, the AI verdict is only a suggestion. */
+export function approvedDamage(k: Check): { panel: string; type: string; sizeCm: number | null; note: string; spot: number | null }[] {
+  const r = k.review;
+  if (!r || k.status !== 'reviewed') return [];
+  const out = k.spots.flatMap((p, i) => {
+    const d = r.decisions?.[String(i)];
+    return d?.damage ? [{ panel: p.panel, type: (p.verdict?.verdict === 'damage' && p.verdict.type) || p.type, sizeCm: p.verdict?.sizeCm ?? p.sizeCm, note: d.note, spot: i }] : [];
+  });
+  return out.concat((r.manual || []).map((m) => ({ panel: m.panel, type: m.type, sizeCm: null, note: m.note, spot: null })));
+}
+
+/** Was the AI right about a spot, judged by the manager's decision (or the older right/wrong buttons)? */
+export function aiWasRight(k: Check, i: number): boolean | null {
+  const p = k.spots[i];
+  const d = k.review?.decisions?.[String(i)];
+  if (d) {
+    const v = p.verdict?.verdict;
+    if (!v || v === 'unclear' || v === 'skipped') return null;
+    return (v === 'damage') === d.damage;
+  }
+  return p.feedback ? p.feedback === 'right' : null;
 }

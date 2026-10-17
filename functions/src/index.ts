@@ -36,16 +36,34 @@ function normBox(b: unknown): Box | null {
 }
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 
-/** Signed in, a member of the company, a known model tier. */
-async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>): Promise<{ uid: string; orgId: string; tier: Tier }> {
+type Role = 'owner' | 'manager' | 'driver';
+interface Who { uid: string; name: string; orgId: string; tier: Tier; role: Role; stationIds: string[]; creator: boolean }
+
+/** Signed in, a member of the company (or the app creator), a known model tier. */
+async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>): Promise<Who> {
   const uid = req.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in again, then try again.');
   const orgId = String(req.data?.orgId || '');
   if (!ID.test(orgId)) throw new HttpsError('invalid-argument', 'Unknown company.');
   const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'default') as Tier;
+  const creator = req.auth?.token?.creator === true;
   const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
-  if (!m.exists) throw new HttpsError('permission-denied', 'Your account isn\'t a member of this company.');
-  return { uid, orgId, tier };
+  const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
+  if (!m.exists) {
+    if (creator) return { uid, name: tokenName || 'App creator', orgId, tier, role: 'owner', stationIds: [], creator };
+    throw new HttpsError('permission-denied', 'Your account isn\'t a member of this company.');
+  }
+  const d = m.data() as { role?: string; stationIds?: string[]; name?: string };
+  const role: Role = creator || d.role === 'owner' || d.role === 'admin' ? 'owner' : d.role === 'manager' ? 'manager' : 'driver';
+  return { uid, name: d.name || tokenName, orgId, tier, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
+}
+/** Can this person work at this station? Owners and the app creator can work everywhere. */
+function needStation(w: Who, stationId: string | undefined | null) {
+  if (w.role === 'owner') return;
+  if (!stationId || !w.stationIds.includes(stationId)) throw new HttpsError('permission-denied', 'This van belongs to another station.');
+}
+function needStaff(w: Who) {
+  if (w.role === 'driver') throw new HttpsError('permission-denied', 'Only fleet managers and owners can do this.');
 }
 function checkPath(p: unknown, prefix: string): string {
   const s = String(p || '');
@@ -72,7 +90,11 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T, i: number) => Promis
 
 /* ---------- 1. identifyVehicle: which body class, so the app picks the photo frames ---------- */
 export const identifyVehicle = onCall(opts(120), async (req) => {
-  const { uid, orgId, tier } = await guard(req);
+  const who = await guard(req);
+  const { uid, orgId, tier } = who;
+  needStaff(who);
+  const stationId = req.data?.stationId ? String(req.data.stationId) : null;
+  if (stationId) needStation(who, stationId);
   const scanId = String(req.data?.scanId || '');
   if (!ID.test(scanId)) throw new HttpsError('invalid-argument', 'Unknown scan.');
   const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
@@ -98,7 +120,7 @@ export const identifyVehicle = onCall(opts(120), async (req) => {
     slideL: pick(r.slidingDoorLeft, ['yes', 'no', 'unknown'], 'unknown'),
     slideR: pick(r.slidingDoorRight, ['yes', 'no', 'unknown'], 'unknown'),
     rear: pick(r.rearDoors, ['barn', 'tailgate', 'roller', 'open_bed', 'unknown'], 'unknown'),
-    verdict: null, actual: null, paths, reason: str(r.reason, 200), issues,
+    verdict: null, actual: null, paths, reason: str(r.reason, 200), issues, stationId,
   };
   await db().doc(`orgs/${orgId}/scans/${scanId}`).set(scan);
   return { scan: { ...scan, id: scanId }, reason: scan.reason, issues, alternatives };
@@ -115,12 +137,14 @@ interface Spot {
 
 export const findDamage = onCall(opts(300), async (req) => {
   const t0 = Date.now();
-  const { uid, orgId, tier } = await guard(req);
+  const who = await guard(req);
+  const { uid, orgId, tier } = who;
   const walkId = String(req.data?.walkId || '');
   if (!ID.test(walkId)) throw new HttpsError('invalid-argument', 'Unknown walk-around.');
   const walk = await db().doc(`orgs/${orgId}/walkarounds/${walkId}`).get();
   if (!walk.exists) throw new HttpsError('not-found', 'This walk-around was deleted.');
-  const w = walk.data() as { vehicleId: string; vehicleName: string; cls: string; photos: { n: number; label: string; path?: string }[] };
+  const w = walk.data() as { vehicleId: string; vehicleName: string; cls: string; stationId?: string; photos: { n: number; label: string; path?: string }[] };
+  needStation(who, w.stationId);
   const photos = (w.photos || []).filter((p) => p.path).slice(0, 30);
   if (!photos.length) throw new HttpsError('failed-precondition', 'This walk-around has no uploaded photos.');
 
@@ -163,6 +187,8 @@ export const findDamage = onCall(opts(300), async (req) => {
 
   const check = {
     vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt: Date.now(), createdBy: uid,
+    createdByName: who.name, stationId: w.stationId || null, status: spots.length ? 'checking' : 'submitted',
+    submittedAt: spots.length ? null : Date.now(), review: null,
     tier, model: MODELS[tier].id, photos: photos.length, pass1: usage, pass2: null, spots, notVisible: [...notVisible].slice(0, 6),
     missedNote: '', serverMs: Date.now() - t0, prepMs,
   };
@@ -172,7 +198,8 @@ export const findDamage = onCall(opts(300), async (req) => {
 
 /* ---------- 3. checkSpot: decide one spot from the driver's close-ups ---------- */
 export const checkSpot = onCall(opts(180), async (req) => {
-  const { orgId, tier } = await guard(req);
+  const who = await guard(req);
+  const { orgId, tier } = who;
   const checkId = String(req.data?.checkId || '');
   if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
   const j = Number(req.data?.spot);
@@ -182,7 +209,9 @@ export const checkSpot = onCall(opts(180), async (req) => {
   const cref = db().doc(`orgs/${orgId}/checks/${checkId}`);
   const snap = await cref.get();
   if (!snap.exists) throw new HttpsError('not-found', 'This check was deleted.');
-  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[] };
+  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string };
+  needStation(who, k.stationId);
+  if (k.status === 'reviewed') throw new HttpsError('failed-precondition', 'A manager has already reviewed this check.');
   const spot = k.spots?.[j];
   if (!Number.isInteger(j) || !spot) throw new HttpsError('invalid-argument', 'Unknown spot.');
   if (!spot.refPath) throw new HttpsError('failed-precondition', 'The marked photo for this spot is missing.');
@@ -211,4 +240,71 @@ export const checkSpot = onCall(opts(180), async (req) => {
     tx.update(cref, { spots: next, pass2: addUsage(d.pass2 || noUsage(), a.usage), updatedAt: FieldValue.serverTimestamp() });
   });
   return { verdict, usage: a.usage, model: a.model };
+});
+
+/* ---------- 4. submitCheck: the driver is done with close-ups and sends the check to the manager ---------- */
+export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  const checkId = String(req.data?.checkId || '');
+  if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
+  const note = typeof req.data?.missedNote === 'string' ? req.data.missedNote.trim().slice(0, 500) : '';
+  const cref = db().doc(`orgs/${who.orgId}/checks/${checkId}`);
+  await db().runTransaction(async (tx) => {
+    const cur = await tx.get(cref);
+    if (!cur.exists) throw new HttpsError('not-found', 'This check was deleted.');
+    const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string };
+    needStation(who, d.stationId);
+    if (d.status === 'reviewed') throw new HttpsError('failed-precondition', 'A manager has already reviewed this check.');
+    const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', ms: null, closeupBox: null };
+    tx.update(cref, {
+      spots: d.spots.map((p) => (p.verdict ? p : { ...p, verdict: skipped })),
+      status: 'submitted', submittedAt: Date.now(), submittedBy: who.uid, missedNote: note,
+    });
+  });
+  return { ok: true };
+});
+
+/* ---------- 5. setupStations: moves a company made before stations existed onto stations ---------- */
+export const setupStations = onCall({ timeoutSeconds: 120 }, async (req) => {
+  const who = await guard(req);
+  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner can do this.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const o = await org.get();
+  if (!o.exists) throw new HttpsError('not-found', 'Unknown company.');
+  if (o.data()?.stationsReady) return { done: false };
+  const stations = await org.collection('stations').orderBy('createdAt').limit(1).get();
+  let mainId: string;
+  if (stations.empty) {
+    const ref = org.collection('stations').doc();
+    await ref.set({ name: 'Main station', code: '', createdAt: Date.now() });
+    mainId = ref.id;
+  } else mainId = stations.docs[0].id;
+
+  let writer = db().batch(), n = 0;
+  const put = async (ref: FirebaseFirestore.DocumentReference, data: Record<string, unknown>) => {
+    writer.update(ref, data);
+    if (++n % 400 === 0) { await writer.commit(); writer = db().batch(); }
+  };
+  for (const c of ['vehicles', 'walkarounds', 'checks', 'scans']) {
+    const all = await org.collection(c).get();
+    for (const d of all.docs) {
+      const x = d.data();
+      const patch: Record<string, unknown> = {};
+      if (!x.stationId) patch.stationId = mainId;
+      if (c === 'checks' && !x.status) { patch.status = 'submitted'; patch.review = null; }
+      if (Object.keys(patch).length) await put(d.ref, patch);
+    }
+  }
+  const members = await org.collection('members').get();
+  for (const d of members.docs) {
+    const x = d.data();
+    if (x.role === 'admin') await put(d.ref, { role: 'owner', stationIds: [] });
+    else if (!Array.isArray(x.stationIds) || !x.stationIds.length) await put(d.ref, { stationIds: [mainId] });
+  }
+  // Invite codes from before stations carry no role or station and can't be used any more.
+  const old = await db().collection('invites').where('orgId', '==', who.orgId).get();
+  for (const d of old.docs) if (!d.data().role) writer.delete(d.ref);
+  writer.update(org, { stationsReady: true, inviteCode: FieldValue.delete() });
+  await writer.commit();
+  return { done: true, stationId: mainId };
 });
