@@ -1,0 +1,100 @@
+## QR code target
+exp://u.expo.dev/a73c29a2-b492-4320-822e-fb6dabc2ab99?runtime-version=exposdk%3A58.0.0&channel-name=main
+## Update manifest for ios
+HTTP/2 200 
+date: Sat, 17 Oct 2026 09:13:29 GMT
+content-type: multipart/mixed; boundary=-----ExpoManifestBoundary-AaFDvM4Ze5WJzfwtCtnCVw
+content-length: 26542
+vary: Accept-Encoding, Origin
+content-security-policy: default-src 'none';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+expo-protocol-version: 1
+cache-control: no-cache, private, max-age=10
+alt-svc: h3=":443"; ma=86400
+expo-update-id: 01a143bc-ce19-7b95-89cd-fc2d0ad9c257
+expo-manifest-filters: branchname="main"
+etag: "67ae-t1FxY8qPegbTtKJEc2uICbnuaf0"
+via: 1.1 google
+strict-transport-security: max-age=31536000; includeSubDomains
+cf-cache-status: DYNAMIC
+server: cloudflare
+cf-ray: a4be3005fdfd22ef-IAD
+
+-------ExpoManifestBoundary-AaFDvM4Ze5WJzfwtCtnCVw
+Content-Disposition: form-data; name="manifest"
+Content-Type: application/json
+
+{"id":"01a143bc-ce19-7b95-89cd-fc2d0ad9c257","createdAt":"2026-10-16T08:03:29.433Z","runtimeVersion":"exposdk:58.0.0","launchAsset":{"hash":"71kIIWMSbDtk_HNQ_NT4leqygHR9pP1ImmGjs93-k6I","key":"910b1c17cfbf09cacfbe82ae6552fc4f","contentType":"application/javascript","url":"https://assets.eascdn.net/NcRks_9kIfg3GHll84QLiGXEvy8uDArlGP0ReI0SRp4?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},"assets":[{"hash":"mtuMXvypMuK3MrKT2oE70uMZUiYwVrzp4lF_7A8LanY","key":"0a328cd9c1afd0afe8e3b1ec5165b1b4","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/LM4SxB4vhDe2iN4tYT0dAlPP_dsY-Zme_H-JpULtHa8?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"LN_rjlzN55dvcBL7jM5zryIpAp7iHU8VCf7RFIccbNg","key":"7d40544b395c5949f4646f5e150fe020","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/Pi65ns2w9xLI5G_m9aGrJ5wK5FpWcGcInSSFwnA_0aA?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"K3RDqaWOksoRpXW9wRWYYVpX3eMFzYznDWAmBrMCzZg","key":"a132ecc4ba5c1517ff83c0fb321bc7fc","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/X3OAkUu5P_LqyKFx1bNkA_qDQFLlSjCYNAlVEaOamHE?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"Pd0Hc-0n4j0leJ8wFzGzrEVa2L5aonoKG4OPicbSciU","key":"0ea69b5077e7c4696db85dbcba75b0e1","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/FwJkAbrRNahBGX1KXnTAgiiwyzENu3D7DeEzCwmInyo?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"ku2BdqyMtENipfxqNwNiagAGrGt8snLumfWFAmLsBw4","key":"2d0a9133e39524f138be6d4db9f4851f","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/I8dvryp2TLXxE9DKqjCm2NN54-HfFCrFNcg8F_7LXJA?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"yGu0he7mh-BsUA_EI09RpnhLRTDCrhHQx2SBEQvOMQU","key":"3cd68ccdb8938e3711da2e8831b85493","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/A08F4i_QzJW79C3BCIZYmmpH_p2FkQbdTQZ_2hVWDeg?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"0Dpc16Zu8QxRR5FvnVh4stCgpa1G9AWjHNmWfvqlWv0","key":"61ca7e64b7d605716c57706cef640b9a","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/04lOdmTXc1loPyqacYwao1j0xlM34n0vGxtIFY7ETTs?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"q1YT0s5w-mfFkm6DE1NmSUUZn8GV-m_nbF_jzsRS4xo","key":"aff2c65b39a296d4f7e96d0f58169170","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/4s0taS6e9_zozzhgsa6FogUB4b0LQc1LMNbBLkxlIz0?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"xOVOagp95jaqFTN4-8YupKQWlb_t-Af5Dfexj_1zP2c","key":"d8e7601e3df962f83c62371ac14964d8","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/g6PisuFJa8j79kTi3ZKboB3DcerIBZXujlFBVhXkh1s?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"IyXFOnPlTEOMu8YN_92LUT1HG6QuL1ZxPvQEuV4Mofw","key":"0747a1317bbe9c6fc340b889ef8ab3ae","contentType":"image/png"
+## Update manifest for android
+HTTP/2 200 
+date: Sat, 17 Oct 2026 09:13:29 GMT
+content-type: multipart/mixed; boundary=-----ExpoManifestBoundary-AaFDvM4Ze6uRKhxfP3yfLQ
+content-length: 28129
+vary: Accept-Encoding, Origin
+content-security-policy: default-src 'none';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+x-frame-options: SAMEORIGIN
+x-content-type-options: nosniff
+expo-protocol-version: 1
+cache-control: no-cache, private, max-age=10
+alt-svc: h3=":443"; ma=86400
+expo-update-id: 01a143bc-ce19-7bab-912a-1c5f3f7c9f2d
+expo-manifest-filters: branchname="main"
+etag: "6de1-dFt1vEf3xs+5Agb8QuY/858Z0v0"
+via: 1.1 google
+strict-transport-security: max-age=31536000; includeSubDomains
+cf-cache-status: DYNAMIC
+server: cloudflare
+cf-ray: a4be30084db814f4-IAD
+
+-------ExpoManifestBoundary-AaFDvM4Ze6uRKhxfP3yfLQ
+Content-Disposition: form-data; name="manifest"
+Content-Type: application/json
+
+{"id":"01a143bc-ce19-7bab-912a-1c5f3f7c9f2d","createdAt":"2026-10-16T08:03:29.433Z","runtimeVersion":"exposdk:58.0.0","launchAsset":{"hash":"EpNePtWs8FKeQWVwQQ57SS0hN5ipa0bfSI98HEwIhIo","key":"fda14f0d865b0f9d387f29c0f1921472","contentType":"application/javascript","url":"https://assets.eascdn.net/3Rt9Zq-lUYjQmEGynRPNIwBgjfMhkQnBT_VATQ97Cv4?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},"assets":[{"hash":"mtuMXvypMuK3MrKT2oE70uMZUiYwVrzp4lF_7A8LanY","key":"0a328cd9c1afd0afe8e3b1ec5165b1b4","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/LM4SxB4vhDe2iN4tYT0dAlPP_dsY-Zme_H-JpULtHa8?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"i2Gkx-9w3JJ1PwSUl2SC9m_UFQ7CPfx3KrZeEDc6-lU","key":"778ffc9fe8773a878e9c30a6304784de","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/idnX8z03q4vGLzhYMPaQGBADjhqvWe67_afPqJ1vGzM?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"kGZm3WiTRq2iMs42ia3vkHtCV_obWT8DY40rlJf2SIQ","key":"c79c3606a1cf168006ad3979763c7e0c","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/k-3xHp3vP8mR36WdccUZVPTRJKpP-zlyboWdkXCIQpQ?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"_6fuRbdkBbpzkhSVAI99aMneY5X0tpQdsGNGX244IyA","key":"02bc1fa7c0313217bde2d65ccbff40c9","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/lfqeUjiWFXwowhxVDBEzxsbTOEzYxMLebljy5Bh1mpU?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"hM9es7ICUPaeDkczvrTaX0F_BoKJKlrRteYlcHU8IbE","key":"35ba0eaec5a4f5ed12ca16fabeae451d","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/fMoMrsUeB5xWw_Ugn8FqGJf-M2pld2hkXKR704z0MM8?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"yGu0he7mh-BsUA_EI09RpnhLRTDCrhHQx2SBEQvOMQU","key":"3cd68ccdb8938e3711da2e8831b85493","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/A08F4i_QzJW79C3BCIZYmmpH_p2FkQbdTQZ_2hVWDeg?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"0Dpc16Zu8QxRR5FvnVh4stCgpa1G9AWjHNmWfvqlWv0","key":"61ca7e64b7d605716c57706cef640b9a","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/04lOdmTXc1loPyqacYwao1j0xlM34n0vGxtIFY7ETTs?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"q1YT0s5w-mfFkm6DE1NmSUUZn8GV-m_nbF_jzsRS4xo","key":"aff2c65b39a296d4f7e96d0f58169170","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/4s0taS6e9_zozzhgsa6FogUB4b0LQc1LMNbBLkxlIz0?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"xOVOagp95jaqFTN4-8YupKQWlb_t-Af5Dfexj_1zP2c","key":"d8e7601e3df962f83c62371ac14964d8","contentType":"image/png","fileExtension":".png","url":"https://assets.eascdn.net/g6PisuFJa8j79kTi3ZKboB3DcerIBZXujlFBVhXkh1s?project=a73c29a2-b492-4320-822e-fb6dabc2ab99"},{"hash":"IyXFOnPlTEOMu8YN_92LUT1HG6QuL1ZxPvQEuV4Mofw","key":"0747a1317bbe9c6fc340b889ef8ab3ae","contentType":"image/png"
+## Expo Go builds for SDK 58
+{
+  "expoVersion": "~58.0.14",
+  "iosClientUrl": "https://github.com/expo/expo-go-releases/releases/download/Expo-Go-58.0.4/Expo-Go-58.0.4.tar.gz",
+  "releaseNoteUrl": "https://expo.dev/changelog/sdk-58",
+  "relatedPackages": {
+    "jest": "~30.5.2",
+    "metro": "^0.84.6",
+    "react": "19.3.0",
+    "typescript": "~6.0.3",
+    "@babel/core": "^7.29.7",
+    "@types/jest": "30.0.0",
+    "@expo/config": "^58.0.0",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.2.3",
+    "react-native-web": "^0.21.4",
+    "babel-preset-expo": "~58.0.0",
+    "@expo/metro-config": "~58.0.0",
+    "@expo/config-plugins": "~58.0.0",
+    "@expo/prebuild-config": "~58.0.0",
+    "expo-modules-autolinking": "~58.0.0"
+  },
+  "androidClientUrl": "https://github.com/expo/expo-go-releases/releases/download/Expo-Go-58.0.4/Expo-Go-58.0.4.apk",
+  "iosClientVersion": "58.0.4",
+  "expoReactNativeTag": "sdk-58",
+  "androidClientVersion": "58.0.4",
+  "facebookReactVersion": "19.3.0",
+  "facebookReactNativeVersion": "0.88.0"
+}
+Expo Go simulator build: https://github.com/expo/expo-go-releases/releases/download/Expo-Go-58.0.4/Expo-Go-58.0.4.tar.gz
+    "host.exp.Exponent" =     {
+        ApplicationType = User;
+        Bundle = "file:///Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/2580A488-0ABE-43F7-BA36-437C951A4B3F/Exponent.app/";
+        BundleContainer = "file:///Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/2580A488-0ABE-43F7-BA36-437C951A4B3F/";
+        CFBundleDisplayName = "Expo Go";
+        CFBundleExecutable = "Expo Go";
+        CFBundleIdentifier = "host.exp.Exponent";
+        CFBundleName = Expo;
+        CFBundleVersion = "58.0.4";
+        DataContainer = "file:///Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Data/Application/2DB0E76E-292C-4336-B98B-66863DEEF674/";
+--
+        Path = "/Users/runner/Library/Developer/CoreSimulator/Devices/48B2DA2E-AF18-4E36-BB25-B25969A4EBCF/data/Containers/Bundle/Application/2580A488-0ABE-43F7-BA36-437C951A4B3F/Exponent.app";
+        SBAppTags =         (
+        );
+    };
+Opening exp://u.expo.dev/a73c29a2-b492-4320-822e-fb6dabc2ab99?runtime-version=exposdk%3A58.0.0&channel-name=main

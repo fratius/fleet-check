@@ -1,0 +1,300 @@
+2026-10-17 09:19:35.779 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.779 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.779 Df Expo Go[7514:a57a] [com.apple.network:connection] [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] event: resolver:receive_dns @0.040s
+2026-10-17 09:19:35.780 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_start_next_child [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] starting child endpoint IPv4#cfe279df:443
+2026-10-17 09:19:35.780 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_handler_start [C9.1.1.1 IPv4#cfe279df:443 initial path ((null))]
+2026-10-17 09:19:35.780 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 initial path ((null))]
+2026-10-17 09:19:35.781 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 initial path ((null))]
+2026-10-17 09:19:35.781 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 initial path ((null))]
+2026-10-17 09:19:35.781 Df Expo Go[7514:a57a] [com.apple.network:connection] [C9.1.1.1 IPv4#cfe279df:443 initial path ((null))] event: path:start @0.042s
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_handler_path_change [C9.1.1.1 IPv4#cfe279df:443 waiting path (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 waiting path (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 waiting path (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 waiting path (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.782 Df Expo Go[7514:a57a] [com.apple.network:connection] [C9.1.1.1 IPv4#cfe279df:443 waiting path (satisfied (Path is satisfied), interface: en0)] event: path:satisfied @0.043s, uuid: 0BC3FFE4-CEE2-4702-9F0E-2AAB9BE27700
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.network:] nw_endpoint_proxy_handler_should_use_proxy Looking up proxy for hostname: <nil>, ifindex: 0
+2026-10-17 09:19:35.782 Db Expo Go[7514:a57a] [com.apple.SystemConfiguration:SCPreferences] create <SCPreferences 0x10c339170 [0x1e578fa80]> {name = SCDynamicStoreCopyProxiesWithOptions, id = /Library/Managed Preferences/mobile/com.apple.SystemConfiguration.plist, path = /Library/Managed Preferences/mobile/com.apple.SystemConfiguration.plist}
+2026-10-17 09:19:35.783 Db Expo Go[7514:a57a] [com.apple.SystemConfiguration:SCPreferences] SCPreferences() access: /Library/Managed Preferences/mobile/com.apple.SystemConfiguration.plist, size=0
+2026-10-17 09:19:35.783 Db Expo Go[7514:a57a] [com.apple.SystemConfiguration:SCPreferences] release <SCPreferences 0x10c339170 [0x1e578fa80]> {name = SCDynamicStoreCopyProxiesWithOptions, id = /Library/Managed Preferences/mobile/com.apple.SystemConfiguration.plist, path = /Library/Managed Preferences/mobile/com.apple.SystemConfiguration.plist, accessed}
+2026-10-17 09:19:35.783 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_association_create_flow <nw_association IPv4#cfe279df:443> Added association flow ID 2770FC38-900D-4403-9FF9-65027D8A22F0
+2026-10-17 09:19:35.783 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_setup_protocols [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] setup flow id 2770FC38-900D-4403-9FF9-65027D8A22F0
+2026-10-17 09:19:35.783 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_attach_protocols [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.783 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_attach_protocols_block_invoke [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] Attached application protocol: CFNetworkConnection-935142150
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_attach_protocols_block_invoke [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] Attached application protocol: tls
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:] nw_fd_wrapper_create Created <fd_wrapper 19, guarded: false>
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_attach_protocols [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] Attached socket protocol
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_setup_protocols [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] leaf flow starting
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.784 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.784 Df Expo Go[7514:a57a] [com.apple.network:connection] [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] event: flow:start_connect @0.045s
+2026-10-17 09:19:35.784 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_restore_ssl_context(2808) [0x11190bba0] New context
+2026-10-17 09:19:35.784 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_start_next_child [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] starting next child endpoint in 100ms
+2026-10-17 09:19:35.787 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_socket_handle_socket_event [C9.1.1.1:3] Event mask: 0x800
+2026-10-17 09:19:35.787 Df Expo Go[7514:a57a] [com.apple.network:connection] nw_socket_handle_socket_event [C9.1.1.1:3] Socket received CONNECTED event
+2026-10-17 09:19:35.787 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_socket_setup_notsent_lowat [C9.1.1.1:3] Set TCP_NOTSENT_LOWAT(16384)
+2026-10-17 09:19:35.787 Df Expo Go[7514:a57a] [com.apple.network:connection] nw_flow_connected [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] Transport protocol connected (socket)
+2026-10-17 09:19:35.787 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.787 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.787 Db Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.787 Df Expo Go[7514:a57a] [com.apple.network:connection] [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] event: flow:finish_transport @0.048s
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] pushing out endpoint race by 2000ms
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_set_ats_enforced(672) [C9.1.1.1:2][0x11190bba0] set false
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_set_ats_minimum_rsa_key_size(681) [C9.1.1.1:2][0x11190bba0] set 0
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_set_ats_minimum_ecdsa_key_size(690) [C9.1.1.1:2][0x11190bba0] set 0
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_set_ats_minimum_signature_algorithm(700) [C9.1.1.1:2][0x11190bba0] set 0
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_set_ats_non_pfs_ciphersuite_allowed(709) [C9.1.1.1:2][0x11190bba0] set false
+2026-10-17 09:19:35.788 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_apply_protocol_options_for_transport_block_invoke(2023) [C9.1.1.1:2][0x11190bba0] ECH is disabled
+2026-10-17 09:19:35.788 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_apply_protocol_options_for_transport_block_invoke_2(2323) [C9.1.1.1:2][0x11190bba0] TLS configured [min_version(0x0303) max_version(0x0304) name(redacted) tickets(false) false_start(false) enforce_ev(false) enforce_ats(false) ats_non_pfs_ciphersuite_allowed(false) ech(false) pqtls(true), pake(false)]
+2026-10-17 09:19:35.788 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_install_association_state(1546) [C9.1.1.1:2][0x11190bba0] Client session cache miss
+2026-10-17 09:19:35.788 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from idle to connecting
+2026-10-17 09:19:35.788 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2390) [C9.1.1.1:2][0x11190bba0] Client handshake started
+2026-10-17 09:19:35.788 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from connecting to connecting
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Writing SSL3_RT_HANDSHAKE 1551 bytes
+2026-10-17 09:19:35.789 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS client enter_early_data
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_write_bytes(260) [C9.1.1.1:2][0x11190bba0] write request: 1556
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_allocate_batching_frame(236) [C9.1.1.1:2][0x11190bba0] allocated new batching frame: 1556 bytes capacity
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_write_to_batching_frame(186) [C9.1.1.1:2][0x11190bba0] wrote 1556 bytes to batching frame
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_flush_batching_frame(144) [C9.1.1.1:2][0x11190bba0] flushed batching frame: frame full
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_write_bytes(305) [C9.1.1.1:2][0x11190bba0] total bytes written: 1556
+2026-10-17 09:19:35.789 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS client read_server_hello
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 5 byte(s)
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(385) [C9.1.1.1:2][0x11190bba0] no input frames available
+2026-10-17 09:19:35.789 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_handshake_incomplete(257) [C9.1.1.1:2][0x11190bba0] Handshake incomplete: waiting for data to read [2]
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 5 byte(s)
+2026-10-17 09:19:35.789 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(385) [C9.1.1.1:2][0x11190bba0] no input frames available
+2026-10-17 09:19:35.789 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_handshake_incomplete(257) [C9.1.1.1:2][0x11190bba0] Handshake incomplete: waiting for data to read [2]
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_input_available(1644) [C9.1.1.1:2][0x11190bba0] triggering input available
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 5 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 5
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 1210 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 1210
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 1210 bytes
+2026-10-17 09:19:35.792 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_hello_retry_request
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Writing SSL3_RT_CHANGE_CIPHER_SPEC 1 bytes
+2026-10-17 09:19:35.792 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_server_hello
+2026-10-17 09:19:35.792 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_encrypted_extensions
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 5 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 5
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 1 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 1
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 5 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 5
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(370) [C9.1.1.1:2][0x11190bba0] read request: 3034 byte(s)
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] nw_protocol_boringssl_read_bytes(446) [C9.1.1.1:2][0x11190bba0] total bytes read: 3034
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 15 bytes
+2026-10-17 09:19:35.792 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_certificate_request
+2026-10-17 09:19:35.792 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 2872 bytes
+2026-10-17 09:19:35.792 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_server_certificate
+2026-10-17 09:19:35.793 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_server_certificate_verify
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 78 bytes
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(597) [C9.1.1.1:2][0x11190bba0] Key usage requirement set to 1
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(603) [C9.1.1.1:2][0x11190bba0] SecTrustCreateWithCertificates result: 0
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(609) [C9.1.1.1:2][0x11190bba0] SecTrustSetURLRequestAttribution(0) result: 0
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(617) [C9.1.1.1:2][0x11190bba0] No TLS-provided OCSP response
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(624) [C9.1.1.1:2][0x11190bba0] No TLS-provided SCTs
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_set_peer_verification_state_from_session(496) [C9.1.1.1:2][0x11190bba0] Set peer trust data
+2026-10-17 09:19:35.793 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_evaluate_trust_async(1833) [C9.1.1.1:2][0x11190bba0] Performing external trust evaluation
+2026-10-17 09:19:35.793 A  Expo Go[7514:a57a] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.793 A  Expo Go[7514:a57a] (Security) SecKeyCopyAttributes
+2026-10-17 09:19:35.793 A  Expo Go[7514:a57a] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.793 Df Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_evaluate_trust_async_external(1818) [C9.1.1.1:2][0x11190bba0] Asyncing for external verify block
+2026-10-17 09:19:35.793 I  Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_session_handshake_incomplete(257) [C9.1.1.1:2][0x11190bba0] Handshake incomplete: certificate evaluation result pending [16]
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.network:boringssl] boringssl_context_evaluate_trust_async_external_block_invoke(1813) [C9.1.1.1:2][0x11190bba0] Invoking verify block
+2026-10-17 09:19:35.793 Df Expo Go[7514:a57a] [com.apple.CFNetwork:Default] Connection 9: asked to evaluate TLS Trust
+2026-10-17 09:19:35.793 Db Expo Go[7514:a57a] [com.apple.CFNetwork:Default] [TLSCBQ] Need to invoke to satisfy trust callback
+2026-10-17 09:19:35.794 Df Expo Go[7514:a57a] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> auth completion disp=1 cred=0x0
+2026-10-17 09:19:35.794 Db Expo Go[7514:a57a] [com.apple.securityd:trust] (Trust 0x600003511340) waiting for queue
+2026-10-17 09:19:35.794 Df Expo Go[7514:a57a] [com.apple.securityd:trust] (Trust 0x600003511340) No pending evals, starting
+2026-10-17 09:19:35.794 Db Expo Go[7514:a57a] [com.apple.securityd:trust] (Trust 0x600003511340) Started eval block
+2026-10-17 09:19:35.794 A  Expo Go[7514:a57a] (Security) SecTrustEvaluateIfNecessaryFastAsync
+2026-10-17 09:19:35.794 Db Expo Go[7514:a57a] [com.apple.securityd:xpc] user sessions enabled, targeting 501
+2026-10-17 09:19:35.795 Df Expo Go[7514:a57a] [com.apple.xpc:connection] [0x10c55e000] activating connection: mach=true listener=false peer=false name=com.apple.trustd
+2026-10-17 09:19:35.795 Df Expo Go[7514:a57a] [com.apple.securityd:trust] (Trust 0x600003511340) Completed async eval kickoff
+2026-10-17 09:19:35.804 Df Expo Go[7514:9e0e] [com.apple.securityd:trust] (Trust 0x600003511340) trustd returned 4
+2026-10-17 09:19:35.804 Db Expo Go[7514:9e0e] [com.apple.securityd:trust] (Trust 0x600003511340) Kick off pending evals
+2026-10-17 09:19:35.804 Db Expo Go[7514:9e0e] [com.apple.securityd:trust] (Trust 0x600003511340) Calling completion block after async xpc
+2026-10-17 09:19:35.804 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Connection 9: TLS Trust result 0
+2026-10-17 09:19:35.804 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_evaluate_trust_async_external_block_invoke_3(1773) [C9.1.1.1:2][0x11190bba0] Returning from external verify block with result: true
+2026-10-17 09:19:35.804 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_evaluate_trust_async_external_block_invoke_2(1801) [C9.1.1.1:2][0x11190bba0] Setting verify result to true
+2026-10-17 09:19:35.804 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_certificate_verify_callback(2014) [C9.1.1.1:2][0x11190bba0] Certificate verification result: OK
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client read_server_finished
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 52 bytes
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client send_end_of_early_data
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client send_client_encrypted_extensions
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client send_client_certificate
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client complete_second_flight
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Writing SSL3_RT_HANDSHAKE 52 bytes
+2026-10-17 09:19:35.805 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS 1.3 client done
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_write_bytes(260) [C9.1.1.1:2][0x11190bba0] write request: 80
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_allocate_batching_frame(236) [C9.1.1.1:2][0x11190bba0] allocated new batching frame: 80 bytes capacity
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_write_to_batching_frame(186) [C9.1.1.1:2][0x11190bba0] wrote 80 bytes to batching frame
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_flush_batching_frame(144) [C9.1.1.1:2][0x11190bba0] flushed batching frame: frame full
+2026-10-17 09:19:35.805 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_write_bytes(305) [C9.1.1.1:2][0x11190bba0] total bytes written: 80
+2026-10-17 09:19:35.806 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS client finish_client_handshake
+2026-10-17 09:19:35.806 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2407) [C9.1.1.1:2][0x11190bba0] Client handshake state: TLS client done
+2026-10-17 09:19:35.806 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_info_handler(2396) [C9.1.1.1:2][0x11190bba0] Client handshake done
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(597) [C9.1.1.1:2][0x11190bba0] Key usage requirement set to 1
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(603) [C9.1.1.1:2][0x11190bba0] SecTrustCreateWithCertificates result: 0
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(609) [C9.1.1.1:2][0x11190bba0] SecTrustSetURLRequestAttribution(0) result: 0
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(617) [C9.1.1.1:2][0x11190bba0] No TLS-provided OCSP response
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_helper_create_sec_trust_with_certificates(624) [C9.1.1.1:2][0x11190bba0] No TLS-provided SCTs
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_session_set_peer_verification_state_from_session(496) [C9.1.1.1:2][0x11190bba0] Set peer trust data
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from connecting to connected
+2026-10-17 09:19:35.806 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.806 A  Expo Go[7514:9e0e] (Security) SecKeyCopyAttributes
+2026-10-17 09:19:35.806 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.806 Df Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_signal_connected(895) [C9.1.1.1:2][0x11190bba0] TLS connected [server(0) version(0x0304) ciphersuite(TLS_AES_256_GCM_SHA384) group(0x11ec) signature_alg(0x0403) alpn(h2) resumed(0) offered_ticket(0) in_early_data(0) early_data_accepted(0) false_started(0) ocsp_received(0) sct_received(0) connect_time(18ms) flight_time(3ms) rtt(3ms) write_stalls(0) read_stalls(2) pake(0x0000)]
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_waiting_for_output(2357) [C9.1.1.1:2][0x11190bba0] Waiting for output: false
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_waiting_for_output(2357) [C9.1.1.1:2][0x11190bba0] Waiting for output: false
+2026-10-17 09:19:35.806 Df Expo Go[7514:9e0e] [com.apple.network:connection] nw_flow_connected [C9.1.1.1 IPv4#cfe279df:443 in_progress socket-flow (satisfied (Path is satisfied), interface: en0)] Output protocol connected (CFNetworkConnection-935142150)
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_connected_path_change [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.806 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_connected_path_change [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)] Connected path is satisfied, not viable
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_resolver_receive_report [C9.1.1 Hostname#cae2bc16:443 in_progress resolver (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.806 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 Hostname#cae2bc16:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)] event: flow:child_finish_connect @0.067s
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] connecting endpoint_flow to child's shared protocol
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_setup_protocols [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] already set up
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_setup_protocols [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] child flow connected, starting
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_setup_protocols [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] already started
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_transform_receive_report [C9.1 Hostname#cae2bc16:443 in_progress transform (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1 Hostname#cae2bc16:443 ready resolver (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1.1 Hostname#cae2bc16:443 ready resolver (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] [C9.1.1 Hostname#cae2bc16:443 ready resolver (satisfied (Path is satisfied), interface: en0)] event: flow:child_finish_connect @0.067s
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_receive_report [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] received child report: [C9.1 Hostname#cae2bc16:443 ready transform (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] [C9.1 Hostname#cae2bc16:443 ready transform (satisfied (Path is satisfied), interface: en0)] event: flow:child_finish_connect @0.067s
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.2 IPv4#6032346b:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.3 IPv4#38604187:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.4 IPv4#d6c6ace8:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.5 IPv4#03f463d3:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.6 IPv4#cdaac572:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.7 IPv4#23161092:443 initial path ((null))]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.8 IPv4#5a25f4d4:443 initial path ((null))]
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] nw_protocol_boringssl_waiting_for_output(2357) [C9.1.1.1:2][0x11190bba0] Waiting for output: false
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] nw_flow_connected [C9 IPv4#cfe279df:443 in_progress parent-flow (satisfied (Path is satisfied), interface: en0)] Output protocol connected (endpoint_flow)
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_connected_path_change [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_flow_connected_path_change [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)] Connected path is satisfied, child is not viable
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)] event: flow:finish_connect @0.068s
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_run_pqtls_probe_locked_on_nw_queue [C9] PQ-TLS already used; not running PQ-TLS probe
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_run_ech_probe_locked_on_nw_queue [C9] stack doesn't include TLS; not running ECH probe
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_endpoint_report_on_nw_queue_block_invoke [C9] Connected fallback generation 0
+2026-10-17 09:19:35.807 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_start_candidate_manager_if_needed_locked [C9] Checking whether to start candidate manager
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_start_candidate_manager_if_needed_locked [C9] Connection does not support multipath, not starting candidate manager
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_report_state_with_handler_on_nw_queue [C9] reporting state ready
+2026-10-17 09:19:35.807 Db Expo Go[7514:9e0e] [com.apple.securityd:xpc] cleaning up unpooled xpc conn to trustd 0x10c55e000
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.xpc:connection] [0x10c55e000] invalidated because the current process cancelled the connection by calling xpc_connection_cancel()
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Connection 9: connected successfully
+2026-10-17 09:19:35.807 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Connection 9: TLS handshake complete
+2026-10-17 09:19:35.808 Db Expo Go[7514:a57a] [com.apple.securityd:xpc] got event: Connection invalid
+2026-10-17 09:19:35.808 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Connection 9: ready C(N) E(N)
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> done setting up Connection 9
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.network:activity] Returning should log: 0 for activity cfnetwork:foreground_task
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.CFNetwork:Coalescing] new connection to firebaselogging-pa.googleapis.com config 0x60000037cfc0
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Connection 9: set is idle false
+2026-10-17 09:19:35.808 Df Expo Go[7514:9e0e] [com.apple.network:connection] [C9] event: client:connection_reused @0.068s
+2026-10-17 09:19:35.808 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_endpoint_handler_report_connection_idle [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)] Reporting connection not idle to protocols
+2026-10-17 09:19:35.808 I  Expo Go[7514:9e0e] [com.apple.network:connection] nw_flow_passthrough_notify [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)] received notification connection_idle
+2026-10-17 09:19:35.808 Df Expo Go[7514:9e0e] [com.apple.network:connection] nw_protocol_socket_notify [C9.1.1.1:3] nw_protocol_notification_type_connection_idle is false
+2026-10-17 09:19:35.808 E  Expo Go[7514:9e0e] [com.apple.network:connection] nw_socket_set_connection_idle [C9.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-17 09:19:35.808 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> now using Connection 9
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.network:activity] Returning should log: 0 for activity cfnetwork:foreground_task
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_modify_estimated_bytes_block_invoke [C9] Incremented estimated bytes to send by 294, total now 294
+2026-10-17 09:19:35.808 Db Expo Go[7514:9e0e] [com.apple.network:connection] nw_connection_modify_estimated_bytes_block_invoke [C9] Using lower threshold 12582912, upper threshold 31457280
+2026-10-17 09:19:35.809 Df Expo Go[7514:9e0e] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> sent request, body S 294
+2026-10-17 09:19:35.809 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 283 bytes
+2026-10-17 09:19:35.809 I  Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_new_session_handler(1510) [C9.1.1.1:2][0x11190bba0] New session available
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyAttributes
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.809 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_new_session_handler(1542) [C9.1.1.1:2][0x11190bba0] Installing session cache state
+2026-10-17 09:19:35.809 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Reading SSL3_RT_HANDSHAKE 283 bytes
+2026-10-17 09:19:35.809 I  Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_new_session_handler(1510) [C9.1.1.1:2][0x11190bba0] New session available
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyAttributes
+2026-10-17 09:19:35.809 A  Expo Go[7514:9e0e] (Security) SecKeyCopyPublicBytes
+2026-10-17 09:19:35.809 Db Expo Go[7514:9e0e] [com.apple.network:boringssl] boringssl_context_new_session_handler(1542) [C9.1.1.1:2][0x11190bba0] Installing session cache state
+2026-10-17 09:19:36.364 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] CFPrefsManagedSource<0x600002c08400> (Domain: host.exp.Exponent, User: kCFPreferencesCurrentUser, ByHost: Yes, Container: (null), Contents Need Refresh: No) loaded: an empty base plist and no additional changes from the base plist
+2026-10-17 09:19:36.365 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] CFPrefsManagedSource<0x600002c08480> (Domain: host.exp.Exponent, User: kCFPreferencesAnyUser, ByHost: Yes, Container: (null), Contents Need Refresh: No) loaded: an empty base plist and no additional changes from the base plist
+2026-10-17 09:19:36.366 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] CFPrefsManagedSource<0x600002c08600> (Domain: kCFPreferencesAnyApplication, User: kCFPreferencesCurrentUser, ByHost: Yes, Container: (null), Contents Need Refresh: No) loaded: an empty base plist and no additional changes from the base plist
+2026-10-17 09:19:36.846 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] CFPrefsManagedSource<0x600002c09280> (Domain: com.apple.UIKit, User: kCFPreferencesCurrentUser, ByHost: Yes, Container: (null), Contents Need Refresh: No) loaded: an empty base plist and no additional changes from the base plist
+2026-10-17 09:19:36.846 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] CFPrefsManagedSource<0x600002c09300> (Domain: com.apple.UIKit, User: kCFPreferencesAnyUser, ByHost: Yes, Container: (null), Contents Need Refresh: No) loaded: an empty base plist and no additional changes from the base plist
+2026-10-17 09:19:36.846 Db Expo Go[7514:910b] [com.apple.defaults:User Defaults] Received remote change notification from process 0 for { domain: host.exp.Exponent, user: (null), byHost: 0, path: (null), cloud configuration path: (null) }
+2026-10-17 09:19:37.867 Df Expo Go[7514:910b] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> received response, status 200 content K
+2026-10-17 09:19:37.867 Df Expo Go[7514:910b] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> done using Connection 9
+2026-10-17 09:19:37.867 Db Expo Go[7514:910b] [com.apple.network:activity] Returning should log: 0 for activity cfnetwork:foreground_task
+2026-10-17 09:19:37.867 Db Expo Go[7514:910b] [com.apple.CFNetwork:Default] Connection 9: set is idle true
+2026-10-17 09:19:37.867 Df Expo Go[7514:910b] [com.apple.network:connection] [C9] event: client:connection_idle @2.127s
+2026-10-17 09:19:37.867 I  Expo Go[7514:910b] [com.apple.network:connection] nw_endpoint_handler_report_connection_idle [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)] Reporting connection idle to protocols
+2026-10-17 09:19:37.867 I  Expo Go[7514:910b] [com.apple.network:connection] nw_flow_passthrough_notify [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)] received notification connection_idle
+2026-10-17 09:19:37.867 Df Expo Go[7514:910b] [com.apple.network:connection] nw_protocol_socket_notify [C9.1.1.1:3] nw_protocol_notification_type_connection_idle is true
+2026-10-17 09:19:37.867 E  Expo Go[7514:910b] [com.apple.network:connection] nw_socket_set_connection_idle [C9.1.1.1:3] setsockopt SO_CONNECTION_IDLE failed [42: Protocol not available]
+2026-10-17 09:19:37.867 Db Expo Go[7514:910b] [com.apple.CFNetwork:Default] HTTP/2 Connection 9 Stream 1 ended. Connection considered operational true
+2026-10-17 09:19:37.867 A  Expo Go[7514:910b] (Security) SecTrustEvaluateIfNecessary
+2026-10-17 09:19:37.867 Db Expo Go[7514:910b] [com.apple.securityd:xpc] user sessions enabled, targeting 501
+2026-10-17 09:19:37.867 Df Expo Go[7514:910b] [com.apple.xpc:connection] [0x10c38d750] activating connection: mach=true listener=false peer=false name=com.apple.trustd
+2026-10-17 09:19:37.870 Db Expo Go[7514:910b] [com.apple.securityd:xpc] cleaning up unpooled xpc conn to trustd 0x10c38d750
+2026-10-17 09:19:37.870 Df Expo Go[7514:910b] [com.apple.xpc:connection] [0x10c38d750] invalidated because the current process cancelled the connection by calling xpc_connection_cancel()
+2026-10-17 09:19:37.870 Db Expo Go[7514:a57c] [com.apple.securityd:xpc] got event: Connection invalid
+2026-10-17 09:19:37.870 Db Expo Go[7514:910b] [com.apple.network:connection] nw_connection_modify_estimated_bytes_block_invoke [C9] Incremented estimated bytes to receive by 30, total now 30
+2026-10-17 09:19:37.870 Db Expo Go[7514:910b] [com.apple.network:connection] nw_connection_modify_estimated_bytes_block_invoke [C9] Using lower threshold 12582912, upper threshold 31457280
+2026-10-17 09:19:37.870 Df Expo Go[7514:910b] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> response ended
+2026-10-17 09:19:37.870 Df Expo Go[7514:910b] [com.apple.CFNetwork:Summary] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> summary for task success {transaction_duration_ms=2137, response_status=200, connection=9, protocol="h2", domain_lookup_duration_ms=21, connect_duration_ms=23, secure_connection_duration_ms=18, private_relay=false, request_start_ms=75, request_duration_ms=0, response_start_ms=2133, response_duration_ms=3, request_bytes=507, request_throughput_kbps=41798, response_bytes=457, response_throughput_kbps=943, cache_hit=false}
+2026-10-17 09:19:37.871 Db Expo Go[7514:6ee7] [com.apple.network:activity] Returning should log: 0 for activity cfnetwork:foreground_task
+2026-10-17 09:19:37.871 Db Expo Go[7514:6ee7] [com.apple.network:activity] Returning should log: 0 for activity cfnetwork:foreground_task
+2026-10-17 09:19:37.871 Db Expo Go[7514:6ee7] [com.apple.network:activity] No threshold for cfnetwork:foreground_task, returning NW_ACTIVITY_DURATION_INVALID
+2026-10-17 09:19:37.871 Db Expo Go[7514:6ee7] [com.apple.network:activity] No threshold for activity <nw_activity 12:2 [6B5D84EC-C38F-4617-85B2-78A9B4281390] (reporting strategy default) complete (reason success)>
+2026-10-17 09:19:37.871 Df Expo Go[7514:6ee7] [com.apple.CFNetwork:Default] Task <7D9805C7-4914-4CA5-A449-BAABE08BE82F>.<1> finished successfully
+2026-10-17 09:19:37.871 Db Expo Go[7514:a57c] [com.apple.CFNetwork:Coalescing] removing all entries config 0x60000037cfc0
+2026-10-17 09:19:37.871 Df Expo Go[7514:a57c] [com.apple.CFNetwork:Default] Connection 9: cleaning up
+2026-10-17 09:19:37.871 Df Expo Go[7514:a57c] [com.apple.network:connection] [C9 12965DE2-5845-4894-8626-7F367DBF8F43 Hostname#cae2bc16:443 quic-connection, url: https://firebaselogging-pa.googleapis.com/v1/firelog/legacy/batchlog, definite, attribution: developer] cancel
+2026-10-17 09:19:37.871 Df Expo Go[7514:a57c] [com.apple.network:connection] [C9 12965DE2-5845-4894-8626-7F367DBF8F43 Hostname#cae2bc16:443 quic-connection, url: https://firebaselogging-pa.googleapis.com/v1/firelog/legacy/batchlog, definite, attribution: developer] cancelled
+	[C9.1.1.1 0BC3FFE4-CEE2-4702-9F0E-2AAB9BE27700 192.168.64.8:51256<->IPv4#cfe279df:443]
+	Connected Path: satisfied (Path is satisfied), interface: en0
+	Privacy Stance: Not Eligible
+	Duration: 2.132s, DNS @0.019s took 0.021s, TCP @0.045s took 0.003s, TLS 1.3 took 0.018s
+	bytes in/out: 5503/2366, packets in/out: 4/8, rtt: 0.003s, retransmitted bytes: 0, out-of-order bytes: 0
+	ecn packets sent/acked/marked/lost: 0/0/0/0
+2026-10-17 09:19:37.871 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9 IPv4#cfe279df:443 ready parent-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:37.871 Db Expo Go[7514:a57c] [com.apple.network:boringssl] began nw_protocol_boringssl_disconnect: boringssl session state is: connected
+2026-10-17 09:19:37.871 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from connected to disconnecting
+2026-10-17 09:19:37.871 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_disconnect(649) [C9.1.1.1:2][0x11190bba0] calling SSL_shutdown.
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_context_log_message(2470) [C9.1.1.1:2][0x11190bba0] Writing SSL3_RT_ALERT 2 bytes
+2026-10-17 09:19:37.872 I  Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_context_handle_warning_alert(2348) [C9.1.1.1:2][0x11190bba0] write alert, level: warning, description: close notify
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_disconnect(651) [C9.1.1.1:2][0x11190bba0] SSL_shutdown returned. Disconnect successful? yes
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from disconnecting to disconnecting
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from disconnecting to disconnected
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_flow_passthrough_disconnected [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)] deferring fail on disconnected
+2026-10-17 09:19:37.872 Df Expo Go[7514:9e0e] [com.apple.UIKit:BackgroundTask] Ending background task with UIBackgroundTaskIdentifier: 14
+2026-10-17 09:19:37.872 Df Expo Go[7514:9e0e] [com.apple.UIKit:BackgroundTask] Ending task with identifier 14 and description: <_UIBackgroundTaskInfo: 0x6000017cc9c0>: taskID = 14, taskName = GDTCCTUploader-upload, creationTime = 605 (elapsed = 17), _expireHandler: <__NSMallocBlock__: 0x6000017cc700>
+2026-10-17 09:19:37.872 Df Expo Go[7514:9e0e] [com.apple.UIKit:BackgroundTask] Decrementing reference count for assertion <BKSProcessAssertion: 0x60000217b6b0> (used by background task with identifier 14: <_UIBackgroundTaskInfo: 0x6000017cc9c0>: taskID = 14, taskName = GDTCCTUploader-upload, creationTime = 605 (elapsed = 17))
+2026-10-17 09:19:37.872 Df Expo Go[7514:9e0e] [com.apple.UIKit:BackgroundTask] Will invalidate assertion: <BKSProcessAssertion: 0x60000217b6b0> for task identifier: 14
+2026-10-17 09:19:37.872 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl called disconnect down the stack
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1 Hostname#cae2bc16:443 ready transform (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_association_schedule_deactivation <nw_association Hostname#cae2bc16:443> will become dormant after 10000ms of inactivity
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1 Hostname#cae2bc16:443 ready resolver (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_association_schedule_deactivation <nw_association Hostname#cae2bc16:443> will become dormant after 10000ms of inactivity
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.1 IPv4#cfe279df:443 ready socket-flow (satisfied (Path is satisfied), interface: en0)]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_association_schedule_deactivation <nw_association IPv4#cfe279df:443> will become dormant after 10000ms of inactivity
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_flow_stitch_stack_without_passthrough [C9.1.1.1 IPv4#cfe279df:443 cancelled socket-flow ((null))] Not stitching the stack since passthrough is directly below a flow
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:boringssl] began nw_protocol_boringssl_disconnect: boringssl session state is: disconnected
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_session_set_state(830) [C9.1.1.1:2][0x11190bba0] boringssl session state changed from disconnected to disconnected
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_flow_passthrough_disconnected [C9.1.1.1 IPv4#cfe279df:443 cancelled socket-flow ((null))] deferring fail on disconnected
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl called disconnect down the stack
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_flow_cancel_read_write_requests [C9.1.1.1 IPv4#cfe279df:443 cancelled socket-flow ((null))] cancelling read/write requests
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.2 IPv4#6032346b:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.3 IPv4#38604187:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.4 IPv4#d6c6ace8:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.5 IPv4#03f463d3:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.6 IPv4#cdaac572:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.7 IPv4#23161092:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] nw_endpoint_handler_cancel [C9.1.1.8 IPv4#5a25f4d4:443 cancelled path ((null))]
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_resolver_cancel [C9.1.1] 0x10c57f570
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:connection] nw_flow_cancel_read_write_requests [C9 Hostname#cae2bc16:443 cancelled parent-flow ((null))] cancelling read/write requests
+2026-10-17 09:19:37.873 Df Expo Go[7514:a57c] [com.apple.network:connection] nw_connection_report_state_with_handler_on_nw_queue [C9] reporting state cancelled
+2026-10-17 09:19:37.873 Df Expo Go[7514:a57c] [com.apple.CFNetwork:Default] Connection 9: done
+2026-10-17 09:19:37.873 I  Expo Go[7514:a57c] [com.apple.network:connection] [C9 Hostname#cae2bc16:443 quic-connection, url: https://firebaselogging-pa.googleapis.com/v1/firelog/legacy/batchlog, definite, attribution: developer] dealloc
+2026-10-17 09:19:37.873 Db Expo Go[7514:a57c] [com.apple.network:boringssl] boringssl_bio_destroy(196)
+2026-10-17 09:19:37.874 Db Expo Go[7514:a57c] [com.apple.network:] nw_fd_wrapper_close closed <fd_wrapper 19, guarded: true>
+2026-10-17 09:19:37.874 I  Expo Go[7514:a57d] [com.apple.runningboard:assertion] Acquiring assertion: <RBSAssertionDescriptor| "com.apple.CFNetwork.StorageDB" ID:(null) target:7514>
+2026-10-17 09:19:37.900 Db Expo Go[7514:a57d] [com.apple.runningboard:assertion] Adding assertion 3995-7514-916 to dictionary
+Child process terminated with signal 15: Terminated
