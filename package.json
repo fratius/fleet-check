@@ -47,7 +47,9 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit && npm --prefix functions run typecheck",
     "build:web": "expo export -p web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "emulators": "npm --prefix functions run build && npx -y firebase-tools@15.33.0 emulators:start --only auth,firestore,functions,storage --project demo-fleet-check",
+    "web:emulators": "FLEET_EMULATORS=1 expo start --web --clear"
   },
   "private": true
 }

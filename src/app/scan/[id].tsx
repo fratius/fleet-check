@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { F, MARKER, Svg, mmss } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
+import { AiError, ai } from '@/lib/store';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 
 type Slot = LocalShot | 'skip' | null;
@@ -25,7 +26,9 @@ function Btn({ title, onPress, kind = 'outline', disabled }: { title: string; on
 }
 
 export default function ScanScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, handover } = useLocalSearchParams<{ id: string; handover?: string }>();
+  // Picking up or dropping off a van (drivers, where the station allows it) needs every photo of the walk-around.
+  const ho = handover === 'pickup' || handover === 'dropoff' ? handover : null;
   const s = useSession();
   const v = s.vehicles.find((x) => x.id === id);
   const sp = useMemo(() => (v ? makeSpec(v.cls, v) : null), [v]);
@@ -45,6 +48,7 @@ export default function ScanScreen() {
   const [busyShot, setBusyShot] = useState(false);
   const [progress, setProgress] = useState('');
   const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [walkId, setWalkId] = useState<string | null>(null);
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
@@ -69,6 +73,7 @@ export default function ScanScreen() {
     router.back();
   };
   const goTo = (k: number, summary?: boolean) => {
+    if (walkId) return; // already uploaded for the pick-up or drop-off
     setPending(null); setI(k); setPhase('aim'); ft0.current = Date.now();
     if (summary !== undefined) setFromSummary(summary);
   };
@@ -104,14 +109,28 @@ export default function ScanScreen() {
   const save = async () => {
     const shots = slots.filter((x): x is LocalShot => !!x && x !== 'skip');
     if (!shots.length) { router.back(); return; }
+    if (ho && shots.length < frames.length) return;
     setPhase('saving'); setSaveErr(null); setProgress(s.mode === 'firebase' ? `Uploading 0 of ${shots.length}` : 'Saving');
+    let wid = walkId;
     try {
-      const walkId = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, {
-        source: 'camera', frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
-      }, (d, t) => setProgress(`Uploading ${d} of ${t}`));
-      router.replace(`/walk/${walkId}`);
+      if (!wid) {
+        wid = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, {
+          source: 'camera', frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
+        }, (d, t) => setProgress(`Uploading ${d} of ${t}`));
+        setWalkId(wid);
+      }
     } catch {
       setPhase('summary'); setSaveErr('Couldn\'t upload the photos. Check the connection and tap Save again.');
+      return;
+    }
+    if (!ho) { router.replace(`/walk/${wid}`); return; }
+    setProgress(ho === 'pickup' ? `Picking up ${v.name}` : `Dropping off ${v.name}`);
+    try {
+      await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
+      router.replace({ pathname: '/vehicle/[id]', params: { id: v.id, done: ho } });
+    } catch (e) {
+      setPhase('summary');
+      setSaveErr(`${e instanceof AiError ? e.message : 'Couldn\'t reach the server.'} The photos are saved as a walk-around.`);
     }
   };
 
@@ -121,7 +140,7 @@ export default function ScanScreen() {
         <Btn title={armed ? 'Tap again to stop' : phase === 'summary' ? 'Done' : 'Close'} kind={armed ? 'armed' : 'outline'} onPress={close} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? v.name : `${v.name}, frame ${f.n} of ${frames.length}`}</Text>
-          <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? 'Walk-around done' : f.label}</Text>
+          <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? (ho === 'pickup' ? 'Pick-up photos' : ho === 'dropoff' ? 'Drop-off photos' : 'Walk-around done') : f.label}</Text>
         </View>
         {phase === 'aim' && ready ? <Btn title="Light" kind={torch ? 'marker' : 'outline'} onPress={() => setTorch(!torch)} /> : null}
       </View>
@@ -159,7 +178,7 @@ export default function ScanScreen() {
             <View style={st.stat}><Text style={st.statV}>{taken}/{frames.length}</Text><Text style={st.statL}>photos{skipped ? `, ${skipped} skipped` : ''}</Text></View>
             <View style={st.stat}><Text style={st.statV}>{retakes}</Text><Text style={st.statL}>retakes</Text></View>
           </View>
-          <Text style={st.note}>Tap a photo to retake it.</Text>
+          <Text style={st.note}>{walkId ? 'Uploaded.' : ho && taken < frames.length ? `All ${frames.length} photos are needed to ${ho === 'pickup' ? 'pick up' : 'drop off'} the van. Tap a missing one to take it.` : 'Tap a photo to retake it.'}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {frames.map((fr, k) => {
               const sl = slots[k];
@@ -179,11 +198,14 @@ export default function ScanScreen() {
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}><ActivityIndicator color={MARKER} /><Text style={st.msg}>{progress}</Text></View>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {taken ? <Btn title={`Save ${taken} photos`} kind="marker" onPress={save} /> : null}
-              <Btn title="Discard" kind="ghost" onPress={() => router.back()} />
+              {ho ? (
+                <Btn title={walkId ? 'Try again' : ho === 'pickup' ? `Pick up ${v.name}` : `Drop off ${v.name}`} kind="marker" disabled={taken < frames.length} onPress={save} />
+              ) : taken ? <Btn title={`Save ${taken} photos`} kind="marker" onPress={save} /> : null}
+              <Btn title={walkId ? 'Close' : 'Discard'} kind="ghost" onPress={() => router.back()} />
             </View>
           )}
-          <Text style={st.note}>{s.mode === 'firebase' ? 'Photos upload to your company\'s storage, so the walk-around is kept as evidence.' : 'Firebase isn\'t connected yet, so photos stay on this phone.'}</Text>
+          <Text style={st.note}>{ho ? 'The photos show the van\'s state when you ' + (ho === 'pickup' ? 'took it' : 'brought it back') + ', so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.'
+            : s.mode === 'firebase' ? 'Photos upload to your company\'s storage, so the walk-around is kept as evidence.' : 'Firebase isn\'t connected yet, so photos stay on this phone.'}</Text>
         </ScrollView>
       </SafeAreaView>
     );
@@ -219,7 +241,7 @@ export default function ScanScreen() {
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel={`Take photo ${f.n}`} disabled={!ready || busyShot} onPress={shoot}
               style={({ pressed }) => ({ width: 78, height: 78, borderRadius: 39, borderWidth: 5, borderColor: '#fff', backgroundColor: MARKER, opacity: !ready || busyShot ? 0.4 : pressed ? 0.8 : 1 })} />
-            <View style={{ flex: 1, alignItems: 'flex-end' }}><Btn title="Skip" kind="ghost" onPress={skip} /></View>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>{ho ? null : <Btn title="Skip" kind="ghost" onPress={skip} />}</View>
           </View>
         )}
       </View>

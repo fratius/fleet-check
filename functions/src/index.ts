@@ -398,7 +398,7 @@ export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' },
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in again, then try again.');
   const email = String(req.auth?.token?.email || '');
   const name = String(req.auth?.token?.name || email.split('@')[0] || 'You');
-  return createDemo(uid, name, email);
+  return createDemo(uid, name, email, req.data?.fresh === true);
 });
 
 export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => {
@@ -407,5 +407,285 @@ export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => 
   const org = await db().doc(`orgs/${who.orgId}`).get();
   if (!org.exists || org.data()?.demo !== true) throw new HttpsError('failed-precondition', 'Only a demo company can be removed this way.');
   await deleteDemo(who.orgId);
+  return { ok: true };
+});
+
+/* ---------- 8. Vans and drivers: assignments with a permanent history ---------- */
+// An assignment links one van to one person from `start` to `end` (null while it lasts). A van has at most one
+// open assignment and so does a person. Assignments are written only here and never edited or deleted: the only
+// change is closing an open one. That record is the history of every van and every driver.
+
+type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
+interface Assignment {
+  vehicleId: string; vehicleName: string; plate: string; driverId: string; driverName: string; stationId: string | null;
+  start: number; end: number | null; startedBy: string; startedByName: string; endedBy: string | null; endedByName: string | null; endReason: EndReason | null;
+  /** The walk-around taken at pick-up and at drop-off (drivers who pick up vans themselves); null when a manager assigned. */
+  startWalkId: string | null; endWalkId?: string | null;
+}
+const closeWith = (who: Who, reason: EndReason, walkId: string | null = null) =>
+  ({ end: Date.now(), endedBy: who.uid, endedByName: who.name, endReason: reason, endWalkId: walkId });
+
+/** Gives a van to a driver (or a manager) of its station, or ends its assignment when `driverId` is null. */
+export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const driverId = req.data?.driverId ? String(req.data.driverId) : null;
+  if (!ID.test(vehicleId) || (driverId && !/^[A-Za-z0-9_-]{1,128}$/.test(driverId))) throw new HttpsError('invalid-argument', 'Unknown van or driver.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const vref = org.collection('vehicles').doc(vehicleId);
+  const aCol = org.collection('assignments');
+  return db().runTransaction(async (tx) => {
+    const v = await tx.get(vref);
+    if (!v.exists) throw new HttpsError('not-found', 'This van was removed.');
+    const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null };
+    needStation(who, van.stationId);
+    if (van.retired && driverId) throw new HttpsError('failed-precondition', 'This van is retired. Bring it back first.');
+    let person: { name: string; role: string; stationIds?: string[] } | null = null;
+    let personOpen: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    if (driverId) {
+      const m = await tx.get(org.collection('members').doc(driverId));
+      if (!m.exists) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+      person = m.data() as { name: string; role: string; stationIds?: string[] };
+      if (!['driver', 'manager'].includes(person.role)) throw new HttpsError('invalid-argument', 'Vans go to drivers or fleet managers.');
+      if (!van.stationId || !(person.stationIds || []).includes(van.stationId)) throw new HttpsError('failed-precondition', `${person.name} works at another station. Move the van or the person first.`);
+      personOpen = (await tx.get(aCol.where('driverId', '==', driverId).where('end', '==', null))).docs;
+    }
+    if (driverId && van.assignedTo?.driverId === driverId) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
+    // Close the van's current assignment and the person's current one (their other van becomes free).
+    if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, driverId ? 'reassigned' : 'ended'));
+    for (const d of personOpen) {
+      if (d.id === van.assignedTo?.assignmentId) continue;
+      tx.update(d.ref, closeWith(who, 'reassigned'));
+      tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
+    }
+    if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null }; }
+    const now = Date.now();
+    const aref = aCol.doc();
+    const a: Assignment & { createdAt: number } = {
+      vehicleId, vehicleName: van.name, plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
+      start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
+      startWalkId: null, endWalkId: null,
+    };
+    tx.set(aref, a);
+    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now } });
+    return { assignmentId: aref.id };
+  });
+});
+
+/** Retires a van (or brings it back). Vans are never deleted: their walk-arounds, checks and history stay. */
+export const retireVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const restore = req.data?.restore === true;
+  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const vref = org.collection('vehicles').doc(vehicleId);
+  await db().runTransaction(async (tx) => {
+    const v = await tx.get(vref);
+    if (!v.exists) throw new HttpsError('not-found', 'Unknown van.');
+    const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
+    needStation(who, van.stationId);
+    if (restore) { tx.update(vref, { retired: false, retiredAt: null, retiredBy: null }); return; }
+    if (van.assignedTo?.assignmentId) tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'van retired'));
+    tx.update(vref, { retired: true, retiredAt: Date.now(), retiredBy: who.name, assignedTo: null });
+  });
+  return { ok: true };
+});
+
+/** Ends a van assignment when the van moves to another station (the driver stays at theirs). */
+export const moveVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const stationId = String(req.data?.stationId || '');
+  if (!ID.test(vehicleId) || !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown van or station.');
+  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner moves vans between stations.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const vref = org.collection('vehicles').doc(vehicleId);
+  await db().runTransaction(async (tx) => {
+    const [v, st] = await Promise.all([tx.get(vref), tx.get(org.collection('stations').doc(stationId))]);
+    if (!v.exists || !st.exists) throw new HttpsError('not-found', 'Unknown van or station.');
+    const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
+    if (van.stationId === stationId) return;
+    if (van.assignedTo?.assignmentId) tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'van moved'));
+    tx.update(vref, { stationId, assignedTo: null });
+  });
+  return { ok: true };
+});
+
+/** Removes someone from the company. Their van becomes free; their history stays. */
+export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const uid = String(req.data?.uid || '');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw new HttpsError('failed-precondition', 'You can\'t remove yourself here.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const mref = org.collection('members').doc(uid);
+  await db().runTransaction(async (tx) => {
+    const m = await tx.get(mref);
+    if (!m.exists) return;
+    const p = m.data() as { role: string; stationIds?: string[] };
+    // Owners remove anyone; managers remove drivers of their station.
+    if (who.role !== 'owner' && !(p.role === 'driver' && (p.stationIds || []).some((s) => who.stationIds.includes(s)))) {
+      throw new HttpsError('permission-denied', 'Fleet managers can only remove drivers of their station.');
+    }
+    const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+    for (const d of open) {
+      tx.update(d.ref, closeWith(who, 'driver removed'));
+      tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
+    }
+    tx.delete(mref);
+  });
+  return { ok: true };
+});
+
+/**
+ * The owner changes someone's role or station. Done here, not in the app, so a person who leaves a station
+ * also leaves its van: their open assignment ends and the van becomes free. Their history stays.
+ */
+export const changePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner changes roles and stations.');
+  const uid = String(req.data?.uid || '');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw new HttpsError('failed-precondition', 'You can\'t change your own role or station.');
+  const role = req.data?.role == null ? null : String(req.data.role);
+  const stationId = req.data?.stationId == null ? null : String(req.data.stationId);
+  if (role && !['owner', 'manager', 'driver'].includes(role)) throw new HttpsError('invalid-argument', 'Unknown role.');
+  if (stationId && !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown station.');
+  if (!role && !stationId) return { ok: true };
+  const org = db().doc(`orgs/${who.orgId}`);
+  const mref = org.collection('members').doc(uid);
+  await db().runTransaction(async (tx) => {
+    const m = await tx.get(mref);
+    if (!m.exists) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+    if (stationId && !(await tx.get(org.collection('stations').doc(stationId))).exists) throw new HttpsError('not-found', 'Unknown station.');
+    const p = m.data() as { role: string; stationIds?: string[] };
+    const nextRole = role || (p.role === 'admin' ? 'owner' : p.role);
+    const nextStations = stationId ? [stationId] : p.stationIds || [];
+    const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+    for (const d of open) {
+      const a = d.data() as Assignment;
+      const reason: EndReason | null = nextRole === 'owner' ? 'role changed' : !a.stationId || !nextStations.includes(a.stationId) ? 'driver moved' : null;
+      if (!reason) continue;
+      tx.update(d.ref, closeWith(who, reason));
+      tx.update(org.collection('vehicles').doc(a.vehicleId), { assignedTo: null });
+    }
+    tx.update(mref, { role: nextRole, stationIds: nextStations });
+  });
+  return { ok: true };
+});
+
+/* ---------- 9. Drivers pick up and drop off vans themselves, where the station allows it ---------- */
+// Some DSPs assign vans in Amazon's tools and just tell drivers to pick one up. Owners (any station) and fleet
+// managers (their station) can let drivers record that themselves. Off by default. Every pick-up and drop-off is
+// an ordinary assignment, so it lands in the same permanent history (startedBy is the driver).
+
+export const setSelfAssign = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const stationId = String(req.data?.stationId || '');
+  if (!ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown station.');
+  needStation(who, stationId, 'Fleet managers can only change this for their station.');
+  const ref = db().doc(`orgs/${who.orgId}/stations/${stationId}`);
+  if (!(await ref.get()).exists) throw new HttpsError('not-found', 'Unknown station.');
+  await ref.update({ selfAssign: req.data?.on === true, selfAssignBy: who.name, selfAssignAt: Date.now() });
+  return { ok: true };
+});
+
+/** Reads the van and checks this person may pick it up or drop it off at its station right now. */
+async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleId: string) {
+  if (!['driver', 'manager'].includes(who.role)) throw new HttpsError('permission-denied', 'Only drivers and fleet managers pick up vans.');
+  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const vref = org.collection('vehicles').doc(vehicleId);
+  const v = await tx.get(vref);
+  if (!v.exists) throw new HttpsError('not-found', 'Unknown van.');
+  const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null };
+  needStation(who, van.stationId);
+  const st = await tx.get(org.collection('stations').doc(van.stationId!));
+  if (st.data()?.selfAssign !== true) throw new HttpsError('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
+  return { org, vref, van };
+}
+
+// A pick-up or drop-off needs a full walk-around of that van, taken with the camera by this person just now:
+// every photo of the van's frame set, none skipped, uploaded in the last two hours, used for one handover only.
+const HANDOVER_MAX_AGE = 2 * 3600_000;
+interface WalkDoc { vehicleId: string; createdBy: string | null; source: string; frames: number; taken: number; skipped: number; photos: { path?: string }[]; handover?: unknown }
+async function checkHandoverPhotos(who: Who, vehicleId: string, walkId: string) {
+  if (!ID.test(walkId)) throw new HttpsError('invalid-argument', 'Take the photos of the van first.');
+  const w = await db().doc(`orgs/${who.orgId}/walkarounds/${walkId}`).get();
+  const d = w.data() as WalkDoc | undefined;
+  if (!d || d.vehicleId !== vehicleId || d.createdBy !== who.uid) throw new HttpsError('failed-precondition', 'These photos aren\'t yours or aren\'t of this van.');
+  if (d.handover) throw new HttpsError('failed-precondition', 'These photos were already used. Take new ones.');
+  if (d.source !== 'camera' || d.skipped > 0 || d.frames < 1 || d.taken < d.frames || (d.photos || []).length < d.frames) {
+    throw new HttpsError('failed-precondition', 'Every photo of the walk-around is needed, taken with the camera. Take the missing ones.');
+  }
+  const prefix = `orgs/${who.orgId}/walkarounds/${walkId}/`;
+  const files = await Promise.all(d.photos.map(async (p) => {
+    if (!p.path || !p.path.startsWith(prefix)) return null;
+    try { const [m] = await bucket().file(p.path).getMetadata(); return m; } catch { return null; }
+  }));
+  if (files.some((m) => !m || Date.now() - new Date(String(m.timeCreated)).getTime() > HANDOVER_MAX_AGE)) {
+    throw new HttpsError('failed-precondition', 'Some photos didn\'t finish uploading or are more than two hours old. Take them again.');
+  }
+}
+/** In the transaction: the walk-around is still unused; mark it as this handover's photos. */
+async function useHandoverPhotos(tx: FirebaseFirestore.Transaction, org: FirebaseFirestore.DocumentReference, walkId: string) {
+  const ref = org.collection('walkarounds').doc(walkId);
+  const w = await tx.get(ref);
+  if ((w.data() as WalkDoc | undefined)?.handover) throw new HttpsError('failed-precondition', 'These photos were already used. Take new ones.');
+  return ref;
+}
+
+/**
+ * The driver takes this van, with its pick-up photos. A van someone else still has in the app (they didn't drop
+ * it off) is taken over: their assignment ends with these photos. A driver who has another van drops that off first.
+ */
+export const pickUpVan = onCall({ timeoutSeconds: 60 }, async (req) => {
+  const who = await guard(req);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const walkId = String(req.data?.walkId || '');
+  await checkHandoverPhotos(who, vehicleId, walkId);
+  return db().runTransaction(async (tx) => {
+    const { org, vref, van } = await selfService(tx, who, vehicleId);
+    if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
+    if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
+    const aCol = org.collection('assignments');
+    const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
+    if (mine.length) throw new HttpsError('failed-precondition', `Drop off ${(mine[0].data() as Assignment).vehicleName} first, with its photos.`);
+    const wref = await useHandoverPhotos(tx, org, walkId);
+    if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', walkId));
+    const now = Date.now();
+    const aref = aCol.doc();
+    const a: Assignment & { createdAt: number } = {
+      vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
+      start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
+      startWalkId: walkId, endWalkId: null,
+    };
+    tx.set(aref, a);
+    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now } });
+    tx.update(wref, { handover: { kind: 'pickup', assignmentId: aref.id } });
+    return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
+  });
+});
+
+/** The driver hands back the van they have, with its drop-off photos. */
+export const dropOffVan = onCall({ timeoutSeconds: 60 }, async (req) => {
+  const who = await guard(req);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const walkId = String(req.data?.walkId || '');
+  await checkHandoverPhotos(who, vehicleId, walkId);
+  await db().runTransaction(async (tx) => {
+    const { org, vref, van } = await selfService(tx, who, vehicleId);
+    if (van.assignedTo?.driverId !== who.uid) throw new HttpsError('failed-precondition', 'You don\'t have this van.');
+    const wref = await useHandoverPhotos(tx, org, walkId);
+    tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', walkId));
+    tx.update(vref, { assignedTo: null });
+    tx.update(wref, { handover: { kind: 'dropoff', assignmentId: van.assignedTo.assignmentId } });
+  });
   return { ok: true };
 });

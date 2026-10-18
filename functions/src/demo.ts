@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
+import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
@@ -86,19 +87,30 @@ const VANS: [string, string, string, number, string, string, Attrs][] = [
 const FRAMES = ['Front', 'Front left corner', 'Left side', 'Rear left corner', 'Rear', 'Rear right corner', 'Right side', 'Front right corner'];
 const usage = (ms: number, calls: number, images: number) => ({ ms, calls, images, inTok: 0, outTok: 0, cost: 0 });
 
-export async function createDemo(uid: string, ownerName: string, email: string): Promise<{ orgId: string; existed: boolean }> {
+const DEMO_VERSION = 2;
+const password = () => {
+  const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from(randomBytes(10), (b) => a[b % a.length]).join('');
+};
+
+/** Makes (or reopens) the person's demo company. An older demo without logins and history is replaced. */
+export async function createDemo(uid: string, ownerName: string, email: string, fresh = false): Promise<{ orgId: string; existed: boolean }> {
   const uref = db().doc(`users/${uid}`);
   const prev = (await uref.get()).data()?.demoOrgId as string | undefined;
-  if (prev && (await db().doc(`orgs/${prev}`).get()).exists) {
-    await uref.set({ orgIds: FieldValue.arrayUnion(prev), orgId: prev }, { merge: true });
-    return { orgId: prev, existed: true };
+  if (prev) {
+    const o = await db().doc(`orgs/${prev}`).get();
+    if (o.exists && !fresh && (o.data()?.demoVersion || 1) >= DEMO_VERSION) {
+      await uref.set({ orgIds: FieldValue.arrayUnion(prev), orgId: prev }, { merge: true });
+      return { orgId: prev, existed: true };
+    }
+    if (o.exists) await deleteDemo(prev);
   }
   const org = db().collection('orgs').doc();
   const orgId = org.id;
   const now = Date.now();
   const day = 86400_000;
   const batch = db().batch();
-  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, aiTier: 'default' });
+  const short = orgId.slice(0, 6).toLowerCase();
   batch.set(org.collection('members').doc(uid), { role: 'owner', stationIds: [], email, name: ownerName, joinedAt: now });
 
   const stationIds = STATIONS.map((st, i) => {
@@ -116,17 +128,71 @@ export async function createDemo(uid: string, ownerName: string, email: string):
     return { id, name: `${first} ${last}` };
   };
   const managers = MANAGERS.map(([f, l, st], n) => person(f, l, 'manager', st, n));
-  const drivers = DRIVERS.map(([f, l, st], n) => person(f, l, 'driver', st, n + 10));
+  const drivers: { id: string; name: string; st: number }[] = DRIVERS.map(([f, l, st], n) => ({ ...person(f, l, 'driver', st, n + 10), st }));
+
+  // Two accounts you can really sign in with: a driver and a fleet manager at Berlin Spandau.
+  const logins: { role: string; name: string; email: string; password: string; uid: string }[] = [];
+  for (const [role, first, last] of [['driver', 'Alex', 'Demo'], ['manager', 'Morgan', 'Demo']] as const) {
+    const em = `demo.${role}.${short}@example.com`;
+    const pw = password();
+    const u = await getAuth().createUser({ email: em, password: pw, displayName: `${first} ${last}` });
+    batch.set(org.collection('members').doc(u.uid), {
+      role, stationIds: [stationIds[0]], name: `${first} ${last}`, firstName: first, lastName: last, email: em,
+      phone: role === 'driver' ? '+49 151 0000 0199' : '+49 151 0000 0198', transporterId: role === 'driver' ? `DEMO${rid(8).toUpperCase()}` : '',
+      joinedAt: now - 20 * day, demo: true, login: true,
+    });
+    batch.set(db().doc(`users/${u.uid}`), { orgIds: [orgId], orgId, email: em, name: `${first} ${last}`, demo: true });
+    logins.push({ role, name: `${first} ${last}`, email: em, password: pw, uid: u.uid });
+    if (role === 'driver') drivers.push({ id: u.uid, name: `${first} ${last}`, st: 0 });
+  }
+  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, demoVersion: DEMO_VERSION, aiTier: 'default', demoLogins: logins });
 
   const vans = VANS.map(([name, plate, cls, st, make, model, a], n) => {
     const ref = org.collection('vehicles').doc();
     batch.set(ref, { name, plate, cls, ...a, make, model, scanId: null, stationId: stationIds[st], createdAt: now - (60 - n) * day, createdBy: uid, demo: true });
     return { id: ref.id, name, cls, st };
   });
+  // A month of assignments: in each 4-day block every driver of a station has a different van of that
+  // station, so nobody has two vans at once. The last block is still running.
+  const BLOCKS = 7, BLOCK = 4 * day;
+  const blockStart = (b: number) => (b === BLOCKS - 1 ? now - 3 * 3600_000 : now - 3 * 3600_000 - (BLOCKS - 1 - b) * BLOCK);
+  const schedule: { van: number; driver: { id: string; name: string }; start: number; end: number | null }[] = [];
+  STATIONS.forEach((_, st) => {
+    const sv = vans.map((v, i) => ({ v, i })).filter((x) => x.v.st === st);
+    const sd = drivers.filter((d) => d.st === st);
+    for (let b = 0; b < BLOCKS; b++) {
+      sd.forEach((d, k) => {
+        const van = sv[(k + b) % sv.length];
+        schedule.push({ van: van.i, driver: d, start: blockStart(b) + k * 600_000, end: b === BLOCKS - 1 ? null : blockStart(b + 1) - 3600_000 });
+      });
+    }
+  });
+  const mgrOf = (st: number) => managers[st];
+  // The first station switched to drivers picking up their vans themselves (with photos) when the current block
+  // started; before that, and at the second station, the fleet manager handed them out.
+  const selfFrom = blockStart(BLOCKS - 1) - 3600_000;
+  batch.update(org.collection('stations').doc(stationIds[0]), { selfAssign: true, selfAssignBy: mgrOf(0).name, selfAssignAt: selfFrom });
+  const pickups: { ref: FirebaseFirestore.DocumentReference; van: number; driver: { id: string; name: string }; at: number }[] = [];
+  schedule.forEach((a) => {
+    const van = vans[a.van];
+    const ref = org.collection('assignments').doc();
+    const self = van.st === 0 && a.start > selfFrom;
+    const by = self ? a.driver : mgrOf(van.st);
+    batch.set(ref, {
+      vehicleId: van.id, vehicleName: van.name, plate: VANS[a.van][1], driverId: a.driver.id, driverName: a.driver.name, stationId: stationIds[van.st],
+      start: a.start, end: a.end, startedBy: by.id, startedByName: by.name, endedBy: a.end ? by.id : null, endedByName: a.end ? by.name : null,
+      endReason: a.end ? 'ended' : null, createdAt: a.start, startWalkId: null, endWalkId: null, demo: true,
+    });
+    if (self) pickups.push({ ref, van: a.van, driver: a.driver, at: a.start });
+    if (!a.end) batch.update(org.collection('vehicles').doc(van.id), { assignedTo: { assignmentId: ref.id, driverId: a.driver.id, driverName: a.driver.name, since: a.start } });
+  });
+  /** Who had this van at this time (for walk-arounds and checks). */
+  const driverAt = (vanIdx: number, t: number) => schedule.find((a) => a.van === vanIdx && a.start <= t && (a.end == null || t < a.end))?.driver
+    || drivers.find((d) => d.st === vans[vanIdx].st)!;
   await batch.commit();
 
   // Walk-arounds with drawn photos for four vans.
-  const walk = async (van: typeof vans[number], by: typeof drivers[number], when: number) => {
+  const walk = async (van: typeof vans[number], by: { id: string; name: string }, when: number) => {
     const ref = org.collection('walkarounds').doc();
     const photos = await Promise.all(FRAMES.map(async (label, i) => ({
       n: i + 1, label, w: 900, h: 1200, takenAt: when + i * 12_000,
@@ -136,10 +202,16 @@ export async function createDemo(uid: string, ownerName: string, email: string):
       createdBy: by.id, totalMs: 8 * 14_000, frames: 8, taken: 8, skipped: 0, retakes: 1, photos, demo: true });
     return ref.id;
   };
+  const T1 = now - 2 * 3600_000, T2 = now - 2 * day, T3 = now - 40 * 60_000, T4 = now - 5 * day;
   const [w1, w2, w3, w4] = await Promise.all([
-    walk(vans[0], drivers[0], now - 2 * 3600_000), walk(vans[1], drivers[1], now - 2 * day),
-    walk(vans[6], drivers[4], now - 40 * 60_000), walk(vans[3], drivers[2], now - 5 * day),
+    walk(vans[0], driverAt(0, T1), T1), walk(vans[1], driverAt(1, T2), T2),
+    walk(vans[6], driverAt(6, T3), T3), walk(vans[3], driverAt(3, T4), T4),
   ]);
+  // Pick-up photos for the vans drivers picked up themselves.
+  await Promise.all(pickups.map(async (p) => {
+    const walkId = await walk(vans[p.van], p.driver, p.at - 8 * 60_000);
+    await Promise.all([p.ref.update({ startWalkId: walkId }), org.collection('walkarounds').doc(walkId).update({ handover: { kind: 'pickup', assignmentId: p.ref.id } })]);
+  }));
 
   // Damage checks in every state.
   const spot = async (checkId: string, i: number, panel: string, type: string, mark: Mark, conf: number, mightBe: string | null,
@@ -157,7 +229,7 @@ export async function createDemo(uid: string, ownerName: string, email: string):
         severity: verdict.v === 'damage' ? verdict.severity || 'cosmetic' : null, confidence: 0.8, reason: verdict.reason, ms: 6400, closeupBox: null } : null,
     };
   };
-  const check = async (van: typeof vans[number], walkId: string, by: typeof drivers[number], when: number, status: string,
+  const check = async (van: typeof vans[number], walkId: string, by: { id: string; name: string }, when: number, status: string,
     make: (id: string) => Promise<unknown[]>, review: unknown = null, note = '') => {
     const ref = org.collection('checks').doc();
     const spots = await make(ref.id);
@@ -175,24 +247,24 @@ export async function createDemo(uid: string, ownerName: string, email: string):
   });
   await Promise.all([
     // Waiting for the manager at Berlin Spandau.
-    check(vans[0], w1, drivers[0], now - 2 * 3600_000, 'submitted', async (id) => Promise.all([
+    check(vans[0], w1, driverAt(0, T1), T1, 'submitted', async (id) => Promise.all([
       spot(id, 0, 'right sliding door', 'scratch', 'scratch', 0.74, null, { v: 'damage', reason: 'A 6 cm scratch through the clear coat, visible in the close-up.' }, 6),
       spot(id, 1, 'front bumper, left corner', 'scuff', 'scuff', 0.41, 'dirt', { v: 'dirt', reason: 'The mark is gone in the close-up: road dirt.' }, 1),
       spot(id, 2, 'rear doors, lower edge', 'dent', 'dent', 0.33, null, null, 4),
     ]), null, 'Small crack in the right mirror glass'),
     // The driver is still at the van in Potsdam.
-    check(vans[6], w3, drivers[4], now - 40 * 60_000, 'checking', async (id) => Promise.all([
+    check(vans[6], w3, driverAt(6, T3), T3, 'checking', async (id) => Promise.all([
       spot(id, 0, 'left front wing', 'scratch', 'scratch', 0.66, null, null, 1),
       spot(id, 1, 'rear bumper', 'scuff', 'scuff', 0.38, 'reflection', null, 4),
     ])),
     // Reviewed: damage approved, one added by the manager.
-    check(vans[1], w2, drivers[1], now - 2 * day, 'reviewed', async (id) => Promise.all([
+    check(vans[1], w2, driverAt(1, T2), T2, 'reviewed', async (id) => Promise.all([
       spot(id, 0, 'rear bumper, right corner', 'scratch', 'scratch', 0.81, null, { v: 'damage', reason: 'A scratch along the bumper corner, about 6 cm.', severity: 'repair' }, 5),
       spot(id, 1, 'left side panel', 'scuff', 'scuff', 0.35, 'reflection', { v: 'reflection', reason: 'The light patch moves between the photos: a reflection.' }, 2),
     ]), decided(managers[0], now - 2 * day + 3 * 3600_000, { 0: true, 1: false },
       [{ panel: 'right mirror cover', type: 'crack', note: 'Hairline crack, about 4 cm', by: managers[0].id, byName: managers[0].name, at: now - 2 * day + 3 * 3600_000 }])),
     // Reviewed: nothing was damage.
-    check(vans[3], w4, drivers[2], now - 5 * day, 'reviewed', async (id) => Promise.all([
+    check(vans[3], w4, driverAt(3, T4), T4, 'reviewed', async (id) => Promise.all([
       spot(id, 0, 'roller door', 'scuff', 'scuff', 0.29, 'dirt', { v: 'dirt', reason: 'Dust on the shutter; wiped off.' }, 4),
     ]), decided(managers[0], now - 5 * day + 2 * 3600_000, { 0: false })),
   ]);
@@ -204,6 +276,11 @@ export async function createDemo(uid: string, ownerName: string, email: string):
 /** Removes a demo company completely: data, photos, invite links, and the link from people's accounts. */
 export async function deleteDemo(orgId: string) {
   const org = db().doc(`orgs/${orgId}`);
+  const logins = ((await org.get()).data()?.demoLogins || []) as { uid: string }[];
+  for (const l of logins) {
+    await getAuth().deleteUser(l.uid).catch(() => {});
+    await db().doc(`users/${l.uid}`).delete().catch(() => {});
+  }
   const users = await db().collection('users').where('orgIds', 'array-contains', orgId).get();
   const invites = await db().collection('invites').where('orgId', '==', orgId).get();
   const batch = db().batch();

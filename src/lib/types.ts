@@ -26,8 +26,47 @@ export interface Vehicle {
   scanId: string | null;
   /** The station (operating area) the van belongs to. Missing on vans saved before stations existed. */
   stationId?: string;
+  /** Who drives it now (set by the server, mirrors the open assignment). */
+  assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number } | null;
+  /** Retired vans stay with their history; they are never deleted. */
+  retired?: boolean;
+  retiredAt?: number | null;
+  retiredBy?: string | null;
   createdAt: number;
   createdBy: string | null;
+}
+
+/**
+ * One person driving one van from `start` to `end` (null while it lasts). Written only by the server and never
+ * edited or deleted: together they are the permanent history of every van and every driver.
+ */
+export type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
+/** Why an assignment ended, for the history lists. */
+export const END_REASON: Record<EndReason, string> = {
+  reassigned: 'given to someone else', ended: 'made free', 'dropped off': 'dropped off', 'taken over': 'taken over',
+  'switched van': 'swapped for another van', 'driver removed': 'removed from the company', 'driver moved': 'moved to another station',
+  'role changed': 'role changed', 'van retired': 'van retired', 'van moved': 'van moved to another station',
+};
+
+export interface Assignment {
+  id: string;
+  vehicleId: string;
+  vehicleName: string;
+  plate: string;
+  driverId: string;
+  driverName: string;
+  stationId: string | null;
+  start: number;
+  end: number | null;
+  startedBy: string;
+  startedByName: string;
+  endedBy: string | null;
+  endedByName: string | null;
+  endReason: EndReason | null;
+  createdAt: number;
+  /** Photos taken at pick-up and drop-off when drivers pick up vans themselves. */
+  startWalkId?: string | null;
+  endWalkId?: string | null;
 }
 
 /** An operating area of a company, such as an Amazon delivery station. */
@@ -36,6 +75,10 @@ export interface Station {
   name: string;
   code: string;
   createdAt: number;
+  /** Drivers pick up and drop off vans themselves. Set on the server by owners or the station's managers. */
+  selfAssign?: boolean;
+  selfAssignBy?: string;
+  selfAssignAt?: number;
 }
 
 /**
@@ -74,6 +117,8 @@ export interface Walkaround {
   skipped: number;
   retakes: number;
   photos: Photo[];
+  /** Set by the server when these photos were taken to pick up or drop off the van. */
+  handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string };
 }
 
 export interface Usage {
@@ -211,6 +256,8 @@ export interface Org {
   aiTier?: Tier;
   /** A demo company full of made-up data. */
   demo?: boolean;
+  /** Sign-in accounts of the demo company (made up, for trying the roles). */
+  demoLogins?: { role: 'driver' | 'manager'; name: string; email: string; password: string; uid: string }[];
 }
 
 export interface Member {

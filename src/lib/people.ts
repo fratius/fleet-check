@@ -1,9 +1,9 @@
 import {
-  collection, deleteDoc, doc, getCountFromServer, getDocs, onSnapshot, orderBy, query, setDoc, updateDoc, where,
+  collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 
 import { fb } from './firebase';
-import type { Invite, Member, Org, Role } from './types';
+import type { Assignment, Invite, Member, Org, Walkaround } from './types';
 
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
@@ -11,6 +11,21 @@ const db = () => fb()!.db;
 export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onError?: () => void) {
   return onSnapshot(collection(db(), 'orgs', orgId, 'members'),
     (snap) => cb(snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }))),
+    () => onError?.());
+}
+
+/** One walk-around by id, for history links to photos older than the ones the app keeps loaded. */
+export async function fetchWalk(orgId: string, id: string): Promise<Walkaround | null> {
+  try {
+    const d = await getDoc(doc(db(), 'orgs', orgId, 'walkarounds', id));
+    return d.exists() ? ({ id: d.id, ...(d.data() as Omit<Walkaround, 'id'>) }) : null;
+  } catch { return null; }
+}
+
+/** One person's membership; null once they've left the company. */
+export function watchMember(orgId: string, uid: string, cb: (m: Member | null) => void, onError?: () => void) {
+  return onSnapshot(doc(db(), 'orgs', orgId, 'members', uid),
+    (d) => cb(d.exists() ? ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }) : null),
     () => onError?.());
 }
 
@@ -34,8 +49,6 @@ export function tokenFrom(text: string) {
   return m ? m[1] : /^[A-Za-z0-9_-]{16,64}$/.test(t) ? t : null;
 }
 
-export const setMember = (orgId: string, uid: string, patch: { role?: Role; stationIds?: string[] }) => updateDoc(doc(db(), 'orgs', orgId, 'members', uid), patch);
-export const removeMember = (orgId: string, uid: string) => deleteDoc(doc(db(), 'orgs', orgId, 'members', uid));
 
 export async function addStation(orgId: string, name: string, code: string) {
   const ref = doc(collection(db(), 'orgs', orgId, 'stations'));
@@ -58,4 +71,17 @@ export async function allCompanies(): Promise<CompanyRow[]> {
     const [vans, people, checks] = await Promise.all([count(d.id, 'vehicles'), count(d.id, 'members'), count(d.id, 'checks')]);
     return { id: d.id, name: o.name, createdAt: o.createdAt || 0, vans, people, checks };
   }));
+}
+
+/**
+ * Assignment history of one van or one person, newest first. Owners read everything; managers only their
+ * stations (the rules check it); drivers only their own.
+ */
+export function watchHistory(orgId: string, by: { vehicleId?: string; driverId?: string }, stations: string[] | null,
+  cb: (rows: Assignment[]) => void, onError?: () => void) {
+  const base = collection(db(), 'orgs', orgId, 'assignments');
+  const f = by.vehicleId ? where('vehicleId', '==', by.vehicleId) : where('driverId', '==', by.driverId);
+  const q = stations ? query(base, f, where('stationId', 'in', stations.slice(0, 30)), orderBy('start', 'desc'), limit(300))
+    : query(base, f, orderBy('start', 'desc'), limit(300));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Assignment, 'id'>) }))), () => onError?.());
 }

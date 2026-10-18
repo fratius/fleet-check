@@ -4,29 +4,43 @@ import { useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
 import { FramesPanel } from '@/components/frames';
+import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
 import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, silhouetteSVG, type RearKind } from '@/lib/frames';
 import { useSession } from '@/lib/session';
+import { AiError, ai } from '@/lib/store';
 import { approvedDamage, type Check, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 
 export default function VehicleScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, done } = useLocalSearchParams<{ id: string; done?: string }>();
   const s = useSession();
   const c = useColors();
   const { width } = useWindowDimensions();
   const v = s.vehicles.find((x) => x.id === id);
+  const history = useHistory({ vehicleId: id });
   const [editing, setEditing] = useState(false);
-  const [armed, setArmed] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [armed, setArmed] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [upload, setUpload] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const arm = (k: string) => { setArmed(k); setTimeout(() => setArmed((a) => (a === k ? null : a)), 3000); };
+  const act = async (k: string, fn: () => Promise<unknown>) => {
+    setBusy(k); setErr(null); setArmed(null);
+    try { await fn(); } catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t save that. Check the connection.'); } finally { setBusy(null); }
+  };
 
   if (!v || !CLS[v.cls]) {
     return <Screen><BackBar title="Fleet" /><Card dashed><T v="hint">{s.loaded.vehicles ? 'This vehicle isn\'t in the fleet any more.' : 'Loading…'}</T></Card></Screen>;
   }
   const sp = makeSpec(v.cls, v);
   const frames = buildFrames(sp);
+  // Drivers pick up and drop off vans themselves where the station allows it.
+  const selfOn = !!s.stations.find((st) => st.id === v.stationId)?.selfAssign;
+  const canSelf = selfOn && !s.runs(v.stationId) && s.myStations.some((st) => st.id === v.stationId);
+  const mine = v.assignedTo?.driverId === s.user?.uid;
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
   const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
@@ -42,12 +56,12 @@ export default function VehicleScreen() {
       if (r.canceled || !r.assets.length) return;
       const assets = r.assets.slice(0, 12).sort((a, b) => (a.fileName || '').localeCompare(b.fileName || '', undefined, { numeric: true }));
       const shots = assets.map((a, i) => ({ n: i + 1, label: `Photo ${i + 1}${a.fileName ? ' (' + a.fileName + ')' : ''}`, uri: a.uri, w: a.width, h: a.height, takenAt: Date.now() }));
-      setBusy('Uploading 0 of ' + shots.length);
+      setUpload('Uploading 0 of ' + shots.length);
       const walkId = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, { source: 'library', frames: shots.length, skipped: 0, retakes: 0, totalMs: null },
-        (d, t) => setBusy(`Uploading ${d} of ${t}`));
-      setBusy(null);
+        (d, t) => setUpload(`Uploading ${d} of ${t}`));
+      setUpload(null);
       router.push({ pathname: '/check/[id]', params: { id: 'new', walk: walkId } });
-    } catch { setBusy(null); setErr('Couldn\'t upload the photos. Check the connection and try again.'); }
+    } catch { setUpload(null); setErr('Couldn\'t upload the photos. Check the connection and try again.'); }
   };
 
   return (
@@ -62,10 +76,64 @@ export default function VehicleScreen() {
         <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
       </View>
 
-      <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
-        <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
-        <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
-      </View>
+      {done === 'pickup' && mine ? <Notice text={`You picked up ${v.name}. The photos are kept with its history.`} /> : null}
+      {done === 'dropoff' && !mine ? <Notice text={`You dropped off ${v.name}. The photos are kept with its history.`} /> : null}
+      {v.retired ? (
+        <Card dashed>
+          <T v="h3">Retired</T>
+          <T v="hint">Taken out of the fleet {fmtWhen(v.retiredAt)}{v.retiredBy ? ' by ' + v.retiredBy : ''}. Its walk-arounds, damage checks and driver history stay.</T>
+        </Card>
+      ) : (
+        <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
+          <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
+          <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
+        </View>
+      )}
+
+      {s.mode === 'firebase' && !v.retired ? (
+        <Card>
+          <T v="hint">Driver</T>
+          {v.assignedTo ? (
+            <Pressable disabled={!s.staff && v.assignedTo.driverId !== s.user?.uid} onPress={() => router.push(`/person/${v.assignedTo!.driverId}`)}>
+              <T v="h2">{v.assignedTo.driverId === s.user?.uid ? 'You' : v.assignedTo.driverName}{s.staff ? ' ›' : ''}</T>
+              <T v="hint">{sinceText(v.assignedTo.since)}</T>
+            </Pressable>
+          ) : <><T v="h2">Free</T><T v="hint">Nobody has this van.</T></>}
+          {canSelf ? (
+            mine ? (
+              <>
+                <Button title="Drop off this van" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'dropoff' } })} />
+                <T v="small">You take all {frames.length} photos when you bring it back, then it's dropped off.</T>
+              </>
+            ) : s.myVan ? (
+              <T v="small">You have {s.myVan.name}. Drop it off first, with its photos, then you can pick up this one.</T>
+            ) : (
+              <>
+                {v.assignedTo ? (
+                  <Button title={armed === 'pick' ? `Tap again: ${v.assignedTo.driverName} no longer has it` : `Take over from ${v.assignedTo.driverName}`} onPress={() => {
+                    if (armed !== 'pick') { arm('pick'); return; }
+                    setArmed(null); router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } });
+                  }} />
+                ) : (
+                  <Button v="primary" title="Pick up this van" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } })} />
+                )}
+                <T v="small">{v.assignedTo ? `Only if you were told to take this van: ${v.assignedTo.driverName} didn't drop it off. ` : ''}You take all {frames.length} photos first, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name.</T>
+              </>
+            )
+          ) : s.role === 'driver' && !mine ? <T v="small">Your fleet manager gives out the vans at this station.</T> : null}
+          {s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : (
+            <Row>
+              <Button small v={v.assignedTo ? 'secondary' : 'primary'} title={v.assignedTo ? 'Give to someone else' : 'Give to a driver'} onPress={() => setPicking(true)} />
+              {v.assignedTo ? (
+                <Button small v="link" title={armed === 'end' ? 'Tap again: the van becomes free' : 'Make the van free'} loading={busy === 'end'} onPress={() => {
+                  if (armed !== 'end') { arm('end'); return; }
+                  act('end', () => ai.assignVan({ orgId: s.org!.id, vehicleId: v.id, driverId: null }));
+                }} />
+              ) : null}
+            </Row>
+          )) : null}
+        </Card>
+      ) : null}
 
       <DamageRecord checks={checks} />
 
@@ -74,7 +142,7 @@ export default function VehicleScreen() {
         {s.mode === 'firebase' ? (
           <>
             <T v="hint">Run one from a walk-around below, or check photos you already have.</T>
-            <Button title={busy || 'Check photos from your library'} loading={!!busy} disabled={!!busy} onPress={checkLibrary} />
+            {!v.retired ? <Button title={upload || 'Check photos from your library'} loading={!!upload} disabled={!!upload} onPress={checkLibrary} /> : null}
           </>
         ) : <T v="hint">Damage checks need the Firebase backend.</T>}
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
@@ -104,19 +172,37 @@ export default function VehicleScreen() {
         ))}
       </View>
 
+      {s.mode === 'firebase' ? (
+        <View style={{ gap: 8 }}>
+          <T v="h2">Drivers of this van</T>
+          <T v="hint">{s.role === 'driver' ? 'The times you had this van.' : 'Everyone who had this van, newest first. This history is kept for good.'}</T>
+          <Card><HistoryList rows={history.rows} error={history.error} show="driver" empty={s.role === 'driver' ? 'You haven\'t had this van yet.' : 'Nobody has had this van yet.'} /></Card>
+        </View>
+      ) : null}
+
       <FramesPanel sp={sp} title="Frames for this vehicle" />
 
       {!s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
-          <Button title="Edit details" onPress={() => setEditing(true)} />
-          {s.runs(v.stationId) ? (
-            <Button v="danger" title={armed ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
-              if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
+          {!v.retired ? <Button title="Edit details" onPress={() => setEditing(true)} /> : null}
+          {s.mode === 'local' ? (
+            <Button v="danger" title={armed === 'remove' ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
+              if (armed !== 'remove') { arm('remove'); return; }
               try { await s.store!.vehicles.remove(v.id); router.replace('/'); } catch { setErr('Couldn\'t remove the vehicle.'); }
             }} />
-          ) : null}
+          ) : v.retired ? (
+            <Button title="Bring back into the fleet" loading={busy === 'retire'} onPress={() => act('retire', () => ai.retireVan({ orgId: s.org!.id, vehicleId: v.id, restore: true }))} />
+          ) : (
+            <Button v="danger" title={armed === 'retire' ? 'Tap again to retire' : 'Retire van'} loading={busy === 'retire'} onPress={() => {
+              if (armed !== 'retire') { arm('retire'); return; }
+              act('retire', () => ai.retireVan({ orgId: s.org!.id, vehicleId: v.id }));
+            }} />
+          )}
         </Row>
       )}
+      {s.runs(v.stationId) && s.mode === 'firebase' && !v.retired && !editing ? (
+        <T v="small">Retiring takes a van out of the fleet (sold, returned, written off). Vans are never deleted: their checks and driver history stay.</T>
+      ) : null}
       {s.mode === 'local' ? <Notice text="Saved on this phone only until Firebase is connected." /> : null}
     </Screen>
   );
@@ -142,12 +228,13 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
     try {
       await s.store!.vehicles.update(v.id, {
         name: name.trim().slice(0, 60), plate: plate.trim().toUpperCase().slice(0, 14), cls, rear,
-        ...(station && station !== v.stationId ? { stationId: station } : {}),
         slideL: vans ? sd[0] : 'no', slideR: vans ? sd[1] : 'no',
         ...(CLS[cls].body !== CLS[v.cls].body ? { roof: 'unknown' as const } : {}),
       });
+      // Moving to another station ends the van's assignment (its driver stays at theirs): done on the server.
+      if (station && station !== v.stationId) await ai.moveVan({ orgId: s.org!.id, vehicleId: v.id, stationId: station });
       onDone();
-    } catch { setErr('Couldn\'t save the changes.'); } finally { setBusy(false); }
+    } catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t save the changes.'); } finally { setBusy(false); }
   };
   return (
     <Card>
@@ -162,7 +249,8 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
           <Row>{([['right', 'Right side'], ['left', 'Left side'], ['both', 'Both sides'], ['none', 'None'], ['unknown', 'Not sure']] as const).map(([k, t]) => <Chip key={k} text={t} on={slide === k} onPress={() => setSlide(k)} />)}</Row></>
       ) : null}
       {s.role === 'owner' && s.stations.length > 1 ? (
-        <><T v="medium">Station</T><Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={st.id === station} onPress={() => setStation(st.id)} />)}</Row></>
+        <><T v="medium">Station</T><Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={st.id === station} onPress={() => setStation(st.id)} />)}</Row>
+          {station !== v.stationId && v.assignedTo ? <T v="hint" color={c.alert}>{v.assignedTo.driverName} stays at {s.stationName(v.stationId)}, so the van becomes free.</T> : null}</>
       ) : null}
       <T v="medium">Rear</T>
       <Row>{(Object.keys(REAR_PILL) as RearKind[]).map((k) => <Chip key={k} text={REAR_PILL[k]} on={rear === k} onPress={() => setRear(k)} />)}</Row>

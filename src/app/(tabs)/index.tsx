@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
+import { sinceText } from '@/components/history';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, approvedDamage, type Check } from '@/lib/types';
@@ -11,9 +12,18 @@ export default function Fleet() {
   const s = useSession();
   const c = useColors();
   const [only, setOnly] = useState<string | null>(null);
+  const [show, setShow] = useState<'all' | 'free' | 'taken' | 'retired'>('all');
+  const selfOn = (stationId: string | null | undefined) => !!s.stations.find((st) => st.id === stationId)?.selfAssign;
+  const canDrop = !!s.myVan && selfOn(s.myVan.stationId) && !s.runs(s.myVan.stationId);
   const showStations = s.myStations.length > 1;
-  const vans = s.vehicles.filter((v) => !only || v.stationId === only);
-  const count = vans.length;
+  const here = s.vehicles.filter((v) => !only || v.stationId === only);
+  const active = here.filter((v) => !v.retired);
+  const free = active.filter((v) => !v.assignedTo);
+  const taken = active.filter((v) => v.assignedTo);
+  const retired = here.filter((v) => v.retired);
+  const tracking = s.mode === 'firebase' && s.staff;
+  const vans = !tracking ? active : show === 'free' ? free : show === 'taken' ? taken : show === 'retired' ? retired : active;
+  const count = active.length;
   const canAdd = s.staff && (s.role === 'owner' || s.myStations.some((st) => s.runs(st.id)));
   const where = s.mode === 'local' ? 'Test mode, saved on this phone'
     : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : `${s.stations.length} stations`) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
@@ -38,6 +48,34 @@ export default function Fleet() {
           <Chip text="All stations" on={!only} onPress={() => setOnly(null)} />
           {s.myStations.map((st) => <Chip key={st.id} text={st.name} on={only === st.id} onPress={() => setOnly(st.id)} />)}
         </Row>
+      ) : null}
+      {s.myVan ? (
+        <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
+          <T v="medium" color="#000">Your van</T>
+          <T v="h2" color="#000">{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
+          <T v="small" color="#000">{sinceText(s.myVan.assignedTo!.since)}</T>
+          <Row>
+            <Button small v="primary" title="Start scanning" onPress={() => router.push(`/scan/${s.myVan!.id}`)} />
+            {canDrop ? <Button small title="Drop off" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: s.myVan!.id, handover: 'dropoff' } })} /> : null}
+          </Row>
+        </Pressable>
+      ) : null}
+      {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
+        <Notice text="Pick up the van you were told to take: open it below, tap Pick up and take its photos. When you bring it back, drop it off here, with photos again." />
+      ) : null}
+      {s.mode === 'firebase' && s.user ? (
+        <Button small v="link" title={s.staff ? 'Your own van history' : 'Vans you had'} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
+      ) : null}
+      {tracking && s.loaded.vehicles && count + retired.length ? (
+        <Row>
+          <Chip text={`All (${active.length})`} on={show === 'all'} onPress={() => setShow('all')} />
+          <Chip text={`Free (${free.length})`} on={show === 'free'} onPress={() => setShow('free')} />
+          <Chip text={`With a driver (${taken.length})`} on={show === 'taken'} onPress={() => setShow('taken')} />
+          {retired.length ? <Chip text={`Retired (${retired.length})`} on={show === 'retired'} onPress={() => setShow('retired')} /> : null}
+        </Row>
+      ) : null}
+      {tracking && s.loaded.vehicles && count && !vans.length ? (
+        <T v="hint">{show === 'free' ? 'Every van has a driver.' : show === 'taken' ? 'No van has a driver yet. Open a van to give it to one.' : 'Nothing here.'}</T>
       ) : null}
       {!s.loaded.vehicles ? <ActivityIndicator color={c.ink} style={{ marginTop: 24 }} /> : null}
       {s.loaded.vehicles && !count ? (
@@ -66,8 +104,15 @@ export default function Fleet() {
               <T v="h3" numberOfLines={2}>{v.name}</T>
               {v.plate ? <Plate text={v.plate} /> : null}
               <T v="hint">{[CLS[v.cls].name, showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
+              {tracking && !v.retired ? (
+                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : 'Free'}</T>
+              ) : null}
               <T v="hint">{last ? 'Last walk-around ' + fmtWhen(last.createdAt) : 'No walk-around yet'}</T>
               <Row gap={6}>
+                {tracking && !v.retired && !v.assignedTo ? <Pill v="good" text="Free" /> : null}
+                {v.retired ? <Pill v="muted" text="Retired" /> : null}
+                {!tracking && v.assignedTo?.driverId === s.user?.uid ? <Pill v="solid" text="Your van" /> : null}
+                {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? 'In use' : 'Free'} /> : null}
                 {k?.status === 'submitted' ? <Pill v="amber" text="Waiting for review" /> : null}
                 {k?.status === 'checking' ? <Pill v="muted" text="Close-ups pending" /> : null}
                 {damages ? <Pill v="bad" text={`${damages} approved damage${damages === 1 ? '' : 's'}`} /> : null}

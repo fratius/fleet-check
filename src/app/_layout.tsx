@@ -27,6 +27,7 @@ function Routes() {
         <Stack.Screen name="vehicle/[id]" />
         <Stack.Screen name="walk/[id]" />
         <Stack.Screen name="check/[id]" />
+        <Stack.Screen name="person/[uid]" />
         <Stack.Screen name="scan/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />
       </Stack.Protected>
       <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>

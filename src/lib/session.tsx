@@ -9,7 +9,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { fb } from './firebase';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Check, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -37,6 +37,10 @@ interface Session {
   runs(stationId: string | null | undefined): boolean;
   store: Store | null;
   vehicles: Vehicle[]; walks: Walkaround[]; checks: Check[]; scans: Scan[];
+  /** Recent assignments (the latest 500 in scope). Full history per van or person: watchHistory. */
+  assignments: Assignment[];
+  /** The van this person drives now, if any. */
+  myVan: Vehicle | null;
   loaded: { vehicles: boolean; walks: boolean; checks: boolean; scans: boolean; stations: boolean };
   dataError: string | null;
   /** AI model for this company's checks. The owner sets it for everyone. */
@@ -47,8 +51,8 @@ interface Session {
   createOrg(company: string, station: string): Promise<void>;
   /** Uses an invite link (one person, 24 hours) with the person's details. */
   joinWithLink(token: string, details: JoinDetails): Promise<{ orgName: string; role: string; stationName: string }>;
-  /** Makes (or reopens) the person's demo company with made-up stations, people, vans and checks. */
-  openDemo(): Promise<void>;
+  /** Makes (or reopens) the person's demo company with made-up stations, people, vans and checks. `fresh` starts it over. */
+  openDemo(fresh?: boolean): Promise<void>;
   /** Removes the open demo company. */
   removeDemo(): Promise<void>;
   switchOrg(orgId: string): Promise<void>;
@@ -180,9 +184,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return r;
   }, [load]);
 
-  const openDemo = useCallback(async () => {
+  const openDemo = useCallback(async (fresh = false) => {
     const u = fb()!.auth.currentUser || fbUser.current!;
-    const r = await ai.createDemoCompany({});
+    if (fresh) setStatus('loading');
+    const r = await ai.createDemoCompany(fresh ? { fresh: true } : {}).catch(async (e) => { if (fresh) await load(u).catch(() => setStatus('needsOrg')); throw e; });
     await load(u, r.orgId);
   }, [load]);
 
@@ -215,21 +220,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const staff = role === 'owner' || role === 'manager';
   // Owners (and the app creator) read every station; managers and drivers only their own.
   const scopeKey = role === 'owner' ? '*' : (member?.stationIds || []).join(',');
+  const driverOnly = role === 'driver' ? user?.uid || null : null;
   const store = useMemo(() => {
     if (status !== 'ready') return null;
     if (mode === 'local') return makeStore(null);
-    return makeStore(org?.id || null, scopeKey === '*' ? null : scopeKey ? scopeKey.split(',') : []);
-  }, [status, mode, org?.id, scopeKey]);
+    return makeStore(org?.id || null, scopeKey === '*' ? null : scopeKey ? scopeKey.split(',') : [], driverOnly);
+  }, [status, mode, org?.id, scopeKey, driverOnly]);
 
   const [stations, setStations] = useState<Station[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [walks, setWalks] = useState<Walkaround[]>([]);
   const [checks, setChecks] = useState<Check[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
-    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]);
+    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setAssignments([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -239,6 +246,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.vehicles.subscribe((r) => { setVehicles(r); setLoaded((l) => ({ ...l, vehicles: true })); }, err),
       store.walks.subscribe((r) => { setWalks(r); setLoaded((l) => ({ ...l, walks: true })); }, err),
       store.checks.subscribe((r) => { setChecks(r); setLoaded((l) => ({ ...l, checks: true })); }, err),
+      store.assignments.subscribe((r) => setAssignments(r), () => {}),
     ];
     if (staff) subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
     else setLoaded((l) => ({ ...l, scans: true }));
@@ -269,9 +277,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return role === 'manager' && !!stationId && (member?.stationIds || []).includes(stationId);
   }, [role, member]);
 
+  const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks, scans, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks, scans, assignments, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

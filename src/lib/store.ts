@@ -6,7 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Check, IdentifyResult, Invite, InvitePeek, JoinDetails, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
+import type { Assignment, Check, IdentifyResult, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -20,15 +20,17 @@ export interface Coll<T extends { id: string }> {
  * A company collection. With `stations`, only records of those stations are read: managers and
  * drivers may only query their own stations (the rules check it), owners read everything.
  */
-function fsColl<T extends { id: string }>(orgId: string, name: string, stations: string[] | null = null): Coll<T> {
+function fsColl<T extends { id: string }>(orgId: string, name: string, stations: string[] | null = null, mine: string | null = null): Coll<T> {
   const f = fb()!;
   const base = collection(f.db, 'orgs', orgId, name);
   return {
     subscribe(cb, onError) {
-      if (stations && !stations.length) { cb([]); return () => {}; }
-      const q = stations
-        ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
-        : query(base, orderBy('createdAt', 'desc'), limit(500));
+      if (stations && !stations.length && !mine) { cb([]); return () => {}; }
+      const q = mine
+        ? query(base, where('driverId', '==', mine), orderBy('createdAt', 'desc'), limit(500))
+        : stations
+          ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
+          : query(base, orderBy('createdAt', 'desc'), limit(500));
       return onSnapshot(q,
         (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)),
         (e) => onError?.(e));
@@ -84,16 +86,22 @@ export interface Store {
   walks: Coll<Walkaround>;
   checks: Coll<Check>;
   scans: Coll<Scan>;
+  /** Recent van assignments: the station's for owners and managers, their own for drivers. */
+  assignments: Coll<Assignment>;
 }
 
-/** `scope`: the stations this person may read, or null for everything (owner, app creator). */
-export function makeStore(orgId: string | null, scope: string[] | null = null): Store {
+/**
+ * `scope`: the stations this person may read, or null for everything (owner, app creator).
+ * `driverId`: set for drivers, who only read their own assignments.
+ */
+export function makeStore(orgId: string | null, scope: string[] | null = null, driverId: string | null = null): Store {
   if (fb() && orgId) {
     return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
-      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans') };
+      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'),
+      assignments: fsColl(orgId, 'assignments', scope, driverId) };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
-    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans') };
+    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), assignments: localColl('assignments') };
 }
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
@@ -135,7 +143,15 @@ export const ai = {
   createInvite: call<{ orgId: string; role: 'manager' | 'driver'; stationId: string; count: number }, { invites: Invite[] }>('createInvite', 40000),
   peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
   acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
-  createDemoCompany: call<Record<string, never>, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
+  createDemoCompany: call<{ fresh?: boolean }, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
+  assignVan: call<{ orgId: string; vehicleId: string; driverId: string | null }, { assignmentId: string | null; unchanged?: boolean }>('assignVan', 30000),
+  retireVan: call<{ orgId: string; vehicleId: string; restore?: boolean }, { ok: boolean }>('retireVan', 30000),
+  moveVan: call<{ orgId: string; vehicleId: string; stationId: string }, { ok: boolean }>('moveVan', 30000),
+  removePerson: call<{ orgId: string; uid: string }, { ok: boolean }>('removePerson', 30000),
+  setSelfAssign: call<{ orgId: string; stationId: string; on: boolean }, { ok: boolean }>('setSelfAssign', 30000),
+  pickUpVan: call<{ orgId: string; vehicleId: string; walkId: string }, { assignmentId: string; unchanged?: boolean; tookOverFrom?: string | null }>('pickUpVan', 60000),
+  dropOffVan: call<{ orgId: string; vehicleId: string; walkId: string }, { ok: boolean }>('dropOffVan', 60000),
+  changePerson: call<{ orgId: string; uid: string; role?: Role; stationId?: string }, { ok: boolean }>('changePerson', 30000),
   deleteDemoCompany: call<{ orgId: string }, { ok: boolean }>('deleteDemoCompany', 130000),
   submitCheck: call<{ orgId: string; checkId: string; missedNote: string }, { ok: boolean }>('submitCheck', 40000),
   setupStations: call<{ orgId: string }, { done: boolean; stationId?: string }>('setupStations', 130000),

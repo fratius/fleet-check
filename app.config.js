@@ -13,6 +13,12 @@ module.exports = ({ config }) => {
   if (process.env.FIREBASE_WEB_CONFIG && !(extra.firebase && extra.firebase.apiKey)) {
     extra.firebase = JSON.parse(process.env.FIREBASE_WEB_CONFIG);
   }
+  // FLEET_EMULATORS=1 points the app at the Firebase emulators on this computer (npm run emulators):
+  // sign-in, data, photos and functions all stay local, under a demo project that never touches the real one.
+  if (process.env.FLEET_EMULATORS === '1') {
+    extra.firebase = { ...(extra.firebase || {}), apiKey: 'demo-key', appId: '1:1:web:1', projectId: 'demo-fleet-check', authDomain: 'demo-fleet-check.firebaseapp.com', storageBucket: 'demo-fleet-check.appspot.com' };
+    extra.emulators = process.env.FLEET_EMULATOR_HOST || '127.0.0.1';
+  }
   const projectId = (extra.eas && extra.eas.projectId) || process.env.EAS_PROJECT_ID;
   if (projectId) {
     extra.eas = { ...(extra.eas || {}), projectId };

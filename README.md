@@ -12,8 +12,9 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 | | App creator | Fleet owner | Fleet manager | Driver |
 |---|---|---|---|---|
 | Sees | every company | all stations of their companies | their station | vans of their station |
-| Vans | everything | add, edit, move, remove | add, edit, remove at their station | scan |
+| Vans | everything | add, edit, move, retire, give to drivers | add, edit, retire, give to drivers at their station | scan; pick up and drop off where the station allows it |
 | People | everything | stations, managers, drivers, invite links | drivers of their station, driver links | none |
+| History | everything | every van and driver | their station | their own vans |
 | Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
 | AI model and test log | everything | sets the model, sees the log | sees the log | none |
 
@@ -23,11 +24,17 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - The rules are tested on every deploy (`tests/rules.test.mjs` on the Firestore emulator) before anything goes live.
 - The full access model and the checklist for new features are in [ROLES.md](ROLES.md).
 
+## Vans, drivers and history
+
+- **Fleet** shows which vans are free and which have a driver, and who. Open a van to give it to a driver or make it free; open a person (People) to give them a van. One van per driver, one driver per van.
+- **History is kept for good:** each van lists every driver it had, each person every van they had, with the dates, who handed it over and why it ended. Nobody can edit or delete it, not even the owner. Vans are retired, not deleted; people who leave keep their history.
+- **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need the van's full photo set, taken with the camera; the photos are linked from the history.
+
 ## Try it with demo data
 
-**Account > Demo company > Open the demo company** (owners and managers; also on the first screen for new accounts) makes a separate company "Demo DSP (test data)": two stations, two fleet managers, eight drivers, twelve vans, walk-arounds and damage checks waiting for review, at the van and reviewed. The people are made up and can't sign in, the photos are drawings and no AI is used. Switch back to your real company under Account; remove the demo company there when you're done.
+**Account > Demo company > Open the demo company** (owners and managers; also on the first screen for new accounts) makes a separate company "Demo DSP (test data)": two stations, fleet managers, drivers, twelve vans with a month of driver history, walk-arounds and damage checks waiting for review, at the van and reviewed. At the first station drivers pick up their vans themselves; at the second the manager hands them out. The photos are drawings and no AI is used. Switch back to your real company under Account; remove the demo company there when you're done.
 
-To try the driver side yourself, make a driver link in the demo company and open it in a private browser window with another email address.
+Two of the made-up people can sign in: a driver and a fleet manager. Their email and password are on the Demo card under Account. Use them in a private browser window to see the app as they do. **Start the demo over** makes everything new, including those logins.
 
 ## Set it up (once)
 
@@ -107,7 +114,9 @@ npx expo start          # press w for the web, or scan the QR code with Expo Go 
 
 The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 npx expo start --clear` for **test mode** instead: no sign-in, data stays on the device, AI checks are off. Fleet, frames and the camera all work. Add `FLEET_TEST_ROLE=manager` or `driver` to see the app as that role.
 
-Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` runs the Test workflow (rules on the emulator, type checks).
+Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` runs the Test workflow (rules on the emulator, the van history flow end to end, type checks).
+
+**Everything on your computer, no real data:** `npm run emulators` (needs Java 21) starts the Firebase emulators for sign-in, data, photos and functions, under a demo project that never touches the real one. In a second terminal, `npm run web:emulators` opens the web app against them. Put any text in `functions/.secret.local` as `ANTHROPIC_API_KEY=...` first (AI checks need a real key; nothing else does).
 
 ## Project layout
 

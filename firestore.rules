@@ -6,6 +6,7 @@ rules_version = '2';
 //   Owner        member role "owner" (or "admin", its older name). Everything in the company.
 //   Manager      member role "manager". Vans, walk-arounds, checks and drivers of their stations; approves damage.
 //   Driver       member role "driver". Reads the vans of their stations and saves walk-arounds.
+// History (who had which van, walk-arounds, damage checks) is never deleted.
 // Type scans and damage checks are written by the server (Cloud Functions). Managers add the review.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -50,11 +51,15 @@ service cloud.firestore {
       allow list: if creator();
       allow create: if signedIn() && request.resource.data.createdBy == me();
       allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy;
-      allow delete: if creator();
+      // Companies aren't deleted from the app (demo companies are removed by the server).
 
       match /stations/{stationId} {
         allow read: if member(orgId) || creator();
-        allow create, update, delete: if owner(orgId);
+        // Owners add, rename and remove stations. Whether drivers pick up and drop off vans themselves
+        // (selfAssign) is set on the server (setSelfAssign), which records who changed it and when.
+        allow create: if owner(orgId) && !request.resource.data.keys().hasAny(['selfAssign', 'selfAssignBy', 'selfAssignAt']);
+        allow update: if owner(orgId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'code']);
+        allow delete: if owner(orgId);
       }
 
       match /members/{uid} {
@@ -63,32 +68,37 @@ service cloud.firestore {
         // The person who created the company becomes its first owner.
         allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
-        // People join through invite links (the server adds them). Owners change roles and stations of others;
-        // nobody changes their own.
-        allow update: if owner(orgId) && uid != me()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'stationIds'])
-          && request.resource.data.role in ['owner', 'manager', 'driver'];
+        // People join through invite links (the server adds them). Roles, stations and removals go through the
+        // server too (changePerson, removePerson): it ends the person's van assignment so the history stays right.
         // Everyone keeps their own contact details up to date.
         allow update: if signedIn() && uid == me()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'firstName', 'lastName', 'phone', 'transporterId']);
-        // Owners remove anyone else; managers remove drivers of their station; anyone can leave.
-        allow delete: if (owner(orgId) && uid != me())
-          || (manager(orgId) && resource.data.role == 'driver' && resource.data.get('stationIds', []).hasAny(stationsOf(orgId)))
-          || (signedIn() && uid == me() && !(resource.data.role in ['owner', 'admin']));
       }
 
+      // Vans are never deleted (their history must stay): they are retired by the server (retireVan).
+      // Who drives a van (assignedTo), retiring and moving between stations are done by the server too.
       match /vehicles/{id} {
         allow read: if at(orgId, resource.data.stationId);
-        allow create: if runs(orgId, request.resource.data.stationId);
-        allow update: if runs(orgId, resource.data.stationId) && runs(orgId, request.resource.data.stationId);
-        allow delete: if runs(orgId, resource.data.stationId);
+        allow create: if runs(orgId, request.resource.data.stationId)
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy']);
+        allow update: if runs(orgId, resource.data.stationId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy']);
+      }
+
+      // Who had which van, when. Written only by the server (assignVan and friends), never edited or deleted:
+      // this is the permanent history of every van and every driver. Owners and managers of the station read
+      // it; drivers read their own.
+      match /assignments/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.driverId == me());
       }
 
       match /walkarounds/{id} {
         allow read: if at(orgId, resource.data.stationId);
         allow create: if at(orgId, request.resource.data.stationId)
-          && (request.resource.data.createdBy == me() || creator());
-        allow delete: if runs(orgId, resource.data.stationId);
+          && (request.resource.data.createdBy == me() || creator())
+          && !request.resource.data.keys().hasAny(['handover']);
+        // No edits or deletes: walk-arounds are part of the van's and the driver's history. Only the server marks
+        // one as the photos of a pick-up or drop-off (handover).
       }
 
       match /checks/{id} {
@@ -96,7 +106,7 @@ service cloud.firestore {
         // Only the review (and the status it sets) can be written from the app, and only by a manager of the station.
         allow update: if runs(orgId, resource.data.stationId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['review', 'status', 'reviewedAt']);
-        allow delete: if owner(orgId);
+        // No deletes: damage checks are part of the van's and the driver's history.
       }
 
       match /scans/{id} {

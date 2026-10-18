@@ -2,9 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getApp, getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from 'firebase/app';
 import * as FirebaseAuth from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
-import { getFunctions, type Functions } from 'firebase/functions';
-import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
+import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
 
 /** Region of the Cloud Functions: Iowa, next to the US Firestore database and Storage bucket. */
@@ -45,5 +45,13 @@ export function fb(): FB | null {
     }
   }
   cached = { app, auth, db: getFirestore(app), storage: getStorage(app), functions: getFunctions(app, REGION) };
+  // Local emulators (FLEET_EMULATORS=1, see README): the ports in firebase.json.
+  const host = (Constants.expoConfig?.extra as { emulators?: string } | undefined)?.emulators;
+  if (host) {
+    FirebaseAuth.connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
+    connectFirestoreEmulator(cached.db, host, 8080);
+    connectStorageEmulator(cached.storage, host, 9199);
+    connectFunctionsEmulator(cached.functions, host, 5001);
+  }
   return cached;
 }

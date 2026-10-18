@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, View } from 'react-native';
 
 import { Button, Card, Chip, Field, Notice, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
-import { addStation, deleteInvite, deleteStation, inviteUrl, removeMember, renameStation, setMember, watchInvites, watchMembers } from '@/lib/people';
+import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchInvites, watchMembers } from '@/lib/people';
+import { ManagePerson, manageRights } from '@/components/person';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
-import { ROLE_NAME, roleOf, type Invite, type Member, type Station } from '@/lib/types';
+import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
@@ -48,6 +50,7 @@ export default function People() {
         </Card>
       ) : null}
       {owner ? <Unassigned members={(members || []).filter((m) => roleOf(m) !== 'owner' && !(m.stationIds || []).some((id) => s.stations.some((st) => st.id === id)))} /> : null}
+      {members ? <Former members={members} /> : null}
       {!members && !err ? <T v="hint">Loading…</T> : null}
     </Screen>
   );
@@ -144,8 +147,41 @@ function StationPeople({ station, members, invites }: { station: Station; member
       ) : null}
       <T v="h3">Drivers</T>
       {drivers.length ? drivers.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No drivers yet.</T>}
+      {s.runs(station.id) ? <SelfAssign station={station} /> : null}
       <InviteLinks station={station} role="driver" invites={invites.filter((i) => i.role === 'driver')} />
     </Card>
+  );
+}
+
+/**
+ * Whether drivers of this station pick up and drop off vans themselves (for DSPs that assign vans in Amazon's
+ * tools and just tell drivers which one to take). Owners and the station's managers switch it; off by default.
+ */
+function SelfAssign({ station }: { station: Station }) {
+  const s = useSession();
+  const c = useColors();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const on = !!station.selfAssign;
+  const set = async (next: boolean) => {
+    if (next === on) return;
+    setBusy(true); setErr(null);
+    try { await ai.setSelfAssign({ orgId: s.org!.id, stationId: station.id, on: next }); }
+    catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t save that.'); } finally { setBusy(false); }
+  };
+  return (
+    <View style={{ gap: 8, backgroundColor: c.page, borderRadius: 4, padding: 10, opacity: busy ? 0.6 : 1 }}>
+      <T v="medium">Who hands out the vans</T>
+      <Row>
+        <Chip text="Fleet managers" on={!on} onPress={() => (busy ? null : set(false))} />
+        <Chip text="Drivers pick up themselves" on={on} onPress={() => (busy ? null : set(true))} />
+      </Row>
+      <T v="small">{on
+        ? 'Drivers tap Pick up on the van they were told to take and Drop off when they bring it back. Every pick-up is in the van\'s history under the driver\'s name. You can still give vans out yourself.'
+        : 'Only you and the other fleet managers give vans to drivers. Turn on driver pick-up if you assign vans elsewhere (for example in Amazon\'s tools) and just tell drivers which one to take.'}</T>
+      {station.selfAssignBy ? <T v="small">Last changed by {station.selfAssignBy}, {fmtWhen(station.selfAssignAt)}.</T> : null}
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+    </View>
   );
 }
 
@@ -201,53 +237,59 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
   );
 }
 
+/** One person: tap to open their page (details, van and history); the + opens role, station and removal. */
 function PersonRow({ m, first }: { m: Member; first: boolean }) {
   const s = useSession();
   const c = useColors();
   const [open, setOpen] = useState(false);
-  const [armed, setArmed] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const r = roleOf(m)!;
   const me = m.uid === s.user?.uid;
-  const owner = s.role === 'owner';
-  // Owners remove anyone but themselves; managers remove drivers of their station.
-  const canRemove = !me && (owner || (r === 'driver' && (m.stationIds || []).some((id) => s.runs(id))));
-  const canEdit = owner && !me;
-  const act = async (fn: () => Promise<void>) => { setErr(null); try { await fn(); } catch { setErr('Couldn\'t save that change.'); } };
+  const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
+  const { canEdit, canRemove } = manageRights(s, m);
   return (
     <View style={{ gap: 6, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 8 }}>
-      <Pressable disabled={!canEdit && !canRemove} onPress={() => setOpen(!open)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
-          <T v="small" numberOfLines={1}>{[m.phone, m.transporterId ? `TID ${m.transporterId}` : '', m.email].filter(Boolean).join(', ')}</T>
-        </View>
-        <Pill v={r === 'owner' ? 'solid' : 'default'} text={ROLE_NAME[r]} />
-        {canEdit || canRemove ? <T v="h3" color={c.ink2}>{open ? '–' : '+'}</T> : null}
-      </Pressable>
-      {open ? (
-        <View style={{ gap: 8, paddingBottom: 4 }}>
-          {canEdit ? (
-            <>
-              <T v="small">Role</T>
-              <Row>{(['owner', 'manager', 'driver'] as const).map((k) => <Chip key={k} text={ROLE_NAME[k]} on={r === k} onPress={() => act(() => setMember(s.org!.id, m.uid, { role: k }))} />)}</Row>
-              {r !== 'owner' ? (
-                <>
-                  <T v="small">Station</T>
-                  <Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={(m.stationIds || []).includes(st.id)} onPress={() => act(() => setMember(s.org!.id, m.uid, { stationIds: [st.id] }))} />)}</Row>
-                </>
-              ) : null}
-            </>
-          ) : null}
-          {canRemove ? (
-            <Button small v="danger" title={armed ? 'Tap again to remove' : `Remove from ${s.org?.name}`} onPress={() => {
-              if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
-              act(() => removeMember(s.org!.id, m.uid));
-            }} />
-          ) : null}
-          {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-        </View>
-      ) : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${m.name}, open`} onPress={() => router.push(`/person/${m.uid}`)} style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
+            <T v="small" numberOfLines={1}>{r === 'owner' ? [m.phone, m.email].filter(Boolean).join(', ') : van ? `Van: ${van.name}${van.plate ? ', ' + van.plate : ''}` : 'No van'}</T>
+          </View>
+          <Pill v={r === 'owner' ? 'solid' : 'default'} text={ROLE_NAME[r]} />
+          <T v="h3" color={c.ink2}>›</T>
+        </Pressable>
+        {canEdit || canRemove ? <Button small v="link" title={open ? 'Close' : 'Manage'} onPress={() => setOpen(!open)} /> : null}
+      </View>
+      {open ? <ManagePerson m={m} onDone={() => setOpen(false)} /> : null}
     </View>
+  );
+}
+
+/** People who had vans here but have left the company. Their history stays; open them to see it. */
+function Former({ members }: { members: Member[] }) {
+  const s = useSession();
+  const c = useColors();
+  const rows = useMemo(() => {
+    const here = new Set(members.map((m) => m.uid));
+    const last = new Map<string, Assignment>();
+    for (const a of s.assignments) if (!here.has(a.driverId) && (!last.has(a.driverId) || last.get(a.driverId)!.start < a.start)) last.set(a.driverId, a);
+    return [...last.values()].sort((a, b) => (b.end || 0) - (a.end || 0));
+  }, [members, s.assignments]);
+  if (!rows.length) return null;
+  return (
+    <Card>
+      <T v="h3">Former people</T>
+      <T v="hint">They left the company. Their van history stays.</T>
+      {rows.map((a, i) => (
+        <Pressable key={a.driverId} onPress={() => router.push(`/person/${a.driverId}`)}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <T v="medium" numberOfLines={1}>{a.driverName}</T>
+            <T v="small" numberOfLines={1}>Last van: {a.vehicleName}, until {fmtWhen(a.end)}</T>
+          </View>
+          <T v="h3" color={c.ink2}>›</T>
+        </Pressable>
+      ))}
+    </Card>
   );
 }
 

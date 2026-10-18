@@ -40,9 +40,32 @@ jobs:
       - name: Run the rules tests on the Firestore emulator
         run: npx -y "$FIREBASE_TOOLS" emulators:exec --only firestore --project demo-fleet "npm --prefix tests test"
 
+  history-test:
+    name: Van history, end to end
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - name: Assignments, pick-up photos and history on the emulators (sign-in, rules, functions, storage)
+        shell: bash
+        run: |
+          echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
+      - name: Show failures
+        if: always()
+        run: |
+          grep -E "^not ok|# (pass|fail)" history.log | while read -r l; do echo "::notice title=History::$l"; done || true
+
   backend:
     name: Rules and AI functions
-    needs: rules-test
+    needs: [rules-test, history-test]
     runs-on: ubuntu-24.04
     steps:
       - name: Check the secrets are there
@@ -107,6 +130,8 @@ jobs:
 
   web:
     name: Web app
+    # The app goes live only after the tests passed and the rules and functions it calls are deployed.
+    needs: backend
     runs-on: ubuntu-24.04
     steps:
       - name: Check the secret is there
@@ -139,6 +164,8 @@ jobs:
 
   phone:
     name: Phone app (Expo Go)
+    # The app goes live only after the tests passed and the rules and functions it calls are deployed.
+    needs: backend
     runs-on: ubuntu-24.04
     steps:
       - name: Check the secret is there

@@ -127,14 +127,42 @@ function Demo() {
   const [busy, setBusy] = useState(false);
   const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [again, setAgain] = useState(false);
   const inDemo = !!s.org?.demo;
+  const mine = inDemo && s.org?.createdBy === s.user?.uid;
+  const logins = s.org?.demoLogins || [];
   const go = async (fn: () => Promise<void>) => { setBusy(true); setErr(null); try { await fn(); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); } };
+  if (inDemo && !mine) {
+    return (
+      <Card dashed>
+        <T v="h3">Demo account</T>
+        <T v="hint">This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.</T>
+      </Card>
+    );
+  }
   return (
     <Card dashed>
       <T v="h3">Demo company</T>
       {inDemo ? (
         <>
-          <T v="hint">You're in the demo company. The people in it are made up and can't sign in; the photos are drawings and no AI was used. Removing it deletes everything in it.</T>
+          <T v="hint">You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.</T>
+          {logins.length ? (
+            <View style={{ gap: 8, backgroundColor: c.page, borderRadius: 4, padding: 10 }}>
+              <T v="medium">Try it as someone else</T>
+              <T v="small">Two of the made-up people have real logins. Sign out and sign in with one, or use a private browser window so you stay signed in here.</T>
+              {logins.map((l) => (
+                <View key={l.uid} style={{ gap: 2 }}>
+                  <T v="small">{l.role === 'driver' ? 'Driver' : 'Fleet manager'}: {l.name}</T>
+                  <T v="body" selectable>{l.email}</T>
+                  <T v="body" selectable>Password: {l.password}</T>
+                </View>
+              ))}
+            </View>
+          ) : <T v="hint">This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.</T>}
+          <Button title={again ? 'Tap again: everything in the demo is made new' : 'Start the demo over'} loading={busy} onPress={() => {
+            if (!again) { setAgain(true); setTimeout(() => setAgain(false), 3000); return; }
+            setAgain(false); go(() => s.openDemo(true));
+          }} />
           <Button v="danger" title={armed ? 'Tap again to remove the demo company' : 'Remove the demo company'} loading={busy} onPress={() => {
             if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
             go(() => s.removeDemo());
@@ -142,7 +170,7 @@ function Demo() {
         </>
       ) : (
         <>
-          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans and damage checks in every state, to try things without touching your real fleet.</T>
+          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, and damage checks in every state, to try things without touching your real fleet. Comes with a driver and a fleet manager login.</T>
           <Button title="Open the demo company" loading={busy} onPress={() => go(() => s.openDemo())} />
         </>
       )}
