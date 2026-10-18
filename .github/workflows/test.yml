@@ -54,6 +54,7 @@ jobs:
         if: always()
         run: |
           grep -E "^not ok|# (pass|fail)" history.log | while read -r l; do echo "::notice title=History::$l"; done || true
+          grep -E -A 14 "^\s*not ok" history.log | grep -E "error|Error|code|expected|actual|failureType|message|at " | head -30 | while read -r l; do echo "::notice title=History detail::$l"; done || true
 
   types:
     name: Type checks

@@ -6,9 +6,9 @@
 //
 // Run: npx firebase-tools emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history"
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 
-import { initializeApp } from 'firebase/app';
+import { deleteApp, getApps, initializeApp } from 'firebase/app';
 import { connectAuthEmulator, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import {
   collection, connectFirestoreEmulator, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, setDoc, updateDoc, where,
@@ -60,6 +60,12 @@ async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 
   });
   return id;
 }
+
+// Close every connection at the end, or the test process stays open and the runner reports the file as failed.
+after(async () => {
+  await Promise.allSettled(getApps().map((a) => deleteApp(a)));
+  setTimeout(() => process.exit(process.exitCode || 0), 500).unref();
+});
 
 const S = {};
 const vanDoc = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'vehicles', id))).data();
