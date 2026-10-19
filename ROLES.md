@@ -82,6 +82,23 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, and the
   demo logins. Deploy stops if either fails.
 
+## The damage record of a van
+
+- Each van page shows the van in 3D with a numbered dot on every approved damage, and the damage list under it,
+  newest first. The dot is placed from where the damage is in the walk-around photo (the frame outline tells
+  which part of the van the photo shows); damage a manager added by hand is placed from its panel name (rough,
+  shown with a dashed dot).
+- **One damage is one record.** The first check that finds it starts it; when a later check finds it again, the
+  manager links it in the review ("Same as #N", which the app suggests from the position). Without the link it
+  counts as new damage.
+- **When:** between the last walk-around of the van without it and the walk-around it was found in.
+  **Who:** the drivers who had the van in that time, from the assignment history. That's who had the van, not
+  proof; the before and after photos (the same part of the van in both walk-arounds) are the proof.
+- **Who sees what:** everyone at the station sees the damage, where it is and the photos. Owners and the
+  station's managers also see who had the van and the comments. Drivers only see whether they had the van then.
+- **Comments** on a damage: owners and the station's managers write them (`orgs/{org}/damageNotes`); they are
+  kept for good, nobody edits or deletes them.
+
 ## Checklist for every change
 
 - [ ] Which roles see it? Which can change it? Write it down in the PR or commit.

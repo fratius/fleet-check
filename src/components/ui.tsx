@@ -39,12 +39,14 @@ export function T({ v = 'body', style, color, children, ...rest }: { v?: TV; col
   return <Text {...rest} style={[base[v], color ? { color } : null, style]}>{children}</Text>;
 }
 
-export function Screen({ children, scroll = true, edges = ['top'], pad = true, style }: { children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle> }) {
+export function Screen({ children, scroll = true, edges = ['top'], pad = true, style, scrollRef }: {
+  children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle>; scrollRef?: React.Ref<ScrollView>;
+}) {
   const c = useColors();
   const inner = <View style={[{ gap: 14, paddingHorizontal: pad ? 16 : 0, paddingTop: 12, paddingBottom: 32, width: '100%', maxWidth: 760, alignSelf: 'center' }, style]}>{children}</View>;
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: c.page }}>
-      {scroll ? <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>{inner}</ScrollView> : inner}
+      {scroll ? <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>{inner}</ScrollView> : inner}
     </SafeAreaView>
   );
 }
@@ -153,12 +155,16 @@ export function Photo({ src, style, contentFit = 'cover' }: { src: { uri?: strin
 }
 
 /** A photo that opens full screen when tapped, so the proof can be checked closely. */
-export function ZoomPhoto({ src, style, caption, contentFit }: { src: Parameters<typeof Photo>[0]['src']; style?: StyleProp<ViewStyle>; caption?: string; contentFit?: 'cover' | 'contain' }) {
+export function ZoomPhoto({ src, style, caption, contentFit, thumb }: {
+  src: Parameters<typeof Photo>[0]['src']; style?: StyleProp<ViewStyle>; caption?: string; contentFit?: 'cover' | 'contain';
+  /** What to show before it's opened, instead of the photo (for example a crop of it). */
+  thumb?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Pressable accessibilityRole="imagebutton" accessibilityLabel={caption ? `Open photo: ${caption}` : 'Open photo'} onPress={() => setOpen(true)}>
-        <Photo src={src} style={style} contentFit={contentFit} />
+        {thumb || <Photo src={src} style={style} contentFit={contentFit} />}
       </Pressable>
       <Modal visible={open} animationType="fade" onRequestClose={() => setOpen(false)} supportedOrientations={['portrait', 'landscape']}>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>

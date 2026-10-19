@@ -156,7 +156,8 @@ function segText(raw: string, sp: Spec, side: 'left' | 'right') {
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
 const HFOV = (67 * Math.PI) / 180, VFOV = (53 * Math.PI) / 180;
-const CA = 0.6, CK = 0.16, CL = 2.4;
+/** Corner views: the flank is foreshortened by CA, skewed by CK, and shows its first CL metres. */
+export const CA = 0.6, CK = 0.16, CL = 2.4;
 /** The scanner is portrait-only, so every frame is framed upright. */
 function measure(sp: Spec, f: Omit<Frame, 'orient' | 'dist' | 'hint'>) {
   let w: number, h: number;
@@ -331,25 +332,35 @@ function cornerParts(sp: Spec, corner: 'fl' | 'fr' | 'rl' | 'rr', st: St) {
   const prof = front ? profileInner(sp, detailSide, st)
     : `<g transform="matrix(-1,0,0,1,${r1(sp.L * 100)},0)">${profileInner(sp, detailSide, st)}</g>`;
   const side = `<g transform="matrix(${CA},${r3(-CK * CA)},0,1,0,0)"><defs><clipPath id="${id}"><rect x="0" y="${r1(-sp.H * 100 - 40)}" width="${CL * 100}" height="${r1(sp.H * 100 + 60)}"/></clipPath></defs><g clip-path="url(#${id})">${prof}</g></g>`;
-  const x0 = -2 * CA * Wh - 14, x1 = CA * CL * 100;
-  const y0 = -(sp.H * 100 + CK * Math.max(2 * CA * Wh, CA * CL * 100)), y1 = 0;
   return mirror
-    ? { inner: `<g transform="scale(-1,1)">${side}${face}</g>`, bbox: [-x1, y0, -x0, y1] as const }
-    : { inner: side + face, bbox: [x0, y0, x1, y1] as const };
+    ? { inner: `<g transform="scale(-1,1)">${side}${face}</g>`, bbox: frameBox(sp, { kind: 'corner', corner }) }
+    : { inner: side + face, bbox: frameBox(sp, { kind: 'corner', corner }) };
 }
-function frameGeom(sp: Spec, f: Frame, st: St): { inner: string; bbox: readonly [number, number, number, number] } {
+/**
+ * The drawing's bounding box for a frame, in drawing units (1 m = 100, y up is negative). The overlay fits this
+ * box into the camera view, so it also tells where on the vehicle a point of the photo is (see van3d.ts).
+ */
+export function frameBox(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'corner'>): readonly [number, number, number, number] {
   if (f.kind === 'side') {
     const L = sp.L * 100, a = f.seg![1] * L, b = f.seg![2] * L;
-    return { inner: sideView(sp, f.side!, st), bbox: f.side === 'left' ? [a, -sp.H * 100, b, 0] : [L - b, -sp.H * 100, L - a, 0] };
+    return f.side === 'left' ? [a, -sp.H * 100, b, 0] : [L - b, -sp.H * 100, L - a, 0];
   }
   if (f.kind === 'front' || f.kind === 'rear') {
     const hw = (sp.W / 2 + (f.kind === 'front' ? 0.22 : 0.04)) * 100;
-    return { inner: faceInner(sp, f.kind, st), bbox: [-hw, -sp.H * 100, hw, 0] };
+    return [-hw, -sp.H * 100, hw, 0];
   }
+  const Wh = sp.W * 50, mirror = f.corner === 'fr' || f.corner === 'rl';
+  const x0 = -2 * CA * Wh - 14, x1 = CA * CL * 100;
+  const y0 = -(sp.H * 100 + CK * Math.max(2 * CA * Wh, CA * CL * 100)), y1 = 0;
+  return mirror ? [-x1, y0, -x0, y1] : [x0, y0, x1, y1];
+}
+function frameGeom(sp: Spec, f: Frame, st: St): { inner: string; bbox: readonly [number, number, number, number] } {
+  if (f.kind === 'side') return { inner: sideView(sp, f.side!, st), bbox: frameBox(sp, f) };
+  if (f.kind === 'front' || f.kind === 'rear') return { inner: faceInner(sp, f.kind, st), bbox: frameBox(sp, f) };
   return cornerParts(sp, f.corner!, st);
 }
 /** A viewBox of the given aspect (width / height) with the box centred and filling `fill` of it. */
-function fitBox(bb: readonly number[], aspect: number, fill: number): [number, number, number, number] {
+export function fitBox(bb: readonly number[], aspect: number, fill: number): [number, number, number, number] {
   const w = bb[2] - bb[0], h = bb[3] - bb[1];
   const vbW = Math.max(w / fill, (h / fill) * aspect), vbH = vbW / aspect;
   return [(bb[0] + bb[2]) / 2 - vbW / 2, (bb[1] + bb[3]) / 2 - vbH / 2, vbW, vbH];

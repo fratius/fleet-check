@@ -3,7 +3,7 @@ import {
 } from 'firebase/firestore';
 
 import { fb } from './firebase';
-import type { Assignment, Invite, Member, Org, Walkaround } from './types';
+import type { Assignment, Check, DamageNote, Invite, Member, Org, Walkaround } from './types';
 
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
@@ -20,6 +20,11 @@ export async function fetchWalk(orgId: string, id: string): Promise<Walkaround |
     const d = await getDoc(doc(db(), 'orgs', orgId, 'walkarounds', id));
     return d.exists() ? ({ id: d.id, ...(d.data() as Omit<Walkaround, 'id'>) }) : null;
   } catch { return null; }
+}
+
+/** One damage check by id, live; null when it isn't there or can't be read. */
+export function watchCheck(orgId: string, id: string, cb: (k: Check | null) => void) {
+  return onSnapshot(doc(db(), 'orgs', orgId, 'checks', id), (d) => cb(d.exists() ? ({ id: d.id, ...(d.data() as Omit<Check, 'id'>) }) : null), () => cb(null));
 }
 
 /** One person's membership; null once they've left the company. */
@@ -84,4 +89,34 @@ export function watchHistory(orgId: string, by: { vehicleId?: string; driverId?:
   const q = stations ? query(base, f, where('stationId', 'in', stations.slice(0, 30)), orderBy('start', 'desc'), limit(300))
     : query(base, f, orderBy('start', 'desc'), limit(300));
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Assignment, 'id'>) }))), () => onError?.());
+}
+
+/**
+ * All walk-arounds and damage checks of one van, newest first (up to 300 each), for its damage record. Owners
+ * read everything; managers and drivers what's at their stations.
+ */
+export function watchVanRecords(orgId: string, vehicleId: string, stations: string[] | null,
+  cb: (r: { walks: Walkaround[] | null; checks: Check[] | null }) => void, onError?: () => void) {
+  let walks: Walkaround[] | null = null, checks: Check[] | null = null;
+  const q = (name: string) => {
+    const base = collection(db(), 'orgs', orgId, name);
+    return stations ? query(base, where('vehicleId', '==', vehicleId), where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(300))
+      : query(base, where('vehicleId', '==', vehicleId), orderBy('createdAt', 'desc'), limit(300));
+  };
+  if (stations && !stations.length) { cb({ walks: [], checks: [] }); return () => {}; }
+  const a = onSnapshot(q('walkarounds'), (snap) => { walks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Walkaround, 'id'>) })); cb({ walks, checks }); }, () => onError?.());
+  const b = onSnapshot(q('checks'), (snap) => { checks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Check, 'id'>) })); cb({ walks, checks }); }, () => onError?.());
+  return () => { a(); b(); };
+}
+
+/** Comments on a van's damage, oldest first. Owners and the station's managers only. */
+export function watchDamageNotes(orgId: string, vehicleId: string, stations: string[] | null, cb: (rows: DamageNote[]) => void, onError?: () => void) {
+  const base = collection(db(), 'orgs', orgId, 'damageNotes');
+  if (stations && !stations.length) { cb([]); return () => {}; }
+  const q = stations ? query(base, where('vehicleId', '==', vehicleId), where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'asc'), limit(500))
+    : query(base, where('vehicleId', '==', vehicleId), orderBy('createdAt', 'asc'), limit(500));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DamageNote, 'id'>) }))), () => onError?.());
+}
+export async function addDamageNote(orgId: string, n: Omit<DamageNote, 'id' | 'createdAt'>) {
+  await setDoc(doc(collection(db(), 'orgs', orgId, 'damageNotes')), { ...n, text: n.text.trim().slice(0, 1000), createdAt: Date.now() });
 }

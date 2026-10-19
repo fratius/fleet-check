@@ -87,7 +87,7 @@ const VANS: [string, string, string, number, string, string, Attrs][] = [
 const FRAMES = ['Front', 'Front left corner', 'Left side', 'Rear left corner', 'Rear', 'Rear right corner', 'Right side', 'Front right corner'];
 const usage = (ms: number, calls: number, images: number) => ({ ms, calls, images, inTok: 0, outTok: 0, cost: 0 });
 
-const DEMO_VERSION = 2;
+const DEMO_VERSION = 3;
 const password = () => {
   const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from(randomBytes(10), (b) => a[b % a.length]).join('');
@@ -240,11 +240,22 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
       tier: 'default', model: 'demo', photos: 8, pass1: usage(38_000, 1, 8), pass2: withCloseups ? usage(withCloseups * 6400, withCloseups, withCloseups * 2) : null,
       spots, notVisible: ['roof: too high to see'], missedNote: note, demo: true,
     });
+    return ref.id;
   };
-  const decided = (by: typeof managers[number], at: number, d: Record<string, boolean>, manual: unknown[] = []) => ({
-    decisions: Object.fromEntries(Object.entries(d).map(([k, v]) => [k, { damage: v, note: '', by: by.id, byName: by.name, at }])),
+  /** A manager's decisions; `known` links a damage seen again to the one already on the van's record. */
+  const decided = (by: typeof managers[number], at: number, d: Record<string, boolean>, manual: unknown[] = [], known: Record<string, string> = {}, notes: Record<string, string> = {}) => ({
+    decisions: Object.fromEntries(Object.entries(d).map(([k, v]) => [k, { damage: v, note: notes[k] || '', by: by.id, byName: by.name, at, known: known[k] || null }])),
     manual, by: by.id, byName: by.name, at,
   });
+  // A damage history for eSprinter 02: photos eight days ago without damage, a check five days ago that found a
+  // dent and a scuff, and the check two days ago that found the dent again plus new damage.
+  const T5 = now - 8 * day, T6 = now - 5 * day + 2 * 3600_000;
+  const [w5, w6] = await Promise.all([walk(vans[1], driverAt(1, T5), T5), walk(vans[1], driverAt(1, T6), T6)]);
+  void w5;
+  const c1 = await check(vans[1], w6, driverAt(1, T6), T6, 'reviewed', async (id) => Promise.all([
+    spot(id, 0, 'right sliding door', 'dent', 'dent', 0.78, null, { v: 'damage', reason: 'A shallow dent about 3 cm across, the paint is not broken.', severity: 'repair' }, 6),
+    spot(id, 1, 'front bumper, left corner', 'scuff', 'scuff', 0.62, null, { v: 'damage', reason: 'Scuffed plastic on the bumper corner, about 6 cm.', severity: 'cosmetic' }, 1),
+  ]), decided(managers[0], T6 + 3 * 3600_000, { 0: true, 1: true }, [], {}, { 0: 'Driver reported it at drop-off.' }));
   await Promise.all([
     // Waiting for the manager at Berlin Spandau.
     check(vans[0], w1, driverAt(0, T1), T1, 'submitted', async (id) => Promise.all([
@@ -261,8 +272,20 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     check(vans[1], w2, driverAt(1, T2), T2, 'reviewed', async (id) => Promise.all([
       spot(id, 0, 'rear bumper, right corner', 'scratch', 'scratch', 0.81, null, { v: 'damage', reason: 'A scratch along the bumper corner, about 6 cm.', severity: 'repair' }, 5),
       spot(id, 1, 'left side panel', 'scuff', 'scuff', 0.35, 'reflection', { v: 'reflection', reason: 'The light patch moves between the photos: a reflection.' }, 2),
-    ]), decided(managers[0], now - 2 * day + 3 * 3600_000, { 0: true, 1: false },
-      [{ panel: 'right mirror cover', type: 'crack', note: 'Hairline crack, about 4 cm', by: managers[0].id, byName: managers[0].name, at: now - 2 * day + 3 * 3600_000 }])),
+      spot(id, 2, 'right sliding door', 'dent', 'dent', 0.74, null, { v: 'damage', reason: 'A shallow dent about 3 cm across.', severity: 'repair' }, 6),
+    ]), decided(managers[0], now - 2 * day + 3 * 3600_000, { 0: true, 1: false, 2: true },
+      [{ panel: 'right mirror cover', type: 'crack', note: 'Hairline crack, about 4 cm', by: managers[0].id, byName: managers[0].name, at: now - 2 * day + 3 * 3600_000, known: null }],
+      { 2: `${c1}:0` })).then(async (c2) => {
+      // Comments by the station's manager.
+      const notes: [string, string, number][] = [
+        [`${c1}:0`, 'Asked the driver: a cage trolley rolled into the door at the loading dock.', T6 + 4 * 3600_000],
+        [`${c1}:0`, 'Seen again two days ago, no bigger. Repair together with the bumper.', now - 2 * day + 4 * 3600_000],
+        [`${c2}:0`, 'Bodyshop quote 240 EUR for the bumper corner. Booked for next Tuesday.', now - 2 * day + 5 * 3600_000],
+      ];
+      await Promise.all(notes.map(([key, text, at]) => org.collection('damageNotes').doc().set({
+        vehicleId: vans[1].id, stationId: stationIds[vans[1].st], damageKey: key, text, by: managers[0].id, byName: managers[0].name, createdAt: at,
+      })));
+    }),
     // Reviewed: nothing was damage.
     check(vans[3], w4, driverAt(3, T4), T4, 'reviewed', async (id) => Promise.all([
       spot(id, 0, 'roller door', 'scuff', 'scuff', 0.29, 'dirt', { v: 'dirt', reason: 'Dust on the shutter; wiped off.' }, 4),

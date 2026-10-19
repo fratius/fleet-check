@@ -1,12 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
+import { KnownChooser, useVanRecords } from '@/components/damage';
 import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV } from '@/components/ui';
+import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
 import { newId, prepare, upload } from '@/lib/images';
+import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
@@ -68,7 +71,19 @@ type Local = Record<number, (string | null)[]>;
 function CheckView({ id }: { id: string }) {
   const s = useSession();
   const c = useColors();
-  const k = s.checks.find((x) => x.id === id);
+  // Older checks (opened from a van's damage record) aren't among the ones the app keeps loaded: watch them.
+  const loadedK = s.checks.find((x) => x.id === id);
+  const [older, setOlder] = useState<Check | null | undefined>(undefined);
+  const orgId = s.org?.id;
+  useEffect(() => {
+    if (loadedK || !s.loaded.checks || !orgId || s.mode !== 'firebase') return;
+    return watchCheck(orgId, id, setOlder);
+  }, [loadedK, s.loaded.checks, orgId, id, s.mode]);
+  const k = loadedK || older || undefined;
+  // The van's damage record, to tell new damage from damage it already has.
+  const van = k ? s.vehicles.find((x) => x.id === k.vehicleId) : undefined;
+  const recs = useVanRecords(s.staff && k ? k.vehicleId : undefined);
+  const onRecord = useMemo(() => (van ? buildDamages(van, recs.checks.filter((x) => x.id !== id), recs.walks) : []), [van, recs.checks, recs.walks, id]);
   const [phase, setPhase] = useState<'list' | 'capture' | 'running'>('list');
   const [i, setI] = useState(0);
   const [local, setLocal] = useState<Local>({});
@@ -78,7 +93,8 @@ function CheckView({ id }: { id: string }) {
   const [sending, setSending] = useState(false);
   useTicker(phase === 'running');
 
-  if (!k) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">{s.loaded.checks ? 'This check was deleted.' : 'Loading…'}</T></Card></Screen>;
+  if (!k) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">{s.loaded.checks && older === null ? 'This check isn\'t available.' : 'Loading…'}</T></Card></Screen>;
+  const walkOfK = recs.walks.find((w) => w.id === k.walkId) || s.walks.find((w) => w.id === k.walkId) || null;
   const n = k.spots.length;
   const checked = k.spots.some((p) => p.verdict);
 
@@ -183,10 +199,14 @@ function CheckView({ id }: { id: string }) {
   };
   const decide = (j: number, damage: boolean | null) => {
     const d = { ...decisions };
+    // Approving damage the van already has (seen in an earlier check) links to it, so it stays one damage.
+    const known = damage && van ? likelySame(spotPos(van, k, j, walkOfK), onRecord, k.id)[0]?.key ?? null : null;
     if (damage == null) delete d[String(j)];
-    else d[String(j)] = { damage, note: '', by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now() };
+    else d[String(j)] = { damage, note: '', by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now(), known };
     return saveReview({ decisions: d });
   };
+  const setKnown = (j: number, key: string | null) => saveReview({ decisions: { ...decisions, [String(j)]: { ...decisions[String(j)], known: key } } });
+  const setKnownManual = (x: number, key: string | null) => saveReview({ manual: manual.map((m, y) => (y === x ? { ...m, known: key } : m)) });
   const submit = async () => {
     setErr(null); setSending(true);
     try { await ai.submitCheck({ orgId: s.store!.orgId, checkId: k.id, missedNote: (note ?? k.missedNote ?? '').trim() }); setNote(null); }
@@ -263,12 +283,16 @@ function CheckView({ id }: { id: string }) {
                   <Button small v={d?.damage === false ? 'primary' : 'secondary'} title="Not damage" onPress={() => decide(j, d?.damage === false ? null : false)} />
                   {d ? <T v="small">{d.byName}, {fmtWhen(d.at)}</T> : null}
                 </Row>
+                {d?.damage && van ? <KnownChooser pos={spotPos(van, k, j, walkOfK)} value={d.known} damages={onRecord} excludeCheck={k.id} onPick={(key) => setKnown(j, key)} /> : null}
               </View>
             ) : d ? (
-              <Row style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
-                <Pill v={d.damage ? 'bad' : 'good'} text={d.damage ? 'Approved damage' : 'Not damage'} />
-                <T v="small">Decided by {d.byName}</T>
-              </Row>
+              <View style={{ gap: 6, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+                <Row>
+                  <Pill v={d.damage ? 'bad' : 'good'} text={d.damage ? 'Approved damage' : 'Not damage'} />
+                  <T v="small">Decided by {d.byName}</T>
+                </Row>
+                {d.damage && van && s.staff ? <KnownChooser pos={spotPos(van, k, j, walkOfK)} value={d.known} damages={onRecord} excludeCheck={k.id} /> : null}
+              </View>
             ) : null}
           </Card>
         );
@@ -280,15 +304,18 @@ function CheckView({ id }: { id: string }) {
           <T v="h3">Damage the AI missed{manual.length ? ` (${manual.length})` : ''}</T>
           {manual.map((m, x) => (
             <Row key={x} style={{ borderTopWidth: x ? 1 : 0, borderColor: c.rule, paddingTop: x ? 8 : 0 }}>
-              <View style={{ flex: 1, minWidth: 160 }}>
+              <View style={{ flex: 1, minWidth: 160, gap: 4 }}>
                 <T v="medium">{cap(m.panel)}, {m.type}</T>
                 {m.note ? <T v="small">{m.note}</T> : null}
                 <T v="small">Added by {m.byName}</T>
+                {van && s.staff ? <KnownChooser pos={manualPos(van, m.panel)} value={m.known} damages={onRecord} excludeCheck={k.id}
+                  onPick={reviewer && status !== 'checking' ? (key) => setKnownManual(x, key) : undefined} /> : null}
               </View>
               {reviewer ? <Button small v="link" title="Remove" onPress={() => saveReview({ manual: manual.filter((_, y) => y !== x) })} /> : null}
             </Row>
           ))}
-          {reviewer && status !== 'checking' ? <AddManual onAdd={(m) => saveReview({ manual: [...manual, { ...m, by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now() }] })} /> : null}
+          {reviewer && status !== 'checking' ? <AddManual onAdd={(m) => saveReview({ manual: [...manual, { ...m, by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now(),
+            known: van ? likelySame(manualPos(van, m.panel), onRecord, k.id)[0]?.key ?? null : null }] })} /> : null}
           <T v="small">Missed damage is also how we measure what the AI misses.</T>
         </Card>
       ) : null}

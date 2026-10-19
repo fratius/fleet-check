@@ -103,6 +103,26 @@ describe('van history', () => {
 describe('walk-arounds and checks', () => {
   test('driver saves a walk-around at their station', () => assertSucceeds(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w2`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2 })));
   test('driver cannot save one for another station', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w3`), { vehicleId: 'v2', stationId: S2, createdBy: 'drv1', createdAt: 2 })));
+  const note = (by, extra = {}) => ({ vehicleId: 'v1', stationId: S1, damageKey: 'c1:0', text: 'Driver says it was there before', by, byName: by, createdAt: Date.now(), ...extra });
+  test('manager comments on a damage at their station', () => assertSucceeds(setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n1`), note('mgr1'))));
+  test('owner comments on any damage', () => assertSucceeds(setDoc(doc(as('own'), `orgs/${O}/damageNotes/n2`), note('own'))));
+  test('drivers cannot comment on damage', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/damageNotes/n3`), note('drv1'))));
+  test('nobody comments in someone else\'s name', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n4`), note('own'))));
+  test('a comment must match the van\'s station', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/damageNotes/n5`), note('own', { stationId: S2 }))));
+  test('a manager cannot comment on damage at another station', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n6`), note('mgr1', { vehicleId: 'v2', stationId: S2 }))));
+  test('comments carry the real time', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n7`), note('mgr1', { createdAt: 1 }))));
+  test('comments are kept: no edits', async () => {
+    await setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n8`), note('mgr1'));
+    await assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n8`), { text: 'changed' }));
+  });
+  test('comments are kept: no deletes, not even by the owner', async () => {
+    await setDoc(doc(as('own'), `orgs/${O}/damageNotes/n9`), note('own'));
+    await assertFails(deleteDoc(doc(as('own'), `orgs/${O}/damageNotes/n9`)));
+  });
+  test('drivers do not read damage comments', async () => {
+    await setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n10`), note('mgr1'));
+    await assertFails(getDoc(doc(as('drv1'), `orgs/${O}/damageNotes/n10`)));
+  });
   test('nobody marks their own photos as a pick-up or drop-off (only the server does)', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w5`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2, handover: { kind: 'pickup', assignmentId: 'a1' } })));
   test('nobody edits a walk-around', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w1`), { taken: 14 })));
   test('driver cannot save one in someone else\'s name', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w4`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv9', createdAt: 2 })));

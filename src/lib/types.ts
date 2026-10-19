@@ -167,6 +167,8 @@ export interface Decision {
   by: string;
   byName: string;
   at: number;
+  /** The damage already on the van this is (its key, see damage.ts), when it isn't new. */
+  known?: string | null;
 }
 /** Damage the AI didn't mark, added by the manager during review. */
 export interface ManualDamage {
@@ -176,6 +178,19 @@ export interface ManualDamage {
   by: string;
   byName: string;
   at: number;
+  known?: string | null;
+}
+
+/** A comment on a damage by an owner or fleet manager. Kept for good: no edits, no deletes. */
+export interface DamageNote {
+  id: string;
+  vehicleId: string;
+  stationId: string | null;
+  damageKey: string;
+  text: string;
+  by: string;
+  byName: string;
+  createdAt: number;
 }
 /**
  * checking: AI spots found, the driver is taking close-ups

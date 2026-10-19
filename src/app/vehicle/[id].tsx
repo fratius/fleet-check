@@ -1,25 +1,42 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 
-import { FramesPanel } from '@/components/frames';
+import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
 import { BackBar } from '@/components/nav';
-import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
-import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, silhouetteSVG, type RearKind } from '@/lib/frames';
+import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { Van3D } from '@/components/van3d';
+import { buildDamages } from '@/lib/damage';
+import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
+import { watchDamageNotes } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
-import { approvedDamage, type Check, type Vehicle } from '@/lib/types';
+import { approvedDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 
 export default function VehicleScreen() {
   const { id, done } = useLocalSearchParams<{ id: string; done?: string }>();
   const s = useSession();
   const c = useColors();
-  const { width } = useWindowDimensions();
   const v = s.vehicles.find((x) => x.id === id);
   const history = useHistory({ vehicleId: id });
+  // The damage record: every damage on the van with where it is, when it happened and who had the van.
+  const recs = useVanRecords(id);
+  const damages = useMemo(() => (v ? buildDamages(v, recs.checks, recs.walks) : []), [v, recs.checks, recs.walks]);
+  const [notes, setNotes] = useState<DamageNote[]>([]);
+  const orgId = s.org?.id;
+  const scope = s.role === 'owner' ? '*' : s.myStations.map((st) => st.id).join(',');
+  useEffect(() => {
+    if (!orgId || !id || !s.staff || s.mode !== 'firebase') return;
+    return watchDamageNotes(orgId, id, scope === '*' ? null : scope ? scope.split(',') : [], setNotes);
+  }, [orgId, id, s.staff, s.mode, scope]);
+  const [sel, setSel] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ key: string; n: number } | null>(null);
+  const scroller = useRef<ScrollView>(null);
+  // Where the model, the damage section, the list inside it and each damage are, to scroll between them.
+  const spots = useRef({ model: 0, list: 0, inner: 0, items: new Map<string, number>() });
   const [editing, setEditing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [armed, setArmed] = useState<string | null>(null);
@@ -46,8 +63,15 @@ export default function VehicleScreen() {
   const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
   const est = Math.max(1, Math.round((frames.length * perPhoto) / 60000));
   const makeModel = [v.make, v.model].filter(Boolean).join(' ');
-  const heroW = Math.min(width - 68, 560);
-  const heroH = heroW * ((sp.H * 100 + 26) / (sp.L * 100 + 40));
+  const selD = sel ? damages.find((d) => d.key === sel) || null : null;
+  const showOnVan = (key: string) => {
+    setSel(key); setFocus({ key, n: Date.now() });
+    scroller.current?.scrollTo({ y: Math.max(0, spots.current.model - 8), animated: true });
+  };
+  const showInList = (key: string) => {
+    const at = spots.current;
+    scroller.current?.scrollTo({ y: Math.max(0, at.list + at.inner + (at.items.get(key) ?? 0) - 8), animated: true });
+  };
 
   const checkLibrary = async () => {
     setErr(null);
@@ -65,10 +89,11 @@ export default function VehicleScreen() {
   };
 
   return (
-    <Screen>
+    <Screen scrollRef={scroller}>
       <BackBar title="Fleet" />
-      <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingTop: 20, paddingBottom: 10, alignItems: 'center' }}>
-        <Svg xml={silhouetteSVG(sp, heroW, true, c.ink2)} width={heroW} height={heroH} />
+      <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
+        <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
+          bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
       </View>
       <View style={{ gap: 6 }}>
         <T v="h1">{v.name}</T>
@@ -135,7 +160,15 @@ export default function VehicleScreen() {
         </Card>
       ) : null}
 
-      <DamageRecord checks={checks} />
+      <View style={{ gap: 8 }} onLayout={(e) => { spots.current.list = e.nativeEvent.layout.y; }}>
+        <T v="h2">Damage{damages.length ? ` (${damages.length})` : ''}</T>
+        {damages.length ? <T v="hint">Newest first. The numbers match the dots on the van.</T> : null}
+        {recs.error ? <T v="hint" color={c.alert}>{recs.error}</T> : null}
+        <View onLayout={(e) => { spots.current.inner = e.nativeEvent.layout.y; }}>
+          <DamageList damages={damages} history={history.rows} notes={notes} vehicleId={v.id} stationId={v.stationId || null} selected={sel}
+            onShow={showOnVan} onLayoutItem={(key, y) => { spots.current.items.set(key, y); }} />
+        </View>
+      </View>
 
       <View style={{ gap: 8 }}>
         <T v="h2">Damage checks</T>
@@ -179,8 +212,6 @@ export default function VehicleScreen() {
           <Card><HistoryList rows={history.rows} error={history.error} show="driver" empty={s.role === 'driver' ? 'You haven\'t had this van yet.' : 'Nobody has had this van yet.'} /></Card>
         </View>
       ) : null}
-
-      <FramesPanel sp={sp} title="Frames for this vehicle" />
 
       {!s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
@@ -257,28 +288,5 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title="Save changes" loading={busy} onPress={save} /><Button v="link" title="Cancel" onPress={onDone} /></Row>
     </Card>
-  );
-}
-
-/** The van's damage record: every damage a fleet manager approved, newest first. */
-function DamageRecord({ checks }: { checks: Check[] }) {
-  const c = useColors();
-  const rows = checks.filter((k) => k.status === 'reviewed').flatMap((k) => approvedDamage(k).map((d) => ({ ...d, k })));
-  return (
-    <View style={{ gap: 8 }}>
-      <T v="h2">Damage record</T>
-      {!rows.length ? <T v="hint">No approved damage. Damage goes on the record when a fleet manager approves it in a check.</T> : null}
-      {rows.map((d, i) => (
-        <Pressable key={d.k.id + i} onPress={() => router.push(`/check/${d.k.id}`)}
-          style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: c.paper, borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12 }}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <T v="h3">{d.panel.charAt(0).toUpperCase() + d.panel.slice(1)}</T>
-            <T v="hint">{[d.type + (d.sizeCm ? `, about ${d.sizeCm} cm` : ''), d.spot == null ? 'added by the manager' : '', `approved ${fmtWhen(d.k.review?.at || d.k.createdAt)}`].filter(Boolean).join(', ')}</T>
-            {d.note ? <T v="small">{d.note}</T> : null}
-          </View>
-          <T v="h3" color={c.ink2}>›</T>
-        </Pressable>
-      ))}
-    </View>
   );
 }

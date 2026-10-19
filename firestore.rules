@@ -109,6 +109,19 @@ service cloud.firestore {
         // No deletes: damage checks are part of the van's and the driver's history.
       }
 
+      // Comments on a van's damage. Owners and the station's managers read and add them; nobody edits or deletes
+      // them, so what was said about a damage stays with it.
+      match /damageNotes/{id} {
+        allow read: if runs(orgId, resource.data.stationId);
+        allow create: if runs(orgId, request.resource.data.stationId)
+          && request.resource.data.keys().hasOnly(['vehicleId', 'stationId', 'damageKey', 'text', 'by', 'byName', 'createdAt'])
+          && request.resource.data.by == me()
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+          && request.resource.data.damageKey is string && request.resource.data.damageKey.size() <= 200
+          && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000
+          && get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(request.resource.data.vehicleId)).data.stationId == request.resource.data.stationId;
+      }
+
       match /scans/{id} {
         allow read: if staff(orgId);
         allow update: if staff(orgId)
