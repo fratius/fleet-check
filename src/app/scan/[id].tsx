@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { F, MARKER, Svg, mmss } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
+import { flash } from '@/lib/flash';
 import { AiError, ai } from '@/lib/store';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 
@@ -123,11 +124,13 @@ export default function ScanScreen() {
       setPhase('summary'); setSaveErr('Couldn\'t upload the photos. Check the connection and tap Save again.');
       return;
     }
-    if (!ho) { router.replace(`/walk/${wid}`); return; }
+    // The camera opens over the tabs: close it, then open the walk-around in the tab you came from.
+    if (!ho) { router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0); return; }
     setProgress(ho === 'pickup' ? `Picking up ${v.name}` : `Dropping off ${v.name}`);
     try {
       await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
-      router.replace({ pathname: '/vehicle/[id]', params: { id: v.id, done: ho } });
+      flash(`van:${v.id}`, ho === 'pickup' ? `You picked up ${v.name}. The photos are kept with its history.` : `You dropped off ${v.name}. The photos are kept with its history.`);
+      router.back();
     } catch (e) {
       setPhase('summary');
       setSaveErr(`${e instanceof AiError ? e.message : 'Couldn\'t reach the server.'} The photos are saved as a walk-around.`);

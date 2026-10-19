@@ -1,8 +1,7 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
-import { BackBar } from '@/components/nav';
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { fetchWalk } from '@/lib/people';
 import { useSession } from '@/lib/session';
@@ -24,12 +23,12 @@ export default function WalkScreen() {
     return () => { live = false; };
   }, [loadedW, s.loaded.walks, orgId, id, s.mode]);
   const w = loadedW || older;
-  if (!w) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">{s.loaded.walks && older === null ? 'This walk-around isn\'t available.' : 'Loading…'}</T></Card></Screen>;
+  if (!w) return <Screen edges={[]}><Card dashed><T v="hint">{s.loaded.walks && older === null ? 'This walk-around isn\'t available.' : 'Loading…'}</T></Card></Screen>;
   const checks = s.checks.filter((k) => k.walkId === w.id);
   const tile = (Math.min(width, 760) - 32 - 20) / 3;
   return (
-    <Screen>
-      <BackBar title={w.vehicleName} onPress={() => router.replace(`/vehicle/${w.vehicleId}`)} />
+    <Screen edges={[]}>
+      <Stack.Screen options={{ title: w.handover ? (w.handover.kind === 'pickup' ? 'Pick-up photos' : 'Drop-off photos') : 'Walk-around' }} />
       <View style={{ gap: 4 }}>
         <T v="hint">{w.handover ? (w.handover.kind === 'pickup' ? 'Pick-up photos' : 'Drop-off photos') : w.source === 'library' ? 'Photos from the library' : 'Walk-around'}, {w.vehicleName}</T>
         <T v="h1">{fmtWhen(w.createdAt)}</T>

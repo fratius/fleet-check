@@ -122,7 +122,10 @@ Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` r
 ## Project layout
 
 ```
-src/app/            screens (expo-router): fleet, review, people, test log, account, add vehicle, vehicle, scan, walk-around, check
+src/app/            screens (expo-router). Every tab is its own stack, so the tab bar stays on every page:
+  (tabs)/(fleet)/   fleet list, add vehicle            (tabs)/(review|people|log|me)/  the other tabs
+  (tabs)/(fleet,review,people,log,me)/  van, walk-around, check, person: open inside whichever tab you're in
+  scan/[id].tsx     the camera, full screen over the tabs
 src/components/     shared UI
 src/lib/frames.ts   vehicle classes, frame sets and outlines
 src/lib/            Firebase, data, session, image upload

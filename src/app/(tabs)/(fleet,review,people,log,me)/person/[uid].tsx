@@ -1,9 +1,8 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
-import { BackBar } from '@/components/nav';
 import { ManagePerson, manageRights } from '@/components/person';
 import { Button, Card, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
 import { watchMember } from '@/lib/people';
@@ -31,8 +30,8 @@ export default function PersonScreen() {
   }, [orgId, uid, allowed, me, s.member, s.mode]);
   const history = useHistory({ driverId: uid });
 
-  if (!allowed) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">Only fleet managers and owners see other people.</T></Card></Screen>;
-  if (s.mode !== 'firebase') return <Screen><BackBar title="Back" /><Card dashed><T v="hint">People and van history need the Firebase backend.</T></Card></Screen>;
+  if (!allowed) return <Screen edges={[]}><Card dashed><T v="hint">Only fleet managers and owners see other people.</T></Card></Screen>;
+  if (s.mode !== 'firebase') return <Screen edges={[]}><Card dashed><T v="hint">People and van history need the Firebase backend.</T></Card></Screen>;
 
   const rows = history.rows || [];
   const name = member?.name || rows[0]?.driverName || (me ? s.user?.name : '') || 'Unknown person';
@@ -46,8 +45,8 @@ export default function PersonScreen() {
   const stationNames = (member?.stationIds || []).map((id) => s.stationName(id)).join(', ');
 
   return (
-    <Screen>
-      <BackBar title="Back" />
+    <Screen edges={[]}>
+      <Stack.Screen options={{ title: me ? 'You' : name }} />
       <View style={{ gap: 6 }}>
         <T v="h1">{name}{me ? ' (you)' : ''}</T>
         <Row>

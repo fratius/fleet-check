@@ -323,15 +323,20 @@ export interface JoinDetails { firstName: string; lastName: string; phone: strin
 export const roleOf = (m: Pick<Member, 'role'> | null | undefined): Role | null => (!m ? null : m.role === 'admin' ? 'owner' : m.role);
 
 /** A spot counts as approved damage when the manager said so. Before review, the AI verdict is only a suggestion. */
-export interface ApprovedDamage { panel: string; type: string; sizeCm: number | null; note: string; spot: number | null }
+/** `known`: the damage already on the van this one is (a repeat sighting), or null when it's new. */
+export interface ApprovedDamage { panel: string; type: string; sizeCm: number | null; note: string; spot: number | null; known: string | null }
 export function approvedDamage(k: Check): ApprovedDamage[] {
   const r = k.review;
   if (!r || k.status !== 'reviewed') return [];
   const out = k.spots.flatMap((p, i): ApprovedDamage[] => {
     const d = r.decisions?.[String(i)];
-    return d?.damage ? [{ panel: p.panel, type: (p.verdict?.verdict === 'damage' && p.verdict.type) || p.type, sizeCm: p.verdict?.sizeCm ?? p.sizeCm, note: d.note, spot: i }] : [];
+    return d?.damage ? [{ panel: p.panel, type: (p.verdict?.verdict === 'damage' && p.verdict.type) || p.type, sizeCm: p.verdict?.sizeCm ?? p.sizeCm, note: d.note, spot: i, known: d.known || null }] : [];
   });
-  return out.concat((r.manual || []).map((m): ApprovedDamage => ({ panel: m.panel, type: m.type, sizeCm: null, note: m.note, spot: null })));
+  return out.concat((r.manual || []).map((m): ApprovedDamage => ({ panel: m.panel, type: m.type, sizeCm: null, note: m.note, spot: null, known: m.known || null })));
+}
+/** Damage a check added to the van's record (approved, and not a repeat of damage it already had). */
+export function newDamage(k: Check): ApprovedDamage[] {
+  return approvedDamage(k).filter((d) => !d.known);
 }
 
 /** Was the AI right about a spot, judged by the manager's decision (or the older right/wrong buttons)? */

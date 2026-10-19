@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
@@ -47,8 +47,7 @@ function NewCheck({ walkId }: { walkId: string }) {
       .catch((e) => setErr(e instanceof AiError ? e.message : 'The check didn\'t finish. Try again.'));
   }, [s.store, s.tier, walkId, attempt]);
   return (
-    <Screen>
-      <BackBar title="Back" />
+    <Screen edges={[]}>
       <View style={{ gap: 4 }}>
         <T v="hint">Damage check{w ? ', ' + w.vehicleName : ''}</T>
         <T v="h1">{err ? 'The check didn\'t finish' : `Looking for damage in ${w ? w.photos.length : ''} photos`}</T>
@@ -93,7 +92,7 @@ function CheckView({ id }: { id: string }) {
   const [sending, setSending] = useState(false);
   useTicker(phase === 'running');
 
-  if (!k) return <Screen><BackBar title="Back" /><Card dashed><T v="hint">{s.loaded.checks && older === null ? 'This check isn\'t available.' : 'Loading…'}</T></Card></Screen>;
+  if (!k) return <Screen edges={[]}><Card dashed><T v="hint">{s.loaded.checks && older === null ? 'This check isn\'t available.' : 'Loading…'}</T></Card></Screen>;
   const walkOfK = recs.walks.find((w) => w.id === k.walkId) || s.walks.find((w) => w.id === k.walkId) || null;
   const n = k.spots.length;
   const checked = k.spots.some((p) => p.verdict);
@@ -136,7 +135,7 @@ function CheckView({ id }: { id: string }) {
 
   if (phase === 'running' && run) {
     return (
-      <Screen>
+      <Screen edges={[]}>
         <View style={{ gap: 4 }}><T v="hint">Damage check, {k.vehicleName}</T><T v="h1">Checking the close-ups, spot {Math.min(run.done + 1, run.total)} of {run.total}</T></View>
         <Card><T v="big">{((Date.now() - run.t0) / 1000).toFixed(1)} s</T><ActivityIndicator color={c.ink} style={{ alignSelf: 'flex-start' }} /></Card>
       </Screen>
@@ -148,8 +147,9 @@ function CheckView({ id }: { id: string }) {
     const mine = local[i] || [null, null];
     const last = i === n - 1;
     return (
-      <Screen>
-        <BackBar title="Spots" onPress={() => setPhase('list')} />
+      <Screen edges={[]}>
+        <Stack.Screen options={{ title: 'Close-ups' }} />
+        <BackBar title="All spots" onPress={() => setPhase('list')} />
         <View style={{ gap: 4 }}><T v="hint">Close-up {i + 1} of {n}</T><T v="h1">{cap(p.panel)}</T></View>
         <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${p.photoLabel}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />
         <View style={{ gap: 6 }}>
@@ -225,8 +225,8 @@ function CheckView({ id }: { id: string }) {
           : 'These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.';
 
   return (
-    <Screen>
-      <BackBar title={k.vehicleName} onPress={() => router.replace(`/vehicle/${k.vehicleId}`)} />
+    <Screen edges={[]}>
+      <Stack.Screen options={{ title: `Check, ${k.vehicleName}` }} />
       <View style={{ gap: 6 }}>
         <T v="hint">Damage check, {k.vehicleName}{k.createdByName ? `, by ${k.createdByName}` : ''}, {fmtWhen(k.createdAt)}</T>
         <T v="h1">{title}</T>

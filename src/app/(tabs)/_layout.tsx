@@ -21,7 +21,8 @@ function Icon({ name, color }: { name: IconName; color: ColorValue }) {
 
 /**
  * Drivers see their station's vans and their account. Fleet managers and owners also get the review
- * queue, people and the test log. "Add vehicle" opens from the fleet page.
+ * queue, people and the test log. Every tab is a stack (see (fleet,review,people,log,me)/_layout.tsx),
+ * so this bar stays on every page.
  */
 export default function TabsLayout() {
   const c = useColors();
@@ -38,12 +39,11 @@ export default function TabsLayout() {
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: 13 },
       sceneStyle: { backgroundColor: c.page },
     }}>
-      <Tabs.Screen name="index" options={{ title: staff ? 'Fleet' : 'Vans', tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
-      <Tabs.Screen name="review" options={{ title: 'Review', href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
-      <Tabs.Screen name="people" options={{ title: 'People', href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
-      <Tabs.Screen name="log" options={{ title: 'Test log', href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
-      <Tabs.Screen name="account" options={{ title: 'Account', tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
-      <Tabs.Screen name="add" options={{ title: 'Add vehicle', href: null }} />
+      <Tabs.Screen name="(fleet)" options={{ title: staff ? 'Fleet' : 'Vans', tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
+      <Tabs.Screen name="(review)" options={{ title: 'Review', href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
+      <Tabs.Screen name="(people)" options={{ title: 'People', href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
+      <Tabs.Screen name="(log)" options={{ title: 'Test log', href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
+      <Tabs.Screen name="(me)" options={{ title: 'Account', tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
     </Tabs>
   );
 }

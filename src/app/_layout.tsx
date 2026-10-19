@@ -23,11 +23,8 @@ function Routes() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.page } }}>
       <Stack.Protected guard={status === 'ready'}>
+        {/* Every page lives in a tab (so the tab bar stays); only the camera opens over everything. */}
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="vehicle/[id]" />
-        <Stack.Screen name="walk/[id]" />
-        <Stack.Screen name="check/[id]" />
-        <Stack.Screen name="person/[uid]" />
         <Stack.Screen name="scan/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />
       </Stack.Protected>
       <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>

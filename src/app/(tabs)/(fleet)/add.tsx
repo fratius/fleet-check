@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { FramesPanel } from '@/components/frames';
-import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, Field, Notice, Photo, Pill, Row, Screen, Segmented, T, secs, useColors } from '@/components/ui';
 import { CLASSES, CLS, attrPills, defaultAttrs, makeSpec, type VehicleAttrs } from '@/lib/frames';
 import { newId, prepare, upload } from '@/lib/images';
@@ -112,7 +111,8 @@ export default function AddVehicle() {
         createdAt: Date.now(), createdBy: s.user?.uid ?? null,
       });
       setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setNameTouched(false); setAttrs(defaultAttrs());
-      router.push(`/vehicle/${id}`);
+      // Replace the form, so Back from the new van goes to the fleet, not to the empty form.
+      router.replace(`/vehicle/${id}`);
     } catch { setErr('Couldn\'t save the vehicle. Try again.'); }
     finally { setSaving(false); }
   };
@@ -121,8 +121,7 @@ export default function AddVehicle() {
   const sc = res?.scan;
   const conf = sc?.confidence;
   return (
-    <Screen>
-      <BackBar title="Fleet" />
+    <Screen edges={[]}>
       <View style={{ gap: 4 }}>
         <T v="h1">Add vehicle</T>
         <T v="hint">Scan it and the app picks its type, or pick the type yourself.</T>

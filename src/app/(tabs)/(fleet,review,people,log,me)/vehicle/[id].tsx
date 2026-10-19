@@ -1,27 +1,29 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
-import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Van3D } from '@/components/van3d';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
+import { useFlash } from '@/lib/flash';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
-import { approvedDamage, type DamageNote, type Vehicle } from '@/lib/types';
+import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 
 export default function VehicleScreen() {
-  const { id, done } = useLocalSearchParams<{ id: string; done?: string }>();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const s = useSession();
   const c = useColors();
   const v = s.vehicles.find((x) => x.id === id);
   const history = useHistory({ vehicleId: id });
+  // "You picked up …" after the camera closes.
+  const done = useFlash(`van:${id}`);
   // The damage record: every damage on the van with where it is, when it happened and who had the van.
   const recs = useVanRecords(id);
   const damages = useMemo(() => (v ? buildDamages(v, recs.checks, recs.walks) : []), [v, recs.checks, recs.walks]);
@@ -50,7 +52,7 @@ export default function VehicleScreen() {
   };
 
   if (!v || !CLS[v.cls]) {
-    return <Screen><BackBar title="Fleet" /><Card dashed><T v="hint">{s.loaded.vehicles ? 'This vehicle isn\'t in the fleet any more.' : 'Loading…'}</T></Card></Screen>;
+    return <Screen edges={[]}><Card dashed><T v="hint">{s.loaded.vehicles ? 'This vehicle isn\'t in the fleet any more.' : 'Loading…'}</T></Card></Screen>;
   }
   const sp = makeSpec(v.cls, v);
   const frames = buildFrames(sp);
@@ -89,8 +91,8 @@ export default function VehicleScreen() {
   };
 
   return (
-    <Screen scrollRef={scroller}>
-      <BackBar title="Fleet" />
+    <Screen scrollRef={scroller} edges={[]}>
+      <Stack.Screen options={{ title: v.name }} />
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
         <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
@@ -101,8 +103,7 @@ export default function VehicleScreen() {
         <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
       </View>
 
-      {done === 'pickup' && mine ? <Notice text={`You picked up ${v.name}. The photos are kept with its history.`} /> : null}
-      {done === 'dropoff' && !mine ? <Notice text={`You dropped off ${v.name}. The photos are kept with its history.`} /> : null}
+      {done ? <Notice text={done} /> : null}
       {v.retired ? (
         <Card dashed>
           <T v="h3">Retired</T>
@@ -181,11 +182,11 @@ export default function VehicleScreen() {
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         {checks.slice(0, 6).map((k) => {
           const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
-          const approved = approvedDamage(k).length;
+          const approved = approvedDamage(k).length, fresh = newDamage(k).length;
           return (
             <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 4 }}>
               <Row>
-                <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed' ? `${approved} approved damage${approved === 1 ? '' : 's'}` : `${k.spots.length} spot${k.spots.length === 1 ? '' : 's'}, ${dmg} damage by the AI`}</T>
+                <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed' ? (approved ? `${fresh} new damage${fresh === 1 ? '' : 's'}${approved > fresh ? `, ${approved - fresh} already on the van` : ''}` : 'No damage') : `${k.spots.length} spot${k.spots.length === 1 ? '' : 's'}, ${dmg} damage by the AI`}</T>
                 <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? 'Reviewed' : k.status === 'submitted' ? 'Waiting for review' : 'Close-ups pending'} />
               </Row>
               <T v="hint">{[k.createdByName || '', `${k.photos} photos`, s.staff && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.staff ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
@@ -219,7 +220,7 @@ export default function VehicleScreen() {
           {s.mode === 'local' ? (
             <Button v="danger" title={armed === 'remove' ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
               if (armed !== 'remove') { arm('remove'); return; }
-              try { await s.store!.vehicles.remove(v.id); router.replace('/'); } catch { setErr('Couldn\'t remove the vehicle.'); }
+              try { await s.store!.vehicles.remove(v.id); router.back(); } catch { setErr('Couldn\'t remove the vehicle.'); }
             }} />
           ) : v.retired ? (
             <Button title="Bring back into the fleet" loading={busy === 'retire'} onPress={() => act('retire', () => ai.retireVan({ orgId: s.org!.id, vehicleId: v.id, restore: true }))} />

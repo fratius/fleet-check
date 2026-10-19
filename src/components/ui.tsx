@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import { useScrollToTop } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   useColorScheme, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
@@ -43,10 +44,18 @@ export function Screen({ children, scroll = true, edges = ['top'], pad = true, s
   children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle>; scrollRef?: React.Ref<ScrollView>;
 }) {
   const c = useColors();
+  // Tapping the tab you're on scrolls its first page back to the top.
+  const own = useRef<ScrollView | null>(null);
+  useScrollToTop(own);
+  const setRef = (r: ScrollView | null) => {
+    own.current = r;
+    if (typeof scrollRef === 'function') scrollRef(r);
+    else if (scrollRef && typeof scrollRef === 'object') (scrollRef as React.MutableRefObject<ScrollView | null>).current = r;
+  };
   const inner = <View style={[{ gap: 14, paddingHorizontal: pad ? 16 : 0, paddingTop: 12, paddingBottom: 32, width: '100%', maxWidth: 760, alignSelf: 'center' }, style]}>{children}</View>;
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: c.page }}>
-      {scroll ? <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>{inner}</ScrollView> : inner}
+      {scroll ? <ScrollView ref={setRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>{inner}</ScrollView> : inner}
     </SafeAreaView>
   );
 }
