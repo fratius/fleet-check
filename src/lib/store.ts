@@ -154,6 +154,7 @@ export const ai = {
   pickUpVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { assignmentId: string; unchanged?: boolean; tookOverFrom?: string | null }>('pickUpVan', 130000),
   dropOffVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { ok: boolean }>('dropOffVan', 130000),
   addHandoverVideo: call<{ orgId: string; assignmentId: string; kind: 'pickup' | 'dropoff'; videoId: string }, { ok: boolean }>('addHandoverVideo', 130000),
+  addVanVideo: call<{ orgId: string; vehicleId: string; videoId: string }, { ok: boolean }>('addVanVideo', 130000),
   processVideo: call<{ orgId: string; videoId: string }, { started: boolean }>('processVideo', 560000),
   changePerson: call<{ orgId: string; uid: string; role?: Role; stationId?: string }, { ok: boolean }>('changePerson', 30000),
   deleteDemoCompany: call<{ orgId: string }, { ok: boolean }>('deleteDemoCompany', 130000),

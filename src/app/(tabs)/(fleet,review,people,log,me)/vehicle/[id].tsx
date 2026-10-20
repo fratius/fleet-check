@@ -116,6 +116,12 @@ export default function VehicleScreen() {
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
           <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
+          {s.mode === 'firebase' ? (
+            <View style={{ gap: 8, borderTopWidth: 1.5, borderColor: 'rgba(0,0,0,0.3)', paddingTop: 10, marginTop: 2 }}>
+              <VideoHandover v={v} kind="walkaround" title="Scan with a video instead" wide />
+              <T v="medium" color="#000" style={{ fontSize: 14 }}>{VIDEO_HOW} The video is kept with the van.</T>
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -203,7 +209,7 @@ export default function VehicleScreen() {
 
       {vids.length ? (
         <View style={{ gap: 8 }}>
-          <T v="h2">Handover videos</T>
+          <T v="h2">Videos</T>
           {vids.slice(0, 6).map((x) => <VideoRow key={x.id} v={x} />)}
         </View>
       ) : null}

@@ -266,6 +266,34 @@ test('pick-up and drop-off with a video instead of photos; a manager adds a miss
   await S.own.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
 });
 
+test('walk-around videos: anyone who can scan the van films it, any time; nothing changes hands', async () => {
+  const { v1, v3 } = S.vans;
+  // Drivers pick up themselves is off at station 1 now: a walk-around video doesn't need it.
+  const dv = await video(S.d1);
+  await S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: dv });
+  const d = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'videos', dv))).data();
+  assert.equal(d.kind, 'walkaround');
+  assert.equal(d.late, false);
+  assert.equal(d.by, S.d1.uid);
+  // Erik has van 1: the video notes his handover, which doesn't change.
+  const van = await vanDoc(S.mgr, v1.id);
+  assert.equal(d.assignmentId, van.assignedTo.assignmentId);
+  assert.equal(van.assignedTo.driverId, S.d2.uid);
+  // Fleet managers of the station and owners too; the manager sees the driver's video, the other driver doesn't.
+  await S.mgr.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.mgr) });
+  await S.own.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(S.own) });
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dv))).data().kind, 'walkaround');
+  await fails(getDoc(doc(S.d2.db, 'orgs', S.org, 'videos', dv)), 'permission-denied');
+  // Not at another station, not twice, not too short, not someone else's upload.
+  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(S.d1) }), 'permission-denied');
+  await fails(S.mgr.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(S.mgr) }), 'permission-denied');
+  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: dv }), 'failed-precondition');
+  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.d1, { seconds: 3 }) }), 'failed-precondition');
+  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.d2) }), 'failed-precondition');
+  // A walk-around video isn't a drop-off: Erik still has the van.
+  assert.equal((await vanDoc(S.mgr, v1.id)).assignedTo.driverId, S.d2.uid);
+});
+
 test('retiring, moving and removing keep the history and free the van', async () => {
   const { v1, v2 } = S.vans;
   await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });

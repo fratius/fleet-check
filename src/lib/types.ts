@@ -73,13 +73,16 @@ export interface Assignment {
 }
 
 /** A handover video: one walk around the van at pick-up or drop-off. Written by the server after checking it. */
+export const VIDEO_TITLE: Record<Video['kind'], string> = { pickup: 'Pick-up video', dropoff: 'Drop-off video', walkaround: 'Walk-around video' };
 export interface Video {
   id: string;
   vehicleId: string;
   vehicleName: string;
   stationId: string | null;
-  kind: 'pickup' | 'dropoff';
-  assignmentId: string;
+  /** At a pick-up, at a drop-off, or a walk-around filmed any time (not a handover). */
+  kind: 'pickup' | 'dropoff' | 'walkaround';
+  /** The handover it belongs to; for a walk-around, the driver who had the van then (or null). */
+  assignmentId: string | null;
   /** Added after the handover (for example by the manager when the driver didn't record one). */
   late: boolean;
   by: string;

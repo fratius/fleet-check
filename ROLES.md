@@ -73,7 +73,12 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   checks it (`pickUpVan`, `dropOffVan`) before anything changes. A drop-off always needs one of the two.
 - **Videos:** uploaded as recorded to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder);
   the server writes the video record (`orgs/{org}/videos`) and makes a 720p playback copy (`processVideo`). Owners
-  and the station's managers watch every handover video; drivers watch their own. Nobody edits or deletes them.
+  and the station's managers watch every video of their station's vans; drivers watch their own. Nobody edits or
+  deletes them.
+- **Walk-around videos** (`addVanVideo`): anyone who can scan a van (its station's drivers and managers, owners)
+  can film it instead of taking the photos, at any time and whatever the station's pick-up setting. Same checks as
+  a handover video. It is kept with the van and notes the driver who had it then; it doesn't pick up or drop off
+  anything.
 - **A missing video can be added later** (`addHandoverVideo`): by the station's owner or managers for any handover
   of the station, or by the driver for their own. It points to the handover; the handover itself doesn't change.
 - **Managers are told when a drop-off has no video or photos:** the Review tab lists (and its badge counts)

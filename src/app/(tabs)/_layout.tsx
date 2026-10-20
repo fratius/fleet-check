@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router/js-tabs';
 import type { ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { F, MARKER, useColors } from '@/components/ui';
@@ -28,6 +29,7 @@ function Icon({ name, color }: { name: IconName; color: ColorValue }) {
 export default function TabsLayout() {
   const c = useColors();
   const s = useSession();
+  const insets = useSafeAreaInsets();
   const staff = s.staff;
   // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
@@ -37,7 +39,8 @@ export default function TabsLayout() {
       headerShown: false,
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,
-      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, minHeight: 60 },
+      // Room for the icon and the label above the iPhone home bar (the default 49 points cuts the labels off).
+      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 62 + insets.bottom },
       tabBarLabelStyle: { fontFamily: F.cond, fontSize: 14 },
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: 13 },
       sceneStyle: { backgroundColor: c.page },

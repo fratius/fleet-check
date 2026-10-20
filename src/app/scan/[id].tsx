@@ -1,9 +1,10 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { F, MARKER, Svg, mmss } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
@@ -23,6 +24,25 @@ function Btn({ title, onPress, kind = 'outline', disabled }: { title: string; on
         borderColor: kind === 'outline' ? 'rgba(255,255,255,0.7)' : bg, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : pressed ? 0.7 : 1 })}>
       <Text style={{ fontFamily: F.cond, fontSize: 19, color: fg, textDecorationLine: kind === 'ghost' ? 'underline' : 'none' }}>{title}</Text>
     </Pressable>
+  );
+}
+
+/**
+ * The camera covers the whole screen, so it keeps clear of the status bar, the notch or Dynamic Island and the home
+ * bar itself. Opened as a full-screen modal on iPhones, the measured safe area can come through as zero for a moment;
+ * the phone's own values from app start are the minimum.
+ */
+function Shell({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const insets = useSafeAreaInsets();
+  const start = initialWindowMetrics?.insets;
+  return (
+    <View style={[st.root, {
+      paddingTop: Math.max(insets.top, start?.top ?? 0), paddingBottom: Math.max(insets.bottom, start?.bottom ?? 0),
+      paddingLeft: insets.left, paddingRight: insets.right,
+    }, style]}>
+      <StatusBar style="light" />
+      {children}
+    </View>
   );
 }
 
@@ -53,20 +73,20 @@ export default function ScanScreen() {
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
-  const insets = useSafeAreaInsets();
-  const { width: W, height: H } = useWindowDimensions();
+  const { width: W } = useWindowDimensions();
+  // The space between the header and the controls, measured, so the camera box never covers either.
+  const [area, setArea] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
 
   if (!v || !sp) {
-    return <SafeAreaView style={st.root}><Text style={st.msg}>This vehicle isn&apos;t in the fleet any more.</Text><Btn title="Close" onPress={() => router.back()} /></SafeAreaView>;
+    return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>This vehicle isn&apos;t in the fleet any more.</Text><Btn title="Close" onPress={() => router.back()} /></Shell>;
   }
   const f = frames[i];
   const taken = slots.filter((x) => x && x !== 'skip').length;
 
   // Camera box: portrait 3:4, as large as fits between the header and the controls.
-  const headH = 92, footH = 196;
-  const boxH = Math.max(240, Math.min(((W) * 4) / 3, H - insets.top - insets.bottom - headH - footH));
-  const boxW = Math.round((boxH * 3) / 4);
+  const boxH = area ? Math.floor(Math.min(area.h, (area.w * 4) / 3)) : 0;
+  const boxW = Math.floor((boxH * 3) / 4);
 
   const close = () => {
     if (phase === 'summary' || !slots.some(Boolean)) { router.back(); return; }
@@ -158,22 +178,22 @@ export default function ScanScreen() {
     </View>
   );
 
-  if (!perm) return <SafeAreaView style={st.root}><ActivityIndicator color="#fff" /></SafeAreaView>;
+  if (!perm) return <Shell style={{ justifyContent: 'center' }}><ActivityIndicator color="#fff" /></Shell>;
   if (!perm.granted) {
     return (
-      <SafeAreaView style={[st.root, { padding: 24, gap: 16, justifyContent: 'center' }]}>
+      <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}>
         <Text style={st.name}>Camera access</Text>
         <Text style={st.msg}>The walk-around uses the camera with an outline to fit the vehicle into.</Text>
         <Btn title={perm.canAskAgain ? 'Allow camera' : 'Open Settings to allow the camera'} kind="marker" onPress={() => requestPerm()} />
         <Btn title="Close" kind="ghost" onPress={() => router.back()} />
-      </SafeAreaView>
+      </Shell>
     );
   }
 
   if (phase === 'summary' || phase === 'saving') {
     const skipped = slots.filter((x) => x === 'skip').length;
     return (
-      <SafeAreaView style={st.root} edges={['top', 'bottom']}>
+      <Shell>
         {header}
         <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
           <View style={st.stats}>
@@ -210,24 +230,25 @@ export default function ScanScreen() {
           <Text style={st.note}>{ho ? 'The photos show the van\'s state when you ' + (ho === 'pickup' ? 'took it' : 'brought it back') + ', so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.'
             : s.mode === 'firebase' ? 'Photos upload to your company\'s storage, so the walk-around is kept as evidence.' : 'Firebase isn\'t connected yet, so photos stay on this phone.'}</Text>
         </ScrollView>
-      </SafeAreaView>
+      </Shell>
     );
   }
 
-  const xml = overlaySVG(sp, f, 3 / 4, boxW);
+  const xml = boxW > 0 ? overlaySVG(sp, f, 3 / 4, boxW) : '';
   return (
-    <SafeAreaView style={st.root} edges={['top', 'bottom']}>
+    <Shell>
       {header}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ width: boxW, height: boxH, overflow: 'hidden', backgroundColor: '#111' }}>
+      <View style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}
+        onLayout={(e) => { const { width, height } = e.nativeEvent.layout; setArea((a) => (a && Math.abs(a.w - width) < 1 && Math.abs(a.h - height) < 1 ? a : { w: width, h: height })); }}>
+        {boxH > 0 ? <View style={{ width: boxW, height: boxH, overflow: 'hidden', backgroundColor: '#111' }}>
           <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="back" ratio="4:3" enableTorch={torch && phase === 'aim'} animateShutter
             onCameraReady={() => setReady(true)} onMountError={(e) => setCamErr(e.message || 'The camera couldn\'t start.')} />
           {phase === 'review' && pending ? <Image source={{ uri: pending.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
           <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg xml={xml} width={boxW} height={boxH} /></View>
           {!ready && !camErr ? <ActivityIndicator style={StyleSheet.absoluteFill} color="#fff" /> : null}
-        </View>
+        </View> : null}
       </View>
-      <View style={{ paddingHorizontal: 16, paddingBottom: 10, gap: 10, minHeight: footH - 10 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: 196 }}>
         {camErr ? <Text style={[st.hint, { color: '#FF8A80' }]}>{camErr}</Text> : null}
         <Text style={st.hint}>
           {phase === 'review' ? 'Does the vehicle line up with the outline?' : <><Text style={{ color: MARKER, fontFamily: F.semi }}>Fit the vehicle to the outline. </Text>About {f.dist.toLocaleString(undefined, { maximumFractionDigits: 1 })} m away. {f.hint}</>}
@@ -248,7 +269,7 @@ export default function ScanScreen() {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </Shell>
   );
 }
 

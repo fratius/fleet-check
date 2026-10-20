@@ -7,10 +7,10 @@ import { Button, Card, Notice, Pill, Row, Screen, T, fmtWhen } from '@/component
 import { photoUrl } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { ai } from '@/lib/store';
-import type { Video } from '@/lib/types';
+import { VIDEO_TITLE, type Video } from '@/lib/types';
 import { mb, watchVideo } from '@/lib/videos';
 
-/** One handover video: the player and what's known about it. */
+/** One video of a van (pick-up, drop-off or walk-around): the player and what's known about it. */
 export default function VideoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useSession();
@@ -34,7 +34,7 @@ export default function VideoScreen() {
   if (!v) return <Screen edges={[]}><Card dashed><T v="hint">{older === null ? 'This video isn\'t available.' : 'Loading…'}</T></Card></Screen>;
   const ready = v.status === 'ready' && v.playPath;
   const aspect = v.width && v.height ? v.width / v.height : 9 / 16;
-  const title = v.kind === 'pickup' ? 'Pick-up video' : 'Drop-off video';
+  const title = VIDEO_TITLE[v.kind] || 'Video';
   return (
     <Screen edges={[]}>
       <Stack.Screen options={{ title: `${title}, ${v.vehicleName}` }} />

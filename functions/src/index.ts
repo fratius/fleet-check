@@ -717,8 +717,9 @@ export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async 
   return { ok: true };
 });
 
-/* ---------- 10. Handover videos ---------- */
-// An alternative to the photos: one video walking around the van, at pick-up and at drop-off. The phone uploads the
+/* ---------- 10. Videos ---------- */
+// An alternative to the photos: one video walking around the van, at pick-up and at drop-off, or any time as a
+// walk-around (addVanVideo). The phone uploads the
 // original to orgs/{org}/videos/{uploader}/{videoId}/original.*; the server checks it is this person's, recent and
 // long enough, writes the video record, and later makes a playback copy (processVideo). Video records are written
 // only by the server.
@@ -738,7 +739,7 @@ async function withLocal<T>(path: string, fn: (file: string) => Promise<T>): Pro
   }
 }
 
-/** The uploaded video: this person's, uploaded and recorded in the last two hours, 8 seconds to 5 minutes long. */
+/** The uploaded video (for a handover or a walk-around): this person's, uploaded and recorded in the last two hours, 8 seconds to 5 minutes long. */
 async function checkHandoverVideo(who: Who, videoId: string): Promise<VideoCheck> {
   if (!ID.test(videoId)) throw new HttpsError('invalid-argument', 'Record the video of the van first.');
   const prefix = `orgs/${who.orgId}/videos/${who.uid}/${videoId}/`;
@@ -760,7 +761,8 @@ async function checkHandoverVideo(who: Who, videoId: string): Promise<VideoCheck
   return { path: f.name, size, contentType, durationMs: p.durationMs, recordedAt: p.recordedAt, device: p.device, width: p.width, height: p.height, hdr: p.hdr };
 }
 
-function videoDoc(who: Who, van: { id: string; name: string; stationId?: string }, v: VideoCheck, kind: 'pickup' | 'dropoff', assignmentId: string, late: boolean) {
+type VideoKind = 'pickup' | 'dropoff' | 'walkaround';
+function videoDoc(who: Who, van: { id: string; name: string; stationId?: string }, v: VideoCheck, kind: VideoKind, assignmentId: string | null, late: boolean) {
   return {
     vehicleId: van.id, vehicleName: van.name, stationId: van.stationId || null, kind, assignmentId, late,
     by: who.uid, byName: who.name, createdAt: Date.now(), recordedAt: v.recordedAt, durationMs: v.durationMs,
@@ -794,6 +796,31 @@ export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, 
     if (used.exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
     if (!other.empty) throw new HttpsError('failed-precondition', 'Someone already added a video for this.');
     tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, true));
+  });
+  return { ok: true };
+});
+
+/**
+ * A walk-around video of a van, outside any handover: anyone who can scan the van (its station's drivers and fleet
+ * managers, the owners) can film it at any time, the same way they'd take the walk-around photos. It's kept with
+ * the van; if a driver has the van at that moment, the video notes their handover for context. It doesn't pick up
+ * or drop off anything.
+ */
+export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+  const who = await guard(req);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const videoId = String(req.data?.videoId || '');
+  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as { name: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string } | null } | undefined;
+  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  needStation(who, van.stationId);
+  if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
+  const v = await checkHandoverVideo(who, videoId);
+  await db().runTransaction(async (tx) => {
+    const vref = org.collection('videos').doc(videoId);
+    if ((await tx.get(vref)).exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+    tx.create(vref, videoDoc(who, { id: vehicleId, name: van.name, stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
   });
   return { ok: true };
 });

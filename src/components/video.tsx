@@ -8,7 +8,7 @@ import { flash } from '@/lib/flash';
 import { photoUrl } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
-import type { Vehicle, Video } from '@/lib/types';
+import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
 import { mb, recordVideo, uploadVideo } from '@/lib/videos';
 
 /** Plays a stored video. */
@@ -29,7 +29,7 @@ export function VideoRow({ v }: { v: Video }) {
     <Pressable onPress={() => router.push(`/video/${v.id}`)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 8 }}>
       {v.posterPath ? <Photo src={v.posterPath} style={{ width: 54, height: 72 }} /> : <View style={{ width: 54, height: 72, borderRadius: 3, backgroundColor: '#16181C', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">▶</T></View>}
       <View style={{ flex: 1, gap: 2 }}>
-        <T v="h3">{v.kind === 'pickup' ? 'Pick-up video' : 'Drop-off video'}{v.late ? ', added later' : ''}</T>
+        <T v="h3">{VIDEO_TITLE[v.kind] || 'Video'}{v.late ? ', added later' : ''}</T>
         <T v="small">{[v.byName, fmtWhen(v.recordedAt || v.createdAt), `${Math.round(v.durationMs / 1000)} s`].filter(Boolean).join(', ')}</T>
       </View>
       <T v="h3" color={c.ink2}>›</T>
@@ -38,11 +38,11 @@ export function VideoRow({ v }: { v: Video }) {
 }
 
 /**
- * Records a video and uses it for a pick-up or drop-off (the server checks it and records the handover), or adds
- * it to a handover that's missing one. Shows the upload as it goes.
+ * Records a video and uses it for a pick-up or drop-off (the server checks it and records the handover), adds it
+ * to a handover that's missing one, or keeps it with the van as a walk-around. Shows the upload as it goes.
  */
-export function VideoHandover({ v, kind, assignmentId, title, primary, onDone }: {
-  v: Vehicle; kind: 'pickup' | 'dropoff'; assignmentId?: string; title: string; primary?: boolean; onDone?: () => void;
+export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onDone }: {
+  v: Vehicle; kind: Video['kind']; assignmentId?: string; title: string; primary?: boolean; wide?: boolean; onDone?: () => void;
 }) {
   const s = useSession();
   const c = useColors();
@@ -51,13 +51,14 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, onDone }:
   const [videoId, setVideoId] = useState<string | null>(null);
   const send = async (id: string) => {
     setStep('Checking the video…');
-    if (assignmentId) await ai.addHandoverVideo({ orgId: s.org!.id, assignmentId, kind, videoId: id });
+    if (kind === 'walkaround') await ai.addVanVideo({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
+    else if (assignmentId) await ai.addHandoverVideo({ orgId: s.org!.id, assignmentId, kind, videoId: id });
     else if (kind === 'pickup') await ai.pickUpVan({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
     else await ai.dropOffVan({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
     // The playback copy is made in the background; nobody waits for it.
     ai.processVideo({ orgId: s.org!.id, videoId: id }).catch(() => {});
     setVideoId(null);
-    flash(`van:${v.id}`, assignmentId ? 'The video was added.' : kind === 'pickup' ? `You picked up ${v.name}. The video is kept with its history.` : `You dropped off ${v.name}. The video is kept with its history.`);
+    flash(`van:${v.id}`, kind === 'walkaround' ? `The video of ${v.name} is saved with the van.` : assignmentId ? 'The video was added.' : kind === 'pickup' ? `You picked up ${v.name}. The video is kept with its history.` : `You dropped off ${v.name}. The video is kept with its history.`);
     onDone?.();
   };
   const go = async () => {
@@ -80,7 +81,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, onDone }:
   // without uploading it again, or replaced with a new recording.
   return (
     <View style={{ gap: 6 }}>
-      <Button v={primary ? 'primary' : 'secondary'} title={step || (videoId ? 'Try again with this video' : title)} loading={!!step} disabled={!!step} onPress={go} />
+      <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || (videoId ? 'Try again with this video' : title)} loading={!!step} disabled={!!step} onPress={go} />
       {videoId && !step ? <Button small v="link" title="Record a new video instead" onPress={() => { setVideoId(null); setErr(null); }} /> : null}
       {err ? <T v="small" color={c.alert}>{err}</T> : null}
     </View>
