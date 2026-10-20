@@ -41,6 +41,8 @@ beforeEach(async () => {
     await put(`orgs/${O}/scans/sc1`, { predicted: 'suv', verdict: null, actual: null, createdAt: 1 });
     await put(`orgs/${O}/assignments/a1`, { vehicleId: 'v1', driverId: 'drv1', driverName: 'Driver 1', stationId: S1, start: 1, end: null, createdAt: 1 });
     await put(`orgs/${O}/assignments/a2`, { vehicleId: 'v2', driverId: 'drv2', driverName: 'Driver 2', stationId: S2, start: 1, end: 5, createdAt: 1 });
+    await put(`orgs/${O}/videos/vd1`, { vehicleId: 'v1', stationId: S1, by: 'drv1', kind: 'pickup', createdAt: 1 });
+    await put(`orgs/${O}/videos/vd2`, { vehicleId: 'v1', stationId: S1, by: 'mgr1', kind: 'dropoff', createdAt: 1 });
     const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
     await put(`invites/DRVLINK2xxxxxxxxxxxxxxxx`, { token: 'DRVLINK2xxxxxxxxxxxxxxxx', ...inv('driver', S2) });
@@ -103,6 +105,14 @@ describe('van history', () => {
 describe('walk-arounds and checks', () => {
   test('driver saves a walk-around at their station', () => assertSucceeds(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w2`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2 })));
   test('driver cannot save one for another station', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w3`), { vehicleId: 'v2', stationId: S2, createdBy: 'drv1', createdAt: 2 })));
+  test('nobody writes a video record from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/videos/x1`), { vehicleId: 'v1', stationId: S1, by: 'own', kind: 'pickup' })));
+  test('a driver cannot write their own video record (the server checks the video first)', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/videos/x2`), { vehicleId: 'v1', stationId: S1, by: 'drv1', kind: 'pickup' })));
+  test('manager watches videos of their station', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/videos/vd1`))));
+  test('a driver sees their own videos', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/videos/vd1`))));
+  test('a driver does not see other people\'s videos', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/videos/vd2`))));
+  test('a driver of another station does not see them', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/videos/vd1`))));
+  test('nobody changes a video record', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}/videos/vd1`), { kind: 'dropoff' })));
+  test('nobody deletes a video record', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/videos/vd1`))));
   const note = (by, extra = {}) => ({ vehicleId: 'v1', stationId: S1, damageKey: 'c1:0', text: 'Driver says it was there before', by, byName: by, createdAt: Date.now(), ...extra });
   test('manager comments on a damage at their station', () => assertSucceeds(setDoc(doc(as('mgr1'), `orgs/${O}/damageNotes/n1`), note('mgr1'))));
   test('owner comments on any damage', () => assertSucceeds(setDoc(doc(as('own'), `orgs/${O}/damageNotes/n2`), note('own'))));

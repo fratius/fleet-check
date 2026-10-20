@@ -56,12 +56,12 @@ export default function Fleet() {
           <T v="small" color="#000">{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <Button small v="primary" title="Start scanning" onPress={() => router.push(`/scan/${s.myVan!.id}`)} />
-            {canDrop ? <Button small title="Drop off" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: s.myVan!.id, handover: 'dropoff' } })} /> : null}
+            {canDrop ? <Button small title="Drop off" onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
           </Row>
         </Pressable>
       ) : null}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
-        <Notice text="Pick up the van you were told to take: open it below, tap Pick up and take its photos. When you bring it back, drop it off here, with photos again." />
+        <Notice text="Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way." />
       ) : null}
       {s.mode === 'firebase' && s.user ? (
         <Button small v="link" title={s.staff ? 'Your own van history' : 'Vans you had'} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />

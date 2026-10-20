@@ -67,6 +67,39 @@ export interface Assignment {
   /** Photos taken at pick-up and drop-off when drivers pick up vans themselves. */
   startWalkId?: string | null;
   endWalkId?: string | null;
+  /** Or a video instead of the photos. Videos added later point to the assignment instead (Video.late). */
+  startVideoId?: string | null;
+  endVideoId?: string | null;
+}
+
+/** A handover video: one walk around the van at pick-up or drop-off. Written by the server after checking it. */
+export interface Video {
+  id: string;
+  vehicleId: string;
+  vehicleName: string;
+  stationId: string | null;
+  kind: 'pickup' | 'dropoff';
+  assignmentId: string;
+  /** Added after the handover (for example by the manager when the driver didn't record one). */
+  late: boolean;
+  by: string;
+  byName: string;
+  createdAt: number;
+  /** When the phone recorded it, if it says. */
+  recordedAt: number | null;
+  durationMs: number;
+  path: string;
+  size: number;
+  contentType: string;
+  device: string | null;
+  width: number;
+  height: number;
+  /** The playback copy (720p H.264) is made after upload. */
+  status: 'uploaded' | 'processing' | 'ready' | 'failed';
+  playPath: string | null;
+  posterPath: string | null;
+  playSize?: number;
+  error?: string | null;
 }
 
 /** An operating area of a company, such as an Amazon delivery station. */

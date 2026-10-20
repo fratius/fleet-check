@@ -2,8 +2,10 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { Card, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { dur } from '@/components/history';
 import { useSession } from '@/lib/session';
 import { approvedDamage, type Check } from '@/lib/types';
+import { missingHandovers } from '@/lib/videos';
 
 /** Damage checks waiting for a fleet manager's decision, then the ones decided lately. */
 export default function ReviewQueue() {
@@ -15,6 +17,8 @@ export default function ReviewQueue() {
   const pending = mine.filter((k) => k.status === 'checking');
   const done = mine.filter((k) => k.status === 'reviewed').slice(0, 30);
   const showStation = s.stations.length > 1;
+  // Handovers in the last 7 days without the driver's drop-off video or photos, and vans still out after a shift.
+  const missing = missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.stations, Date.now() - 7 * 86400_000);
 
   const row = (k: Check, line: string, pill?: React.ReactNode) => (
     <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)}
@@ -30,6 +34,22 @@ export default function ReviewQueue() {
         <T v="h1">Review</T>
         <T v="hint">Drivers send damage checks here. You decide each spot: damage or not. Your decision is final and goes on the van&apos;s record.</T>
       </View>
+      {missing.length ? (
+        <>
+          <T v="h2">Missing drop-off videos ({missing.length})</T>
+          <T v="hint">At stations where drivers pick up vans themselves, every drop-off needs a video or the photos. Open the van to see its history or add the video yourself.</T>
+          {missing.map(({ a, what }) => (
+            <Pressable key={a.id} onPress={() => router.push(`/vehicle/${a.vehicleId}`)}
+              style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12, gap: 4 }}>
+              <Row><T v="h3" style={{ flex: 1 }}>{a.vehicleName}</T><Pill v="bad" text={what === 'still-out' ? 'Not dropped off' : 'No drop-off video'} /></Row>
+              <T v="hint">{what === 'still-out'
+                ? `${a.driverName} has had it for ${dur(Date.now() - a.start)}, since ${fmtWhen(a.start)}`
+                : [`${a.driverName} had it until ${fmtWhen(a.end)}`, a.endReason === 'taken over' ? `then ${a.endedByName || 'another driver'} took it over` : a.endedByName ? `ended by ${a.endedByName}` : '',
+                  showStation ? s.stationName(a.stationId) : ''].filter(Boolean).join(', ')}</T>
+            </Pressable>
+          ))}
+        </>
+      ) : null}
       <T v="h2">Waiting for you ({waiting.length})</T>
       {!waiting.length ? <Card dashed><T v="hint">Nothing to review right now.</T></Card> : null}
       {waiting.map((k) => {

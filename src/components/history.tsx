@@ -5,6 +5,8 @@ import { Pressable, View } from 'react-native';
 import { Button, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { watchHistory, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
+import { handoverMedia, noDropoff, stillOut } from '@/lib/videos';
+import { VideoHandover } from '@/components/video';
 import { AiError, ai } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 
@@ -59,6 +61,11 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
   const damage = checks.reduce((n, k) => n + approvedDamage(k).length, 0);
   const canOpen = show === 'driver' ? s.staff || a.driverId === s.user?.uid : s.vehicles.some((v) => v.id === a.vehicleId);
   const title = show === 'driver' ? a.driverName : [a.vehicleName, a.plate].filter(Boolean).join(', ');
+  // The proof at each end (photos or video, also videos added later), and whether the drop-off is missing.
+  const m = handoverMedia(a, s.videos);
+  const missing = noDropoff(a, s.videos, s.stations);
+  const out = stillOut(a, s.stations);
+  const van = s.vehicles.find((x) => x.id === a.vehicleId);
   return (
     <Pressable disabled={!canOpen} accessibilityRole={canOpen ? 'button' : undefined}
       onPress={() => router.push(show === 'driver' ? `/person/${a.driverId}` : `/vehicle/${a.vehicleId}`)}
@@ -73,12 +80,19 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
         {[a.startedBy === a.driverId ? 'Picked up by the driver' : `Given by ${a.startedByName}`, !open && a.endReason ? `${END_REASON[a.endReason] || a.endReason}${a.endedByName ? ' by ' + a.endedByName : ''}` : '',
           s.stations.length > 1 && s.staff ? s.stationName(a.stationId) : ''].filter(Boolean).join('. ')}
       </T>
-      {a.startWalkId || a.endWalkId ? (
+      {m.start.walkId || m.end.walkId || m.start.videoId || m.end.videoId ? (
         <Row gap={6}>
-          {a.startWalkId ? <Button small v="link" title="Pick-up photos" onPress={() => router.push(`/walk/${a.startWalkId}`)} /> : null}
-          {a.endWalkId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Photos at takeover' : 'Drop-off photos'} onPress={() => router.push(`/walk/${a.endWalkId}`)} /> : null}
+          {m.start.walkId ? <Button small v="link" title="Pick-up photos" onPress={() => router.push(`/walk/${m.start.walkId}`)} /> : null}
+          {m.start.videoId ? <Button small v="link" title={m.start.late ? 'Pick-up video (added later)' : 'Pick-up video'} onPress={() => router.push(`/video/${m.start.videoId}`)} /> : null}
+          {m.end.walkId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Photos at takeover' : 'Drop-off photos'} onPress={() => router.push(`/walk/${m.end.walkId}`)} /> : null}
+          {m.end.videoId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Video at takeover' : m.end.late ? 'Drop-off video (added later)' : 'Drop-off video'} onPress={() => router.push(`/video/${m.end.videoId}`)} /> : null}
         </Row>
       ) : null}
+      {missing ? <T v="small" color={c.alert}>No drop-off video or photos{a.endReason === 'taken over' ? `: ${a.driverName} didn't drop it off, ${a.endedByName || 'the next driver'} took it over` : ''}.</T> : null}
+      {out ? <T v="small" color={c.alert}>Not dropped off after {dur(Date.now() - a.start)}.</T> : null}
+      {van && s.mode === 'firebase' && missing && s.runs(a.stationId) ? <VideoHandover v={van} kind="dropoff" assignmentId={a.id} title="Add the drop-off video" /> : null}
+      {van && s.mode === 'firebase' && open && !m.start.walkId && !m.start.videoId && (a.driverId === s.user?.uid || s.runs(a.stationId))
+        ? <VideoHandover v={van} kind="pickup" assignmentId={a.id} title="Add a pick-up video" /> : null}
       {walks.length || checks.length ? (
         <T v="small">{[`${walks.length} walk-around${walks.length === 1 ? '' : 's'}`, `${checks.length} check${checks.length === 1 ? '' : 's'}`,
           damage ? `${damage} approved damage${damage === 1 ? '' : 's'} found` : ''].filter(Boolean).join(', ')} in this time</T>

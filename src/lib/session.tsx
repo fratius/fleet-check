@@ -9,7 +9,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { fb } from './firebase';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -39,6 +39,8 @@ interface Session {
   vehicles: Vehicle[]; walks: Walkaround[]; checks: Check[]; scans: Scan[];
   /** Recent assignments (the latest 500 in scope). Full history per van or person: watchHistory. */
   assignments: Assignment[];
+  /** Recent handover videos (the latest 500 in scope; drivers: their own). */
+  videos: Video[];
   /** The van this person drives now, if any. */
   myVan: Vehicle | null;
   loaded: { vehicles: boolean; walks: boolean; checks: boolean; scans: boolean; stations: boolean };
@@ -233,10 +235,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [checks, setChecks] = useState<Check[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
-    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setAssignments([]);
+    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setAssignments([]); setVideos([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -247,6 +250,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.walks.subscribe((r) => { setWalks(r); setLoaded((l) => ({ ...l, walks: true })); }, err),
       store.checks.subscribe((r) => { setChecks(r); setLoaded((l) => ({ ...l, checks: true })); }, err),
       store.assignments.subscribe((r) => setAssignments(r), () => {}),
+      store.videos.subscribe((r) => setVideos(r), () => {}),
     ];
     if (staff) subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
     else setLoaded((l) => ({ ...l, scans: true }));
@@ -280,7 +284,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks, scans, assignments, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks, scans, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -29,7 +29,8 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Fleet** shows which vans are free and which have a driver, and who. Open a van to give it to a driver or make it free; open a person (People) to give them a van. One van per driver, one driver per van.
 - **History is kept for good:** each van lists every driver it had, each person every van they had, with the dates, who handed it over and why it ended. Nobody can edit or delete it, not even the owner. Vans are retired, not deleted; people who leave keep their history.
 - **Damage on each van:** the van page shows the van in 3D with a dot on each damage; tap a dot for when it happened, who had the van, the before and after photos and comments. The damage list below has the full details, newest first. When a check finds damage the van already has, the manager links it in the review so it stays one damage.
-- **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need the van's full photo set, taken with the camera; the photos are linked from the history.
+- **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need proof: a video walking around the van, or the full photo set. Both are linked from the history.
+- **Handover videos** are uploaded as recorded; the server makes a copy that plays on every phone (720p, normal colours from iPhone HDR). The Review tab tells managers when a drop-off has no video or photos, and managers can add a missing video afterwards.
 
 ## Try it with demo data
 

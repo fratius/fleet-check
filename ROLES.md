@@ -66,10 +66,19 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 
 - **Off by default.** The owner (any station) or a fleet manager (their station) switches it on under People
   (`setSelfAssign`, which records who changed it and when). Where it's off, only staff hand out vans.
-- **Pick up and drop off need photos:** every photo of the van's walk-around, taken with the camera by that
-  driver, none skipped, uploaded in the last two hours, of that van, and used for one handover only. The server
-  checks all of it (`pickUpVan`, `dropOffVan`) and marks the walk-around as the pick-up or drop-off photos
-  (`handover`), which the app can't set or change. Video is not decided yet.
+- **Pick up and drop off need proof: the photos or a video.** Either every photo of the van's walk-around, taken
+  with the camera by that driver, none skipped, uploaded in the last two hours, of that van, used for one handover
+  only (marked `handover` on the walk-around by the server); **or one video** walking around the van, recorded by
+  that driver, 8 seconds to 5 minutes long, recorded and uploaded in the last two hours, used once. The server
+  checks it (`pickUpVan`, `dropOffVan`) before anything changes. A drop-off always needs one of the two.
+- **Videos:** uploaded as recorded to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder);
+  the server writes the video record (`orgs/{org}/videos`) and makes a 720p playback copy (`processVideo`). Owners
+  and the station's managers watch every handover video; drivers watch their own. Nobody edits or deletes them.
+- **A missing video can be added later** (`addHandoverVideo`): by the station's owner or managers for any handover
+  of the station, or by the driver for their own. It points to the handover; the handover itself doesn't change.
+- **Managers are told when a drop-off has no video or photos:** the Review tab lists (and its badge counts)
+  handovers of the last 7 days at pick-up-yourself stations that ended without the driver's drop-off (taken over,
+  or ended by a manager) and vans a driver has had for more than 14 hours. For now this is in the app only.
 - A driver who has a van drops it off before picking up another.
 - A van another driver still has (they didn't drop it off) can be taken over after a confirmation; their
   assignment ends as "taken over" with the new driver's photos.

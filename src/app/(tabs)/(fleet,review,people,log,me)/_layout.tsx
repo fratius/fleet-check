@@ -44,6 +44,7 @@ export default function TabStack({ segment }: { segment: string }) {
       <Stack.Screen name="walk/[id]" options={{ title: 'Walk-around' }} />
       <Stack.Screen name="check/[id]" options={{ title: 'Damage check' }} />
       <Stack.Screen name="person/[uid]" options={{ title: 'Person' }} />
+      <Stack.Screen name="video/[id]" options={{ title: 'Video' }} />
     </Stack>
   );
 }

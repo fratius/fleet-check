@@ -1,4 +1,7 @@
 import { randomBytes } from 'node:crypto';
+import { promises as fsp } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
@@ -13,6 +16,7 @@ import { createDemo, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
+import { makePlayback, probe } from './video';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -421,9 +425,14 @@ interface Assignment {
   start: number; end: number | null; startedBy: string; startedByName: string; endedBy: string | null; endedByName: string | null; endReason: EndReason | null;
   /** The walk-around taken at pick-up and at drop-off (drivers who pick up vans themselves); null when a manager assigned. */
   startWalkId: string | null; endWalkId?: string | null;
+  /** Or a video instead of photos (see section 10). */
+  startVideoId?: string | null; endVideoId?: string | null;
 }
-const closeWith = (who: Who, reason: EndReason, walkId: string | null = null) =>
-  ({ end: Date.now(), endedBy: who.uid, endedByName: who.name, endReason: reason, endWalkId: walkId });
+/** Proof at a handover: the photos of a walk-around, or a video. */
+interface Media { walkId: string | null; videoId: string | null }
+const NO_MEDIA: Media = { walkId: null, videoId: null };
+const closeWith = (who: Who, reason: EndReason, media: Media = NO_MEDIA) =>
+  ({ end: Date.now(), endedBy: who.uid, endedByName: who.name, endReason: reason, endWalkId: media.walkId, endVideoId: media.videoId });
 
 /** Gives a van to a driver (or a manager) of its station, or ends its assignment when `driverId` is null. */
 export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
@@ -465,7 +474,7 @@ export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: van.name, plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: null, endWalkId: null,
+      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null,
     };
     tx.set(aref, a);
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now } });
@@ -641,51 +650,190 @@ async function useHandoverPhotos(tx: FirebaseFirestore.Transaction, org: Firebas
   return ref;
 }
 
+/** The photos or the video given for a handover, checked before anything changes. */
+async function checkMedia(who: Who, vehicleId: string, data: { walkId?: unknown; videoId?: unknown }): Promise<{ media: Media; video: VideoCheck | null }> {
+  const videoId = data?.videoId ? String(data.videoId) : '';
+  if (videoId) return { media: { walkId: null, videoId }, video: await checkHandoverVideo(who, videoId) };
+  const walkId = String(data?.walkId || '');
+  await checkHandoverPhotos(who, vehicleId, walkId);
+  return { media: { walkId, videoId: null }, video: null };
+}
+/** In the transaction: the photos or video aren't used yet. Returns how to mark them as this handover's proof. */
+async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestore.DocumentReference, who: Who, m: { media: Media; video: VideoCheck | null },
+  van: { id: string; name: string; stationId?: string }) {
+  if (m.media.walkId) {
+    const wref = await useHandoverPhotos(tx, org, m.media.walkId);
+    return (kind: 'pickup' | 'dropoff', assignmentId: string) => tx.update(wref, { handover: { kind, assignmentId } });
+  }
+  const vref = org.collection('videos').doc(m.media.videoId!);
+  if ((await tx.get(vref)).exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+  return (kind: 'pickup' | 'dropoff', assignmentId: string) => tx.create(vref, videoDoc(who, van, m.video!, kind, assignmentId, false));
+}
+
 /**
- * The driver takes this van, with its pick-up photos. A van someone else still has in the app (they didn't drop
- * it off) is taken over: their assignment ends with these photos. A driver who has another van drops that off first.
+ * The driver takes this van, with pick-up photos or a video. A van someone else still has in the app (they didn't
+ * drop it off) is taken over: their assignment ends with this proof. A driver who has another van drops that off first.
  */
-export const pickUpVan = onCall({ timeoutSeconds: 60 }, async (req) => {
+export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
-  const walkId = String(req.data?.walkId || '');
-  await checkHandoverPhotos(who, vehicleId, walkId);
+  const m = await checkMedia(who, vehicleId, req.data);
   return db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
     if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
     if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
     const aCol = org.collection('assignments');
     const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
-    if (mine.length) throw new HttpsError('failed-precondition', `Drop off ${(mine[0].data() as Assignment).vehicleName} first, with its photos.`);
-    const wref = await useHandoverPhotos(tx, org, walkId);
-    if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', walkId));
+    if (mine.length) throw new HttpsError('failed-precondition', `Drop off ${(mine[0].data() as Assignment).vehicleName} first, with its photos or a video.`);
+    const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+    if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
     const now = Date.now();
     const aref = aCol.doc();
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: walkId, endWalkId: null,
+      startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null,
     };
     tx.set(aref, a);
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now } });
-    tx.update(wref, { handover: { kind: 'pickup', assignmentId: aref.id } });
+    mark('pickup', aref.id);
     return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
   });
 });
 
-/** The driver hands back the van they have, with its drop-off photos. */
-export const dropOffVan = onCall({ timeoutSeconds: 60 }, async (req) => {
+/** The driver hands back the van they have, with drop-off photos or a video. */
+export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
-  const walkId = String(req.data?.walkId || '');
-  await checkHandoverPhotos(who, vehicleId, walkId);
+  const m = await checkMedia(who, vehicleId, req.data);
   await db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
     if (van.assignedTo?.driverId !== who.uid) throw new HttpsError('failed-precondition', 'You don\'t have this van.');
-    const wref = await useHandoverPhotos(tx, org, walkId);
-    tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', walkId));
+    const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+    tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', m.media));
     tx.update(vref, { assignedTo: null });
-    tx.update(wref, { handover: { kind: 'dropoff', assignmentId: van.assignedTo.assignmentId } });
+    mark('dropoff', van.assignedTo.assignmentId);
   });
   return { ok: true };
+});
+
+/* ---------- 10. Handover videos ---------- */
+// An alternative to the photos: one video walking around the van, at pick-up and at drop-off. The phone uploads the
+// original to orgs/{org}/videos/{uploader}/{videoId}/original.*; the server checks it is this person's, recent and
+// long enough, writes the video record, and later makes a playback copy (processVideo). Video records are written
+// only by the server.
+
+const VIDEO_MIN_MS = 8_000, VIDEO_MAX_MS = 5 * 60_000;
+interface VideoCheck { path: string; size: number; contentType: string; durationMs: number; recordedAt: number | null; device: string | null; width: number; height: number; hdr: boolean }
+
+/** Downloads a video to a temporary file, runs fn with its path, then deletes it. */
+async function withLocal<T>(path: string, fn: (file: string) => Promise<T>): Promise<T> {
+  const dir = await fsp.mkdtemp(join(tmpdir(), 'v-'));
+  const file = join(dir, path.split('/').pop() || 'video');
+  try {
+    await bucket().file(path).download({ destination: file });
+    return await fn(file);
+  } finally {
+    await fsp.rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+/** The uploaded video: this person's, uploaded and recorded in the last two hours, 8 seconds to 5 minutes long. */
+async function checkHandoverVideo(who: Who, videoId: string): Promise<VideoCheck> {
+  if (!ID.test(videoId)) throw new HttpsError('invalid-argument', 'Record the video of the van first.');
+  const prefix = `orgs/${who.orgId}/videos/${who.uid}/${videoId}/`;
+  const [files] = await bucket().getFiles({ prefix });
+  const f = files.find((x) => /\/original\.[A-Za-z0-9]{2,5}$/.test(x.name));
+  if (!f) throw new HttpsError('failed-precondition', 'The video didn\'t finish uploading. Try again.');
+  const meta = f.metadata;
+  const size = Number(meta.size || 0), contentType = String(meta.contentType || '');
+  if (!contentType.startsWith('video/')) throw new HttpsError('failed-precondition', 'That file isn\'t a video.');
+  if (Date.now() - new Date(String(meta.timeCreated)).getTime() > HANDOVER_MAX_AGE) throw new HttpsError('failed-precondition', 'This video was uploaded more than two hours ago. Record a new one.');
+  const p = await withLocal(f.name, (file) => probe(file));
+  if (!p.hasVideo || !p.durationMs) throw new HttpsError('failed-precondition', 'This video can\'t be read. Record it again.');
+  if (p.durationMs < VIDEO_MIN_MS) throw new HttpsError('failed-precondition', `The video is ${Math.round(p.durationMs / 1000)} seconds long. Walk all the way around the van: at least ${VIDEO_MIN_MS / 1000} seconds.`);
+  if (p.durationMs > VIDEO_MAX_MS) throw new HttpsError('failed-precondition', 'The video is longer than 5 minutes. One walk around the van is enough.');
+  // Phones write when they recorded it. Allow some clock difference; not every phone or browser writes it.
+  if (p.recordedAt && Date.now() - p.recordedAt > HANDOVER_MAX_AGE + 10 * 60_000) {
+    throw new HttpsError('failed-precondition', 'This video was recorded more than two hours ago. Record a new one at the van.');
+  }
+  return { path: f.name, size, contentType, durationMs: p.durationMs, recordedAt: p.recordedAt, device: p.device, width: p.width, height: p.height, hdr: p.hdr };
+}
+
+function videoDoc(who: Who, van: { id: string; name: string; stationId?: string }, v: VideoCheck, kind: 'pickup' | 'dropoff', assignmentId: string, late: boolean) {
+  return {
+    vehicleId: van.id, vehicleName: van.name, stationId: van.stationId || null, kind, assignmentId, late,
+    by: who.uid, byName: who.name, createdAt: Date.now(), recordedAt: v.recordedAt, durationMs: v.durationMs,
+    path: v.path, size: v.size, contentType: v.contentType, device: v.device, width: v.width, height: v.height, hdr: v.hdr,
+    status: 'uploaded', playPath: null, posterPath: null, error: null,
+  };
+}
+
+/**
+ * Adds a missing pick-up or drop-off video to a handover after the fact (for example the manager films the van
+ * when the driver left without a drop-off video). The handover itself doesn't change: the video points to it.
+ */
+export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+  const who = await guard(req);
+  const assignmentId = String(req.data?.assignmentId || '');
+  const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
+  const videoId = String(req.data?.videoId || '');
+  if (!ID.test(assignmentId) || !kind) throw new HttpsError('invalid-argument', 'Unknown handover.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const aref = org.collection('assignments').doc(assignmentId);
+  const a = (await aref.get()).data() as Assignment | undefined;
+  if (!a) throw new HttpsError('not-found', 'Unknown handover.');
+  // The station's staff, or the driver for their own handover.
+  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, 'This handover belongs to another station.'); }
+  if (kind === 'dropoff' && a.end == null) throw new HttpsError('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
+  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw new HttpsError('failed-precondition', `This ${kind === 'pickup' ? 'pick-up' : 'drop-off'} already has photos or a video.`);
+  const v = await checkHandoverVideo(who, videoId);
+  await db().runTransaction(async (tx) => {
+    const vref = org.collection('videos').doc(videoId);
+    const [used, other] = await Promise.all([tx.get(vref), tx.get(org.collection('videos').where('assignmentId', '==', assignmentId).where('kind', '==', kind).limit(1))]);
+    if (used.exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+    if (!other.empty) throw new HttpsError('failed-precondition', 'Someone already added a video for this.');
+    tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, true));
+  });
+  return { ok: true };
+});
+
+/**
+ * Makes the playback copy and poster of a video. The app starts it right after a handover; anyone who opens a
+ * video that isn't ready starts it again, so it gets done even if the phone went offline. Safe to run twice.
+ */
+export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4, concurrency: 1 }, async (req) => {
+  const who = await guard(req);
+  const videoId = String(req.data?.videoId || '');
+  if (!ID.test(videoId)) throw new HttpsError('invalid-argument', 'Unknown video.');
+  const ref = db().doc(`orgs/${who.orgId}/videos/${videoId}`);
+  const go = await db().runTransaction(async (tx) => {
+    const d = (await tx.get(ref)).data() as { stationId: string | null; by: string; status: string; processingAt?: number } | undefined;
+    if (!d) throw new HttpsError('not-found', 'Unknown video.');
+    if (d.by !== who.uid) needStation(who, d.stationId, 'This video belongs to another station.');
+    if (d.status === 'ready') return false;
+    if (d.status === 'processing' && Date.now() - (d.processingAt || 0) < 10 * 60_000) return false;
+    tx.update(ref, { status: 'processing', processingAt: Date.now() });
+    return true;
+  });
+  if (!go) return { started: false };
+  const d = (await ref.get()).data() as { path: string; hdr?: boolean };
+  const base = d.path.replace(/original\.[A-Za-z0-9]+$/, '');
+  try {
+    await withLocal(d.path, async (file) => {
+      const out = file.replace(/[^/]+$/, 'play.mp4'), jpg = file.replace(/[^/]+$/, 'poster.jpg');
+      const pr = await probe(file);
+      await makePlayback(file, out, jpg, pr.hdr || !!d.hdr);
+      const playSize = (await fsp.stat(out)).size;
+      await Promise.all([
+        bucket().upload(out, { destination: `${base}play.mp4`, contentType: 'video/mp4', resumable: false }),
+        bucket().upload(jpg, { destination: `${base}poster.jpg`, contentType: 'image/jpeg', resumable: false }),
+      ]);
+      await ref.update({ status: 'ready', playPath: `${base}play.mp4`, posterPath: `${base}poster.jpg`, playSize, readyAt: Date.now(), error: null });
+    });
+  } catch (e) {
+    await ref.update({ status: 'failed', error: String((e as Error)?.message || e).slice(0, 300) });
+    throw new HttpsError('internal', 'Couldn\'t convert the video. The original is kept.');
+  }
+  return { started: true };
 });

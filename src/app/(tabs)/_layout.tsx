@@ -4,6 +4,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { F, MARKER, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
+import { missingHandovers } from '@/lib/videos';
 
 type IconName = 'fleet' | 'review' | 'people' | 'log' | 'account';
 function Icon({ name, color }: { name: IconName; color: ColorValue }) {
@@ -28,7 +29,9 @@ export default function TabsLayout() {
   const c = useColors();
   const s = useSession();
   const staff = s.staff;
-  const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length;
+  // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
+  const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
+    + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.stations, Date.now() - 7 * 86400_000).length : 0);
   return (
     <Tabs screenOptions={{
       headerShown: false,

@@ -7,6 +7,7 @@ import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Van3D } from '@/components/van3d';
+import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
@@ -41,6 +42,7 @@ export default function VehicleScreen() {
   const spots = useRef({ model: 0, list: 0, inner: 0, items: new Map<string, number>() });
   const [editing, setEditing] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [takeover, setTakeover] = useState(false);
   const [armed, setArmed] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export default function VehicleScreen() {
   const canSelf = selfOn && !s.runs(v.stationId) && s.myStations.some((st) => st.id === v.stationId);
   const mine = v.assignedTo?.driverId === s.user?.uid;
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
+  const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
   const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
   const est = Math.max(1, Math.round((frames.length * perPhoto) / 60000));
@@ -127,24 +130,27 @@ export default function VehicleScreen() {
           ) : <><T v="h2">Free</T><T v="hint">Nobody has this van.</T></>}
           {canSelf ? (
             mine ? (
-              <>
-                <Button title="Drop off this van" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'dropoff' } })} />
-                <T v="small">You take all {frames.length} photos when you bring it back, then it's dropped off.</T>
-              </>
+              <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+                <T v="medium">Drop off</T>
+                <VideoHandover v={v} kind="dropoff" title="Drop off with a video" primary />
+                <Button title={`Drop off with ${frames.length} photos`} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'dropoff' } })} />
+                <T v="small">A video or the photos are needed to drop it off. {VIDEO_HOW}</T>
+              </View>
             ) : s.myVan ? (
-              <T v="small">You have {s.myVan.name}. Drop it off first, with its photos, then you can pick up this one.</T>
-            ) : (
+              <T v="small">You have {s.myVan.name}. Drop it off first, with a video or its photos, then you can pick up this one.</T>
+            ) : v.assignedTo && !takeover ? (
               <>
-                {v.assignedTo ? (
-                  <Button title={armed === 'pick' ? `Tap again: ${v.assignedTo.driverName} no longer has it` : `Take over from ${v.assignedTo.driverName}`} onPress={() => {
-                    if (armed !== 'pick') { arm('pick'); return; }
-                    setArmed(null); router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } });
-                  }} />
-                ) : (
-                  <Button v="primary" title="Pick up this van" onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } })} />
-                )}
-                <T v="small">{v.assignedTo ? `Only if you were told to take this van: ${v.assignedTo.driverName} didn't drop it off. ` : ''}You take all {frames.length} photos first, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name.</T>
+                <Button title={`Take over from ${v.assignedTo.driverName}`} onPress={() => setTakeover(true)} />
+                <T v="small">Only if you were told to take this van: {v.assignedTo.driverName} didn't drop it off.</T>
               </>
+            ) : (
+              <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+                <T v="medium">{v.assignedTo ? `Take over from ${v.assignedTo.driverName}` : 'Pick up'}</T>
+                <VideoHandover v={v} kind="pickup" title="Pick up with a video" primary />
+                <Button title={`Pick up with ${frames.length} photos`} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } })} />
+                <T v="small">First a video or the photos, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name. {VIDEO_HOW}</T>
+                {v.assignedTo ? <Button small v="link" title="Cancel" onPress={() => setTakeover(false)} /> : null}
+              </View>
             )
           ) : s.role === 'driver' && !mine ? <T v="small">Your fleet manager gives out the vans at this station.</T> : null}
           {s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : (
@@ -194,6 +200,13 @@ export default function VehicleScreen() {
           );
         })}
       </View>
+
+      {vids.length ? (
+        <View style={{ gap: 8 }}>
+          <T v="h2">Handover videos</T>
+          {vids.slice(0, 6).map((x) => <VideoRow key={x.id} v={x} />)}
+        </View>
+      ) : null}
 
       <View style={{ gap: 8 }}>
         <T v="h2">Walk-arounds</T>

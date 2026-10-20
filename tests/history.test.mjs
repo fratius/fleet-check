@@ -6,6 +6,11 @@
 //
 // Run: npx firebase-tools emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history"
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 
 import { deleteApp, getApps, initializeApp } from 'firebase/app';
@@ -68,6 +73,21 @@ after(async () => {
 });
 
 const S = {};
+
+// Test videos, made with the same ffmpeg the functions use.
+const FFMPEG = createRequire(new URL('../functions/package.json', import.meta.url))('ffmpeg-static');
+function clip({ seconds = 10, recordedHoursAgo = 0 } = {}) {
+  const out = join(mkdtempSync(join(tmpdir(), 'clip-')), 'c.mp4');
+  execFileSync(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=320x240:rate=15:duration=${seconds}`,
+    '-metadata', `creation_time=${new Date(Date.now() - recordedHoursAgo * 3600_000).toISOString()}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', out]);
+  return new Uint8Array(readFileSync(out));
+}
+/** Records and uploads a video the way the app does: the original, in the uploader's own folder. */
+async function video(p, opts = {}) {
+  const id = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  await uploadBytes(ref(p.st, `orgs/${S.org}/videos/${p.uid}/${id}/original.mp4`), clip(opts), { contentType: 'video/mp4' });
+  return id;
+}
 const vanDoc = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'vehicles', id))).data();
 const history = async (p, filters) => (await getDocs(query(collection(p.db, 'orgs', S.org, 'assignments'), ...filters))).docs.map((d) => ({ id: d.id, ...d.data() }));
 
@@ -189,6 +209,61 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   // Switched off again: no more pick-ups or drop-offs by drivers.
   await S.own.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
   await fails(S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v1.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
+});
+
+test('pick-up and drop-off with a video instead of photos; a manager adds a missing video later', async () => {
+  const { v1, v2 } = S.vans;
+  await S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: true });
+  // People upload only into their own video folder, and only videos.
+  await fails(uploadBytes(ref(S.d1.st, `orgs/${S.org}/videos/${S.d2.uid}/x1/original.mp4`), clip(), { contentType: 'video/mp4' }));
+  await fails(uploadBytes(ref(S.d1.st, `orgs/${S.org}/videos/${S.d1.uid}/x2/original.mp4`), new Uint8Array([1, 2, 3]), { contentType: 'image/jpeg' }));
+  // Too short, recorded hours ago, or someone else's: refused.
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d1, { seconds: 3 }) }), 'failed-precondition');
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d1, { recordedHoursAgo: 5 }) }), 'failed-precondition');
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d2) }), 'failed-precondition');
+  // Picked up with a video.
+  const pv = await video(S.d1);
+  const r = await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: pv });
+  const a = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
+  assert.equal(a.startVideoId, pv);
+  assert.equal(a.startWalkId, null);
+  const vd = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'videos', pv))).data();
+  assert.equal(vd.kind, 'pickup');
+  assert.equal(vd.assignmentId, r.assignmentId);
+  assert.equal(vd.by, S.d1.uid);
+  assert.ok(vd.durationMs >= 9000);
+  // Other drivers don't see it; nobody writes video records from the app.
+  await fails(getDoc(doc(S.d2.db, 'orgs', S.org, 'videos', pv)), 'permission-denied');
+  await fails(updateDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', pv), { kind: 'dropoff' }), 'permission-denied');
+  // The same video can't be used twice; dropped off with a new one.
+  await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, videoId: pv }), 'failed-precondition');
+  const dv = await video(S.d1);
+  await S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, videoId: dv });
+  const a2 = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
+  assert.equal(a2.endVideoId, dv);
+  assert.equal(a2.endReason, 'dropped off');
+  assert.equal((await vanDoc(S.mgr, v2.id)).assignedTo, null);
+  // The playback copy and poster.
+  await S.d1.call('processVideo', { orgId: S.org, videoId: dv });
+  const done = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dv))).data();
+  assert.equal(done.status, 'ready');
+  assert.ok(done.playPath.endsWith('play.mp4') && done.posterPath.endsWith('poster.jpg'));
+  // Erik's van 1 is made free by the manager: no drop-off video. The manager adds one afterwards; the handover
+  // itself doesn't change, the video points to it.
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: null });
+  const [ended] = await history(S.own, [where('driverId', '==', S.d2.uid), where('vehicleId', '==', v1.id), orderBy('start', 'desc'), limit(1)]);
+  assert.equal(ended.endReason, 'ended');
+  await fails(S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: await video(S.d1) }), 'permission-denied');
+  const late = await video(S.mgr);
+  await S.mgr.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: late });
+  const lv = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', late))).data();
+  assert.equal(lv.late, true);
+  assert.equal(lv.assignmentId, ended.id);
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', ended.id))).data().endVideoId ?? null, null);
+  await fails(S.mgr.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: await video(S.mgr) }), 'failed-precondition');
+  // Back as it was for the next test: Erik has van 1, drivers don't pick up themselves.
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d2.uid });
+  await S.own.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
 });
 
 test('retiring, moving and removing keep the history and free the van', async () => {

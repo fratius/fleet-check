@@ -8,11 +8,27 @@ service firebase.storage {
         && firestore.exists(/databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid));
     }
 
+    function staff(orgId) {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'manager'];
+    }
+
+    // Photos: any member of the company sees and adds them.
     match /orgs/{orgId}/{rest=**} {
-      allow read: if member(orgId);
-      allow create: if member(orgId)
+      allow read: if member(orgId) && rest[0] != 'videos';
+      allow create: if member(orgId) && rest[0] != 'videos'
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
+    }
+
+    // Handover videos, in a folder per uploader: people upload only their own, as the original recording (the
+    // server makes the playback copy). Owners and managers watch them; drivers watch their own.
+    match /orgs/{orgId}/videos/{uid}/{videoId}/{file} {
+      allow read: if member(orgId) && (request.auth.uid == uid || staff(orgId));
+      allow create: if member(orgId) && request.auth.uid == uid
+        && file.matches('original[.][A-Za-z0-9]{2,5}')
+        && request.resource.contentType.matches('video/.*')
+        && request.resource.size < 500 * 1024 * 1024;
     }
   }
 }
