@@ -31,6 +31,7 @@ jobs:
         if: always()
         run: |
           grep -E "^not ok|# (pass|fail)" rules.log | while read -r l; do echo "::notice title=Rules::$l"; done || true
+          grep -E -A 12 "^\s+not ok" rules.log | grep -E "not ok|error|Error|expected|actual|message" | head -30 | while read -r l; do echo "::notice title=Rules detail::$l"; done || true
 
   history:
     name: Van history, end to end

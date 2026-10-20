@@ -5,7 +5,7 @@ rules_version = '2';
 // and their membership.
 service firebase.storage {
   match /b/{bucket}/o {
-    function creatorClaim() { return request.auth != null && request.auth.token.creator == true; }
+    function creatorClaim() { return request.auth != null && request.auth.token.get('creator', false) == true; }
     function userPath() { return /databases/(default)/documents/users/$(request.auth.uid); }
     function memberPath(orgId) { return /databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid); }
     // The app creator viewing the app as an owner, manager or driver of one company (see firestore.rules).

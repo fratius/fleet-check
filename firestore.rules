@@ -14,7 +14,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function me() { return request.auth.uid; }
-    function creatorClaim() { return signedIn() && request.auth.token.creator == true; }
+    function creatorClaim() { return signedIn() && request.auth.token.get('creator', false) == true; }
     // "View as": only with the app creator claim; for anyone else the field means nothing. It only ever takes
     // access away (the creator can do everything anyway), so the creator sets it on their own profile.
     function userPath() { return /databases/$(database)/documents/users/$(me()); }
@@ -32,7 +32,8 @@ service cloud.firestore {
     function staff(orgId) { return owner(orgId) || manager(orgId); }
     // Works at this station (managers and drivers; owners pass before this is asked).
     function inStation(orgId, stationId) {
-      return (viewingIn(orgId) && va().get('st', null) != null && stationId == va().st)
+      // Written as "in [station]" like a member's list, so queries with where('stationId', 'in', ...) pass too.
+      return (viewingIn(orgId) && va().get('st', null) is string && stationId in [va().st])
         || (realMember(orgId) && stationId in m(orgId).get('stationIds', []));
     }
     // Can see or work on things at this station? Owners and the creator pass before the station is read,
