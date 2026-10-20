@@ -31,6 +31,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Damage on each van:** the van page shows the van in 3D with a dot on each damage; tap a dot for when it happened, who had the van, the before and after photos and comments. The damage list below has the full details, newest first. When a check finds damage the van already has, the manager links it in the review so it stays one damage.
 - **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need proof: a video walking around the van, or the full photo set. Both are linked from the history.
 - **Videos** instead of photos: under Start scanning anyone can film a walk-around video of a van, and drivers can pick up and drop off with one. They're uploaded as recorded; the server makes a copy that plays on every phone (720p, normal colours from iPhone HDR). The Review tab tells managers when a drop-off has no video or photos, and managers can add a missing video afterwards.
+- **A driver given a van is told and asked for the pick-up video or photos**: a phone notification (web app, after turning notifications on in Account) and a card on their Vans tab. Managers see it in Review if they're still missing after 2 hours.
 - **View the app as someone else** (app creator only): Account > View the app as. Pick fleet owner, fleet manager or driver (and a station) to see the open company exactly as they do; the server applies the same access. A strip above the tab bar shows who you're viewing as, with Back to me.
 
 ## Try it with demo data
@@ -119,7 +120,7 @@ The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 n
 
 Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` runs the Test workflow (rules on the emulator, the van history flow end to end, type checks).
 
-**Everything on your computer, no real data:** `npm run emulators` (needs Java 21) starts the Firebase emulators for sign-in, data, photos and functions, under a demo project that never touches the real one. In a second terminal, `npm run web:emulators` opens the web app against them. Put any text in `functions/.secret.local` as `ANTHROPIC_API_KEY=...` first (AI checks need a real key; nothing else does).
+**Everything on your computer, no real data:** `npm run emulators` (needs Java 21) starts the Firebase emulators for sign-in, data, photos and functions, under a demo project that never touches the real one. In a second terminal, `npm run web:emulators` opens the web app against them. Put any text in `functions/.secret.local` as `ANTHROPIC_API_KEY=...` and `WEBPUSH_KEYS={}` first (AI checks need a real key and phone notifications a real key pair; nothing else does).
 
 ## Project layout
 

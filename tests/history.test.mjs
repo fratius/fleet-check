@@ -7,6 +7,8 @@
 // Run: npx firebase-tools emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history"
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import http from 'node:http';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -75,7 +77,8 @@ after(async () => {
 const S = {};
 
 // Test videos, made with the same ffmpeg the functions use.
-const FFMPEG = createRequire(new URL('../functions/package.json', import.meta.url))('ffmpeg-static');
+const fnRequire = createRequire(new URL('../functions/package.json', import.meta.url));
+const FFMPEG = fnRequire('ffmpeg-static');
 function clip({ seconds = 10, recordedHoursAgo = 0 } = {}) {
   const out = join(mkdtempSync(join(tmpdir(), 'clip-')), 'c.mp4');
   execFileSync(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=320x240:rate=15:duration=${seconds}`,
@@ -340,6 +343,82 @@ test('the app creator views the app as a driver, a manager and an owner, and get
   // Nobody else can switch: the rules refuse the field, and a driver stays a driver on the server.
   await fails(setDoc(doc(S.d1.db, 'users', S.d1.uid), { viewAs: { org: S.org, role: 'owner', st: null } }, { merge: true }), 'permission-denied');
   await fails(S.d1.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false }), 'permission-denied');
+});
+
+// Writes past the rules (the emulator's admin access), for what the app can't write itself.
+let admin = null;
+function adminDb() {
+  if (!admin) {
+    process.env.FIRESTORE_EMULATOR_HOST ||= `${HOST}:8080`;
+    const { initializeApp: init } = fnRequire('firebase-admin/app');
+    const { getFirestore: fs } = fnRequire('firebase-admin/firestore');
+    admin = fs(init({ projectId: cfg.projectId }, 'admin'));
+  }
+  return admin;
+}
+
+test('a driver given a van gets a phone notification and adds the pick-up photos or video afterwards', async () => {
+  const { v2 } = S.vans;
+  // The push service, on this computer: it keeps what arrives; /gone answers like a phone that turned them off.
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (c) => ch.push(c));
+    req.on('end', () => { got.push({ url: req.url, headers: req.headers, body: Buffer.concat(ch) }); res.statusCode = req.url.endsWith('/gone') ? 410 : 201; res.end(); });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  const port = srv.address().port;
+  // Dana's phone: its own key pair, as a browser makes it when notifications are turned on.
+  const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+  const auth = crypto.randomBytes(16).toString('base64url');
+  const keys = { p256dh: ecdh.getPublicKey().toString('base64url'), auth };
+  // The app may only save real push services (the rules check), so this test address is written past the rules.
+  const pushCol = adminDb().collection(`users/${S.d1.uid}/push`);
+  await pushCol.doc('here').set({ endpoint: `http://${HOST}:${port}/push/here`, keys, createdAt: Date.now(), device: 'test phone' });
+  await pushCol.doc('gone').set({ endpoint: `http://${HOST}:${port}/push/gone`, keys, createdAt: Date.now(), device: 'old phone' });
+  const r = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });
+  srv.close();
+  assert.equal(r.notified, 1);
+  const msg = got.find((g) => g.url === '/push/here');
+  assert.ok(msg, 'the notification arrived');
+  // Signed with the server's key pair and encrypted for this phone only.
+  const secret = readFileSync(new URL('../functions/.secret.local', import.meta.url), 'utf8').match(/^WEBPUSH_KEYS='(.+)'$/m);
+  const pub = JSON.parse(secret[1]).publicKey;
+  assert.ok(msg.headers.authorization.startsWith('vapid t=') && msg.headers.authorization.endsWith(`k=${pub}`), msg.headers.authorization);
+  assert.equal(msg.headers['content-encoding'], 'aes128gcm');
+  const body = JSON.parse(fnRequire('http_ece').decrypt(msg.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString());
+  assert.equal(body.url, `/vehicle/${v2.id}`);
+  assert.equal(body.title, 'Van v2 is yours');
+  assert.match(body.body, /^Max Manager gave you Van v2 \(V2\)\. Before you drive, take the pick-up video or photos\.$/);
+  // The phone that turned notifications off is forgotten.
+  assert.equal((await pushCol.doc('gone').get()).exists, false);
+  // The handover asks for the pick-up photos or video.
+  const a = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
+  assert.equal(a.pickupRequested, true);
+  // The driver adds them (another driver can't); every photo, taken with the camera.
+  await fails(S.d2.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: await photos(S.d2, S.org, v2) }), 'permission-denied');
+  await fails(S.d1.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: await photos(S.d1, S.org, v2, { skipped: 1 }) }), 'failed-precondition');
+  const pick = await photos(S.d1, S.org, v2);
+  await S.d1.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: pick });
+  const w = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'walkarounds', pick))).data();
+  assert.deepEqual(w.handover, { kind: 'pickup', assignmentId: r.assignmentId, late: false });
+  // One pick-up proof per handover, and the handover record itself doesn't change.
+  await fails(S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', videoId: await video(S.d1) }), 'failed-precondition');
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data().startWalkId, null);
+  // Or a video: the next time Dana is given the van she films it. It counts as her pick-up, not as added late.
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: null });
+  const r2 = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });
+  const pv = await video(S.d1);
+  await S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: r2.assignmentId, kind: 'pickup', videoId: pv });
+  const vd = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'videos', pv))).data();
+  assert.equal(vd.assignmentId, r2.assignmentId);
+  assert.equal(vd.late, false);
+  // Taking a van yourself (a manager) asks for nothing and sends nothing.
+  const r3 = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.mgr.uid });
+  assert.equal(r3.notified, 0);
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r3.assignmentId))).data().pickupRequested, false);
+  // Back as it was: van 2 free.
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: null });
 });
 
 test('retiring, moving and removing keep the history and free the van', async () => {

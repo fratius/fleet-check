@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
+import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
@@ -13,6 +14,8 @@ export default function Fleet() {
   const c = useColors();
   const [only, setOnly] = useState<string | null>(null);
   const [show, setShow] = useState<'all' | 'free' | 'taken' | 'retired'>('all');
+  // A van a manager gave this driver that still needs its pick-up video or photos.
+  const pickup = usePickupRequest(s.myVan);
   const selfOn = (stationId: string | null | undefined) => !!s.stations.find((st) => st.id === stationId)?.selfAssign;
   const canDrop = !!s.myVan && selfOn(s.myVan.stationId) && !s.runs(s.myVan.stationId);
   const showStations = s.myStations.length > 1;
@@ -49,7 +52,7 @@ export default function Fleet() {
           {s.myStations.map((st) => <Chip key={st.id} text={st.name} on={only === st.id} onPress={() => setOnly(st.id)} />)}
         </Row>
       ) : null}
-      {s.myVan ? (
+      {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
           <T v="medium" color="#000">Your van</T>
           <T v="h2" color="#000">{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
@@ -60,6 +63,7 @@ export default function Fleet() {
           </Row>
         </Pressable>
       ) : null}
+      {!s.staff ? <Notifications prompt /> : null}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
         <Notice text="Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way." />
       ) : null}

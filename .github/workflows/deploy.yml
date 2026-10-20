@@ -57,6 +57,8 @@ jobs:
         shell: bash
         run: |
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          # A throwaway key pair for the notification test (the test reads it back to check the signature).
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
       - name: Show failures
         if: always()
@@ -118,10 +120,32 @@ jobs:
           else
             echo "Anthropic key unchanged."
           fi
+      - name: Make the key pair for phone notifications (once)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          set -euo pipefail
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          # Made once and kept: a new pair would cut off every phone that turned notifications on.
+          if fb functions:secrets:access WEBPUSH_KEYS > /dev/null 2>&1; then
+            echo "Notification keys already there."
+          else
+            F="$RUNNER_TEMP/webpush.json"
+            node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))" > "$F"
+            fb functions:secrets:set WEBPUSH_KEYS --data-file "$F" --force
+            rm -f "$F"
+            echo "Notification keys made."
+          fi
       - name: Deploy rules and functions
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: npx -y "$FIREBASE_TOOLS" deploy --only firestore,storage,functions --project "$PROJECT" --non-interactive --force
+      - name: Publish the notification key for the app
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          set -euo pipefail
+          npx -y "$FIREBASE_TOOLS" functions:secrets:access WEBPUSH_KEYS --project "$PROJECT" --non-interactive | node functions/scripts/set-push-key.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

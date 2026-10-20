@@ -70,6 +70,8 @@ export interface Assignment {
   /** Or a video instead of the photos. Videos added later point to the assignment instead (Video.late). */
   startVideoId?: string | null;
   endVideoId?: string | null;
+  /** Given by a manager or owner: the driver is asked for pick-up photos or a video (added afterwards, pointing here). */
+  pickupRequested?: boolean;
 }
 
 /** A handover video: one walk around the van at pick-up or drop-off. Written by the server after checking it. */
@@ -154,7 +156,8 @@ export interface Walkaround {
   retakes: number;
   photos: Photo[];
   /** Set by the server when these photos were taken to pick up or drop off the van. */
-  handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string };
+  /** The photos of a pick-up or drop-off (set by the server); late: added after the handover, not by the driver at pick-up. */
+  handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string; late?: boolean };
 }
 
 export interface Usage {

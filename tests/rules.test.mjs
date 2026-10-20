@@ -50,6 +50,8 @@ beforeEach(async () => {
     await put('users/vown', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
     await put('users/boss2', { orgId: O, viewAs: null });
     await put('users/drv2', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
+    await put('config/push', { vapidPublicKey: 'BPUBLIC', updatedAt: 1 });
+    await put('users/drv1/push/p1', { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'x', auth: 'y' }, createdAt: 1, device: 'Android phone' });
     const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
     await put(`invites/DRVLINK2xxxxxxxxxxxxxxxx`, { token: 'DRVLINK2xxxxxxxxxxxxxxxx', ...inv('driver', S2) });
@@ -245,4 +247,19 @@ describe('the app creator viewing the app as someone else', () => {
   test('nobody else can set it', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1'), { viewAs: { org: O, role: 'owner', st: null } })));
   test('nobody else gets anything from it', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/vehicles/v1`))));
   test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(vehiclesAt(as('drv2'), [S2]))));
+});
+
+describe('phone notifications', () => {
+  const sub = (endpoint) => ({ endpoint, keys: { p256dh: 'BKEY', auth: 'AUTH' }, createdAt: 5, device: 'iPhone' });
+  test('a driver turns them on for their phone', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1/push/p2'), sub('https://web.push.apple.com/QGx'))));
+  test('Android (Chrome) push service too', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1/push/p3'), sub('https://fcm.googleapis.com/fcm/send/xyz'))));
+  test('only real push services, never another address', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p4'), sub('https://evil.example.com/collect'))));
+  test('no plain http', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p5'), sub('http://fcm.googleapis.com/fcm/send/xyz'))));
+  test('nothing extra in the record', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p6'), { ...sub('https://fcm.googleapis.com/fcm/send/1'), role: 'owner' })));
+  test('they see and remove their own', () => assertSucceeds(deleteDoc(doc(as('drv1'), 'users/drv1/push/p1'))));
+  test('nobody else sees them, not even the owner', () => assertFails(getDoc(doc(as('own'), 'users/drv1/push/p1'))));
+  test('nobody adds a phone for someone else', () => assertFails(setDoc(doc(as('mgr1'), 'users/drv1/push/p7'), sub('https://fcm.googleapis.com/fcm/send/m'))));
+  test('everyone signed in reads the public key', () => assertSucceeds(getDoc(doc(as('drv2'), 'config/push'))));
+  test('nobody changes it from the app', () => assertFails(setDoc(doc(as('boss', { creator: true }), 'config/push'), { vapidPublicKey: 'X' })));
+  test('signed out: no key', () => assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'config/push'))));
 });

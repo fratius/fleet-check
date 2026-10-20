@@ -50,6 +50,8 @@ jobs:
         shell: bash
         run: |
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          # A throwaway key pair for the notification test (the test reads it back to check the signature).
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
       - name: Show failures
         if: always()

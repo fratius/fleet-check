@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
 import { ViewAsCard } from '@/components/viewas';
+import { Notifications } from '@/components/pickup';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
 import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
@@ -42,6 +43,7 @@ export default function Account() {
         </T>
       </Card>
 
+      <Notifications />
       <ViewAsCard />
       {/* While viewing as someone, the company stays put: switch back to change it. */}
       {s.viewAs && s.mode === 'firebase' ? null : (

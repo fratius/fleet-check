@@ -8,6 +8,7 @@ import { arrayUnion, collection, doc, getDoc, setDoc, updateDoc } from 'firebase
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fb } from './firebase';
+import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
 import { roleOf, type Assignment, type Check, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
@@ -195,6 +196,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       try { const t = await u.getIdTokenResult(true); isCreator.current = t.claims.creator === true; } catch { isCreator.current = false; }
       setCreator(isCreator.current);
       try { await load(u); } catch { setStatus('needsOrg'); }
+      // If this phone has notifications on, they go to whoever is signed in now.
+      refreshPush(u.uid);
     });
   }, [f, load]);
 
@@ -269,7 +272,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [load]);
 
   const resetPassword = useCallback(async (email: string) => { await sendPasswordResetEmail(fb()!.auth, email.trim()); }, []);
-  const signOut = useCallback(async () => { if (fb()) await fbSignOut(fb()!.auth); }, []);
+  const signOut = useCallback(async () => {
+    if (!fb()) return;
+    // This phone stops getting this person's notifications.
+    if (fbUser.current) await forgetPush(fbUser.current.uid);
+    await fbSignOut(fb()!.auth);
+  }, []);
 
   orgRef.current = org;
   const role = roleOf(member);

@@ -10,6 +10,7 @@ import { getStorage } from 'firebase-admin/storage';
 import { setGlobalOptions } from 'firebase-functions';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/https';
 import { defineSecret } from 'firebase-functions/params';
+import webpush from 'web-push';
 
 import { ask } from './claude';
 import { createDemo, deleteDemo } from './demo';
@@ -23,6 +24,8 @@ initializeApp();
 setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
+/** The key pair for phone notifications (web push), made once by the Deploy workflow: {publicKey, privateKey}. */
+const WEBPUSH_KEYS = defineSecret('WEBPUSH_KEYS');
 const db = () => getFirestore();
 const bucket = () => getStorage().bucket();
 const opts = (timeoutSeconds: number) => ({ secrets: [ANTHROPIC_API_KEY], memory: '2GiB' as const, cpu: 1, timeoutSeconds, concurrency: 4 });
@@ -447,6 +450,8 @@ interface Assignment {
   startWalkId: string | null; endWalkId?: string | null;
   /** Or a video instead of photos (see section 10). */
   startVideoId?: string | null; endVideoId?: string | null;
+  /** Given by someone else (a manager or owner): the driver is asked for pick-up photos or a video (section 11). */
+  pickupRequested?: boolean;
 }
 /** Proof at a handover: the photos of a walk-around, or a video. */
 interface Media { walkId: string | null; videoId: string | null }
@@ -454,8 +459,11 @@ const NO_MEDIA: Media = { walkId: null, videoId: null };
 const closeWith = (who: Who, reason: EndReason, media: Media = NO_MEDIA) =>
   ({ end: Date.now(), endedBy: who.uid, endedByName: who.name, endReason: reason, endWalkId: media.walkId, endVideoId: media.videoId });
 
-/** Gives a van to a driver (or a manager) of its station, or ends its assignment when `driverId` is null. */
-export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+/**
+ * Gives a van to a driver (or a manager) of its station, or ends its assignment when `driverId` is null. The driver
+ * is told on their phone and asked for pick-up photos or a video (section 11).
+ */
+export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
@@ -464,7 +472,7 @@ export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   const aCol = org.collection('assignments');
-  return db().runTransaction(async (tx) => {
+  const r = await db().runTransaction(async (tx) => {
     const v = await tx.get(vref);
     if (!v.exists) throw new HttpsError('not-found', 'This van was removed.');
     const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null };
@@ -488,18 +496,28 @@ export const assignVan = onCall({ timeoutSeconds: 30 }, async (req) => {
       tx.update(d.ref, closeWith(who, 'reassigned'));
       tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
     }
-    if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null }; }
+    if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null as string | null }; }
     const now = Date.now();
     const aref = aCol.doc();
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: van.name, plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null,
+      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid,
     };
     tx.set(aref, a);
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now } });
-    return { assignmentId: aref.id };
+    return { assignmentId: aref.id as string | null, vanName: van.name, plate: van.plate || '' };
   });
+  // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
+  let notified = 0;
+  if (driverId && r.assignmentId && !('unchanged' in r) && driverId !== who.uid && 'vanName' in r) {
+    notified = await notify(driverId, {
+      title: `${r.vanName} is yours`,
+      body: `${who.name} gave you ${r.vanName}${r.plate ? ` (${r.plate})` : ''}. Before you drive, take the pick-up video or photos.`,
+      url: `/vehicle/${vehicleId}`, tag: `van-${vehicleId}`,
+    }).catch(() => 0);
+  }
+  return { assignmentId: r.assignmentId, notified };
 });
 
 /** Retires a van (or brings it back). Vans are never deleted: their walk-arounds, checks and history stay. */
@@ -812,10 +830,52 @@ export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, 
   const v = await checkHandoverVideo(who, videoId);
   await db().runTransaction(async (tx) => {
     const vref = org.collection('videos').doc(videoId);
-    const [used, other] = await Promise.all([tx.get(vref), tx.get(org.collection('videos').where('assignmentId', '==', assignmentId).where('kind', '==', kind).limit(1))]);
+    const used = await tx.get(vref);
     if (used.exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
-    if (!other.empty) throw new HttpsError('failed-precondition', 'Someone already added a video for this.');
-    tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, true));
+    await noProofYet(tx, org, assignmentId, kind);
+    tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, isLate(who, a, kind)));
+  });
+  return { ok: true };
+});
+
+/**
+ * Was this proof added late? A driver filming the van a manager gave them is the normal pick-up, not late. Anything
+ * else added after the handover (a drop-off video later, or a manager's video) is marked as added later.
+ */
+function isLate(who: Who, a: Assignment, kind: 'pickup' | 'dropoff') {
+  return !(kind === 'pickup' && a.driverId === who.uid && a.startedBy !== a.driverId);
+}
+/** In the transaction: nobody added photos or a video for this end of the handover yet. */
+async function noProofYet(tx: FirebaseFirestore.Transaction, org: FirebaseFirestore.DocumentReference, assignmentId: string, kind: 'pickup' | 'dropoff') {
+  const [vids, walks] = await Promise.all([
+    tx.get(org.collection('videos').where('assignmentId', '==', assignmentId).where('kind', '==', kind).limit(1)),
+    tx.get(org.collection('walkarounds').where('handover.assignmentId', '==', assignmentId).where('handover.kind', '==', kind).limit(1)),
+  ]);
+  if (!vids.empty || !walks.empty) throw new HttpsError('failed-precondition', 'Someone already added photos or a video for this.');
+}
+
+/**
+ * The same with photos: a full walk-around taken with the camera by this person in the last two hours (the driver
+ * of the handover, or the station's staff). The walk-around is marked as this handover's photos; the handover
+ * itself doesn't change.
+ */
+export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
+  const who = await guard(req);
+  const assignmentId = String(req.data?.assignmentId || '');
+  const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
+  const walkId = String(req.data?.walkId || '');
+  if (!ID.test(assignmentId) || !kind) throw new HttpsError('invalid-argument', 'Unknown handover.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const a = (await org.collection('assignments').doc(assignmentId).get()).data() as Assignment | undefined;
+  if (!a) throw new HttpsError('not-found', 'Unknown handover.');
+  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, 'This handover belongs to another station.'); }
+  if (kind === 'dropoff' && a.end == null) throw new HttpsError('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
+  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw new HttpsError('failed-precondition', `This ${kind === 'pickup' ? 'pick-up' : 'drop-off'} already has photos or a video.`);
+  await checkHandoverPhotos(who, a.vehicleId, walkId);
+  await db().runTransaction(async (tx) => {
+    const wref = await useHandoverPhotos(tx, org, walkId);
+    await noProofYet(tx, org, assignmentId, kind);
+    tx.update(wref, { handover: { kind, assignmentId, late: isLate(who, a, kind) } });
   });
   return { ok: true };
 });
@@ -884,3 +944,38 @@ export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4
   }
   return { started: true };
 });
+
+/* ---------- 11. Phone notifications ---------- */
+// Through the browser's push service: the web app (on iPhones only when it's on the home screen, iOS 16.4 or
+// later), after the person turned notifications on in the Account tab. Each phone or browser is one
+// users/{uid}/push/{id} record. Expo Go can't receive them. Only real push services are used; the emulator tests
+// receive them on this computer.
+const PUSH_SERVICES = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.apple\.com|push\.services\.mozilla\.com|notify\.windows\.com)\//;
+const pushAllowed = (endpoint: string) => PUSH_SERVICES.test(endpoint)
+  || (process.env.FUNCTIONS_EMULATOR === 'true' && /^http:\/\/127\.0\.0\.1:\d+\//.test(endpoint));
+
+/** Sends a notification to every phone this person turned notifications on for. Returns how many took it. */
+async function notify(uid: string, msg: { title: string; body: string; url: string; tag?: string }): Promise<number> {
+  let keys: { publicKey?: string; privateKey?: string } = {};
+  try { keys = JSON.parse(WEBPUSH_KEYS.value() || '{}'); } catch { return 0; }
+  if (!keys.publicKey || !keys.privateKey) return 0;
+  const subs = await db().collection(`users/${uid}/push`).limit(10).get();
+  const project = process.env.GCLOUD_PROJECT || 'fleet-check';
+  const sent = await Promise.all(subs.docs.map(async (d) => {
+    const s = d.data() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+    if (!s.endpoint || !s.keys?.p256dh || !s.keys?.auth || !pushAllowed(s.endpoint)) return 0;
+    try {
+      const r = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } }, JSON.stringify(msg), {
+        vapidDetails: { subject: `https://${project}.web.app`, publicKey: keys.publicKey!, privateKey: keys.privateKey! },
+        TTL: 12 * 3600, urgency: 'high',
+      });
+      const headers: Record<string, string> = {};
+      for (const [k, v] of Object.entries(r.headers || {})) if (k.toLowerCase() !== 'content-length') headers[k] = String(v);
+      const res = await fetch(r.endpoint, { method: r.method, headers, body: new Uint8Array(r.body as Buffer), signal: AbortSignal.timeout(8000) });
+      // The phone turned notifications off or the browser dropped the subscription: forget it.
+      if (res.status === 404 || res.status === 410) { await d.ref.delete().catch(() => {}); return 0; }
+      return res.ok ? 1 : 0;
+    } catch { return 0; }
+  }));
+  return sent.reduce((n: number, x) => n + x, 0);
+}

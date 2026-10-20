@@ -7,6 +7,7 @@ import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Van3D } from '@/components/van3d';
+import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
@@ -25,6 +26,7 @@ export default function VehicleScreen() {
   const history = useHistory({ vehicleId: id });
   // "You picked up …" after the camera closes.
   const done = useFlash(`van:${id}`);
+  const pickup = usePickupRequest(v);
   // The damage record: every damage on the van with where it is, when it happened and who had the van.
   const recs = useVanRecords(id);
   const damages = useMemo(() => (v ? buildDamages(v, recs.checks, recs.walks) : []), [v, recs.checks, recs.walks]);
@@ -96,6 +98,8 @@ export default function VehicleScreen() {
   return (
     <Screen scrollRef={scroller} edges={[]}>
       <Stack.Screen options={{ title: v.name }} />
+      {/* A van a manager just gave this driver: the pick-up video or photos come first (the notification opens here). */}
+      {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : null}
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
         <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />

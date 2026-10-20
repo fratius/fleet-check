@@ -47,8 +47,9 @@ function Shell({ children, style }: { children: React.ReactNode; style?: StylePr
 }
 
 export default function ScanScreen() {
-  const { id, handover } = useLocalSearchParams<{ id: string; handover?: string }>();
+  const { id, handover, assignment } = useLocalSearchParams<{ id: string; handover?: string; assignment?: string }>();
   // Picking up or dropping off a van (drivers, where the station allows it) needs every photo of the walk-around.
+  // With `assignment`: the pick-up photos of a van a manager gave the driver (the handover already happened).
   const ho = handover === 'pickup' || handover === 'dropoff' ? handover : null;
   const s = useSession();
   const v = s.vehicles.find((x) => x.id === id);
@@ -146,10 +147,15 @@ export default function ScanScreen() {
     }
     // The camera opens over the tabs: close it, then open the walk-around in the tab you came from.
     if (!ho) { router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0); return; }
-    setProgress(ho === 'pickup' ? `Picking up ${v.name}` : `Dropping off ${v.name}`);
+    setProgress(assignment ? 'Saving the pick-up photos' : ho === 'pickup' ? `Picking up ${v.name}` : `Dropping off ${v.name}`);
     try {
-      await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
-      flash(`van:${v.id}`, ho === 'pickup' ? `You picked up ${v.name}. The photos are kept with its history.` : `You dropped off ${v.name}. The photos are kept with its history.`);
+      if (assignment) {
+        await ai.addHandoverPhotos({ orgId: s.org!.id, assignmentId: assignment, kind: ho, walkId: wid });
+        flash(`van:${v.id}`, `The pick-up photos of ${v.name} are saved with its history.`);
+      } else {
+        await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
+        flash(`van:${v.id}`, ho === 'pickup' ? `You picked up ${v.name}. The photos are kept with its history.` : `You dropped off ${v.name}. The photos are kept with its history.`);
+      }
       router.back();
     } catch (e) {
       setPhase('summary');
@@ -222,7 +228,7 @@ export default function ScanScreen() {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {ho ? (
-                <Btn title={walkId ? 'Try again' : ho === 'pickup' ? `Pick up ${v.name}` : `Drop off ${v.name}`} kind="marker" disabled={taken < frames.length} onPress={save} />
+                <Btn title={walkId ? 'Try again' : assignment ? 'Save the pick-up photos' : ho === 'pickup' ? `Pick up ${v.name}` : `Drop off ${v.name}`} kind="marker" disabled={taken < frames.length} onPress={save} />
               ) : taken ? <Btn title={`Save ${taken} photos`} kind="marker" onPress={save} /> : null}
               <Btn title={walkId ? 'Close' : 'Discard'} kind="ghost" onPress={() => router.back()} />
             </View>

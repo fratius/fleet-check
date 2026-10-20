@@ -17,8 +17,8 @@ export default function ReviewQueue() {
   const pending = mine.filter((k) => k.status === 'checking');
   const done = mine.filter((k) => k.status === 'reviewed').slice(0, 30);
   const showStation = s.stations.length > 1;
-  // Handovers in the last 7 days without the driver's drop-off video or photos, and vans still out after a shift.
-  const missing = missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.stations, Date.now() - 7 * 86400_000);
+  // Handovers in the last 7 days without the driver's pick-up or drop-off video or photos, and vans still out after a shift.
+  const missing = missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000);
 
   const row = (k: Check, line: string, pill?: React.ReactNode) => (
     <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)}
@@ -36,13 +36,15 @@ export default function ReviewQueue() {
       </View>
       {missing.length ? (
         <>
-          <T v="h2">Missing drop-off videos ({missing.length})</T>
-          <T v="hint">At stations where drivers pick up vans themselves, every drop-off needs a video or the photos. Open the van to see its history or add the video yourself.</T>
+          <T v="h2">Missing handover videos ({missing.length})</T>
+          <T v="hint">A van you give a driver needs their pick-up video or photos within 2 hours. At stations where drivers pick up vans themselves, every drop-off needs them too. Open the van to see its history or add the video yourself.</T>
           {missing.map(({ a, what }) => (
             <Pressable key={a.id} onPress={() => router.push(`/vehicle/${a.vehicleId}`)}
               style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12, gap: 4 }}>
-              <Row><T v="h3" style={{ flex: 1 }}>{a.vehicleName}</T><Pill v="bad" text={what === 'still-out' ? 'Not dropped off' : 'No drop-off video'} /></Row>
-              <T v="hint">{what === 'still-out'
+              <Row><T v="h3" style={{ flex: 1 }}>{a.vehicleName}</T><Pill v="bad" text={what === 'still-out' ? 'Not dropped off' : what === 'no-pickup' ? 'No pick-up video' : 'No drop-off video'} /></Row>
+              <T v="hint">{what === 'no-pickup'
+                ? [`${a.startedByName} gave it to ${a.driverName} ${fmtWhen(a.start)}`, `no pick-up video or photos after ${dur(Date.now() - a.start)}`, showStation ? s.stationName(a.stationId) : ''].filter(Boolean).join(', ')
+                : what === 'still-out'
                 ? `${a.driverName} has had it for ${dur(Date.now() - a.start)}, since ${fmtWhen(a.start)}`
                 : [`${a.driverName} had it until ${fmtWhen(a.end)}`, a.endReason === 'taken over' ? `then ${a.endedByName || 'another driver'} took it over` : a.endedByName ? `ended by ${a.endedByName}` : '',
                   showStation ? s.stationName(a.stationId) : ''].filter(Boolean).join(', ')}</T>

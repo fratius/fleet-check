@@ -55,6 +55,24 @@ service cloud.firestore {
       allow delete: if signedIn() && uid == me();
     }
 
+    // The phones (browsers) where a person turned notifications on: one record each, kept by the person. The
+    // server sends to them (notify in the functions) and forgets the ones the push service says are gone.
+    match /users/{uid}/push/{id} {
+      allow read, delete: if signedIn() && uid == me();
+      allow create, update: if signedIn() && uid == me()
+        && request.resource.data.keys().hasOnly(['endpoint', 'keys', 'createdAt', 'device'])
+        && request.resource.data.endpoint is string && request.resource.data.endpoint.size() < 1000
+        && request.resource.data.endpoint.matches('https://([a-z0-9-]+[.])*(fcm[.]googleapis[.]com|push[.]apple[.]com|push[.]services[.]mozilla[.]com|notify[.]windows[.]com)/.*')
+        && request.resource.data.keys.keys().hasOnly(['p256dh', 'auth'])
+        && request.resource.data.keys.p256dh is string && request.resource.data.keys.p256dh.size() < 200
+        && request.resource.data.keys.auth is string && request.resource.data.keys.auth.size() < 100;
+    }
+
+    // Settings the app reads (written by the Deploy workflow): the public key for phone notifications.
+    match /config/{doc} {
+      allow read: if signedIn();
+    }
+
     // Who the app creators are (written by the Deploy workflow).
     match /platform/{doc} {
       allow read: if creator();

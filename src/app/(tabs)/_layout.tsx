@@ -6,7 +6,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { F, MARKER, useColors } from '@/components/ui';
 import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
-import { missingHandovers } from '@/lib/videos';
+import { missingHandovers, needsPickup } from '@/lib/videos';
 
 type IconName = 'fleet' | 'review' | 'people' | 'log' | 'account';
 function Icon({ name, color }: { name: IconName; color: ColorValue }) {
@@ -34,7 +34,9 @@ export default function TabsLayout() {
   const staff = s.staff;
   // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
-    + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.stations, Date.now() - 7 * 86400_000).length : 0);
+    + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000).length : 0);
+  // The driver's badge: a van they were given that still needs its pick-up video or photos.
+  const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
   return (
     // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
     <Tabs tabBar={(props) => <><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
@@ -47,7 +49,7 @@ export default function TabsLayout() {
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: 13 },
       sceneStyle: { backgroundColor: c.page },
     }}>
-      <Tabs.Screen name="(fleet)" options={{ title: staff ? 'Fleet' : 'Vans', tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
+      <Tabs.Screen name="(fleet)" options={{ title: staff ? 'Fleet' : 'Vans', tabBarBadge: toFilm || undefined, tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
       <Tabs.Screen name="(review)" options={{ title: 'Review', href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
       <Tabs.Screen name="(people)" options={{ title: 'People', href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
       <Tabs.Screen name="(log)" options={{ title: 'Test log', href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />

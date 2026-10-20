@@ -4,7 +4,8 @@ import { Pressable, View } from 'react-native';
 
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
-import { Button, Card, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Notice, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { useFlash } from '@/lib/flash';
 import { watchMember } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, approvedDamage, roleOf, type Member } from '@/lib/types';
@@ -22,6 +23,7 @@ export default function PersonScreen() {
   const [member, setMember] = useState<Member | null | undefined>(undefined);
   const [picking, setPicking] = useState(false);
   const [manage, setManage] = useState(false);
+  const done = useFlash(`person:${uid}`);
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || !uid || !allowed || s.mode !== 'firebase') return;
@@ -59,6 +61,7 @@ export default function PersonScreen() {
         {member === null ? <T v="hint">{name} is no longer in {s.org?.name}. Their van history, walk-arounds and checks stay.</T> : null}
       </View>
 
+      {done ? <Notice text={done} /> : null}
       {r !== 'owner' && member !== null ? (
         <Card>
           <T v="hint">Van now</T>

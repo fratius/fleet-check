@@ -5,8 +5,9 @@ import { Pressable, View } from 'react-native';
 import { Button, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { watchHistory, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
-import { handoverMedia, noDropoff, stillOut } from '@/lib/videos';
+import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
+import { flash } from '@/lib/flash';
 import { AiError, ai } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 
@@ -62,8 +63,9 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
   const canOpen = show === 'driver' ? s.staff || a.driverId === s.user?.uid : s.vehicles.some((v) => v.id === a.vehicleId);
   const title = show === 'driver' ? a.driverName : [a.vehicleName, a.plate].filter(Boolean).join(', ');
   // The proof at each end (photos or video, also videos added later), and whether the drop-off is missing.
-  const m = handoverMedia(a, s.videos);
-  const missing = noDropoff(a, s.videos, s.stations);
+  const m = handoverMedia(a, s.videos, s.walks);
+  const missing = noDropoff(a, s.videos, s.walks, s.stations);
+  const noPickup = needsPickup(a, s.videos, s.walks);
   const out = stillOut(a, s.stations);
   const van = s.vehicles.find((x) => x.id === a.vehicleId);
   return (
@@ -82,7 +84,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       </T>
       {m.start.walkId || m.end.walkId || m.start.videoId || m.end.videoId ? (
         <Row gap={6}>
-          {m.start.walkId ? <Button small v="link" title="Pick-up photos" onPress={() => router.push(`/walk/${m.start.walkId}`)} /> : null}
+          {m.start.walkId ? <Button small v="link" title={m.start.late ? 'Pick-up photos (added later)' : 'Pick-up photos'} onPress={() => router.push(`/walk/${m.start.walkId}`)} /> : null}
           {m.start.videoId ? <Button small v="link" title={m.start.late ? 'Pick-up video (added later)' : 'Pick-up video'} onPress={() => router.push(`/video/${m.start.videoId}`)} /> : null}
           {m.end.walkId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Photos at takeover' : 'Drop-off photos'} onPress={() => router.push(`/walk/${m.end.walkId}`)} /> : null}
           {m.end.videoId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Video at takeover' : m.end.late ? 'Drop-off video (added later)' : 'Drop-off video'} onPress={() => router.push(`/video/${m.end.videoId}`)} /> : null}
@@ -90,6 +92,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       ) : null}
       {missing ? <T v="small" color={c.alert}>No drop-off video or photos{a.endReason === 'taken over' ? `: ${a.driverName} didn't drop it off, ${a.endedByName || 'the next driver'} took it over` : ''}.</T> : null}
       {out ? <T v="small" color={c.alert}>Not dropped off after {dur(Date.now() - a.start)}.</T> : null}
+      {noPickup ? <T v="small" color={c.alert}>No pick-up video or photos yet.</T> : null}
       {van && s.mode === 'firebase' && missing && s.runs(a.stationId) ? <VideoHandover v={van} kind="dropoff" assignmentId={a.id} title="Add the drop-off video" /> : null}
       {van && s.mode === 'firebase' && open && !m.start.walkId && !m.start.videoId && (a.driverId === s.user?.uid || s.runs(a.stationId))
         ? <VideoHandover v={van} kind="pickup" assignmentId={a.id} title="Add a pick-up video" /> : null}
@@ -107,6 +110,14 @@ export function HistoryList({ rows, error, show, empty }: { rows: Assignment[] |
   if (!rows) return <T v="hint">Loading…</T>;
   if (!rows.length) return <T v="hint">{empty}</T>;
   return <View style={{ gap: 10 }}>{rows.map((a, i) => <HistoryRow key={a.id} a={a} show={show} first={i === 0} />)}</View>;
+}
+
+/** What happened after giving a van: whether the driver got a notification on their phone. */
+function given(person: string, van: string, r: { notified?: number; unchanged?: boolean }, self: boolean) {
+  if (r.unchanged || self) return `${self ? 'You have' : person + ' has'} ${van}.`;
+  return r.notified
+    ? `${person} has ${van} now. Their phone got a notification asking for the pick-up video or photos.`
+    : `${person} has ${van} now. Their phone doesn't have notifications on, so they'll see it, and the request for the pick-up video or photos, when they open the app.`;
 }
 
 /** Owners and managers of the van's station give it to a driver (or a fleet manager) of that station. */
@@ -127,7 +138,11 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
     .sort((a, b) => (roleOf(a) === roleOf(b) ? a.name.localeCompare(b.name) : roleOf(a) === 'driver' ? -1 : 1));
   const give = async (m: Member) => {
     setBusy(m.uid); setErr(null);
-    try { await ai.assignVan({ orgId: orgId!, vehicleId: v.id, driverId: m.uid }); onDone(); }
+    try {
+      const r = await ai.assignVan({ orgId: orgId!, vehicleId: v.id, driverId: m.uid });
+      flash(`van:${v.id}`, given(m.name, v.name, r, m.uid === s.user?.uid));
+      onDone();
+    }
     catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t give the van. Check the connection.'); } finally { setBusy(null); }
   };
   return (
@@ -166,7 +181,11 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
     .sort((a, b) => Number(!!a.assignedTo) - Number(!!b.assignedTo) || a.name.localeCompare(b.name));
   const give = async (v: Vehicle) => {
     setBusy(v.id); setErr(null);
-    try { await ai.assignVan({ orgId: s.org!.id, vehicleId: v.id, driverId: m.uid }); onDone(); }
+    try {
+      const r = await ai.assignVan({ orgId: s.org!.id, vehicleId: v.id, driverId: m.uid });
+      flash(`person:${m.uid}`, given(m.name, v.name, r, m.uid === s.user?.uid));
+      onDone();
+    }
     catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t give the van. Check the connection.'); } finally { setBusy(null); }
   };
   return (

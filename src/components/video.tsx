@@ -58,7 +58,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
     // The playback copy is made in the background; nobody waits for it.
     ai.processVideo({ orgId: s.org!.id, videoId: id }).catch(() => {});
     setVideoId(null);
-    flash(`van:${v.id}`, kind === 'walkaround' ? `The video of ${v.name} is saved with the van.` : assignmentId ? 'The video was added.' : kind === 'pickup' ? `You picked up ${v.name}. The video is kept with its history.` : `You dropped off ${v.name}. The video is kept with its history.`);
+    flash(`van:${v.id}`, kind === 'walkaround' ? `The video of ${v.name} is saved with the van.` : assignmentId ? (kind === 'pickup' ? `The pick-up video of ${v.name} is saved with its history.` : 'The video was added.') : kind === 'pickup' ? `You picked up ${v.name}. The video is kept with its history.` : `You dropped off ${v.name}. The video is kept with its history.`);
     onDone?.();
   };
   const go = async () => {

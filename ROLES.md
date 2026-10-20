@@ -87,11 +87,21 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   can film it instead of taking the photos, at any time and whatever the station's pick-up setting. Same checks as
   a handover video. It is kept with the van and notes the driver who had it then; it doesn't pick up or drop off
   anything.
-- **A missing video can be added later** (`addHandoverVideo`): by the station's owner or managers for any handover
-  of the station, or by the driver for their own. It points to the handover; the handover itself doesn't change.
-- **Managers are told when a drop-off has no video or photos:** the Review tab lists (and its badge counts)
-  handovers of the last 7 days at pick-up-yourself stations that ended without the driver's drop-off (taken over,
-  or ended by a manager) and vans a driver has had for more than 14 hours. For now this is in the app only.
+- **A missing video or photos can be added later** (`addHandoverVideo`, `addHandoverPhotos`): by the station's
+  owner or managers for any handover of the station, or by the driver for their own. One per end of a handover. It
+  points to the handover (the photos' walk-around is marked `handover`); the handover itself doesn't change.
+- **A van given by a manager or owner asks the driver for pick-up proof** (any station): the assignment is marked
+  `pickupRequested`, the driver is told on their phone (if they turned notifications on) and in the app (a card on
+  the Vans tab and the van's page, a badge on the tab), and adds the pick-up video or photos as above. That's the
+  normal pick-up, not "added later". A manager who takes a van themselves isn't asked.
+- **Phone notifications** (web push): only for the web app (Chrome on Android; on iPhone only from the home screen,
+  iOS 16.4 or later), not Expo Go. Each person turns them on per phone in the Account tab
+  (`users/{uid}/push/{id}`, only theirs, only real push services). The key pair is the `WEBPUSH_KEYS` secret, made
+  once by the Deploy workflow; the public half is in `config/push`. For now only "a van was given to you" is sent.
+- **Managers are told when handover proof is missing:** the Review tab lists (and its badge counts) vans given to
+  a driver more than 2 hours ago without the pick-up video or photos; and at pick-up-yourself stations, handovers
+  of the last 7 days that ended without the driver's drop-off (taken over, or ended by a manager) and vans a driver
+  has had for more than 14 hours. This part is in the app only.
 - A driver who has a van drops it off before picking up another.
 - A van another driver still has (they didn't drop it off) can be taken over after a confirmation; their
   assignment ends as "taken over" with the new driver's photos.
