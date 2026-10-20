@@ -2,7 +2,9 @@ rules_version = '2';
 
 // Who can do what
 //   App creator  sign-in claim `creator`, set by the Deploy workflow from the APP_CREATOR_EMAILS variable.
-//                Reads and changes every company.
+//                Reads and changes every company. Can view the app as an owner, manager or driver of one company
+//                (users/{uid}.viewAs, set in the Account tab): then the rules treat them exactly as that role, and
+//                their app creator access is off until they switch back.
 //   Owner        member role "owner" (or "admin", its older name). Everything in the company.
 //   Manager      member role "manager". Vans, walk-arounds, checks and drivers of their stations; approves damage.
 //   Driver       member role "driver". Reads the vans of their stations and saves walk-arounds.
@@ -12,24 +14,44 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function me() { return request.auth.uid; }
-    function creator() { return signedIn() && request.auth.token.creator == true; }
+    function creatorClaim() { return signedIn() && request.auth.token.creator == true; }
+    // "View as": only with the app creator claim; for anyone else the field means nothing. It only ever takes
+    // access away (the creator can do everything anyway), so the creator sets it on their own profile.
+    function userPath() { return /databases/$(database)/documents/users/$(me()); }
+    function viewing() { return creatorClaim() && exists(userPath()) && get(userPath()).data.get('viewAs', null) != null; }
+    function va() { return get(userPath()).data.viewAs; }
+    function viewingIn(orgId) { return viewing() && va().org == orgId; }
+    function creator() { return creatorClaim() && !viewing(); }
     function memberPath(orgId) { return /databases/$(database)/documents/orgs/$(orgId)/members/$(me()); }
-    function member(orgId) { return signedIn() && exists(memberPath(orgId)); }
+    // A real member of the company (not while viewing as someone).
+    function realMember(orgId) { return signedIn() && !viewing() && exists(memberPath(orgId)); }
+    function member(orgId) { return signedIn() && (viewingIn(orgId) || realMember(orgId)); }
     function m(orgId) { return get(memberPath(orgId)).data; }
-    function owner(orgId) { return creator() || (member(orgId) && m(orgId).role in ['owner', 'admin']); }
-    function manager(orgId) { return member(orgId) && m(orgId).role == 'manager'; }
+    function owner(orgId) { return creator() || (viewingIn(orgId) && va().role == 'owner') || (realMember(orgId) && m(orgId).role in ['owner', 'admin']); }
+    function manager(orgId) { return (viewingIn(orgId) && va().role == 'manager') || (realMember(orgId) && m(orgId).role == 'manager'); }
     function staff(orgId) { return owner(orgId) || manager(orgId); }
-    function stationsOf(orgId) { return m(orgId).get('stationIds', []); }
+    // Works at this station (managers and drivers; owners pass before this is asked).
+    function inStation(orgId, stationId) {
+      return (viewingIn(orgId) && va().get('st', null) != null && stationId == va().st)
+        || (realMember(orgId) && stationId in m(orgId).get('stationIds', []));
+    }
     // Can see or work on things at this station? Owners and the creator pass before the station is read,
     // so records saved before stations existed stay visible to them.
-    function at(orgId, stationId) { return owner(orgId) || (member(orgId) && stationId in stationsOf(orgId)); }
+    function at(orgId, stationId) { return owner(orgId) || (member(orgId) && inStation(orgId, stationId)); }
     // Manager of this station, or owner?
-    function runs(orgId, stationId) { return owner(orgId) || (manager(orgId) && stationId in stationsOf(orgId)); }
+    function runs(orgId, stationId) { return owner(orgId) || (manager(orgId) && inStation(orgId, stationId)); }
 
-    // Which companies a person belongs to, and which one they had open.
+    // Which companies a person belongs to, and which one they had open. viewAs: only the app creator sets it,
+    // as {org, role: owner | manager | driver, st: station (managers and drivers)}, or null to be themselves.
+    function okViewAs(d) {
+      return !('viewAs' in d) || d.viewAs == null
+        || (creatorClaim() && d.viewAs is map && d.viewAs.keys().hasOnly(['org', 'role', 'st']) && d.viewAs.org is string
+          && (d.viewAs.role == 'owner' || ((d.viewAs.role == 'manager' || d.viewAs.role == 'driver') && d.viewAs.get('st', null) is string)));
+    }
     match /users/{uid} {
       allow read: if (signedIn() && uid == me()) || creator();
-      allow write: if signedIn() && uid == me();
+      allow create, update: if signedIn() && uid == me() && okViewAs(request.resource.data);
+      allow delete: if signedIn() && uid == me();
     }
 
     // Who the app creators are (written by the Deploy workflow).

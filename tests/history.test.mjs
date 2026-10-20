@@ -19,7 +19,7 @@ import {
   collection, connectFirestoreEmulator, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { connectStorageEmulator, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { connectStorageEmulator, getBytes, getStorage, ref, uploadBytes } from 'firebase/storage';
 
 const HOST = '127.0.0.1';
 const cfg = { apiKey: 'demo-key', appId: '1:1:web:1', projectId: 'demo-fleet-check', storageBucket: 'demo-fleet-check.appspot.com' };
@@ -292,6 +292,54 @@ test('walk-around videos: anyone who can scan the van films it, any time; nothin
   await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.d2) }), 'failed-precondition');
   // A walk-around video isn't a drop-off: Erik still has the van.
   assert.equal((await vanDoc(S.mgr, v1.id)).assignedTo.driverId, S.d2.uid);
+});
+
+test('the app creator views the app as a driver, a manager and an owner, and gets exactly their access', async () => {
+  const { v1, v3 } = S.vans;
+  const cr = await person('Cora Creator');
+  // The app creator claim, as the Deploy workflow sets it.
+  const r = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/projects/${cfg.projectId}/accounts:update`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ localId: cr.uid, customAttributes: JSON.stringify({ creator: true }) }),
+  });
+  assert.equal(r.status, 200, await r.text());
+  await cr.auth.currentUser.getIdToken(true);
+  const viewAs = (v) => setDoc(doc(cr.db, 'users', cr.uid), { viewAs: v }, { merge: true });
+  // Themselves: every company and station, photos and videos included, without being a member.
+  const walk = await photos(S.d1, S.org, v1);
+  const photo = `orgs/${S.org}/walkarounds/${walk}/01.jpg`;
+  const dv = await video(S.d1);
+  const dvPath = `orgs/${S.org}/videos/${S.d1.uid}/${dv}/original.mp4`;
+  assert.ok((await vanDoc(cr, v3.id)).name);
+  assert.ok((await getBytes(ref(cr.st, photo))).byteLength > 0);
+  assert.ok((await getBytes(ref(cr.st, dvPath))).byteLength > 0);
+  // As a driver of station 1: their station only, no managing, only their own videos.
+  await viewAs({ org: S.org, role: 'driver', st: S.s1 });
+  assert.ok((await vanDoc(cr, v1.id)).name);
+  await fails(vanDoc(cr, v3.id), 'permission-denied');
+  await fails(cr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d1.uid }), 'permission-denied');
+  await fails(cr.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(cr) }), 'permission-denied');
+  await cr.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(cr) });
+  assert.ok((await getBytes(ref(cr.st, photo))).byteLength > 0);
+  await fails(getBytes(ref(cr.st, dvPath)));
+  await fails(cr.call('assignVan', { orgId: 'someOtherCompany', vehicleId: v1.id, driverId: null }), 'permission-denied');
+  // As a fleet manager of station 1: invites drivers there, nothing at station 2, no station settings there.
+  await viewAs({ org: S.org, role: 'manager', st: S.s1 });
+  const { invites } = await cr.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+  assert.equal(invites.length, 1);
+  await fails(cr.call('createInvite', { orgId: S.org, role: 'manager', stationId: S.s1, count: 1 }), 'permission-denied');
+  await fails(cr.call('setSelfAssign', { orgId: S.org, stationId: S.s2, on: false }), 'permission-denied');
+  assert.ok((await getBytes(ref(cr.st, dvPath))).byteLength > 0);
+  // As an owner: every station of this company.
+  await viewAs({ org: S.org, role: 'owner', st: null });
+  await cr.call('setSelfAssign', { orgId: S.org, stationId: S.s2, on: false });
+  assert.ok((await vanDoc(cr, v3.id)).name);
+  // Back to themselves.
+  await viewAs(null);
+  assert.ok((await vanDoc(cr, v3.id)).name);
+  // Nobody else can switch: the rules refuse the field, and a driver stays a driver on the server.
+  await fails(setDoc(doc(S.d1.db, 'users', S.d1.uid), { viewAs: { org: S.org, role: 'owner', st: null } }, { merge: true }), 'permission-denied');
+  await fails(S.d1.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false }), 'permission-denied');
 });
 
 test('retiring, moving and removing keep the history and free the van', async () => {

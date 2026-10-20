@@ -16,12 +16,27 @@ type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 /** A company this person belongs to, for the company switcher. */
 export interface Company { id: string; name: string; role: Role }
 
+/** The app creator viewing the open company as an owner, fleet manager or driver (of one station). */
+export interface ViewAs { org: string; role: Role; st: string | null }
+function parseViewAs(v: unknown): ViewAs | null {
+  const x = v as { org?: unknown; role?: unknown; st?: unknown } | null | undefined;
+  if (!x || typeof x.org !== 'string') return null;
+  const role: Role = x.role === 'owner' ? 'owner' : x.role === 'manager' ? 'manager' : 'driver';
+  return { org: x.org, role, st: role !== 'owner' && typeof x.st === 'string' ? x.st : null };
+}
+
 interface Session {
   status: Status;
   mode: 'firebase' | 'local';
   user: { uid: string; email: string; name: string } | null;
-  /** The app creator: sees and manages every company. */
+  /** The app creator: sees and manages every company. False while viewing the app as someone else. */
   creator: boolean;
+  /** Can switch to viewing the app as an owner, manager or driver: the app creator (and test mode). */
+  canViewAs: boolean;
+  /** Viewing the open company as this role; null when being yourself. The server and the rules apply it too. */
+  viewAs: ViewAs | null;
+  /** View the open company as this role (managers and drivers at a station), or null to be yourself again. */
+  setViewAs(role: Role | null, stationId?: string | null): Promise<void>;
   companies: Company[];
   org: Org | null;
   member: Member | null;
@@ -91,6 +106,8 @@ const LOCAL_MEMBER: Member = TEST_ROLE === 'manager' || TEST_ROLE === 'driver'
   ? { uid: 'local', role: TEST_ROLE, stationIds: [LOCAL_STATION], email: '', name: 'You' }
   : { uid: 'local', role: 'owner', stationIds: [], email: '', name: 'You' };
 
+const displayName = (u: User) => u.displayName || (u.email || '').split('@')[0];
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const f = fb();
   const mode: 'firebase' | 'local' = f ? 'firebase' : 'local';
@@ -101,13 +118,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [org, setOrg] = useState<Org | null>(f ? null : LOCAL_ORG);
   const [member, setMember] = useState<Member | null>(f ? null : LOCAL_MEMBER);
   const [localTier, setLocalTier] = useState<Tier>('default');
+  const [viewAs, setViewAsState] = useState<ViewAs | null>(null);
   const fbUser = useRef<User | null>(null);
   const orgRef = useRef<Org | null>(null);
   const isCreator = useRef(false);
 
   useEffect(() => {
     AsyncStorage.getItem('fc.tier').then((t) => { if (t === 'quick' || t === 'default' || t === 'complex') setLocalTier(t); }).catch(() => {});
-  }, []);
+    // Test mode: the role picked in the Account tab stays on this phone.
+    if (!f) {
+      AsyncStorage.getItem('fc.viewAs').then((t) => {
+        const va = t ? parseViewAs(JSON.parse(t)) : null;
+        if (va) { setViewAsState(va); setMember({ ...LOCAL_MEMBER, role: va.role, stationIds: va.st ? [va.st] : [] }); }
+      }).catch(() => {});
+    }
+  }, [f]);
 
   /** Reads the person's companies and opens `want` (or the one they had open last). */
   // Several loads can overlap (sign-in, joining, switching); only the latest one may set the state.
@@ -116,7 +141,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const f2 = fb()!;
     const my = ++loadSeq.current;
     const prof = await getDoc(doc(f2.db, 'users', u.uid));
-    const p = (prof.exists() ? prof.data() : {}) as { orgIds?: string[]; orgId?: string };
+    const p = (prof.exists() ? prof.data() : {}) as { orgIds?: string[]; orgId?: string; viewAs?: unknown };
+    // The app creator viewing a company as someone else: only that company, with that role and station.
+    const va = isCreator.current ? parseViewAs(p.viewAs) : null;
+    if (va) {
+      const [o, real] = await Promise.all([getDoc(doc(f2.db, 'orgs', va.org)).catch(() => null), getDoc(doc(f2.db, 'orgs', va.org, 'members', u.uid)).catch(() => null)]);
+      if (my !== loadSeq.current) return;
+      if (o?.exists()) {
+        const org: Org = { id: va.org, ...(o.data() as Omit<Org, 'id'>) };
+        setViewAsState(va);
+        setCompanies([{ id: org.id, name: org.name, role: va.role }]);
+        setOrg(org);
+        setMember({ uid: u.uid, role: va.role, stationIds: va.st ? [va.st] : [], email: u.email || '', name: (real?.data() as Member | undefined)?.name || displayName(u) });
+        setStatus('ready');
+        return;
+      }
+      // The company is gone (for example a removed demo): be yourself again.
+      await setDoc(doc(f2.db, 'users', u.uid), { viewAs: null }, { merge: true }).catch(() => {});
+    }
+    setViewAsState(null);
     const ids = Array.from(new Set([...(p.orgIds || []), ...(p.orgId ? [p.orgId] : [])]));
     const rows = (await Promise.all(ids.map(async (id) => {
       try {
@@ -146,7 +189,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!f) return;
     return onAuthStateChanged(f.auth, async (u) => {
       fbUser.current = u;
-      if (!u) { setUser(null); setOrg(null); setMember(null); setCompanies([]); setCreator(false); isCreator.current = false; setStatus('signedOut'); return; }
+      if (!u) { setUser(null); setOrg(null); setMember(null); setCompanies([]); setCreator(false); setViewAsState(null); isCreator.current = false; setStatus('signedOut'); return; }
       setUser({ uid: u.uid, email: u.email || '', name: u.displayName || (u.email || '').split('@')[0] });
       // Refresh the sign-in token so a newly given app creator claim shows up straight away.
       try { const t = await u.getIdTokenResult(true); isCreator.current = t.claims.creator === true; } catch { isCreator.current = false; }
@@ -163,7 +206,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() });
     setUser({ uid: cred.user.uid, email: cred.user.email || '', name: name.trim() || (cred.user.email || '').split('@')[0] });
   }, []);
-  const displayName = (u: User) => u.displayName || (u.email || '').split('@')[0];
 
   /** A new company with its first station; the person becomes its owner. */
   const createOrg = useCallback(async (company: string, station: string) => {
@@ -205,6 +247,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!u) return;
     setStatus('loading');
     try { await load(u, orgId); } catch { setStatus('needsOrg'); }
+  }, [load]);
+
+  const setViewAs = useCallback(async (r: Role | null, stationId?: string | null) => {
+    const next: ViewAs | null = r && orgRef.current ? { org: orgRef.current.id, role: r, st: r === 'owner' ? null : stationId || null } : null;
+    if (next && next.role !== 'owner' && !next.st) throw new Error('Pick a station.');
+    if (!fb()) {
+      setViewAsState(next);
+      setMember(next ? { ...LOCAL_MEMBER, role: next.role, stationIds: next.st ? [next.st] : [] } : LOCAL_MEMBER);
+      AsyncStorage.setItem('fc.viewAs', JSON.stringify(next)).catch(() => {});
+      return;
+    }
+    const u = fbUser.current, o = orgRef.current;
+    if (!u || !o || !isCreator.current) return;
+    setStatus('loading');
+    try {
+      await setDoc(doc(fb()!.db, 'users', u.uid), { viewAs: next }, { merge: true });
+    } finally {
+      await load(u, o.id).catch(() => setStatus('needsOrg'));
+    }
   }, [load]);
 
   const resetPassword = useCallback(async (email: string) => { await sendPasswordResetEmail(fb()!.auth, email.trim()); }, []);
@@ -283,7 +344,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
-    status, mode, user, creator, companies, org, member, role, staff, myStations, stations, stationName, runs,
+    status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
     store, vehicles, walks, checks, scans, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };

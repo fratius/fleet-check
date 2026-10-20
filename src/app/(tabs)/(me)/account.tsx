@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
+import { ViewAsCard } from '@/components/viewas';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
 import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
@@ -14,8 +15,9 @@ export default function Account() {
   const c = useColors();
   const [armed, setArmed] = useState(false);
   const projectId = (Constants.expoConfig?.extra as { firebase?: { projectId?: string } } | undefined)?.firebase?.projectId;
-  const viewing = s.creator && s.org && !s.companies.some((x) => x.id === s.org!.id);
-  const roleName = viewing ? 'App creator' : ROLE_NAME[s.role || 'driver'];
+  // The app creator in a company they aren't a member of.
+  const outside = s.creator && s.org && !s.companies.some((x) => x.id === s.org!.id);
+  const roleName = outside ? 'App creator' : ROLE_NAME[s.role || 'driver'];
 
   return (
     <Screen>
@@ -29,7 +31,8 @@ export default function Account() {
         <T v="h2">{s.org?.name}</T>
         <Row>
           <Pill v="solid" text={roleName} />
-          {s.creator && !viewing ? <Pill text="App creator" /> : null}
+          {s.creator && !outside ? <Pill text="App creator" /> : null}
+          {s.viewAs && s.mode === 'firebase' ? <Pill v="amber" text="You, viewing as this role" /> : null}
         </Row>
         <T v="hint">
           {s.role === 'owner' ? `You see and manage all ${s.stations.length === 1 ? 'of ' + s.stations[0].name : s.stations.length + ' stations'}.`
@@ -39,10 +42,16 @@ export default function Account() {
         </T>
       </Card>
 
-      <MyCompanies />
-      {s.mode === 'firebase' ? <AddCompany /> : null}
-      {s.mode === 'firebase' && (s.staff || s.creator) ? <Demo /> : null}
-      {s.creator ? <AllCompanies /> : null}
+      <ViewAsCard />
+      {/* While viewing as someone, the company stays put: switch back to change it. */}
+      {s.viewAs && s.mode === 'firebase' ? null : (
+        <>
+          <MyCompanies />
+          {s.mode === 'firebase' ? <AddCompany /> : null}
+          {s.mode === 'firebase' && (s.staff || s.creator) ? <Demo /> : null}
+          {s.creator ? <AllCompanies /> : null}
+        </>
+      )}
 
       {s.staff ? (
         <Card>

@@ -1,31 +1,43 @@
 rules_version = '2';
 
 // Photos live under orgs/{orgId}/... and only that company's members can see or add them.
+// Each check reads at most two documents (the Storage limit): the person's profile (only for the app creator)
+// and their membership.
 service firebase.storage {
   match /b/{bucket}/o {
+    function creatorClaim() { return request.auth != null && request.auth.token.creator == true; }
+    function userPath() { return /databases/(default)/documents/users/$(request.auth.uid); }
+    function memberPath(orgId) { return /databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid); }
+    // The app creator viewing the app as an owner, manager or driver of one company (see firestore.rules).
+    function viewing() { return creatorClaim() && firestore.exists(userPath()) && firestore.get(userPath()).data.get('viewAs', null) != null; }
+    function va() { return firestore.get(userPath()).data.viewAs; }
+    // The app creator as themselves: every company.
+    function creator() { return creatorClaim() && !viewing(); }
+
     function member(orgId) {
       return request.auth != null
-        && firestore.exists(/databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid));
+        && ((viewing() && va().org == orgId) || (!viewing() && firestore.exists(memberPath(orgId))));
     }
 
     function staff(orgId) {
       return request.auth != null
-        && firestore.get(/databases/(default)/documents/orgs/$(orgId)/members/$(request.auth.uid)).data.role in ['owner', 'admin', 'manager'];
+        && ((viewing() && va().org == orgId && va().role in ['owner', 'manager'])
+          || (!viewing() && firestore.get(memberPath(orgId)).data.role in ['owner', 'admin', 'manager']));
     }
 
-    // Photos: any member of the company sees and adds them.
+    // Photos: any member of the company sees and adds them (and the app creator).
     match /orgs/{orgId}/{rest=**} {
-      allow read: if member(orgId) && rest[0] != 'videos';
-      allow create: if member(orgId) && rest[0] != 'videos'
+      allow read: if (creator() || member(orgId)) && rest[0] != 'videos';
+      allow create: if (creator() || member(orgId)) && rest[0] != 'videos'
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
     }
 
-    // Handover videos, in a folder per uploader: people upload only their own, as the original recording (the
-    // server makes the playback copy). Owners and managers watch them; drivers watch their own.
+    // Videos, in a folder per uploader: people upload only their own, as the original recording (the server
+    // makes the playback copy). Owners and managers watch them; drivers watch their own.
     match /orgs/{orgId}/videos/{uid}/{videoId}/{file} {
-      allow read: if member(orgId) && (request.auth.uid == uid || staff(orgId));
-      allow create: if member(orgId) && request.auth.uid == uid
+      allow read: if creator() || (member(orgId) && (request.auth.uid == uid || staff(orgId)));
+      allow create: if (creator() || member(orgId)) && request.auth.uid == uid
         && file.matches('original[.][A-Za-z0-9]{2,5}')
         && request.resource.contentType.matches('video/.*')
         && request.resource.size < 500 * 1024 * 1024;

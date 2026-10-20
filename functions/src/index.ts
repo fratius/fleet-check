@@ -47,6 +47,18 @@ const ID = /^[A-Za-z0-9_-]{1,64}$/;
 type Role = 'owner' | 'manager' | 'driver';
 interface Who { uid: string; name: string; orgId: string; tier: Tier; role: Role; stationIds: string[]; creator: boolean }
 
+/**
+ * The app creator viewing the app as an owner, fleet manager or driver of one company (set in the Account tab, on
+ * their profile). Only counts with the creator claim; then they get exactly that role's access, here and in the rules.
+ */
+export interface ViewAs { org: string; role: Role; st: string | null }
+async function viewAsOf(uid: string): Promise<ViewAs | null> {
+  const v = (await db().doc(`users/${uid}`).get()).data()?.viewAs as { org?: unknown; role?: unknown; st?: unknown } | null | undefined;
+  if (!v || typeof v.org !== 'string') return null;
+  const role: Role = v.role === 'owner' ? 'owner' : v.role === 'manager' ? 'manager' : 'driver';
+  return { org: v.org, role, st: role !== 'owner' && typeof v.st === 'string' ? v.st : null };
+}
+
 /** Signed in, a member of the company (or the app creator), a known model tier. */
 async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>): Promise<Who> {
   const uid = req.auth?.uid;
@@ -55,8 +67,16 @@ async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>):
   if (!ID.test(orgId)) throw new HttpsError('invalid-argument', 'Unknown company.');
   const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'default') as Tier;
   const creator = req.auth?.token?.creator === true;
-  const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
   const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
+  if (creator) {
+    const va = await viewAsOf(uid);
+    if (va) {
+      if (va.org !== orgId) throw new HttpsError('permission-denied', 'You\'re viewing another company as someone else. Switch back to yourself in the Account tab first.');
+      const real = (await db().doc(`orgs/${orgId}/members/${uid}`).get()).data() as { name?: string } | undefined;
+      return { uid, name: real?.name || tokenName || 'App creator', orgId, tier, role: va.role, stationIds: va.st ? [va.st] : [], creator: false };
+    }
+  }
+  const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
   if (!m.exists) {
     if (creator) return { uid, name: tokenName || 'App creator', orgId, tier, role: 'owner', stationIds: [], creator };
     throw new HttpsError('permission-denied', 'Your account isn\'t a member of this company.');

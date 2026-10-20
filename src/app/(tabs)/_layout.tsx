@@ -1,9 +1,10 @@
-import { Tabs } from 'expo-router/js-tabs';
+import { BottomTabBar, Tabs } from 'expo-router/js-tabs';
 import type { ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { F, MARKER, useColors } from '@/components/ui';
+import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
 import { missingHandovers } from '@/lib/videos';
 
@@ -35,7 +36,8 @@ export default function TabsLayout() {
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
     + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.stations, Date.now() - 7 * 86400_000).length : 0);
   return (
-    <Tabs screenOptions={{
+    // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
+    <Tabs tabBar={(props) => <><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,

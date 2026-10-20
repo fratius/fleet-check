@@ -43,6 +43,13 @@ beforeEach(async () => {
     await put(`orgs/${O}/assignments/a2`, { vehicleId: 'v2', driverId: 'drv2', driverName: 'Driver 2', stationId: S2, start: 1, end: 5, createdAt: 1 });
     await put(`orgs/${O}/videos/vd1`, { vehicleId: 'v1', stationId: S1, by: 'drv1', kind: 'pickup', createdAt: 1 });
     await put(`orgs/${O}/videos/vd2`, { vehicleId: 'v1', stationId: S1, by: 'mgr1', kind: 'dropoff', createdAt: 1 });
+    // The app creator viewing company O as a driver, a manager and an owner (three creator accounts, to test each
+    // at once); a creator being themselves; and a driver who wrote a viewAs on their profile (means nothing).
+    await put('users/vdrv', { orgId: O, viewAs: { org: O, role: 'driver', st: S1 } });
+    await put('users/vmgr', { orgId: O, viewAs: { org: O, role: 'manager', st: S1 } });
+    await put('users/vown', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
+    await put('users/boss2', { orgId: O, viewAs: null });
+    await put('users/drv2', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
     const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
     await put(`invites/DRVLINK2xxxxxxxxxxxxxxxx`, { token: 'DRVLINK2xxxxxxxxxxxxxxxx', ...inv('driver', S2) });
@@ -193,4 +200,49 @@ describe('new companies', () => {
     await assertSucceeds(setDoc(doc(db, 'orgs/neworg/stations/s1'), { name: 'DXX9', code: 'DXX9', createdAt: 5 }));
   });
   test('cannot become owner of someone else\'s company', () => assertFails(setDoc(doc(as('fresh'), `orgs/${O}/members/fresh`), { role: 'owner', stationIds: [], name: 'F', email: 'f@x' })));
+});
+
+describe('the app creator viewing the app as someone else', () => {
+  const C = { creator: true };
+  const asDrv = () => as('vdrv', C), asMgr = () => as('vmgr', C), asOwn = () => as('vown', C);
+  // As a driver of station 1.
+  test('as a driver: reads the vans of their station', () => assertSucceeds(getDocs(vehiclesAt(asDrv(), [S1]))));
+  test('as a driver: not another station', () => assertFails(getDocs(vehiclesAt(asDrv(), [S2]))));
+  test('as a driver: not every van', () => assertFails(getDocs(collection(asDrv(), `orgs/${O}/vehicles`))));
+  test('as a driver: not another company', () => assertFails(getDoc(doc(asDrv(), `orgs/${O2}/vehicles/x1`))));
+  test('as a driver: cannot list companies', () => assertFails(getDocs(collection(asDrv(), 'orgs'))));
+  test('as a driver: reads the company it views', () => assertSucceeds(getDoc(doc(asDrv(), `orgs/${O}`))));
+  test('as a driver: cannot change a van', () => assertFails(updateDoc(doc(asDrv(), `orgs/${O}/vehicles/v1`), { name: 'X' })));
+  test('as a driver: not other drivers\' history', () => assertFails(getDoc(doc(asDrv(), `orgs/${O}/assignments/a1`))));
+  test('as a driver: their own history', () => assertSucceeds(getDocs(query(collection(asDrv(), `orgs/${O}/assignments`), where('driverId', '==', 'vdrv')))));
+  test('as a driver: not other people\'s videos', () => assertFails(getDoc(doc(asDrv(), `orgs/${O}/videos/vd1`))));
+  test('as a driver: not the people list', () => assertFails(getDocs(collection(asDrv(), `orgs/${O}/members`))));
+  test('as a driver: not the reviews', () => assertFails(updateDoc(doc(asDrv(), `orgs/${O}/checks/c1`), review)));
+  test('as a driver: saves a walk-around at their station', () => assertSucceeds(setDoc(doc(asDrv(), `orgs/${O}/walkarounds/vw1`), { vehicleId: 'v1', stationId: S1, createdBy: 'vdrv', createdAt: 5 })));
+  test('as a driver: not at another station', () => assertFails(setDoc(doc(asDrv(), `orgs/${O}/walkarounds/vw2`), { vehicleId: 'v2', stationId: S2, createdBy: 'vdrv', createdAt: 5 })));
+  test('as a driver: not in someone else\'s name (creators can, drivers can\'t)', () => assertFails(setDoc(doc(asDrv(), `orgs/${O}/walkarounds/vw3`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 5 })));
+  test('as a driver: not the creator\'s list of creators', () => assertFails(getDoc(doc(asDrv(), 'platform/creators'))));
+  // As a fleet manager of station 1.
+  test('as a manager: the station\'s history', () => assertSucceeds(getDoc(doc(asMgr(), `orgs/${O}/assignments/a1`))));
+  test('as a manager: not another station\'s history', () => assertFails(getDoc(doc(asMgr(), `orgs/${O}/assignments/a2`))));
+  test('as a manager: reviews damage at the station', () => assertSucceeds(updateDoc(doc(asMgr(), `orgs/${O}/checks/c1`), review)));
+  test('as a manager: not at another station', () => assertFails(updateDoc(doc(asMgr(), `orgs/${O}/checks/c2`), review)));
+  test('as a manager: lists people', () => assertSucceeds(getDocs(collection(asMgr(), `orgs/${O}/members`))));
+  test('as a manager: cannot add a station', () => assertFails(setDoc(doc(asMgr(), `orgs/${O}/stations/st9`), { name: 'DXX9', code: '', createdAt: 9 })));
+  test('as a manager: watches the station\'s videos', () => assertSucceeds(getDoc(doc(asMgr(), `orgs/${O}/videos/vd1`))));
+  // As an owner of company O.
+  test('as an owner: every station\'s history', () => assertSucceeds(getDoc(doc(asOwn(), `orgs/${O}/assignments/a2`))));
+  test('as an owner: adds a station', () => assertSucceeds(setDoc(doc(asOwn(), `orgs/${O}/stations/st9`), { name: 'DXX9', code: '', createdAt: 9 })));
+  test('as an owner: not another company', () => assertFails(getDoc(doc(asOwn(), `orgs/${O2}/vehicles/x1`))));
+  test('as an owner: cannot list companies', () => assertFails(getDocs(collection(asOwn(), 'orgs'))));
+  // Switching.
+  test('switches back to themselves', () => assertSucceeds(updateDoc(doc(asDrv(), 'users/vdrv'), { viewAs: null })));
+  test('switches to another role', () => assertSucceeds(updateDoc(doc(asDrv(), 'users/vdrv'), { viewAs: { org: O, role: 'manager', st: S2 } })));
+  test('a manager or driver view needs a station', () => assertFails(updateDoc(doc(asDrv(), 'users/vdrv'), { viewAs: { org: O, role: 'driver', st: null } })));
+  test('no made-up roles', () => assertFails(updateDoc(doc(asDrv(), 'users/vdrv'), { viewAs: { org: O, role: 'creator', st: null } })));
+  test('a creator being themselves still reads every company', () => assertSucceeds(getDocs(collection(as('boss2', C), `orgs/${O2}/vehicles`))));
+  // Anyone else: the switch doesn't exist.
+  test('nobody else can set it', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1'), { viewAs: { org: O, role: 'owner', st: null } })));
+  test('nobody else gets anything from it', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/vehicles/v1`))));
+  test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(vehiclesAt(as('drv2'), [S2]))));
 });

@@ -8,6 +8,14 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
 1. **App creator** (the person who runs Fleet Check). Sees every company and can open and manage any of them.
    Given by the sign-in claim `creator`, set on each deploy for the emails in the GitHub variable
    `APP_CREATOR_EMAILS` (default `casian.colto@gmail.com`).
+   **View as:** in the Account tab the app creator (and nobody else) can view the open company as a fleet owner,
+   a fleet manager or a driver of one station (`users/{uid}.viewAs = {org, role, st}`). The rules, Storage rules
+   and Cloud Functions then treat them exactly as that role in that company and nowhere else; their app creator
+   access is off until they switch back. It only takes access away, and the field means nothing without the
+   `creator` claim (the rules also refuse it from anyone else). What they do while viewing is real and saved under
+   their own name (walk-arounds, pick-ups in the permanent history, reviews, invites); try things in the demo
+   company. As a driver they aren't a real member, so nobody can give them a van; they can pick one up where the
+   station allows it.
 2. **Fleet owner** (member role `owner`; `admin` is its old name). Owns one or more companies (DSPs).
    Sees all stations of their company. Adds and removes stations, fleet managers, drivers and vans; moves people
    and vans between stations; picks the AI model; can review damage at any station.
