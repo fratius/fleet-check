@@ -16,6 +16,10 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    their own name (walk-arounds, pick-ups in the permanent history, reviews, invites); try things in the demo
    company. As a driver they aren't a real member, so nobody can give them a van; they can pick one up where the
    station allows it.
+   **AI speed, AI cost and the Test log are theirs only** (not owners, managers or drivers, and not the app creator
+   while viewing as someone): the speed and cost of each damage check are kept in `orgs/{org}/checkUsage`, type scans
+   (which carry cost) in `orgs/{org}/scans`, both readable only by the app creator; the functions leave them out of
+   their answers for everyone else. Older checks had them inside; the Deploy workflow moves them out.
 2. **Fleet owner** (member role `owner`; `admin` is its old name). Owns one or more companies (DSPs).
    Sees all stations of their company. Adds and removes stations, fleet managers, drivers and vans; moves people
    and vans between stations; picks the AI model; can review damage at any station.
@@ -25,8 +29,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    missed, finishes the review. Approved damage goes on the van's damage record.
 4. **Driver** (role `driver`). Scans: sees the vans of their station, does walk-arounds, runs the AI damage
    check and takes close-ups at the van, then sends the check to the manager. Where the station allows it, picks
-   up and drops off vans themselves (see below). Cannot change vans, people or reviews, and doesn't see costs or
-   the test log.
+   up and drops off vans themselves (see below). Cannot change vans, people or reviews.
 
 ## How it is built
 

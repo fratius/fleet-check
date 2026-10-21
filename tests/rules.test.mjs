@@ -51,6 +51,7 @@ beforeEach(async () => {
     await put('users/boss2', { orgId: O, viewAs: null });
     await put('users/drv2', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
     await put('config/push', { vapidPublicKey: 'BPUBLIC', updatedAt: 1 });
+    await put(`orgs/${O}/checkUsage/c1`, { checkId: 'c1', stationId: S1, createdAt: 1, pass1: { ms: 9000, cost: 0.2 }, pass2: null });
     await put('users/drv1/push/p1', { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'x', auth: 'y' }, createdAt: 1, device: 'Android phone' });
     const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
@@ -262,4 +263,18 @@ describe('phone notifications', () => {
   test('everyone signed in reads the public key', () => assertSucceeds(getDoc(doc(as('drv2'), 'config/push'))));
   test('nobody changes it from the app', () => assertFails(setDoc(doc(as('boss', { creator: true }), 'config/push'), { vapidPublicKey: 'X' })));
   test('signed out: no key', () => assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'config/push'))));
+});
+
+describe('AI speed and cost: only the app creator', () => {
+  test('the app creator reads the speed and cost of a check', () => assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/checkUsage/c1`))));
+  test('the app creator lists them for the test log', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/checkUsage`))));
+  test('not the fleet owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/checkUsage/c1`))));
+  test('not the station\'s manager', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/checkUsage/c1`))));
+  test('not the driver', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/checkUsage/c1`))));
+  test('not the app creator viewing the app as an owner', () => assertFails(getDoc(doc(as('vown', { creator: true }), `orgs/${O}/checkUsage/c1`))));
+  test('nobody writes them from the app, not even the app creator', () => assertFails(setDoc(doc(as('boss', { creator: true }), `orgs/${O}/checkUsage/c9`), { pass1: null })));
+  test('type scans (they carry cost): the app creator reads them', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/scans`))));
+  test('type scans: not the fleet owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/scans/sc1`))));
+  test('type scans: not the manager', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/scans`))));
+  test('the check itself stays readable at the station', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`))));
 });

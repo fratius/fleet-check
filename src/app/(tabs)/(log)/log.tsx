@@ -10,7 +10,8 @@ import { TIER_NAME, aiWasRight, type Check, type Scan } from '@/lib/types';
 type Tab = 'checks' | 'scans' | 'walks';
 
 const median = (xs: number[]) => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+const sum = (xs: (number | null | undefined)[]) => xs.reduce<number>((a, b) => a + (b || 0), 0);
+const nums = (xs: (number | null | undefined)[]) => xs.filter((x): x is number => typeof x === 'number');
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) + '%' : '–');
 const shortModel = (m: string) => cap(m.replace(/^claude-/, '').replace(/-(\d+)-(\d+)$/, ' $1.$2'));
 
@@ -23,6 +24,8 @@ function byModel<T extends { model: string }>(rows: T[]) {
 export default function Log() {
   const s = useSession();
   const [tab, setTab] = useState<Tab>('checks');
+  // Only for the app creator (the tab is hidden for everyone else; this covers links opened directly).
+  if (!s.seesAiStats) return <Screen><T v="h1">Test log</T><Card dashed><T v="hint">Only the app creator sees the test log.</T></Card></Screen>;
   return (
     <Screen>
       <View style={{ gap: 4 }}>
@@ -123,7 +126,7 @@ function Scans({ rows }: { rows: Scan[] }) {
       <Stats>
         <Stat value={String(rows.length)} label="scans" />
         <Stat value={pct(rated.filter((r) => r.verdict === 'correct').length, rated.length)} label={`right, of ${rated.length} rated`} />
-        <Stat value={secs(median(rows.map((r) => r.ms)))} label="median time" />
+        <Stat value={secs(median(nums(rows.map((r) => r.ms))))} label="median time" />
       </Stats>
       <T v="h2">By model</T>
       {byModel(rows).map(([model, rs]) => {
@@ -133,7 +136,7 @@ function Scans({ rows }: { rows: Scan[] }) {
           <Card key={model}>
             <Row><T v="h3" style={{ flex: 1 }}>{shortModel(model)}</T><Pill text={`${rs.length} scan${rs.length === 1 ? '' : 's'}`} /></Row>
             <Table rows={[
-              ['Time per scan', secs(median(rs.map((r) => r.ms))), 'median'],
+              ['Time per scan', secs(median(nums(rs.map((r) => r.ms)))), 'median'],
               ['Cost per scan', usd(sum(rs.map((r) => r.cost)) / rs.length), usd(imgs ? sum(rs.map((r) => r.cost)) / imgs : null) + ' per photo'],
               ['Type right', pct(rr.filter((r) => r.verdict === 'correct').length, rr.length), `of ${rr.length} rated`],
             ]} />

@@ -154,8 +154,16 @@ export const identifyVehicle = onCall(opts(120), async (req) => {
     verdict: null, actual: null, paths, reason: str(r.reason, 200), issues, stationId,
   };
   await db().doc(`orgs/${orgId}/scans/${scanId}`).set(scan);
-  return { scan: { ...scan, id: scanId }, reason: scan.reason, issues, alternatives };
+  // AI speed and cost are for the app creator only (type scans are read only by them, see the rules).
+  const shown = who.creator ? scan : { ...scan, ms: null, inTok: null, outTok: null, cost: null };
+  return { scan: { ...shown, id: scanId }, reason: scan.reason, issues, alternatives };
 });
+
+/**
+ * AI speed and cost of a damage check, kept apart from the check (orgs/{org}/checkUsage/{checkId}) because only
+ * the app creator may see them: everyone at the station reads the check itself. Written only here.
+ */
+const usageRef = (orgId: string, checkId: string) => db().doc(`orgs/${orgId}/checkUsage/${checkId}`);
 
 /* ---------- 2. findDamage: mark every spot that could be damage in a walk-around ---------- */
 const BATCH = 10; // photos per call: keeps every request well under 100k tokens and lets batches run in parallel
@@ -220,11 +228,16 @@ export const findDamage = onCall(opts(300), async (req) => {
     vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt: Date.now(), createdBy: uid,
     createdByName: who.name, stationId: w.stationId || null, status: spots.length ? 'checking' : 'submitted',
     submittedAt: spots.length ? null : Date.now(), review: null,
-    tier, model: MODELS[tier].id, photos: photos.length, pass1: usage, pass2: null, spots, notVisible: [...notVisible].slice(0, 6),
-    missedNote: '', serverMs: Date.now() - t0, prepMs,
+    tier, model: MODELS[tier].id, photos: photos.length, spots, notVisible: [...notVisible].slice(0, 6), missedNote: '',
   };
-  await ref.set(check);
-  return { checkId: ref.id, spots, notVisible: check.notVisible, usage, model: check.model };
+  const b = db().batch();
+  b.set(ref, check);
+  b.set(usageRef(orgId, ref.id), {
+    checkId: ref.id, stationId: check.stationId, createdAt: check.createdAt, tier, model: check.model,
+    pass1: usage, pass2: null, serverMs: Date.now() - t0, prepMs, spotMs: {},
+  });
+  await b.commit();
+  return { checkId: ref.id, spots, notVisible: check.notVisible, model: check.model, ...(who.creator ? { usage } : {}) };
 });
 
 /* ---------- 3. checkSpot: decide one spot from the driver's close-ups ---------- */
@@ -259,18 +272,21 @@ export const checkSpot = onCall(opts(180), async (req) => {
   const verdict = {
     verdict: v, type: dmg && DAMAGE_TYPES.includes(o.type as string) ? o.type : null, sizeCm: dmg ? posInt(o.sizeCm) : null,
     severity: dmg && (o.severity === 'cosmetic' || o.severity === 'repair') ? o.severity : null,
-    confidence: round(clamp01(o.confidence)), reason: str(o.reason, 300) || '', ms: a.usage.ms, closeupBox: cb,
+    confidence: round(clamp01(o.confidence)), reason: str(o.reason, 300) || '', closeupBox: cb,
   };
   const markPath = cb ? await save(`orgs/${orgId}/checks/${checkId}/mark${j + 1}_${Date.now().toString(36)}.jpg`, await markBox(closeBufs[0], cb)) : null;
 
+  const uref = usageRef(orgId, checkId);
   await db().runTransaction(async (tx) => {
-    const cur = await tx.get(cref);
-    const d = cur.data() as { spots: Spot[]; pass2: Usage | null };
+    const [cur, u] = await Promise.all([tx.get(cref), tx.get(uref)]);
+    const d = cur.data() as { spots: Spot[] };
+    const prev = (u.data() as { pass2?: Usage | null } | undefined)?.pass2 || noUsage();
     const next = d.spots.slice();
     next[j] = { ...next[j], closeups, verdict, markPath, feedback: null };
-    tx.update(cref, { spots: next, pass2: addUsage(d.pass2 || noUsage(), a.usage), updatedAt: FieldValue.serverTimestamp() });
+    tx.update(cref, { spots: next, updatedAt: FieldValue.serverTimestamp() });
+    tx.set(uref, { checkId, pass2: addUsage(prev, a.usage), spotMs: { [j]: a.usage.ms } }, { merge: true });
   });
-  return { verdict, usage: a.usage, model: a.model };
+  return { verdict, model: a.model, ...(who.creator ? { usage: a.usage, ms: a.usage.ms } : {}) };
 });
 
 /* ---------- 4. submitCheck: the driver is done with close-ups and sends the check to the manager ---------- */
@@ -286,7 +302,7 @@ export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
     const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string };
     needStation(who, d.stationId);
     if (d.status === 'reviewed') throw new HttpsError('failed-precondition', 'A manager has already reviewed this check.');
-    const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', ms: null, closeupBox: null };
+    const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null };
     tx.update(cref, {
       spots: d.spots.map((p) => (p.verdict ? p : { ...p, verdict: skipped })),
       status: 'submitted', submittedAt: Date.now(), submittedBy: who.uid, missedNote: note,

@@ -205,7 +205,7 @@ export default function VehicleScreen() {
                 <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed' ? (approved ? `${fresh} new damage${fresh === 1 ? '' : 's'}${approved > fresh ? `, ${approved - fresh} already on the van` : ''}` : 'No damage') : `${k.spots.length} spot${k.spots.length === 1 ? '' : 's'}, ${dmg} damage by the AI`}</T>
                 <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? 'Reviewed' : k.status === 'submitted' ? 'Waiting for review' : 'Close-ups pending'} />
               </Row>
-              <T v="hint">{[k.createdByName || '', `${k.photos} photos`, s.staff && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.staff ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+              <T v="hint">{[k.createdByName || '', `${k.photos} photos`, s.seesAiStats && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
             </Pressable>
           );
         })}

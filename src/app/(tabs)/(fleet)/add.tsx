@@ -156,12 +156,12 @@ export default function AddVehicle() {
 
       {sc ? (
         <Card>
-          <T v="hint">Identified in {secs(sc.ms)} with the {TIER_NAME[sc.tier]} model ({sc.model}). Upload took {secs(res!.uploadMs)}.</T>
+          {s.seesAiStats && sc.ms != null ? <T v="hint">Identified in {secs(sc.ms)} with the {TIER_NAME[sc.tier]} model ({sc.model}). Upload took {secs(res!.uploadMs)}.</T> : null}
           {sc.predicted && CLS[sc.predicted] ? <T v="h1">{CLS[sc.predicted].name}</T> : <T v="h1">No vehicle found</T>}
           {sc.vMake || sc.vModel ? <T v="medium">Looks like a {[sc.vMake, sc.vModel].filter(Boolean).join(' ')}</T> : null}
           <Row>
             {conf != null ? <Pill v={conf >= 0.8 ? 'good' : conf >= 0.55 ? 'default' : 'bad'} text={`${conf >= 0.8 ? 'High' : conf >= 0.55 ? 'Medium' : 'Low'} confidence, ${Math.round(conf * 100)}%`} /> : null}
-            <Pill v="muted" text={`Est. cost $${sc.cost.toFixed(4)}`} />
+            {s.seesAiStats && sc.cost != null ? <Pill v="muted" text={`Est. cost $${sc.cost.toFixed(4)}`} /> : null}
           </Row>
           {res!.reason ? <T v="hint">{res!.reason}</T> : null}
           {res!.alternatives.length ? <T v="hint">Also close: {res!.alternatives.map((a) => CLS[a.cls]?.name).filter(Boolean).join(' or ')}.</T> : null}

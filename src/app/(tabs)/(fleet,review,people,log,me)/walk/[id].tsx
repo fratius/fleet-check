@@ -50,7 +50,7 @@ export default function WalkScreen() {
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <T v="h3">Check: {k.spots.length} spot{k.spots.length === 1 ? '' : 's'}, {dmg} damage</T>
-            <T v="hint">{[s.staff && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.staff ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) + ' est.' : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+            <T v="hint">{[s.seesAiStats && k.pass1 ? `found in ${secs(k.pass1.ms)}` : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) + ' est.' : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
           </Pressable>
         );
       })}

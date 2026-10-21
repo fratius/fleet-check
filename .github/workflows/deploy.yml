@@ -146,6 +146,10 @@ jobs:
         run: |
           set -euo pipefail
           npx -y "$FIREBASE_TOOLS" functions:secrets:access WEBPUSH_KEYS --project "$PROJECT" --non-interactive | node functions/scripts/set-push-key.cjs
+      - name: Move AI speed and cost out of older damage checks (only the app creator sees them)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/move-usage.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

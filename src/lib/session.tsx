@@ -10,7 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type CheckUsage, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -34,6 +34,8 @@ interface Session {
   creator: boolean;
   /** Can switch to viewing the app as an owner, manager or driver: the app creator (and test mode). */
   canViewAs: boolean;
+  /** Sees AI speed and cost and the test log: the app creator as themselves (and test mode, as the owner). */
+  seesAiStats: boolean;
   /** Viewing the open company as this role; null when being yourself. The server and the rules apply it too. */
   viewAs: ViewAs | null;
   /** View the open company as this role (managers and drivers at a station), or null to be yourself again. */
@@ -289,6 +291,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setOrg((o) => (o && o.id === org.id ? { ...o, aiTier: t } : o));
   }, [mode, org, role]);
   const staff = role === 'owner' || role === 'manager';
+  const seesAiStats = mode === 'local' ? !viewAs : creator && !viewAs;
   // Owners (and the app creator) read every station; managers and drivers only their own.
   const scopeKey = role === 'owner' ? '*' : (member?.stationIds || []).join(',');
   const driverOnly = role === 'driver' ? user?.uid || null : null;
@@ -303,12 +306,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [walks, setWalks] = useState<Walkaround[]>([]);
   const [checks, setChecks] = useState<Check[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
+  const [usage, setUsage] = useState<CheckUsage[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
-    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setAssignments([]); setVideos([]);
+    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setAssignments([]); setVideos([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -321,10 +325,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.assignments.subscribe((r) => setAssignments(r), () => {}),
       store.videos.subscribe((r) => setVideos(r), () => {}),
     ];
-    if (staff) subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
-    else setLoaded((l) => ({ ...l, scans: true }));
+    // Type scans and AI speed and cost: only the app creator reads them (the rules refuse everyone else).
+    if (seesAiStats) {
+      subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
+      subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
+    } else setLoaded((l) => ({ ...l, scans: true }));
     return () => subs.forEach((u) => u());
-  }, [store, staff]);
+  }, [store, seesAiStats]);
+  // For the app creator: each check with its AI speed and cost filled in.
+  const checksShown = useMemo(() => {
+    if (!seesAiStats || !usage.length) return checks;
+    const by = new Map(usage.map((u) => [u.checkId || u.id, u]));
+    return checks.map((k) => {
+      const u = by.get(k.id);
+      if (!u) return k;
+      return { ...k, pass1: u.pass1, pass2: u.pass2, spots: k.spots.map((p, j) => (p.verdict ? { ...p, verdict: { ...p.verdict, ms: u.spotMs?.[j] ?? null } } : p)) };
+    });
+  }, [checks, usage, seesAiStats]);
 
   // A company made before stations existed: the owner's first visit moves it onto a "Main station".
   const migrating = useRef<string | null>(null);
@@ -353,7 +370,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks, scans, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -169,8 +169,15 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(request.resource.data.vehicleId)).data.stationId == request.resource.data.stationId;
       }
 
+      // AI speed and cost of each damage check (written by the server). Only the app creator sees them.
+      match /checkUsage/{id} {
+        allow read: if creator();
+      }
+
+      // Type scans (which body class): they carry AI speed and cost and feed the test log, so only the app creator
+      // reads them. Owners and managers still tell whether the AI was right when they add a van.
       match /scans/{id} {
-        allow read: if staff(orgId);
+        allow read: if creator();
         allow update: if staff(orgId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verdict', 'actual']);
       }

@@ -4,10 +4,11 @@ export type Tier = 'quick' | 'default' | 'complex';
 export const TIERS: [Tier, string][] = [['quick', 'Fast'], ['default', 'Balanced'], ['complex', 'Best']];
 export const TIER_NAME: Record<Tier, string> = { quick: 'Fast', default: 'Balanced', complex: 'Best' };
 /** Same table as functions/src/models.ts. Prices are list prices per million tokens, input and output. */
-export const TIER_MODEL: Record<Tier, { id: string; name: string; inPerM: number; outPerM: number; note: string }> = {
-  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: 'Cheapest and fastest.' },
-  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: 'The default. Mid price.' },
-  complex: { id: 'claude-opus-5-5', name: 'Opus 5.5', inPerM: 4, outPerM: 20, note: 'The largest model. Slowest and most expensive.' },
+/** `note` mentions speed and price (the app creator sees it); `plain` is what everyone else sees. */
+export const TIER_MODEL: Record<Tier, { id: string; name: string; inPerM: number; outPerM: number; note: string; plain: string }> = {
+  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: 'Cheapest and fastest.', plain: 'Quick answers; can miss small damage.' },
+  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: 'The default. Mid price.', plain: 'The default, recommended for most fleets.' },
+  complex: { id: 'claude-opus-5-5', name: 'Opus 5.5', inPerM: 4, outPerM: 20, note: 'The largest model. Slowest and most expensive.', plain: 'The most thorough look at every photo.' },
 };
 /** Rough cost of one photo: the server sizes it to the 4,784-token image limit, plus about 150 output tokens. */
 export const perPhotoCost = (t: Tier) => (4784 * TIER_MODEL[t].inPerM + 150 * TIER_MODEL[t].outPerM) / 1e6;
@@ -177,7 +178,8 @@ export interface Verdict {
   severity: 'cosmetic' | 'repair' | null;
   confidence: number | null;
   reason: string;
-  ms: number | null;
+  /** How long the AI took (app creator only: filled in from checkUsage). */
+  ms?: number | null;
   closeupBox: [number, number, number, number] | null;
 }
 
@@ -261,11 +263,26 @@ export interface Check {
   tier: Tier;
   model: string;
   photos: number;
-  pass1: Usage | null;
-  pass2: Usage | null;
+  /** AI speed and cost: only for the app creator, filled in from checkUsage (see CheckUsage). */
+  pass1?: Usage | null;
+  pass2?: Usage | null;
   spots: Spot[];
   notVisible: string[];
   missedNote: string;
+}
+
+/** AI speed and cost of one damage check (orgs/{org}/checkUsage/{checkId}): only the app creator reads it. */
+export interface CheckUsage {
+  id: string;
+  checkId: string;
+  stationId: string | null;
+  createdAt: number;
+  pass1: Usage | null;
+  pass2: Usage | null;
+  serverMs: number | null;
+  prepMs: number | null;
+  /** AI time per spot, by spot number. */
+  spotMs: Record<string, number | null>;
 }
 
 export interface Scan {
@@ -275,11 +292,12 @@ export interface Scan {
   createdBy: string | null;
   tier: Tier;
   model: string;
-  ms: number;
+  /** AI speed and cost: null unless the app creator asked (type scans are only theirs to read). */
+  ms: number | null;
   photos: number;
-  inTok: number;
-  outTok: number;
-  cost: number;
+  inTok: number | null;
+  outTok: number | null;
+  cost: number | null;
   predicted: string | null;
   confidence: number | null;
   vMake: string | null;

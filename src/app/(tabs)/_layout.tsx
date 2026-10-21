@@ -52,7 +52,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="(fleet)" options={{ title: staff ? 'Fleet' : 'Vans', tabBarBadge: toFilm || undefined, tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
       <Tabs.Screen name="(review)" options={{ title: 'Review', href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
       <Tabs.Screen name="(people)" options={{ title: 'People', href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
-      <Tabs.Screen name="(log)" options={{ title: 'Test log', href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
+      <Tabs.Screen name="(log)" options={{ title: 'Test log', href: s.seesAiStats ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
       <Tabs.Screen name="(me)" options={{ title: 'Account', tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
     </Tabs>
   );

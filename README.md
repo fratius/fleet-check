@@ -4,7 +4,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 
 - **Fleet:** each vehicle gets photo frames that fit its body type (car to step van).
 - **Walk-around:** the camera shows the outline to line up for each photo.
-- **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI suggests: damage, dirt, reflection or nothing. The fleet manager approves or rejects each spot; approved damage goes on the van's record. Every step records its time and real cost.
+- **Damage check:** the AI marks every spot that could be damage, the driver takes close-ups of each one, and the AI suggests: damage, dirt, reflection or nothing. The fleet manager approves or rejects each spot; approved damage goes on the van's record. Every step records its time and real cost, which only the app creator sees.
 - **Companies and stations:** each company sees only its own fleet, split into stations (operating areas). People join with invite links made per station and role: one link per person, valid for 24 hours.
 
 ## Who can do what
@@ -16,7 +16,8 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 | People | everything | stations, managers, drivers, invite links | drivers of their station, driver links | none |
 | History | everything | every van and driver | their station | their own vans |
 | Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
-| AI model and test log | everything | sets the model, sees the log | sees the log | none |
+| AI model | everything | sets the model | sees which one | none |
+| AI speed, cost, test log | only the app creator | none | none | none |
 
 - **App creator:** whoever signs up with an email listed in the GitHub variable `APP_CREATOR_EMAILS` (Settings > Secrets and variables > Actions > Variables, comma separated; `casian.colto@gmail.com` when the variable isn't set). Change it, run Deploy, then sign out and in.
 - **Fleet owners** can own several companies (Account > Join or create another company) and switch between them.
@@ -93,7 +94,7 @@ Prices per million tokens, input and output: Haiku 5.5 $0.10 and $0.50, Sonnet 5
 | Balanced (Sonnet 5.5) | $0.011 | $0.15 | $0.27 |
 | Best (Opus 5.5) | $0.022 | $0.31 | $0.54 |
 
-These are estimates. Every run stores the token counts the API reported and the cost, and the **Test log** tab adds them up per model.
+These are estimates. Every run stores the token counts the API reported and the cost, and the **Test log** tab (app creator only) adds them up per model.
 
 ## How it works
 

@@ -21,6 +21,7 @@ export interface Answer<T> { obj: T; usage: Usage; model: string }
  * (structured output), and falls back to plain JSON in the text if the model rejects the schema.
  */
 export async function ask<T>(key: string, tier: Tier, parts: Part[], prompt: string, schema: object, maxTokens: number): Promise<Answer<T>> {
+  if (process.env.FUNCTIONS_EMULATOR === 'true' && key === 'not-used-in-tests') return testAnswer<T>(tier, parts, schema);
   const c = getClient(key);
   const model = MODELS[tier].id;
   const content: Anthropic.ContentBlockParam[] = [];
@@ -91,4 +92,19 @@ function toHttps(e: unknown): HttpsError {
   if (e instanceof Anthropic.APIConnectionError) return new HttpsError('unavailable', 'Couldn\'t reach the AI service. Try again.');
   logger.error('Unexpected error', e as Error);
   return new HttpsError('internal', 'Something went wrong on the server. Try again.');
+}
+
+/**
+ * The emulator tests run without the Claude API (their key is "not-used-in-tests"): a fixed answer that fits the
+ * schema, with made-up usage, so the checks can be tested end to end. Never used outside the emulator.
+ */
+function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
+  const props = (schema as { properties?: Record<string, unknown> }).properties || {};
+  const obj = 'spots' in props
+    ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }
+    : 'verdict' in props
+      ? { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.', closeupBox: [0.3, 0.3, 0.6, 0.6] }
+      : { class: 'large_van', confidence: 0.9, make: 'Test', model: 'Van', roof: 'high', slidingDoorLeft: 'no', slidingDoorRight: 'yes', rearDoors: 'barn', alternatives: [], photoIssues: [], reason: 'Test answer.' };
+  const inTok = 1500 * parts.length, outTok = 200;
+  return { obj: obj as T, usage: { ms: 1234, calls: 1, images: parts.length, inTok, outTok, cost: round(costOf(tier, inTok, outTok)) }, model: MODELS[tier].id };
 }

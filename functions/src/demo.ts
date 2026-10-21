@@ -226,7 +226,7 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
       photo, photoLabel: FRAMES[photo], box: [0.42, 0.4, 0.58, 0.52], panel, type, sizeCm: type === 'dent' ? 3 : 6, conf, mightBe, closeup: 'Stand level with the spot, about half a metre away.',
       refPath, closeups, markPath, feedback: null,
       verdict: verdict ? { verdict: verdict.v, type: verdict.v === 'damage' ? type : null, sizeCm: verdict.v === 'damage' ? (type === 'dent' ? 3 : 6) : null,
-        severity: verdict.v === 'damage' ? verdict.severity || 'cosmetic' : null, confidence: 0.8, reason: verdict.reason, ms: 6400, closeupBox: null } : null,
+        severity: verdict.v === 'damage' ? verdict.severity || 'cosmetic' : null, confidence: 0.8, reason: verdict.reason, closeupBox: null } : null,
     };
   };
   const check = async (van: typeof vans[number], walkId: string, by: { id: string; name: string }, when: number, status: string,
@@ -237,8 +237,13 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     await ref.set({
       vehicleId: van.id, vehicleName: van.name, cls: van.cls, walkId, stationId: stationIds[van.st], createdAt: when, createdBy: by.id, createdByName: by.name,
       status, submittedAt: status === 'checking' ? null : when + 6 * 60_000, review, reviewedAt: status === 'reviewed' ? when + 3 * 3600_000 : null,
-      tier: 'default', model: 'demo', photos: 8, pass1: usage(38_000, 1, 8), pass2: withCloseups ? usage(withCloseups * 6400, withCloseups, withCloseups * 2) : null,
-      spots, notVisible: ['roof: too high to see'], missedNote: note, demo: true,
+      tier: 'default', model: 'demo', photos: 8, spots, notVisible: ['roof: too high to see'], missedNote: note, demo: true,
+    });
+    // Speed and cost go where only the app creator reads them (checkUsage), like real checks.
+    await org.collection('checkUsage').doc(ref.id).set({
+      checkId: ref.id, stationId: stationIds[van.st], createdAt: when, tier: 'default', model: 'demo',
+      pass1: usage(38_000, 1, 8), pass2: withCloseups ? usage(withCloseups * 6400, withCloseups, withCloseups * 2) : null,
+      serverMs: 41_000, prepMs: 3_000, spotMs: Object.fromEntries((spots as { closeups: string[] }[]).map((p, j) => [j, p.closeups.length ? 6400 : null]).filter(([, v]) => v != null)),
     });
     return ref.id;
   };

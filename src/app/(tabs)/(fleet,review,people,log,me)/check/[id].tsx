@@ -236,7 +236,7 @@ function CheckView({ id }: { id: string }) {
           {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
         </Row>
       </View>
-      {s.staff ? <CostPanel k={k} /> : null}
+      {s.seesAiStats ? <CostPanel k={k} /> : null}
       {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={`Take close-ups of ${n} spot${n === 1 ? '' : 's'}`} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
       {status === 'checking' && n > 0 && checked && open > 0 ? <Button title="Take more close-ups" onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
@@ -256,7 +256,7 @@ function CheckView({ id }: { id: string }) {
               {v ? <Pill v={VERDICT[v.verdict][1]} text={`AI: ${VERDICT[v.verdict][0].toLowerCase()}`} /> : <Pill v={p.conf >= 0.6 ? 'bad' : 'amber'} text={`${p.conf >= 0.6 ? 'Likely' : 'Possible'}, ${Math.round(p.conf * 100)}%`} />}
               <Pill text={`${cap(v?.verdict === 'damage' ? v.type || p.type : p.type)}${(v?.sizeCm || p.sizeCm) ? `, about ${v?.sizeCm || p.sizeCm} cm` : ''}`} />
               {v?.severity ? <Pill text={v.severity === 'repair' ? 'Bodyshop repair' : 'Cosmetic'} /> : null}
-              {v?.ms && s.staff ? <Pill v="muted" text={secs(v.ms)} /> : null}
+              {v?.ms && s.seesAiStats ? <Pill v="muted" text={secs(v.ms)} /> : null}
             </Row>
             {v?.reason ? <T>{v.reason}</T> : !v && p.mightBe ? <T v="hint">Could also be {p.mightBe}.</T> : null}
             {/* Flex 16 : 9 makes the 4:3 crop and the 3:4 close-ups the same height. Tap any photo to see it full screen. */}

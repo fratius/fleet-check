@@ -52,13 +52,36 @@ async function fails(p, code) {
   assert.fail(`expected it to fail${code ? ' with ' + code : ''}`);
 }
 
+/** A new account with the app creator claim, as the Deploy workflow sets it. */
+async function appCreator(name) {
+  const p = await person(name);
+  const r = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/projects/${cfg.projectId}/accounts:update`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ localId: p.uid, customAttributes: JSON.stringify({ creator: true }) }),
+  });
+  assert.equal(r.status, 200, await r.text());
+  await p.auth.currentUser.getIdToken(true);
+  return p;
+}
+
+/** A real JPEG (the AI steps open the photos), made with ffmpeg. */
+let jpegBytes = null;
+function jpeg() {
+  if (!jpegBytes) {
+    const out = join(mkdtempSync(join(tmpdir(), 'jpg-')), 'p.jpg');
+    execFileSync(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', 'testsrc=size=640x480', '-frames:v', '1', '-y', out]);
+    jpegBytes = new Uint8Array(readFileSync(out));
+  }
+  return jpegBytes;
+}
+
 /** A walk-around with every photo uploaded, as the app's scanner saves it. */
-async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0 } = {}) {
+async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0, real = false } = {}) {
   const id = doc(collection(p.db, 'orgs', orgId, 'walkarounds')).id;
   const ps = [];
   for (let n = 1; n <= frames; n++) {
     const path = `orgs/${orgId}/walkarounds/${id}/0${n}.jpg`;
-    await uploadBytes(ref(p.st, path), new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
+    await uploadBytes(ref(p.st, path), real ? jpeg() : new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
     ps.push({ n, label: `Frame ${n}`, w: 900, h: 1200, takenAt: Date.now(), path });
   }
   await setDoc(doc(p.db, 'orgs', orgId, 'walkarounds', id), {
@@ -299,14 +322,7 @@ test('walk-around videos: anyone who can scan the van films it, any time; nothin
 
 test('the app creator views the app as a driver, a manager and an owner, and gets exactly their access', async () => {
   const { v1, v3 } = S.vans;
-  const cr = await person('Cora Creator');
-  // The app creator claim, as the Deploy workflow sets it.
-  const r = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/projects/${cfg.projectId}/accounts:update`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-    body: JSON.stringify({ localId: cr.uid, customAttributes: JSON.stringify({ creator: true }) }),
-  });
-  assert.equal(r.status, 200, await r.text());
-  await cr.auth.currentUser.getIdToken(true);
+  const cr = await appCreator('Cora Creator');
   const viewAs = (v) => setDoc(doc(cr.db, 'users', cr.uid), { viewAs: v }, { merge: true });
   // Themselves: every company and station, photos and videos included, without being a member.
   const walk = await photos(S.d1, S.org, v1);
@@ -419,6 +435,68 @@ test('a driver given a van gets a phone notification and adds the pick-up photos
   assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r3.assignmentId))).data().pickupRequested, false);
   // Back as it was: van 2 free.
   await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: null });
+});
+
+test('AI speed and cost: only the app creator sees them, in the functions\' answers and in the data', async () => {
+  const { v1 } = S.vans;
+  const cr = await appCreator('Cleo Creator');
+  // A driver runs a damage check (the emulator answers for the AI, with made-up usage).
+  const walk = await photos(S.d1, S.org, v1, { real: true });
+  const f = await S.d1.call('findDamage', { orgId: S.org, walkId: walk, tier: 'default' });
+  assert.equal(f.spots.length, 1);
+  assert.equal(f.usage, undefined, 'the driver gets no speed or cost back');
+  const kref = doc(S.d1.db, 'orgs', S.org, 'checks', f.checkId);
+  const k = (await getDoc(kref)).data();
+  for (const field of ['pass1', 'pass2', 'serverMs', 'prepMs']) assert.equal(k[field], undefined, `${field} isn't on the check`);
+  // The close-up check: no time on the verdict.
+  const close = `orgs/${S.org}/checks/${f.checkId}/close1.jpg`;
+  await uploadBytes(ref(S.d1.st, close), jpeg(), { contentType: 'image/jpeg' });
+  const sp = await S.d1.call('checkSpot', { orgId: S.org, checkId: f.checkId, spot: 0, closeups: [close], tier: 'default' });
+  assert.equal(sp.verdict.verdict, 'damage');
+  assert.equal(sp.verdict.ms, undefined);
+  assert.equal(sp.usage, undefined);
+  assert.equal((await getDoc(kref)).data().spots[0].verdict.ms, undefined);
+  // Speed and cost are kept apart: the driver, the manager and the owner can't read them; the app creator can.
+  const uPath = ['orgs', S.org, 'checkUsage', f.checkId];
+  for (const p of [S.d1, S.mgr, S.own]) await fails(getDoc(doc(p.db, ...uPath)), 'permission-denied');
+  const u = (await getDoc(doc(cr.db, ...uPath))).data();
+  assert.equal(u.pass1.calls, 1);
+  assert.ok(u.pass1.cost > 0 && u.pass1.ms >= 0);
+  assert.equal(u.pass2.calls, 1);
+  assert.equal(u.spotMs[0], 1234);
+  assert.ok(u.serverMs >= 0 && u.prepMs >= 0);
+  // The app creator running a check gets them back.
+  const walk2 = await photos(cr, S.org, v1, { real: true });
+  assert.ok((await cr.call('findDamage', { orgId: S.org, walkId: walk2, tier: 'default' })).usage.cost > 0);
+  // Type scans carry cost: only the app creator reads them, and the manager's answer has none.
+  const scanId = 'scan' + Date.now().toString(36);
+  const sp1 = `orgs/${S.org}/scans/${scanId}/1.jpg`;
+  await uploadBytes(ref(S.mgr.st, sp1), jpeg(), { contentType: 'image/jpeg' });
+  const id = await S.mgr.call('identifyVehicle', { orgId: S.org, scanId, paths: [sp1], tier: 'default', stationId: S.s1 });
+  assert.equal(id.scan.predicted, 'large_van');
+  assert.equal(id.scan.cost, null);
+  assert.equal(id.scan.ms, null);
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'scans', scanId)), 'permission-denied');
+  await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'scans', scanId), { verdict: 'correct', actual: 'large_van' });
+  assert.ok((await getDoc(doc(cr.db, 'orgs', S.org, 'scans', scanId))).data().cost > 0);
+  // Checks saved before this change: the Deploy workflow moves their speed and cost out. Safe to run twice.
+  const old = adminDb().collection(`orgs/${S.org}/checks`).doc();
+  await old.set({ vehicleId: v1.id, vehicleName: v1.name, stationId: S.s1, createdAt: Date.now(), tier: 'default', model: 'm', status: 'reviewed',
+    pass1: { ms: 9000, calls: 1, images: 3, inTok: 1, outTok: 1, cost: 0.2 }, pass2: { ms: 4000, calls: 1, images: 2, inTok: 1, outTok: 1, cost: 0.1 },
+    serverMs: 9500, prepMs: 400, spots: [{ panel: 'door', verdict: { verdict: 'damage', ms: 4000, reason: 'x' } }, { panel: 'roof', verdict: null }] });
+  const move = () => execFileSync(process.execPath, [new URL('../functions/scripts/move-usage.cjs', import.meta.url).pathname],
+    { env: { ...process.env, FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || `${HOST}:8080`, PROJECT: cfg.projectId }, encoding: 'utf8' });
+  assert.match(move(), /Moved the speed and cost of \d+ damage check/);
+  const o = (await old.get()).data();
+  for (const field of ['pass1', 'pass2', 'serverMs', 'prepMs']) assert.equal(o[field], undefined);
+  assert.equal(o.spots[0].verdict.ms, undefined);
+  assert.equal(o.spots[0].verdict.reason, 'x');
+  const ou = (await adminDb().doc(`orgs/${S.org}/checkUsage/${old.id}`).get()).data();
+  assert.equal(ou.pass1.cost, 0.2);
+  assert.equal(ou.pass2.cost, 0.1);
+  assert.equal(ou.serverMs, 9500);
+  assert.equal(ou.spotMs[0], 4000);
+  assert.match(move(), /No damage checks to move/);
 });
 
 test('retiring, moving and removing keep the history and free the van', async () => {

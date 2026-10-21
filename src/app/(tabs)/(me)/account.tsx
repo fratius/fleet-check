@@ -58,7 +58,7 @@ export default function Account() {
       {s.staff ? (
         <Card>
           <T v="h3">AI model for checks</T>
-          <T v="hint">{s.role === 'owner' ? 'Used for every type scan and damage check in this company. ' : 'Set by the fleet owner for the whole company. '}Each run records its model, time and cost, so the test log can compare them.</T>
+          <T v="hint">{s.role === 'owner' ? 'Used for every type scan and damage check in this company. ' : 'Set by the fleet owner for the whole company. '}{s.seesAiStats ? 'Each run records its model, time and cost, so the test log can compare them.' : ''}</T>
           {(Object.keys(TIER_MODEL) as Tier[]).map((t) => (
             <Pressable key={t} accessibilityRole="radio" accessibilityState={{ checked: s.tier === t }} disabled={s.role !== 'owner'} onPress={() => s.setTier(t)}
               style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 2, borderColor: s.tier === t ? c.ink : c.rule, borderRadius: 4, padding: 12, backgroundColor: s.tier === t ? c.page : 'transparent', opacity: s.role !== 'owner' && s.tier !== t ? 0.6 : 1 }}>
@@ -67,8 +67,8 @@ export default function Account() {
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Row><T v="h3">{TIER_NAME[t]}</T><T v="hint">{TIER_MODEL[t].name}</T></Row>
-                <T v="hint">{TIER_MODEL[t].note}</T>
-                <T v="small">About {usd(perPhotoCost(t))} per photo, so {usd(perPhotoCost(t) * 14)} for a 14-photo van check before close-ups.</T>
+                <T v="hint">{s.seesAiStats ? TIER_MODEL[t].note : TIER_MODEL[t].plain}</T>
+                {s.seesAiStats ? <T v="small">About {usd(perPhotoCost(t))} per photo, so {usd(perPhotoCost(t) * 14)} for a 14-photo van check before close-ups.</T> : null}
               </View>
             </Pressable>
           ))}
