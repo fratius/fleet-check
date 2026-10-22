@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
 import { DueLine, FactSection, type FieldSpec, type Vals } from '@/components/vanfacts';
 import { CHECK_MONTHS, EMPLOYMENT, LICENCE_CLASSES, addMonths, driverDeadlines, fmtDay, lastCheck, parseDay, today } from '@/lib/fleet';
+import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
 import { AiError, ai } from '@/lib/store';
@@ -15,20 +16,20 @@ import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
  * FLEET_DATA.md (no licence numbers or copies, no date of birth, no home address, no health data).
  */
 
-const LICENCE: FieldSpec[] = [
+export const LICENCE: FieldSpec[] = [
   { key: 'licenceClasses', label: 'Classes', kind: 'multi', options: Object.fromEntries(LICENCE_CLASSES.map((k) => [k, k])) },
   { key: 'licenceValid', label: 'Valid until', kind: 'day', hint: 'The date on the card, or the class that runs out first' },
 ];
-const WORK: FieldSpec[] = [
+export const WORK: FieldSpec[] = [
   { key: 'employment', label: 'Contract', kind: 'choice', options: EMPLOYMENT },
   { key: 'employedFrom', label: 'Started', kind: 'day' },
   { key: 'employedTo', label: 'Last working day', kind: 'day', hint: 'When they leave' },
 ];
-const TRAINING: FieldSpec[] = [
+export const TRAINING: FieldSpec[] = [
   { key: 'vanBriefing', label: 'Briefed on the vans', kind: 'day', hint: 'Driving, loading, what to do after an accident' },
   { key: 'safetyBriefing', label: 'Last safety briefing', kind: 'day', hint: 'Yearly: the next is due a year later' },
 ];
-const EMERGENCY: FieldSpec[] = [
+export const EMERGENCY: FieldSpec[] = [
   { key: 'emergencyName', label: 'Who to call', kind: 'text' },
   { key: 'emergencyPhone', label: 'Phone', kind: 'phone' },
 ];
@@ -39,7 +40,7 @@ const FINE: Record<string, string> = { speeding: 'Speeding', parking: 'Parking',
 const FAULT: Record<string, string> = { yes: 'Driver at fault', no: 'Not at fault', unclear: 'Not clear yet' };
 
 /** Saves part of the record (creates it the first time, at the driver's station). */
-async function saveRecord(s: ReturnType<typeof useSession>, m: Member, prev: DriverRecord | undefined, patch: Vals) {
+export async function saveRecord(s: ReturnType<typeof useSession>, m: Member, prev: DriverRecord | undefined, patch: Vals) {
   const { id: _id, checks: _c, ...rest } = (prev || {}) as DriverRecord;
   const next = { ...rest, ...patch, stationId: prev?.stationId ?? m.stationIds?.[0] ?? null, createdAt: prev?.createdAt ?? Date.now(), updatedAt: Date.now(), updatedByName: s.user?.name || null };
   if (prev) await s.store!.records.update(m.uid, next);
@@ -58,6 +59,7 @@ export function DriverRecordView({ m, incidents }: { m: Member; incidents: Incid
   const values = (rec || {}) as unknown as Vals;
   return (
     <View style={{ gap: 12 }}>
+      {canEdit ? <DocScan target="driver" m={m} /> : null}
       {due.length ? (
         <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: due.some((x) => x.state === 'overdue') ? c.alert : c.ink, borderRadius: 4, padding: 12, gap: 8 }}>
           <T v="h3">Coming up</T>

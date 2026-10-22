@@ -4,6 +4,7 @@ import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
 import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, parseDay, today, type Deadline } from '@/lib/fleet';
+import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import type { Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
 
@@ -19,7 +20,7 @@ export interface FieldSpec { key: string; label: string; kind: Kind; unit?: stri
 
 const ev = (v: Vals) => v.fuel === 'electric' || v.fuel === 'hybrid';
 const notOwned = (v: Vals) => !!v.ownership && v.ownership !== 'owned';
-const VEHICLE: FieldSpec[] = [
+export const VEHICLE: FieldSpec[] = [
   { key: 'vin', label: 'VIN', kind: 'upper', hint: '17 characters, on the registration document' },
   { key: 'firstReg', label: 'First registration', kind: 'day' },
   { key: 'modelYear', label: 'Model year', kind: 'num', plain: true },
@@ -33,7 +34,7 @@ const VEHICLE: FieldSpec[] = [
   { key: 'branded', label: 'Livery', kind: 'bool', options: { yes: 'Amazon livery', no: 'Plain' } },
   { key: 'keys', label: 'Keys', kind: 'num' },
 ];
-const SIZE: FieldSpec[] = [
+export const SIZE: FieldSpec[] = [
   { key: 'heightM', label: 'Height', kind: 'num', unit: 'm', digits: 2, hint: 'Check it before car parks and garages' },
   { key: 'lengthM', label: 'Length', kind: 'num', unit: 'm', digits: 2 },
   { key: 'grossKg', label: 'Gross weight', kind: 'num', unit: 'kg' },
@@ -41,13 +42,13 @@ const SIZE: FieldSpec[] = [
   { key: 'cargoM3', label: 'Cargo space', kind: 'num', unit: 'm³', digits: 1 },
   { key: 'tyreSize', label: 'Tyre size', kind: 'upper' },
 ];
-const HELP: FieldSpec[] = [
+export const HELP: FieldSpec[] = [
   { key: 'breakdownPhone', label: 'Breakdown help', kind: 'phone' },
   { key: 'claimsPhone', label: 'Accident claims', kind: 'phone' },
   { key: 'insurer', label: 'Insurer', kind: 'text' },
   { key: 'policyNo', label: 'Policy number', kind: 'upper' },
 ];
-const DUE: FieldSpec[] = [
+export const DUE: FieldSpec[] = [
   { key: 'due.hu', label: 'Main inspection (HU)', kind: 'month', hint: 'The month on the sticker, like 03/2027' },
   { key: 'due.uvv', label: 'Safety check (UVV)', kind: 'day', hint: 'Yearly check for company vehicles' },
   { key: 'due.service', label: 'Service by date', kind: 'day' },
@@ -55,11 +56,11 @@ const DUE: FieldSpec[] = [
   { key: 'due.tyres', label: 'Tyre change', kind: 'day' },
   { key: 'due.tax', label: 'Vehicle tax', kind: 'day' },
 ];
-const MILEAGE: FieldSpec[] = [
+export const MILEAGE: FieldSpec[] = [
   { key: 'odometerKm', label: 'Odometer', kind: 'num', unit: 'km' },
   { key: 'odometerAt', label: 'Read on', kind: 'day', hint: 'Today when you change the odometer' },
 ];
-const CONTRACT: FieldSpec[] = [
+export const CONTRACT: FieldSpec[] = [
   { key: 'ownership', label: 'The van is', kind: 'choice', options: OWNERSHIP },
   { key: 'provider', label: 'Leasing company, landlord or seller', kind: 'text' },
   { key: 'contractNo', label: 'Contract number', kind: 'upper' },
@@ -71,27 +72,27 @@ const CONTRACT: FieldSpec[] = [
   { key: 'contact', label: 'Contact', kind: 'text', hint: 'Name, phone or email' },
   { key: 'returnNotes', label: 'When it goes back', kind: 'long', show: notOwned },
 ];
-const INSURANCE: FieldSpec[] = [
+export const INSURANCE: FieldSpec[] = [
   { key: 'coverage', label: 'Cover', kind: 'choice', options: COVERAGE },
   { key: 'insuranceRenewal', label: 'Renewal', kind: 'day' },
 ];
 /** Money: owners only (kept apart from the record managers read). `ownership` comes from the contract. */
-const COSTS: FieldSpec[] = [
+export const COSTS: FieldSpec[] = [
   { key: 'monthly', label: 'Per month, without VAT', kind: 'eur', show: notOwned },
   { key: 'purchasePrice', label: 'Purchase price', kind: 'eur', show: (v) => !v.ownership || v.ownership === 'owned' || v.ownership === 'financed' },
   { key: 'excessPerKm', label: 'Each kilometre over the allowance', kind: 'eur', digits: 2, show: notOwned },
   { key: 'premium', label: 'Insurance premium a year', kind: 'eur' },
   { key: 'deductible', label: 'Insurance deductible', kind: 'eur' },
 ];
-const OTHER: FieldSpec[] = [
+export const OTHER: FieldSpec[] = [
   { key: 'fuelCard', label: 'Fuel or charging card', kind: 'text', hint: 'Provider and the last digits, never the full number or PIN' },
   { key: 'notes', label: 'Notes', kind: 'long' },
 ];
 
-const get = (o: Vals | null | undefined, path: string): unknown => path.split('.').reduce<unknown>((x, k) => (x && typeof x === 'object' ? (x as Vals)[k] : undefined), o || undefined);
-const filled = (x: unknown) => x != null && x !== '' && !(Array.isArray(x) && !x.length);
+export const get = (o: Vals | null | undefined, path: string): unknown => path.split('.').reduce<unknown>((x, k) => (x && typeof x === 'object' ? (x as Vals)[k] : undefined), o || undefined);
+export const filled = (x: unknown) => x != null && x !== '' && !(Array.isArray(x) && !x.length);
 
-function show(f: FieldSpec, x: unknown): string {
+export function show(f: FieldSpec, x: unknown): string {
   if (!filled(x)) return '';
   const n = typeof x === 'number' ? x : null;
   switch (f.kind) {
@@ -149,16 +150,34 @@ export function FactSection({ title, note, fields, values, canEdit, onSave, empt
   );
 }
 
-/** Edits one section. Numbers accept commas; dates accept 31.03.2027 or 2027-03-31, months 03/2027. */
+/** A stored value as it's typed in a form: 31.03.2027, 03/2027, 2,72. */
+export function toInput(f: FieldSpec, x: unknown): unknown {
+  return f.kind === 'day' || f.kind === 'month' ? (x ? (f.kind === 'month' ? String(x).slice(5, 7) + '/' + String(x).slice(0, 4) : String(x).split('-').reverse().join('.')) : '')
+    : f.kind === 'num' || f.kind === 'eur' ? (x == null ? '' : String(x).replace('.', ','))
+      : f.kind === 'multi' ? (x as string[] | undefined) || [] : x ?? (f.kind === 'choice' || f.kind === 'bool' ? null : '');
+}
+/** What was typed, as it's stored; or what's wrong with it. Numbers accept commas; dates 31.03.2027 or 2027-03-31, months 03/2027. */
+export function fromInput(f: FieldSpec, raw: unknown): { value: unknown } | { error: string } {
+  let val: unknown = raw;
+  if (f.kind === 'num' || f.kind === 'eur') {
+    const t = String(raw ?? '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    val = t ? Number(t) : null;
+    if (val != null && !Number.isFinite(val as number)) return { error: `${f.label}: enter a number.` };
+  } else if (f.kind === 'day' || f.kind === 'month') {
+    val = String(raw ?? '').trim() ? parseDay(String(raw)) : null;
+    if (String(raw ?? '').trim() && !val) return { error: `${f.label}: enter a date like ${f.kind === 'month' ? '03/2027' : '31.03.2027'}.` };
+  } else if (typeof raw === 'string') {
+    val = raw.trim() ? (f.kind === 'upper' ? raw.trim().toUpperCase() : raw.trim()).slice(0, f.kind === 'long' ? 1000 : 120) : null;
+  }
+  if (f.key === 'vin' && val && String(val).length !== 17) return { error: 'The VIN has 17 characters.' };
+  return { value: val };
+}
+
+/** Edits one section. */
 function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; values: Vals | null | undefined; onSave: (patch: Vals) => Promise<void>; onCancel: () => void }) {
   const c = useColors();
   const init: Record<string, unknown> = {};
-  for (const f of fields) {
-    const x = get(values, f.key);
-    init[f.key] = f.kind === 'day' || f.kind === 'month' ? (x ? (f.kind === 'month' ? String(x).slice(5, 7) + '/' + String(x).slice(0, 4) : String(x).split('-').reverse().join('.')) : '')
-      : f.kind === 'num' || f.kind === 'eur' ? (x == null ? '' : String(x).replace('.', ','))
-        : f.kind === 'multi' ? (x as string[] | undefined) || [] : x ?? (f.kind === 'choice' || f.kind === 'bool' ? null : '');
-  }
+  for (const f of fields) init[f.key] = toInput(f, get(values, f.key));
   const [form, setForm] = useState(init);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -169,20 +188,9 @@ function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; val
     setErr(null);
     const out: Vals = {};
     for (const f of fields) {
-      const raw = form[f.key];
-      let val: unknown = raw;
-      if (f.kind === 'num' || f.kind === 'eur') {
-        const t = String(raw ?? '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
-        val = t ? Number(t) : null;
-        if (val != null && !Number.isFinite(val as number)) { setErr(`${f.label}: enter a number.`); return; }
-      } else if (f.kind === 'day' || f.kind === 'month') {
-        val = String(raw ?? '').trim() ? parseDay(String(raw)) : null;
-        if (String(raw ?? '').trim() && !val) { setErr(`${f.label}: enter a date like ${f.kind === 'month' ? '03/2027' : '31.03.2027'}.`); return; }
-      } else if (typeof raw === 'string') {
-        val = raw.trim() ? (f.kind === 'upper' ? raw.trim().toUpperCase() : raw.trim()).slice(0, f.kind === 'long' ? 1000 : 120) : null;
-      }
-      if (f.key === 'vin' && val && String(val).length !== 17) { setErr('The VIN has 17 characters.'); return; }
-      out[f.key] = val;
+      const r = fromInput(f, form[f.key]);
+      if ('error' in r) { setErr(r.error); return; }
+      out[f.key] = r.value;
     }
     // A new odometer reading is from today unless another day is given.
     if ('odometerKm' in out && out.odometerKm !== get(values, 'odometerKm') && form.odometerAt === init.odometerAt) out.odometerAt = today();
@@ -227,7 +235,7 @@ function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; val
 }
 
 /** Saves part of a van's business record (creates it the first time), with its station and who changed it. */
-async function saveDetails(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleDetails | undefined, patch: Vals) {
+export async function saveDetails(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleDetails | undefined, patch: Vals) {
   const due: Vals = { ...(prev?.due || {}) };
   const top: Vals = {};
   for (const [k, x] of Object.entries(patch)) { if (k.startsWith('due.')) due[k.slice(4)] = x; else top[k] = x; }
@@ -238,7 +246,7 @@ async function saveDetails(s: ReturnType<typeof useSession>, v: Vehicle, prev: V
 }
 
 /** Saves the costs of a van (owners only; creates the record the first time). */
-async function saveCosts(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleCosts | undefined, patch: Vals) {
+export async function saveCosts(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleCosts | undefined, patch: Vals) {
   const { id: _id, ...rest } = (prev || {}) as VehicleCosts;
   const next = { ...rest, ...patch, createdAt: prev?.createdAt ?? Date.now(), updatedAt: Date.now(), updatedByName: s.user?.name || null };
   if (prev) await s.store!.costs.update(v.id, next);
@@ -261,6 +269,8 @@ export function VanRecord({ v }: { v: Vehicle }) {
   const perKm = owner && m && cost?.monthly && m.perYear > 0 ? (cost.monthly * 12) / m.perYear : null;
   return (
     <View style={{ gap: 12 }}>
+      {/* Most of this is on paper: a photo of the document fills in the right sections. */}
+      {staff && !v.retired ? <DocScan target="van" v={v} /> : null}
       {staff ? <Deadlines v={v} d={d} /> : null}
       <FactSection title="Vehicle" fields={VEHICLE} values={facts} canEdit={staff} onSave={saveFacts}
         empty="VIN, first registration, fuel and gearbox. Add them from the registration document." />

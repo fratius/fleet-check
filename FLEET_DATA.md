@@ -61,6 +61,30 @@ allowance and what the monthly rate comes to per kilometre.
   the yearly pace and how far over or under the allowance it is (the estimated extra cost for owners).
 - The page header shows fuel and height at a glance.
 
+## Filling in from a photo of a document
+
+Most of this is on paper. On a van's Details and a driver's Record, owners and the station's managers photograph a
+document (several pages if needed, from the camera or the photo library) and the AI (`readDocument`):
+
+- says what it is: registration certificate (part I or II), lease, rental or financing contract, purchase invoice,
+  insurance policy, inspection report (HU/AU), safety check (UVV), service or tyre invoice, vehicle tax notice,
+  fuel card; for drivers a driving licence, employment contract or briefing record;
+- reads only the details the record keeps, and returns them sorted into the record's sections (a registration
+  certificate fills Vehicle, Size and load and the HU deadline; a lease contract fills Contract and, for owners,
+  Costs). Millimetres become metres; the payload is worked out from the maximum mass and the mass in running order;
+- shows each one ticked when it's new or different, with what's saved now and the words on the document it came
+  from. Values the AI isn't sure of are marked. Nothing is saved until the person checks and taps Save.
+
+Limits on purpose:
+
+- Costs are only read when an owner photographs the document; for a manager they aren't even asked for.
+- From a driving licence only the classes and the expiry date: never the licence number, date or place of birth or
+  address, which aren't in what the AI is asked for. For drivers' documents the AI also says whether the name on it
+  matches the person. After a licence photo, the manager can tick "I saw the original licence today" to record the
+  licence check.
+- The photos are deleted on the server straight after reading; no copy of a licence or contract is kept.
+  `docReads` keeps only what kind of document it was, how many details, and the AI's speed and cost (app creator).
+
 ## Drivers (built)
 
 Each person's page has three parts under their details and the van they have now: **Record**, **Tours**, **Vans**.
@@ -154,7 +178,7 @@ the works council where there is one. A deletion period for the records of peopl
 - **Fuel card import**: real litres and euros per van and driver from the fuel card provider, instead of the gauge.
 - **Amazon's own driving data**: where a DSP gets safety scores per driver, importing them measures driving
   behaviour directly (fuel use only hints at it).
-- **Documents**: registration certificate, lease contract, insurance card, as photos or PDFs on the van.
+- **Documents kept on the van** (registration certificate, insurance card) and PDFs: today a document photo only fills in the record and is deleted.
 - **Service and repair log** with costs, and the cost per van per month (lease plus repairs plus fuel).
 - **Reminders**: deadline notifications to the station's managers, by phone notification or email.
 - **Deletion periods** for records of people who left, and for old dashboard photos.

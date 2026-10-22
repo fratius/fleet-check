@@ -62,6 +62,7 @@ beforeEach(async () => {
     await put(`orgs/${O}/tours/t2`, { driverId: 'drv2', vehicleId: 'v2', stationId: S2, km: 90, createdAt: 2, startAt: 2 });
     await put(`orgs/${O}/readings/r1`, { driverId: 'drv1', by: 'drv1', vehicleId: 'v1', stationId: S1, odometerKm: 48000, createdAt: 1, at: 1 });
     await put(`orgs/${O}/dashReads/d1`, { by: 'drv1', vehicleId: 'v1', createdAt: 1 });
+    await put(`orgs/${O}/docReads/k1`, { by: 'mgr1', target: 'van', kind: 'registration certificate', found: 9, createdAt: 1 });
     await put(`orgs/${O}/damageLog/c1`, { checkId: 'c1', vehicleId: 'v1', stationId: S1, n: 1, drivers: [{ id: 'drv1', name: 'Driver 1' }], driverIds: ['drv1'], foundAt: 1, createdAt: 1 });
     await put(`orgs/${O}/vehicleDetails/v2`, { stationId: S2, createdAt: 2, ownership: 'owned' });
     await put(`orgs/${O}/checkUsage/c1`, { checkId: 'c1', stationId: S1, createdAt: 1, pass1: { ms: 9000, cost: 0.2 }, pass2: null });
@@ -386,6 +387,9 @@ describe('tours, dashboard readings and the damage log: written by the server', 
   test('what the AI read first: the app creator only', () => assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/dashReads/d1`))));
   test('…not the driver who took it', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/dashReads/d1`))));
   test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/dashReads/d1`))));
+  test('documents read from a photo: the app creator only', () => assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/docReads/k1`))));
+  test('…not the manager who read it', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/docReads/k1`))));
+  test('…and nobody writes them from the app', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/docReads/k9`), { by: 'own', createdAt: 1 })));
   test('the damage log: a manager reads their station\'s', () => assertSucceeds(getDocs(query(collection(as('mgr1'), `orgs/${O}/damageLog`), where('stationId', 'in', [S1])))));
   test('…a driver the ones they\'re in', () => assertSucceeds(getDocs(query(collection(as('drv1'), `orgs/${O}/damageLog`), where('driverIds', 'array-contains', 'drv1')))));
   test('…not others\'', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/damageLog/c1`))));

@@ -18,6 +18,7 @@ import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
+import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, probe } from './video';
 
 initializeApp();
@@ -1250,4 +1251,54 @@ export const syncDamageLog = onCall({ timeoutSeconds: 120 }, async (req) => {
   const todo = stale.slice(0, 300);
   await pool(todo, 6, (id) => damageLogFor(who.orgId, id));
   return { updated: todo.length };
+});
+
+/* ---------- 15. Records from a photo of a document ---------- */
+// Owners and the station's managers photograph a van's papers (registration certificate, lease or insurance
+// contract, inspection report, service invoice...) or a driver's (driving licence, employment contract, briefing
+// record). The AI says what the document is and reads the details the app keeps, sorted into the record's sections
+// on the phone; the person checks them before anything is saved. The photos are deleted straight after reading,
+// so no copy of a licence or contract is kept. Costs are only read for owners.
+
+export const readDocument = onCall(opts(180), async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const target = req.data?.target === 'driver' ? 'driver' : req.data?.target === 'van' ? 'van' : null;
+  const id = String(req.data?.id || '');
+  if (!target || !/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw new HttpsError('invalid-argument', 'Unknown van or person.');
+  const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
+  if (!raw.length || raw.length > 6) throw new HttpsError('invalid-argument', 'Send 1 to 6 photos of the document.');
+  const paths: string[] = raw.map((p: unknown) => checkPath(p, `orgs/${who.orgId}/docs/${who.uid}/`));
+  const org = db().doc(`orgs/${who.orgId}`);
+  try {
+    let about: string;
+    if (target === 'van') {
+      const van = (await org.collection('vehicles').doc(id).get()).data() as { name?: string; plate?: string; make?: string; model?: string; stationId?: string } | undefined;
+      if (!van) throw new HttpsError('not-found', 'Unknown van.');
+      needStation(who, van.stationId);
+      about = `the van ${van.name || ''}${van.plate ? `, number plate ${van.plate}` : ''}${van.make || van.model ? `, a ${[van.make, van.model].filter(Boolean).join(' ')}` : ''}`;
+    } else {
+      const m = (await org.collection('members').doc(id).get()).data() as { name?: string; stationIds?: string[] } | undefined;
+      if (!m) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+      if (who.role !== 'owner' && !(m.stationIds || []).some((st) => who.stationIds.includes(st))) throw new HttpsError('permission-denied', 'This person works at another station.');
+      about = `the driver ${m.name || ''}`;
+    }
+    // Managers don't see costs: they aren't even asked for.
+    const fields = (target === 'van' ? VAN_FIELDS : DRIVER_FIELDS).filter((f) => !f.owner || who.role === 'owner');
+    const imgs = await pool(paths, 3, async (p) => fit(await download(p)));
+    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, imgs.map((image, i) => ({ label: imgs.length > 1 ? `Page ${i + 1}` : undefined, image })),
+      docPrompt(target, about, fields, imgs.length), docSchema(target, fields), 3000);
+    const found = cleanFields(a.obj.fields, fields);
+    const out = {
+      kind: String(a.obj.documentType || 'other'), title: str(a.obj.title, 80), readable: a.obj.readable !== false,
+      sameName: target === 'driver' ? String(a.obj.sameName || 'not shown') : null, notes: str(a.obj.notes, 200), fields: found,
+    };
+    // What it cost, for the app creator (no values: a lease contract's costs aren't for everyone who reads this).
+    await org.collection('docReads').add({ by: who.uid, byName: who.name, target, kind: out.kind, pages: imgs.length, found: found.length,
+      model: a.model, tier: who.tier, usage: a.usage, createdAt: Date.now() });
+    return { ...out, ...(who.creator ? { usage: a.usage } : {}) };
+  } finally {
+    // No copy of the document is kept.
+    await Promise.all(paths.map((p) => bucket().file(p).delete().catch(() => {})));
+  }
 });
