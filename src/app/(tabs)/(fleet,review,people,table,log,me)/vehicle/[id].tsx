@@ -13,6 +13,7 @@ import { TourCard, TourLine } from '@/components/dash';
 import { isOpen } from '@/lib/stats';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
+import { ScanChoice } from '@/components/scanchoice';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
@@ -142,14 +143,9 @@ export default function VehicleScreen() {
         </Card>
       ) : (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
-          <Button v="primary" wide title="Start scanning" onPress={() => router.push(`/scan/${v.id}`)} />
-          <T v="medium" color="#000" style={{ fontSize: 14 }}>{frames.length} photos for this {CLS[v.cls].lower}, about {est} min. The camera shows the outline to fit for each one.</T>
-          {s.mode === 'firebase' ? (
-            <View style={{ gap: 8, borderTopWidth: 1.5, borderColor: 'rgba(0,0,0,0.3)', paddingTop: 10, marginTop: 2 }}>
-              <VideoHandover v={v} kind="walkaround" title="Scan with a video instead" wide />
-              <T v="medium" color="#000" style={{ fontSize: 14 }}>{VIDEO_HOW} The video is kept with the van.</T>
-            </View>
-          ) : null}
+          {/* One button; it asks whether to scan with the photos or a video. */}
+          <ScanChoice v={v} minutes={est} caption={s.mode === 'firebase' ? `A walk-around with ${frames.length} photos (about ${est} min) or one video.`
+            : `${frames.length} photos for this ${CLS[v.cls].lower}, about ${est} min. The camera shows the outline to fit for each one.`} />
         </View>
       )}
 
