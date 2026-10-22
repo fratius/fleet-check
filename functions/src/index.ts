@@ -16,7 +16,8 @@ import { ask } from './claude';
 import { createDemo, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
-import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
+import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
+import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { makePlayback, probe } from './video';
 
 initializeApp();
@@ -634,6 +635,10 @@ export const changePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
     const nextRole = role || (p.role === 'admin' ? 'owner' : p.role);
     const nextStations = stationId ? [stationId] : p.stationIds || [];
     const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+    // Their driver record goes with them, so the new station's managers keep it (and the old one's don't see it).
+    const rref = org.collection('driverRecords').doc(uid);
+    const rec = await tx.get(rref);
+    if (rec.exists && nextStations[0] && rec.data()?.stationId !== nextStations[0]) tx.update(rref, { stationId: nextStations[0] });
     for (const d of open) {
       const a = d.data() as Assignment;
       const reason: EndReason | null = nextRole === 'owner' ? 'role changed' : !a.stationId || !nextStations.includes(a.stationId) ? 'driver moved' : null;
@@ -999,3 +1004,250 @@ async function notify(uid: string, msg: { title: string; body: string; url: stri
   }));
   return sent.reduce((n: number, x) => n + x, 0);
 }
+
+/* ---------- 12. Driver records: licence checks ---------- */
+// The record itself (licence, employment, briefings, emergency contact) is kept by owners and the driver's station
+// managers in the app (the rules check it). A licence check is proof, so it is added here and never changed: who
+// looked at the licence, on which day, and whether it was fine.
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const recordLicenceCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const uid = String(req.data?.uid || '');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw new HttpsError('failed-precondition', 'Someone else has to check your own licence.');
+  const day = String(req.data?.day || '');
+  const t = DAY_RE.test(day) ? Date.parse(`${day}T12:00:00Z`) : NaN;
+  if (!Number.isFinite(t) || t > Date.now() + 36 * 3600_000 || t < Date.now() - 366 * 86400_000) {
+    throw new HttpsError('invalid-argument', 'Enter the day of the check: today or a day in the last 12 months.');
+  }
+  const ok = req.data?.ok !== false;
+  const note = clean(req.data?.note, 300);
+  if (!ok && !note) throw new HttpsError('invalid-argument', 'Say what the problem with the licence is.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const m = (await org.collection('members').doc(uid).get()).data() as { stationIds?: string[] } | undefined;
+  if (!m) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+  const stations = m.stationIds || [];
+  if (who.role !== 'owner' && !stations.some((st) => who.stationIds.includes(st))) throw new HttpsError('permission-denied', 'This person works at another station.');
+  const ref = org.collection('driverRecords').doc(uid);
+  const entry = { day, at: Date.now(), by: who.uid, byName: who.name, ok, note };
+  await db().runTransaction(async (tx) => {
+    const cur = await tx.get(ref);
+    if (cur.exists) tx.update(ref, { checks: FieldValue.arrayUnion(entry), updatedAt: Date.now(), updatedByName: who.name });
+    else tx.set(ref, { stationId: stations[0] || null, createdAt: Date.now(), updatedAt: Date.now(), updatedByName: who.name, checks: [entry] });
+  });
+  return { ok: true };
+});
+
+/* ---------- 13. Dashboard photos and tours ---------- */
+// Where the owner turns it on, the driver takes a photo of the dashboard at the start and at the end of each tour.
+// The AI reads the odometer, the fuel or battery level and the warning lights (readDashboard); the driver checks
+// and corrects the numbers and saves them (saveReading). The server then starts or ends the tour, works out the
+// kilometres and, when it can, the fuel or energy used, and keeps the van's odometer up to date.
+
+interface VanDoc {
+  name: string; plate?: string; stationId?: string; retired?: boolean; make?: string | null; model?: string | null; cls?: string;
+  fuel?: Fuel; tankL?: number | null; batteryKwh?: number | null;
+  assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null;
+}
+const READ_MAX_AGE = 2 * 3600_000;
+const staffAt = (w: Who, stationId: string | null | undefined) => w.role === 'owner' || (w.role === 'manager' && !!stationId && w.stationIds.includes(stationId));
+const fmtKm = (n: number) => `${Math.round(n).toLocaleString('en-GB')} km`;
+
+async function dashOn(orgId: string) {
+  if ((await db().doc(`orgs/${orgId}`).get()).data()?.dashScans !== true) {
+    throw new HttpsError('failed-precondition', 'Dashboard photos are off for this company. The owner turns them on in the Account tab.');
+  }
+}
+
+type Q = FirebaseFirestore.Query;
+type R = FirebaseFirestore.DocumentReference;
+/** The van, its open tours, what saving a photo would do, and its last reading. Reads only (for transactions too). */
+async function readingContext(org: R, who: Who, vehicleId: string, getQ: (q: Q) => Promise<FirebaseFirestore.QuerySnapshot>, getR: (r: R) => Promise<FirebaseFirestore.DocumentSnapshot>) {
+  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  const van = (await getR(org.collection('vehicles').doc(vehicleId))).data() as VanDoc | undefined;
+  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  needStation(who, van.stationId);
+  const openSnap = await getQ(org.collection('tours').where('vehicleId', '==', vehicleId).where('open', '==', true).limit(5));
+  const open = openSnap.docs.map((d) => ({ id: d.id, ref: d.ref, data: d.data() as TourDoc }));
+  const hasVan = van.assignedTo?.driverId === who.uid && !van.retired;
+  const plan = planReading({ id: who.uid, name: who.name }, staffAt(who, van.stationId), hasVan,
+    open.map((o) => ({ id: o.id, driverId: o.data.driverId, driverName: o.data.driverName, vehicleId, startAt: o.data.startAt })), Date.now());
+  if (!plan) throw new HttpsError('permission-denied', 'You don\'t have this van. The driver who has it, or the station\'s fleet manager, takes its dashboard photo.');
+  // Starting a tour ends any tour of this person still open on another van (without an end photo).
+  const elsewhere = plan.startFor
+    ? (await getQ(org.collection('tours').where('driverId', '==', who.uid).where('open', '==', true).limit(10))).docs.filter((d) => d.data().vehicleId !== vehicleId)
+    : [];
+  const l = (await getQ(org.collection('readings').where('vehicleId', '==', vehicleId).orderBy('at', 'desc').limit(1))).docs[0]?.data();
+  const last = l ? { km: Number(l.odometerKm), at: Number(l.at), byName: String(l.byName || '') } : null;
+  return { van, open, plan, elsewhere, last };
+}
+
+const numIn = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null);
+const warnList = (v: unknown) => Array.from(new Set((Array.isArray(v) ? v : []).filter((x): x is string => typeof x === 'string' && !!x.trim())
+  .map((x) => x.trim().replace(/\s+/g, ' ').slice(0, 40)))).slice(0, 8);
+/** The AI's answer, cleaned: whole kilometres (miles converted), levels 0 to 100 with one decimal. */
+function dashValues(o: Record<string, unknown>) {
+  let odo = numIn(o.odometerKm, 0, 3_000_000);
+  if (odo != null && o.unit === 'mi') odo = odo * 1.609344;
+  const pct = (v: unknown) => { const n = numIn(v, 0, 100); return n == null ? null : Math.round(n * 10) / 10; };
+  const range = numIn(o.rangeKm, 0, 2000);
+  return {
+    odometerKm: odo == null ? null : Math.round(odo), fuelPct: pct(o.fuelPct), batteryPct: pct(o.batteryPct),
+    rangeKm: range == null ? null : Math.round(range), warnings: warnList(o.warnings),
+  };
+}
+
+export const readDashboard = onCall(opts(120), async (req) => {
+  const who = await guard(req);
+  await dashOn(who.orgId);
+  const vehicleId = String(req.data?.vehicleId || '');
+  const path = checkPath(req.data?.path, `orgs/${who.orgId}/dash/${who.uid}/`);
+  const org = db().doc(`orgs/${who.orgId}`);
+  const ctx = await readingContext(org, who, vehicleId, (q) => q.get(), (r) => r.get());
+  const img = await fit(await download(path));
+  const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }], dashPrompt(ctx.van), dashSchema, 700);
+  const values = dashValues(a.obj);
+  const confidence = numIn(a.obj.confidence, 0, 1);
+  const readable = a.obj.readable !== false && values.odometerKm != null;
+  const issue = str(a.obj.issue, 200);
+  const ref = org.collection('dashReads').doc();
+  await ref.set({
+    by: who.uid, byName: who.name, vehicleId, stationId: ctx.van.stationId || null, path, at: Date.now(), createdAt: Date.now(),
+    ai: values, confidence, readable, issue, model: a.model, tier: who.tier, usage: a.usage, used: false,
+  });
+  return {
+    readId: ref.id, values, confidence, readable, issue, will: ctx.plan.will, tourDriver: ctx.plan.tourDriver, last: ctx.last,
+    endsMine: ctx.plan.ends.some((e) => e.tour.driverId === who.uid && e.how === 'photo'),
+    ...(who.creator ? { usage: a.usage } : {}),
+  };
+});
+
+export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  await dashOn(who.orgId);
+  const readId = String(req.data?.readId || '');
+  if (!ID.test(readId)) throw new HttpsError('invalid-argument', 'Take the dashboard photo again.');
+  const v = (req.data?.values || {}) as Record<string, unknown>;
+  const odometerKm = Math.round(Number(v.odometerKm));
+  if (v.odometerKm == null || v.odometerKm === '' || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) {
+    throw new HttpsError('invalid-argument', 'Enter the odometer reading in km.');
+  }
+  const pct = (x: unknown, what: string) => {
+    if (x == null || x === '') return null;
+    const n = Number(x);
+    if (!Number.isFinite(n) || n < 0 || n > 100) throw new HttpsError('invalid-argument', `The ${what} is a percentage from 0 to 100.`);
+    return Math.round(n * 10) / 10;
+  };
+  const fuelPct = pct(v.fuelPct, 'fuel level'), batteryPct = pct(v.batteryPct, 'battery level');
+  const rangeKm = v.rangeKm == null || v.rangeKm === '' ? null : Math.round(Math.max(0, Math.min(2000, Number(v.rangeKm) || 0)));
+  const warnings = warnList(v.warnings);
+  const values = { odometerKm, fuelPct, batteryPct, rangeKm, warnings };
+  const rf = req.data?.refuel as Record<string, unknown> | null | undefined;
+  const amount = (x: unknown) => { const n = Number(x); return x == null || x === '' || !Number.isFinite(n) || n <= 0 ? null : Math.min(400, Math.round(n * 10) / 10); };
+  const refuel: Refuel | null = rf ? { litres: amount(rf.litres), kwh: amount(rf.kwh), unknown: rf.unknown === true } : null;
+  const sure = req.data?.sure === true;
+  const org = db().doc(`orgs/${who.orgId}`);
+  const rref = org.collection('dashReads').doc(readId);
+
+  const out = await db().runTransaction(async (tx) => {
+    const rd = (await tx.get(rref)).data() as { by: string; vehicleId: string; path: string; at: number; used?: boolean; ai: Record<string, unknown>; confidence: number | null } | undefined;
+    if (!rd || rd.by !== who.uid) throw new HttpsError('not-found', 'Take the dashboard photo again.');
+    if (rd.used) throw new HttpsError('failed-precondition', 'This photo is already saved.');
+    if (Date.now() - rd.at > READ_MAX_AGE) throw new HttpsError('failed-precondition', 'This photo is more than two hours old. Take a new one.');
+    const { van, open, plan, elsewhere, last } = await readingContext(org, who, rd.vehicleId, (q) => tx.get(q), (r) => tx.get(r));
+    if (last && odometerKm < last.km && !(sure && staffAt(who, van.stationId))) {
+      throw new HttpsError('failed-precondition', `The odometer can't go down: it showed ${fmtKm(last.km)} on ${new Date(last.at).toISOString().slice(0, 10)}${last.byName ? ` (${last.byName})` : ''}. Check the number.`);
+    }
+    const days = last ? Math.max(1, (Date.now() - last.at) / 86400_000) : 1;
+    if (last && odometerKm - last.km > Math.max(1500, 1200 * days) && !sure) {
+      throw new HttpsError('out-of-range', `That's ${fmtKm(odometerKm - last.km)} more than the last reading (${fmtKm(last.km)}). Check the number, or confirm it's right.`);
+    }
+    const detRef = org.collection('vehicleDetails').doc(rd.vehicleId);
+    const det = await tx.get(detRef);
+
+    const now = Date.now();
+    const reading = org.collection('readings').doc();
+    const point: TourEnd = { readingId: reading.id, at: now, km: odometerKm, fuelPct, batteryPct, by: who.uid, byName: who.name };
+    const facts = { fuel: van.fuel || null, tankL: van.tankL ?? null, batteryKwh: van.batteryKwh ?? null };
+    let ended: (TourDoc & { id: string }) | null = null;
+    for (const e of plan.ends) {
+      const t = open.find((o) => o.id === e.tour.id)!;
+      const n = tourNumbers(t.data.start, point, e.how, e.how === 'photo' ? refuel : null, facts);
+      const patch = { end: point, endedHow: e.how, refuel: e.how === 'photo' ? refuel : null, ...n, warnings: warnList([...(t.data.warnings || []), ...warnings]), open: false };
+      tx.update(t.ref, patch);
+      if (!ended) ended = { ...t.data, ...patch, id: t.id };
+    }
+    for (const d of elsewhere) tx.update(d.ref, { endedHow: 'none', open: false });
+    let started: (TourDoc & { id: string }) | null = null;
+    if (plan.startFor) {
+      const tref = org.collection('tours').doc();
+      const t: TourDoc = {
+        driverId: plan.startFor.id, driverName: plan.startFor.name, vehicleId: rd.vehicleId, vehicleName: van.name, plate: van.plate || '',
+        stationId: van.stationId || null, model: modelOf(van), cls: van.cls || null, fuel: van.fuel || null,
+        assignmentId: van.assignedTo?.driverId === plan.startFor.id ? van.assignedTo.assignmentId : null,
+        start: point, end: null, endedHow: null, refuel: null, km: null, hours: null, used: null, unit: null, per100: null,
+        warnings, startAt: now, createdAt: now,
+      };
+      tx.set(tref, { ...t, open: true });
+      started = { ...t, id: tref.id };
+    }
+    const ai = { ...(rd.ai as object), confidence: rd.confidence } as Record<string, unknown>;
+    const corrected: string[] = (['odometerKm', 'fuelPct', 'batteryPct', 'rangeKm'] as const).filter((k) => (ai[k] ?? null) !== values[k]);
+    if (JSON.stringify(warnList(ai.warnings).sort()) !== JSON.stringify(warnings.slice().sort())) corrected.push('warnings');
+    const role = started ? 'start' : ended ? 'end' : 'none';
+    tx.set(reading, {
+      vehicleId: rd.vehicleId, vehicleName: van.name, stationId: van.stationId || null, by: who.uid, byName: who.name,
+      driverId: started?.driverId || ended?.driverId || van.assignedTo?.driverId || null, at: now, createdAt: now, path: rd.path,
+      ...values, ai, corrected, refuel: ended ? refuel : null, tourId: started?.id || ended?.id || null, endedTourId: ended?.id || null, role,
+    });
+    tx.update(rref, { used: true, readingId: reading.id, values, corrected });
+    // The van's odometer in its record, for the mileage against the contract and the service by distance.
+    const today = new Date(now).toISOString().slice(0, 10);
+    if (!det.exists) tx.set(detRef, { stationId: van.stationId || null, createdAt: now, odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
+    else if (Number(det.data()?.odometerKm ?? -1) <= odometerKm) tx.update(detRef, { odometerKm, odometerAt: today });
+    return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started };
+  });
+  return out;
+});
+
+/* ---------- 14. Damage log: new damage and who had the van, for the driver numbers ---------- */
+// Written from each reviewed check (see fleetlog.ts). The app asks for it right after a review is finished; the
+// Data tab fills in any that are missing or out of date for the period it shows.
+
+export const logReview = onCall({ timeoutSeconds: 40 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const checkId = String(req.data?.checkId || '');
+  if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
+  const k = (await db().doc(`orgs/${who.orgId}/checks/${checkId}`).get()).data() as { stationId?: string } | undefined;
+  if (!k) throw new HttpsError('not-found', 'Unknown check.');
+  needStation(who, k.stationId);
+  await damageLogFor(who.orgId, checkId);
+  return { ok: true };
+});
+
+export const syncDamageLog = onCall({ timeoutSeconds: 120 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const since = Math.max(0, Number(req.data?.since) || 0);
+  const org = db().doc(`orgs/${who.orgId}`);
+  const snap = await org.collection('checks').where('createdAt', '>=', since - 86400_000).orderBy('createdAt', 'desc').limit(2000).get();
+  const reviewed = snap.docs.filter((d) => {
+    const x = d.data() as { stationId?: string; status?: string };
+    return x.status === 'reviewed' && (who.role === 'owner' || (!!x.stationId && who.stationIds.includes(x.stationId)));
+  });
+  const stale: string[] = [];
+  for (let i = 0; i < reviewed.length; i += 300) {
+    const part = reviewed.slice(i, i + 300);
+    const logs = await db().getAll(...part.map((d) => org.collection('damageLog').doc(d.id)));
+    part.forEach((d, j) => {
+      const at = (d.data() as { review?: { at?: number | null } }).review?.at ?? null;
+      if (!logs[j].exists || (logs[j].data()?.reviewAt ?? null) !== at) stale.push(d.id);
+    });
+  }
+  const todo = stale.slice(0, 300);
+  await pool(todo, 6, (id) => damageLogFor(who.orgId, id));
+  return { updated: todo.length };
+});

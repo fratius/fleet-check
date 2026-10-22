@@ -4,13 +4,13 @@ import {
   createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut as fbSignOut,
   updateProfile, type User,
 } from 'firebase/auth';
-import { arrayUnion, collection, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { arrayUnion, collection, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fb } from './firebase';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type CheckUsage, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -59,8 +59,18 @@ interface Session {
   assignments: Assignment[];
   /** Recent handover videos (the latest 500 in scope; drivers: their own). */
   videos: Video[];
-  /** Contract, costs, insurance and deadlines of the vans in scope: owners and managers only (empty for drivers). */
+  /** Contract, insurance and deadlines of the vans in scope: owners and managers only (empty for drivers). */
   details: VehicleDetails[];
+  /** What each van costs: owners only (empty for everyone else). */
+  costs: VehicleCosts[];
+  /** Driver records in scope (owners and managers); a driver gets only their own. */
+  records: DriverRecord[];
+  /** Recent tours (the latest 500 in scope; drivers: their own). */
+  tours: Tour[];
+  /** This person's own driver record, if there is one. */
+  myRecord: DriverRecord | null;
+  /** Owners change company settings: dashboard photos on tours, how often licences are checked. */
+  setOrgSettings(patch: Partial<Pick<Org, 'dashScans' | 'licenceCheckMonths'>>): Promise<void>;
   /** The van this person drives now, if any. */
   myVan: Vehicle | null;
   loaded: { vehicles: boolean; walks: boolean; checks: boolean; scans: boolean; stations: boolean };
@@ -310,12 +320,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [scans, setScans] = useState<Scan[]>([]);
   const [usage, setUsage] = useState<CheckUsage[]>([]);
   const [details, setDetails] = useState<VehicleDetails[]>([]);
+  const [costs, setCosts] = useState<VehicleCosts[]>([]);
+  const [records, setRecords] = useState<DriverRecord[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [ownRecord, setOwnRecord] = useState<DriverRecord | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
+    setCosts([]); setRecords([]); setTours([]); setOwnRecord(null);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -327,16 +342,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.checks.subscribe((r) => { setChecks(r); setLoaded((l) => ({ ...l, checks: true })); }, err),
       store.assignments.subscribe((r) => setAssignments(r), () => {}),
       store.videos.subscribe((r) => setVideos(r), () => {}),
+      store.tours.subscribe((r) => setTours(r), () => {}),
     ];
-    // The business side of the vans: owners and managers (the rules refuse drivers).
-    if (staff) subs.push(store.details.subscribe((r) => setDetails(r), () => {}));
+    // The business side of the vans and the driver records: owners and managers (the rules refuse drivers).
+    if (staff) {
+      subs.push(store.details.subscribe((r) => setDetails(r), () => {}));
+      subs.push(store.records.subscribe((r) => setRecords(r), () => {}));
+    }
+    // What the vans cost: owners only.
+    if (role === 'owner') subs.push(store.costs.subscribe((r) => setCosts(r), () => {}));
+    // Everyone reads their own driver record (licence checks and briefings are about them).
+    const uid = user?.uid;
+    if (store.mode === 'firebase' && uid && !staff) {
+      subs.push(onSnapshot(doc(fb()!.db, 'orgs', store.orgId, 'driverRecords', uid),
+        (d) => setOwnRecord(d.exists() ? ({ ...(d.data() as Omit<DriverRecord, 'id'>), id: d.id }) : null), () => setOwnRecord(null)));
+    }
     // Type scans and AI speed and cost: only the app creator reads them (the rules refuse everyone else).
     if (seesAiStats) {
       subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
       subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
     } else setLoaded((l) => ({ ...l, scans: true }));
     return () => subs.forEach((u) => u());
-  }, [store, seesAiStats, staff]);
+  }, [store, seesAiStats, staff, role, user?.uid]);
   // For the app creator: each check with its AI speed and cost filled in.
   const checksShown = useMemo(() => {
     if (!seesAiStats || !usage.length) return checks;
@@ -372,10 +399,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return role === 'manager' && !!stationId && (member?.stationIds || []).includes(stationId);
   }, [role, member]);
 
+  const setOrgSettings = useCallback(async (patch: Partial<Pick<Org, 'dashScans' | 'licenceCheckMonths'>>) => {
+    if (!org || role !== 'owner') return;
+    const full: Record<string, unknown> = { ...patch };
+    if ('dashScans' in patch) { full.dashScansBy = user?.name || ''; full.dashScansAt = Date.now(); }
+    if (mode === 'firebase') await updateDoc(doc(fb()!.db, 'orgs', org.id), full);
+    setOrg((o) => (o && o.id === org.id ? { ...o, ...full } : o));
+  }, [org, role, mode, user?.name]);
+  const myRecord = useMemo(() => (staff ? records.find((r) => r.id === user?.uid) || null : ownRecord), [staff, records, ownRecord, user?.uid]);
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

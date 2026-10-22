@@ -1,4 +1,4 @@
-import type { Vehicle, VehicleDetails } from './types';
+import type { DriverRecord, Employment, Member, Vehicle, VehicleDetails } from './types';
 
 /**
  * The fleet records of a van: what its fields mean, its deadlines and its mileage against the contract.
@@ -98,16 +98,71 @@ export const eur = (n: number | null | undefined, digits = 0) => (n == null ? ''
 
 /**
  * How the van is driven against its mileage allowance: kilometres a year at the current pace (from the contract
- * start and the last odometer reading), and how far over or under the allowance that is.
+ * start and the last odometer reading), and how far over or under the allowance that is. The extra cost needs the
+ * price per kilometre, which only owners have (VehicleCosts).
  */
-export function mileage(d: VehicleDetails | null | undefined, now = Date.now()) {
+export function mileage(d: VehicleDetails | null | undefined, excessPerKm?: number | null, now = Date.now()) {
   if (!d || d.odometerKm == null || d.kmAtStart == null || !d.start) return null;
   const at = d.odometerAt ? Date.parse(d.odometerAt) : now;
   const days = (at - Date.parse(d.start)) / 86400_000;
   if (!(days >= 30)) return null;
   const perYear = ((d.odometerKm - d.kmAtStart) / days) * 365;
   const over = d.kmPerYear ? perYear - d.kmPerYear : null;
-  return { perYear, over, cost: over != null && over > 0 && d.excessPerKm ? over * d.excessPerKm : null };
+  return { perYear, over, cost: over != null && over > 0 && excessPerKm ? over * excessPerKm : null };
+}
+
+/* ---------- Drivers ---------- */
+
+export const EMPLOYMENT: Record<Employment, string> = { full: 'Full-time', part: 'Part-time', mini: 'Mini-job', student: 'Student job', other: 'Other' };
+/** Licence classes a delivery driver may hold (B is the usual van licence; C1 above 3.5 t). */
+export const LICENCE_CLASSES = ['B', 'BE', 'C1', 'C1E', 'C', 'CE', 'AM', 'A1', 'A2', 'A'];
+/** How often licences are checked when the owner hasn't set it (every 6 months is common practice). */
+export const CHECK_MONTHS = 6;
+
+/** The same day n months later (the last day of the month when it's shorter). */
+export function addMonths(day: string, n: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate();
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+}
+export const lastCheck = (r: DriverRecord | null | undefined) =>
+  (r?.checks || []).slice().sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at)[0] || null;
+/** Has the driver left (their last working day is past)? */
+export const hasLeft = (r: DriverRecord | null | undefined, now = Date.now()) => !!r?.employedTo && daysTo(r.employedTo, now) < 0;
+
+/**
+ * What falls due for a driver: the licence running out, the next licence check (every `months` months after the
+ * last one; overdue when none was ever recorded) and the yearly safety briefing. Nothing once they've left.
+ */
+export function driverDeadlines(r: DriverRecord | null | undefined, months = CHECK_MONTHS, now = Date.now()): Deadline[] {
+  if (!r || hasLeft(r, now)) return [];
+  const out: Deadline[] = [];
+  const add = (key: string, label: string, day: string | null | undefined, soon: number) => {
+    if (!day) return;
+    const days = daysTo(day, now);
+    out.push({ key, label, day, days, state: days < 0 ? 'overdue' : days <= soon ? 'soon' : 'ok', note: when(days) });
+  };
+  add('licence', 'Driving licence runs out', r.licenceValid, 60);
+  const last = lastCheck(r);
+  if (last) add('licenceCheck', 'Licence check', addMonths(last.day, months), 14);
+  else out.push({ key: 'licenceCheck', label: 'Licence check', day: null, days: null, state: 'overdue', note: 'never recorded' });
+  if (last && !last.ok) out.push({ key: 'licenceProblem', label: 'Licence check found a problem', day: last.day, days: null, state: 'overdue', note: last.note || 'see the record' });
+  if (r.safetyBriefing) add('briefing', 'Safety briefing (yearly)', addMonths(r.safetyBriefing, 12), 30);
+  const rank = { overdue: 0, soon: 1, ok: 2 };
+  return out.sort((a, b) => rank[a.state] - rank[b.state] || (a.days ?? -99999) - (b.days ?? -99999));
+}
+
+/** Drivers' deadlines that are overdue or due soon, for the Review tab and its badge. */
+export function peopleDue(records: DriverRecord[], members: Pick<Member, 'uid' | 'name'>[] | null, months = CHECK_MONTHS, now = Date.now(), known?: Map<string, string>) {
+  const names = new Map((members || []).map((m) => [m.uid, m.name]));
+  const out: { uid: string; name: string; stationId: string | null; x: Deadline }[] = [];
+  for (const r of records) {
+    // Only people still in the company (their record stays when they leave, their deadlines don't).
+    if (members && !names.has(r.id)) continue;
+    for (const x of driverDeadlines(r, months, now)) if (x.state !== 'ok') out.push({ uid: r.id, name: names.get(r.id) || known?.get(r.id) || 'Driver', stationId: r.stationId, x });
+  }
+  return out.sort((a, b) => (a.x.state === b.x.state ? (a.x.days ?? -99999) - (b.x.days ?? -99999) : a.x.state === 'overdue' ? -1 : 1));
 }
 
 /** German inspection sticker colours, by year (a six-year cycle: 2023 pink, 2024 green, 2025 orange, ...). */

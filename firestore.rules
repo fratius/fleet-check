@@ -126,15 +126,79 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy']);
       }
 
-      // The business side of a van (doc id = the van's id): contract, costs, insurance, deadlines, odometer, notes.
+      // The business side of a van (doc id = the van's id): contract, insurance, deadlines, odometer, notes.
       // Owners and the van's station managers only; drivers never read it. It carries the van's station so a
       // manager can query theirs, and must match the van's (the server keeps it in step when a van moves).
+      // Money is not allowed in here: it goes in vehicleCosts, which only owners read.
       match /vehicleDetails/{id} {
         allow read: if runs(orgId, resource.data.stationId);
         allow create, update: if runs(orgId, request.resource.data.stationId)
           && request.resource.data.stationId == get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id)).data.get('stationId', null)
+          && !request.resource.data.keys().hasAny(['monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible'])
           && request.resource.data.keys().size() <= 40;
         // Kept with the van for good, like its history.
+      }
+
+      // What a van costs (doc id = the van's id): monthly rate, purchase price, price per extra kilometre,
+      // insurance premium and deductible. Owners only.
+      match /vehicleCosts/{id} {
+        allow read: if owner(orgId);
+        allow create, update: if owner(orgId)
+          && exists(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id))
+          && request.resource.data.keys().hasOnly(['createdAt', 'updatedAt', 'updatedByName', 'monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible']);
+      }
+
+      // A driver's record (doc id = their account): licence, employment, briefings, emergency contact, notes.
+      // Owners and the managers of the driver's station keep it; the driver reads their own. Its station is the
+      // driver's (the server moves it with them). Licence checks are added only by the server and never changed.
+      match /driverRecords/{uid} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && uid == me());
+        allow create: if runs(orgId, request.resource.data.stationId)
+          && request.resource.data.stationId in get(/databases/$(database)/documents/orgs/$(orgId)/members/$(uid)).data.get('stationIds', [])
+          && !('checks' in request.resource.data)
+          && request.resource.data.keys().size() <= 30;
+        allow update: if runs(orgId, resource.data.stationId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['checks', 'stationId'])
+          && request.resource.data.keys().size() <= 30;
+        // Kept when the driver leaves (the van history keeps their name too).
+      }
+
+      // Accidents, traffic fines, customer complaints and other incidents of a driver. Owners and the station's
+      // managers add and correct them; the driver reads their own. Nobody deletes them.
+      match /incidents/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.driverId == me());
+        allow create: if runs(orgId, request.resource.data.stationId)
+          && request.resource.data.keys().hasOnly(['driverId', 'driverName', 'vehicleId', 'vehicleName', 'stationId', 'day', 'time', 'kind', 'fineType', 'atFault', 'note', 'by', 'byName', 'createdAt'])
+          && request.resource.data.by == me()
+          && request.resource.data.driverId is string && request.resource.data.driverId.size() > 0
+          && request.resource.data.kind in ['accident', 'fine', 'complaint', 'other']
+          && request.resource.data.day is string && request.resource.data.day.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+          && request.resource.data.note is string && request.resource.data.note.size() <= 2000
+          && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000;
+        allow update: if runs(orgId, resource.data.stationId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverId', 'driverName', 'vehicleId', 'vehicleName', 'day', 'time', 'kind', 'fineType', 'atFault', 'note', 'updatedAt', 'updatedByName'])
+          && request.resource.data.kind in ['accident', 'fine', 'complaint', 'other']
+          && request.resource.data.note is string && request.resource.data.note.size() <= 2000;
+      }
+
+      // Tours (a dashboard photo at the start and one at the end) and the dashboard readings themselves: written
+      // only by the server, which reads the photos and works out the kilometres and fuel. Owners and the station's
+      // managers read them; drivers their own.
+      match /tours/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.driverId == me());
+      }
+      match /readings/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && (resource.data.driverId == me() || resource.data.by == me()));
+      }
+      // What the AI read before the person confirmed it, with its speed and cost: the app creator only.
+      match /dashReads/{id} {
+        allow read: if creator();
+      }
+
+      // New damage found by a reviewed check and who had the van in that time (written by the server from the
+      // review), for the drivers' numbers. Owners and the station's managers read it; drivers the ones they're in.
+      match /damageLog/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && me() in resource.data.driverIds);
       }
 
       // Who had which van, when. Written only by the server (assignVan and friends), never edited or deleted:

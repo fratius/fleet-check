@@ -5,7 +5,7 @@ import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
 import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, parseDay, today, type Deadline } from '@/lib/fleet';
 import { useSession } from '@/lib/session';
-import type { Vehicle, VehicleDetails } from '@/lib/types';
+import type { Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
 
 /**
  * The van's record, organised like the papers that come with a van: what it is, its size, what to do when
@@ -13,9 +13,9 @@ import type { Vehicle, VehicleDetails } from '@/lib/types';
  * the station's managers). Each section is edited on its own.
  */
 
-type Kind = 'text' | 'upper' | 'num' | 'eur' | 'day' | 'month' | 'choice' | 'multi' | 'bool' | 'phone' | 'long';
-type Vals = Record<string, unknown>;
-interface FieldSpec { key: string; label: string; kind: Kind; unit?: string; options?: Record<string, string>; hint?: string; show?: (v: Vals) => boolean; digits?: number; plain?: boolean }
+export type Kind = 'text' | 'upper' | 'num' | 'eur' | 'day' | 'month' | 'choice' | 'multi' | 'bool' | 'phone' | 'long';
+export type Vals = Record<string, unknown>;
+export interface FieldSpec { key: string; label: string; kind: Kind; unit?: string; options?: Record<string, string>; hint?: string; show?: (v: Vals) => boolean; digits?: number; plain?: boolean }
 
 const ev = (v: Vals) => v.fuel === 'electric' || v.fuel === 'hybrid';
 const notOwned = (v: Vals) => !!v.ownership && v.ownership !== 'owned';
@@ -24,7 +24,8 @@ const VEHICLE: FieldSpec[] = [
   { key: 'firstReg', label: 'First registration', kind: 'day' },
   { key: 'modelYear', label: 'Model year', kind: 'num', plain: true },
   { key: 'fuel', label: 'Fuel', kind: 'choice', options: FUEL },
-  { key: 'batteryKwh', label: 'Battery', kind: 'num', unit: 'kWh', show: ev },
+  { key: 'tankL', label: 'Fuel tank', kind: 'num', unit: 'l', show: (v) => v.fuel === 'diesel' || v.fuel === 'petrol' || v.fuel === 'hybrid', hint: 'For the fuel used on each tour' },
+  { key: 'batteryKwh', label: 'Battery', kind: 'num', unit: 'kWh', show: ev, hint: 'Usable capacity, for the energy used on each tour' },
   { key: 'rangeKm', label: 'Range', kind: 'num', unit: 'km', show: ev },
   { key: 'powerKw', label: 'Power', kind: 'num', unit: 'kW' },
   { key: 'gearbox', label: 'Gearbox', kind: 'choice', options: GEARBOX },
@@ -64,20 +65,23 @@ const CONTRACT: FieldSpec[] = [
   { key: 'contractNo', label: 'Contract number', kind: 'upper' },
   { key: 'start', label: 'Start', kind: 'day' },
   { key: 'end', label: 'End', kind: 'day', show: notOwned },
-  { key: 'monthly', label: 'Per month, without VAT', kind: 'eur', show: notOwned },
-  { key: 'purchasePrice', label: 'Purchase price', kind: 'eur', show: (v) => v.ownership === 'owned' || v.ownership === 'financed' },
   { key: 'kmPerYear', label: 'Kilometres allowed a year', kind: 'num', unit: 'km', show: notOwned },
   { key: 'kmAtStart', label: 'Odometer at the start', kind: 'num', unit: 'km' },
-  { key: 'excessPerKm', label: 'Each kilometre over', kind: 'eur', digits: 2, show: notOwned },
   { key: 'included', label: 'Included', kind: 'multi', options: INCLUDED, show: notOwned },
   { key: 'contact', label: 'Contact', kind: 'text', hint: 'Name, phone or email' },
   { key: 'returnNotes', label: 'When it goes back', kind: 'long', show: notOwned },
 ];
 const INSURANCE: FieldSpec[] = [
   { key: 'coverage', label: 'Cover', kind: 'choice', options: COVERAGE },
-  { key: 'deductible', label: 'Deductible', kind: 'eur' },
-  { key: 'premium', label: 'Premium a year', kind: 'eur' },
   { key: 'insuranceRenewal', label: 'Renewal', kind: 'day' },
+];
+/** Money: owners only (kept apart from the record managers read). `ownership` comes from the contract. */
+const COSTS: FieldSpec[] = [
+  { key: 'monthly', label: 'Per month, without VAT', kind: 'eur', show: notOwned },
+  { key: 'purchasePrice', label: 'Purchase price', kind: 'eur', show: (v) => !v.ownership || v.ownership === 'owned' || v.ownership === 'financed' },
+  { key: 'excessPerKm', label: 'Each kilometre over the allowance', kind: 'eur', digits: 2, show: notOwned },
+  { key: 'premium', label: 'Insurance premium a year', kind: 'eur' },
+  { key: 'deductible', label: 'Insurance deductible', kind: 'eur' },
 ];
 const OTHER: FieldSpec[] = [
   { key: 'fuelCard', label: 'Fuel or charging card', kind: 'text', hint: 'Provider and the last digits, never the full number or PIN' },
@@ -233,7 +237,15 @@ async function saveDetails(s: ReturnType<typeof useSession>, v: Vehicle, prev: V
   else await s.store!.details.add(next as Omit<VehicleDetails, 'id'>, v.id);
 }
 
-/** The van's record: facts for everyone at the station; contract, costs and deadlines for owners and managers. */
+/** Saves the costs of a van (owners only; creates the record the first time). */
+async function saveCosts(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleCosts | undefined, patch: Vals) {
+  const { id: _id, ...rest } = (prev || {}) as VehicleCosts;
+  const next = { ...rest, ...patch, createdAt: prev?.createdAt ?? Date.now(), updatedAt: Date.now(), updatedByName: s.user?.name || null };
+  if (prev) await s.store!.costs.update(v.id, next);
+  else await s.store!.costs.add(next as Omit<VehicleCosts, 'id'>, v.id);
+}
+
+/** The van's record: facts for everyone at the station; contract and deadlines for owners and managers; costs for owners. */
 export function VanRecord({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
@@ -242,7 +254,11 @@ export function VanRecord({ v }: { v: Vehicle }) {
   const facts = v as unknown as Vals;
   const saveFacts = async (patch: Vals) => { await s.store!.vehicles.update(v.id, patch as Partial<Vehicle>); };
   const saveBiz = (patch: Vals) => saveDetails(s, v, d, patch);
-  const m = mileage(d);
+  const owner = s.role === 'owner';
+  const cost = s.costs.find((x) => x.id === v.id);
+  const m = mileage(d, owner ? cost?.excessPerKm : null);
+  // What the van costs per kilometre at this pace (the monthly rate only, without fuel and repairs).
+  const perKm = owner && m && cost?.monthly && m.perYear > 0 ? (cost.monthly * 12) / m.perYear : null;
   return (
     <View style={{ gap: 12 }}>
       {staff ? <Deadlines v={v} d={d} /> : null}
@@ -257,10 +273,10 @@ export function VanRecord({ v }: { v: Vehicle }) {
             <View style={{ width: 6, alignSelf: 'stretch', backgroundColor: c.ink, borderRadius: 2 }} />
             <View style={{ flex: 1 }}>
               <T v="h2">Business</T>
-              <T v="small">Only owners and this station&apos;s fleet managers see this part.</T>
+              <T v="small">Only owners and this station&apos;s fleet managers see this part{owner ? '; the costs only owners' : ''}.</T>
             </View>
           </View>
-          <FactSection title="Mileage" fields={MILEAGE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Add the odometer reading to follow the mileage." />
+          <FactSection title="Mileage" note={s.org?.dashScans ? 'Every dashboard photo updates the odometer.' : undefined} fields={MILEAGE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Add the odometer reading to follow the mileage." />
           {m ? (
             <View style={{ borderWidth: 2, borderColor: m.over != null && m.over > 0 ? c.alert : c.ink, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
               <T v="medium">At this pace: {km(m.perYear)} a year</T>
@@ -269,10 +285,15 @@ export function VanRecord({ v }: { v: Vehicle }) {
                   {m.over > 0 ? `About ${km(m.over)} a year over the allowance${m.cost ? `, roughly ${eur(m.cost)} a year extra` : ''}.` : `${km(-m.over)} a year under the allowance.`}
                 </T>
               ) : null}
+              {perKm ? <T v="small">The monthly rate works out at {eur(perKm, 2)} per kilometre (without fuel and repairs).</T> : null}
             </View>
           ) : null}
-          <FactSection title="Contract" fields={CONTRACT} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Owned, leased, rented or financed: who, how long, what it costs, the mileage allowance." />
-          <FactSection title="Insurance" fields={INSURANCE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Cover, deductible, premium and renewal." />
+          <FactSection title="Contract" fields={CONTRACT} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Owned, leased, rented or financed: who with, how long, the mileage allowance." />
+          <FactSection title="Insurance" fields={INSURANCE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Cover and renewal date." />
+          {owner ? (
+            <FactSection title="Costs" note="Only owners see what the van costs." fields={COSTS} values={{ ...(cost || {}), ownership: d?.ownership ?? null } as Vals}
+              canEdit onSave={(patch) => saveCosts(s, v, cost, patch)} empty="Monthly rate or purchase price, the price per extra kilometre, the insurance premium and deductible." />
+          ) : null}
           <FactSection title="Deadlines" note="Due dates show on the van, in the fleet list and in Review." fields={DUE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz}
             empty="Main inspection, safety check, service, tyres and tax." />
           <FactSection title="Fuel card and notes" fields={OTHER} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="The van's fuel or charging card and anything else to remember." />
@@ -310,7 +331,7 @@ export function Deadlines({ v, d, compact, onOpen }: { v: Vehicle; d: VehicleDet
     </View>
   );
 }
-function DueLine({ x }: { x: Deadline }) {
+export function DueLine({ x }: { x: Deadline }) {
   const c = useColors();
   const color = x.state === 'overdue' ? c.alert : x.state === 'soon' ? c.amber : c.ink2;
   return (

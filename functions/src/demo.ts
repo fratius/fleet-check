@@ -5,6 +5,8 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 
+import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
+
 /**
  * A demo company to try the app with: two stations, fleet managers, drivers, vans, walk-arounds and
  * damage checks in every state. Everything is made up: the people can't sign in, the photos are drawings
@@ -90,13 +92,18 @@ const VANS: [string, string, string, number, string, string, Attrs][] = [
  */
 const WMI: Record<string, string> = { 'Mercedes-Benz': 'W1V', Ford: 'WF0', Rivian: '7FC', Volkswagen: 'WV1', Fiat: 'ZFA', Renault: 'VF1', 'Citroën': 'VF7' };
 const day0 = (t: number) => new Date(t).toISOString().slice(0, 10);
+/** Made-up fuel use per 100 km by model (litres, or kWh for the electric ones) and the tank size in litres. */
+const USE: Record<string, [number, number | null]> = {
+  eSprinter: [29, null], 'EDV 700': [33, null], Transit: [10.8, 80], Crafter: [10.2, 75], 'Sprinter L3': [11.5, 93],
+  Ducato: [10.4, 90], 'Master L4': [11.8, 80], 'Transit Custom': [8.6, 70], Berlingo: [6.8, 50], 'Transit Luton': [13.5, 80],
+};
 function demoFacts(n: number, make: string, model: string, cls: string) {
   const ev = /eSprinter|Rivian/.test(model);
   const tall = cls === 'box_truck' || cls === 'step_van' ? 3.3 : cls === 'midsize_van' ? 2.0 : cls === 'compact_van' ? 1.85 : 2.72;
   return {
     vin: `${WMI[make] || 'WDB'}9${String(70000 + n * 137).padStart(5, '0')}P${String(431208 + n * 911).slice(0, 6)}`.slice(0, 17),
     firstReg: `${2022 + (n % 3)}-${String(1 + ((n * 5) % 12)).padStart(2, '0')}-15`, modelYear: 2022 + (n % 3),
-    color: n % 4 === 3 ? 'Silver' : 'White', fuel: ev ? 'electric' : 'diesel', gearbox: ev || n % 2 ? 'automatic' : 'manual',
+    color: n % 4 === 3 ? 'Silver' : 'White', fuel: ev ? 'electric' : 'diesel', tankL: ev ? null : USE[model]?.[1] ?? 80, gearbox: ev || n % 2 ? 'automatic' : 'manual',
     powerKw: ev ? 150 : 120, batteryKwh: ev ? 113 : null, rangeKm: ev ? 400 : null, branded: n % 3 !== 2, keys: 2,
     heightM: tall, lengthM: cls === 'large_van_long' ? 6.97 : cls === 'compact_van' ? 4.4 : cls === 'midsize_van' ? 5.05 : 5.93,
     grossKg: cls === 'compact_van' ? 2300 : 3500, payloadKg: cls === 'compact_van' ? 800 : ev ? 900 : 1200,
@@ -112,11 +119,11 @@ function demoDetails(n: number, now: number) {
   const leased = n % 4 !== 3;
   return {
     ownership: leased ? 'leased' : 'owned', provider: leased ? 'Nordlicht Fleet Leasing (made up)' : null, contractNo: leased ? `NFL-2024-${3100 + n}` : null,
-    start: off(-400 - n * 20), end: leased ? off(n === 2 ? 75 : 700 + n * 30) : null, monthly: leased ? 690 + n * 15 : null,
-    kmPerYear: leased ? 40000 : null, kmAtStart: leased ? 12 : null, excessPerKm: leased ? 0.08 : null,
-    included: leased ? ['maintenance', 'tyres'] : [], purchasePrice: leased ? null : 41500, contact: leased ? 'Fleet desk, +49 40 555 0144' : null,
+    start: off(-400 - n * 20), end: leased ? off(n === 2 ? 75 : 700 + n * 30) : null,
+    kmPerYear: leased ? 40000 : null, kmAtStart: leased ? 12 : null,
+    included: leased ? ['maintenance', 'tyres'] : [], contact: leased ? 'Fleet desk, +49 40 555 0144' : null,
     returnNotes: leased ? 'Return washed, with both keys and the service book. Damage over 2 cm is charged.' : null,
-    coverage: 'full', deductible: 1000, premium: 2350 + n * 40, insuranceRenewal: off(n === 5 ? 25 : 120 + n * 9),
+    coverage: 'full', insuranceRenewal: off(n === 5 ? 25 : 120 + n * 9),
     odometerKm: 38000 + n * 4100 + (n === 1 ? 9000 : 0), odometerAt: off(-3),
     due: {
       hu: off(n === 0 ? -10 : 200 + n * 23), uvv: off(n === 3 ? 20 : 150 + n * 11), service: off(n === 1 ? 12 : 90 + n * 14),
@@ -126,10 +133,17 @@ function demoDetails(n: number, now: number) {
   };
 }
 
+/** What each demo van costs (owners only). */
+function demoCosts(n: number, now: number) {
+  const leased = n % 4 !== 3;
+  return { createdAt: now, updatedAt: now, updatedByName: 'Demo', monthly: leased ? 690 + n * 15 : null, excessPerKm: leased ? 0.08 : null,
+    purchasePrice: leased ? null : 41500, deductible: 1000, premium: 2350 + n * 40 };
+}
+
 const FRAMES = ['Front', 'Front left corner', 'Left side', 'Rear left corner', 'Rear', 'Rear right corner', 'Right side', 'Front right corner'];
 const usage = (ms: number, calls: number, images: number) => ({ ms, calls, images, inTok: 0, outTok: 0, cost: 0 });
 
-const DEMO_VERSION = 4;
+const DEMO_VERSION = 5;
 const password = () => {
   const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from(randomBytes(10), (b) => a[b % a.length]).join('');
@@ -187,12 +201,14 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     logins.push({ role, name: `${first} ${last}`, email: em, password: pw, uid: u.uid });
     if (role === 'driver') drivers.push({ id: u.uid, name: `${first} ${last}`, st: 0 });
   }
-  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, demoVersion: DEMO_VERSION, aiTier: 'default', demoLogins: logins });
+  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, demoVersion: DEMO_VERSION, aiTier: 'default', demoLogins: logins,
+    dashScans: true, dashScansBy: ownerName, dashScansAt: now - 30 * day, licenceCheckMonths: 6 });
 
   const vans = VANS.map(([name, plate, cls, st, make, model, a], n) => {
     const ref = org.collection('vehicles').doc();
     batch.set(ref, { name, plate, cls, ...a, make, model, scanId: null, stationId: stationIds[st], createdAt: now - (60 - n) * day, createdBy: uid, demo: true, ...demoFacts(n, make, model, cls) });
     batch.set(org.collection('vehicleDetails').doc(ref.id), { stationId: stationIds[st], createdAt: now - (60 - n) * day, updatedAt: now, updatedByName: 'Demo', ...demoDetails(n, now) });
+    batch.set(org.collection('vehicleCosts').doc(ref.id), demoCosts(n, now));
     return { id: ref.id, name, cls, st };
   });
   // A month of assignments: in each 4-day block every driver of a station has a different van of that
@@ -340,6 +356,25 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     ]), decided(managers[0], now - 5 * day + 2 * 3600_000, { 0: false })),
   ]);
 
+  // Three more damages found over the month, each between two walk-arounds, so the driver numbers have some.
+  const more: [number, number, number, string, string, Mark][] = [[2, 20, 16, 'rear doors, lower edge', 'dent', 'dent'], [7, 12, 9, 'left side panel', 'scratch', 'scratch'], [5, 26, 22, 'rear bumper, left corner', 'scuff', 'scuff']];
+  await Promise.all(more.map(async ([vi, before, after, panel, type, mark]) => {
+    const van = vans[vi];
+    const tb = now - before * day + 7 * 3600_000, ta = now - after * day + 16 * 3600_000;
+    await walk(van, driverAt(vi, tb), tb);
+    const wa = await walk(van, driverAt(vi, ta), ta);
+    const mgr = managers[van.st];
+    await check(van, wa, driverAt(vi, ta), ta, 'reviewed', async (id) => Promise.all([
+      spot(id, 0, panel, type, mark, 0.77, null, { v: 'damage', reason: `A ${type} on the ${panel}, about ${type === 'dent' ? 3 : 6} cm.`, severity: type === 'dent' ? 'repair' : 'cosmetic' }, 4),
+    ]), decided(mgr, ta + 2 * 3600_000, { 0: true }, vi === 5 ? [{ panel: 'left mirror glass', type: 'crack', note: 'Cracked across', by: mgr.id, byName: mgr.name, at: ta + 2 * 3600_000, known: null }] : []));
+  }));
+  // Who had the van when each damage could have happened (what the app writes after every review).
+  const reviewed = await org.collection('checks').where('status', '==', 'reviewed').get();
+  await Promise.all(reviewed.docs.map((d) => damageLogFor(orgId, d.id)));
+
+  await demoTours(org, orgId, now, vans.map((v, i) => ({ ...v, n: i, make: VANS[i][4], model: VANS[i][5], plate: VANS[i][1], stationId: stationIds[v.st] })), schedule, drivers);
+  await demoPeople(org, now, drivers, managers, vans, stationIds, schedule);
+
   await uref.set({ orgIds: FieldValue.arrayUnion(orgId), orgId, demoOrgId: orgId }, { merge: true });
   return { orgId, existed: false };
 }
@@ -360,4 +395,189 @@ export async function deleteDemo(orgId: string) {
   await batch.commit();
   await db().recursiveDelete(org);
   await bucket().deleteFiles({ prefix: `orgs/${orgId}/` }).catch(() => {});
+}
+
+/** Firestore batches of up to 400 writes, committed as they fill up. */
+function writer() {
+  let b = db().batch(), n = 0;
+  const done: Promise<unknown>[] = [];
+  const next = () => { if (++n % 400 === 0) { done.push(b.commit()); b = db().batch(); } };
+  return {
+    set(ref: FirebaseFirestore.DocumentReference, data: object, merge = false) { if (merge) b.set(ref, data, { merge: true }); else b.set(ref, data); next(); },
+    async flush() { done.push(b.commit()); await Promise.all(done); },
+  };
+}
+
+/** A dashboard photo for the demo: a drawn instrument cluster with the odometer and a fuel or battery gauge. */
+function dashPhoto(ev: boolean) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <rect width="1200" height="800" fill="#15171a"/>
+  <circle cx="330" cy="400" r="230" fill="#0b0c0e" stroke="#3a3f47" stroke-width="10"/><circle cx="870" cy="400" r="230" fill="#0b0c0e" stroke="#3a3f47" stroke-width="10"/>
+  <path d="M175 520 A200 200 0 1 1 485 520" stroke="#e8e8e8" stroke-width="8" fill="none"/><path d="M715 520 A200 200 0 1 1 1025 520" stroke="#e8e8e8" stroke-width="8" fill="none"/>
+  <line x1="330" y1="400" x2="250" y2="270" stroke="#ff4d2e" stroke-width="10" stroke-linecap="round"/><line x1="870" y1="400" x2="980" y2="300" stroke="#ff4d2e" stroke-width="10" stroke-linecap="round"/>
+  <rect x="470" y="600" width="260" height="70" rx="8" fill="#0b0c0e" stroke="#3a3f47" stroke-width="4"/>
+  <text x="600" y="648" font-family="Arial, sans-serif" font-size="40" fill="#9ef0ff" text-anchor="middle">048213 km</text>
+  <text x="870" y="470" font-family="Arial, sans-serif" font-size="34" fill="#e8e8e8" text-anchor="middle">${ev ? 'BATTERY %' : 'E  ½  F'}</text>
+  <rect x="40" y="40" width="460" height="90" rx="12" fill="#000" opacity="0.75"/>
+  <text x="70" y="100" font-family="Arial, sans-serif" font-size="44" fill="#E2FF1C" font-weight="bold">DEMO PHOTO</text>
+</svg>`;
+}
+
+type DemoVan = { id: string; name: string; cls: string; st: number; n: number; make: string; model: string; plate: string; stationId: string };
+type Slot = { van: number; driver: { id: string; name: string }; start: number; end: number | null };
+/** How each made-up driver drives: fuel use against the van's usual (1.17 = 17% more). */
+const STYLE: Record<string, number> = { 'Lukas Schmidt': 1.17, 'Sofia Rossi': 0.93, 'Elena Petrova': 1.09, 'Mihai Popescu': 1.02, 'Jonas Weber': 1.04, 'Fatima Haddad': 0.97, 'David Kowalski': 0.99 };
+
+/**
+ * A month of tours from dashboard photos: on each working day the driver who has a van takes it out around 7:30 and
+ * back around 17:00, 90 to 160 km. Diesel gauges are read to a sixteenth of a tank, like the AI would; electric
+ * vans are charged at the depot overnight. A few tours have no end photo, a few refuels have no receipt, and some
+ * vans show warning lights.
+ */
+async function demoTours(org: FirebaseFirestore.DocumentReference, orgId: string, now: number, vans: DemoVan[], schedule: Slot[], drivers: { id: string; name: string; st: number }[]) {
+  const day = 86400_000;
+  const [dieselPath, evPath] = await Promise.all([
+    put(`orgs/${orgId}/dash/demo/diesel.jpg`, await jpeg(dashPhoto(false))), put(`orgs/${orgId}/dash/demo/electric.jpg`, await jpeg(dashPhoto(true))),
+  ]);
+  // A repeatable "random" so the demo looks the same each time it's made.
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const w = writer();
+  const startOf = (t: number) => { const d = new Date(t); d.setUTCHours(0, 0, 0, 0); return d.getTime(); };
+  for (const van of vans) {
+    const [use, tank] = USE[van.model] || [10, 80];
+    const ev = tank == null;
+    const battery = 113;
+    const slots = schedule.filter((x) => x.van === van.n).sort((a, b) => a.start - b.start);
+    // Plan the van's tours first, then drive them in order.
+    const plan: { slot: Slot; start: number; end: number | null }[] = [];
+    for (const slot of slots) {
+      for (let d0 = startOf(slot.start); d0 < (slot.end ?? now); d0 += day) {
+        if (new Date(d0).getUTCDay() === 0) continue;
+        const start = d0 + 5.5 * 3600_000 + Math.round(rnd() * 40) * 60_000;
+        let end: number | null = d0 + 15 * 3600_000 + Math.round(rnd() * 120) * 60_000;
+        if (start < slot.start || start > now) continue;
+        if (slot.end != null && end > slot.end) continue;
+        if (end > now) end = null; // still out on today's tour
+        plan.push({ slot, start, end });
+      }
+    }
+    let odo = 38000 + van.n * 4100 - plan.length * 125;
+    let fuel = 70; // true tank level, percent
+    for (let i = 0; i < plan.length; i++) {
+      const p = plan[i];
+      const style = STYLE[p.slot.driver.name] ?? 1;
+      const km = Math.round((van.st === 0 ? 110 : 95) + rnd() * 50);
+      const used = (km * use * style * (0.95 + rnd() * 0.1)) / 100;
+      const read = (pct: number) => (ev ? Math.round(pct) : Math.round(pct / 6.25) * 6.25);
+      if (ev) fuel = 88 + rnd() * 10; // charged at the depot overnight
+      const startPt: TourEnd = { readingId: '', at: p.start, km: odo, fuelPct: ev ? null : read(fuel), batteryPct: ev ? read(fuel) : null, by: p.slot.driver.id, byName: p.slot.driver.name };
+      // Diesel: fill up on the way when the tank would get low (the receipt says how much; one in ten has none).
+      let refuel: { litres: number | null; kwh: number | null; unknown: boolean } = { litres: null, kwh: null, unknown: false };
+      const usedPct = (used / (ev ? battery : tank!)) * 100;
+      let endTrue = fuel - usedPct;
+      if (!ev && endTrue < 15) {
+        const before = fuel - usedPct / 2;
+        const litres = Math.round(((100 - before) / 100) * tank! * 10) / 10;
+        endTrue = 100 - usedPct / 2;
+        refuel = rnd() < 0.1 ? { litres: null, kwh: null, unknown: true } : { litres, kwh: null, unknown: false };
+      }
+      odo += km;
+      const tref = org.collection('tours').doc();
+      const r1 = org.collection('readings').doc();
+      startPt.readingId = r1.id;
+      const warnings: string[] = [];
+      const recent = now - p.start < 3 * day;
+      if (van.name === 'Ducato 11' && recent) warnings.push('Check engine');
+      if (van.name === 'Master 12' && now - p.start < 7 * day) warnings.push('AdBlue');
+      if (rnd() < 0.03) warnings.push('Tyre pressure');
+      const reading = (id: FirebaseFirestore.DocumentReference, pt: TourEnd, role: string, extra: object = {}) => w.set(id, {
+        vehicleId: van.id, vehicleName: van.name, stationId: van.stationId, by: p.slot.driver.id, byName: p.slot.driver.name, driverId: p.slot.driver.id,
+        at: pt.at, createdAt: pt.at, path: ev ? evPath : dieselPath, odometerKm: pt.km, fuelPct: pt.fuelPct, batteryPct: pt.batteryPct,
+        rangeKm: ev ? Math.round(((pt.batteryPct || 0) / 100) * 380) : null, warnings, ai: { odometerKm: pt.km, fuelPct: pt.fuelPct, batteryPct: pt.batteryPct, rangeKm: null, warnings, confidence: 0.94 },
+        corrected: [], tourId: tref.id, role, demo: true, ...extra,
+      });
+      reading(r1, startPt, 'start');
+      const base = {
+        driverId: p.slot.driver.id, driverName: p.slot.driver.name, vehicleId: van.id, vehicleName: van.name, plate: van.plate, stationId: van.stationId,
+        model: modelOf(van), cls: van.cls, fuel: ev ? 'electric' : 'diesel', assignmentId: null, start: startPt, warnings, startAt: p.start, createdAt: p.start, demo: true,
+      };
+      const facts = { fuel: (ev ? 'electric' : 'diesel') as 'electric' | 'diesel', tankL: tank, batteryKwh: battery };
+      if (p.end == null) {
+        w.set(tref, { ...base, end: null, endedHow: null, refuel: null, km: null, hours: null, used: null, unit: null, per100: null, open: true });
+      } else if (rnd() < 0.05 && i < plan.length - 1) {
+        // No end photo: the van's next start photo ends it (an estimate, no fuel figure).
+        const next = plan[i + 1];
+        const endPt: TourEnd = { readingId: '', at: next.start, km: odo, fuelPct: ev ? null : read(endTrue), batteryPct: ev ? read(endTrue) : null, by: next.slot.driver.id, byName: next.slot.driver.name };
+        w.set(tref, { ...base, end: endPt, endedHow: 'next', refuel: null, ...tourNumbers(startPt, endPt, 'next', null, facts), open: false });
+      } else {
+        const r2 = org.collection('readings').doc();
+        const endPt: TourEnd = { readingId: r2.id, at: p.end, km: odo, fuelPct: ev ? null : read(endTrue), batteryPct: ev ? read(endTrue) : null, by: p.slot.driver.id, byName: p.slot.driver.name };
+        reading(r2, endPt, 'end', { refuel });
+        w.set(tref, { ...base, end: endPt, endedHow: 'photo', refuel, ...tourNumbers(startPt, endPt, 'photo', refuel, facts), open: false });
+      }
+      fuel = Math.max(5, endTrue);
+    }
+    // The van's odometer in its record follows the last photo.
+    w.set(org.collection('vehicleDetails').doc(van.id), { odometerKm: odo, odometerAt: new Date(now).toISOString().slice(0, 10) }, true);
+  }
+  await w.flush();
+  void drivers;
+}
+
+/**
+ * Made-up driver records and incidents: licences, licence checks (one overdue, one never recorded), briefings (one
+ * due soon, one overdue), employment, emergency contacts; a few fines, accidents and a complaint.
+ */
+async function demoPeople(org: FirebaseFirestore.DocumentReference, now: number, drivers: { id: string; name: string; st: number }[],
+  managers: { id: string; name: string }[], vans: { id: string; name: string; st: number }[], stationIds: string[], schedule: Slot[]) {
+  const day = 86400_000;
+  const d = (offset: number) => new Date(now + offset * day).toISOString().slice(0, 10);
+  const w = writer();
+  const EMERGENCY = ['Ayla Yilmaz', 'Marco Rossi', 'Anna Schmidt', 'Ioana Popescu', 'Omar Haddad', 'Lea Weber', 'Pavel Petrov', 'Ewa Kowalska', 'Sam Demo'];
+  drivers.forEach((p, i) => {
+    const mgr = managers[p.st];
+    const from = -(220 + i * 83);
+    const lastCheck = p.name === 'Ali Yilmaz' ? -205 : -(40 + i * 13);
+    const checks = p.name === 'David Kowalski' ? [] : [
+      { day: d(lastCheck - 182), at: now + (lastCheck - 182) * day, by: mgr.id, byName: mgr.name, ok: true, note: '' },
+      { day: d(lastCheck), at: now + lastCheck * day, by: mgr.id, byName: mgr.name, ok: true, note: '' },
+    ].filter((c) => c.day > d(from));
+    const briefed = p.name === 'Mihai Popescu' ? -350 : p.name === 'Elena Petrova' ? -380 : -(120 + i * 20);
+    w.set(org.collection('driverRecords').doc(p.id), {
+      stationId: stationIds[p.st], createdAt: now + from * day, updatedAt: now - 3 * day, updatedByName: mgr.name,
+      licenceClasses: p.name === 'Lukas Schmidt' ? ['B', 'C1'] : p.name === 'Fatima Haddad' ? ['B', 'BE'] : ['B'],
+      licenceValid: p.name === 'Jonas Weber' ? d(41) : d(900 + i * 410),
+      employment: p.name === 'Sofia Rossi' ? 'part' : p.name === 'David Kowalski' ? 'mini' : 'full',
+      employedFrom: d(from), employedTo: null, vanBriefing: d(from + 1), safetyBriefing: d(briefed),
+      emergencyName: `${EMERGENCY[i % EMERGENCY.length]} (made up)`, emergencyPhone: `+49 151 0000 ${String(9100 + i).padStart(4, '0')}`,
+      notes: p.name === 'Lukas Schmidt' ? 'Talked about driving style after the second speeding fine.' : null, checks,
+    });
+  });
+  const who = (name: string) => drivers.find((x) => x.name === name);
+  const vanOf = (driverId: string, t: number) => {
+    const a = schedule.find((x) => x.driver.id === driverId && x.start <= t && (x.end == null || t < x.end));
+    return a ? vans[a.van] : null;
+  };
+  const incidents: [string, number, string, string, string | null, string | null, string][] = [
+    ['Lukas Schmidt', -12, '10:42', 'fine', 'speeding', null, '61 km/h in a 50 zone, Spandauer Damm. Notice from the city; driver named.'],
+    ['Lukas Schmidt', -9, '14:05', 'accident', null, 'yes', 'Reversed into a bollard at the loading dock. Rear bumper scuffed, nobody hurt.'],
+    ['Lukas Schmidt', -3, '09:18', 'fine', 'speeding', null, '58 km/h in a 50 zone. Second this month.'],
+    ['Ali Yilmaz', -15, '11:30', 'fine', 'parking', null, 'Parked in a bus stop while delivering.'],
+    ['Jonas Weber', -6, '16:10', 'complaint', null, null, 'Customer says the parcel was left at the door without a photo.'],
+    ['Elena Petrova', -20, '13:00', 'accident', null, 'no', 'Another car clipped the left mirror while the van was parked.'],
+    ['David Kowalski', -4, '12:45', 'fine', 'parking', null, 'Second-row parking, 30 EUR.'],
+  ];
+  for (const [name, off, time, kind, fineType, atFault, note] of incidents) {
+    const p = who(name);
+    if (!p) continue;
+    const at = now + off * day;
+    const van = vanOf(p.id, at);
+    const mgr = managers[p.st];
+    w.set(org.collection('incidents').doc(), {
+      driverId: p.id, driverName: p.name, vehicleId: van?.id || null, vehicleName: van?.name || null, stationId: stationIds[p.st],
+      day: d(off), time, kind, fineType, atFault, note, by: mgr.id, byName: mgr.name, createdAt: at + 2 * 3600_000,
+    });
+  }
+  await w.flush();
 }

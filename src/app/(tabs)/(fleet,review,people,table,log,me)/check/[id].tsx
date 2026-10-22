@@ -195,7 +195,9 @@ function CheckView({ id }: { id: string }) {
     const fields: Partial<Check> & { reviewedAt?: number | null } = { review: next };
     if (finish === 'reviewed') { next.by = s.user?.uid || null; next.byName = s.user?.name || null; next.at = Date.now(); fields.status = 'reviewed'; fields.reviewedAt = Date.now(); }
     if (finish === 'submitted') fields.status = 'submitted';
-    try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr('Couldn\'t save the review. Check the connection and try again.'); }
+    try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr('Couldn\'t save the review. Check the connection and try again.'); return; }
+    // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
+    if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) ai.logReview({ orgId: s.org!.id, checkId: k.id }).catch(() => {});
   };
   const decide = (j: number, damage: boolean | null) => {
     const d = { ...decisions };

@@ -1,7 +1,7 @@
 # Notes for coding agents
 
 - Expo SDK 57, React Native 0.86, expo-router with routes in `src/app`. Typed routes and the React Compiler are on.
-- Navigation: every tab is a stack (`src/app/(tabs)/(fleet,review,people,log,me)/_layout.tsx`), so the tab bar stays on every page and detail pages (van, walk-around, check, person) open inside the current tab with a header and back button. Put new detail pages in that shared folder, not at the root. Only the camera (`scan/[id]`) sits at the root, full screen. Keep `(fleet)` sorting first alphabetically: links opened from outside land in the first group.
+- Navigation: every tab is a stack (`src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx`), so the tab bar stays on every page and detail pages (van, walk-around, check, person) open inside the current tab with a header and back button. Put new detail pages in that shared folder, not at the root. Only the camera (`scan/[id]`) sits at the root, full screen. Keep `(fleet)` sorting first alphabetically: links opened from outside land in the first group.
 - Install native packages with `npx expo install <pkg>` so versions match the SDK. Without network access to the Expo API, prefix `EXPO_OFFLINE=1`.
 - The app must keep working in Expo Go: no custom native code, no packages that need a development build.
 - Test mode: build with `FLEET_TEST_MODE=1` (drops the Firebase config) and the app stores data on the device with AI checks off. Keep that path working; it's how the app is tested without a backend.

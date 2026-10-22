@@ -5,6 +5,8 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
+import { TourCard } from '@/components/dash';
+import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
@@ -34,6 +36,9 @@ export default function Fleet() {
   const where = s.mode === 'local' ? 'Test mode, saved on this phone'
     : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : `${s.stations.length} stations`) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
 
+  // A tour of mine still open on a van I no longer have (dropped off before the end photo).
+  const myOpen = s.tours.find((t) => isOpen(t) && t.driverId === s.user?.uid && t.vehicleId !== s.myVan?.id);
+  const tourElsewhere = myOpen ? s.vehicles.find((v) => v.id === myOpen.vehicleId) || null : null;
   // Latest check per van, for the status line.
   const lastCheck = new Map<string, Check>();
   s.checks.forEach((k) => { if (!lastCheck.has(k.vehicleId)) lastCheck.set(k.vehicleId, k); });
@@ -66,12 +71,15 @@ export default function Fleet() {
           </Row>
         </Pressable>
       ) : null}
+      {/* The tour: a dashboard photo at the start and the end (where the owner turned it on). */}
+      {s.myVan && !pickup ? <TourCard v={s.myVan} compact /> : null}
+      {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
       {!s.staff ? <Notifications prompt /> : null}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
         <Notice text="Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way." />
       ) : null}
       {s.mode === 'firebase' && s.user ? (
-        <Button small v="link" title={s.staff ? 'Your own van history' : 'Vans you had'} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
+        <Button small v="link" title={s.staff ? 'Your own van history' : 'Your record, tours and vans'} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
       ) : null}
       {tracking && s.loaded.vehicles && count + retired.length ? (
         <Row>

@@ -6,7 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Assignment, Check, CheckUsage, IdentifyResult, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { Assignment, Check, CheckUsage, DashValues, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -86,8 +86,16 @@ export interface Store {
   walks: Coll<Walkaround>;
   checks: Coll<Check>;
   scans: Coll<Scan>;
-  /** Contract, costs, insurance and deadlines of vans: owners and the station's managers only. */
+  /** Contract, insurance and deadlines of vans: owners and the station's managers only. */
   details: Coll<VehicleDetails>;
+  /** What each van costs: owners only. */
+  costs: Coll<VehicleCosts>;
+  /** Driver records (licence, employment, briefings, emergency contact): owners and the station's managers. */
+  records: Coll<DriverRecord>;
+  /** Accidents, fines and complaints: owners and the station's managers. */
+  incidents: Coll<Incident>;
+  /** Tours from dashboard photos: the station's for owners and managers, their own for drivers. */
+  tours: Coll<Tour>;
   /** AI speed and cost of damage checks: the app creator only. */
   usage: Coll<CheckUsage>;
   /** Recent van assignments: the station's for owners and managers, their own for drivers. */
@@ -104,10 +112,30 @@ export function makeStore(orgId: string | null, scope: string[] | null = null, d
   if (fb() && orgId) {
     return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
       walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), details: fsColl(orgId, 'vehicleDetails', scope),
+      costs: fsColl(orgId, 'vehicleCosts'), records: fsColl(orgId, 'driverRecords', scope), incidents: fsColl(orgId, 'incidents', scope),
+      tours: fsColl(orgId, 'tours', scope, driverId),
       assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by') };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
-    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), details: localColl('vehicleDetails'), assignments: localColl('assignments'), videos: localColl('videos') };
+    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), details: localColl('vehicleDetails'),
+    costs: localColl('vehicleCosts'), records: localColl('driverRecords'), incidents: localColl('incidents'), tours: localColl('tours'),
+    assignments: localColl('assignments'), videos: localColl('videos') };
+}
+
+/** What the server read from a dashboard photo, before the person confirms it. */
+export interface DashRead {
+  readId: string;
+  values: DashValues;
+  confidence: number | null;
+  readable: boolean;
+  issue: string | null;
+  /** What saving it will do: start a tour, end one (whose), or just record the odometer. */
+  will: 'start' | 'end' | 'end-start' | 'none';
+  tourDriver: string | null;
+  /** It ends the person's own tour with this photo (so the refuelling question applies). */
+  endsMine: boolean;
+  last: { km: number; at: number; byName: string } | null;
+  usage?: Usage;
 }
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
@@ -165,5 +193,11 @@ export const ai = {
   deleteDemoCompany: call<{ orgId: string }, { ok: boolean }>('deleteDemoCompany', 130000),
   submitCheck: call<{ orgId: string; checkId: string; missedNote: string }, { ok: boolean }>('submitCheck', 40000),
   setupStations: call<{ orgId: string }, { done: boolean; stationId?: string }>('setupStations', 130000),
+  readDashboard: call<{ orgId: string; vehicleId: string; path: string }, DashRead>('readDashboard', 130000),
+  saveReading: call<{ orgId: string; readId: string; values: DashValues; refuel: { litres: number | null; kwh: number | null; unknown: boolean } | null; sure?: boolean },
+    { readingId: string; tourId: string | null; role: 'start' | 'end' | 'none'; tour: Tour | null }>('saveReading', 40000),
+  recordLicenceCheck: call<{ orgId: string; uid: string; ok: boolean; note: string; day: string }, { ok: boolean }>('recordLicenceCheck', 30000),
+  logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
+  syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
   checkSpot: call<{ orgId: string; checkId: string; spot: number; closeups: string[]; tier: Tier }, { verdict: Verdict; usage?: Usage; ms?: number; model: string }>('checkSpot'),
 };

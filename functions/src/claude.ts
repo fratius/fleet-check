@@ -100,7 +100,9 @@ function toHttps(e: unknown): HttpsError {
  */
 function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
   const props = (schema as { properties?: Record<string, unknown> }).properties || {};
-  const obj = 'spots' in props
+  const obj = 'odometerKm' in props
+    ? { readable: true, odometerKm: 48213, unit: 'km', fuelPct: 62.5, batteryPct: null, rangeKm: 410, warnings: ['Tyre pressure'], confidence: 0.92, issue: null }
+    : 'spots' in props
     ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }
     : 'verdict' in props
       ? { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.', closeupBox: [0.3, 0.3, 0.6, 0.6] }
