@@ -183,7 +183,7 @@ function Demo() {
         </>
       ) : (
         <>
-          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, and damage checks in every state, to try things without touching your real fleet. Comes with a driver and a fleet manager login.</T>
+          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.</T>
           <Button title="Open the demo company" loading={busy} onPress={() => go(() => s.openDemo())} />
         </>
       )}

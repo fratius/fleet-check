@@ -22,14 +22,17 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    their answers for everyone else. Older checks had them inside; the Deploy workflow moves them out.
 2. **Fleet owner** (member role `owner`; `admin` is its old name). Owns one or more companies (DSPs).
    Sees all stations of their company. Adds and removes stations, fleet managers, drivers and vans; moves people
-   and vans between stations; picks the AI model; can review damage at any station.
+   and vans between stations; picks the AI model; can review damage at any station. Turns dashboard photos on or
+   off and sets how often licences are checked. **The only role that sees what vans cost.**
 3. **Fleet manager** (role `manager`). Same powers as the owner, limited to their station (operating area) and
    its drivers: adds, edits and removes vans there, invites and removes drivers there. Cannot add stations or
    managers. **Has the final word on damage**: approves or rejects every spot the AI found, adds damage it
    missed, finishes the review. Approved damage goes on the van's damage record.
 4. **Driver** (role `driver`). Scans: sees the vans of their station, does walk-arounds, runs the AI damage
    check and takes close-ups at the van, then sends the check to the manager. Where the station allows it, picks
-   up and drops off vans themselves (see below). Cannot change vans, people or reviews.
+   up and drops off vans themselves (see below). Where the owner turned dashboard photos on, photographs the
+   dashboard at the start and end of each tour. Reads their own record, tours and incidents. Cannot change vans,
+   people, records or reviews.
 
 ## How it is built
 
@@ -114,20 +117,39 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 
 - `tests/rules.test.mjs`: what each role can read and write, including that nobody writes history.
 - `tests/history.test.mjs`: the whole flow on the emulators (sign-in, rules, functions, storage): assigning,
-  reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, and the
-  demo logins. Deploy stops if either fails.
+  reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, driver
+  records and licence checks, tours from dashboard photos, the damage log, moving costs, and the demo logins.
+  Deploy stops if either fails.
 
-## Van records (FLEET_DATA.md)
+## Van and driver records (FLEET_DATA.md)
 
-- **The van's facts** (VIN, registration, fuel, size, breakdown and accident numbers) are on the van: everyone at
-  its station reads them; owners and the station's managers change them.
-- **The business side** (contract, costs, insurance terms, deadlines, odometer, fuel card, notes) is in
-  `orgs/{org}/vehicleDetails/{vehicleId}`: only owners and the van's station managers read or write it, never
-  drivers (also not the app creator viewing as a driver). It carries the van's station, which must match the van;
-  `moveVan` moves it with the van. Never deleted.
-- Deadlines show to owners and managers only: on the van, in the fleet list, and as "Due soon" in Review.
-- Drivers' records (licence checks, employment, onboarding) are planned, not built; see FLEET_DATA.md for the
-  fields and what is deliberately not stored.
+| Record | Owner | Manager (own station) | Driver | Written by |
+|---|---|---|---|---|
+| Van facts (on the van) | read, write | read, write | read | the app |
+| Van business record `vehicleDetails` | read, write | read, write | no | the app; odometer also the server |
+| Van costs `vehicleCosts` | read, write | **no** | no | the app |
+| Driver record `driverRecords/{uid}` | read, write | read, write | their own, read only | the app; licence checks only the server |
+| Incidents `incidents` | read, add, correct | read, add, correct | their own, read only | the app; never deleted |
+| Tours `tours`, readings `readings` | read | read | their own | the server only |
+| Damage log `damageLog` | read | read | the ones they're in | the server only |
+| What the AI read first `dashReads` | no | no | no | the server; app creator reads |
+
+- **The van's facts** (VIN, registration, fuel, tank, size, breakdown and accident numbers) are on the van:
+  everyone at its station reads them; owners and the station's managers change them.
+- **The business side** (contract, insurance terms, deadlines, odometer, fuel card, notes) is in
+  `orgs/{org}/vehicleDetails/{vehicleId}`: only owners and the van's station managers. It carries the van's
+  station, which must match the van; `moveVan` moves it with the van. The rules refuse money fields in it.
+- **Costs** (monthly rate, purchase price, price per extra km, insurance premium and deductible) are in
+  `orgs/{org}/vehicleCosts/{vehicleId}`: owners only (and the app creator; not while viewing as a manager).
+  Older records had them in `vehicleDetails`; the Deploy workflow moves them (`functions/scripts/move-costs.cjs`).
+- **Driver records** carry the driver's station; `changePerson` moves the record with the driver. Licence checks
+  are added only by `recordLicenceCheck` (owners and the driver's station managers, never for themselves) and are
+  never changed. Nobody deletes a record.
+- **Tours** need the company setting `dashScans` (owner). The driver who has the van (or whose tour on it is still
+  open) starts and ends their tours; the station's staff can end a tour a driver left open. `readDashboard` and
+  `saveReading` check all of it; the odometer can't go down and big jumps need a confirmation.
+- Deadlines (vans and drivers), warning lights and tours without their photos show to owners and managers only:
+  on the van or person, in the fleet list, and in Review.
 
 ## The damage record of a van
 

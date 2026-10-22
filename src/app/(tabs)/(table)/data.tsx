@@ -197,6 +197,9 @@ function driverCols(c: C, station: boolean, stationName: (id: string | null) => 
     { key: 'check', label: 'Next licence check', width: 110, get: (r) => r.nextCheck || (r.checkState === 'overdue' ? '0000' : null),
       text: (r) => (r.nextCheck ? fmtDay(r.nextCheck) : r.checkState === 'overdue' ? 'never' : ''), tone: (r) => (r.checkState === 'overdue' ? c.alert : r.checkState === 'soon' ? c.amber : undefined) },
   ];
+  // The numbers that matter most first, so they show on a phone without swiping.
+  const order = ['name', 'km', 'tours', 'diesel', 'electric', 'vs', 'damage', 'sole', 'accidents', 'fines', 'complaints', 'check', 'licence', 'noEnd', 'proof', 'days', 'kmPerTour', 'hours', 'vans', 'per10k'];
+  cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   if (station) cols.splice(1, 0, { key: 'station', label: 'Station', width: 110, align: 'left', get: (r) => stationName(r.stationId) });
   return cols;
 }
@@ -218,6 +221,8 @@ function tourCols(c: C, station: boolean, stationName: (id: string | null) => st
     { key: 'endPhoto', label: 'End photo', width: 86, align: 'left', get: ended, tone: (t) => (t.endedHow === 'next' || t.endedHow === 'none' ? c.amber : undefined) },
     { key: 'warnings', label: 'Warning lights', width: 150, align: 'left', get: (t) => (t.warnings || []).join(', '), tone: (t) => (t.warnings?.length ? c.warn : undefined) },
   ];
+  const order = ['driver', 'date', 'van', 'km', 'per100', 'used', 'refuel', 'endPhoto', 'warnings', 'hours', 'end', 'startKm'];
+  cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   if (station) cols.push({ key: 'station', label: 'Station', width: 110, align: 'left', get: (t) => stationName(t.stationId) });
   return cols;
 }
@@ -240,6 +245,8 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
     { key: 'due', label: 'Next deadline', width: 190, align: 'left', get: (v) => v.nextDue?.days ?? null, text: (v) => (v.nextDue ? `${v.nextDue.label}, ${v.nextDue.note}` : ''),
       tone: (v) => (v.nextDue?.state === 'overdue' ? c.alert : v.nextDue?.state === 'soon' ? c.amber : undefined) },
   ];
+  const order = ['name', 'km', 'per100', 'vs', 'damage', 'warnings', 'due', 'tours', 'drivers', 'noEnd', 'odo', 'plate', 'model', 'fuel'];
+  cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   if (station) cols.splice(1, 0, { key: 'station', label: 'Station', width: 110, align: 'left', get: (v) => stationName(v.stationId) });
   if (owner) {
     cols.push({ key: 'monthly', label: '€ a month', width: 84, get: (v) => v.monthly, text: (v) => (v.monthly == null ? '' : `€${int(v.monthly)}`), total: (vs) => `€${int(sum(vs, (v) => v.monthly))}` });

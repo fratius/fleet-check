@@ -126,14 +126,20 @@ export default function PersonScreen() {
 function Numbers({ uid, member, data, history }: { uid: string; member: Member | null; data: ReturnType<typeof useDriverData>; history: Assignment[] }) {
   const s = useSession();
   const c = useColors();
-  const [all, setAll] = useState(false);
+  const [more, setMore] = useState(false);
   const to = Date.now(), from = to - 30 * 86_400_000;
+  // The comparison with the other drivers needs their tours too: the ones the app has loaded for the station.
+  const all = useMemo(() => {
+    const byId = new Map(s.tours.map((t) => [t.id, t]));
+    for (const t of data.tours || []) byId.set(t.id, t);
+    return [...byId.values()];
+  }, [s.tours, data.tours]);
   const row = useMemo(() => driverRows({
-    from, to, tours: data.tours || [], assignments: history, logs: data.logs || [], incidents: data.incidents || [], records: s.records,
+    from, to, tours: all, assignments: history, logs: data.logs || [], incidents: data.incidents || [], records: s.records,
     members: member ? [member] : null, vehicles: s.vehicles, details: s.details, costs: s.costs, videos: s.videos, walks: s.walks, stations: s.stations,
-  }).find((x) => x.id === uid), [data.tours, data.logs, data.incidents, history, member, uid, s.records, s.vehicles, s.details, s.costs, s.videos, s.walks, s.stations, from, to]);
-  const tours = data.tours || [];
-  const shown = all ? tours : tours.slice(0, 12);
+  }).find((x) => x.id === uid), [all, data.logs, data.incidents, history, member, uid, s.records, s.vehicles, s.details, s.costs, s.videos, s.walks, s.stations, from, to]);
+  const tours = (data.tours || []).slice().sort((a, b) => b.startAt - a.startAt);
+  const shown = more ? tours : tours.slice(0, 12);
   const pct = (v: number | null) => (v == null ? '–' : `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`);
   return (
     <View style={{ gap: 10 }}>
@@ -160,7 +166,7 @@ function Numbers({ uid, member, data, history }: { uid: string; member: Member |
             <TourLine t={t} show="van" />
           </Pressable>
         ))}
-        {tours.length > shown.length ? <Button small v="link" title={`Show all ${tours.length}`} onPress={() => setAll(true)} /> : null}
+        {tours.length > shown.length ? <Button small v="link" title={`Show all ${tours.length}`} onPress={() => setMore(true)} /> : null}
       </Card>
       {tours.length ? <T v="small">{kmText(tours.reduce((n, t) => n + (t.km || 0), 0))} in all {tours.length} tours shown here.</T> : null}
     </View>

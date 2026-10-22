@@ -39,6 +39,8 @@ export default function Fleet() {
   // A tour of mine still open on a van I no longer have (dropped off before the end photo).
   const myOpen = s.tours.find((t) => isOpen(t) && t.driverId === s.user?.uid && t.vehicleId !== s.myVan?.id);
   const tourElsewhere = myOpen ? s.vehicles.find((v) => v.id === myOpen.vehicleId) || null : null;
+  // With the tour card on top, the "Your van" card steps back to plain paper.
+  const touring = s.mode === 'firebase' && !!s.org?.dashScans && !!s.myVan && !pickup;
   // Latest check per van, for the status line.
   const lastCheck = new Map<string, Check>();
   s.checks.forEach((k) => { if (!lastCheck.has(k.vehicleId)) lastCheck.set(k.vehicleId, k); });
@@ -60,20 +62,21 @@ export default function Fleet() {
           {s.myStations.map((st) => <Chip key={st.id} text={st.name} on={only === st.id} onPress={() => setOnly(st.id)} />)}
         </Row>
       ) : null}
+      {/* The tour comes first when there is one to start or end (a dashboard photo, where the owner turned it on). */}
+      {s.myVan && !pickup ? <TourCard v={s.myVan} compact /> : null}
+      {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
       {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (
-        <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
-          <T v="medium" color="#000">Your van</T>
-          <T v="h2" color="#000">{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
-          <T v="small" color="#000">{sinceText(s.myVan.assignedTo!.since)}</T>
+        <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
+          style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
+          <T v="medium" color={touring ? undefined : '#000'}>Your van</T>
+          <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
+          <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <Button small v="primary" title="Start scanning" onPress={() => router.push(`/scan/${s.myVan!.id}`)} />
             {canDrop ? <Button small title="Drop off" onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
           </Row>
         </Pressable>
       ) : null}
-      {/* The tour: a dashboard photo at the start and the end (where the owner turned it on). */}
-      {s.myVan && !pickup ? <TourCard v={s.myVan} compact /> : null}
-      {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
       {!s.staff ? <Notifications prompt /> : null}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
         <Notice text="Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way." />
