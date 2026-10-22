@@ -84,10 +84,52 @@ const VANS: [string, string, string, number, string, string, Attrs][] = [
   ['Box van 15', 'P-DS 205', 'box_truck', 1, 'Ford', 'Transit Luton', { roof: 'high', slideL: 'no', slideR: 'no', rear: 'roller' }],
   ['eSprinter 16', 'P-DS 206', 'large_van', 1, 'Mercedes-Benz', 'eSprinter', { roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn' }],
 ];
+/**
+ * Made-up fleet records for the demo vans: the van's facts (everyone at the station sees them) and its contract,
+ * insurance and deadlines (owners and managers). Deadlines are spread so some are overdue or due soon.
+ */
+const WMI: Record<string, string> = { 'Mercedes-Benz': 'W1V', Ford: 'WF0', Rivian: '7FC', Volkswagen: 'WV1', Fiat: 'ZFA', Renault: 'VF1', 'Citroën': 'VF7' };
+const day0 = (t: number) => new Date(t).toISOString().slice(0, 10);
+function demoFacts(n: number, make: string, model: string, cls: string) {
+  const ev = /eSprinter|Rivian/.test(model);
+  const tall = cls === 'box_truck' || cls === 'step_van' ? 3.3 : cls === 'midsize_van' ? 2.0 : cls === 'compact_van' ? 1.85 : 2.72;
+  return {
+    vin: `${WMI[make] || 'WDB'}9${String(70000 + n * 137).padStart(5, '0')}P${String(431208 + n * 911).slice(0, 6)}`.slice(0, 17),
+    firstReg: `${2022 + (n % 3)}-${String(1 + ((n * 5) % 12)).padStart(2, '0')}-15`, modelYear: 2022 + (n % 3),
+    color: n % 4 === 3 ? 'Silver' : 'White', fuel: ev ? 'electric' : 'diesel', gearbox: ev || n % 2 ? 'automatic' : 'manual',
+    powerKw: ev ? 150 : 120, batteryKwh: ev ? 113 : null, rangeKm: ev ? 400 : null, branded: n % 3 !== 2, keys: 2,
+    heightM: tall, lengthM: cls === 'large_van_long' ? 6.97 : cls === 'compact_van' ? 4.4 : cls === 'midsize_van' ? 5.05 : 5.93,
+    grossKg: cls === 'compact_van' ? 2300 : 3500, payloadKg: cls === 'compact_van' ? 800 : ev ? 900 : 1200,
+    cargoM3: cls === 'large_van_long' ? 15.5 : cls === 'compact_van' ? 3.8 : cls === 'midsize_van' ? 6 : 11,
+    tyreSize: cls === 'compact_van' ? '205/60 R16' : '235/65 R16 C',
+    breakdownPhone: '+49 800 555 0100', insurer: 'Hansa Fleet Insurance (made up)', policyNo: `HF-${48210 + n}`, claimsPhone: '+49 30 555 0199',
+  };
+}
+function demoDetails(n: number, now: number) {
+  const D = 86400_000;
+  // Spread the deadlines: one inspection overdue, a service and a safety check soon, a lease ending.
+  const off = (d: number) => day0(now + d * D);
+  const leased = n % 4 !== 3;
+  return {
+    ownership: leased ? 'leased' : 'owned', provider: leased ? 'Nordlicht Fleet Leasing (made up)' : null, contractNo: leased ? `NFL-2024-${3100 + n}` : null,
+    start: off(-400 - n * 20), end: leased ? off(n === 2 ? 75 : 700 + n * 30) : null, monthly: leased ? 690 + n * 15 : null,
+    kmPerYear: leased ? 40000 : null, kmAtStart: leased ? 12 : null, excessPerKm: leased ? 0.08 : null,
+    included: leased ? ['maintenance', 'tyres'] : [], purchasePrice: leased ? null : 41500, contact: leased ? 'Fleet desk, +49 40 555 0144' : null,
+    returnNotes: leased ? 'Return washed, with both keys and the service book. Damage over 2 cm is charged.' : null,
+    coverage: 'full', deductible: 1000, premium: 2350 + n * 40, insuranceRenewal: off(n === 5 ? 25 : 120 + n * 9),
+    odometerKm: 38000 + n * 4100 + (n === 1 ? 9000 : 0), odometerAt: off(-3),
+    due: {
+      hu: off(n === 0 ? -10 : 200 + n * 23), uvv: off(n === 3 ? 20 : 150 + n * 11), service: off(n === 1 ? 12 : 90 + n * 14),
+      serviceKm: 60000 + n * 5000, tyres: off(n === 4 ? 9 : 160), tax: off(240 + n * 7),
+    },
+    fuelCard: n % 4 === 3 ? 'Shell card ending 4471' : 'DKV card ending 20' + String(10 + n), notes: n === 0 ? 'Rear door seal replaced in spring.' : null,
+  };
+}
+
 const FRAMES = ['Front', 'Front left corner', 'Left side', 'Rear left corner', 'Rear', 'Rear right corner', 'Right side', 'Front right corner'];
 const usage = (ms: number, calls: number, images: number) => ({ ms, calls, images, inTok: 0, outTok: 0, cost: 0 });
 
-const DEMO_VERSION = 3;
+const DEMO_VERSION = 4;
 const password = () => {
   const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from(randomBytes(10), (b) => a[b % a.length]).join('');
@@ -149,7 +191,8 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
 
   const vans = VANS.map(([name, plate, cls, st, make, model, a], n) => {
     const ref = org.collection('vehicles').doc();
-    batch.set(ref, { name, plate, cls, ...a, make, model, scanId: null, stationId: stationIds[st], createdAt: now - (60 - n) * day, createdBy: uid, demo: true });
+    batch.set(ref, { name, plate, cls, ...a, make, model, scanId: null, stationId: stationIds[st], createdAt: now - (60 - n) * day, createdBy: uid, demo: true, ...demoFacts(n, make, model, cls) });
+    batch.set(org.collection('vehicleDetails').doc(ref.id), { stationId: stationIds[st], createdAt: now - (60 - n) * day, updatedAt: now, updatedByName: 'Demo', ...demoDetails(n, now) });
     return { id: ref.id, name, cls, st };
   });
   // A month of assignments: in each 4-day block every driver of a station has a different van of that

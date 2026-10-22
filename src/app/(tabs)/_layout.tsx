@@ -7,6 +7,7 @@ import { F, MARKER, useColors } from '@/components/ui';
 import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
 import { missingHandovers, needsPickup } from '@/lib/videos';
+import { fleetDue, pressing } from '@/lib/fleet';
 
 type IconName = 'fleet' | 'review' | 'people' | 'log' | 'account';
 function Icon({ name, color }: { name: IconName; color: ColorValue }) {
@@ -34,7 +35,9 @@ export default function TabsLayout() {
   const staff = s.staff;
   // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
-    + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000).length : 0);
+    + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000).length : 0)
+    // Deadlines that are overdue or due within a week (inspections, service, tax, insurance, contract end).
+    + (staff ? fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details).filter((d) => pressing(d.x)).length : 0);
   // The driver's badge: a van they were given that still needs its pick-up video or photos.
   const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
   return (

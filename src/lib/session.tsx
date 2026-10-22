@@ -10,7 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type CheckUsage, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type CheckUsage, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -59,6 +59,8 @@ interface Session {
   assignments: Assignment[];
   /** Recent handover videos (the latest 500 in scope; drivers: their own). */
   videos: Video[];
+  /** Contract, costs, insurance and deadlines of the vans in scope: owners and managers only (empty for drivers). */
+  details: VehicleDetails[];
   /** The van this person drives now, if any. */
   myVan: Vehicle | null;
   loaded: { vehicles: boolean; walks: boolean; checks: boolean; scans: boolean; stations: boolean };
@@ -307,12 +309,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [checks, setChecks] = useState<Check[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
   const [usage, setUsage] = useState<CheckUsage[]>([]);
+  const [details, setDetails] = useState<VehicleDetails[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
-    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setAssignments([]); setVideos([]);
+    setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -325,13 +328,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.assignments.subscribe((r) => setAssignments(r), () => {}),
       store.videos.subscribe((r) => setVideos(r), () => {}),
     ];
+    // The business side of the vans: owners and managers (the rules refuse drivers).
+    if (staff) subs.push(store.details.subscribe((r) => setDetails(r), () => {}));
     // Type scans and AI speed and cost: only the app creator reads them (the rules refuse everyone else).
     if (seesAiStats) {
       subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
       subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
     } else setLoaded((l) => ({ ...l, scans: true }));
     return () => subs.forEach((u) => u());
-  }, [store, seesAiStats]);
+  }, [store, seesAiStats, staff]);
   // For the app creator: each check with its AI speed and cost filled in.
   const checksShown = useMemo(() => {
     if (!seesAiStats || !usage.length) return checks;
@@ -370,7 +375,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

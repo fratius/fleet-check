@@ -117,6 +117,18 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, and the
   demo logins. Deploy stops if either fails.
 
+## Van records (FLEET_DATA.md)
+
+- **The van's facts** (VIN, registration, fuel, size, breakdown and accident numbers) are on the van: everyone at
+  its station reads them; owners and the station's managers change them.
+- **The business side** (contract, costs, insurance terms, deadlines, odometer, fuel card, notes) is in
+  `orgs/{org}/vehicleDetails/{vehicleId}`: only owners and the van's station managers read or write it, never
+  drivers (also not the app creator viewing as a driver). It carries the van's station, which must match the van;
+  `moveVan` moves it with the van. Never deleted.
+- Deadlines show to owners and managers only: on the van, in the fleet list, and as "Due soon" in Review.
+- Drivers' records (licence checks, employment, onboarding) are planned, not built; see FLEET_DATA.md for the
+  fields and what is deliberately not stored.
+
 ## The damage record of a van
 
 - Each van page shows the van in 3D with a numbered dot on every approved damage, and the damage list under it,

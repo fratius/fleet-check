@@ -525,11 +525,16 @@ test('retiring, moving and removing keep the history and free the van', async ()
   // Moving a van to another station ends its assignment.
   await S.own.call('changePerson', { orgId: S.org, uid: S.d1.uid, stationId: S.s1 });
   await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d1.uid });
+  // Its contract and deadlines (owners and managers only) go with it to the new station.
+  await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v1.id), { stationId: S.s1, createdAt: Date.now(), ownership: 'leased', monthly: 700 });
+  await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicleDetails', v1.id)), 'permission-denied');
   await fails(S.mgr.call('moveVan', { orgId: S.org, vehicleId: v1.id, stationId: S.s2 }), 'permission-denied');
   await S.own.call('moveVan', { orgId: S.org, vehicleId: v1.id, stationId: S.s2 });
   const v1d = await vanDoc(S.own, v1.id);
   assert.equal(v1d.stationId, S.s2);
   assert.equal(v1d.assignedTo, null);
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'vehicleDetails', v1.id))).data().stationId, S.s2);
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v1.id)), 'permission-denied');
 });
 
 test('the demo company: a driver login with a van, history, and pick-up at the first station', async () => {

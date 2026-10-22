@@ -572,8 +572,12 @@ export const moveVan = onCall({ timeoutSeconds: 30 }, async (req) => {
     if (!v.exists || !st.exists) throw new HttpsError('not-found', 'Unknown van or station.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     if (van.stationId === stationId) return;
+    const dref = org.collection('vehicleDetails').doc(vehicleId);
+    const details = await tx.get(dref);
     if (van.assignedTo?.assignmentId) tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'van moved'));
     tx.update(vref, { stationId, assignedTo: null });
+    // Its contract, costs and deadlines go with it, so the new station's managers see them (and the old one's don't).
+    if (details.exists) tx.update(dref, { stationId });
   });
   return { ok: true };
 });

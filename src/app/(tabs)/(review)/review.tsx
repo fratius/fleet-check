@@ -7,8 +7,9 @@ import { Card, F, MARKER, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from
 import { useSession } from '@/lib/session';
 import { approvedDamage, type Check } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
+import { fleetDue, fmtDay } from '@/lib/fleet';
 
-type Cat = 'all' | 'review' | 'missing' | 'van' | 'done';
+type Cat = 'all' | 'review' | 'missing' | 'due' | 'van' | 'done';
 
 /**
  * The fleet manager's queue, by category: checks to decide, handovers missing their video or photos, checks the
@@ -27,13 +28,15 @@ export default function ReviewQueue() {
   const done = mine.filter((k) => k.status === 'reviewed');
   // Handovers in the last 7 days without the driver's pick-up or drop-off video or photos, and vans still out after a shift.
   const missing = missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000);
+  // Inspections, service, tax, insurance and contract ends that are overdue or due soon.
+  const due = fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details);
   const showStation = s.stations.length > 1;
   const plate = (vehicleId: string) => s.vehicles.find((v) => v.id === vehicleId)?.plate || '';
   const where = (stationId: string | null | undefined) => (showStation ? s.stationName(stationId) : '');
 
-  const color = { review: MARKER, missing: c.alert, van: c.ink2, done: c.ok };
+  const color = { review: MARKER, missing: c.alert, due: c.amber, van: c.ink2, done: c.ok };
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
-    ['review', 'To review', waiting.length], ['missing', 'Missing videos', missing.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
+    ['review', 'To review', waiting.length], ['missing', 'Missing videos', missing.length], ['due', 'Due soon', due.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
   const shownDone = allDone ? done : done.slice(0, 8);
@@ -72,6 +75,19 @@ export default function ReviewQueue() {
         <Section color={c.alert} title="Missing videos" count={missing.length} note="Handovers without their video or photos. Open the van to add them or see its history.">
           {!missing.length ? <Empty text="Every handover has its video or photos." /> : null}
           {missing.map((m) => <MissingCard key={`${m.a.id}-${m.what}`} m={m} plate={plate(m.a.vehicleId)} where={where(m.a.stationId)} />)}
+        </Section>
+      ) : null}
+
+      {show('due') && (due.length || cat === 'due') ? (
+        <Section color={c.amber} title="Due soon" count={due.length} note="Inspections, service, tax, insurance and contract ends in the next weeks, or overdue.">
+          <List>
+            {!due.length ? <T v="hint">Nothing due in the next weeks.</T> : null}
+            {due.map(({ v, x }, i) => (
+              <ListRow key={`${v.id}-${x.key}`} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'details' } })}
+                title={`${v.name} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
+                right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
+            ))}
+          </List>
         </Section>
       ) : null}
 
@@ -202,7 +218,7 @@ function ListRow({ title, line, right, first, onPress }: { title: string; line: 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <T v="medium" numberOfLines={1}>{title}</T>
+        <T v="medium" numberOfLines={2}>{title}</T>
         <T v="small" numberOfLines={2}>{line}</T>
       </View>
       {right}

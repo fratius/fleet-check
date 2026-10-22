@@ -31,10 +31,73 @@ export interface Vehicle {
   assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number } | null;
   /** Retired vans stay with their history; they are never deleted. */
   retired?: boolean;
+  // The van's own facts, which everyone at its station sees (owners and its managers fill them in).
+  vin?: string | null;
+  /** First registration, "YYYY-MM-DD". */
+  firstReg?: string | null;
+  modelYear?: number | null;
+  color?: string | null;
+  fuel?: 'diesel' | 'electric' | 'petrol' | 'hybrid' | 'cng' | null;
+  batteryKwh?: number | null;
+  rangeKm?: number | null;
+  powerKw?: number | null;
+  gearbox?: 'manual' | 'automatic' | null;
+  /** In Amazon livery. */
+  branded?: boolean | null;
+  keys?: number | null;
+  heightM?: number | null;
+  lengthM?: number | null;
+  grossKg?: number | null;
+  payloadKg?: number | null;
+  cargoM3?: number | null;
+  tyreSize?: string | null;
+  // What the driver needs after a breakdown or an accident.
+  breakdownPhone?: string | null;
+  insurer?: string | null;
+  policyNo?: string | null;
+  claimsPhone?: string | null;
   retiredAt?: number | null;
   retiredBy?: string | null;
   createdAt: number;
   createdBy: string | null;
+}
+
+/**
+ * The business side of a van (orgs/{org}/vehicleDetails/{vehicleId}): contract, costs, insurance, deadlines,
+ * odometer and notes. Only owners and the van's station managers read and change it. Dates are "YYYY-MM-DD".
+ */
+export interface VehicleDetails {
+  id: string;
+  /** The van's station (kept in step by the server when the van moves), so managers can read their station's. */
+  stationId: string | null;
+  createdAt: number;
+  updatedAt?: number;
+  updatedByName?: string | null;
+  ownership?: 'owned' | 'leased' | 'rented' | 'financed' | 'other' | null;
+  provider?: string | null;
+  contractNo?: string | null;
+  start?: string | null;
+  end?: string | null;
+  /** Euros a month, without VAT. */
+  monthly?: number | null;
+  kmPerYear?: number | null;
+  kmAtStart?: number | null;
+  /** Euros per kilometre over the allowance. */
+  excessPerKm?: number | null;
+  included?: string[] | null;
+  purchasePrice?: number | null;
+  contact?: string | null;
+  returnNotes?: string | null;
+  coverage?: 'liability' | 'partial' | 'full' | null;
+  deductible?: number | null;
+  /** Euros a year. */
+  premium?: number | null;
+  insuranceRenewal?: string | null;
+  odometerKm?: number | null;
+  odometerAt?: string | null;
+  due?: { hu?: string | null; uvv?: string | null; service?: string | null; serviceKm?: number | null; tyres?: string | null; tax?: string | null } | null;
+  fuelCard?: string | null;
+  notes?: string | null;
 }
 
 /**

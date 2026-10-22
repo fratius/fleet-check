@@ -1,11 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
-import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { Button, Card, Chip, F, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { useWhoDid } from '@/lib/names';
@@ -20,7 +21,7 @@ import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/
 import { saveWalk } from '@/lib/walks';
 
 export default function VehicleScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab: openTab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const s = useSession();
   const c = useColors();
   const v = s.vehicles.find((x) => x.id === id);
@@ -45,6 +46,9 @@ export default function VehicleScreen() {
   // Where the model, the damage section, the list inside it and each damage are, to scroll between them.
   const spots = useRef({ model: 0, list: 0, inner: 0, items: new Map<string, number>() });
   const [editing, setEditing] = useState(false);
+  // The page in three parts below the van's status and actions: its damage, its record, its drivers.
+  const [tab, setTab] = useState<'damage' | 'details' | 'history'>(openTab === 'details' || openTab === 'history' ? openTab : 'damage');
+  const tabTop = useRef(0);
   const [picking, setPicking] = useState(false);
   const [takeover, setTakeover] = useState(false);
   const [armed, setArmed] = useState<string | null>(null);
@@ -78,9 +82,13 @@ export default function VehicleScreen() {
     scroller.current?.scrollTo({ y: Math.max(0, spots.current.model - 8), animated: true });
   };
   const showInList = (key: string) => {
-    const at = spots.current;
-    scroller.current?.scrollTo({ y: Math.max(0, at.list + at.inner + (at.items.get(key) ?? 0) - 8), animated: true });
+    const go = () => {
+      const at = spots.current;
+      scroller.current?.scrollTo({ y: Math.max(0, at.list + at.inner + (at.items.get(key) ?? 0) - 8), animated: true });
+    };
+    if (tab !== 'damage') { setTab('damage'); setTimeout(go, 120); } else go();
   };
+  const openDetails = () => { setTab('details'); setTimeout(() => scroller.current?.scrollTo({ y: Math.max(0, tabTop.current - 8), animated: true }), 80); };
 
   const checkLibrary = async () => {
     setErr(null);
@@ -110,9 +118,11 @@ export default function VehicleScreen() {
         <T v="h1">{v.name}</T>
         <Row><Plate text={v.plate} /><T v="hint">{CLS[v.cls].name}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}{s.stations.length > 1 ? ', ' + s.stationName(v.stationId) : ''}</T></Row>
         <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
+        {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: 'Diesel', electric: 'Electric', petrol: 'Petrol', hybrid: 'Hybrid', cng: 'Gas' }[v.fuel] : '', v.heightM ? `${v.heightM.toLocaleString(undefined, { maximumFractionDigits: 2 })} m high` : ''].filter(Boolean).join(', ')}</T> : null}
       </View>
 
       {done ? <Notice text={done} /> : null}
+      {s.runs(v.stationId) && !v.retired ? <Deadlines v={v} d={s.details.find((x) => x.id === v.id)} compact onOpen={openDetails} /> : null}
       {v.retired ? (
         <Card dashed>
           <T v="h3">Retired</T>
@@ -179,6 +189,11 @@ export default function VehicleScreen() {
         </Card>
       ) : null}
 
+      <View onLayout={(e) => { tabTop.current = e.nativeEvent.layout.y; }}>
+        <Tabs value={tab} onChange={setTab} items={[['damage', 'Damage', damages.length], ['details', 'Details', null], ['history', 'Drivers', null]]} />
+      </View>
+
+      {tab === 'damage' ? (<>
       <View style={{ gap: 8 }} onLayout={(e) => { spots.current.list = e.nativeEvent.layout.y; }}>
         <T v="h2">Damage{damages.length ? ` (${damages.length})` : ''}</T>
         {damages.length ? <T v="hint">Newest first. The numbers match the dots on the van.</T> : null}
@@ -230,18 +245,21 @@ export default function VehicleScreen() {
           </Pressable>
         ))}
       </View>
+      </>) : null}
 
-      {s.mode === 'firebase' ? (
+      {tab === 'history' ? (s.mode === 'firebase' ? (
         <View style={{ gap: 8 }}>
           <T v="h2">Drivers of this van</T>
           <T v="hint">{s.role === 'driver' ? 'The times you had this van.' : 'Everyone who had this van, newest first. This history is kept for good.'}</T>
           <Card><HistoryList rows={history.rows} error={history.error} show="driver" empty={s.role === 'driver' ? 'You haven\'t had this van yet.' : 'Nobody has had this van yet.'} /></Card>
         </View>
-      ) : null}
+      ) : <Card dashed><T v="hint">The drivers of each van need the Firebase backend.</T></Card>) : null}
 
-      {!s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
+      {tab === 'details' ? <VanRecord v={v} /> : null}
+
+      {tab !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
-          {!v.retired ? <Button title="Edit details" onPress={() => setEditing(true)} /> : null}
+          {!v.retired ? <Button title="Name, plate and type" onPress={() => setEditing(true)} /> : null}
           {s.mode === 'local' ? (
             <Button v="danger" title={armed === 'remove' ? 'Tap again to remove' : 'Remove from fleet'} onPress={async () => {
               if (armed !== 'remove') { arm('remove'); return; }
@@ -257,7 +275,7 @@ export default function VehicleScreen() {
           )}
         </Row>
       )}
-      {s.runs(v.stationId) && s.mode === 'firebase' && !v.retired && !editing ? (
+      {tab === 'details' && s.runs(v.stationId) && s.mode === 'firebase' && !v.retired && !editing ? (
         <T v="small">Retiring takes a van out of the fleet (sold, returned, written off). Vans are never deleted: their checks and driver history stay.</T>
       ) : null}
       {s.mode === 'local' ? <Notice text="Saved on this phone only until Firebase is connected." /> : null}
@@ -314,5 +332,24 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title="Save changes" loading={busy} onPress={save} /><Button v="link" title="Cancel" onPress={onDone} /></Row>
     </Card>
+  );
+}
+
+/** The three parts of the van page, as one full-width switch. */
+function Tabs<K extends string>({ value, onChange, items }: { value: K; onChange: (k: K) => void; items: [K, string, number | null][] }) {
+  const c = useColors();
+  return (
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
+      {items.map(([k, label, n], i) => {
+        const on = k === value;
+        return (
+          <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
+            style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
+            <Text style={{ fontFamily: F.cond, fontSize: 19, color: on ? c.paper : c.ink }}>{label}</Text>
+            {n ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }

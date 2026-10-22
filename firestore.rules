@@ -126,6 +126,17 @@ service cloud.firestore {
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy']);
       }
 
+      // The business side of a van (doc id = the van's id): contract, costs, insurance, deadlines, odometer, notes.
+      // Owners and the van's station managers only; drivers never read it. It carries the van's station so a
+      // manager can query theirs, and must match the van's (the server keeps it in step when a van moves).
+      match /vehicleDetails/{id} {
+        allow read: if runs(orgId, resource.data.stationId);
+        allow create, update: if runs(orgId, request.resource.data.stationId)
+          && request.resource.data.stationId == get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id)).data.get('stationId', null)
+          && request.resource.data.keys().size() <= 40;
+        // Kept with the van for good, like its history.
+      }
+
       // Who had which van, when. Written only by the server (assignVan and friends), never edited or deleted:
       // this is the permanent history of every van and every driver. Owners and managers of the station read
       // it; drivers read their own.

@@ -1,0 +1,356 @@
+import { useState } from 'react';
+import { Linking, Pressable, Text, View } from 'react-native';
+import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
+
+import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
+import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, parseDay, today, type Deadline } from '@/lib/fleet';
+import { useSession } from '@/lib/session';
+import type { Vehicle, VehicleDetails } from '@/lib/types';
+
+/**
+ * The van's record, organised like the papers that come with a van: what it is, its size, what to do when
+ * something happens (everyone at the station), then its contract, insurance, mileage and deadlines (owners and
+ * the station's managers). Each section is edited on its own.
+ */
+
+type Kind = 'text' | 'upper' | 'num' | 'eur' | 'day' | 'month' | 'choice' | 'multi' | 'bool' | 'phone' | 'long';
+type Vals = Record<string, unknown>;
+interface FieldSpec { key: string; label: string; kind: Kind; unit?: string; options?: Record<string, string>; hint?: string; show?: (v: Vals) => boolean; digits?: number; plain?: boolean }
+
+const ev = (v: Vals) => v.fuel === 'electric' || v.fuel === 'hybrid';
+const notOwned = (v: Vals) => !!v.ownership && v.ownership !== 'owned';
+const VEHICLE: FieldSpec[] = [
+  { key: 'vin', label: 'VIN', kind: 'upper', hint: '17 characters, on the registration document' },
+  { key: 'firstReg', label: 'First registration', kind: 'day' },
+  { key: 'modelYear', label: 'Model year', kind: 'num', plain: true },
+  { key: 'fuel', label: 'Fuel', kind: 'choice', options: FUEL },
+  { key: 'batteryKwh', label: 'Battery', kind: 'num', unit: 'kWh', show: ev },
+  { key: 'rangeKm', label: 'Range', kind: 'num', unit: 'km', show: ev },
+  { key: 'powerKw', label: 'Power', kind: 'num', unit: 'kW' },
+  { key: 'gearbox', label: 'Gearbox', kind: 'choice', options: GEARBOX },
+  { key: 'color', label: 'Colour', kind: 'text' },
+  { key: 'branded', label: 'Livery', kind: 'bool', options: { yes: 'Amazon livery', no: 'Plain' } },
+  { key: 'keys', label: 'Keys', kind: 'num' },
+];
+const SIZE: FieldSpec[] = [
+  { key: 'heightM', label: 'Height', kind: 'num', unit: 'm', digits: 2, hint: 'Check it before car parks and garages' },
+  { key: 'lengthM', label: 'Length', kind: 'num', unit: 'm', digits: 2 },
+  { key: 'grossKg', label: 'Gross weight', kind: 'num', unit: 'kg' },
+  { key: 'payloadKg', label: 'Payload', kind: 'num', unit: 'kg' },
+  { key: 'cargoM3', label: 'Cargo space', kind: 'num', unit: 'm³', digits: 1 },
+  { key: 'tyreSize', label: 'Tyre size', kind: 'upper' },
+];
+const HELP: FieldSpec[] = [
+  { key: 'breakdownPhone', label: 'Breakdown help', kind: 'phone' },
+  { key: 'claimsPhone', label: 'Accident claims', kind: 'phone' },
+  { key: 'insurer', label: 'Insurer', kind: 'text' },
+  { key: 'policyNo', label: 'Policy number', kind: 'upper' },
+];
+const DUE: FieldSpec[] = [
+  { key: 'due.hu', label: 'Main inspection (HU)', kind: 'month', hint: 'The month on the sticker, like 03/2027' },
+  { key: 'due.uvv', label: 'Safety check (UVV)', kind: 'day', hint: 'Yearly check for company vehicles' },
+  { key: 'due.service', label: 'Service by date', kind: 'day' },
+  { key: 'due.serviceKm', label: 'Service at', kind: 'num', unit: 'km' },
+  { key: 'due.tyres', label: 'Tyre change', kind: 'day' },
+  { key: 'due.tax', label: 'Vehicle tax', kind: 'day' },
+];
+const MILEAGE: FieldSpec[] = [
+  { key: 'odometerKm', label: 'Odometer', kind: 'num', unit: 'km' },
+  { key: 'odometerAt', label: 'Read on', kind: 'day', hint: 'Today when you change the odometer' },
+];
+const CONTRACT: FieldSpec[] = [
+  { key: 'ownership', label: 'The van is', kind: 'choice', options: OWNERSHIP },
+  { key: 'provider', label: 'Leasing company, landlord or seller', kind: 'text' },
+  { key: 'contractNo', label: 'Contract number', kind: 'upper' },
+  { key: 'start', label: 'Start', kind: 'day' },
+  { key: 'end', label: 'End', kind: 'day', show: notOwned },
+  { key: 'monthly', label: 'Per month, without VAT', kind: 'eur', show: notOwned },
+  { key: 'purchasePrice', label: 'Purchase price', kind: 'eur', show: (v) => v.ownership === 'owned' || v.ownership === 'financed' },
+  { key: 'kmPerYear', label: 'Kilometres allowed a year', kind: 'num', unit: 'km', show: notOwned },
+  { key: 'kmAtStart', label: 'Odometer at the start', kind: 'num', unit: 'km' },
+  { key: 'excessPerKm', label: 'Each kilometre over', kind: 'eur', digits: 2, show: notOwned },
+  { key: 'included', label: 'Included', kind: 'multi', options: INCLUDED, show: notOwned },
+  { key: 'contact', label: 'Contact', kind: 'text', hint: 'Name, phone or email' },
+  { key: 'returnNotes', label: 'When it goes back', kind: 'long', show: notOwned },
+];
+const INSURANCE: FieldSpec[] = [
+  { key: 'coverage', label: 'Cover', kind: 'choice', options: COVERAGE },
+  { key: 'deductible', label: 'Deductible', kind: 'eur' },
+  { key: 'premium', label: 'Premium a year', kind: 'eur' },
+  { key: 'insuranceRenewal', label: 'Renewal', kind: 'day' },
+];
+const OTHER: FieldSpec[] = [
+  { key: 'fuelCard', label: 'Fuel or charging card', kind: 'text', hint: 'Provider and the last digits, never the full number or PIN' },
+  { key: 'notes', label: 'Notes', kind: 'long' },
+];
+
+const get = (o: Vals | null | undefined, path: string): unknown => path.split('.').reduce<unknown>((x, k) => (x && typeof x === 'object' ? (x as Vals)[k] : undefined), o || undefined);
+const filled = (x: unknown) => x != null && x !== '' && !(Array.isArray(x) && !x.length);
+
+function show(f: FieldSpec, x: unknown): string {
+  if (!filled(x)) return '';
+  const n = typeof x === 'number' ? x : null;
+  switch (f.kind) {
+    case 'num': return `${f.plain ? String(n) : n!.toLocaleString(undefined, { maximumFractionDigits: f.digits ?? 0 })}${f.unit ? ' ' + f.unit : ''}`;
+    case 'eur': return eur(n, f.digits ?? 0);
+    case 'day': return fmtDay(String(x));
+    case 'month': return fmtDay(String(x), true);
+    case 'choice': return f.options?.[String(x)] || String(x);
+    case 'multi': return (x as string[]).map((k) => f.options?.[k] || k).join(', ');
+    case 'bool': return x ? f.options?.yes || 'Yes' : f.options?.no || 'No';
+    default: return String(x);
+  }
+}
+
+/** One section: its facts as a label-and-value grid, and an Edit button for those who may change it. */
+export function FactSection({ title, note, fields, values, canEdit, onSave, empty }: {
+  title: string; note?: string; fields: FieldSpec[]; values: Vals | null | undefined; canEdit: boolean;
+  onSave: (patch: Vals) => Promise<void>; empty: string;
+}) {
+  const c = useColors();
+  const [editing, setEditing] = useState(false);
+  const shown = fields.filter((f) => (!f.show || f.show(values || {})) && filled(get(values, f.key)));
+  if (!shown.length && !canEdit) return null;
+  return (
+    <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 8, borderBottomWidth: 1, borderColor: c.rule }}>
+        <View style={{ flex: 1 }}>
+          <T v="h3">{title}</T>
+          {note ? <T v="small">{note}</T> : null}
+        </View>
+        {canEdit && !editing ? <Button small v="link" title={shown.length ? 'Edit' : 'Add'} onPress={() => setEditing(true)} /> : null}
+      </View>
+      <View style={{ padding: 12 }}>
+        {editing ? <Editor fields={fields} values={values} onCancel={() => setEditing(false)} onSave={async (p) => { await onSave(p); setEditing(false); }} />
+          : shown.length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, columnGap: 16 }}>
+              {shown.map((f) => {
+                const val = show(f, get(values, f.key));
+                const wide = f.kind === 'long' || f.kind === 'multi' || val.length > 22;
+                return (
+                  <View key={f.key} style={{ width: wide ? '100%' : '46%', minWidth: 130, flexGrow: 1, gap: 1 }}>
+                    <T v="small">{f.label}</T>
+                    {f.kind === 'phone' ? (
+                      <Pressable accessibilityRole="link" onPress={() => Linking.openURL(`tel:${val.replace(/[^\d+]/g, '')}`).catch(() => {})}>
+                        <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink, textDecorationLine: 'underline' }}>{val}</Text>
+                      </Pressable>
+                    ) : <Text selectable style={{ fontFamily: f.key === 'vin' ? F.cond : F.medium, fontSize: f.key === 'vin' ? 19 : 16, letterSpacing: f.key === 'vin' ? 1 : 0, color: c.ink }}>{val}</Text>}
+                  </View>
+                );
+              })}
+            </View>
+          ) : <T v="hint">{empty}</T>}
+      </View>
+    </View>
+  );
+}
+
+/** Edits one section. Numbers accept commas; dates accept 31.03.2027 or 2027-03-31, months 03/2027. */
+function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; values: Vals | null | undefined; onSave: (patch: Vals) => Promise<void>; onCancel: () => void }) {
+  const c = useColors();
+  const init: Record<string, unknown> = {};
+  for (const f of fields) {
+    const x = get(values, f.key);
+    init[f.key] = f.kind === 'day' || f.kind === 'month' ? (x ? (f.kind === 'month' ? String(x).slice(5, 7) + '/' + String(x).slice(0, 4) : String(x).split('-').reverse().join('.')) : '')
+      : f.kind === 'num' || f.kind === 'eur' ? (x == null ? '' : String(x).replace('.', ','))
+        : f.kind === 'multi' ? (x as string[] | undefined) || [] : x ?? (f.kind === 'choice' || f.kind === 'bool' ? null : '');
+  }
+  const [form, setForm] = useState(init);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const set = (k: string, x: unknown) => setForm((p) => ({ ...p, [k]: x }));
+  const cur: Vals = {};
+  for (const f of fields) cur[f.key.split('.').pop()!] = form[f.key];
+  const save = async () => {
+    setErr(null);
+    const out: Vals = {};
+    for (const f of fields) {
+      const raw = form[f.key];
+      let val: unknown = raw;
+      if (f.kind === 'num' || f.kind === 'eur') {
+        const t = String(raw ?? '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+        val = t ? Number(t) : null;
+        if (val != null && !Number.isFinite(val as number)) { setErr(`${f.label}: enter a number.`); return; }
+      } else if (f.kind === 'day' || f.kind === 'month') {
+        val = String(raw ?? '').trim() ? parseDay(String(raw)) : null;
+        if (String(raw ?? '').trim() && !val) { setErr(`${f.label}: enter a date like ${f.kind === 'month' ? '03/2027' : '31.03.2027'}.`); return; }
+      } else if (typeof raw === 'string') {
+        val = raw.trim() ? (f.kind === 'upper' ? raw.trim().toUpperCase() : raw.trim()).slice(0, f.kind === 'long' ? 1000 : 120) : null;
+      }
+      if (f.key === 'vin' && val && String(val).length !== 17) { setErr('The VIN has 17 characters.'); return; }
+      out[f.key] = val;
+    }
+    // A new odometer reading is from today unless another day is given.
+    if ('odometerKm' in out && out.odometerKm !== get(values, 'odometerKm') && form.odometerAt === init.odometerAt) out.odometerAt = today();
+    setBusy(true);
+    try { await onSave(out); } catch { setErr('Couldn\'t save. Check the connection.'); } finally { setBusy(false); }
+  };
+  return (
+    <View style={{ gap: 12 }}>
+      {fields.filter((f) => !f.show || f.show(cur)).map((f) => {
+        if (f.kind === 'choice' || f.kind === 'bool') {
+          const opts = f.kind === 'bool' ? [['yes', f.options?.yes || 'Yes'], ['no', f.options?.no || 'No']] : Object.entries(f.options || {});
+          const on = (k: string) => (f.kind === 'bool' ? form[f.key] === (k === 'yes') : form[f.key] === k);
+          return (
+            <View key={f.key} style={{ gap: 6 }}>
+              <T v="medium">{f.label}</T>
+              <Row>{opts.map(([k, t]) => <Chip key={k} text={t} on={on(k)} onPress={() => set(f.key, on(k) ? null : f.kind === 'bool' ? k === 'yes' : k)} />)}</Row>
+            </View>
+          );
+        }
+        if (f.kind === 'multi') {
+          const list = (form[f.key] as string[]) || [];
+          return (
+            <View key={f.key} style={{ gap: 6 }}>
+              <T v="medium">{f.label}</T>
+              <Row>{Object.entries(f.options || {}).map(([k, t]) => <Chip key={k} text={t} on={list.includes(k)} onPress={() => set(f.key, list.includes(k) ? list.filter((x) => x !== k) : [...list, k])} />)}</Row>
+            </View>
+          );
+        }
+        const numeric = f.kind === 'num' || f.kind === 'eur';
+        return (
+          <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : f.kind === 'eur' ? ' (€)' : '')} hint={f.hint} value={String(form[f.key] ?? '')}
+            onChangeText={(t) => set(f.key, f.kind === 'upper' ? t.toUpperCase() : t)}
+            keyboardType={numeric ? 'decimal-pad' : f.kind === 'phone' ? 'phone-pad' : 'default'}
+            autoCapitalize={f.kind === 'upper' ? 'characters' : 'sentences'} multiline={f.kind === 'long'}
+            placeholder={f.kind === 'day' ? 'DD.MM.YYYY' : f.kind === 'month' ? 'MM/YYYY' : undefined} maxLength={f.key === 'vin' ? 17 : f.kind === 'long' ? 1000 : 120} />
+        );
+      })}
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+      <Row><Button small v="primary" title="Save" loading={busy} onPress={save} /><Button small v="link" title="Cancel" onPress={onCancel} /></Row>
+    </View>
+  );
+}
+
+/** Saves part of a van's business record (creates it the first time), with its station and who changed it. */
+async function saveDetails(s: ReturnType<typeof useSession>, v: Vehicle, prev: VehicleDetails | undefined, patch: Vals) {
+  const due: Vals = { ...(prev?.due || {}) };
+  const top: Vals = {};
+  for (const [k, x] of Object.entries(patch)) { if (k.startsWith('due.')) due[k.slice(4)] = x; else top[k] = x; }
+  const { id: _id, ...rest } = (prev || {}) as VehicleDetails;
+  const next = { ...rest, ...top, due, stationId: v.stationId ?? null, createdAt: prev?.createdAt ?? Date.now(), updatedAt: Date.now(), updatedByName: s.user?.name || null };
+  if (prev) await s.store!.details.update(v.id, next);
+  else await s.store!.details.add(next as Omit<VehicleDetails, 'id'>, v.id);
+}
+
+/** The van's record: facts for everyone at the station; contract, costs and deadlines for owners and managers. */
+export function VanRecord({ v }: { v: Vehicle }) {
+  const s = useSession();
+  const c = useColors();
+  const staff = s.runs(v.stationId);
+  const d = s.details.find((x) => x.id === v.id);
+  const facts = v as unknown as Vals;
+  const saveFacts = async (patch: Vals) => { await s.store!.vehicles.update(v.id, patch as Partial<Vehicle>); };
+  const saveBiz = (patch: Vals) => saveDetails(s, v, d, patch);
+  const m = mileage(d);
+  return (
+    <View style={{ gap: 12 }}>
+      {staff ? <Deadlines v={v} d={d} /> : null}
+      <FactSection title="Vehicle" fields={VEHICLE} values={facts} canEdit={staff} onSave={saveFacts}
+        empty="VIN, first registration, fuel and gearbox. Add them from the registration document." />
+      <FactSection title="Size and load" fields={SIZE} values={facts} canEdit={staff} onSave={saveFacts} empty="Height, weight, payload and cargo space." />
+      <FactSection title="If something happens" note="Who drivers call after a breakdown or an accident." fields={HELP} values={facts} canEdit={staff} onSave={saveFacts}
+        empty="Add the breakdown number and the insurer, so drivers have them at the van." />
+      {staff ? (
+        <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+            <View style={{ width: 6, alignSelf: 'stretch', backgroundColor: c.ink, borderRadius: 2 }} />
+            <View style={{ flex: 1 }}>
+              <T v="h2">Business</T>
+              <T v="small">Only owners and this station&apos;s fleet managers see this part.</T>
+            </View>
+          </View>
+          <FactSection title="Mileage" fields={MILEAGE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Add the odometer reading to follow the mileage." />
+          {m ? (
+            <View style={{ borderWidth: 2, borderColor: m.over != null && m.over > 0 ? c.alert : c.ink, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
+              <T v="medium">At this pace: {km(m.perYear)} a year</T>
+              {m.over != null ? (
+                <T v="small" color={m.over > 0 ? c.alert : undefined}>
+                  {m.over > 0 ? `About ${km(m.over)} a year over the allowance${m.cost ? `, roughly ${eur(m.cost)} a year extra` : ''}.` : `${km(-m.over)} a year under the allowance.`}
+                </T>
+              ) : null}
+            </View>
+          ) : null}
+          <FactSection title="Contract" fields={CONTRACT} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Owned, leased, rented or financed: who, how long, what it costs, the mileage allowance." />
+          <FactSection title="Insurance" fields={INSURANCE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="Cover, deductible, premium and renewal." />
+          <FactSection title="Deadlines" note="Due dates show on the van, in the fleet list and in Review." fields={DUE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz}
+            empty="Main inspection, safety check, service, tyres and tax." />
+          <FactSection title="Fuel card and notes" fields={OTHER} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="The van's fuel or charging card and anything else to remember." />
+          {d?.updatedAt ? <T v="small">Last changed {new Date(d.updatedAt).toLocaleDateString()}{d.updatedByName ? ` by ${d.updatedByName}` : ''}.</T> : null}
+        </>
+      ) : null}
+    </View>
+  );
+}
+
+/** What falls due for the van, soonest first, with the inspection sticker as it should be on the plate. */
+export function Deadlines({ v, d, compact, onOpen }: { v: Vehicle; d: VehicleDetails | undefined; compact?: boolean; onOpen?: () => void }) {
+  const c = useColors();
+  const list = deadlines(v, d);
+  const urgent = list.filter((x) => x.state !== 'ok');
+  if (compact) {
+    if (!urgent.length) return null;
+    return (
+      <Pressable accessibilityRole="button" onPress={onOpen} style={{ borderWidth: 2, borderColor: urgent.some((x) => x.state === 'overdue') ? c.alert : c.ink, borderRadius: 4, backgroundColor: c.paper, padding: 12, gap: 6 }}>
+        {urgent.slice(0, 3).map((x) => <DueLine key={x.key} x={x} />)}
+        {urgent.length > 3 ? <T v="small">and {urgent.length - 3} more</T> : null}
+        <T v="small" style={{ textDecorationLine: 'underline' }}>See all deadlines</T>
+      </Pressable>
+    );
+  }
+  if (!list.length) return null;
+  const hu = d?.due?.hu;
+  return (
+    <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 12, flexDirection: 'row', alignItems: 'flex-start' }}>
+      {hu ? <HuSticker day={hu} /> : null}
+      <View style={{ flex: 1, gap: 8 }}>
+        <T v="h3">Coming up</T>
+        {list.map((x) => <DueLine key={x.key} x={x} />)}
+      </View>
+    </View>
+  );
+}
+function DueLine({ x }: { x: Deadline }) {
+  const c = useColors();
+  const color = x.state === 'overdue' ? c.alert : x.state === 'soon' ? c.amber : c.ink2;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+      <View style={{ width: 10, height: 10, borderRadius: 5, marginTop: 6, backgroundColor: x.state === 'ok' ? 'transparent' : color, borderWidth: 2, borderColor: color }} />
+      <View style={{ flex: 1 }}>
+        <T v="medium">{x.label}</T>
+        <Text style={{ fontFamily: x.state === 'ok' ? F.body : F.semi, fontSize: 14, color }}>{x.day ? `${fmtDay(x.day, x.key === 'hu')}, ${x.note}` : x.note}</Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * The round German inspection sticker (HU-Plakette): coloured by year, the due month at the top, the year in the
+ * middle, so the date reads the way it does on the van's rear plate.
+ */
+export function HuSticker({ day, size = 84 }: { day: string; size?: number }) {
+  const [y, mo] = day.split('-').map(Number);
+  const fill = huColor(y);
+  const ink = fill === '#2F6FC6' || fill === '#8A5A33' ? '#FFFFFF' : '#000000';
+  const r = size / 2;
+  return (
+    <View accessibilityLabel={`Main inspection sticker: ${mo}/${y}`}>
+      <Svg width={size} height={size}>
+        <Circle cx={r} cy={r} r={r - 1} fill={fill} stroke="#000" strokeWidth={2} />
+        <Circle cx={r} cy={r} r={r * 0.52} fill="none" stroke={ink} strokeWidth={1} opacity={0.5} />
+        <G>
+          {Array.from({ length: 12 }, (_, i) => {
+            // Month `mo` sits at 12 o'clock; the others follow clockwise.
+            const k = ((mo - 1 + i) % 12) + 1;
+            const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+            return (
+              <SvgText key={k} x={r + Math.cos(a) * r * 0.74} y={r + Math.sin(a) * r * 0.74 + size * 0.045} fontSize={size * (i === 0 ? 0.16 : 0.12)}
+                fontWeight={i === 0 ? '700' : '400'} fill={ink} textAnchor="middle">{k}</SvgText>
+            );
+          })}
+        </G>
+        <SvgText x={r} y={r + size * 0.11} fontSize={size * 0.3} fontWeight="700" fill={ink} textAnchor="middle">{String(y).slice(2)}</SvgText>
+      </Svg>
+    </View>
+  );
+}

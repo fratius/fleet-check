@@ -6,7 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Assignment, Check, CheckUsage, IdentifyResult, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { Assignment, Check, CheckUsage, IdentifyResult, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -86,6 +86,8 @@ export interface Store {
   walks: Coll<Walkaround>;
   checks: Coll<Check>;
   scans: Coll<Scan>;
+  /** Contract, costs, insurance and deadlines of vans: owners and the station's managers only. */
+  details: Coll<VehicleDetails>;
   /** AI speed and cost of damage checks: the app creator only. */
   usage: Coll<CheckUsage>;
   /** Recent van assignments: the station's for owners and managers, their own for drivers. */
@@ -101,11 +103,11 @@ export interface Store {
 export function makeStore(orgId: string | null, scope: string[] | null = null, driverId: string | null = null): Store {
   if (fb() && orgId) {
     return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
-      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'),
+      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), details: fsColl(orgId, 'vehicleDetails', scope),
       assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by') };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
-    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), assignments: localColl('assignments'), videos: localColl('videos') };
+    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), details: localColl('vehicleDetails'), assignments: localColl('assignments'), videos: localColl('videos') };
 }
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */

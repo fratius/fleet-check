@@ -7,6 +7,7 @@ import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
+import { deadlines } from '@/lib/fleet';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
 
@@ -102,6 +103,8 @@ export default function Fleet() {
         const last = s.walks.find((w) => w.vehicleId === v.id);
         const k = lastCheck.get(v.id);
         const damages = s.checks.filter((x) => x.vehicleId === v.id).reduce((n, x) => n + newDamage(x).length, 0);
+        // Inspections, service, tax, insurance and contract end: owners and managers only.
+        const due = s.runs(v.stationId) && !v.retired ? deadlines(v, s.details.find((d) => d.id === v.id)).filter((x) => x.state !== 'ok') : [];
         return (
           <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${v.name}, ${CLS[v.cls].name}`} onPress={() => router.push(`/vehicle/${v.id}`)}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, opacity: pressed ? 0.8 : 1 })}>
@@ -122,6 +125,8 @@ export default function Fleet() {
                 {k?.status === 'submitted' ? <Pill v="amber" text="Waiting for review" /> : null}
                 {k?.status === 'checking' ? <Pill v="muted" text="Close-ups pending" /> : null}
                 {damages ? <Pill v="bad" text={`${damages} approved damage${damages === 1 ? '' : 's'}`} /> : null}
+                {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={`${due[0].label} ${due[0].state === 'overdue' ? 'overdue' : due[0].note}`} /> : null}
+                {due.length > 1 ? <Pill v="muted" text={`${due.length - 1} more due`} /> : null}
               </Row>
             </View>
             <T v="h2" color={c.ink2}>›</T>
