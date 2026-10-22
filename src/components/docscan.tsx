@@ -51,7 +51,9 @@ const driverSections = (): Section[] => [
   { title: 'Briefings', fields: TRAINING, to: 'record' },
 ];
 const EDITABLE = new Set(['text', 'upper', 'num', 'eur', 'day', 'month', 'phone', 'long']);
-const same = (a: unknown, b: unknown) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a ?? null) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b ?? null);
+const norm = (x: unknown, f?: FieldSpec) => (Array.isArray(x) ? [...x].sort() : f?.kind === 'month' && typeof x === 'string' ? x.slice(0, 7) : x ?? null);
+/** The same value as saved? A month (the inspection sticker) counts by its month. */
+const same = (a: unknown, b: unknown, f?: FieldSpec) => JSON.stringify(norm(a, f)) === JSON.stringify(norm(b, f));
 
 interface Row { key: string; f: FieldSpec; section: string; to: To; value: unknown; input: unknown; now: unknown; on: boolean; confidence: number | null; evidence: string; older?: boolean }
 
@@ -113,7 +115,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
           // An odometer reading older than the one on record (an old invoice) isn't taken by default.
           const older = f.key === 'odometerKm' && typeof now === 'number' && (x.value as number) < now;
           out.push({ key: f.key, f, section: sec.title, to: sec.to, value: x.value, input: toInput(f, x.value), now, confidence: x.confidence, evidence: x.evidence,
-            older, on: !same(now, x.value) && (x.confidence ?? 1) >= 0.5 && !older });
+            older, on: !same(now, x.value, f) && (x.confidence ?? 1) >= 0.5 && !older });
         }
       }
       setRows(out);
@@ -215,9 +217,9 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
               <T v="h3">{sec.title}</T>
               {sec.to === 'costs' ? <T v="small">only owners see this</T> : null}
             </View>
-            {rs.filter((r) => !same(r.now, r.value)).map((r) => <FoundRow key={r.key} r={r} onToggle={() => setRow(r.key, { on: !r.on })} onInput={(t) => setRow(r.key, { input: t, on: true })} />)}
+            {rs.filter((r) => !same(r.now, r.value, r.f)).map((r) => <FoundRow key={r.key} r={r} onToggle={() => setRow(r.key, { on: !r.on })} onInput={(t) => setRow(r.key, { input: t, on: true })} />)}
             {/* What the document says that's already saved, in one line. */}
-            {rs.some((r) => same(r.now, r.value)) ? <T v="small">Same as saved: {rs.filter((r) => same(r.now, r.value)).map((r) => r.f.label).join(', ')}.</T> : null}
+            {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">Same as saved: {rs.filter((r) => same(r.now, r.value, r.f)).map((r) => r.f.label).join(', ')}.</T> : null}
           </View>
         ))}
         {m && isLicence ? (
@@ -254,7 +256,7 @@ function Box({ on }: { on: boolean }) {
 function FoundRow({ r, onToggle, onInput }: { r: Row; onToggle: () => void; onInput: (t: string) => void }) {
   const c = useColors();
   const nowText = r.now == null || r.now === '' ? '' : show(r.f, r.now);
-  const unchanged = same(r.now, r.value);
+  const unchanged = same(r.now, r.value, r.f);
   const unsure = r.confidence != null && r.confidence < 0.7;
   return (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 4 }}>
