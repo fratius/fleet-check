@@ -6,6 +6,7 @@ import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, 
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard } from '@/components/dash';
+import { ScanChoice } from '@/components/scanchoice';
 import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
@@ -72,7 +73,7 @@ export default function Fleet() {
           <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
-            <Button small v="primary" title="Start scanning" onPress={() => router.push(`/scan/${s.myVan!.id}`)} />
+            <ScanChoice v={s.myVan} small onMarker={!touring} />
             {canDrop ? <Button small title="Drop off" onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
           </Row>
         </Pressable>
