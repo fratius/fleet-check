@@ -6,6 +6,7 @@ import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, 
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
+import { useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
 
@@ -16,6 +17,7 @@ export default function Fleet() {
   const [show, setShow] = useState<'all' | 'free' | 'taken' | 'retired'>('all');
   // A van a manager gave this driver that still needs its pick-up video or photos.
   const pickup = usePickupRequest(s.myVan);
+  const whoDid = useWhoDid();
   const selfOn = (stationId: string | null | undefined) => !!s.stations.find((st) => st.id === stationId)?.selfAssign;
   const canDrop = !!s.myVan && selfOn(s.myVan.stationId) && !s.runs(s.myVan.stationId);
   const showStations = s.myStations.length > 1;
@@ -111,7 +113,7 @@ export default function Fleet() {
               {tracking && !v.retired ? (
                 <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : 'Free'}</T>
               ) : null}
-              <T v="hint">{last ? 'Last walk-around ' + fmtWhen(last.createdAt) : 'No walk-around yet'}</T>
+              <T v="hint">{last ? ['Last walk-around ' + fmtWhen(last.createdAt), whoDid(last.createdBy) ? 'by ' + whoDid(last.createdBy) : ''].filter(Boolean).join(', ') : 'No walk-around yet'}</T>
               <Row gap={6}>
                 {tracking && !v.retired && !v.assignedTo ? <Pill v="good" text="Free" /> : null}
                 {v.retired ? <Pill v="muted" text="Retired" /> : null}

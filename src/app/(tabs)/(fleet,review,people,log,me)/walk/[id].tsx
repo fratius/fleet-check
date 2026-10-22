@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { useWhoDid } from '@/lib/names';
 import { fetchWalk } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import type { Walkaround } from '@/lib/types';
@@ -10,6 +11,7 @@ import type { Walkaround } from '@/lib/types';
 export default function WalkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useSession();
+  const whoDid = useWhoDid();
   const c = useColors();
   const { width } = useWindowDimensions();
   const loadedW = s.walks.find((x) => x.id === id);
@@ -30,7 +32,7 @@ export default function WalkScreen() {
     <Screen edges={[]}>
       <Stack.Screen options={{ title: w.handover ? (w.handover.kind === 'pickup' ? 'Pick-up photos' : 'Drop-off photos') : 'Walk-around' }} />
       <View style={{ gap: 4 }}>
-        <T v="hint">{w.handover ? (w.handover.kind === 'pickup' ? 'Pick-up photos' : 'Drop-off photos') : w.source === 'library' ? 'Photos from the library' : 'Walk-around'}, {w.vehicleName}</T>
+        <T v="hint">{w.handover ? (w.handover.kind === 'pickup' ? 'Pick-up photos' : 'Drop-off photos') : w.source === 'library' ? 'Photos from the library' : 'Walk-around'}, {w.vehicleName}{whoDid(w.createdBy) ? `, by ${whoDid(w.createdBy)}` : ''}</T>
         <T v="h1">{fmtWhen(w.createdAt)}</T>
       </View>
       <Stats>

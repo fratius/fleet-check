@@ -8,6 +8,7 @@ import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/h
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
+import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
@@ -27,6 +28,7 @@ export default function VehicleScreen() {
   // "You picked up …" after the camera closes.
   const done = useFlash(`van:${id}`);
   const pickup = usePickupRequest(v);
+  const whoDid = useWhoDid();
   // The damage record: every damage on the van with where it is, when it happened and who had the van.
   const recs = useVanRecords(id);
   const damages = useMemo(() => (v ? buildDamages(v, recs.checks, recs.walks) : []), [v, recs.checks, recs.walks]);
@@ -223,7 +225,7 @@ export default function VehicleScreen() {
         {!walks.length ? <T v="hint">No walk-around yet. Start one above.</T> : null}
         {walks.slice(0, 8).map((w) => (
           <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-            <T v="h3">{fmtWhen(w.createdAt)}</T>
+            <T v="h3">{[whoDid(w.createdBy), fmtWhen(w.createdAt)].filter(Boolean).join(' – ')}</T>
             <T v="hint">{[`${w.taken} of ${w.frames} photos`, w.totalMs ? mmss(w.totalMs) : '', w.source === 'library' ? 'from library' : `${w.retakes} retake${w.retakes === 1 ? '' : 's'}`].filter(Boolean).join(', ')}</T>
           </Pressable>
         ))}

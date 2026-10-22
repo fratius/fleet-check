@@ -81,7 +81,7 @@ export default function ReviewQueue() {
             {!atVan.length ? <T v="hint">No driver is at a van right now.</T> : null}
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                title={k.vehicleName} line={[k.createdByName, `started ${dur(Date.now() - k.createdAt)} ago`, where(k.stationId)].filter(Boolean).join(', ')}
+                title={k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName} line={[`started ${dur(Date.now() - k.createdAt)} ago`, where(k.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="muted" text={`${k.spots.filter((p) => p.verdict).length} of ${k.spots.length} spots`} />} />
             ))}
           </List>
@@ -96,7 +96,8 @@ export default function ReviewQueue() {
               const n = approvedDamage(k).length;
               return (
                 <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                  title={k.vehicleName} line={[k.review?.byName, k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(', ')}
+                  title={k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName}
+                  line={[k.review?.byName ? `reviewed by ${k.review.byName}` : '', k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(', ')}
                   right={<Pill v={n ? 'bad' : 'good'} text={n ? `${n} damage${n === 1 ? '' : 's'}` : 'No damage'} />} />
               );
             })}
@@ -151,15 +152,12 @@ function ToReview({ k, plate, where }: { k: Check; plate: string; where: string 
   const aiDamage = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
   const long = Date.now() - sent > 2 * 3600_000;
   return (
-    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={`Review ${k.vehicleName}`}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <T v="h2" style={{ flexShrink: 1 }} numberOfLines={1}>{k.vehicleName}</T>
-        <View style={{ flex: 1 }} />
-        <Text style={{ fontFamily: F.semi, fontSize: 14, color: long ? c.amber : c.ink }}>Waiting {dur(Date.now() - sent)}</Text>
-      </View>
+    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={`Review ${k.createdByName ? k.createdByName + ', ' : ''}${k.vehicleName}`}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName}</Text>
       <Row>
         {plate ? <Plate text={plate} /> : null}
-        <T v="hint">{['from ' + (k.createdByName || 'a driver'), where].filter(Boolean).join(', ')}</T>
+        <Text style={{ fontFamily: F.semi, fontSize: 14, color: long ? c.amber : c.ink }}>Waiting {dur(Date.now() - sent)}</Text>
+        {where ? <T v="hint">{where}</T> : null}
       </Row>
       <Row gap={6}>
         <Pill text={`${k.spots.length} spot${k.spots.length === 1 ? '' : 's'}`} />
@@ -175,15 +173,16 @@ function MissingCard({ m, plate, where }: { m: Missing; plate: string; where: st
   const { a, what } = m;
   const problem = what === 'no-pickup' ? 'No pick-up video' : what === 'still-out' ? 'Not dropped off' : 'No drop-off video';
   const since = what === 'no-pickup' ? `${dur(Date.now() - a.start)} since it was given` : what === 'still-out' ? `out for ${dur(Date.now() - a.start)}` : '';
-  const detail = what === 'no-pickup' ? `${a.startedByName} gave it to ${a.driverName}, ${fmtWhen(a.start)}`
-    : what === 'still-out' ? `${a.driverName} has had it since ${fmtWhen(a.start)}`
-      : [`${a.driverName} had it until ${fmtWhen(a.end)}`, a.endReason === 'taken over' ? `then ${a.endedByName || 'another driver'} took it over` : a.endedByName ? `ended by ${a.endedByName}` : ''].filter(Boolean).join(', ');
+  // The driver it's about comes first; the line below says what happened.
+  const detail = what === 'no-pickup' ? `Given by ${a.startedByName}, ${fmtWhen(a.start)}`
+    : what === 'still-out' ? `Has had it since ${fmtWhen(a.start)}`
+      : [`Had it until ${fmtWhen(a.end)}`, a.endReason === 'taken over' ? `then ${a.endedByName || 'another driver'} took it over` : a.endedByName ? `ended by ${a.endedByName}` : ''].filter(Boolean).join(', ');
   return (
-    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${problem}: ${a.vehicleName}`}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <Text style={{ fontFamily: F.condBold, fontSize: 21, color: c.alert }}>{problem}</Text>
-        {since ? <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.alert }}>{since}</Text> : null}
-      </View>
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${a.vehicleName}`}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+        {a.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
+      </Text>
+      {since ? <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.alert, marginTop: -4 }}>{since}</Text> : null}
       <Row>
         <T v="h3">{a.vehicleName}</T>
         {plate ? <Plate text={plate} /> : null}
@@ -204,7 +203,7 @@ function ListRow({ title, line, right, first, onPress }: { title: string; line: 
     <Pressable accessibilityRole="button" onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
         <T v="medium" numberOfLines={1}>{title}</T>
-        <T v="small" numberOfLines={1}>{line}</T>
+        <T v="small" numberOfLines={2}>{line}</T>
       </View>
       {right}
     </Pressable>
