@@ -133,6 +133,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | Tours `tours`, readings `readings` | read | read | their own | the server only |
 | Damage log `damageLog` | read | read | the ones they're in | the server only |
 | What the AI read first `dashReads` | no | no | no | the server; app creator reads |
+| Documents read from a photo `docReads` (kind, count, cost; no values) | no | no | no | the server; app creator reads |
 
 - **The van's facts** (VIN, registration, fuel, tank, size, breakdown and accident numbers) are on the van:
   everyone at its station reads them; owners and the station's managers change them.
@@ -148,6 +149,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 - **Tours** need the company setting `dashScans` (owner). The driver who has the van (or whose tour on it is still
   open) starts and ends their tours; the station's staff can end a tour a driver left open. `readDashboard` and
   `saveReading` check all of it; the odometer can't go down and big jumps need a confirmation.
+- **Filling in from a document photo** (`readDocument`): owners and the managers of the van's or driver's station;
+  costs are only read for owners; the photos are deleted after reading; nothing is saved until the person confirms.
 - Deadlines (vans and drivers), warning lights and tours without their photos show to owners and managers only:
   on the van or person, in the fleet list, and in Review.
 

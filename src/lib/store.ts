@@ -138,6 +138,18 @@ export interface DashRead {
   usage?: Usage;
 }
 
+/** What the server read from a photo of a document: what it is, and the details the record keeps (by field key). */
+export interface DocRead {
+  kind: string;
+  title: string | null;
+  readable: boolean;
+  /** Drivers' documents: whether the name on it matches the person. */
+  sameName: 'yes' | 'no' | 'unclear' | 'not shown' | null;
+  notes: string | null;
+  fields: { key: string; value: unknown; confidence: number | null; evidence: string }[];
+  usage?: Usage;
+}
+
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
 export class AiError extends Error {
   constructor(public code: string, message: string) { super(message); }
@@ -197,6 +209,7 @@ export const ai = {
   saveReading: call<{ orgId: string; readId: string; values: DashValues; refuel: { litres: number | null; kwh: number | null; unknown: boolean } | null; sure?: boolean },
     { readingId: string; tourId: string | null; role: 'start' | 'end' | 'none'; tour: Tour | null }>('saveReading', 40000),
   recordLicenceCheck: call<{ orgId: string; uid: string; ok: boolean; note: string; day: string }, { ok: boolean }>('recordLicenceCheck', 30000),
+  readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
   checkSpot: call<{ orgId: string; checkId: string; spot: number; closeups: string[]; tier: Tier }, { verdict: Verdict; usage?: Usage; ms?: number; model: string }>('checkSpot'),

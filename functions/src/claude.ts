@@ -100,7 +100,19 @@ function toHttps(e: unknown): HttpsError {
  */
 function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
   const props = (schema as { properties?: Record<string, unknown> }).properties || {};
-  const obj = 'odometerKm' in props
+  const obj = 'documentType' in props
+    ? { documentType: 'registration certificate', title: 'Zulassungsbescheinigung Teil I', readable: true, sameName: 'not shown', notes: null,
+      fields: [
+        { key: 'vin', value: 'WF0XXXTTGXKA12345', confidence: 0.95, evidence: 'E WF0XXXTTGXKA12345' },
+        { key: 'firstReg', value: '15.05.2023', confidence: 0.9, evidence: 'B 15.05.2023' },
+        { key: 'grossKg', value: '3.500', confidence: 0.9, evidence: 'F.2 3500' },
+        { key: 'emptyKg', value: '2310', confidence: 0.9, evidence: 'G 2310' },
+        { key: 'heightM', value: '2.72', confidence: 0.8, evidence: '20 2720' },
+        { key: 'due.hu', value: '03/2027', confidence: 0.85, evidence: 'HU 03/27' },
+        { key: 'monthly', value: '705.50', confidence: 0.9, evidence: 'Monatsrate 705,50 EUR' },
+        { key: 'fuel', value: 'Diesel', confidence: 0.9, evidence: 'P.3 Diesel' },
+      ].filter((f) => ((props.fields as { items?: { properties?: { key?: { enum?: string[] } } } })?.items?.properties?.key?.enum || []).includes(f.key)) }
+    : 'odometerKm' in props
     ? { readable: true, odometerKm: 48213, unit: 'km', fuelPct: 62.5, batteryPct: null, rangeKm: 410, warnings: ['Tyre pressure'], confidence: 0.92, issue: null }
     : 'spots' in props
     ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }

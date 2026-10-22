@@ -194,6 +194,10 @@ service cloud.firestore {
       match /dashReads/{id} {
         allow read: if creator();
       }
+      // Documents read from a photo (what kind, how many details, speed and cost; never the values): the app creator only.
+      match /docReads/{id} {
+        allow read: if creator();
+      }
 
       // New damage found by a reviewed check and who had the van in that time (written by the server from the
       // review), for the drivers' numbers. Owners and the station's managers read it; drivers the ones they're in.

@@ -659,6 +659,42 @@ test('damage log: new damage and who had the van, after the review', async () =>
   await fails(S.d1.call('syncDamageLog', { orgId: S.org, since: 0 }), 'permission-denied');
 });
 
+test('records from a photo of a document: read, sorted, costs only for owners, the photo deleted', async () => {
+  const { v2 } = S.vans;
+  const shot = async (p) => {
+    const path = `orgs/${S.org}/docs/${p.uid}/${Date.now().toString(36)}-1.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  // The station's manager: the van's details, no costs (not even asked for), the payload worked out.
+  const pm = await shot(S.mgr);
+  const r = await S.mgr.call('readDocument', { orgId: S.org, target: 'van', id: v2.id, paths: [pm] });
+  assert.equal(r.kind, 'registration certificate');
+  const got = Object.fromEntries(r.fields.map((f) => [f.key, f.value]));
+  assert.equal(got.vin, 'WF0XXXTTGXKA12345');
+  assert.equal(got.firstReg, '2023-05-15');
+  assert.equal(got.grossKg, 3500);
+  assert.equal(got.payloadKg, 1190);
+  assert.equal(got['due.hu'], '2027-03-31');
+  assert.equal(got.fuel, 'diesel');
+  assert.equal(got.monthly, undefined, 'a manager never gets costs');
+  assert.equal(got.emptyKg, undefined);
+  assert.equal(r.usage, undefined);
+  // The photo isn't kept.
+  await fails(getBytes(ref(S.own.st, pm)));
+  // The owner gets the costs too.
+  const ro = await S.own.call('readDocument', { orgId: S.org, target: 'van', id: v2.id, paths: [await shot(S.own)] });
+  assert.equal(ro.fields.find((f) => f.key === 'monthly').value, 705.5);
+  // Drivers can't; another station's van can't; someone else's photo can't.
+  await fails(S.d1.call('readDocument', { orgId: S.org, target: 'van', id: v2.id, paths: [await shot(S.d1)] }), 'permission-denied');
+  await fails(S.mgr.call('readDocument', { orgId: S.org, target: 'van', id: S.vans.v3.id, paths: [await shot(S.mgr)] }), 'permission-denied');
+  await fails(S.mgr.call('readDocument', { orgId: S.org, target: 'van', id: v2.id, paths: [await shot(S.own)] }), 'invalid-argument');
+  await fails(S.mgr.call('readDocument', { orgId: S.org, target: 'driver', id: S.d3.uid, paths: [await shot(S.mgr)] }), 'permission-denied');
+  // A driver's document: only the driver fields are asked for.
+  const rd = await S.mgr.call('readDocument', { orgId: S.org, target: 'driver', id: S.d1.uid, paths: [await shot(S.mgr)] });
+  assert.ok(rd.fields.every((f) => ['licenceClasses', 'licenceValid', 'employment', 'employedFrom', 'employedTo', 'vanBriefing', 'safetyBriefing'].includes(f.key)));
+});
+
 test('costs move out of the record managers read (Deploy runs this once)', async () => {
   const { v3 } = S.vans;
   const det = adminDb().doc(`orgs/${S.org}/vehicleDetails/${v3.id}`);
