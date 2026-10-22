@@ -1,3 +1,5 @@
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
 /**
@@ -122,8 +124,6 @@ export async function saveXlsx(name: string, sheets: Sheet[]) {
     setTimeout(() => URL.revokeObjectURL(url), 30_000);
     return;
   }
-  const { File, Paths } = await import('expo-file-system');
-  const Sharing = await import('expo-sharing');
   const f = new File(Paths.cache, file);
   if (f.exists) f.delete();
   f.create();
