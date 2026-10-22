@@ -136,12 +136,12 @@ export function Chip({ text, on, onPress }: { text: string; on?: boolean; onPres
   );
 }
 
-export function Plate({ text }: { text: string }) {
+export function Plate({ text, small }: { text: string; small?: boolean }) {
   if (!text) return null;
   return (
-    <View style={{ flexDirection: 'row', borderWidth: 2, borderColor: '#000', borderRadius: 4, backgroundColor: '#fff', overflow: 'hidden', alignSelf: 'flex-start' }}>
-      <View style={{ width: 10, backgroundColor: '#1F4FB4' }} />
-      <Text style={{ fontFamily: F.cond, fontSize: 17, letterSpacing: 1.2, color: '#000', paddingHorizontal: 8, paddingVertical: 2 }}>{text}</Text>
+    <View style={{ flexDirection: 'row', borderWidth: small ? 1.5 : 2, borderColor: '#000', borderRadius: small ? 3 : 4, backgroundColor: '#fff', overflow: 'hidden', alignSelf: 'flex-start' }}>
+      <View style={{ width: small ? 7 : 10, backgroundColor: '#1F4FB4' }} />
+      <Text style={{ fontFamily: F.cond, fontSize: small ? 14 : 17, letterSpacing: small ? 0.8 : 1.2, color: '#000', paddingHorizontal: small ? 6 : 8, paddingVertical: small ? 0 : 2 }}>{text}</Text>
     </View>
   );
 }

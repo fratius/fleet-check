@@ -1,10 +1,9 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, View } from 'react-native';
+import { Pressable, Share, Text, View } from 'react-native';
 
-import { Button, Card, Chip, Field, Notice, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchInvites, watchMembers } from '@/lib/people';
-import { ManagePerson, manageRights } from '@/components/person';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
@@ -35,21 +34,21 @@ export default function People() {
     <Screen>
       <View style={{ gap: 4 }}>
         <T v="h1">People</T>
-        <T v="hint">{owner ? 'Stations, fleet managers and drivers of ' + s.org?.name + '. People join with an invite link: one link per person, valid for 24 hours.' : 'Drivers of your station. Invite more with the links below: one link per person, valid for 24 hours.'}</T>
+        <T v="hint">{owner ? `Fleet managers and drivers of ${s.org?.name}, by station.` : 'The fleet managers and drivers of your station.'}</T>
       </View>
       {err ? <Notice tone="bad" text={err} /> : null}
-      {owner ? <Stations members={members || []} /> : null}
       {stations.map((st) => (
         <StationPeople key={st.id} station={st} members={(members || []).filter((m) => (m.stationIds || []).includes(st.id) && roleOf(m) !== 'owner')}
           invites={invites.filter((i) => i.stationId === st.id)} />
       ))}
       {owner && owners.length ? (
-        <Card>
-          <T v="h3">Owners</T>
-          {owners.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />)}
-        </Card>
+        <View style={{ gap: 8 }}>
+          <T v="h2">Owners</T>
+          <View style={{ gap: 6 }}>{owners.map((m) => <BossRow key={m.uid} m={m} label="Fleet owner" />)}</View>
+        </View>
       ) : null}
       {owner ? <Unassigned members={(members || []).filter((m) => roleOf(m) !== 'owner' && !(m.stationIds || []).some((id) => s.stations.some((st) => st.id === id)))} /> : null}
+      {owner ? <Stations members={members || []} /> : null}
       {members ? <Former members={members} /> : null}
       {!members && !err ? <T v="hint">Loading…</T> : null}
     </Screen>
@@ -71,8 +70,8 @@ function Stations({ members }: { members: Member[] }) {
   };
   return (
     <Card>
-      <T v="h3">Stations ({s.stations.length})</T>
-      <T v="hint">Each station has its own vans, fleet managers and drivers. Managers and drivers only see their station.</T>
+      <T v="h3">Manage stations</T>
+      <T v="small">Managers and drivers only see their own station.</T>
       {s.stations.map((st, i) => (
         <StationRow key={st.id} st={st} first={i === 0} vans={s.vehicles.filter((v) => v.stationId === st.id).length}
           people={members.filter((m) => (m.stationIds || []).includes(st.id)).length} />
@@ -129,27 +128,59 @@ function StationRow({ st, first, vans, people }: { st: Station; first: boolean; 
   );
 }
 
-/** One station: its managers and drivers, and the links to invite more. */
+/**
+ * One station: a heavy heading, then its fleet managers as dark badges and its drivers as light rows with the van
+ * they have, so the two never look alike. Inviting more and who hands out the vans sit behind their own buttons.
+ */
 function StationPeople({ station, members, invites }: { station: Station; members: Member[]; invites: Invite[] }) {
   const s = useSession();
+  const c = useColors();
   const owner = s.role === 'owner';
   const managers = members.filter((m) => roleOf(m) === 'manager');
-  const drivers = members.filter((m) => roleOf(m) === 'driver');
+  const drivers = members.filter((m) => roleOf(m) === 'driver').sort((a, b) => a.name.localeCompare(b.name));
+  const vans = s.vehicles.filter((v) => v.stationId === station.id && !v.retired).length;
   return (
-    <Card>
-      <T v="h2">{station.name}</T>
-      {owner ? (
-        <>
-          <T v="h3">Fleet managers</T>
-          {managers.length ? managers.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No fleet manager yet.</T>}
-          <InviteLinks station={station} role="manager" invites={invites.filter((i) => i.role === 'manager')} />
-        </>
-      ) : null}
-      <T v="h3">Drivers</T>
-      {drivers.length ? drivers.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No drivers yet.</T>}
+    <View style={{ gap: 12, marginTop: 8 }}>
+      <View style={{ borderBottomWidth: 4, borderColor: c.ink, paddingBottom: 6, gap: 2 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <Text style={{ fontFamily: F.condBold, fontSize: 30, lineHeight: 33, color: c.ink, flexShrink: 1 }}>{station.name}</Text>
+          {station.code ? <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 3, paddingHorizontal: 6 }}><Text style={{ fontFamily: F.cond, fontSize: 15, letterSpacing: 1, color: c.ink }}>{station.code}</Text></View> : null}
+        </View>
+        <T v="small">{[`${managers.length} fleet manager${managers.length === 1 ? '' : 's'}`, `${drivers.length} driver${drivers.length === 1 ? '' : 's'}`, `${vans} van${vans === 1 ? '' : 's'}`].join(', ')}</T>
+      </View>
+
+      <View style={{ gap: 6 }}>
+        <T v="h3">Fleet managers</T>
+        {managers.length ? managers.map((m) => <BossRow key={m.uid} m={m} label="Fleet manager" />)
+          : <View style={{ borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, padding: 12 }}><T v="hint">No fleet manager at {station.name} yet.</T></View>}
+        {owner ? <InviteToggle station={station} role="manager" invites={invites.filter((i) => i.role === 'manager')} /> : null}
+      </View>
+
+      <View style={{ gap: 6 }}>
+        <T v="h3">Drivers{drivers.length ? ` (${drivers.length})` : ''}</T>
+        <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 10, gap: 10 }}>
+          {drivers.length ? drivers.map((m, i) => <DriverRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">No drivers yet. Invite them with a link.</T>}
+        </View>
+        <InviteToggle station={station} role="driver" invites={invites.filter((i) => i.role === 'driver')} />
+      </View>
+
       {s.runs(station.id) ? <SelfAssign station={station} /> : null}
-      <InviteLinks station={station} role="driver" invites={invites.filter((i) => i.role === 'driver')} />
-    </Card>
+    </View>
+  );
+}
+
+/** Invite links behind a button: the panel opens when you want to invite someone. */
+function InviteToggle({ station, role, invites }: { station: Station; role: 'manager' | 'driver'; invites: Invite[] }) {
+  const [open, setOpen] = useState(false);
+  const live = invites.filter((i) => !i.usedBy && i.expiresAt > Date.now()).length;
+  return (
+    <View style={{ gap: 8 }}>
+      <Row>
+        <Button small v={open ? 'primary' : 'secondary'} title={open ? 'Done inviting' : role === 'manager' ? 'Invite a fleet manager' : 'Invite drivers'} onPress={() => setOpen(!open)} />
+        {live && !open ? <T v="small">{live} open link{live === 1 ? '' : 's'}</T> : null}
+      </Row>
+      {open ? <InviteLinks station={station} role={role} invites={invites} /> : null}
+    </View>
   );
 }
 
@@ -170,16 +201,14 @@ function SelfAssign({ station }: { station: Station }) {
     catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t save that.'); } finally { setBusy(false); }
   };
   return (
-    <View style={{ gap: 8, backgroundColor: c.page, borderRadius: 4, padding: 10, opacity: busy ? 0.6 : 1 }}>
-      <T v="medium">Who hands out the vans</T>
-      <Row>
-        <Chip text="Fleet managers" on={!on} onPress={() => (busy ? null : set(false))} />
-        <Chip text="Drivers pick up themselves" on={on} onPress={() => (busy ? null : set(true))} />
-      </Row>
+    <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 12, opacity: busy ? 0.6 : 1 }}>
+      <T v="h3">Who hands out the vans</T>
+      <Segmented label="Who hands out the vans" value={on ? 'drivers' : 'managers'} onChange={(k) => (busy ? null : set(k === 'drivers'))}
+        options={[['managers', 'Fleet managers'], ['drivers', 'Drivers themselves']]} />
       <T v="small">{on
-        ? 'Drivers tap Pick up on the van they were told to take and Drop off when they bring it back. Every pick-up is in the van\'s history under the driver\'s name. You can still give vans out yourself.'
-        : 'Only you and the other fleet managers give vans to drivers. Turn on driver pick-up if you assign vans elsewhere (for example in Amazon\'s tools) and just tell drivers which one to take.'}</T>
-      {station.selfAssignBy ? <T v="small">Last changed by {station.selfAssignBy}, {fmtWhen(station.selfAssignAt)}.</T> : null}
+        ? 'Drivers pick up and drop off the van they were told to take, with a video or photos. You can still give vans out.'
+        : 'Only fleet managers give vans to drivers. Switch if you assign vans elsewhere, like Amazon\'s tools.'}
+        {station.selfAssignBy ? ` Changed by ${station.selfAssignBy}, ${fmtWhen(station.selfAssignAt)}.` : ''}</T>
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
   );
@@ -210,9 +239,8 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
     message: `You're invited to join ${s.org!.name} in Fleet Check as a ${who} at ${station.name}. Open this link on your phone to create your account (it works once, until ${fmtWhen(i.expiresAt)}): ${inviteUrl(i.token)}`,
   }).catch(() => {});
   return (
-    <View style={{ gap: 8, backgroundColor: c.page, borderRadius: 4, padding: 10 }}>
-      <T v="medium">Invite {role === 'manager' ? 'fleet managers' : 'drivers'}</T>
-      <T v="small">One link per person. A link works once and expires after 24 hours.</T>
+    <View style={{ gap: 8, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderStyle: 'dashed', borderRadius: 4, padding: 12 }}>
+      <T v="small">One link per person, sent to them. A link works once and expires after 24 hours.</T>
       {open.map((i, n) => (
         <View key={i.token} style={{ gap: 4, borderTopWidth: n ? 1 : 0, borderColor: c.rule, paddingTop: n ? 8 : 0 }}>
           <T v="small" selectable numberOfLines={1}>{inviteUrl(i.token)}</T>
@@ -237,29 +265,57 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
   );
 }
 
-/** One person: tap to open their page (details, van and history); the + opens role, station and removal. */
-function PersonRow({ m, first }: { m: Member; first: boolean }) {
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || '?';
+
+/**
+ * A fleet manager or owner: a dark badge with a yellow initials square, so the people in charge stand apart from
+ * the drivers at a glance. Tap to open their page (Manage is there: role, station, removal).
+ */
+function BossRow({ m, label }: { m: Member; label: string }) {
   const s = useSession();
   const c = useColors();
-  const [open, setOpen] = useState(false);
-  const r = roleOf(m)!;
   const me = m.uid === s.user?.uid;
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
-  const { canEdit, canRemove } = manageRights(s, m);
+  const fg = c.paper, sub = c.dark ? '#565C66' : '#B9BEC7';
   return (
-    <View style={{ gap: 6, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 8 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${m.name}, ${label}, open`} onPress={() => router.push(`/person/${m.uid}`)}
+      style={({ pressed }) => ({ backgroundColor: c.ink, borderRadius: 4, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 })}>
+      <View style={{ width: 46, height: 46, borderRadius: 4, backgroundColor: MARKER, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontFamily: F.condBold, fontSize: 21, color: '#000' }}>{initials(m.name)}</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+        <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: 22, lineHeight: 25, color: fg }}>{m.name}{me ? ' (you)' : ''}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone || label}</Text>
+          {van ? <Plate small text={van.plate || van.name} /> : null}
+        </View>
+      </View>
+      <Text style={{ fontFamily: F.cond, fontSize: 26, color: fg }}>›</Text>
+    </Pressable>
+  );
+}
+
+/** A driver: a light row with a round initials badge and the plate of the van they have now. */
+function DriverRow({ m, first }: { m: Member; first: boolean }) {
+  const s = useSession();
+  const c = useColors();
+  const me = m.uid === s.user?.uid;
+  const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
+  return (
+    <View style={{ borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${m.name}, open`} onPress={() => router.push(`/person/${m.uid}`)} style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
-            <T v="small" numberOfLines={1}>{r === 'owner' ? [m.phone, m.email].filter(Boolean).join(', ') : van ? `Van: ${van.name}${van.plate ? ', ' + van.plate : ''}` : 'No van'}</T>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${m.name}, driver, open`} onPress={() => router.push(`/person/${m.uid}`)}
+          style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: c.ink2, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontFamily: F.cond, fontSize: 15, color: c.ink2 }}>{initials(m.name)}</Text>
           </View>
-          <Pill v={r === 'owner' ? 'solid' : 'default'} text={ROLE_NAME[r]} />
+          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+            <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
+            {van ? <Row gap={6}><Plate small text={van.plate || van.name} />{van.plate ? <T v="small" numberOfLines={1}>{van.name}</T> : null}</Row> : <T v="small">No van</T>}
+          </View>
           <T v="h3" color={c.ink2}>›</T>
         </Pressable>
-        {canEdit || canRemove ? <Button small v="link" title={open ? 'Close' : 'Manage'} onPress={() => setOpen(!open)} /> : null}
       </View>
-      {open ? <ManagePerson m={m} onDone={() => setOpen(false)} /> : null}
     </View>
   );
 }
@@ -299,7 +355,7 @@ function Unassigned({ members }: { members: Member[] }) {
     <Card>
       <T v="h3">Not at a station</T>
       <T v="hint">Open a person to put them at a station. Until then they see nothing.</T>
-      {members.map((m, i) => <PersonRow key={m.uid} m={m} first={i === 0} />)}
+      {members.map((m, i) => (roleOf(m) === 'manager' ? <BossRow key={m.uid} m={m} label="Fleet manager" /> : <DriverRow key={m.uid} m={m} first={i === 0} />))}
     </Card>
   );
 }
