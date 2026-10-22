@@ -7,6 +7,7 @@ import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watc
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
+import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
@@ -301,6 +302,8 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
   const c = useColors();
   const me = m.uid === s.user?.uid;
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
+  // The most pressing thing on their record (licence check, licence, safety briefing), if anything is due.
+  const due = driverDeadlines(s.records.find((r) => r.id === m.uid), s.org?.licenceCheckMonths || CHECK_MONTHS).find((x) => x.state !== 'ok');
   return (
     <View style={{ borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -312,6 +315,7 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
             <T v="medium" numberOfLines={1}>{m.name}{me ? ' (you)' : ''}</T>
             {van ? <Row gap={6}><Plate small text={van.plate || van.name} />{van.plate ? <T v="small" numberOfLines={1}>{van.name}</T> : null}</Row> : <T v="small">No van</T>}
+            {due ? <T v="small" color={due.state === 'overdue' ? c.alert : c.amber} numberOfLines={1}>{due.label}: {due.note}</T> : null}
           </View>
           <T v="h3" color={c.ink2}>›</T>
         </Pressable>

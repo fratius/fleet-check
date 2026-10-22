@@ -1,14 +1,16 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
-import { Button, Card, Chip, F, Field, Notice, Pill, Plate, Row, Screen, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
+import { TourCard, TourLine } from '@/components/dash';
+import { isOpen } from '@/lib/stats';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { buildDamages } from '@/lib/damage';
@@ -73,6 +75,10 @@ export default function VehicleScreen() {
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
   const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
+  const vanTours = s.tours.filter((t) => t.vehicleId === v.id);
+  // A warning light on the latest dashboard photo in the last three days (the station's staff).
+  const latest = vanTours[0];
+  const warned = s.runs(v.stationId) && latest?.warnings?.length && Date.now() - (latest.end?.at || latest.startAt) < 3 * 86_400_000 ? latest : null;
   const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
   const est = Math.max(1, Math.round((frames.length * perPhoto) / 60000));
   const makeModel = [v.make, v.model].filter(Boolean).join(' ');
@@ -109,7 +115,7 @@ export default function VehicleScreen() {
     <Screen scrollRef={scroller} edges={[]}>
       <Stack.Screen options={{ title: v.name }} />
       {/* A van a manager just gave this driver: the pick-up video or photos come first (the notification opens here). */}
-      {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : null}
+      {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : <TourCard v={v} />}
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
         <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
@@ -122,6 +128,12 @@ export default function VehicleScreen() {
       </View>
 
       {done ? <Notice text={done} /> : null}
+      {warned ? (
+        <View style={{ borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
+          <T v="medium" color={c.alert}>Warning light on the dashboard: {warned.warnings.join(', ')}</T>
+          <T v="small">On the {warned.end && !isOpen(warned) ? 'end' : 'start'} photo of {warned.driverName}&apos;s tour, {fmtWhen(warned.end?.at || warned.startAt)}. Check it before the van goes out again.</T>
+        </View>
+      ) : null}
       {s.runs(v.stationId) && !v.retired ? <Deadlines v={v} d={s.details.find((x) => x.id === v.id)} compact onOpen={openDetails} /> : null}
       {v.retired ? (
         <Card dashed>
@@ -247,6 +259,17 @@ export default function VehicleScreen() {
       </View>
       </>) : null}
 
+      {tab === 'history' && vanTours.length ? (
+        <View style={{ gap: 8 }}>
+          <T v="h2">Tours</T>
+          <T v="hint">{s.role === 'driver' ? 'Your tours with this van, from the dashboard photos.' : 'From the dashboard photos at the start and end of each tour, newest first.'}</T>
+          <Card>
+            {vanTours.slice(0, 10).map((t, i) => (
+              <View key={t.id} style={{ borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}><TourLine t={t} show="driver" /></View>
+            ))}
+          </Card>
+        </View>
+      ) : null}
       {tab === 'history' ? (s.mode === 'firebase' ? (
         <View style={{ gap: 8 }}>
           <T v="h2">Drivers of this van</T>
@@ -332,24 +355,5 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title="Save changes" loading={busy} onPress={save} /><Button v="link" title="Cancel" onPress={onDone} /></Row>
     </Card>
-  );
-}
-
-/** The three parts of the van page, as one full-width switch. */
-function Tabs<K extends string>({ value, onChange, items }: { value: K; onChange: (k: K) => void; items: [K, string, number | null][] }) {
-  const c = useColors();
-  return (
-    <View accessibilityRole="tablist" style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
-      {items.map(([k, label, n], i) => {
-        const on = k === value;
-        return (
-          <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
-            style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
-            <Text style={{ fontFamily: F.cond, fontSize: 19, color: on ? c.paper : c.ink }}>{label}</Text>
-            {n ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }

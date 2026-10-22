@@ -11,8 +11,8 @@ import { SvgXml } from 'react-native-svg';
 import { photoUrl } from '@/lib/images';
 
 export const MARKER = '#E2FF1C';
-const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00' };
-const DARK = { page: '#111316', paper: '#1B1E23', ink: '#F2F3F5', ink2: '#A2A8B2', rule: '#383D45', alert: '#FF7468', ok: '#5FD18E', amber: '#F2B54A' };
+const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00', warn: '#D9480F' };
+const DARK = { page: '#111316', paper: '#1B1E23', ink: '#F2F3F5', ink2: '#A2A8B2', rule: '#383D45', alert: '#FF7468', ok: '#5FD18E', amber: '#F2B54A', warn: '#FF922B' };
 export type Colors = typeof LIGHT;
 export function useColors(): Colors & { dark: boolean } {
   const dark = useColorScheme() === 'dark';
@@ -40,8 +40,10 @@ export function T({ v = 'body', style, color, children, ...rest }: { v?: TV; col
   return <Text {...rest} style={[base[v], color ? { color } : null, style]}>{children}</Text>;
 }
 
-export function Screen({ children, scroll = true, edges = ['top'], pad = true, style, scrollRef }: {
+export function Screen({ children, scroll = true, edges = ['top'], pad = true, style, scrollRef, wide }: {
   children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle>; scrollRef?: React.Ref<ScrollView>;
+  /** Tables: use the width of a computer screen. */
+  wide?: boolean;
 }) {
   const c = useColors();
   // Tapping the tab you're on scrolls its first page back to the top.
@@ -52,7 +54,7 @@ export function Screen({ children, scroll = true, edges = ['top'], pad = true, s
     if (typeof scrollRef === 'function') scrollRef(r);
     else if (scrollRef && typeof scrollRef === 'object') (scrollRef as React.MutableRefObject<ScrollView | null>).current = r;
   };
-  const inner = <View style={[{ gap: 14, paddingHorizontal: pad ? 16 : 0, paddingTop: 12, paddingBottom: 32, width: '100%', maxWidth: 760, alignSelf: 'center' }, style]}>{children}</View>;
+  const inner = <View style={[{ gap: 14, paddingHorizontal: pad ? 16 : 0, paddingTop: 12, paddingBottom: 32, width: '100%', maxWidth: wide ? 1400 : 760, alignSelf: 'center' }, style]}>{children}</View>;
   return (
     <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: c.page }}>
       {scroll ? <ScrollView ref={setRef} keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1 }}>{inner}</ScrollView> : inner}
@@ -219,3 +221,22 @@ export function fmtWhen(ms?: number | null) {
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 export const cap = (s: string | null | undefined) => { const t = String(s || ''); return t.charAt(0).toUpperCase() + t.slice(1); };
+
+/** A page in parts (a van's Damage, Details, Drivers): one full-width switch. */
+export function Tabs<K extends string>({ value, onChange, items }: { value: K; onChange: (k: K) => void; items: [K, string, number | null][] }) {
+  const c = useColors();
+  return (
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
+      {items.map(([k, label, n], i) => {
+        const on = k === value;
+        return (
+          <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
+            style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
+            <Text style={{ fontFamily: F.cond, fontSize: 19, color: on ? c.paper : c.ink }}>{label}</Text>
+            {n ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}

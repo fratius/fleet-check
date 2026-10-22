@@ -150,6 +150,10 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/move-usage.cjs
+      - name: Move van costs out of the records managers read (only owners see costs)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/move-costs.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

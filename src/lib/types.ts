@@ -38,6 +38,8 @@ export interface Vehicle {
   modelYear?: number | null;
   color?: string | null;
   fuel?: 'diesel' | 'electric' | 'petrol' | 'hybrid' | 'cng' | null;
+  /** Fuel tank in litres (diesel and petrol): turns the fuel gauge into litres for the consumption. */
+  tankL?: number | null;
   batteryKwh?: number | null;
   rangeKm?: number | null;
   powerKw?: number | null;
@@ -63,8 +65,9 @@ export interface Vehicle {
 }
 
 /**
- * The business side of a van (orgs/{org}/vehicleDetails/{vehicleId}): contract, costs, insurance, deadlines,
- * odometer and notes. Only owners and the van's station managers read and change it. Dates are "YYYY-MM-DD".
+ * The business side of a van (orgs/{org}/vehicleDetails/{vehicleId}): contract, insurance, deadlines, odometer and
+ * notes. Only owners and the van's station managers read and change it. What it costs is in VehicleCosts (owners
+ * only). Dates are "YYYY-MM-DD".
  */
 export interface VehicleDetails {
   id: string;
@@ -78,26 +81,172 @@ export interface VehicleDetails {
   contractNo?: string | null;
   start?: string | null;
   end?: string | null;
-  /** Euros a month, without VAT. */
-  monthly?: number | null;
   kmPerYear?: number | null;
   kmAtStart?: number | null;
-  /** Euros per kilometre over the allowance. */
-  excessPerKm?: number | null;
   included?: string[] | null;
-  purchasePrice?: number | null;
   contact?: string | null;
   returnNotes?: string | null;
   coverage?: 'liability' | 'partial' | 'full' | null;
-  deductible?: number | null;
-  /** Euros a year. */
-  premium?: number | null;
   insuranceRenewal?: string | null;
   odometerKm?: number | null;
   odometerAt?: string | null;
   due?: { hu?: string | null; uvv?: string | null; service?: string | null; serviceKm?: number | null; tyres?: string | null; tax?: string | null } | null;
   fuelCard?: string | null;
   notes?: string | null;
+}
+
+/** What a van costs (orgs/{org}/vehicleCosts/{vehicleId}): only owners read and change it. Euros, without VAT. */
+export interface VehicleCosts {
+  id: string;
+  createdAt: number;
+  updatedAt?: number;
+  updatedByName?: string | null;
+  /** A month (lease, rent or financing). */
+  monthly?: number | null;
+  purchasePrice?: number | null;
+  /** Each kilometre over the mileage allowance. */
+  excessPerKm?: number | null;
+  /** Insurance premium a year. */
+  premium?: number | null;
+  /** Insurance deductible per claim. */
+  deductible?: number | null;
+}
+export const COST_KEYS = ['monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible'] as const;
+
+/**
+ * A driver's record (orgs/{org}/driverRecords/{uid}): what an owner needs to know about the people who drive the
+ * vans. Owners and the driver's station managers keep it; the driver reads their own. Dates are "YYYY-MM-DD".
+ * Deliberately not here: licence numbers or copies, date of birth, home address, health data (FLEET_DATA.md).
+ */
+export interface LicenceCheck { day: string; at: number; by: string; byName: string; ok: boolean; note: string }
+export type Employment = 'full' | 'part' | 'mini' | 'student' | 'other';
+export interface DriverRecord {
+  id: string;
+  /** The driver's station, so its managers can read it (the server moves it with the driver). */
+  stationId: string | null;
+  createdAt: number;
+  updatedAt?: number;
+  updatedByName?: string | null;
+  licenceClasses?: string[] | null;
+  /** The date on the licence card (or the class that runs out first). */
+  licenceValid?: string | null;
+  employedFrom?: string | null;
+  employedTo?: string | null;
+  employment?: Employment | null;
+  /** First briefing on the vans (how to drive and load them, what to do after an accident). */
+  vanBriefing?: string | null;
+  /** The last yearly safety briefing. */
+  safetyBriefing?: string | null;
+  emergencyName?: string | null;
+  emergencyPhone?: string | null;
+  notes?: string | null;
+  /** Licence checks: who saw the licence when and whether it was fine. Added only by the server, never changed. */
+  checks?: LicenceCheck[];
+}
+
+/** Something that happened with a driver: an accident, a traffic fine, a customer complaint. Kept, not deleted. */
+export type IncidentKind = 'accident' | 'fine' | 'complaint' | 'other';
+export interface Incident {
+  id: string;
+  driverId: string;
+  driverName: string;
+  vehicleId: string | null;
+  vehicleName: string | null;
+  stationId: string;
+  day: string;
+  time: string | null;
+  kind: IncidentKind;
+  /** Fines: what for. */
+  fineType?: 'speeding' | 'parking' | 'red light' | 'phone' | 'other' | null;
+  /** Accidents: was the driver at fault? */
+  atFault?: 'yes' | 'no' | 'unclear' | null;
+  note: string;
+  by: string;
+  byName: string;
+  createdAt: number;
+  updatedAt?: number;
+  updatedByName?: string | null;
+}
+
+/** What the dashboard photo says (read by the AI, then confirmed or corrected by the person who took it). */
+export interface DashValues { odometerKm: number | null; fuelPct: number | null; batteryPct: number | null; rangeKm: number | null; warnings: string[] }
+/** One dashboard photo, confirmed (orgs/{org}/readings/{id}). Written only by the server; kept for good. */
+export interface Reading extends DashValues {
+  id: string;
+  vehicleId: string;
+  vehicleName: string;
+  stationId: string | null;
+  by: string;
+  byName: string;
+  /** The driver whose tour it starts or ends (null: a reading outside any tour). */
+  driverId: string | null;
+  at: number;
+  createdAt: number;
+  path: string;
+  /** What the AI read, and which values the person changed. */
+  ai: DashValues & { confidence: number | null };
+  corrected: string[];
+  tourId: string | null;
+  role: 'start' | 'end' | 'none';
+}
+/** One end of a tour: the dashboard at that moment. */
+export interface TourEnd { readingId: string; at: number; km: number; fuelPct: number | null; batteryPct: number | null; by?: string; byName?: string }
+/**
+ * A tour (orgs/{org}/tours/{id}): one driver, one van, from a dashboard photo at the start to one at the end.
+ * Written only by the server, which works out the kilometres and, when it can, the fuel or energy used.
+ * endedHow: photo (the end photo), next (no end photo: the van's next start photo ends it, an estimate), none
+ * (no end photo and no next photo on that van: the driver started a tour elsewhere).
+ */
+export interface Tour {
+  id: string;
+  driverId: string;
+  driverName: string;
+  vehicleId: string;
+  vehicleName: string;
+  plate: string;
+  stationId: string | null;
+  /** Make and model (or the body class), to compare drivers on the same kind of van. */
+  model: string | null;
+  cls?: string | null;
+  fuel: Vehicle['fuel'] | null;
+  assignmentId: string | null;
+  start: TourEnd;
+  end: TourEnd | null;
+  endedHow: 'photo' | 'next' | 'none' | null;
+  /** Fuel or charge added during the tour, as the driver said at the end. */
+  refuel: { litres: number | null; kwh: number | null; unknown: boolean } | null;
+  km: number | null;
+  hours: number | null;
+  /** Litres (diesel, petrol) or kWh (electric) used, when it could be worked out. */
+  used: number | null;
+  unit: 'l' | 'kwh' | null;
+  per100: number | null;
+  warnings: string[];
+  startAt: number;
+  createdAt: number;
+  /** Still going (no end yet). */
+  open?: boolean;
+}
+
+/**
+ * New damage found by a reviewed check, and who had the van while it could have happened
+ * (orgs/{org}/damageLog/{checkId}). Written by the server from the review, for the driver numbers.
+ */
+export interface DamageLog {
+  id: string;
+  checkId: string;
+  vehicleId: string;
+  vehicleName: string;
+  stationId: string | null;
+  foundAt: number;
+  /** The van's walk-around before (null: no earlier photos, so nobody can be named). */
+  from: number | null;
+  /** New damages (approved, not already on the van). */
+  n: number;
+  drivers: { id: string; name: string }[];
+  driverIds: string[];
+  reviewAt: number | null;
+  createdAt: number;
 }
 
 /**
@@ -391,6 +540,12 @@ export interface Org {
   aiTier?: Tier;
   /** A demo company full of made-up data. */
   demo?: boolean;
+  /** Drivers take a photo of the dashboard at the start and end of each tour (the owner turns it on). */
+  dashScans?: boolean;
+  dashScansBy?: string;
+  dashScansAt?: number;
+  /** How often drivers' licences are checked, in months (default 6). */
+  licenceCheckMonths?: number;
   /** Sign-in accounts of the demo company (made up, for trying the roles). */
   demoLogins?: { role: 'driver' | 'manager'; name: string; email: string; password: string; uid: string }[];
 }

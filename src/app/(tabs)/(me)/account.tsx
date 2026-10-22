@@ -55,6 +55,8 @@ export default function Account() {
         </>
       )}
 
+      {s.staff ? <FleetSettings /> : null}
+
       {s.staff ? (
         <Card>
           <T v="h3">AI model for checks</T>
@@ -181,10 +183,50 @@ function Demo() {
         </>
       ) : (
         <>
-          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, and damage checks in every state, to try things without touching your real fleet. Comes with a driver and a fleet manager login.</T>
+          <T v="hint">Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.</T>
           <Button title="Open the demo company" loading={busy} onPress={() => go(() => s.openDemo())} />
         </>
       )}
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+    </Card>
+  );
+}
+
+/**
+ * Company settings for the fleet records (the owner changes them, managers see them): dashboard photos at the start
+ * and end of each tour, and how often drivers' licences are checked.
+ */
+function FleetSettings() {
+  const s = useSession();
+  const c = useColors();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const owner = s.role === 'owner';
+  const on = !!s.org?.dashScans;
+  const months = s.org?.licenceCheckMonths || 6;
+  const set = async (patch: Parameters<typeof s.setOrgSettings>[0]) => {
+    setBusy(true); setErr(null);
+    try { await s.setOrgSettings(patch); } catch { setErr('Couldn\'t save that. Check the connection.'); } finally { setBusy(false); }
+  };
+  return (
+    <Card>
+      <T v="h3">Tours and driver records</T>
+      <View style={{ gap: 6, opacity: busy ? 0.6 : 1 }}>
+        <T v="medium">Dashboard photos on every tour</T>
+        <Segmented label="Dashboard photos" value={on ? 'on' : 'off'} onChange={(k) => (owner && !busy ? set({ dashScans: k === 'on' }) : null)} options={[['off', 'Off'], ['on', 'On']]} />
+        <T v="small">
+          {on ? 'Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.'
+            : 'When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.'}
+          {s.org?.dashScansBy ? ` Changed by ${s.org.dashScansBy}${s.org.dashScansAt ? `, ${new Date(s.org.dashScansAt).toLocaleDateString()}` : ''}.` : ''}
+        </T>
+        {owner && !on ? <T v="small" color={c.amber}>Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.</T> : null}
+      </View>
+      <View style={{ gap: 6, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10, opacity: busy ? 0.6 : 1 }}>
+        <T v="medium">Check drivers&apos; licences every</T>
+        <Segmented label="Licence check interval" value={String(months)} onChange={(k) => (owner && !busy ? set({ licenceCheckMonths: Number(k) }) : null)} options={[['3', '3 months'], ['6', '6 months'], ['12', '12 months']]} />
+        <T v="small">The next check shows on each driver&apos;s record and in Review. Every 6 months is common practice.</T>
+      </View>
+      {!owner ? <T v="small">The fleet owner changes these.</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </Card>
   );

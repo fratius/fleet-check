@@ -525,8 +525,11 @@ test('retiring, moving and removing keep the history and free the van', async ()
   // Moving a van to another station ends its assignment.
   await S.own.call('changePerson', { orgId: S.org, uid: S.d1.uid, stationId: S.s1 });
   await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d1.uid });
-  // Its contract and deadlines (owners and managers only) go with it to the new station.
-  await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v1.id), { stationId: S.s1, createdAt: Date.now(), ownership: 'leased', monthly: 700 });
+  // Its contract and deadlines (owners and managers only) go with it to the new station; its costs are owners' only.
+  await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v1.id), { stationId: S.s1, createdAt: Date.now(), ownership: 'leased', kmPerYear: 40000 });
+  await fails(setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleCosts', v1.id), { createdAt: Date.now(), monthly: 700 }), 'permission-denied');
+  await setDoc(doc(S.own.db, 'orgs', S.org, 'vehicleCosts', v1.id), { createdAt: Date.now(), monthly: 700 });
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleCosts', v1.id)), 'permission-denied');
   await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicleDetails', v1.id)), 'permission-denied');
   await fails(S.mgr.call('moveVan', { orgId: S.org, vehicleId: v1.id, stationId: S.s2 }), 'permission-denied');
   await S.own.call('moveVan', { orgId: S.org, vehicleId: v1.id, stationId: S.s2 });
@@ -535,6 +538,141 @@ test('retiring, moving and removing keep the history and free the van', async ()
   assert.equal(v1d.assignedTo, null);
   assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'vehicleDetails', v1.id))).data().stationId, S.s2);
   await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v1.id)), 'permission-denied');
+});
+
+test('driver records: managers keep their station\'s; licence checks only through the server', async () => {
+  const rec = (p, uid) => getDoc(doc(p.db, 'orgs', S.org, 'driverRecords', uid));
+  await setDoc(doc(S.mgr.db, 'orgs', S.org, 'driverRecords', S.d1.uid), { stationId: S.s1, createdAt: Date.now(), licenceClasses: ['B'], licenceValid: '2031-05-31' });
+  await fails(setDoc(doc(S.mgr.db, 'orgs', S.org, 'driverRecords', S.d3.uid), { stationId: S.s2, createdAt: Date.now() }), 'permission-denied');
+  await fails(updateDoc(doc(S.mgr.db, 'orgs', S.org, 'driverRecords', S.d1.uid), { checks: [{ day: '2026-01-01', ok: true }] }), 'permission-denied');
+  const today = new Date().toISOString().slice(0, 10);
+  await S.mgr.call('recordLicenceCheck', { orgId: S.org, uid: S.d1.uid, ok: true, note: '', day: today });
+  await fails(S.d1.call('recordLicenceCheck', { orgId: S.org, uid: S.d1.uid, ok: true, note: '', day: today }), 'permission-denied');
+  await fails(S.mgr.call('recordLicenceCheck', { orgId: S.org, uid: S.mgr.uid, ok: true, note: '', day: today }), 'failed-precondition');
+  await fails(S.mgr.call('recordLicenceCheck', { orgId: S.org, uid: S.d3.uid, ok: true, note: '', day: today }), 'permission-denied');
+  await fails(S.mgr.call('recordLicenceCheck', { orgId: S.org, uid: S.d1.uid, ok: false, note: '', day: today }), 'invalid-argument');
+  await fails(S.mgr.call('recordLicenceCheck', { orgId: S.org, uid: S.d1.uid, ok: true, note: '', day: '2030-01-01' }), 'invalid-argument');
+  const r = (await rec(S.d1, S.d1.uid)).data();
+  assert.equal(r.checks.length, 1);
+  assert.equal(r.checks[0].byName, 'Max Manager');
+  assert.equal(r.licenceValid, '2031-05-31');
+  await fails(rec(S.d1, S.mgr.uid), 'permission-denied');
+  // The record goes with the driver to another station (and the old station's manager loses it).
+  await S.own.call('changePerson', { orgId: S.org, uid: S.d1.uid, stationId: S.s2 });
+  assert.equal((await rec(S.own, S.d1.uid)).data().stationId, S.s2);
+  await fails(rec(S.mgr, S.d1.uid), 'permission-denied');
+  await S.own.call('changePerson', { orgId: S.org, uid: S.d1.uid, stationId: S.s1 });
+  assert.equal((await rec(S.mgr, S.d1.uid)).data().stationId, S.s1);
+  // Incidents: the station's manager adds them, the driver reads their own.
+  await setDoc(doc(collection(S.mgr.db, 'orgs', S.org, 'incidents')), { driverId: S.d1.uid, driverName: 'Dana Driver', vehicleId: null, vehicleName: null, stationId: S.s1,
+    day: today, time: '10:00', kind: 'fine', fineType: 'parking', atFault: null, note: 'Bus stop', by: S.mgr.uid, byName: 'Max Manager', createdAt: Date.now() });
+  const mine = await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'incidents'), where('driverId', '==', S.d1.uid), orderBy('createdAt', 'desc')));
+  assert.equal(mine.size, 1);
+});
+
+test('tours from dashboard photos: start, end, kilometres, fuel, and the van\'s odometer', async () => {
+  const { v2 } = S.vans;
+  await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicles', v2.id), { fuel: 'diesel', tankL: 80, make: 'Ford', model: 'Transit' });
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });
+  const shot = async (p) => {
+    const path = `orgs/${S.org}/dash/${p.uid}/${Date.now().toString(36)}.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const p1 = await shot(S.d1);
+  // Off until the owner turns it on.
+  await fails(S.d1.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: p1 }), 'failed-precondition');
+  await fails(updateDoc(doc(S.mgr.db, 'orgs', S.org), { dashScans: true }), 'permission-denied');
+  await updateDoc(doc(S.own.db, 'orgs', S.org), { dashScans: true, dashScansBy: 'Olga Owner', dashScansAt: Date.now() });
+  const r1 = await S.d1.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: p1 });
+  assert.equal(r1.values.odometerKm, 48213);
+  assert.equal(r1.will, 'start');
+  assert.equal(r1.usage, undefined, 'drivers don\'t get AI cost');
+  // Someone without the van (another station, or a photo path that isn't theirs) can't.
+  await fails(S.d3.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: await shot(S.d3) }), 'permission-denied');
+  await fails(S.mgr.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: p1 }), 'invalid-argument');
+  await fails(S.d3.call('saveReading', { orgId: S.org, readId: r1.readId, values: { odometerKm: 48213 }, refuel: null }), 'not-found');
+  const s1 = await S.d1.call('saveReading', { orgId: S.org, readId: r1.readId, values: { odometerKm: 48213, fuelPct: 75, batteryPct: null, rangeKm: null, warnings: [] }, refuel: null });
+  assert.equal(s1.role, 'start');
+  await fails(S.d1.call('saveReading', { orgId: S.org, readId: r1.readId, values: { odometerKm: 48213 }, refuel: null }), 'failed-precondition');
+  const open = (await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'tours'), where('driverId', '==', S.d1.uid), orderBy('createdAt', 'desc')))).docs.map((d) => d.data());
+  assert.equal(open.length, 1);
+  assert.equal(open[0].start.km, 48213);
+  assert.equal(open[0].model, 'Ford Transit');
+  await fails(setDoc(doc(S.own.db, 'orgs', S.org, 'tours', 'fake'), { driverId: S.d1.uid, stationId: S.s1, km: 1, createdAt: 1 }), 'permission-denied');
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id))).data().odometerKm, 48213);
+  // The end photo: the odometer can't go down; then 130 km, an eighth of the 80-litre tank: 10 litres, 7.7 l/100 km.
+  const r2 = await S.d1.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: await shot(S.d1) });
+  assert.equal(r2.will, 'end');
+  assert.equal(r2.endsMine, true);
+  await fails(S.d1.call('saveReading', { orgId: S.org, readId: r2.readId, values: { odometerKm: 48100, fuelPct: 60 }, refuel: { litres: null, kwh: null, unknown: false } }), 'failed-precondition');
+  const s2 = await S.d1.call('saveReading', { orgId: S.org, readId: r2.readId, values: { odometerKm: 48343, fuelPct: 62.5, batteryPct: null, rangeKm: null, warnings: ['Check engine'] }, refuel: { litres: null, kwh: null, unknown: false } });
+  assert.equal(s2.role, 'end');
+  const t = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'tours', s2.tourId))).data();
+  assert.equal(t.km, 130);
+  assert.equal(t.used, 10);
+  assert.equal(t.per100, 7.7);
+  assert.equal(t.endedHow, 'photo');
+  assert.equal(t.open, false);
+  assert.deepEqual(t.warnings, ['Check engine']);
+  // A misread that would add thousands of kilometres needs a "yes, that's right".
+  const r3 = await S.d1.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: await shot(S.d1) });
+  await fails(S.d1.call('saveReading', { orgId: S.org, readId: r3.readId, values: { odometerKm: 60000, fuelPct: 50 }, refuel: null }), 'out-of-range');
+  const s3 = await S.d1.call('saveReading', { orgId: S.org, readId: r3.readId, values: { odometerKm: 60000, fuelPct: 50 }, refuel: null, sure: true });
+  assert.equal(s3.role, 'start');
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id))).data().odometerKm, 60000);
+  // The station's manager ends a tour the driver left open (the van is back).
+  const r4 = await S.mgr.call('readDashboard', { orgId: S.org, vehicleId: v2.id, path: await shot(S.mgr) });
+  assert.equal(r4.will, 'end');
+  assert.equal(r4.endsMine, false);
+  const s4 = await S.mgr.call('saveReading', { orgId: S.org, readId: r4.readId, values: { odometerKm: 60120, fuelPct: 40 }, refuel: null });
+  assert.equal(s4.role, 'end');
+  const t4 = (await getDoc(doc(S.own.db, 'orgs', S.org, 'tours', s4.tourId))).data();
+  assert.equal(t4.km, 120);
+  assert.equal(t4.used, null, 'no fuel figure without the driver\'s answer about refuelling');
+  // Readings: the driver reads their own, nobody writes them.
+  const mineR = await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'readings'), where('driverId', '==', S.d1.uid)));
+  assert.ok(mineR.size >= 3);
+});
+
+test('damage log: new damage and who had the van, after the review', async () => {
+  const { v2 } = S.vans;
+  const before = await photos(S.d1, S.org, v2);
+  await new Promise((r) => setTimeout(r, 1500));
+  const after = await photos(S.d1, S.org, v2);
+  const k = adminDb().collection(`orgs/${S.org}/checks`).doc();
+  await k.set({ vehicleId: v2.id, vehicleName: v2.name, stationId: S.s1, walkId: after, createdAt: Date.now(), createdBy: S.d1.uid, status: 'reviewed',
+    spots: [{ panel: 'door' }, { panel: 'bumper' }], review: { decisions: { 0: { damage: true, known: null }, 1: { damage: false } }, manual: [{ panel: 'mirror', known: null }], at: Date.now() } });
+  await fails(S.d1.call('logReview', { orgId: S.org, checkId: k.id }), 'permission-denied');
+  await S.mgr.call('logReview', { orgId: S.org, checkId: k.id });
+  const log = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'damageLog', k.id))).data();
+  assert.equal(log.n, 2);
+  assert.deepEqual(log.driverIds, [S.d1.uid]);
+  assert.ok(log.from && log.from < log.foundAt);
+  void before;
+  const mine = await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'damageLog'), where('driverIds', 'array-contains', S.d1.uid), orderBy('foundAt', 'desc')));
+  assert.equal(mine.size, 1);
+  await fails(getDoc(doc(S.d3.db, 'orgs', S.org, 'damageLog', k.id)), 'permission-denied');
+  // The Data tab fills in what's missing (checks reviewed before the log existed); after that, nothing is left.
+  await S.mgr.call('syncDamageLog', { orgId: S.org, since: Date.now() - 86400_000 });
+  assert.equal((await S.mgr.call('syncDamageLog', { orgId: S.org, since: Date.now() - 86400_000 })).updated, 0);
+  await fails(S.d1.call('syncDamageLog', { orgId: S.org, since: 0 }), 'permission-denied');
+});
+
+test('costs move out of the record managers read (Deploy runs this once)', async () => {
+  const { v3 } = S.vans;
+  const det = adminDb().doc(`orgs/${S.org}/vehicleDetails/${v3.id}`);
+  await det.set({ stationId: S.s2, createdAt: Date.now(), ownership: 'leased', monthly: 650, excessPerKm: 0.08, premium: 2100, deductible: 1000 });
+  const move = () => execFileSync(process.execPath, [new URL('../functions/scripts/move-costs.cjs', import.meta.url).pathname],
+    { env: { ...process.env, FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || `${HOST}:8080`, PROJECT: cfg.projectId }, encoding: 'utf8' });
+  assert.match(move(), /Moved the costs of \d+ van/);
+  const d = (await det.get()).data();
+  for (const f of ['monthly', 'excessPerKm', 'premium', 'deductible']) assert.equal(d[f], undefined);
+  assert.equal(d.ownership, 'leased');
+  const c = (await getDoc(doc(S.own.db, 'orgs', S.org, 'vehicleCosts', v3.id))).data();
+  assert.equal(c.monthly, 650);
+  assert.equal(c.premium, 2100);
+  assert.match(move(), /No van costs to move/);
 });
 
 test('the demo company: a driver login with a van, history, and pick-up at the first station', async () => {
@@ -549,6 +687,15 @@ test('the demo company: a driver login with a van, history, and pick-up at the f
   const open = mine.filter((a) => a.end == null);
   assert.equal(open.length, 1, 'the demo driver has one van now');
   assert.ok(open[0].startWalkId, 'and picked it up with photos');
+  // Tours, records and incidents: the driver reads their own; the owner everything, costs included.
+  const tours = await getDocs(query(collection(alex.db, 'orgs', orgId, 'tours'), where('driverId', '==', alex.uid), orderBy('createdAt', 'desc')));
+  assert.ok(tours.size >= 5, 'the demo driver has tours');
+  assert.ok((await getDoc(doc(alex.db, 'orgs', orgId, 'driverRecords', alex.uid))).exists());
+  assert.ok((await getDocs(collection(me.db, 'orgs', orgId, 'incidents'))).size >= 5);
+  assert.ok((await getDocs(collection(me.db, 'orgs', orgId, 'vehicleCosts'))).size >= 10);
+  assert.ok((await getDocs(collection(me.db, 'orgs', orgId, 'damageLog'))).size >= 3);
+  const withFuel = (await getDocs(collection(me.db, 'orgs', orgId, 'tours'))).docs.map((d) => d.data()).filter((t) => t.per100 != null);
+  assert.ok(withFuel.length > 50, 'most demo tours have a fuel figure');
   const van = { id: open[0].vehicleId, name: open[0].vehicleName, stationId: open[0].stationId };
   await alex.call('dropOffVan', { orgId, vehicleId: van.id, walkId: await photos(alex, orgId, van) });
   const v = (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id))).data();

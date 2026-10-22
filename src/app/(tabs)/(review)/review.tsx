@@ -1,26 +1,35 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Card, F, MARKER, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
-import { approvedDamage, type Check } from '@/lib/types';
+import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
-import { fleetDue, fmtDay } from '@/lib/fleet';
+import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
+import { watchMembers } from '@/lib/people';
+import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 
-type Cat = 'all' | 'review' | 'missing' | 'due' | 'van' | 'done';
+type Cat = 'all' | 'review' | 'missing' | 'warn' | 'due' | 'van' | 'done';
 
 /**
- * The fleet manager's queue, by category: checks to decide, handovers missing their video or photos, checks the
- * driver is still taking close-ups for, and the ones decided lately. Each category has its own colour and weight,
- * so what needs action stands out from what is only information.
+ * The fleet manager's queue, by category: checks to decide, handovers and tours missing their video or photos,
+ * warning lights on the dashboard, what falls due (vans and drivers), checks the driver is still taking close-ups
+ * for, and the ones decided lately. Each category has its own colour and weight, so what needs action stands out
+ * from what is only information.
  */
 export default function ReviewQueue() {
   const s = useSession();
   const c = useColors();
   const [cat, setCat] = useState<Cat>('all');
   const [allDone, setAllDone] = useState(false);
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const orgId = s.org?.id;
+  useEffect(() => {
+    if (!orgId || s.mode !== 'firebase' || !s.staff) return;
+    return watchMembers(orgId, setMembers);
+  }, [orgId, s.mode, s.staff]);
   if (!s.staff) return <Screen><T v="h1">Review</T><Card dashed><T v="hint">Fleet managers and owners review damage checks.</T></Card></Screen>;
   const mine = s.checks.filter((k) => s.runs(k.stationId));
   const waiting = mine.filter((k) => k.status === 'submitted').sort((a, b) => (a.submittedAt || a.createdAt) - (b.submittedAt || b.createdAt));
@@ -28,15 +37,23 @@ export default function ReviewQueue() {
   const done = mine.filter((k) => k.status === 'reviewed');
   // Handovers in the last 7 days without the driver's pick-up or drop-off video or photos, and vans still out after a shift.
   const missing = missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000);
-  // Inspections, service, tax, insurance and contract ends that are overdue or due soon.
+  // Tours without their start or end photo (where dashboard photos are on).
+  const gaps = s.org?.dashScans ? tourGaps(s.tours.filter((t) => s.runs(t.stationId)), s.assignments.filter((a) => s.runs(a.stationId)), Date.now() - 7 * 86400_000, s.org.dashScansAt || 0) : [];
+  // Warning lights on the latest dashboard photo of a van.
+  const warn = vanWarnings(s.tours.filter((t) => s.runs(t.stationId)));
+  // Inspections, service, tax, insurance and contract ends that are overdue or due soon, and the drivers' licence
+  // checks, licences and safety briefings.
   const due = fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details);
+  const known = new Map([...s.assignments.map((a) => [a.driverId, a.driverName] as const), ...s.tours.map((t) => [t.driverId, t.driverName] as const)]);
+  const pdue = peopleDue(s.records.filter((r) => s.runs(r.stationId)), members, s.org?.licenceCheckMonths || CHECK_MONTHS, Date.now(), known);
   const showStation = s.stations.length > 1;
   const plate = (vehicleId: string) => s.vehicles.find((v) => v.id === vehicleId)?.plate || '';
   const where = (stationId: string | null | undefined) => (showStation ? s.stationName(stationId) : '');
 
-  const color = { review: MARKER, missing: c.alert, due: c.amber, van: c.ink2, done: c.ok };
+  const color = { review: MARKER, missing: c.alert, warn: c.warn, due: c.amber, van: c.ink2, done: c.ok };
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
-    ['review', 'To review', waiting.length], ['missing', 'Missing videos', missing.length], ['due', 'Due soon', due.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
+    ['review', 'To review', waiting.length], ['missing', 'Missing proof', missing.length + gaps.length], ['warn', 'Warning lights', warn.length],
+    ['due', 'Due soon', due.length + pdue.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
   const shownDone = allDone ? done : done.slice(0, 8);
@@ -71,19 +88,32 @@ export default function ReviewQueue() {
         </Section>
       ) : null}
 
-      {show('missing') && (missing.length || cat === 'missing') ? (
-        <Section color={c.alert} title="Missing videos" count={missing.length} note="Handovers without their video or photos. Open the van to add them or see its history.">
-          {!missing.length ? <Empty text="Every handover has its video or photos." /> : null}
+      {show('missing') && (missing.length || gaps.length || cat === 'missing') ? (
+        <Section color={c.alert} title="Missing proof" count={missing.length + gaps.length} note={`Handovers without their video or photos${s.org?.dashScans ? ', and tours without the dashboard photo' : ''}. Open the van to add them or see its history.`}>
+          {!missing.length && !gaps.length ? <Empty text="Every handover has its video or photos." /> : null}
           {missing.map((m) => <MissingCard key={`${m.a.id}-${m.what}`} m={m} plate={plate(m.a.vehicleId)} where={where(m.a.stationId)} />)}
+          {gaps.map((g) => <GapCard key={`${g.vehicleId}-${g.driverId}-${g.at}-${g.kind}`} g={g} plate={plate(g.vehicleId)} where={where(g.stationId)} />)}
         </Section>
       ) : null}
 
-      {show('due') && (due.length || cat === 'due') ? (
-        <Section color={c.amber} title="Due soon" count={due.length} note="Inspections, service, tax, insurance and contract ends in the next weeks, or overdue.">
+      {show('warn') && (warn.length || cat === 'warn') ? (
+        <Section color={c.warn} title="Warning lights" count={warn.length} note="Lit on a van's latest dashboard photo, in the last 3 days. Check the van before it goes out again.">
+          {!warn.length ? <Empty text="No warning lights on the latest dashboard photos." /> : null}
+          {warn.map((t) => <WarnCard key={t.id} t={t} plate={plate(t.vehicleId)} where={where(t.stationId)} />)}
+        </Section>
+      ) : null}
+
+      {show('due') && (due.length || pdue.length || cat === 'due') ? (
+        <Section color={c.amber} title="Due soon" count={due.length + pdue.length} note="Inspections, service, tax, insurance and contract ends; drivers' licence checks, licences and safety briefings. In the next weeks, or overdue.">
           <List>
-            {!due.length ? <T v="hint">Nothing due in the next weeks.</T> : null}
+            {!due.length && !pdue.length ? <T v="hint">Nothing due in the next weeks.</T> : null}
+            {pdue.map(({ uid, name, stationId, x }, i) => (
+              <ListRow key={`${uid}-${x.key}`} first={i === 0} onPress={() => router.push({ pathname: '/person/[uid]', params: { uid, tab: 'record' } })}
+                title={`${name} – ${x.label}`} line={[x.day ? fmtDay(x.day) : '', where(stationId)].filter(Boolean).join(', ')}
+                right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
+            ))}
             {due.map(({ v, x }, i) => (
-              <ListRow key={`${v.id}-${x.key}`} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'details' } })}
+              <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'details' } })}
                 title={`${v.name} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
@@ -204,6 +234,44 @@ function MissingCard({ m, plate, where }: { m: Missing; plate: string; where: st
         {plate ? <Plate text={plate} /> : null}
       </Row>
       <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
+    </ActionCard>
+  );
+}
+
+/** A tour missing its dashboard photo: the driver first, then the van. */
+function GapCard({ g, plate, where }: { g: TourGap; plate: string; where: string }) {
+  const c = useColors();
+  const problem = g.kind === 'no-end' ? 'No end-of-tour photo' : g.kind === 'no-start' ? 'No start-of-tour photo' : `On tour for ${dur(Date.now() - g.at)}`;
+  const detail = g.kind === 'no-end' ? `Tour started ${fmtWhen(g.at)}; the kilometres are an estimate, no fuel figure`
+    : g.kind === 'no-start' ? `Had the van since ${fmtWhen(g.at)}` : `Started ${fmtWhen(g.at)}, no end photo yet`;
+  return (
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}, ${problem}: ${g.vehicleName}`}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+        {g.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
+      </Text>
+      <Row>
+        <T v="h3">{g.vehicleName}</T>
+        {plate ? <Plate text={plate} /> : null}
+      </Row>
+      <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
+    </ActionCard>
+  );
+}
+
+/** A warning light on a van's dashboard: the van first, then who saw it and when. */
+function WarnCard({ t, plate, where }: { t: Tour; plate: string; where: string }) {
+  const c = useColors();
+  const at = t.end?.at || t.startAt;
+  return (
+    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${t.vehicleId}`)} label={`${t.vehicleName}, warning light: ${t.warnings.join(', ')}`}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+        {t.vehicleName}<Text style={{ color: c.warn }}>{` – ${t.warnings.join(', ')}`}</Text>
+      </Text>
+      <Row>
+        {plate ? <Plate text={plate} /> : null}
+        <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.warn }}>{dur(Date.now() - at)} ago</Text>
+      </Row>
+      <T v="hint">{[`On ${t.driverName}'s ${t.end ? 'end' : 'start'} photo, ${fmtWhen(at)}`, where].filter(Boolean).join(', ')}</T>
     </ActionCard>
   );
 }

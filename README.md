@@ -13,7 +13,9 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 |---|---|---|---|---|
 | Sees | every company | all stations of their companies | their station | vans of their station |
 | Vans | everything | add, edit, move, retire, give to drivers | add, edit, retire, give to drivers at their station | scan; pick up and drop off where the station allows it |
-| Van records | everything | facts, contract, costs, insurance, deadlines | the same for their station | the van's facts and breakdown and accident numbers |
+| Van records | everything | facts, contract, insurance, deadlines, **costs** | the same for their station, without costs | the van's facts and breakdown and accident numbers |
+| Driver records | everything | licence and checks, employment, briefings, incidents | the same for their station | their own, read only |
+| Tours and numbers (Data tab) | everything | every station, Excel download | their station, Excel download | their own tours |
 | People | everything | stations, managers, drivers, invite links | drivers of their station, driver links | none |
 | History | everything | every van and driver | their station | their own vans |
 | Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
@@ -34,7 +36,10 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need proof: a video walking around the van, or the full photo set. Both are linked from the history.
 - **Videos** instead of photos: under Start scanning anyone can film a walk-around video of a van, and drivers can pick up and drop off with one. They're uploaded as recorded; the server makes a copy that plays on every phone (720p, normal colours from iPhone HDR). The Review tab tells managers when a drop-off has no video or photos, and managers can add a missing video afterwards.
 - **A driver given a van is told and asked for the pick-up video or photos**: a phone notification (web app, after turning notifications on in Account) and a card on their Vans tab. Managers see it in Review if they're still missing after 2 hours.
-- **Van records** (FLEET_DATA.md): each van's VIN, registration, fuel, size, breakdown and accident numbers (everyone at the station), and its contract, costs, insurance, mileage against the allowance and deadlines (owners and managers). Deadlines (main inspection, safety check, service, tyres, tax, insurance, contract end) show on the van, in the fleet list and as Due soon in Review.
+- **Van records** (FLEET_DATA.md): each van's VIN, registration, fuel, tank, size, breakdown and accident numbers (everyone at the station), and its contract, insurance, mileage against the allowance and deadlines (owners and managers). What it costs only owners see. Deadlines (main inspection, safety check, service, tyres, tax, insurance, contract end) show on the van, in the fleet list and as Due soon in Review.
+- **Driver records** (FLEET_DATA.md): licence classes and expiry, licence checks (the date and who checked, as proof; the interval is set by the owner), employment, briefings, emergency contact, notes, and incidents (accidents, fines, complaints). Overdue checks, expiring licences and safety briefings show in Review. Drivers read their own.
+- **Tours from dashboard photos** (the owner turns them on in Account): drivers photograph the dashboard at the start and end of each tour; the AI reads the odometer, fuel or battery and warning lights, the driver confirms. The server works out kilometres and fuel per tour and keeps each van's odometer up to date. Warning lights and tours without their photos show in Review.
+- **Data tab** (owners and managers): drivers, tours and vans as sortable tables for a period, with totals; fuel compared with other drivers on the same van model; damage and incidents per driver; who was driving a van at a given moment; download for Excel.
 - **View the app as someone else** (app creator only): Account > View the app as. Pick fleet owner, fleet manager or driver (and a station) to see the open company exactly as they do; the server applies the same access. A strip above the tab bar shows who you're viewing as, with Back to me.
 
 ## Try it with demo data
@@ -130,7 +135,7 @@ Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` r
 ```
 src/app/            screens (expo-router). Every tab is its own stack, so the tab bar stays on every page:
   (tabs)/(fleet)/   fleet list, add vehicle            (tabs)/(review|people|log|me)/  the other tabs
-  (tabs)/(fleet,review,people,log,me)/  van, walk-around, check, person: open inside whichever tab you're in
+  (tabs)/(fleet,review,people,table,log,me)/  van, walk-around, check, person: open inside whichever tab you're in
   scan/[id].tsx     the camera, full screen over the tabs
 src/components/     shared UI
 src/lib/frames.ts   vehicle classes, frame sets and outlines

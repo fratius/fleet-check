@@ -51,7 +51,18 @@ beforeEach(async () => {
     await put('users/boss2', { orgId: O, viewAs: null });
     await put('users/drv2', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
     await put('config/push', { vapidPublicKey: 'BPUBLIC', updatedAt: 1 });
-    await put(`orgs/${O}/vehicleDetails/v1`, { stationId: S1, createdAt: 1, ownership: 'leased', monthly: 700, due: { hu: '2027-03-31' } });
+    await put(`orgs/${O}/vehicleDetails/v1`, { stationId: S1, createdAt: 1, ownership: 'leased', due: { hu: '2027-03-31' } });
+    await put(`orgs/${O}/vehicleCosts/v1`, { createdAt: 1, monthly: 700, excessPerKm: 0.08 });
+    await put(`orgs/${O}/members/mgr2`, { role: 'manager', stationIds: [S2], name: 'Manager 2', email: 'm2@x' });
+    await put(`orgs/${O}/driverRecords/drv1`, { stationId: S1, createdAt: 1, licenceClasses: ['B'], licenceValid: '2031-05-31', checks: [{ day: '2026-09-01', at: 1, by: 'mgr1', byName: 'Manager 1', ok: true, note: '' }] });
+    await put(`orgs/${O}/driverRecords/drv2`, { stationId: S2, createdAt: 2, emergencyName: 'Ana', emergencyPhone: '+40 1' });
+    await put(`orgs/${O}/incidents/i1`, { driverId: 'drv1', driverName: 'Driver 1', vehicleId: 'v1', vehicleName: 'Van 1', stationId: S1, day: '2026-10-01', time: '10:20', kind: 'fine', fineType: 'speeding', atFault: null, note: '', by: 'mgr1', byName: 'Manager 1', createdAt: 1 });
+    await put(`orgs/${O}/incidents/i2`, { driverId: 'drv2', driverName: 'Driver 2', vehicleId: 'v2', vehicleName: 'Van 2', stationId: S2, day: '2026-10-02', time: null, kind: 'accident', fineType: null, atFault: 'no', note: '', by: 'own', byName: 'Owner', createdAt: 2 });
+    await put(`orgs/${O}/tours/t1`, { driverId: 'drv1', vehicleId: 'v1', stationId: S1, km: 120, createdAt: 1, startAt: 1 });
+    await put(`orgs/${O}/tours/t2`, { driverId: 'drv2', vehicleId: 'v2', stationId: S2, km: 90, createdAt: 2, startAt: 2 });
+    await put(`orgs/${O}/readings/r1`, { driverId: 'drv1', by: 'drv1', vehicleId: 'v1', stationId: S1, odometerKm: 48000, createdAt: 1, at: 1 });
+    await put(`orgs/${O}/dashReads/d1`, { by: 'drv1', vehicleId: 'v1', createdAt: 1 });
+    await put(`orgs/${O}/damageLog/c1`, { checkId: 'c1', vehicleId: 'v1', stationId: S1, n: 1, drivers: [{ id: 'drv1', name: 'Driver 1' }], driverIds: ['drv1'], foundAt: 1, createdAt: 1 });
     await put(`orgs/${O}/vehicleDetails/v2`, { stationId: S2, createdAt: 2, ownership: 'owned' });
     await put(`orgs/${O}/checkUsage/c1`, { checkId: 'c1', stationId: S1, createdAt: 1, pass1: { ms: 9000, cost: 0.2 }, pass2: null });
     await put('users/drv1/push/p1', { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'x', auth: 'y' }, createdAt: 1, device: 'Android phone' });
@@ -281,7 +292,7 @@ describe('AI speed and cost: only the app creator', () => {
   test('the check itself stays readable at the station', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`))));
 });
 
-describe('van records: facts for the station, contract and costs for owners and managers', () => {
+describe('van records: facts for the station, contract and deadlines for owners and managers', () => {
   const det = (db, id) => doc(db, `orgs/${O}/vehicleDetails/${id}`);
   const atS1 = (db) => query(collection(db, `orgs/${O}/vehicleDetails`), where('stationId', 'in', [S1]));
   test('the owner reads every van\'s contract and deadlines', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/vehicleDetails`))));
@@ -289,7 +300,9 @@ describe('van records: facts for the station, contract and costs for owners and 
   test('not another station\'s', () => assertFails(getDoc(det(as('mgr1'), 'v2'))));
   test('a driver never reads them', () => assertFails(getDoc(det(as('drv1'), 'v1'))));
   test('a driver can\'t query them either', () => assertFails(getDocs(atS1(as('drv1')))));
-  test('a manager fills them in for a van of their station', () => assertSucceeds(setDoc(det(as('mgr1'), 'v1'), { stationId: S1, createdAt: 1, monthly: 720, notes: 'New lease' })));
+  test('a manager fills them in for a van of their station', () => assertSucceeds(setDoc(det(as('mgr1'), 'v1'), { stationId: S1, createdAt: 1, kmPerYear: 40000, notes: 'New lease' })));
+  test('…but never what it costs (that is owners only)', () => assertFails(setDoc(det(as('mgr1'), 'v1'), { stationId: S1, createdAt: 1, monthly: 720 })));
+  test('the owner can\'t put costs in there either', () => assertFails(updateDoc(det(as('own'), 'v1'), { premium: 1200 })));
   test('…only with the van\'s station', () => assertFails(setDoc(det(as('mgr1'), 'v1'), { stationId: S2, createdAt: 1 })));
   test('not for another station\'s van', () => assertFails(setDoc(det(as('mgr1'), 'v2'), { stationId: S2, createdAt: 2 })));
   test('a driver can\'t write them', () => assertFails(setDoc(det(as('drv1'), 'v1'), { stationId: S1, createdAt: 1 })));
@@ -300,4 +313,87 @@ describe('van records: facts for the station, contract and costs for owners and 
   test('a manager writes the van\'s facts (VIN, size, breakdown number)', () => assertSucceeds(updateDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v1`), { vin: 'W1V9070001P431208', heightM: 2.72, breakdownPhone: '+49 800 1' })));
   test('a driver reads them', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`))));
   test('a driver can\'t change them', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`), { vin: 'X' })));
+});
+
+describe('what a van costs: owners only', () => {
+  const cost = (db, id) => doc(db, `orgs/${O}/vehicleCosts/${id}`);
+  test('the owner reads the costs', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/vehicleCosts`))));
+  test('a manager can\'t, not even for their own station\'s van', () => assertFails(getDoc(cost(as('mgr1'), 'v1'))));
+  test('a manager can\'t list them', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/vehicleCosts`))));
+  test('a driver can\'t', () => assertFails(getDoc(cost(as('drv1'), 'v1'))));
+  test('the owner enters them', () => assertSucceeds(setDoc(cost(as('own'), 'v2'), { createdAt: 2, purchasePrice: 61000, premium: 1400 })));
+  test('…only the money fields', () => assertFails(setDoc(cost(as('own'), 'v2'), { createdAt: 2, purchasePrice: 61000, stationId: S2 })));
+  test('…only for a van that exists', () => assertFails(setDoc(cost(as('own'), 'nope'), { createdAt: 2, monthly: 1 })));
+  test('a manager can\'t write them', () => assertFails(setDoc(cost(as('mgr1'), 'v1'), { createdAt: 1, monthly: 1 })));
+  test('the app creator viewing as a manager can\'t read them', () => assertFails(getDoc(cost(as('vmgr', { creator: true }), 'v1'))));
+  test('…viewing as an owner can', () => assertSucceeds(getDoc(cost(as('vown', { creator: true }), 'v1'))));
+  test('the app creator as themselves can', () => assertSucceeds(getDoc(cost(as('boss', { creator: true }), 'v1'))));
+  test('nobody deletes them', () => assertFails(deleteDoc(cost(as('own'), 'v1'))));
+});
+
+describe('driver records: owners and the station\'s managers keep them, drivers read their own', () => {
+  const rec = (db, id) => doc(db, `orgs/${O}/driverRecords/${id}`);
+  const atS1 = (db) => query(collection(db, `orgs/${O}/driverRecords`), where('stationId', 'in', [S1]));
+  test('the owner reads every record', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/driverRecords`))));
+  test('a manager reads their station\'s', () => assertSucceeds(getDocs(atS1(as('mgr1')))));
+  test('not another station\'s', () => assertFails(getDoc(rec(as('mgr1'), 'drv2'))));
+  test('a driver reads their own', () => assertSucceeds(getDoc(rec(as('drv1'), 'drv1'))));
+  test('not someone else\'s', () => assertFails(getDoc(rec(as('drv1'), 'drv2'))));
+  test('a driver can\'t query the station\'s', () => assertFails(getDocs(atS1(as('drv1')))));
+  test('a driver can\'t change their own', () => assertFails(updateDoc(rec(as('drv1'), 'drv1'), { licenceValid: '2040-01-01' })));
+  test('a manager starts a record for a driver of their station', () => assertSucceeds(setDoc(rec(as('mgr1'), 'mgr1'), { stationId: S1, createdAt: 3, licenceClasses: ['B'] })));
+  test('…with the driver\'s own station', () => assertFails(setDoc(rec(as('own'), 'drv2'), { stationId: S1, createdAt: 3 })));
+  test('a manager can\'t start one for another station\'s driver', () => assertFails(setDoc(rec(as('mgr1'), 'drv2'), { stationId: S2, createdAt: 3 })));
+  test('a manager updates the licence and briefings', () => assertSucceeds(updateDoc(rec(as('mgr1'), 'drv1'), { licenceValid: '2032-01-31', safetyBriefing: '2026-10-01' })));
+  test('licence checks are added only by the server', () => assertFails(updateDoc(rec(as('mgr1'), 'drv1'), { checks: [] })));
+  test('…not on a new record either', () => assertFails(setDoc(rec(as('own'), 'mgr2'), { stationId: S2, createdAt: 3, checks: [{ day: '2026-10-01', ok: true }] })));
+  test('the station moves only with the driver (on the server)', () => assertFails(updateDoc(rec(as('own'), 'drv1'), { stationId: S2 })));
+  test('nobody deletes a record', () => assertFails(deleteDoc(rec(as('own'), 'drv1'))));
+  test('the app creator viewing as a driver can\'t read another\'s', () => assertFails(getDoc(rec(as('vdrv', { creator: true }), 'drv1'))));
+});
+
+describe('incidents: accidents, fines, complaints', () => {
+  const inc = (db, id) => doc(db, `orgs/${O}/incidents/${id}`);
+  const mine = (db, uid) => query(collection(db, `orgs/${O}/incidents`), where('driverId', '==', uid));
+  const fine = (by, stationId = S1) => ({ driverId: 'drv1', driverName: 'Driver 1', vehicleId: 'v1', vehicleName: 'Van 1', stationId, day: '2026-10-20', time: '08:15', kind: 'fine', fineType: 'parking', atFault: null, note: 'Ticket', by, byName: 'x', createdAt: Date.now() });
+  test('the owner reads them all', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/incidents`))));
+  test('a manager reads their station\'s', () => assertSucceeds(getDocs(query(collection(as('mgr1'), `orgs/${O}/incidents`), where('stationId', 'in', [S1])))));
+  test('not another station\'s', () => assertFails(getDoc(inc(as('mgr1'), 'i2'))));
+  test('a driver reads their own', () => assertSucceeds(getDocs(mine(as('drv1'), 'drv1'))));
+  test('not someone else\'s', () => assertFails(getDocs(mine(as('drv1'), 'drv2'))));
+  test('a manager adds one at their station', () => assertSucceeds(setDoc(inc(as('mgr1'), 'n1'), fine('mgr1'))));
+  test('…signed with their own name', () => assertFails(setDoc(inc(as('mgr1'), 'n2'), fine('own'))));
+  test('…not at another station', () => assertFails(setDoc(inc(as('mgr1'), 'n3'), fine('mgr1', S2))));
+  test('a driver can\'t add one', () => assertFails(setDoc(inc(as('drv1'), 'n4'), fine('drv1'))));
+  test('a manager corrects one', () => assertSucceeds(updateDoc(inc(as('mgr1'), 'i1'), { note: 'Paid by the driver', updatedAt: 5, updatedByName: 'Manager 1' })));
+  test('…but not who added it or when', () => assertFails(updateDoc(inc(as('mgr1'), 'i1'), { by: 'mgr1', createdAt: 9 })));
+  test('…or its station', () => assertFails(updateDoc(inc(as('own'), 'i1'), { stationId: S2 })));
+  test('nobody deletes one', () => assertFails(deleteDoc(inc(as('own'), 'i1'))));
+});
+
+describe('tours, dashboard readings and the damage log: written by the server', () => {
+  const tours = (db, f, v) => getDocs(query(collection(db, `orgs/${O}/tours`), where(f, f === 'stationId' ? 'in' : '==', v)));
+  test('the owner reads every tour', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/tours`))));
+  test('a manager reads their station\'s', () => assertSucceeds(tours(as('mgr1'), 'stationId', [S1])));
+  test('not another station\'s', () => assertFails(tours(as('mgr1'), 'stationId', [S2])));
+  test('a driver reads their own tours', () => assertSucceeds(tours(as('drv1'), 'driverId', 'drv1')));
+  test('not other drivers\'', () => assertFails(tours(as('drv1'), 'driverId', 'drv2')));
+  test('nobody writes a tour from the app', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/tours/t9`), { driverId: 'drv1', stationId: S1, km: 5, createdAt: 3 })));
+  test('nobody edits a tour', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}/tours/t1`), { km: 5 })));
+  test('a driver reads their own dashboard readings', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/readings/r1`))));
+  test('another driver can\'t', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/readings/r1`))));
+  test('nobody writes a reading from the app', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/readings/r9`), { vehicleId: 'v1', stationId: S1, odometerKm: 1 })));
+  test('what the AI read first: the app creator only', () => assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/dashReads/d1`))));
+  test('…not the driver who took it', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/dashReads/d1`))));
+  test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/dashReads/d1`))));
+  test('the damage log: a manager reads their station\'s', () => assertSucceeds(getDocs(query(collection(as('mgr1'), `orgs/${O}/damageLog`), where('stationId', 'in', [S1])))));
+  test('…a driver the ones they\'re in', () => assertSucceeds(getDocs(query(collection(as('drv1'), `orgs/${O}/damageLog`), where('driverIds', 'array-contains', 'drv1')))));
+  test('…not others\'', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/damageLog/c1`))));
+  test('nobody writes the damage log from the app', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/damageLog/c9`), { stationId: S1, n: 0, driverIds: [] })));
+});
+
+describe('company settings: dashboard photos and licence checks', () => {
+  test('the owner turns dashboard photos on', () => assertSucceeds(updateDoc(doc(as('own'), `orgs/${O}`), { dashScans: true, dashScansBy: 'Owner', dashScansAt: 1, licenceCheckMonths: 3 })));
+  test('a manager can\'t', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}`), { dashScans: true })));
+  test('a driver can\'t', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}`), { dashScans: false })));
 });

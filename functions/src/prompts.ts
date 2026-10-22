@@ -132,3 +132,36 @@ export const spotSchema = {
     closeupBox: { anyOf: [{ type: 'array', items: { type: 'number' } }, { type: 'null' }] },
   },
 };
+
+/* ---------- 4. Read the dashboard: odometer, fuel or battery, range, warning lights ---------- */
+export function dashPrompt(van: { name: string; make?: string | null; model?: string | null; fuel?: string | null }) {
+  const what = [van.make, van.model].filter(Boolean).join(' ') || van.name;
+  return `This is a photo of the instrument cluster (dashboard) of a delivery van, ${what}${van.fuel ? `, ${van.fuel === 'electric' ? 'electric' : van.fuel}` : ''}, taken by the driver at the start or end of a tour. A fleet app records the odometer and the fuel or battery level from it.
+
+Read:
+- odometerKm: the total distance the van has driven (the odometer), as a whole number. Not a trip meter: ignore numbers labelled TRIP, A, B, Trip 1 or with a decimal place. If you can't read every digit with confidence, give your best reading and lower the confidence.
+- unit: "km" or "mi", as shown next to the odometer ("unknown" if not shown).
+- fuelPct: the fuel gauge, as a percentage of a full tank (0 to 100). A needle or bars between E (or 0) and F (or 1/1): 1/2 is 50, 1/4 is 25, 3/4 is 75. Null when the van has no fuel gauge or it isn't visible.
+- batteryPct: the charge of the high-voltage battery of an electric or hybrid van, in percent. Null for diesel and petrol vans or when not shown.
+- rangeKm: the remaining range the display shows, in km, or null.
+- warnings: warning lights that are lit, as short names: "Check engine", "Tyre pressure", "AdBlue", "Oil pressure", "Battery charge", "Brake system", "ABS", "Airbag", "Coolant temperature", "Service due", "Glow plug", "Particle filter", "Steering", "Low fuel", "Washer fluid", "High-voltage system" and similar. Leave out normal indicators: headlights, turn signals, seat belt reminder, the parking brake while it's on, the ready light, cruise control.
+- confidence: 0 to 1, how sure you are of the odometer reading.
+- readable: false if this is not a dashboard or the odometer can't be read at all (too dark, blurred, screen off, glare).
+- issue: one short sentence on what made it hard to read, or null.`;
+}
+export const dashSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['readable', 'odometerKm', 'unit', 'fuelPct', 'batteryPct', 'rangeKm', 'warnings', 'confidence', 'issue'],
+  properties: {
+    readable: { type: 'boolean' },
+    odometerKm: nullable('integer'),
+    unit: { type: 'string', enum: ['km', 'mi', 'unknown'] },
+    fuelPct: nullable('number'),
+    batteryPct: nullable('number'),
+    rangeKm: nullable('integer'),
+    warnings: { type: 'array', items: { type: 'string' } },
+    confidence: { type: 'number' },
+    issue: nullable('string'),
+  },
+};

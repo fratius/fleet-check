@@ -13,6 +13,7 @@ export const unstable_settings = {
   fleet: { anchor: 'index' },
   review: { anchor: 'review' },
   people: { anchor: 'people' },
+  table: { anchor: 'data' },
   log: { anchor: 'log' },
   me: { anchor: 'account' },
 };
@@ -21,6 +22,7 @@ const ROOT: Record<string, { name: string; title: string }> = {
   '(fleet)': { name: 'index', title: 'Fleet' },
   '(review)': { name: 'review', title: 'Review' },
   '(people)': { name: 'people', title: 'People' },
+  '(table)': { name: 'data', title: 'Data' },
   '(log)': { name: 'log', title: 'Test log' },
   '(me)': { name: 'account', title: 'Account' },
 };
