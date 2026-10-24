@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View, type ScrollViewInstance } from 'react-native';
 
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
@@ -45,7 +45,7 @@ export default function VehicleScreen() {
   }, [orgId, id, s.staff, s.mode, scope]);
   const [sel, setSel] = useState<string | null>(null);
   const [focus, setFocus] = useState<{ key: string; n: number } | null>(null);
-  const scroller = useRef<ScrollView>(null);
+  const scroller = useRef<ScrollViewInstance>(null);
   // Where the model, the damage section, the list inside it and each damage are, to scroll between them.
   const spots = useRef({ model: 0, list: 0, inner: 0, items: new Map<string, number>() });
   const [editing, setEditing] = useState(false);
