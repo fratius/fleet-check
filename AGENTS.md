@@ -1,6 +1,7 @@
 # Notes for coding agents
 
-- Expo SDK 57, React Native 0.86, expo-router with routes in `src/app`. Typed routes and the React Compiler are on.
+- Expo SDK 58, React Native 0.88, React 19.3, expo-router with routes in `src/app`. Typed routes and the React Compiler are on. React Native's strict TypeScript API is on: type refs with instance types (`useRef<ScrollViewInstance>`, not `useRef<ScrollView>`), and don't deep-import from `react-native/Libraries`.
+- The web build is one bundle (`asyncRoutes: { web: false }` in app.json): with split route files, a web app left open across a deploy would ask for files that no longer exist. `web.output` stays `single`.
 - Navigation: every tab is a stack (`src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx`), so the tab bar stays on every page and detail pages (van, walk-around, check, person) open inside the current tab with a header and back button. Put new detail pages in that shared folder, not at the root. Only the camera (`scan/[id]`) sits at the root, full screen. Keep `(fleet)` sorting first alphabetically: links opened from outside land in the first group.
 - Install native packages with `npx expo install <pkg>` so versions match the SDK. Without network access to the Expo API, prefix `EXPO_OFFLINE=1`.
 - The app must keep working in Expo Go: no custom native code, no packages that need a development build.

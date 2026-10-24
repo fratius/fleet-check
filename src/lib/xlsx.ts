@@ -127,7 +127,7 @@ export async function saveXlsx(name: string, sheets: Sheet[]) {
   const f = new File(Paths.cache, file);
   if (f.exists) f.delete();
   f.create();
-  f.write(bytes);
+  await f.write(bytes);
   if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing isn\'t available on this phone.');
   await Sharing.shareAsync(f.uri, { mimeType: MIME, UTI: 'org.openxmlformats.spreadsheetml.sheet', dialogTitle: file });
 }

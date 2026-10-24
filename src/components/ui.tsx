@@ -3,7 +3,7 @@ import { useScrollToTop } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
-  useColorScheme, type PressableProps, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  useColorScheme, type PressableProps, type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
@@ -41,18 +41,18 @@ export function T({ v = 'body', style, color, children, ...rest }: { v?: TV; col
 }
 
 export function Screen({ children, scroll = true, edges = ['top'], pad = true, style, scrollRef, wide }: {
-  children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle>; scrollRef?: React.Ref<ScrollView>;
+  children: React.ReactNode; scroll?: boolean; edges?: Edge[]; pad?: boolean; style?: StyleProp<ViewStyle>; scrollRef?: React.Ref<ScrollViewInstance>;
   /** Tables: use the width of a computer screen. */
   wide?: boolean;
 }) {
   const c = useColors();
   // Tapping the tab you're on scrolls its first page back to the top.
-  const own = useRef<ScrollView | null>(null);
+  const own = useRef<ScrollViewInstance | null>(null);
   useScrollToTop(own);
-  const setRef = (r: ScrollView | null) => {
+  const setRef = (r: ScrollViewInstance | null) => {
     own.current = r;
     if (typeof scrollRef === 'function') scrollRef(r);
-    else if (scrollRef && typeof scrollRef === 'object') (scrollRef as React.MutableRefObject<ScrollView | null>).current = r;
+    else if (scrollRef && typeof scrollRef === 'object') (scrollRef as React.RefObject<ScrollViewInstance | null>).current = r;
   };
   const inner = <View style={[{ gap: 14, paddingHorizontal: pad ? 16 : 0, paddingTop: 12, paddingBottom: 32, width: '100%', maxWidth: wide ? 1400 : 760, alignSelf: 'center' }, style]}>{children}</View>;
   return (
