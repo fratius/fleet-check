@@ -2512,7 +2512,7 @@
    "src/app/scan/[id].tsx:84",
    "src/components/damage.tsx:113",
    "src/components/language.tsx:35",
-   "src/components/ui.tsx:187"
+   "src/components/ui.tsx:191"
   ]
  },
  {
@@ -7571,14 +7571,14 @@
   "id": "502ca37f",
   "key": "Open photo",
   "where": [
-   "src/components/ui.tsx:178"
+   "src/components/ui.tsx:182"
   ]
  },
  {
   "id": "7ae2a9b7",
   "key": "Open photo: {caption}",
   "where": [
-   "src/components/ui.tsx:178"
+   "src/components/ui.tsx:182"
   ]
  },
  {
@@ -7754,7 +7754,7 @@
   "key": "Parts",
   "server": true,
   "where": [
-   "functions/src/purchases.ts:9",
+   "functions/src/purchases.ts:11",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:264",
    "src/components/buy.tsx:17"
   ]
@@ -8457,7 +8457,7 @@
   "key": "Refuel",
   "server": true,
   "where": [
-   "functions/src/purchases.ts:9",
+   "functions/src/purchases.ts:11",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:51",
    "src/components/buy.tsx:109",
    "src/components/buy.tsx:17",
@@ -12344,7 +12344,7 @@
   "key": "Wash",
   "server": true,
   "where": [
-   "functions/src/purchases.ts:9",
+   "functions/src/purchases.ts:11",
    "src/components/buy.tsx:110",
    "src/components/buy.tsx:17",
    "src/components/buy.tsx:182"

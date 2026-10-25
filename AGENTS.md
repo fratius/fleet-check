@@ -24,5 +24,10 @@
   - Not translated: what people type, names (vans, stations, people, companies), plates, what the AI wrote (damage reasons, warnings it read), units like km, l, kWh, €, and technical names that stay as is (HU, UVV, AdBlue, VIN, Transporter ID, Expo Go, Excel, Firebase).
   - Dates and numbers: `toLocaleString(loc())` etc., never `undefined`.
   - Server messages: `fail(code, 'English with {x}', { x })` in the functions (the app translates it), notifications with `tr(lang, ...)`; texts stored in records for others to read (flags) carry their template and values so each reader sees their own language.
-  - After adding texts: `node scripts/i18n.mjs` lists them (i18n/keys.json) and what each language misses; missing ones show in English until translated.
+  - One English text, one meaning: the same word used for two things (a van's right side and "the AI was right") gets two keys ("Right", "Correct"), because other languages need two words.
+  - After adding texts: `node scripts/i18n.mjs` lists them (i18n/keys.json, and i18n/source.txt with a short id per text) and what each language misses; missing ones show in English until translated. CI fails when a translation loses or invents a `{placeholder}`.
+  - Translating (31 languages, AI-made, not yet checked by native speakers): follow i18n/GLOSSARY.md; write `{"id","t"}` lines to i18n/out/<code>.*.jsonl (not committed) and run `node scripts/i18n-merge.mjs <code>`, which writes public/i18n/<code>.json and checks it. Plural forms per language: scripts/plural-forms.mjs.
+  - Right-to-left (Arabic, Persian): the web app flips (html dir); arrows use `fwd()` / `back()`. The phone app keeps the left-to-right layout (switching it needs a restart of the app), only the text is right-to-left.
+  - Fonts: Barlow has Latin letters only; on the web the font names carry a sans-serif fallback (`F` in ui.tsx) so Cyrillic, Greek, Arabic and Devanagari don't fall back to a serif.
+  - Functions are compiled to CommonJS, which doesn't hoist imports: import './i18n' before any top-level `N_()`.
 

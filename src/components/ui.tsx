@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useScrollToTop } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   useColorScheme, type PressableProps, type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
@@ -20,9 +20,13 @@ export function useColors(): Colors & { dark: boolean } {
   return { ...(dark ? DARK : LIGHT), dark };
 }
 
+// Barlow has Latin letters only. Phones fill in other scripts (Cyrillic, Greek, Arabic, Devanagari) from their own
+// fonts; on the web the browser would use a serif, so a plain sans-serif is named after it.
+const web = (name: string, narrow = false) =>
+  Platform.OS === 'web' ? `${name}, ${narrow ? '"Arial Narrow", "Roboto Condensed", ' : ''}system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif` : name;
 export const F = {
-  body: 'Barlow_400Regular', medium: 'Barlow_500Medium', semi: 'Barlow_600SemiBold',
-  cond: 'BarlowCondensed_600SemiBold', condMed: 'BarlowCondensed_500Medium', condBold: 'BarlowCondensed_700Bold',
+  body: web('Barlow_400Regular'), medium: web('Barlow_500Medium'), semi: web('Barlow_600SemiBold'),
+  cond: web('BarlowCondensed_600SemiBold', true), condMed: web('BarlowCondensed_500Medium', true), condBold: web('BarlowCondensed_700Bold', true),
 };
 
 type TV = 'h1' | 'h2' | 'h3' | 'body' | 'medium' | 'hint' | 'small' | 'big';

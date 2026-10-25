@@ -74,3 +74,5 @@ jobs:
           cache: npm
       - run: npm ci && npm ci --prefix functions
       - run: npm run typecheck
+      - name: Translations (no lost or invented placeholders)
+        run: node scripts/i18n.mjs --strict
