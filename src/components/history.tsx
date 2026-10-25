@@ -167,7 +167,7 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
               <T v="medium" numberOfLines={1}>{m.name}</T>
               <T v="small" numberOfLines={1}>{[current ? t('Has this van now') : has ? t('Has {van} now', { van: has.name }) : t('No van'), roleOf(m) === 'manager' ? t(ROLE_NAME.manager) : ''].filter(Boolean).join(', ')}</T>
             </View>
-            {busy === m.uid ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? t('Swap') : t('Free')} /> : null}
+            {busy === m.uid ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? t('Swap') : t('Give')} /> : null}
           </Pressable>
         );
       })}

@@ -526,6 +526,7 @@
  "Gearbox": "Κιβώτιο ταχυτήτων",
  "Get a notification on this phone when someone gives you a van.": "Λάβετε ειδοποίηση σε αυτό το τηλέφωνο όταν κάποιος σας αναθέτει βαν.",
  "Get told when you're given a van": "Ειδοποίηση όταν σας ανατίθεται βαν",
+ "Give": "Ανάθεση",
  "Give a different van": "Ανάθεση άλλου βαν",
  "Give a van": "Ανάθεση βαν",
  "Give the station a name.": "Δώστε όνομα στον σταθμό.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "Η κοινοποίηση δεν είναι διαθέσιμη σε αυτό το τηλέφωνο.",
  "Show": "Εμφάνιση",
  "Show all {n}": "Εμφάνιση όλων ({n})",
+ "Show all {n} rows": {
+  "one": "Εμφάνιση όλων ({n})",
+  "other": "Εμφάνιση όλων ({n})"
+ },
  "Show on the van": "Εμφάνιση στο βαν",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Ρολό, προφυλακτήρας και φώτα μέσα στο κάδρο, μέχρι την άκρη της οροφής.",
  "Shutter, bumper and lights in frame.": "Ρολό, προφυλακτήρας και φώτα μέσα στο κάδρο.",

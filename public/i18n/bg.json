@@ -526,6 +526,7 @@
  "Gearbox": "Скоростна кутия",
  "Get a notification on this phone when someone gives you a van.": "Получавайте известие на този телефон, когато някой ви даде бус.",
  "Get told when you're given a van": "Известие, когато получите бус",
+ "Give": "Даване",
  "Give a different van": "Даване на друг бус",
  "Give a van": "Даване на бус",
  "Give the station a name.": "Дайте име на станцията.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "Споделянето не е налично на този телефон.",
  "Show": "Показване",
  "Show all {n}": "Показване на всички {n}",
+ "Show all {n} rows": {
+  "one": "Показване на всички {n}",
+  "other": "Показване на всички {n}"
+ },
  "Show on the van": "Показване на буса",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Ролетната врата, бронята и светлините в кадър, до ръба на покрива.",
  "Shutter, bumper and lights in frame.": "Ролетната врата, бронята и светлините в кадър.",

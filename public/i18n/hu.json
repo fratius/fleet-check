@@ -526,6 +526,7 @@
  "Gearbox": "Sebességváltó",
  "Get a notification on this phone when someone gives you a van.": "Kapj értesítést erre a telefonra, amikor valaki furgont ad át neked.",
  "Get told when you're given a van": "Értesítés, ha furgont kapsz",
+ "Give": "Átadás",
  "Give a different van": "Másik furgon átadása",
  "Give a van": "Furgon átadása",
  "Give the station a name.": "Adj nevet az állomásnak.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "A megosztás nem érhető el ezen a telefonon.",
  "Show": "Megjelenítés",
  "Show all {n}": "Összes megjelenítése ({n})",
+ "Show all {n} rows": {
+  "one": "Összes megjelenítése ({n})",
+  "other": "Összes megjelenítése ({n})"
+ },
  "Show on the van": "Megjelenítés a furgonon",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Redőny, lökhárító és lámpák a képen, egészen a tetőélig.",
  "Shutter, bumper and lights in frame.": "Redőny, lökhárító és lámpák a képen.",

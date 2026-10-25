@@ -539,6 +539,7 @@
  "Gearbox": "Pārnesumkārba",
  "Get a notification on this phone when someone gives you a van.": "Saņemiet paziņojumu šajā tālrunī, kad jums izsniedz furgonu.",
  "Get told when you're given a van": "Paziņot, kad jums izsniedz furgonu",
+ "Give": "Izsniegt",
  "Give a different van": "Izsniegt citu furgonu",
  "Give a van": "Izsniegt furgonu",
  "Give the station a name.": "Piešķiriet stacijai nosaukumu.",
@@ -1159,6 +1160,11 @@
  "Sharing isn't available on this phone.": "Kopīgošana šajā tālrunī nav pieejama.",
  "Show": "Rādīt",
  "Show all {n}": "Rādīt visus {n}",
+ "Show all {n} rows": {
+  "zero": "Rādīt visus {n}",
+  "one": "Rādīt visus {n}",
+  "other": "Rādīt visus {n}"
+ },
  "Show on the van": "Rādīt uz furgona",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Rolete, bamperis un lukturi kadrā, līdz jumta malai.",
  "Shutter, bumper and lights in frame.": "Rolete, bamperis un lukturi kadrā.",

@@ -539,6 +539,7 @@
  "Gearbox": "Cutie de viteze",
  "Get a notification on this phone when someone gives you a van.": "Primește o notificare pe acest telefon când cineva îți dă o dubă.",
  "Get told when you're given a van": "Află când primești o dubă",
+ "Give": "Dă-i",
  "Give a different van": "Dă altă dubă",
  "Give a van": "Dă o dubă",
  "Give the station a name.": "Dă un nume stației.",
@@ -1159,6 +1160,11 @@
  "Sharing isn't available on this phone.": "Partajarea nu e disponibilă pe acest telefon.",
  "Show": "Afișează",
  "Show all {n}": "Arată toate ({n})",
+ "Show all {n} rows": {
+  "one": "Arată toate ({n})",
+  "few": "Arată toate ({n})",
+  "other": "Arată toate ({n})"
+ },
  "Show on the van": "Arată pe dubă",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Ușa rulou, bara și lămpile în cadru, până la marginea plafonului.",
  "Shutter, bumper and lights in frame.": "Ușa rulou, bara și lămpile în cadru.",

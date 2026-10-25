@@ -526,6 +526,7 @@
  "Gearbox": "Käigukast",
  "Get a notification on this phone when someone gives you a van.": "Saa sellesse telefoni teavitus, kui keegi annab sulle kaubiku.",
  "Get told when you're given a van": "Teavitus, kui sulle antakse kaubik",
+ "Give": "Anna",
  "Give a different van": "Anna teine kaubik",
  "Give a van": "Anna kaubik",
  "Give the station a name.": "Anna jaamale nimi.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "Jagamine pole selles telefonis saadaval.",
  "Show": "Näita",
  "Show all {n}": "Näita kõiki {n}",
+ "Show all {n} rows": {
+  "one": "Näita kõiki {n}",
+  "other": "Näita kõiki {n}"
+ },
  "Show on the van": "Näita kaubikul",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Rulluks, kaitseraud ja tuled kaadris, kuni katuseservani.",
  "Shutter, bumper and lights in frame.": "Rulluks, kaitseraud ja tuled kaadris.",

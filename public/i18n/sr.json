@@ -539,6 +539,7 @@
  "Gearbox": "Menjač",
  "Get a notification on this phone when someone gives you a van.": "Dobijte obaveštenje na ovom telefonu kada vam neko dodeli kombi.",
  "Get told when you're given a van": "Obaveštenje kada dobijete kombi",
+ "Give": "Dodeli",
  "Give a different van": "Dodeli drugi kombi",
  "Give a van": "Dodeli kombi",
  "Give the station a name.": "Dajte naziv stanici.",
@@ -1159,6 +1160,11 @@
  "Sharing isn't available on this phone.": "Deljenje nije dostupno na ovom telefonu.",
  "Show": "Prikaži",
  "Show all {n}": "Prikaži sve ({n})",
+ "Show all {n} rows": {
+  "one": "Prikaži sve ({n})",
+  "few": "Prikaži sve ({n})",
+  "other": "Prikaži sve ({n})"
+ },
  "Show on the van": "Prikaži na kombiju",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Roletna, branik i svetla u kadru, do ivice krova.",
  "Shutter, bumper and lights in frame.": "Roletna, branik i svetla u kadru.",

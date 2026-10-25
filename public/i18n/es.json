@@ -526,6 +526,7 @@
  "Gearbox": "Caja de cambios",
  "Get a notification on this phone when someone gives you a van.": "Recibe una notificación en este teléfono cuando alguien te asigne una furgoneta.",
  "Get told when you're given a van": "Avísame cuando me asignen una furgoneta",
+ "Give": "Asignar",
  "Give a different van": "Asignar otra furgoneta",
  "Give a van": "Asignar una furgoneta",
  "Give the station a name.": "Ponle un nombre a la estación.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "No se puede compartir en este teléfono.",
  "Show": "Mostrar",
  "Show all {n}": "Mostrar todo ({n})",
+ "Show all {n} rows": {
+  "one": "Mostrar todo ({n})",
+  "other": "Mostrar todo ({n})"
+ },
  "Show on the van": "Mostrar en la furgoneta",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Persiana, parachoques y luces dentro del encuadre, hasta el borde del techo.",
  "Shutter, bumper and lights in frame.": "Persiana, parachoques y luces dentro del encuadre.",

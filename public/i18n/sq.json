@@ -526,6 +526,7 @@
  "Gearbox": "Kutia e shpejtësive",
  "Get a notification on this phone when someone gives you a van.": "Merr një njoftim në këtë telefon kur dikush të jep një furgon.",
  "Get told when you're given a van": "Njoftohu kur të jepet një furgon",
+ "Give": "Jep",
  "Give a different van": "Jep një furgon tjetër",
  "Give a van": "Jep një furgon",
  "Give the station a name.": "Vendos një emër për stacionin.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "Ndarja nuk është e disponueshme në këtë telefon.",
  "Show": "Shfaq",
  "Show all {n}": "Shfaq të gjitha {n}",
+ "Show all {n} rows": {
+  "one": "Shfaq të gjitha {n}",
+  "other": "Shfaq të gjitha {n}"
+ },
  "Show on the van": "Shfaq në furgon",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Qepeni, parakolpi dhe dritat brenda kuadrit, deri në buzën e çatisë.",
  "Shutter, bumper and lights in frame.": "Qepeni, parakolpi dhe dritat brenda kuadrit.",

@@ -552,6 +552,7 @@
  "Gearbox": "Skrzynia biegów",
  "Get a notification on this phone when someone gives you a van.": "Otrzymuj powiadomienie na tym telefonie, gdy ktoś przekaże ci furgonetkę.",
  "Get told when you're given a van": "Powiadom mnie, gdy dostanę furgonetkę",
+ "Give": "Przekaż",
  "Give a different van": "Przekaż inną furgonetkę",
  "Give a van": "Przekaż furgonetkę",
  "Give the station a name.": "Nadaj stacji nazwę.",
@@ -1183,6 +1184,12 @@
  "Sharing isn't available on this phone.": "Udostępnianie nie jest dostępne na tym telefonie.",
  "Show": "Pokaż",
  "Show all {n}": "Pokaż wszystkie ({n})",
+ "Show all {n} rows": {
+  "one": "Pokaż wszystkie ({n})",
+  "few": "Pokaż wszystkie ({n})",
+  "many": "Pokaż wszystkie ({n})",
+  "other": "Pokaż wszystkie ({n})"
+ },
  "Show on the van": "Pokaż na furgonetce",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Roleta, zderzak i światła w kadrze, aż do krawędzi dachu.",
  "Shutter, bumper and lights in frame.": "Roleta, zderzak i światła w kadrze.",

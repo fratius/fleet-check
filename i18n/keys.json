@@ -4519,7 +4519,6 @@
    "src/app/(tabs)/(fleet)/index.tsx:139",
    "src/app/(tabs)/(fleet)/index.tsx:142",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:173",
-   "src/components/history.tsx:170",
    "src/components/history.tsx:210",
    "src/components/history.tsx:212"
   ]
@@ -4771,6 +4770,13 @@
   "key": "Get told when you're given a van",
   "where": [
    "src/components/pickup.tsx:77"
+  ]
+ },
+ {
+  "id": "fbefae1e",
+  "key": "Give",
+  "where": [
+   "src/components/history.tsx:170"
   ]
  },
  {

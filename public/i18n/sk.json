@@ -552,6 +552,7 @@
  "Gearbox": "Prevodovka",
  "Get a notification on this phone when someone gives you a van.": "Upozornenie na tomto telefóne, keď vám niekto pridelí dodávku.",
  "Get told when you're given a van": "Upozorniť ma, keď dostanem dodávku",
+ "Give": "Prideliť",
  "Give a different van": "Prideliť inú dodávku",
  "Give a van": "Prideliť dodávku",
  "Give the station a name.": "Zadajte názov stanice.",
@@ -1183,6 +1184,12 @@
  "Sharing isn't available on this phone.": "Zdieľanie nie je na tomto telefóne dostupné.",
  "Show": "Zobraziť",
  "Show all {n}": "Zobraziť všetky ({n})",
+ "Show all {n} rows": {
+  "one": "Zobraziť všetky ({n})",
+  "few": "Zobraziť všetky ({n})",
+  "many": "Zobraziť všetky ({n})",
+  "other": "Zobraziť všetky ({n})"
+ },
  "Show on the van": "Zobraziť na dodávke",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Roleta, nárazník a svetlá v zábere, až po okraj strechy.",
  "Shutter, bumper and lights in frame.": "Roleta, nárazník a svetlá v zábere.",

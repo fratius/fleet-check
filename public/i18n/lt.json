@@ -552,6 +552,7 @@
  "Gearbox": "Pavarų dėžė",
  "Get a notification on this phone when someone gives you a van.": "Gaukite pranešimą šiame telefone, kai jums bus skirtas furgonas.",
  "Get told when you're given a van": "Pranešti, kai gausite furgoną",
+ "Give": "Skirti",
  "Give a different van": "Skirti kitą furgoną",
  "Give a van": "Skirti furgoną",
  "Give the station a name.": "Įveskite stoties pavadinimą.",
@@ -1183,6 +1184,12 @@
  "Sharing isn't available on this phone.": "Šiame telefone bendrinti negalima.",
  "Show": "Rodyti",
  "Show all {n}": "Rodyti visus ({n})",
+ "Show all {n} rows": {
+  "one": "Rodyti visus ({n})",
+  "few": "Rodyti visus ({n})",
+  "many": "Rodyti visus ({n})",
+  "other": "Rodyti visus ({n})"
+ },
  "Show on the van": "Rodyti ant furgono",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Roletinės durys, buferis ir žibintai kadre, iki stogo krašto.",
  "Shutter, bumper and lights in frame.": "Roletinės durys, buferis ir žibintai kadre.",

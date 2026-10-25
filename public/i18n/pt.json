@@ -526,6 +526,7 @@
  "Gearbox": "Caixa de velocidades",
  "Get a notification on this phone when someone gives you a van.": "Receba uma notificação neste telefone quando alguém lhe atribuir uma carrinha.",
  "Get told when you're given a van": "Ser avisado quando receber uma carrinha",
+ "Give": "Atribuir",
  "Give a different van": "Atribuir outra carrinha",
  "Give a van": "Atribuir uma carrinha",
  "Give the station a name.": "Dê um nome à estação.",
@@ -1135,6 +1136,10 @@
  "Sharing isn't available on this phone.": "A partilha não está disponível neste telefone.",
  "Show": "Mostrar",
  "Show all {n}": "Mostrar tudo ({n})",
+ "Show all {n} rows": {
+  "one": "Mostrar tudo ({n})",
+  "other": "Mostrar tudo ({n})"
+ },
  "Show on the van": "Mostrar na carrinha",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Porta de enrolar, para-choques e luzes na imagem, até à borda do teto.",
  "Shutter, bumper and lights in frame.": "Porta de enrolar, para-choques e luzes na imagem.",
