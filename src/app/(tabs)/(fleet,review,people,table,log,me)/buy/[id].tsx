@@ -43,7 +43,7 @@ export default function BuyPage() {
   useEffect(() => { const t = setTimeout(() => setWaited(true), 6000); return () => clearTimeout(t); }, []);
   const title = <Stack.Screen options={{ title: BUY_NAME[kind] }} />;
 
-  if (s.mode !== 'firebase') return <Screen edges={[]}>{title}<Card dashed><T v="hint">Refuelling, washing and parts need the Firebase backend.</T></Card></Screen>;
+  if (false as boolean) return <Screen edges={[]}>{title}<Card dashed><T v="hint">Refuelling, washing and parts need the Firebase backend.</T></Card></Screen>;
   if (pid && !p) {
     return (
       <Screen edges={[]}>{title}

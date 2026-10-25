@@ -1,0 +1,43 @@
+# The app creator's own test driver account: a separate sign-in that is a driver at one station of the company
+# they own, to see the app exactly as a driver does (View as keeps you signed in as yourself). By hand only:
+# Actions > Test driver account > Run workflow. No password is made public: set it in the app with
+# "Forgot your password?" (the email goes to the driver address; with "+driver" Gmail delivers it to your inbox).
+name: Test driver account
+
+on:
+  workflow_dispatch:
+    inputs:
+      station:
+        description: Station name or code (empty = the first station)
+        required: false
+        default: ''
+      driver_email:
+        description: Address for the driver account, your own with a +tag (empty = your address with +driver)
+        required: false
+        default: ''
+
+jobs:
+  driver:
+    name: Make the test driver account
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci --prefix functions
+      - name: Make or update the account
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          OWNER_EMAIL: ${{ vars.APP_CREATOR_EMAILS || 'casian.colto@gmail.com' }}
+          DRIVER_EMAIL: ${{ inputs.driver_email }}
+          STATION: ${{ inputs.station }}
+        run: |
+          set -euo pipefail
+          # The first app creator address is the owner.
+          export OWNER_EMAIL="$(printf '%s' "$OWNER_EMAIL" | tr ',; ' '\n\n\n' | sed '/^$/d' | head -n1)"
+          node functions/scripts/test-driver.cjs

@@ -70,7 +70,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
  */
 export function BuyNow({ v }: { v: Vehicle }) {
   const s = useSession();
-  if (s.mode !== 'firebase' || !s.user) return null;
+  if (!s.user) return null;
   const mine = s.purchases.find((p) => p.vehicleId === v.id && p.by === s.user!.uid && isOpenBuy(p) && Date.now() - p.createdAt < STALE_BUY);
   const asking = s.runs(v.stationId) ? s.purchases.filter((p) => p.vehicleId === v.id && p.status === 'waiting' && p.by !== s.user!.uid) : [];
   if (!mine && !asking.length) return null;
@@ -81,7 +81,7 @@ export function BuyNow({ v }: { v: Vehicle }) {
 export function BuyActions({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
-  if (s.mode !== 'firebase' || v.retired || !s.user) return null;
+  if (v.retired || !s.user) return null;
   const start = (kind: BuyKind) => router.push({ pathname: '/buy/[id]', params: { id: 'new', van: v.id, kind } });
   return (
     <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 8, backgroundColor: c.paper }}>
@@ -132,7 +132,7 @@ export function WaitingCard({ p, where }: { p: Purchase; where?: string }) {
 /** The person's own unfinished one on any van (for the Vans tab). */
 export function MyOpenBuy() {
   const s = useSession();
-  if (s.mode !== 'firebase' || !s.user) return null;
+  if (!s.user) return null;
   const mine = s.purchases.find((p) => p.by === s.user!.uid && isOpenBuy(p) && Date.now() - p.createdAt < STALE_BUY);
   return mine ? <MineCard p={mine} withVan /> : null;
 }
@@ -140,7 +140,7 @@ export function MyOpenBuy() {
 /** Small buttons for a driver's own van on the Vans tab. */
 export function BuyButtons({ v }: { v: Vehicle }) {
   const s = useSession();
-  if (s.mode !== 'firebase' || v.retired) return null;
+  if (v.retired) return null;
   const start = (kind: BuyKind) => router.push({ pathname: '/buy/[id]', params: { id: 'new', van: v.id, kind } });
   return (
     <>

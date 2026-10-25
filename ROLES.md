@@ -52,6 +52,9 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   be made at once. The link opens the join page, which asks for the person's details (name, mobile, Transporter
   ID for drivers), creates their account, then shows how to put the app on the home screen. Links are made and
   used by Cloud Functions (`createInvite`, `peekInvite`, `acceptInvite`); the app can only list and cancel them.
+- **One exception, for testing:** the app creator's own test driver account (Actions > Test driver account) is added
+  as a driver to a station of a company the creator owns, without a link, so the creator can see the app exactly as a
+  driver does. It never adds anyone else, and it never prints a password (set it with "Forgot your password?").
 
 ## Vans, drivers and history (permanent: do not change)
 
