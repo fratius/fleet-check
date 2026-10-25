@@ -168,7 +168,6 @@ export class AiError extends Error {
 function call<I, O>(name: string, timeout = 180000) {
   return async (input: I): Promise<O> => {
     const f = fb();
-    if (!f && name === 'purchase' && (input as { action?: string }).action === 'contacts') return { people: [{ name: 'Jana Becker', phone: '+49 151 0000 0100' }, { name: 'Tomasz Nowak', phone: null }] } as O;
     if (!f) throw new AiError('not-configured', t('AI checks need the Firebase backend. Finish the setup first.'));
     try {
       const res = await httpsCallable<I, O>(f.functions, name, { timeout })(input);
