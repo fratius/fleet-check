@@ -4,11 +4,11 @@
  * The callable function is in index.ts (section 16).
  */
 
+import { fill, N_, tr, type Vars } from './i18n';
+
 export type BuyKind = 'fuel' | 'wash' | 'parts';
 export const BUY_KINDS: BuyKind[] = ['fuel', 'wash', 'parts'];
 export const BUY_WORD: Record<BuyKind, string> = { fuel: N_('Refuel'), wash: N_('Wash'), parts: N_('Parts') };
-
-import { fill, N_, tr, type Vars } from './i18n';
 
 const nullable = (type: string, extra: object = {}) => ({ anyOf: [{ type, ...extra }, { type: 'null' }] });
 
