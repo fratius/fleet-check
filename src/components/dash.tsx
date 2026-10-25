@@ -11,7 +11,7 @@ import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
-import { loc } from '@/lib/i18n';
+import { N_, loc, t, tp } from '@/lib/i18n';
 
 /**
  * Tours from dashboard photos (where the owner turned them on): the driver photographs the dashboard when the tour
@@ -20,8 +20,8 @@ import { loc } from '@/lib/i18n';
  * kilometres and the fuel used.
  */
 
-const EIGHTHS: [number, string][] = [[0, 'Empty'], [12.5, '1/8'], [25, '1/4'], [37.5, '3/8'], [50, '1/2'], [62.5, '5/8'], [75, '3/4'], [87.5, '7/8'], [100, 'Full']];
-const num = (t: string) => { const s = t.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); return s ? Number(s) : null; };
+const EIGHTHS: [number, string][] = [[0, N_('Empty')], [12.5, '1/8'], [25, '1/4'], [37.5, '3/8'], [50, '1/2'], [62.5, '5/8'], [75, '3/4'], [87.5, '7/8'], [100, N_('Full')]];
+const num = (txt: string) => { const s = txt.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); return s ? Number(s) : null; };
 const show = (n: number | null | undefined) => (n == null ? '' : String(n).replace('.', ','));
 export const kmText = (n: number | null | undefined) => (n == null ? '–' : `${Math.round(n).toLocaleString(loc())} km`);
 /** "10.4 l/100 km" or "29.0 kWh/100 km". */
@@ -44,9 +44,9 @@ export async function takePhoto(): Promise<{ uri: string; w: number; h: number }
 function intent(s: ReturnType<typeof useSession>, v: Vehicle) {
   const me = s.user?.uid;
   const hasVan = v.assignedTo?.driverId === me;
-  const open = s.tours.filter((t) => t.vehicleId === v.id && isOpen(t));
-  const mine = open.find((t) => t.driverId === me) || null;
-  const others = open.filter((t) => t.driverId !== me);
+  const open = s.tours.filter((x) => x.vehicleId === v.id && isOpen(x));
+  const mine = open.find((x) => x.driverId === me) || null;
+  const others = open.filter((x) => x.driverId !== me);
   if (mine) {
     const stale = hasVan && Date.now() - mine.startAt > STALE_TOUR;
     return { kind: stale ? 'start' : 'end', mine, others, hasVan, stale } as const;
@@ -64,33 +64,33 @@ export function TourCard({ v, compact }: { v: Vehicle; compact?: boolean }) {
   const s = useSession();
   const c = useColors();
   const [open, setOpen] = useState(false);
-  if (s.mode !== 'firebase' || !s.org?.dashScans || v.retired && !s.tours.some((t) => t.vehicleId === v.id && isOpen(t))) return null;
+  if (s.mode !== 'firebase' || !s.org?.dashScans || v.retired && !s.tours.some((x) => x.vehicleId === v.id && isOpen(x))) return null;
   const it = intent(s, v);
   if (!it) return null;
   if (it.kind === 'end-other') {
-    const t = it.others[0];
+    const other = it.others[0];
     return (
       <View style={{ borderWidth: 2, borderColor: c.amber, borderRadius: 4, padding: 12, gap: 6, backgroundColor: c.paper }}>
-        <T v="medium">{t.driverName}&apos;s tour is still open</T>
-        <T v="small">Started {fmtWhen(t.startAt)} ({dur(Date.now() - t.startAt)} ago) at {kmText(t.start.km)}. If the van is back, end it with a photo of the dashboard.</T>
-        {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button small title="End the tour with a dashboard photo" onPress={() => setOpen(true)} />}
+        <T v="medium">{t('{name}\'s tour is still open', { name: other.driverName })}</T>
+        <T v="small">{t('Started {when} ({time} ago) at {km}. If the van is back, end it with a photo of the dashboard.', { when: fmtWhen(other.startAt), time: dur(Date.now() - other.startAt), km: kmText(other.start.km) })}</T>
+        {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button small title={t('End the tour with a dashboard photo')} onPress={() => setOpen(true)} />}
       </View>
     );
   }
   const starting = it.kind === 'start';
-  const title = starting ? 'Start your tour' : 'End your tour';
+  const title = starting ? t('Start your tour') : t('End your tour');
   const line = starting
-    ? it.stale ? `Your last tour on ${v.name} had no end photo. This photo ends it and starts today's.` : 'Before you drive off: a photo of the dashboard with the ignition on, so the kilometres and the fuel are on record.'
-    : `Started ${fmtWhen(it.mine!.startAt)} at ${kmText(it.mine!.start.km)}. When you're back: a photo of the dashboard with the ignition on.`;
+    ? it.stale ? t('Your last tour on {van} had no end photo. This photo ends it and starts today\'s.', { van: v.name }) : t('Before you drive off: a photo of the dashboard with the ignition on, so the kilometres and the fuel are on record.')
+    : t('Started {when} at {km}. When you\'re back: a photo of the dashboard with the ignition on.', { when: fmtWhen(it.mine!.startAt), km: kmText(it.mine!.start.km) });
   return (
     <View style={{ backgroundColor: MARKER, borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
       <Row>
         <Text style={{ fontFamily: F.condBold, fontSize: compact ? 22 : 26, lineHeight: compact ? 25 : 29, color: '#000', flexShrink: 1 }}>{title}</Text>
-        {!starting ? <View style={{ borderWidth: 1.5, borderColor: '#000', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }}><Text style={{ fontFamily: F.medium, fontSize: 13, color: '#000' }}>On tour {dur(Date.now() - it.mine!.startAt)}</Text></View> : null}
+        {!starting ? <View style={{ borderWidth: 1.5, borderColor: '#000', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }}><Text style={{ fontFamily: F.medium, fontSize: 13, color: '#000' }}>{t('On tour {time}', { time: dur(Date.now() - it.mine!.startAt) })}</Text></View> : null}
       </Row>
       {compact ? <T v="medium" color="#000">{v.name}{v.plate ? `, ${v.plate}` : ''}</T> : null}
       <T v="body" color="#000">{line}</T>
-      {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button v="primary" wide title={starting ? 'Photo of the dashboard' : 'End-of-tour photo'} onPress={() => setOpen(true)} />}
+      {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button v="primary" wide title={starting ? t('Photo of the dashboard') : t('End-of-tour photo')} onPress={() => setOpen(true)} />}
     </View>
   );
 }
@@ -116,16 +116,16 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       const p = await takePhoto();
       if (!p) return;
       setPhoto(p.uri);
-      setStep('Uploading the photo…');
+      setStep(t('Uploading the photo…'));
       const small = await prepare(p.uri, p.w, p.h, 2000, 0.85);
       const path = await upload(small.uri, `orgs/${s.org!.id}/dash/${s.user!.uid}/${newId()}.jpg`);
-      setStep('Reading the dashboard…');
+      setStep(t('Reading the dashboard…'));
       const r = await ai.readDashboard({ orgId: s.org!.id, vehicleId: v.id, path });
       setRead(r);
       setForm({ odo: show(r.values.odometerKm), fuel: show(r.values.fuelPct), battery: show(r.values.batteryPct), range: show(r.values.rangeKm) });
       setWarnings(r.values.warnings);
       // Refuels recorded with their receipt during this tour answer the refuelling question.
-      const mine = s.tours.find((t) => t.vehicleId === v.id && isOpen(t) && t.driverId === s.user?.uid);
+      const mine = s.tours.find((x) => x.vehicleId === v.id && isOpen(x) && x.driverId === s.user?.uid);
       const fills = mine && r.endsMine ? s.purchases.filter((x) => x.kind === 'fuel' && x.status === 'done' && x.vehicleId === v.id && x.by === s.user?.uid && x.createdAt >= mine.startAt && x.litres) : [];
       if (fills.length && !ev) {
         setRefuel('litres');
@@ -133,8 +133,8 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
         setFromReceipts(fills.length);
       }
     } catch (e) {
-      setErr(e instanceof Error && e.message === 'camera' ? 'Allow camera access in Settings to take the photo.'
-        : e instanceof AiError ? e.message : 'The photo didn\'t upload. Check the connection and try again.');
+      setErr(e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to take the photo.')
+        : e instanceof AiError ? e.message : t('The photo didn\'t upload. Check the connection and try again.'));
     } finally { setStep(null); }
   };
   // Ending their own tour with this photo: the refuelling question makes the fuel figure possible.
@@ -143,12 +143,12 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
     if (!read) return;
     setErr(null); setJump(null);
     const odometerKm = num(form.odo);
-    if (odometerKm == null || !Number.isFinite(odometerKm)) { setErr('Enter the odometer reading in km.'); return; }
-    if (ending && !refuel) { setErr(ev ? 'Say whether you charged during the tour.' : 'Say whether you refuelled during the tour.'); return; }
+    if (odometerKm == null || !Number.isFinite(odometerKm)) { setErr(t('Enter the odometer reading in km.')); return; }
+    if (ending && !refuel) { setErr(ev ? t('Say whether you charged during the tour.') : t('Say whether you refuelled during the tour.')); return; }
     const values: DashValues = { odometerKm, fuelPct: ev ? null : num(form.fuel), batteryPct: ev ? num(form.battery) : null, rangeKm: num(form.range), warnings };
     const l = refuel === 'litres' ? num(litres) : null;
-    if (refuel === 'litres' && (l == null || !(l > 0))) { setErr('Enter the litres from the receipt.'); return; }
-    setStep('Saving…');
+    if (refuel === 'litres' && (l == null || !(l > 0))) { setErr(t('Enter the litres from the receipt.')); return; }
+    setStep(t('Saving…'));
     try {
       const r = await ai.saveReading({ orgId: s.org!.id, readId: read.readId, values, sure,
         refuel: ending ? { litres: ev ? null : l, kwh: null, unknown: refuel === 'unknown' || (ev && refuel === 'litres') } : null });
@@ -156,17 +156,18 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       onDone();
     } catch (e) {
       if (e instanceof AiError && e.code === 'out-of-range') setJump(e.message);
-      else setErr(e instanceof AiError ? e.message : 'Couldn\'t save. Check the connection and try again.');
+      else setErr(e instanceof AiError ? e.message : t('Couldn\'t save. Check the connection and try again.'));
     } finally { setStep(null); }
   };
 
   if (!read) {
     return (
       <View style={{ gap: 6 }}>
-        <Button v="primary" wide title={step || 'Take the photo'} loading={!!step} disabled={!!step} onPress={shoot} />
-        <T v="small" color="#000">Ignition on, the whole display in the picture: odometer, {ev ? 'battery' : 'fuel gauge'} and any warning lights. No flash.</T>
+        <Button v="primary" wide title={step || t('Take the photo')} loading={!!step} disabled={!!step} onPress={shoot} />
+        <T v="small" color="#000">{ev ? t('Ignition on, the whole display in the picture: odometer, battery and any warning lights. No flash.')
+          : t('Ignition on, the whole display in the picture: odometer, fuel gauge and any warning lights. No flash.')}</T>
         {err ? <T v="small" color={c.alert}>{err}</T> : null}
-        {!step ? <Button small v="link" title="Cancel" onPress={onDone} /> : null}
+        {!step ? <Button small v="link" title={t('Cancel')} onPress={onDone} /> : null}
       </View>
     );
   }
@@ -175,82 +176,89 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       <Row style={{ alignItems: 'flex-start', flexWrap: 'nowrap' }}>
         {photo ? <Image source={{ uri: photo }} style={{ width: 96, height: 72, borderRadius: 3, backgroundColor: '#000' }} contentFit="cover" /> : null}
         <View style={{ flex: 1, gap: 2 }}>
-          <T v="medium">{read.readable ? 'Check what the AI read' : 'Type the numbers from the dashboard'}</T>
-          <T v="small">{read.readable ? (read.confidence != null && read.confidence < 0.7 ? 'The AI isn\'t sure about the odometer. Compare it with the dashboard.' : 'Compare with the dashboard and correct anything that\'s wrong.')
-            : `The AI couldn't read it${read.issue ? `: ${read.issue}` : ''}.`}</T>
+          <T v="medium">{read.readable ? t('Check what the AI read') : t('Type the numbers from the dashboard')}</T>
+          <T v="small">{read.readable ? (read.confidence != null && read.confidence < 0.7 ? t('The AI isn\'t sure about the odometer. Compare it with the dashboard.') : t('Compare with the dashboard and correct anything that\'s wrong.'))
+            : read.issue ? t('The AI couldn\'t read it: {issue}.', { issue: read.issue }) : t('The AI couldn\'t read it.')}</T>
         </View>
       </Row>
-      <Field label="Odometer (km)" value={form.odo} onChangeText={(t) => setForm((f) => ({ ...f, odo: t }))} keyboardType="number-pad" placeholder="For example 48213" />
-      {read.last ? <T v="small">Last reading: {kmText(read.last.km)}, {fmtWhen(read.last.at)}{read.last.byName ? ` (${read.last.byName})` : ''}.</T> : null}
+      <Field label={t('Odometer (km)')} value={form.odo} onChangeText={(x) => setForm((f) => ({ ...f, odo: x }))} keyboardType="number-pad" placeholder={t('For example 48213')} />
+      {read.last ? <T v="small">{read.last.byName ? t('Last reading: {km}, {when} ({name}).', { km: kmText(read.last.km), when: fmtWhen(read.last.at), name: read.last.byName })
+        : t('Last reading: {km}, {when}.', { km: kmText(read.last.km), when: fmtWhen(read.last.at) })}</T> : null}
       {ev ? (
-        <Field label="Battery (%)" value={form.battery} onChangeText={(t) => setForm((f) => ({ ...f, battery: t }))} keyboardType="number-pad" />
+        <Field label={t('Battery (%)')} value={form.battery} onChangeText={(x) => setForm((f) => ({ ...f, battery: x }))} keyboardType="number-pad" />
       ) : (
         <View style={{ gap: 6 }}>
-          <T v="medium">Fuel gauge</T>
-          <Row gap={6}>{EIGHTHS.map(([p, label]) => <Chip key={label} text={label} on={num(form.fuel) === p} onPress={() => setForm((f) => ({ ...f, fuel: show(p) }))} />)}</Row>
-          <Field label="or in percent" value={form.fuel} onChangeText={(t) => setForm((f) => ({ ...f, fuel: t }))} keyboardType="decimal-pad" />
+          <T v="medium">{t('Fuel gauge')}</T>
+          <Row gap={6}>{EIGHTHS.map(([p, label]) => <Chip key={label} text={t(label)} on={num(form.fuel) === p} onPress={() => setForm((f) => ({ ...f, fuel: show(p) }))} />)}</Row>
+          <Field label={t('or in percent')} value={form.fuel} onChangeText={(x) => setForm((f) => ({ ...f, fuel: x }))} keyboardType="decimal-pad" />
         </View>
       )}
-      <Field label="Range shown (km)" hint="optional" value={form.range} onChangeText={(t) => setForm((f) => ({ ...f, range: t }))} keyboardType="number-pad" />
+      <Field label={t('Range shown (km)')} hint={t('optional')} value={form.range} onChangeText={(x) => setForm((f) => ({ ...f, range: x }))} keyboardType="number-pad" />
       <View style={{ gap: 6 }}>
-        <T v="medium">Warning lights</T>
+        <T v="medium">{t('Warning lights')}</T>
         {warnings.length ? (
           <>
             <Row gap={6}>{warnings.map((w) => <Chip key={w} text={`${w}  ✕`} on onPress={() => setWarnings((x) => x.filter((y) => y !== w))} />)}</Row>
-            <T v="small">Tap one that isn&apos;t lit to remove it. Your fleet manager sees the rest.</T>
+            <T v="small">{t('Tap one that isn\'t lit to remove it. Your fleet manager sees the rest.')}</T>
           </>
-        ) : <T v="small">None found. If one is lit, tell your fleet manager.</T>}
+        ) : <T v="small">{t('None found. If one is lit, tell your fleet manager.')}</T>}
       </View>
       {ending ? (
         <View style={{ gap: 6 }}>
-          <T v="medium">{ev ? 'Did you charge the van during the tour?' : 'Did you refuel during the tour?'}</T>
+          <T v="medium">{ev ? t('Did you charge the van during the tour?') : t('Did you refuel during the tour?')}</T>
           <Row gap={6}>
-            <Chip text="No" on={refuel === 'no'} onPress={() => setRefuel('no')} />
-            <Chip text={ev ? 'Yes' : 'Yes, litres from the receipt'} on={refuel === 'litres'} onPress={() => setRefuel('litres')} />
-            {!ev ? <Chip text="Yes, don't know how much" on={refuel === 'unknown'} onPress={() => setRefuel('unknown')} /> : null}
+            <Chip text={t('No')} on={refuel === 'no'} onPress={() => setRefuel('no')} />
+            <Chip text={ev ? t('Yes') : t('Yes, litres from the receipt')} on={refuel === 'litres'} onPress={() => setRefuel('litres')} />
+            {!ev ? <Chip text={t('Yes, don\'t know how much')} on={refuel === 'unknown'} onPress={() => setRefuel('unknown')} /> : null}
           </Row>
-          {refuel === 'litres' && !ev ? <Field label="Litres" value={litres} onChangeText={setLitres} keyboardType="decimal-pad" /> : null}
-          {refuel === 'litres' && fromReceipts ? <T v="small">From {fromReceipts === 1 ? 'your refuel' : `your ${fromReceipts} refuels`} during this tour (the receipt{fromReceipts === 1 ? '' : 's'}).</T> : null}
+          {refuel === 'litres' && !ev ? <Field label={t('Litres')} value={litres} onChangeText={setLitres} keyboardType="decimal-pad" /> : null}
+          {refuel === 'litres' && fromReceipts ? <T v="small">{tp(fromReceipts, 'From your refuel during this tour (the receipt).', 'From your {n} refuels during this tour (the receipts).')}</T> : null}
         </View>
       ) : null}
-      {read.will === 'end' && !read.endsMine && read.tourDriver ? <T v="small">This ends {read.tourDriver}&apos;s tour.</T> : null}
-      {read.will === 'end-start' && read.tourDriver ? <T v="small">{read.tourDriver} didn&apos;t take an end photo: this ends their tour and starts yours.</T> : null}
+      {read.will === 'end' && !read.endsMine && read.tourDriver ? <T v="small">{t('This ends {name}\'s tour.', { name: read.tourDriver })}</T> : null}
+      {read.will === 'end-start' && read.tourDriver ? <T v="small">{t('{name} didn\'t take an end photo: this ends their tour and starts yours.', { name: read.tourDriver })}</T> : null}
       {jump ? (
         <View style={{ gap: 6 }}>
           <T v="small" color={c.alert}>{jump}</T>
-          <Button small title="It's right, save it" loading={!!step} onPress={() => save(true)} />
+          <Button small title={t('It\'s right, save it')} loading={!!step} onPress={() => save(true)} />
         </View>
       ) : null}
       {err ? <T v="small" color={c.alert}>{err}</T> : null}
       <Row>
-        <Button v="primary" title={step || (read.will === 'none' ? 'Save the reading' : read.will === 'start' || read.will === 'end-start' ? 'Save and start the tour' : 'Save and end the tour')} loading={!!step} disabled={!!step} onPress={() => save()} />
-        <Button small v="link" title="Take it again" onPress={() => { setRead(null); setPhoto(null); }} />
+        <Button v="primary" title={step || (read.will === 'none' ? t('Save the reading') : read.will === 'start' || read.will === 'end-start' ? t('Save and start the tour') : t('Save and end the tour'))} loading={!!step} disabled={!!step} onPress={() => save()} />
+        <Button small v="link" title={t('Take it again')} onPress={() => { setRead(null); setPhoto(null); }} />
       </Row>
     </View>
   );
 }
 
-function savedText(role: 'start' | 'end' | 'none', t: Tour | null, km: number) {
-  if (role === 'start') return `Tour started at ${kmText(km)}. Take the end photo when you're back.`;
-  if (role === 'end' && t) {
-    return [`Tour ended: ${kmText(t.km)}`, t.hours != null ? `in ${t.hours.toLocaleString(loc())} h` : '', t.per100 != null ? per100Text(t.per100, t.unit) : ''].filter(Boolean).join(', ') + '.';
+function savedText(role: 'start' | 'end' | 'none', tour: Tour | null, km: number) {
+  if (role === 'start') return t('Tour started at {km}. Take the end photo when you\'re back.', { km: kmText(km) });
+  if (role === 'end' && tour) {
+    const hours = tour.hours != null ? `${tour.hours.toLocaleString(loc())} h` : null;
+    const per100 = tour.per100 != null ? per100Text(tour.per100, tour.unit) : null;
+    if (hours && per100) return t('Tour ended: {km} in {hours}, {per100}.', { km: kmText(tour.km), hours, per100 });
+    if (hours) return t('Tour ended: {km} in {hours}.', { km: kmText(tour.km), hours });
+    if (per100) return t('Tour ended: {km}, {per100}.', { km: kmText(tour.km), per100 });
+    return t('Tour ended: {km}.', { km: kmText(tour.km) });
   }
-  return `Odometer saved: ${kmText(km)}.`;
+  return t('Odometer saved: {km}.', { km: kmText(km) });
 }
 
 /** A compact line about a tour, for lists. */
-export function TourLine({ t, show: who }: { t: Tour; show: 'driver' | 'van' }) {
+export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'van' }) {
   const c = useColors();
-  const open = isOpen(t);
+  const open = isOpen(tour);
+  const when = tour.end ? t('{start} to {end}', { start: fmtWhen(tour.startAt), end: new Date(tour.end.at).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : fmtWhen(tour.startAt);
   return (
     <View style={{ gap: 2 }}>
       <Row>
-        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? t.driverName : t.vehicleName}</T>
-        <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? 'On tour' : kmText(t.km)}</Text>
+        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? tour.driverName : tour.vehicleName}</T>
+        <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? t('On tour') : kmText(tour.km)}</Text>
       </Row>
-      <T v="small">{[fmtWhen(t.startAt), t.end ? `to ${new Date(t.end.at).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' })}` : '',
-        t.per100 != null ? per100Text(t.per100, t.unit) : '', t.endedHow === 'next' ? 'no end photo (estimated)' : t.endedHow === 'none' ? 'no end photo' : '',
-        t.warnings?.length ? `warning: ${t.warnings.join(', ')}` : ''].filter(Boolean).join(', ')}</T>
+      <T v="small">{[when,
+        tour.per100 != null ? per100Text(tour.per100, tour.unit) : '', tour.endedHow === 'next' ? t('no end photo (estimated)') : tour.endedHow === 'none' ? t('no end photo') : '',
+        tour.warnings?.length ? t('warning: {lights}', { lights: tour.warnings.join(', ') }) : ''].filter(Boolean).join(', ')}</T>
     </View>
   );
 }

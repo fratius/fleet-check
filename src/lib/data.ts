@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { fb } from './firebase';
 import { useSession } from './session';
+import { t } from './i18n';
 import { ai } from './store';
 import type { Assignment, DamageLog, Incident, Purchase, Tour } from './types';
 
@@ -53,7 +54,7 @@ export function usePeriodData(from: number): PeriodData {
       return () => { a(); b(); };
     }
     setTours(null); setAssignments(null); setLogs(null); setIncidents(null); setPurchases(null);
-    const fail = () => setError('Couldn\'t load all the numbers. Check the connection, then open the tab again.');
+    const fail = () => setError(t('Couldn\'t load all the numbers. Check the connection, then open the tab again.'));
     const sc = { stations: stations ? stations : null };
     const fromDay = new Date(from).toISOString().slice(0, 10);
     const subs = [

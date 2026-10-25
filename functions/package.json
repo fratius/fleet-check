@@ -6,7 +6,7 @@
     "node": "22"
   },
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p . && node scripts/copy-i18n.cjs",
     "typecheck": "tsc -p . --noEmit"
   },
   "dependencies": {

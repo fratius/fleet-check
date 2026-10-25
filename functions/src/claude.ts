@@ -2,13 +2,14 @@ import Anthropic from '@anthropic-ai/sdk';
 import { HttpsError } from 'firebase-functions/https';
 import { logger } from 'firebase-functions';
 
+import { fail } from './i18n';
 import type { Sent } from './images';
 import { MODELS, costOf, round, type Tier, type Usage } from './models';
 
 let client: Anthropic | null = null;
 let clientKey = '';
 function getClient(key: string) {
-  if (!key) throw new HttpsError('failed-precondition', 'The AI key isn\'t set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.');
+  if (!key) throw fail('failed-precondition', 'The AI key isn\'t set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.');
   if (!client || clientKey !== key) { client = new Anthropic({ apiKey: key, maxRetries: 2, timeout: 240_000 }); clientKey = key; }
   return client;
 }
@@ -55,11 +56,11 @@ export async function ask<T>(key: string, tier: Tier, parts: Part[], prompt: str
   const outTok = u.output_tokens || 0;
   const usage: Usage = { ms, calls: 1, images: parts.length, inTok, outTok, cost: round(costOf(tier, inTok, outTok)) };
   const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
-  if (res.stop_reason === 'refusal') throw new HttpsError('aborted', 'The AI declined to answer for these photos. Try other photos.');
+  if (res.stop_reason === 'refusal') throw fail('aborted', 'The AI declined to answer for these photos. Try other photos.');
   let obj: T;
   try { obj = parseJSON(text) as T; } catch {
     logger.error('Unreadable answer', { model, stop: res.stop_reason, text: text.slice(0, 500) });
-    throw new HttpsError('aborted', res.stop_reason === 'max_tokens' ? 'The AI answer was cut off. Try again.' : 'The AI answer couldn\'t be read. Try again.');
+    throw fail('aborted', res.stop_reason === 'max_tokens' ? 'The AI answer was cut off. Try again.' : 'The AI answer couldn\'t be read. Try again.');
   }
   logger.info('claude call', { model, ms, images: parts.length, inTok, outTok, cost: usage.cost });
   return { obj, usage, model };
@@ -76,22 +77,22 @@ export function parseJSON(t: string): unknown {
 
 function toHttps(e: unknown): HttpsError {
   if (e instanceof HttpsError) return e;
-  if (e instanceof Anthropic.APIConnectionTimeoutError) return new HttpsError('deadline-exceeded', 'The AI took too long to answer. Try again.');
+  if (e instanceof Anthropic.APIConnectionTimeoutError) return fail('deadline-exceeded', 'The AI took too long to answer. Try again.');
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) {
-    return new HttpsError('failed-precondition', 'The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.');
+    return fail('failed-precondition', 'The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.');
   }
-  if (e instanceof Anthropic.RateLimitError) return new HttpsError('resource-exhausted', 'Too many AI checks at once. Wait a minute and try again.');
+  if (e instanceof Anthropic.RateLimitError) return fail('resource-exhausted', 'Too many AI checks at once. Wait a minute and try again.');
   if (e instanceof Anthropic.APIError) {
     const msg = String(e.message || '');
     logger.error('Anthropic API error', { status: e.status, message: msg });
-    if (/credit balance|billing/i.test(msg)) return new HttpsError('resource-exhausted', 'The Anthropic account is out of credit. Add credit in the Claude Console.');
-    if (e.status === 400) return new HttpsError('invalid-argument', `The AI rejected the request: ${msg.slice(0, 200)}`);
-    if (e.status === 404) return new HttpsError('failed-precondition', 'This AI model isn\'t available on the Anthropic account. Pick another model in Account.');
-    return new HttpsError('unavailable', 'The AI service is busy or down. Try again in a minute.');
+    if (/credit balance|billing/i.test(msg)) return fail('resource-exhausted', 'The Anthropic account is out of credit. Add credit in the Claude Console.');
+    if (e.status === 400) return fail('invalid-argument', 'The AI rejected the request: {why}', { why: msg.slice(0, 200) });
+    if (e.status === 404) return fail('failed-precondition', 'This AI model isn\'t available on the Anthropic account. Pick another model in Account.');
+    return fail('unavailable', 'The AI service is busy or down. Try again in a minute.');
   }
-  if (e instanceof Anthropic.APIConnectionError) return new HttpsError('unavailable', 'Couldn\'t reach the AI service. Try again.');
+  if (e instanceof Anthropic.APIConnectionError) return fail('unavailable', 'Couldn\'t reach the AI service. Try again.');
   logger.error('Unexpected error', e as Error);
-  return new HttpsError('internal', 'Something went wrong on the server. Try again.');
+  return fail('internal', 'Something went wrong on the server. Try again.');
 }
 
 /**

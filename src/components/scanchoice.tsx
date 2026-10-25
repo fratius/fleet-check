@@ -7,6 +7,7 @@ import { VIDEO_HOW, VideoHandover } from '@/components/video';
 import { CLS, buildFrames, makeSpec } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import type { Vehicle } from '@/lib/types';
+import { t, tp } from '@/lib/i18n';
 
 /**
  * One "Start scanning" button. Tapping it asks how: the photo set (the camera shows the outline to fit for each
@@ -22,28 +23,35 @@ export function ScanChoice({ v, minutes, onMarker = true, small, caption }: { v:
   const photos = () => { setOpen(false); router.push(`/scan/${v.id}`); };
   if (!open) {
     // Without the backend (test mode) there's no video: straight to the photos.
-    const button = <Button v="primary" wide={!small} small={small} title="Start scanning" onPress={s.mode !== 'firebase' ? photos : () => setOpen(true)} />;
+    const button = <Button v="primary" wide={!small} small={small} title={t('Start scanning')} onPress={s.mode !== 'firebase' ? photos : () => setOpen(true)} />;
     return caption ? <View style={{ gap: 8 }}>{button}<T v="medium" color={ink} style={{ fontSize: 14 }}>{caption}</T></View> : button;
   }
   const rule = { borderTopWidth: 1.5, borderColor: onMarker ? 'rgba(0,0,0,0.3)' : 'rgba(127,127,127,0.35)', paddingTop: 10 };
   return (
     <View style={{ gap: 10, width: '100%' }}>
-      <T v="h3" color={ink}>Scan with photos or a video?</T>
+      <T v="h3" color={ink}>{t('Scan with photos or a video?')}</T>
       <View style={{ gap: 6 }}>
-        <Button v="primary" wide title="Photos" onPress={photos} />
+        <Button v="primary" wide title={t('Photos')} onPress={photos} />
         <T v="small" color={ink}>
-          {frames} photos{CLS[v.cls] ? ` for this ${CLS[v.cls].lower}` : ''}{minutes ? `, about ${minutes} min` : ''}. The camera shows the outline to fit for each one.
-          Only photos get the AI damage check.
+          {[howMany(frames, CLS[v.cls] ? t(CLS[v.cls].lower) : null, minutes), t('The camera shows the outline to fit for each one.'), t('Only photos get the AI damage check.')].join(' ')}
         </T>
       </View>
       <View style={[{ gap: 6 }, rule]}>
-        <VideoHandover v={v} kind="walkaround" title="Video" wide onDone={() => setOpen(false)} />
-        <T v="small" color={ink}>{VIDEO_HOW} The video is kept with the van.</T>
+        <VideoHandover v={v} kind="walkaround" title={t('Video')} wide onDone={() => setOpen(false)} />
+        <T v="small" color={ink}>{t(VIDEO_HOW)} {t('The video is kept with the van.')}</T>
       </View>
       {/* Black on the yellow card in dark mode too (a plain link would turn light). */}
       <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={{ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 }}>
-        <Text style={{ fontFamily: F.cond, fontSize: 17, color: ink || c.ink, textDecorationLine: 'underline' }}>Cancel</Text>
+        <Text style={{ fontFamily: F.cond, fontSize: 17, color: ink || c.ink, textDecorationLine: 'underline' }}>{t('Cancel')}</Text>
       </Pressable>
     </View>
   );
+}
+
+/** "12 photos for this large van, about 2 min." (whole sentences, so each language can order them its own way). */
+function howMany(n: number, cls: string | null, minutes?: number) {
+  if (cls && minutes) return tp(n, '{n} photo for this {cls}, about {min} min.', '{n} photos for this {cls}, about {min} min.', { cls, min: minutes });
+  if (cls) return tp(n, '{n} photo for this {cls}.', '{n} photos for this {cls}.', { cls });
+  if (minutes) return tp(n, '{n} photo, about {min} min.', '{n} photos, about {min} min.', { min: minutes });
+  return tp(n, '{n} photo.', '{n} photos.');
 }

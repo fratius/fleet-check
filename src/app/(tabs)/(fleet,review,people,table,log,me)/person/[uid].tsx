@@ -15,7 +15,7 @@ import { watchMember } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { driverRows } from '@/lib/stats';
 import { ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member } from '@/lib/types';
-import { loc } from '@/lib/i18n';
+import { loc, t, tp } from '@/lib/i18n';
 
 /**
  * One person, in three parts under their details and the van they have now: their record (licence and checks,
@@ -42,11 +42,11 @@ export default function PersonScreen() {
   const history = useHistory({ driverId: uid });
   const data = useDriverData(allowed ? uid : undefined);
 
-  if (!allowed) return <Screen edges={[]}><Card dashed><T v="hint">Only fleet managers and owners see other people.</T></Card></Screen>;
-  if (s.mode !== 'firebase') return <Screen edges={[]}><Card dashed><T v="hint">People and van history need the Firebase backend.</T></Card></Screen>;
+  if (!allowed) return <Screen edges={[]}><Card dashed><T v="hint">{t('Only fleet managers and owners see other people.')}</T></Card></Screen>;
+  if (s.mode !== 'firebase') return <Screen edges={[]}><Card dashed><T v="hint">{t('People and van history need the Firebase backend.')}</T></Card></Screen>;
 
   const rows = history.rows || [];
-  const name = member?.name || rows[0]?.driverName || (me ? s.user?.name : '') || 'Unknown person';
+  const name = member?.name || rows[0]?.driverName || (me ? s.user?.name : '') || t('Unknown person');
   const r = member ? roleOf(member) : null;
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === uid);
   const openRow = rows.find((a) => a.end == null);
@@ -60,24 +60,24 @@ export default function PersonScreen() {
 
   return (
     <Screen edges={[]}>
-      <Stack.Screen options={{ title: me ? 'You' : name }} />
+      <Stack.Screen options={{ title: me ? t('You') : name }} />
       <View style={{ gap: 6 }}>
-        <T v="h1">{name}{me ? ' (you)' : ''}</T>
+        <T v="h1">{me ? t('{name} (you)', { name }) : name}</T>
         <Row>
-          {r ? <Pill v={r === 'owner' ? 'solid' : 'default'} text={ROLE_NAME[r]} /> : null}
-          {member === null ? <Pill v="muted" text="Left the company" /> : null}
-          {due.length ? <Pill v={due.some((x) => x.state === 'overdue') ? 'bad' : 'amber'} text={due.length === 1 ? `${due[0].label}: ${due[0].note}` : `${due.length} things due`} /> : null}
+          {r ? <Pill v={r === 'owner' ? 'solid' : 'default'} text={t(ROLE_NAME[r])} /> : null}
+          {member === null ? <Pill v="muted" text={t('Left the company')} /> : null}
+          {due.length ? <Pill v={due.some((x) => x.state === 'overdue') ? 'bad' : 'amber'} text={due.length === 1 ? `${due[0].label}: ${due[0].note}` : tp(due.length, '{n} thing due', '{n} things due')} /> : null}
           {stationNames ? <T v="hint">{stationNames}</T> : null}
         </Row>
-        {member ? <T v="hint" selectable>{[member.phone, member.transporterId ? `Transporter ID ${member.transporterId}` : '', member.email].filter(Boolean).join(', ')}</T> : null}
-        {member === undefined ? <T v="hint">Loading…</T> : null}
-        {member === null ? <T v="hint">{name} is no longer in {s.org?.name}. Their van history, tours and record stay.</T> : null}
+        {member ? <T v="hint" selectable>{[member.phone, member.transporterId ? t('Transporter ID {id}', { id: member.transporterId }) : '', member.email].filter(Boolean).join(', ')}</T> : null}
+        {member === undefined ? <T v="hint">{t('Loading…')}</T> : null}
+        {member === null ? <T v="hint">{t('{name} is no longer in {company}. Their van history, tours and record stay.', { name, company: s.org?.name || '' })}</T> : null}
       </View>
 
       {done ? <Notice text={done} /> : null}
       {r !== 'owner' && member !== null ? (
         <Card>
-          <T v="hint">Van now</T>
+          <T v="hint">{t('Van now')}</T>
           {van ? (
             <Pressable onPress={() => router.push(`/vehicle/${van.id}`)} style={{ gap: 4 }}>
               <T v="h2">{van.name} ›</T>
@@ -86,19 +86,19 @@ export default function PersonScreen() {
             </Pressable>
           ) : openRow ? (
             <><T v="h2">{openRow.vehicleName}</T><T v="hint">{sinceText(openRow.start)}</T></>
-          ) : <><T v="h2">No van</T><T v="hint">{me ? 'Your fleet manager gives you a van.' : 'Give them one below or from a van\'s page.'}</T></>}
+          ) : <><T v="h2">{t('No van')}</T><T v="hint">{me ? t('Your fleet manager gives you a van.') : t('Give them one below or from a van\'s page.')}</T></>}
           {canGive ? (picking ? <VanPicker m={member!} onDone={() => setPicking(false)} />
-            : <Button small v={van ? 'secondary' : 'primary'} title={van ? 'Give a different van' : 'Give a van'} onPress={() => setPicking(true)} />) : null}
+            : <Button small v={van ? 'secondary' : 'primary'} title={van ? t('Give a different van') : t('Give a van')} onPress={() => setPicking(true)} />) : null}
         </Card>
       ) : null}
 
       {r !== 'owner' ? (
-        <Tabs value={tab} onChange={setTab} items={[['record', 'Record', null], ['tours', 'Tours', null], ['vans', 'Vans', rows.length || null]]} />
+        <Tabs value={tab} onChange={setTab} items={[['record', t('Record'), null], ['tours', t('Tours'), null], ['vans', t('Vans'), rows.length || null]]} />
       ) : null}
 
       {tab === 'record' && r !== 'owner' && shown ? (
         <>
-          {me && !s.staff ? <T v="hint">What your company keeps about you as a driver. Ask your fleet manager to correct anything that&apos;s wrong.</T> : null}
+          {me && !s.staff ? <T v="hint">{t('What your company keeps about you as a driver. Ask your fleet manager to correct anything that\'s wrong.')}</T> : null}
           <DriverRecordView m={shown} incidents={data.incidents} />
         </>
       ) : null}
@@ -108,8 +108,8 @@ export default function PersonScreen() {
         const buys = s.purchases.filter((p) => p.by === uid);
         return buys.length ? (
           <View style={{ gap: 8 }}>
-            <T v="h2">Fuel, wash and parts</T>
-            <T v="hint">{me ? 'Yours, newest first.' : 'Newest first, with the ones refused or given up.'}</T>
+            <T v="h2">{t('Fuel, wash and parts')}</T>
+            <T v="hint">{me ? t('Yours, newest first.') : t('Newest first, with the ones refused or given up.')}</T>
             <Card style={{ paddingVertical: 6 }}>{buys.slice(0, 15).map((p, i) => <BuyRow key={p.id} p={p} show="van" first={i === 0} />)}</Card>
           </View>
         ) : null;
@@ -118,17 +118,17 @@ export default function PersonScreen() {
       {tab === 'vans' || r === 'owner' ? (
         <>
           <View style={{ gap: 8 }}>
-            <T v="h2">Vans {me ? 'you' : 'they'} had</T>
-            <T v="hint">{s.role === 'manager' && !me ? 'At your station, newest first. Kept for good.' : 'Newest first. Kept for good.'}</T>
-            <Card><HistoryList rows={history.rows} error={history.error} show="van" empty={me ? 'You haven\'t had a van yet.' : 'No van yet.'} /></Card>
+            <T v="h2">{me ? t('Vans you had') : t('Vans they had')}</T>
+            <T v="hint">{s.role === 'manager' && !me ? t('At your station, newest first. Kept for good.') : t('Newest first. Kept for good.')}</T>
+            <Card><HistoryList rows={history.rows} error={history.error} show="van" empty={me ? t('You haven\'t had a van yet.') : t('No van yet.')} /></Card>
           </View>
           <Checks uid={uid!} me={me} />
         </>
       ) : null}
 
       {member && (rights.canEdit || rights.canRemove) ? (
-        manage ? <Card><T v="h3">Manage {member.name}</T><ManagePerson m={member} onDone={() => router.back()} /><Button v="link" small title="Close" onPress={() => setManage(false)} /></Card>
-          : <Button title={`Manage ${member.name}`} onPress={() => setManage(true)} />
+        manage ? <Card><T v="h3">{t('Manage {name}', { name: member.name })}</T><ManagePerson m={member} onDone={() => router.back()} /><Button v="link" small title={t('Close')} onPress={() => setManage(false)} /></Card>
+          : <Button title={t('Manage {name}', { name: member.name })} onPress={() => setManage(true)} />
       ) : null}
     </Screen>
   );
@@ -155,32 +155,33 @@ function Numbers({ uid, member, data, history }: { uid: string; member: Member |
   const pct = (v: number | null) => (v == null ? '–' : `${v > 0 ? '+' : ''}${Math.round(v * 100)}%`);
   return (
     <View style={{ gap: 10 }}>
-      <T v="h2">Last 30 days</T>
-      {!s.org?.dashScans && !tours.length ? <Notice text="Tours come from dashboard photos at the start and end of each tour. The owner turns them on in the Account tab." /> : null}
+      <T v="h2">{t('Last 30 days')}</T>
+      {!s.org?.dashScans && !tours.length ? <Notice text={t('Tours come from dashboard photos at the start and end of each tour. The owner turns them on in the Account tab.')} /> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper }}>
-        <Num value={String(row?.tours ?? 0)} label="tours" />
+        <Num value={String(row?.tours ?? 0)} label={t('tours')} />
         <Num value={row ? Math.round(row.km).toLocaleString(loc()) : '0'} label="km" />
-        <Num value={row?.diesel != null ? per100Text(row.diesel, 'l').replace('/100 km', '') : row?.electric != null ? per100Text(row.electric, 'kwh').replace('/100 km', '') : '–'} label="per 100 km" />
-        <Num value={pct(row?.vsModel ?? null)} label="vs others, same van" tone={row?.vsModel != null && row.vsModel > 0.08 ? c.alert : undefined} />
-        <Num value={String(row?.damage ?? 0)} label="new damage while they had the van" />
-        <Num value={String((row?.accidents ?? 0) + (row?.fines ?? 0) + (row?.complaints ?? 0))} label="incidents" />
+        <Num value={row?.diesel != null ? per100Text(row.diesel, 'l').replace('/100 km', '') : row?.electric != null ? per100Text(row.electric, 'kwh').replace('/100 km', '') : '–'} label={t('per 100 km')} />
+        <Num value={pct(row?.vsModel ?? null)} label={t('vs others, same van')} tone={row?.vsModel != null && row.vsModel > 0.08 ? c.alert : undefined} />
+        <Num value={String(row?.damage ?? 0)} label={t('new damage while they had the van')} />
+        <Num value={String((row?.accidents ?? 0) + (row?.fines ?? 0) + (row?.complaints ?? 0))} label={t('incidents')} />
       </View>
       <T v="small">
-        Fuel from gauge photos is a rough figure per tour; the average over many tours is what counts. &quot;vs others&quot; compares with the other
-        drivers of the same van model over the same kilometres{row && row.vsTours ? ` (${row.vsTours} tours)` : ''}. Damage counts every driver who had the van
-        between the walk-around before and the one it was found in: who had it, not proof of who caused it.
+        {row && row.vsTours
+          ? tp(row.vsTours, 'Fuel from gauge photos is a rough figure per tour; the average over many tours is what counts. "vs others" compares with the other drivers of the same van model over the same kilometres ({n} tour). Damage counts every driver who had the van between the walk-around before and the one it was found in: who had it, not proof of who caused it.',
+            'Fuel from gauge photos is a rough figure per tour; the average over many tours is what counts. "vs others" compares with the other drivers of the same van model over the same kilometres ({n} tours). Damage counts every driver who had the van between the walk-around before and the one it was found in: who had it, not proof of who caused it.')
+          : t('Fuel from gauge photos is a rough figure per tour; the average over many tours is what counts. "vs others" compares with the other drivers of the same van model over the same kilometres. Damage counts every driver who had the van between the walk-around before and the one it was found in: who had it, not proof of who caused it.')}
       </T>
-      <T v="h2">Tours</T>
+      <T v="h2">{t('Tours')}</T>
       <Card>
-        {data.tours == null ? <T v="hint">Loading…</T> : !tours.length ? <T v="hint">No tours yet.</T> : null}
+        {data.tours == null ? <T v="hint">{t('Loading…')}</T> : !tours.length ? <T v="hint">{t('No tours yet.')}</T> : null}
         {shown.map((t, i) => (
           <Pressable key={t.id} onPress={() => router.push(`/vehicle/${t.vehicleId}`)} style={{ borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}>
             <TourLine t={t} show="van" />
           </Pressable>
         ))}
-        {tours.length > shown.length ? <Button small v="link" title={`Show all ${tours.length}`} onPress={() => setMore(true)} /> : null}
+        {tours.length > shown.length ? <Button small v="link" title={t('Show all {n}', { n: tours.length })} onPress={() => setMore(true)} /> : null}
       </Card>
-      {tours.length ? <T v="small">{kmText(tours.reduce((n, t) => n + (t.km || 0), 0))} in all {tours.length} tours shown here.</T> : null}
+      {tours.length ? <T v="small">{tp(tours.length, '{km} in the {n} tour shown here.', '{km} in all {n} tours shown here.', { km: kmText(tours.reduce((n, x) => n + (x.km || 0), 0)) })}</T> : null}
     </View>
   );
 }
@@ -203,15 +204,15 @@ function Checks({ uid, me }: { uid: string; me: boolean }) {
   if (!walks.length && !checks.length) return null;
   return (
     <View style={{ gap: 8 }}>
-      <T v="h2">Walk-arounds and checks</T>
-      <T v="hint">The latest ones in the app{s.role === 'manager' && !me ? ' for your station' : ''}.</T>
+      <T v="h2">{t('Walk-arounds and checks')}</T>
+      <T v="hint">{s.role === 'manager' && !me ? t('The latest ones in the app for your station.') : t('The latest ones in the app.')}</T>
       {checks.slice(0, 8).map((k) => {
         const dmg = approvedDamage(k).length;
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <Row>
-              <T v="h3" style={{ flex: 1 }}>Check, {k.vehicleName}</T>
-              <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? `${dmg} approved damage${dmg === 1 ? '' : 's'}` : k.status === 'submitted' ? 'Waiting for review' : 'Close-ups pending'} />
+              <T v="h3" style={{ flex: 1 }}>{t('Check, {van}', { van: k.vehicleName })}</T>
+              <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? tp(dmg, '{n} approved damage', '{n} approved damages') : k.status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
             </Row>
             <T v="hint">{fmtWhen(k.createdAt)}</T>
           </Pressable>
@@ -219,8 +220,8 @@ function Checks({ uid, me }: { uid: string; me: boolean }) {
       })}
       {walks.slice(0, 8).map((w) => (
         <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-          <T v="h3">Walk-around, {w.vehicleName}</T>
-          <T v="hint">{fmtWhen(w.createdAt)}, {w.taken} of {w.frames} photos</T>
+          <T v="h3">{t('Walk-around, {van}', { van: w.vehicleName })}</T>
+          <T v="hint">{tp(w.frames, '{when}, {taken} of {n} photo', '{when}, {taken} of {n} photos', { when: fmtWhen(w.createdAt), taken: w.taken })}</T>
         </Pressable>
       ))}
     </View>

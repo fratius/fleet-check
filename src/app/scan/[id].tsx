@@ -12,7 +12,7 @@ import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
 import { AiError, ai } from '@/lib/store';
 import { saveWalk, type LocalShot } from '@/lib/walks';
-import { loc } from '@/lib/i18n';
+import { loc, t, tp } from '@/lib/i18n';
 
 type Slot = LocalShot | 'skip' | null;
 
@@ -81,7 +81,7 @@ export default function ScanScreen() {
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
 
   if (!v || !sp) {
-    return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>This vehicle isn&apos;t in the fleet any more.</Text><Btn title="Close" onPress={() => router.back()} /></Shell>;
+    return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={() => router.back()} /></Shell>;
   }
   const f = frames[i];
   const taken = slots.filter((x) => x && x !== 'skip').length;
@@ -115,7 +115,7 @@ export default function ScanScreen() {
     try {
       const p = await cam.current.takePictureAsync({ quality: 0.9 });
       if (p?.uri) { setPending({ uri: p.uri, w: p.width, h: p.height }); setPhase('review'); }
-    } catch { setCamErr('Couldn\'t take the photo. Try again.'); }
+    } catch { setCamErr(t('Couldn\'t take the photo. Try again.')); }
     finally { setBusyShot(false); }
   };
   const use = () => {
@@ -133,51 +133,51 @@ export default function ScanScreen() {
     const shots = slots.filter((x): x is LocalShot => !!x && x !== 'skip');
     if (!shots.length) { router.back(); return; }
     if (ho && shots.length < frames.length) return;
-    setPhase('saving'); setSaveErr(null); setProgress(s.mode === 'firebase' ? `Uploading 0 of ${shots.length}` : 'Saving');
+    setPhase('saving'); setSaveErr(null); setProgress(s.mode === 'firebase' ? t('Uploading {done} of {total}', { done: 0, total: shots.length }) : t('Saving'));
     let wid = walkId;
     try {
       if (!wid) {
         wid = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, {
           source: 'camera', frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
-        }, (d, t) => setProgress(`Uploading ${d} of ${t}`));
+        }, (d, n) => setProgress(t('Uploading {done} of {total}', { done: d, total: n })));
         setWalkId(wid);
       }
     } catch {
-      setPhase('summary'); setSaveErr('Couldn\'t upload the photos. Check the connection and tap Save again.');
+      setPhase('summary'); setSaveErr(t('Couldn\'t upload the photos. Check the connection and tap Save again.'));
       return;
     }
     // The camera opens over the tabs: close it, then open the walk-around in the tab you came from.
     if (!ho) { router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0); return; }
-    setProgress(assignment ? 'Saving the pick-up photos' : ho === 'pickup' ? `Picking up ${v.name}` : `Dropping off ${v.name}`);
+    setProgress(assignment ? t('Saving the pick-up photos') : ho === 'pickup' ? t('Picking up {van}', { van: v.name }) : t('Dropping off {van}', { van: v.name }));
     try {
       if (assignment) {
         await ai.addHandoverPhotos({ orgId: s.org!.id, assignmentId: assignment, kind: ho, walkId: wid });
-        flash(`van:${v.id}`, `The pick-up photos of ${v.name} are saved with its history.`);
+        flash(`van:${v.id}`, t('The pick-up photos of {van} are saved with its history.', { van: v.name }));
       } else {
         await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
-        flash(`van:${v.id}`, ho === 'pickup' ? `You picked up ${v.name}. The photos are kept with its history.` : `You dropped off ${v.name}. The photos are kept with its history.`);
+        flash(`van:${v.id}`, ho === 'pickup' ? t('You picked up {van}. The photos are kept with its history.', { van: v.name }) : t('You dropped off {van}. The photos are kept with its history.', { van: v.name }));
       }
       router.back();
     } catch (e) {
       setPhase('summary');
-      setSaveErr(`${e instanceof AiError ? e.message : 'Couldn\'t reach the server.'} The photos are saved as a walk-around.`);
+      setSaveErr(`${e instanceof AiError ? e.message : t('Couldn\'t reach the server.')} ${t('The photos are saved as a walk-around.')}`);
     }
   };
 
   const header = (
     <View style={{ paddingHorizontal: 12, paddingTop: 6, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Btn title={armed ? 'Tap again to stop' : phase === 'summary' ? 'Done' : 'Close'} kind={armed ? 'armed' : 'outline'} onPress={close} />
+        <Btn title={armed ? t('Tap again to stop') : phase === 'summary' ? t('Done') : t('Close')} kind={armed ? 'armed' : 'outline'} onPress={close} />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? v.name : `${v.name}, frame ${f.n} of ${frames.length}`}</Text>
-          <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? (ho === 'pickup' ? 'Pick-up photos' : ho === 'dropoff' ? 'Drop-off photos' : 'Walk-around done') : f.label}</Text>
+          <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? v.name : t('{van}, frame {n} of {total}', { van: v.name, n: f.n, total: frames.length })}</Text>
+          <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? (ho === 'pickup' ? t('Pick-up photos') : ho === 'dropoff' ? t('Drop-off photos') : t('Walk-around done')) : t(f.label)}</Text>
         </View>
-        {phase === 'aim' && ready ? <Btn title="Light" kind={torch ? 'marker' : 'outline'} onPress={() => setTorch(!torch)} /> : null}
+        {phase === 'aim' && ready ? <Btn title={t('Light')} kind={torch ? 'marker' : 'outline'} onPress={() => setTorch(!torch)} /> : null}
       </View>
       <View style={{ flexDirection: 'row', gap: 3 }}>
         {frames.map((fr, k) => {
           const sl = slots[k];
-          return <Pressable key={fr.n} accessibilityLabel={`Frame ${fr.n}, ${fr.label}`} onPress={() => (phase === 'aim' || phase === 'summary' || phase === 'review') && goTo(k, phase === 'summary' ? true : undefined)}
+          return <Pressable key={fr.n} accessibilityLabel={t('Frame {n}, {label}', { n: fr.n, label: t(fr.label) })} onPress={() => (phase === 'aim' || phase === 'summary' || phase === 'review') && goTo(k, phase === 'summary' ? true : undefined)}
             style={{ flex: 1, height: 10, borderRadius: 2, backgroundColor: sl === 'skip' ? 'rgba(255,255,255,0.55)' : sl ? MARKER : 'rgba(255,255,255,0.22)',
               borderWidth: k === i && phase !== 'summary' ? 2 : 0, borderColor: '#fff' }} />;
         })}
@@ -189,10 +189,10 @@ export default function ScanScreen() {
   if (!perm.granted) {
     return (
       <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}>
-        <Text style={st.name}>Camera access</Text>
-        <Text style={st.msg}>The walk-around uses the camera with an outline to fit the vehicle into.</Text>
-        <Btn title={perm.canAskAgain ? 'Allow camera' : 'Open Settings to allow the camera'} kind="marker" onPress={() => requestPerm()} />
-        <Btn title="Close" kind="ghost" onPress={() => router.back()} />
+        <Text style={st.name}>{t('Camera access')}</Text>
+        <Text style={st.msg}>{t('The walk-around uses the camera with an outline to fit the vehicle into.')}</Text>
+        <Btn title={perm.canAskAgain ? t('Allow camera') : t('Open Settings to allow the camera')} kind="marker" onPress={() => requestPerm()} />
+        <Btn title={t('Close')} kind="ghost" onPress={() => router.back()} />
       </Shell>
     );
   }
@@ -204,21 +204,24 @@ export default function ScanScreen() {
         {header}
         <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
           <View style={st.stats}>
-            <View style={st.stat}><Text style={st.statV}>{mmss(totalMs.current)}</Text><Text style={st.statL}>total time</Text></View>
-            <View style={st.stat}><Text style={st.statV}>{taken}/{frames.length}</Text><Text style={st.statL}>photos{skipped ? `, ${skipped} skipped` : ''}</Text></View>
-            <View style={st.stat}><Text style={st.statV}>{retakes}</Text><Text style={st.statL}>retakes</Text></View>
+            <View style={st.stat}><Text style={st.statV}>{mmss(totalMs.current)}</Text><Text style={st.statL}>{t('total time')}</Text></View>
+            <View style={st.stat}><Text style={st.statV}>{taken}/{frames.length}</Text><Text style={st.statL}>{skipped ? tp(skipped, 'photos, {n} skipped', 'photos, {n} skipped') : t('photos')}</Text></View>
+            <View style={st.stat}><Text style={st.statV}>{retakes}</Text><Text style={st.statL}>{t('retakes')}</Text></View>
           </View>
-          <Text style={st.note}>{walkId ? 'Uploaded.' : ho && taken < frames.length ? `All ${frames.length} photos are needed to ${ho === 'pickup' ? 'pick up' : 'drop off'} the van. Tap a missing one to take it.` : 'Tap a photo to retake it.'}</Text>
+          <Text style={st.note}>{walkId ? t('Uploaded.') : ho && taken < frames.length
+            ? (ho === 'pickup' ? tp(frames.length, 'All {n} photos are needed to pick up the van. Tap a missing one to take it.', 'All {n} photos are needed to pick up the van. Tap a missing one to take it.')
+              : tp(frames.length, 'All {n} photos are needed to drop off the van. Tap a missing one to take it.', 'All {n} photos are needed to drop off the van. Tap a missing one to take it.'))
+            : t('Tap a photo to retake it.')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {frames.map((fr, k) => {
               const sl = slots[k];
               return (
                 <Pressable key={fr.n} onPress={() => phase === 'summary' && goTo(k, true)} style={{ width: (W - 32 - 20) / 3 }}>
                   <View style={{ aspectRatio: 3 / 4, borderRadius: 3, overflow: 'hidden', backgroundColor: '#16181C', borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-                    {sl && sl !== 'skip' ? <Image source={{ uri: sl.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Text style={st.note}>{sl === 'skip' ? 'Skipped' : 'No photo'}</Text>}
+                    {sl && sl !== 'skip' ? <Image source={{ uri: sl.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Text style={st.note}>{sl === 'skip' ? t('Skipped') : t('No photo')}</Text>}
                     <View style={st.badge}><Text style={st.badgeT}>{fr.n}</Text></View>
                   </View>
-                  <Text style={st.thumbL} numberOfLines={2}>{fr.label}</Text>
+                  <Text style={st.thumbL} numberOfLines={2}>{t(fr.label)}</Text>
                 </Pressable>
               );
             })}
@@ -229,13 +232,14 @@ export default function ScanScreen() {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {ho ? (
-                <Btn title={walkId ? 'Try again' : assignment ? 'Save the pick-up photos' : ho === 'pickup' ? `Pick up ${v.name}` : `Drop off ${v.name}`} kind="marker" disabled={taken < frames.length} onPress={save} />
-              ) : taken ? <Btn title={`Save ${taken} photos`} kind="marker" onPress={save} /> : null}
-              <Btn title={walkId ? 'Close' : 'Discard'} kind="ghost" onPress={() => router.back()} />
+                <Btn title={walkId ? t('Try again') : assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: v.name }) : t('Drop off {van}', { van: v.name })} kind="marker" disabled={taken < frames.length} onPress={save} />
+              ) : taken ? <Btn title={tp(taken, 'Save {n} photo', 'Save {n} photos')} kind="marker" onPress={save} /> : null}
+              <Btn title={walkId ? t('Close') : t('Discard')} kind="ghost" onPress={() => router.back()} />
             </View>
           )}
-          <Text style={st.note}>{ho ? 'The photos show the van\'s state when you ' + (ho === 'pickup' ? 'took it' : 'brought it back') + ', so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.'
-            : s.mode === 'firebase' ? 'Photos upload to your company\'s storage, so the walk-around is kept as evidence.' : 'Firebase isn\'t connected yet, so photos stay on this phone.'}</Text>
+          <Text style={st.note}>{ho ? (ho === 'pickup' ? t('The photos show the van\'s state when you took it, so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.')
+            : t('The photos show the van\'s state when you brought it back, so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.'))
+            : s.mode === 'firebase' ? t('Photos upload to your company\'s storage, so the walk-around is kept as evidence.') : t('Firebase isn\'t connected yet, so photos stay on this phone.')}</Text>
         </ScrollView>
       </Shell>
     );
@@ -249,7 +253,7 @@ export default function ScanScreen() {
         onLayout={(e) => { const { width, height } = e.nativeEvent.layout; setArea((a) => (a && Math.abs(a.w - width) < 1 && Math.abs(a.h - height) < 1 ? a : { w: width, h: height })); }}>
         {boxH > 0 ? <View style={{ width: boxW, height: boxH, overflow: 'hidden', backgroundColor: '#111' }}>
           <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="back" ratio="4:3" enableTorch={torch && phase === 'aim'} animateShutter
-            onCameraReady={() => setReady(true)} onMountError={(e) => setCamErr(e.message || 'The camera couldn\'t start.')} />
+            onCameraReady={() => setReady(true)} onMountError={(e) => setCamErr(e.message || t('The camera couldn\'t start.'))} />
           {phase === 'review' && pending ? <Image source={{ uri: pending.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
           <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg xml={xml} width={boxW} height={boxH} /></View>
           {!ready && !camErr ? <ActivityIndicator style={StyleSheet.absoluteFill} color="#fff" /> : null}
@@ -258,21 +262,21 @@ export default function ScanScreen() {
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: 196 }}>
         {camErr ? <Text style={[st.hint, { color: '#FF8A80' }]}>{camErr}</Text> : null}
         <Text style={st.hint}>
-          {phase === 'review' ? 'Does the vehicle line up with the outline?' : <><Text style={{ color: MARKER, fontFamily: F.semi }}>Fit the vehicle to the outline. </Text>About {f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 })} m away. {f.hint}</>}
+          {phase === 'review' ? t('Does the vehicle line up with the outline?') : <><Text style={{ color: MARKER, fontFamily: F.semi }}>{t('Fit the vehicle to the outline.')} </Text>{t('About {m} m away.', { m: f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 }) })} {t(f.hint)}</>}
         </Text>
         {phase === 'review' ? (
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
-            <Btn title="Retake" onPress={retake} />
-            <Btn title="Use photo" kind="marker" onPress={use} />
+            <Btn title={t('Retake')} onPress={retake} />
+            <Btn title={t('Use photo')} kind="marker" onPress={use} />
           </View>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flex: 1, alignItems: 'flex-start' }}>
-              {fromSummary ? <Btn title="Cancel" kind="ghost" onPress={toSummary} /> : i > 0 ? <Btn title="Back" kind="ghost" onPress={() => goTo(i - 1)} /> : null}
+              {fromSummary ? <Btn title={t('Cancel')} kind="ghost" onPress={toSummary} /> : i > 0 ? <Btn title={t('Back')} kind="ghost" onPress={() => goTo(i - 1)} /> : null}
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Take photo ${f.n}`} disabled={!ready || busyShot} onPress={shoot}
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Take photo {n}', { n: f.n })} disabled={!ready || busyShot} onPress={shoot}
               style={({ pressed }) => ({ width: 78, height: 78, borderRadius: 39, borderWidth: 5, borderColor: '#fff', backgroundColor: MARKER, opacity: !ready || busyShot ? 0.4 : pressed ? 0.8 : 1 })} />
-            <View style={{ flex: 1, alignItems: 'flex-end' }}>{ho ? null : <Btn title="Skip" kind="ghost" onPress={skip} />}</View>
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>{ho ? null : <Btn title={t('Skip')} kind="ghost" onPress={skip} />}</View>
           </View>
         )}
       </View>

@@ -1,14 +1,16 @@
 import type { DriverRecord, Employment, Member, Vehicle, VehicleDetails } from './types';
-import { loc } from '@/lib/i18n';
+import { N_, loc, t, tp } from '@/lib/i18n';
 
 /**
  * The fleet records of a van: what its fields mean, its deadlines and its mileage against the contract.
  * Dates are kept as "YYYY-MM-DD" (a calendar day, no time zone).
+ * Option labels (FUEL, OWNERSHIP, ...) are in English: show them with t(). Deadlines come back with their label and
+ * note already in the chosen language (they're made at render, only shown).
  */
 
 /** Reads 31.03.2027, 31/03/2027, 2027-03-31, 03/2027 or 3.2027 (a month means its last day). Null if unreadable. */
-export function parseDay(t: string): string | null {
-  const s = t.trim();
+export function parseDay(text: string): string | null {
+  const s = text.trim();
   if (!s) return null;
   let y: number, m: number, d: number;
   let r = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
@@ -32,16 +34,16 @@ export function fmtDay(day: string | null | undefined, month = false): string {
 /** Whole days from today to that day (negative when it's past). */
 export function daysTo(day: string, now = Date.now()): number {
   const [y, m, d] = day.split('-').map(Number);
-  const t = new Date(now);
-  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())) / 86400_000);
+  const n0 = new Date(now);
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(n0.getFullYear(), n0.getMonth(), n0.getDate())) / 86400_000);
 }
-export const today = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+export const today = () => { const d0 = new Date(); return `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, '0')}-${String(d0.getDate()).padStart(2, '0')}`; };
 
-export const FUEL: Record<string, string> = { diesel: 'Diesel', electric: 'Electric', petrol: 'Petrol', hybrid: 'Hybrid', cng: 'Gas (CNG)' };
-export const GEARBOX: Record<string, string> = { manual: 'Manual', automatic: 'Automatic' };
-export const OWNERSHIP: Record<string, string> = { owned: 'Owned', leased: 'Leased', rented: 'Rented', financed: 'Financed', other: 'Other' };
-export const COVERAGE: Record<string, string> = { liability: 'Liability only', partial: 'Partial cover', full: 'Full cover' };
-export const INCLUDED: Record<string, string> = { maintenance: 'Maintenance', tyres: 'Tyres', insurance: 'Insurance', breakdown: 'Breakdown cover', replacement: 'Replacement van' };
+export const FUEL: Record<string, string> = { diesel: N_('Diesel'), electric: N_('Electric'), petrol: N_('Petrol'), hybrid: N_('Hybrid'), cng: N_('Gas (CNG)') };
+export const GEARBOX: Record<string, string> = { manual: N_('Manual'), automatic: N_('Automatic') };
+export const OWNERSHIP: Record<string, string> = { owned: N_('Owned'), leased: N_('Leased'), rented: N_('Rented'), financed: N_('Financed'), other: N_('Other') };
+export const COVERAGE: Record<string, string> = { liability: N_('Liability only'), partial: N_('Partial cover'), full: N_('Full cover') };
+export const INCLUDED: Record<string, string> = { maintenance: N_('Maintenance'), tyres: N_('Tyres'), insurance: N_('Insurance'), breakdown: N_('Breakdown cover'), replacement: N_('Replacement van') };
 
 export type DueState = 'overdue' | 'soon' | 'ok';
 export interface Deadline { key: string; label: string; day: string | null; days: number | null; state: DueState; note: string }
@@ -58,28 +60,28 @@ export function deadlines(v: Vehicle, d: VehicleDetails | null | undefined, now 
     out.push({ key, label, day, days, state: days < 0 ? 'overdue' : days <= soon ? 'soon' : 'ok', note: when(days) });
   };
   const due = d.due || {};
-  add('hu', 'Main inspection (HU)', due.hu);
-  add('uvv', 'Safety check (UVV)', due.uvv);
-  add('service', 'Service', due.service);
-  add('tyres', 'Tyre change', due.tyres, 21);
-  add('tax', 'Vehicle tax', due.tax);
-  add('insurance', 'Insurance renewal', d.insuranceRenewal, 45);
-  if (d.ownership && d.ownership !== 'owned') add('contract', `${d.ownership === 'rented' ? 'Rental' : d.ownership === 'financed' ? 'Financing' : 'Lease'} ends`, d.end, 90);
+  add('hu', t('Main inspection (HU)'), due.hu);
+  add('uvv', t('Safety check (UVV)'), due.uvv);
+  add('service', t('Service'), due.service);
+  add('tyres', t('Tyre change'), due.tyres, 21);
+  add('tax', t('Vehicle tax'), due.tax);
+  add('insurance', t('Insurance renewal'), d.insuranceRenewal, 45);
+  if (d.ownership && d.ownership !== 'owned') add('contract', d.ownership === 'rented' ? t('Rental ends') : d.ownership === 'financed' ? t('Financing ends') : t('Lease ends'), d.end, 90);
   // Service by distance: due when the odometer gets there.
   if (due.serviceKm && d.odometerKm != null) {
     const left = due.serviceKm - d.odometerKm;
-    out.push({ key: 'serviceKm', label: 'Service (distance)', day: null, days: null, state: left <= 0 ? 'overdue' : left <= 2000 ? 'soon' : 'ok',
-      note: left <= 0 ? `${km(-left)} over` : `in ${km(left)}` });
+    out.push({ key: 'serviceKm', label: t('Service (distance)'), day: null, days: null, state: left <= 0 ? 'overdue' : left <= 2000 ? 'soon' : 'ok',
+      note: left <= 0 ? t('{km} over', { km: km(-left) }) : t('in {km}', { km: km(left) }) });
   }
   const rank = { overdue: 0, soon: 1, ok: 2 };
   return out.sort((a, b) => rank[a.state] - rank[b.state] || (a.days ?? 99999) - (b.days ?? 99999));
 }
 function when(days: number) {
-  if (days === 0) return 'today';
-  if (days < 0) return days === -1 ? '1 day overdue' : `${-days} days overdue`;
-  if (days === 1) return 'tomorrow';
-  if (days < 60) return `in ${days} days`;
-  return `in ${Math.round(days / 30.4)} months`;
+  if (days === 0) return t('today');
+  if (days < 0) return tp(-days, '{n} day overdue', '{n} days overdue');
+  if (days === 1) return t('tomorrow');
+  if (days < 60) return tp(days, 'in {n} day', 'in {n} days');
+  return tp(Math.round(days / 30.4), 'in {n} month', 'in {n} months');
 }
 /** Deadlines of the vans someone runs that are overdue or due soon, for the Review tab and its badge. */
 export function fleetDue(vans: Vehicle[], details: VehicleDetails[], now = Date.now()) {
@@ -114,7 +116,7 @@ export function mileage(d: VehicleDetails | null | undefined, excessPerKm?: numb
 
 /* ---------- Drivers ---------- */
 
-export const EMPLOYMENT: Record<Employment, string> = { full: 'Full-time', part: 'Part-time', mini: 'Mini-job', student: 'Student job', other: 'Other' };
+export const EMPLOYMENT: Record<Employment, string> = { full: N_('Full-time'), part: N_('Part-time'), mini: N_('Mini-job'), student: N_('Student job'), other: N_('Other') };
 /** Licence classes a delivery driver may hold (B is the usual van licence; C1 above 3.5 t). */
 export const LICENCE_CLASSES = ['B', 'BE', 'C1', 'C1E', 'C', 'CE', 'AM', 'A1', 'A2', 'A'];
 /** How often licences are checked when the owner hasn't set it (every 6 months is common practice). */
@@ -123,9 +125,9 @@ export const CHECK_MONTHS = 6;
 /** The same day n months later (the last day of the month when it's shorter). */
 export function addMonths(day: string, n: number): string {
   const [y, m, d] = day.split('-').map(Number);
-  const t = new Date(Date.UTC(y, m - 1 + n, 1));
-  const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate();
-  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
+  const at = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth() + 1, 0)).getUTCDate();
+  return `${at.getUTCFullYear()}-${String(at.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(d, last)).padStart(2, '0')}`;
 }
 export const lastCheck = (r: DriverRecord | null | undefined) =>
   (r?.checks || []).slice().sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at)[0] || null;
@@ -144,12 +146,12 @@ export function driverDeadlines(r: DriverRecord | null | undefined, months = CHE
     const days = daysTo(day, now);
     out.push({ key, label, day, days, state: days < 0 ? 'overdue' : days <= soon ? 'soon' : 'ok', note: when(days) });
   };
-  add('licence', 'Driving licence runs out', r.licenceValid, 60);
+  add('licence', t('Driving licence runs out'), r.licenceValid, 60);
   const last = lastCheck(r);
-  if (last) add('licenceCheck', 'Licence check', addMonths(last.day, months), 14);
-  else out.push({ key: 'licenceCheck', label: 'Licence check', day: null, days: null, state: 'overdue', note: 'never recorded' });
-  if (last && !last.ok) out.push({ key: 'licenceProblem', label: 'Licence check found a problem', day: last.day, days: null, state: 'overdue', note: last.note || 'see the record' });
-  if (r.safetyBriefing) add('briefing', 'Safety briefing (yearly)', addMonths(r.safetyBriefing, 12), 30);
+  if (last) add('licenceCheck', t('Licence check'), addMonths(last.day, months), 14);
+  else out.push({ key: 'licenceCheck', label: t('Licence check'), day: null, days: null, state: 'overdue', note: t('never recorded') });
+  if (last && !last.ok) out.push({ key: 'licenceProblem', label: t('Licence check found a problem'), day: last.day, days: null, state: 'overdue', note: last.note || t('see the record') });
+  if (r.safetyBriefing) add('briefing', t('Safety briefing (yearly)'), addMonths(r.safetyBriefing, 12), 30);
   const rank = { overdue: 0, soon: 1, ok: 2 };
   return out.sort((a, b) => rank[a.state] - rank[b.state] || (a.days ?? -99999) - (b.days ?? -99999));
 }
@@ -161,7 +163,7 @@ export function peopleDue(records: DriverRecord[], members: Pick<Member, 'uid' |
   for (const r of records) {
     // Only people still in the company (their record stays when they leave, their deadlines don't).
     if (members && !names.has(r.id)) continue;
-    for (const x of driverDeadlines(r, months, now)) if (x.state !== 'ok') out.push({ uid: r.id, name: names.get(r.id) || known?.get(r.id) || 'Driver', stationId: r.stationId, x });
+    for (const x of driverDeadlines(r, months, now)) if (x.state !== 'ok') out.push({ uid: r.id, name: names.get(r.id) || known?.get(r.id) || t('Driver'), stationId: r.stationId, x });
   }
   return out.sort((a, b) => (a.x.state === b.x.state ? (a.x.days ?? -99999) - (b.x.days ?? -99999) : a.x.state === 'overdue' ? -1 : 1));
 }

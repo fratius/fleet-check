@@ -8,19 +8,20 @@ import { useSession } from '@/lib/session';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
 import { flash } from '@/lib/flash';
+import { t, tp } from '@/lib/i18n';
 import { AiError, ai } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 
 /** "3 days", "5 h", "40 min". */
 export function dur(ms: number) {
   const m = Math.max(1, Math.round(ms / 60000));
-  if (m < 60) return `${m} min`;
+  if (m < 60) return t('{n} min', { n: m });
   const h = Math.round(m / 60);
-  if (h < 48) return `${h} h`;
+  if (h < 48) return t('{n} h', { n: h });
   const d = Math.round(h / 24);
-  return `${d} days`;
+  return tp(d, '{n} day', '{n} days');
 }
-export const sinceText = (ms: number) => `since ${fmtWhen(ms)} (${dur(Date.now() - ms)})`;
+export const sinceText = (ms: number) => t('since {when} ({ago})', { when: fmtWhen(ms), ago: dur(Date.now() - ms) });
 
 /**
  * The full assignment history of one van or one person, newest first. Owners read all of it, managers what
@@ -42,7 +43,7 @@ export function useHistory(by: { vehicleId?: string; driverId?: string }) {
     const stations = own || scope === '*' ? null : scope ? scope.split(',') : [];
     if (stations && !stations.length) { setRows([]); return; }
     return watchHistory(orgId, by, stations, setRows,
-      () => setError('Couldn\'t load the history. Check the connection.'));
+      () => setError(t('Couldn\'t load the history. Check the connection.')));
   }, [orgId, by.vehicleId, by.driverId, own, scope, fromSession]);
   const local = useMemo(() => s.assignments.filter((a) => (by.vehicleId ? a.vehicleId === by.vehicleId : a.driverId === by.driverId)),
     [s.assignments, by.vehicleId, by.driverId]);
@@ -74,31 +75,36 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       style={{ gap: 3, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <Row>
         <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{title}</T>
-        {open ? <Pill v="solid" text="Now" /> : null}
+        {open ? <Pill v="solid" text={t('Now')} /> : null}
         {canOpen ? <T v="h3" color={c.ink2}>›</T> : null}
       </Row>
-      <T v="small">{fmtWhen(a.start)} to {open ? 'now' : fmtWhen(a.end)}, {dur(end - a.start)}</T>
+      <T v="small">{open ? t('{from} to now, {time}', { from: fmtWhen(a.start), time: dur(end - a.start) }) : t('{from} to {to}, {time}', { from: fmtWhen(a.start), to: fmtWhen(a.end), time: dur(end - a.start) })}</T>
       <T v="small">
-        {[a.startedBy === a.driverId ? 'Picked up by the driver' : `Given by ${a.startedByName}`, !open && a.endReason ? `${END_REASON[a.endReason] || a.endReason}${a.endedByName ? ' by ' + a.endedByName : ''}` : '',
+        {[a.startedBy === a.driverId ? t('Picked up by the driver') : t('Given by {name}', { name: a.startedByName }),
+          !open && a.endReason ? (a.endedByName ? t('{reason} by {name}', { reason: t(END_REASON[a.endReason] || a.endReason), name: a.endedByName }) : t(END_REASON[a.endReason] || a.endReason)) : '',
           s.stations.length > 1 && s.staff ? s.stationName(a.stationId) : ''].filter(Boolean).join('. ')}
       </T>
       {m.start.walkId || m.end.walkId || m.start.videoId || m.end.videoId ? (
         <Row gap={6}>
-          {m.start.walkId ? <Button small v="link" title={m.start.late ? 'Pick-up photos (added later)' : 'Pick-up photos'} onPress={() => router.push(`/walk/${m.start.walkId}`)} /> : null}
-          {m.start.videoId ? <Button small v="link" title={m.start.late ? 'Pick-up video (added later)' : 'Pick-up video'} onPress={() => router.push(`/video/${m.start.videoId}`)} /> : null}
-          {m.end.walkId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Photos at takeover' : 'Drop-off photos'} onPress={() => router.push(`/walk/${m.end.walkId}`)} /> : null}
-          {m.end.videoId ? <Button small v="link" title={a.endReason === 'taken over' ? 'Video at takeover' : m.end.late ? 'Drop-off video (added later)' : 'Drop-off video'} onPress={() => router.push(`/video/${m.end.videoId}`)} /> : null}
+          {m.start.walkId ? <Button small v="link" title={m.start.late ? t('Pick-up photos (added later)') : t('Pick-up photos')} onPress={() => router.push(`/walk/${m.start.walkId}`)} /> : null}
+          {m.start.videoId ? <Button small v="link" title={m.start.late ? t('Pick-up video (added later)') : t('Pick-up video')} onPress={() => router.push(`/video/${m.start.videoId}`)} /> : null}
+          {m.end.walkId ? <Button small v="link" title={a.endReason === 'taken over' ? t('Photos at takeover') : t('Drop-off photos')} onPress={() => router.push(`/walk/${m.end.walkId}`)} /> : null}
+          {m.end.videoId ? <Button small v="link" title={a.endReason === 'taken over' ? t('Video at takeover') : m.end.late ? t('Drop-off video (added later)') : t('Drop-off video')} onPress={() => router.push(`/video/${m.end.videoId}`)} /> : null}
         </Row>
       ) : null}
-      {missing ? <T v="small" color={c.alert}>No drop-off video or photos{a.endReason === 'taken over' ? `: ${a.driverName} didn't drop it off, ${a.endedByName || 'the next driver'} took it over` : ''}.</T> : null}
-      {out ? <T v="small" color={c.alert}>Not dropped off after {dur(Date.now() - a.start)}.</T> : null}
-      {noPickup ? <T v="small" color={c.alert}>No pick-up video or photos yet.</T> : null}
-      {van && s.mode === 'firebase' && missing && s.runs(a.stationId) ? <VideoHandover v={van} kind="dropoff" assignmentId={a.id} title="Add the drop-off video" /> : null}
+      {missing ? <T v="small" color={c.alert}>{a.endReason === 'taken over'
+        ? (a.endedByName ? t('No drop-off video or photos: {driver} didn\'t drop it off, {next} took it over.', { driver: a.driverName, next: a.endedByName })
+          : t('No drop-off video or photos: {driver} didn\'t drop it off, the next driver took it over.', { driver: a.driverName }))
+        : t('No drop-off video or photos.')}</T> : null}
+      {out ? <T v="small" color={c.alert}>{t('Not dropped off after {time}.', { time: dur(Date.now() - a.start) })}</T> : null}
+      {noPickup ? <T v="small" color={c.alert}>{t('No pick-up video or photos yet.')}</T> : null}
+      {van && s.mode === 'firebase' && missing && s.runs(a.stationId) ? <VideoHandover v={van} kind="dropoff" assignmentId={a.id} title={t('Add the drop-off video')} /> : null}
       {van && s.mode === 'firebase' && open && !m.start.walkId && !m.start.videoId && (a.driverId === s.user?.uid || s.runs(a.stationId))
-        ? <VideoHandover v={van} kind="pickup" assignmentId={a.id} title="Add a pick-up video" /> : null}
+        ? <VideoHandover v={van} kind="pickup" assignmentId={a.id} title={t('Add a pick-up video')} /> : null}
       {walks.length || checks.length ? (
-        <T v="small">{[`${walks.length} walk-around${walks.length === 1 ? '' : 's'}`, `${checks.length} check${checks.length === 1 ? '' : 's'}`,
-          damage ? `${damage} approved damage${damage === 1 ? '' : 's'} found` : ''].filter(Boolean).join(', ')} in this time</T>
+        <T v="small">{damage
+          ? t('In this time: {walks}, {checks}, {damage} found', { walks: tp(walks.length, '{n} walk-around', '{n} walk-arounds'), checks: tp(checks.length, '{n} check', '{n} checks'), damage: tp(damage, '{n} approved damage', '{n} approved damages') })
+          : t('In this time: {walks}, {checks}', { walks: tp(walks.length, '{n} walk-around', '{n} walk-arounds'), checks: tp(checks.length, '{n} check', '{n} checks') })}</T>
       ) : null}
     </Pressable>
   );
@@ -107,17 +113,18 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
 export function HistoryList({ rows, error, show, empty }: { rows: Assignment[] | null; error: string | null; show: 'driver' | 'van'; empty: string }) {
   const c = useColors();
   if (error) return <T v="hint" color={c.alert}>{error}</T>;
-  if (!rows) return <T v="hint">Loading…</T>;
+  if (!rows) return <T v="hint">{t('Loading…')}</T>;
   if (!rows.length) return <T v="hint">{empty}</T>;
   return <View style={{ gap: 10 }}>{rows.map((a, i) => <HistoryRow key={a.id} a={a} show={show} first={i === 0} />)}</View>;
 }
 
 /** What happened after giving a van: whether the driver got a notification on their phone. */
 function given(person: string, van: string, r: { notified?: number; unchanged?: boolean }, self: boolean) {
-  if (r.unchanged || self) return `${self ? 'You have' : person + ' has'} ${van}.`;
+  if (self) return t('You have {van}.', { van });
+  if (r.unchanged) return t('{person} has {van}.', { person, van });
   return r.notified
-    ? `${person} has ${van} now. Their phone got a notification asking for the pick-up video or photos.`
-    : `${person} has ${van} now. Their phone doesn't have notifications on, so they'll see it, and the request for the pick-up video or photos, when they open the app.`;
+    ? t('{person} has {van} now. Their phone got a notification asking for the pick-up video or photos.', { person, van })
+    : t('{person} has {van} now. Their phone doesn\'t have notifications on, so they\'ll see it, and the request for the pick-up video or photos, when they open the app.', { person, van });
 }
 
 /** Owners and managers of the van's station give it to a driver (or a fleet manager) of that station. */
@@ -130,7 +137,7 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId) return;
-    return watchMembers(orgId, setMembers, () => setErr('Couldn\'t load the people of this station.'));
+    return watchMembers(orgId, setMembers, () => setErr(t('Couldn\'t load the people of this station.')));
   }, [orgId]);
   const vanOf = useMemo(() => new Map(s.vehicles.filter((x) => x.assignedTo && !x.retired).map((x) => [x.assignedTo!.driverId, x])), [s.vehicles]);
   const people = (members || [])
@@ -143,13 +150,13 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
       flash(`van:${v.id}`, given(m.name, v.name, r, m.uid === s.user?.uid));
       onDone();
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t give the van. Check the connection.'); } finally { setBusy(null); }
+    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
   };
   return (
     <View style={{ gap: 8 }}>
-      <T v="medium">Give {v.name} to</T>
-      <T v="small">People of {s.stationName(v.stationId)}. Someone who already has a van hands it back: it becomes free.</T>
-      {!members ? <T v="hint">Loading…</T> : !people.length ? <T v="hint">Nobody at this station yet. Invite drivers under People.</T> : null}
+      <T v="medium">{t('Give {van} to', { van: v.name })}</T>
+      <T v="small">{t('People of {station}. Someone who already has a van hands it back: it becomes free.', { station: s.stationName(v.stationId) })}</T>
+      {!members ? <T v="hint">{t('Loading…')}</T> : !people.length ? <T v="hint">{t('Nobody at this station yet. Invite drivers under People.')}</T> : null}
       {people.map((m) => {
         const has = vanOf.get(m.uid);
         const current = v.assignedTo?.driverId === m.uid;
@@ -158,14 +165,14 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== m.uid ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <T v="medium" numberOfLines={1}>{m.name}</T>
-              <T v="small" numberOfLines={1}>{current ? 'Has this van now' : has ? `Has ${has.name} now` : 'No van'}{roleOf(m) === 'manager' ? `, ${ROLE_NAME.manager.toLowerCase()}` : ''}</T>
+              <T v="small" numberOfLines={1}>{[current ? t('Has this van now') : has ? t('Has {van} now', { van: has.name }) : t('No van'), roleOf(m) === 'manager' ? t(ROLE_NAME.manager) : ''].filter(Boolean).join(', ')}</T>
             </View>
-            {busy === m.uid ? <T v="small">Saving…</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? 'Swap' : 'Free'} /> : null}
+            {busy === m.uid ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? t('Swap') : t('Free')} /> : null}
           </Pressable>
         );
       })}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-      <Button v="link" small title="Cancel" onPress={onDone} />
+      <Button v="link" small title={t('Cancel')} onPress={onDone} />
     </View>
   );
 }
@@ -186,13 +193,13 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
       flash(`person:${m.uid}`, given(m.name, v.name, r, m.uid === s.user?.uid));
       onDone();
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t give the van. Check the connection.'); } finally { setBusy(null); }
+    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
   };
   return (
     <View style={{ gap: 8 }}>
-      <T v="medium">Give {m.name} a van</T>
-      <T v="small">Free vans first. Taking a van from someone else leaves them without one.</T>
-      {!vans.length ? <T v="hint">No vans at {s.stationName(m.stationIds?.[0])}.</T> : null}
+      <T v="medium">{t('Give {name} a van', { name: m.name })}</T>
+      <T v="small">{t('Free vans first. Taking a van from someone else leaves them without one.')}</T>
+      {!vans.length ? <T v="hint">{t('No vans at {station}.', { station: s.stationName(m.stationIds?.[0]) })}</T> : null}
       {vans.map((v) => {
         const current = v.assignedTo?.driverId === m.uid;
         return (
@@ -200,14 +207,14 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== v.id ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <T v="medium" numberOfLines={1}>{v.name}{v.plate ? `, ${v.plate}` : ''}</T>
-              <T v="small" numberOfLines={1}>{current ? `${m.name} has it now` : v.assignedTo ? `${v.assignedTo.driverName} has it now` : 'Free'}</T>
+              <T v="small" numberOfLines={1}>{current ? t('{name} has it now', { name: m.name }) : v.assignedTo ? t('{name} has it now', { name: v.assignedTo.driverName }) : t('Free')}</T>
             </View>
-            {busy === v.id ? <T v="small">Saving…</T> : !current ? <Pill v={v.assignedTo ? 'amber' : 'good'} text={v.assignedTo ? 'Take over' : 'Free'} /> : null}
+            {busy === v.id ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={v.assignedTo ? 'amber' : 'good'} text={v.assignedTo ? t('Take over') : t('Free')} /> : null}
           </Pressable>
         );
       })}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-      <Button v="link" small title="Cancel" onPress={onDone} />
+      <Button v="link" small title={t('Cancel')} onPress={onDone} />
     </View>
   );
 }

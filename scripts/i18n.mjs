@@ -4,6 +4,7 @@
 //                                    per language in public/i18n/<code>.json, what is missing or broken
 //   node scripts/i18n.mjs --prune    also removes translations of texts the app no longer has
 //   node scripts/i18n.mjs --strict   fails when a translation is broken (a {placeholder} lost or invented)
+//   node scripts/i18n.mjs --lang=de  checks one language only, and leaves i18n/keys.json as it is (for translators)
 //
 // A text is found where it is passed to t(), tp(), tj() or N_() in the app, and to fail(), tr(), trp() or N_() in the
 // functions: only as a plain string (a variable can't be found, so mark constants with N_()).
@@ -87,8 +88,11 @@ for (const f of files(join(ROOT, 'functions/src'))) scan(f, true);
 const list = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, v]) => ({
   key, ...(v.one ? { one: v.one } : {}), ...(v.server ? { server: true } : {}), where: [...v.files].sort(),
 }));
-mkdirSync(join(ROOT, 'i18n'), { recursive: true });
-writeFileSync(join(ROOT, 'i18n/keys.json'), JSON.stringify(list, null, 1) + '\n');
+const only = [...args].find((a) => a.startsWith('--lang='))?.slice(7) || null;
+if (!only) {
+  mkdirSync(join(ROOT, 'i18n'), { recursive: true });
+  writeFileSync(join(ROOT, 'i18n/keys.json'), JSON.stringify(list, null, 1) + '\n');
+}
 console.log(`${list.length} texts (${list.filter((k) => k.one).length} with a count), ${list.filter((k) => k.server).length} from the functions.`);
 problems.forEach((p) => console.log(`  ! ${p}`));
 
@@ -98,7 +102,7 @@ const dir = join(ROOT, 'public/i18n');
 let broken = 0;
 if (existsSync(dir)) {
   const { formsOf } = await import(join(ROOT, 'scripts/plural-forms.mjs'));
-  for (const f of readdirSync(dir).filter((x) => x.endsWith('.json')).sort()) {
+  for (const f of readdirSync(dir).filter((x) => x.endsWith('.json') && (!only || x === `${only}.json`)).sort()) {
     const code = f.replace('.json', '');
     const d = JSON.parse(readFileSync(join(dir, f), 'utf8'));
     let missing = 0, bad = [];
@@ -123,7 +127,8 @@ if (existsSync(dir)) {
     }
     broken += bad.length;
     console.log(`${code}: ${list.length - missing}/${list.length} translated${missing ? `, ${missing} missing (English shown)` : ''}${bad.length ? `, ${bad.length} broken` : ''}${unused.length ? `, ${unused.length} no longer used${args.has('--prune') ? ' (removed)' : ''}` : ''}`);
-    bad.slice(0, 8).forEach((b) => console.log(`    broken: ${b}`));
+    bad.slice(0, only ? 200 : 8).forEach((b) => console.log(`    broken: ${b}`));
+    if (only && missing) list.filter((k) => d[k.key] == null || d[k.key] === '').slice(0, 200).forEach((k) => console.log(`    missing: ${k.key}`));
   }
 }
 if (args.has('--strict') && (broken || problems.length)) process.exit(1);

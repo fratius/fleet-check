@@ -5,6 +5,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
+import { t } from './i18n';
 import { newId } from './images';
 import type { Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
@@ -155,9 +156,10 @@ export interface DocRead {
 
 /** Who to call about a refuel: the station's fleet managers (or the owners). */
 export interface Contact { name: string; phone: string | null }
+/** `why` in English; whyT and whyV to show it in the person's language: t(whyT, whyV). */
 export type CardAnswer =
-  | { result: 'match' | 'retake'; why: string }
-  | { result: 'mismatch' | 'unclear' | 'missing'; why: string; people: Contact[] };
+  | { result: 'match' | 'retake'; why: string; whyT?: string; whyV?: Record<string, string | number> }
+  | { result: 'mismatch' | 'unclear' | 'missing'; why: string; whyT?: string; whyV?: Record<string, string | number>; people: Contact[] };
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
 export class AiError extends Error {
@@ -167,29 +169,33 @@ function call<I, O>(name: string, timeout = 180000) {
   return async (input: I): Promise<O> => {
     const f = fb();
     if (!f && name === 'purchase' && (input as { action?: string }).action === 'contacts') return { people: [{ name: 'Jana Becker', phone: '+49 151 0000 0100' }, { name: 'Tomasz Nowak', phone: null }] } as O;
-    if (!f) throw new AiError('not-configured', 'AI checks need the Firebase backend. Finish the setup first.');
+    if (!f) throw new AiError('not-configured', t('AI checks need the Firebase backend. Finish the setup first.'));
     try {
       const res = await httpsCallable<I, O>(f.functions, name, { timeout })(input);
       return res.data;
     } catch (e) {
-      const err = e as { code?: string; message?: string };
+      const err = e as { code?: string; message?: string; details?: { t?: unknown; v?: unknown } };
       const code = (err.code || 'unknown').replace(/^functions\//, '');
-      throw new AiError(code, aiMessage(code, err.message));
+      // The server sends its message's template and values, so it shows in the person's language.
+      const d = err.details;
+      const msg = d && typeof d.t === 'string' ? t(d.t, (d.v && typeof d.v === 'object' ? d.v : {}) as Record<string, string | number>) : aiMessage(code, err.message);
+      throw new AiError(code, msg);
     }
   };
 }
 export function aiMessage(code: string, raw?: string): string {
-  // The functions send messages written for the driver; the SDK's own messages are just the code.
-  if (raw && raw.length > 24 && !/^[a-z -]+$/i.test(raw)) return raw;
+  // The functions send messages written for the driver (translated by their English text); the SDK's own messages
+  // are just the code.
+  if (raw && raw.length > 24 && !/^[a-z -]+$/i.test(raw)) return t(raw);
   switch (code) {
-    case 'not-found': return 'The AI functions aren\'t deployed yet. Check that the GitHub deploy ran.';
-    case 'unauthenticated': return 'Sign in again, then try again.';
-    case 'permission-denied': return 'Your account isn\'t a member of this company.';
-    case 'resource-exhausted': return 'Too many AI checks in a short time, or the Anthropic credit has run out.';
-    case 'failed-precondition': return raw || 'The AI service isn\'t set up. Add the ANTHROPIC_API_KEY secret.';
-    case 'deadline-exceeded': return 'The AI took too long to answer. Try again.';
-    case 'unavailable': case 'internal': return 'Couldn\'t reach the AI service. Check the connection and try again.';
-    default: return raw || 'Something went wrong with the AI check. Try again.';
+    case 'not-found': return t('The AI functions aren\'t deployed yet. Check that the GitHub deploy ran.');
+    case 'unauthenticated': return t('Sign in again, then try again.');
+    case 'permission-denied': return t('Your account isn\'t a member of this company.');
+    case 'resource-exhausted': return t('Too many AI checks in a short time, or the Anthropic credit has run out.');
+    case 'failed-precondition': return raw ? t(raw) : t('The AI service isn\'t set up. Add the ANTHROPIC_API_KEY secret.');
+    case 'deadline-exceeded': return t('The AI took too long to answer. Try again.');
+    case 'unavailable': case 'internal': return t('Couldn\'t reach the AI service. Check the connection and try again.');
+    default: return raw ? t(raw) : t('Something went wrong with the AI check. Try again.');
   }
 }
 

@@ -2,6 +2,8 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
+import { t } from './i18n';
+
 /**
  * A small Excel (.xlsx) writer for the Data tab: a few sheets of plain rows, with a bold header, frozen first row,
  * Excel's filter buttons on the header, real numbers and real dates. No library: an .xlsx file is a zip of a few
@@ -114,7 +116,9 @@ const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
  */
 export async function saveXlsx(name: string, sheets: Sheet[]) {
   const bytes = xlsxBytes(sheets);
-  const file = `${name.replace(/[^\w .-]+/g, ' ').trim() || 'Fleet Check'}.xlsx`;
+  // Only what file names can't hold is taken out: the name is in the person's language (any script).
+  // eslint-disable-next-line no-control-regex
+  const file = `${name.replace(/[\\/:*?"<>|\u0000-\u001F]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Fleet Check'}.xlsx`;
   if (Platform.OS === 'web') {
     const blob = new Blob([bytes as BlobPart], { type: MIME });
     const url = URL.createObjectURL(blob);
@@ -128,6 +132,6 @@ export async function saveXlsx(name: string, sheets: Sheet[]) {
   if (f.exists) f.delete();
   f.create();
   await f.write(bytes);
-  if (!(await Sharing.isAvailableAsync())) throw new Error('Sharing isn\'t available on this phone.');
+  if (!(await Sharing.isAvailableAsync())) throw new Error(t('Sharing isn\'t available on this phone.'));
   await Sharing.shareAsync(f.uri, { mimeType: MIME, UTI: 'org.openxmlformats.spreadsheetml.sheet', dialogTitle: file });
 }

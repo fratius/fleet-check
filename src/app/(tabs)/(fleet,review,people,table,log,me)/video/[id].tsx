@@ -9,6 +9,7 @@ import { useSession } from '@/lib/session';
 import { ai } from '@/lib/store';
 import { VIDEO_TITLE, type Video } from '@/lib/types';
 import { mb, watchVideo } from '@/lib/videos';
+import { t, tp } from '@/lib/i18n';
 
 /** One video of a van (pick-up, drop-off or walk-around): the player and what's known about it. */
 export default function VideoScreen() {
@@ -31,32 +32,33 @@ export default function VideoScreen() {
     ai.processVideo({ orgId, videoId: v.id }).catch(() => {});
   }, [v, orgId, stuck]);
 
-  if (!v) return <Screen edges={[]}><Card dashed><T v="hint">{older === null ? 'This video isn\'t available.' : 'Loading…'}</T></Card></Screen>;
+  if (!v) return <Screen edges={[]}><Card dashed><T v="hint">{older === null ? t('This video isn\'t available.') : t('Loading…')}</T></Card></Screen>;
   const ready = v.status === 'ready' && v.playPath;
   const aspect = v.width && v.height ? v.width / v.height : 9 / 16;
-  const title = VIDEO_TITLE[v.kind] || 'Video';
+  const title = VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video');
   return (
     <Screen edges={[]}>
-      <Stack.Screen options={{ title: `${title}, ${v.vehicleName}` }} />
+      <Stack.Screen options={{ title: t('{title}, {van}', { title, van: v.vehicleName }) }} />
       <View style={{ alignSelf: 'center', width: aspect < 1 ? '72%' : '100%', maxWidth: 520 }}>
         <VideoPlayer path={ready ? v.playPath! : v.path} aspect={aspect} />
       </View>
       {!ready ? (
-        <Notice text={v.status === 'failed' ? 'The copy that plays on every phone couldn\'t be made. This is the original; it plays on iPhones and Macs.'
-          : 'Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.'} />
+        <Notice text={v.status === 'failed' ? t('The copy that plays on every phone couldn\'t be made. This is the original; it plays on iPhones and Macs.')
+          : t('Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.')} />
       ) : null}
       <View style={{ gap: 4 }}>
-        <T v="h2">{title}{v.late ? ', added later' : ''}</T>
+        <T v="h2">{v.late ? t('{title}, added later', { title }) : title}</T>
         <Row>
-          <Pill text={`${Math.round(v.durationMs / 1000)} seconds`} />
-          {v.late ? <Pill v="amber" text="Added after the handover" /> : null}
+          <Pill text={tp(Math.round(v.durationMs / 1000), '{n} second', '{n} seconds')} />
+          {v.late ? <Pill v="amber" text={t('Added after the handover')} /> : null}
         </Row>
-        <T>Recorded by {v.byName}{v.recordedAt ? `, ${fmtWhen(v.recordedAt)}` : ''}.</T>
-        <T v="small">Uploaded {fmtWhen(v.createdAt)}{v.device ? `, ${v.device}` : ''}{v.size ? `, original ${mb(v.size)}` : ''}{v.playSize ? `, playback copy ${mb(v.playSize)}` : ''}.</T>
+        <T>{v.recordedAt ? t('Recorded by {name}, {when}.', { name: v.byName, when: fmtWhen(v.recordedAt) }) : t('Recorded by {name}.', { name: v.byName })}</T>
+        <T v="small">{[t('Uploaded {when}', { when: fmtWhen(v.createdAt) }), v.device || '', v.size ? t('original {size}', { size: mb(v.size) }) : '',
+          v.playSize ? t('playback copy {size}', { size: mb(v.playSize) }) : ''].filter(Boolean).join(', ')}.</T>
       </View>
       <Row>
-        <Button small title={`Open ${v.vehicleName}`} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
-        {s.staff ? <Button small v="link" title="Download the original" onPress={async () => { const u = await photoUrl(v.path); if (u) Linking.openURL(u); }} /> : null}
+        <Button small title={t('Open {name}', { name: v.vehicleName })} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
+        {s.staff ? <Button small v="link" title={t('Download the original')} onPress={async () => { const u = await photoUrl(v.path); if (u) Linking.openURL(u); }} /> : null}
       </Row>
     </Screen>
   );

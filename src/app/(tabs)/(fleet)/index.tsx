@@ -12,6 +12,7 @@ import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
+import { t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
 
@@ -35,11 +36,11 @@ export default function Fleet() {
   const vans = !tracking ? active : show === 'free' ? free : show === 'taken' ? taken : show === 'retired' ? retired : active;
   const count = active.length;
   const canAdd = s.staff && (s.role === 'owner' || s.myStations.some((st) => s.runs(st.id)));
-  const where = s.mode === 'local' ? 'Test mode, saved on this phone'
-    : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : `${s.stations.length} stations`) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
+  const where = s.mode === 'local' ? t('Test mode, saved on this phone')
+    : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : tp(s.stations.length, '{n} station', '{n} stations')) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
 
   // A tour of mine still open on a van I no longer have (dropped off before the end photo).
-  const myOpen = s.tours.find((t) => isOpen(t) && t.driverId === s.user?.uid && t.vehicleId !== s.myVan?.id);
+  const myOpen = s.tours.find((x) => isOpen(x) && x.driverId === s.user?.uid && x.vehicleId !== s.myVan?.id);
   const tourElsewhere = myOpen ? s.vehicles.find((v) => v.id === myOpen.vehicleId) || null : null;
   // With the tour card on top, the "Your van" card steps back to plain paper.
   const touring = s.mode === 'firebase' && !!s.org?.dashScans && !!s.myVan && !pickup;
@@ -51,16 +52,16 @@ export default function Fleet() {
     <Screen>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <T v="h1">{s.staff ? 'Fleet' : 'Vans'}</T>
-          <T v="hint">{where}{s.loaded.vehicles ? `, ${count === 1 ? '1 van' : count + ' vans'}` : ''}</T>
+          <T v="h1">{s.staff ? t('Fleet') : t('Vans')}</T>
+          <T v="hint">{where}{s.loaded.vehicles ? `, ${tp(count, '{n} van', '{n} vans')}` : ''}</T>
         </View>
-        {canAdd ? <Button small title="Add vehicle" onPress={() => router.push('/add')} /> : null}
+        {canAdd ? <Button small title={t('Add vehicle')} onPress={() => router.push('/add')} /> : null}
       </View>
-      {s.creator && s.role === 'owner' && !s.companies.some((x) => x.id === s.org?.id) ? <Notice text={`You're viewing ${s.org?.name} as the app creator.`} /> : null}
+      {s.creator && s.role === 'owner' && !s.companies.some((x) => x.id === s.org?.id) ? <Notice text={t('You\'re viewing {company} as the app creator.', { company: s.org?.name })} /> : null}
       {s.dataError ? <Notice tone="bad" text={s.dataError} /> : null}
       {showStations ? (
         <Row>
-          <Chip text="All stations" on={!only} onPress={() => setOnly(null)} />
+          <Chip text={t('All stations')} on={!only} onPress={() => setOnly(null)} />
           {s.myStations.map((st) => <Chip key={st.id} text={st.name} on={only === st.id} onPress={() => setOnly(st.id)} />)}
         </Row>
       ) : null}
@@ -72,44 +73,45 @@ export default function Fleet() {
       {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
           style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
-          <T v="medium" color={touring ? undefined : '#000'}>Your van</T>
+          <T v="medium" color={touring ? undefined : '#000'}>{t('Your van')}</T>
           <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <ScanChoice v={s.myVan} small onMarker={!touring} />
             <BuyButtons v={s.myVan} />
-            {canDrop ? <Button small title="Drop off" onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
+            {canDrop ? <Button small title={t('Drop off')} onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
           </Row>
         </Pressable>
       ) : null}
       {!s.staff ? <Notifications prompt /> : null}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
-        <Notice text="Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way." />
+        <Notice text={t('Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.')} />
       ) : null}
       {s.mode === 'firebase' && s.user ? (
-        <Button small v="link" title={s.staff ? 'Your own van history' : 'Your record, tours and vans'} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
+        <Button small v="link" title={s.staff ? t('Your own van history') : t('Your record, tours and vans')} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
       ) : null}
       {tracking && s.loaded.vehicles && count + retired.length ? (
         <Row>
-          <Chip text={`All (${active.length})`} on={show === 'all'} onPress={() => setShow('all')} />
-          <Chip text={`Free (${free.length})`} on={show === 'free'} onPress={() => setShow('free')} />
-          <Chip text={`With a driver (${taken.length})`} on={show === 'taken'} onPress={() => setShow('taken')} />
-          {retired.length ? <Chip text={`Retired (${retired.length})`} on={show === 'retired'} onPress={() => setShow('retired')} /> : null}
+          <Chip text={t('All ({n})', { n: active.length })} on={show === 'all'} onPress={() => setShow('all')} />
+          <Chip text={t('Free ({n})', { n: free.length })} on={show === 'free'} onPress={() => setShow('free')} />
+          <Chip text={t('With a driver ({n})', { n: taken.length })} on={show === 'taken'} onPress={() => setShow('taken')} />
+          {retired.length ? <Chip text={t('Retired ({n})', { n: retired.length })} on={show === 'retired'} onPress={() => setShow('retired')} /> : null}
         </Row>
       ) : null}
       {tracking && s.loaded.vehicles && count && !vans.length ? (
-        <T v="hint">{show === 'free' ? 'Every van has a driver.' : show === 'taken' ? 'No van has a driver yet. Open a van to give it to one.' : 'Nothing here.'}</T>
+        <T v="hint">{show === 'free' ? t('Every van has a driver.') : show === 'taken' ? t('No van has a driver yet. Open a van to give it to one.') : t('Nothing here.')}</T>
       ) : null}
       {!s.loaded.vehicles ? <ActivityIndicator color={c.ink} style={{ marginTop: 24 }} /> : null}
       {s.loaded.vehicles && !count ? (
         <Card dashed>
           {canAdd ? (
             <>
-              <T v="hint">No vans here yet. Add one by scanning it or picking its type. Each van keeps its own photo frames, walk-arounds and damage record.</T>
-              <Button v="primary" title="Add vehicle" onPress={() => router.push('/add')} />
+              <T v="hint">{t('No vans here yet. Add one by scanning it or picking its type. Each van keeps its own photo frames, walk-arounds and damage record.')}</T>
+              <Button v="primary" title={t('Add vehicle')} onPress={() => router.push('/add')} />
             </>
           ) : (
-            <T v="hint">{s.myStations.length ? `No vans at ${s.myStations.map((st) => st.name).join(', ')} yet. Your fleet manager adds them.` : `You're signed in as a ${ROLE_NAME[s.role || 'driver'].toLowerCase()} but not at a station yet. Ask your fleet manager to add you to one.`}</T>
+            <T v="hint">{s.myStations.length ? t('No vans at {stations} yet. Your fleet manager adds them.', { stations: s.myStations.map((st) => st.name).join(', ') })
+              : t('You\'re signed in as {role} but not at a station yet. Ask your fleet manager to add you to one.', { role: t(ROLE_NAME[s.role || 'driver']) })}</T>
           )}
         </Card>
       ) : null}
@@ -122,27 +124,27 @@ export default function Fleet() {
         // Inspections, service, tax, insurance and contract end: owners and managers only.
         const due = s.runs(v.stationId) && !v.retired ? deadlines(v, s.details.find((d) => d.id === v.id)).filter((x) => x.state !== 'ok') : [];
         return (
-          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${v.name}, ${CLS[v.cls].name}`} onPress={() => router.push(`/vehicle/${v.id}`)}
+          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${v.name}, ${t(CLS[v.cls].name)}`} onPress={() => router.push(`/vehicle/${v.id}`)}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, opacity: pressed ? 0.8 : 1 })}>
             <Svg xml={silhouetteSVG(sp, 104, false, c.ink2)} width={104} height={49} />
             <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
               <T v="h3" numberOfLines={2}>{v.name}</T>
               {v.plate ? <Plate text={v.plate} /> : null}
-              <T v="hint">{[CLS[v.cls].name, showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
+              <T v="hint">{[t(CLS[v.cls].name), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
               {tracking && !v.retired ? (
-                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : 'Free'}</T>
+                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : t('Free')}</T>
               ) : null}
-              <T v="hint">{last ? ['Last walk-around ' + fmtWhen(last.createdAt), whoDid(last.createdBy) ? 'by ' + whoDid(last.createdBy) : ''].filter(Boolean).join(', ') : 'No walk-around yet'}</T>
+              <T v="hint">{last ? (whoDid(last.createdBy) ? t('Last walk-around {when}, by {name}', { when: fmtWhen(last.createdAt), name: whoDid(last.createdBy) }) : t('Last walk-around {when}', { when: fmtWhen(last.createdAt) })) : t('No walk-around yet')}</T>
               <Row gap={6}>
-                {tracking && !v.retired && !v.assignedTo ? <Pill v="good" text="Free" /> : null}
-                {v.retired ? <Pill v="muted" text="Retired" /> : null}
-                {!tracking && v.assignedTo?.driverId === s.user?.uid ? <Pill v="solid" text="Your van" /> : null}
-                {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? 'In use' : 'Free'} /> : null}
-                {k?.status === 'submitted' ? <Pill v="amber" text="Waiting for review" /> : null}
-                {k?.status === 'checking' ? <Pill v="muted" text="Close-ups pending" /> : null}
-                {damages ? <Pill v="bad" text={`${damages} approved damage${damages === 1 ? '' : 's'}`} /> : null}
-                {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={`${due[0].label} ${due[0].state === 'overdue' ? 'overdue' : due[0].note}`} /> : null}
-                {due.length > 1 ? <Pill v="muted" text={`${due.length - 1} more due`} /> : null}
+                {tracking && !v.retired && !v.assignedTo ? <Pill v="good" text={t('Free')} /> : null}
+                {v.retired ? <Pill v="muted" text={t('Retired')} /> : null}
+                {!tracking && v.assignedTo?.driverId === s.user?.uid ? <Pill v="solid" text={t('Your van')} /> : null}
+                {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? t('In use') : t('Free')} /> : null}
+                {k?.status === 'submitted' ? <Pill v="amber" text={t('Waiting for review')} /> : null}
+                {k?.status === 'checking' ? <Pill v="muted" text={t('Close-ups pending')} /> : null}
+                {damages ? <Pill v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null}
+                {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null}
+                {due.length > 1 ? <Pill v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null}
               </Row>
             </View>
             <T v="h2" color={c.ink2}>›</T>

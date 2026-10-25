@@ -4,6 +4,7 @@ import Svg, { G, Polygon, Polyline } from 'react-native-svg';
 
 import { F, MARKER, T, useColors } from '@/components/ui';
 import type { Spec } from '@/lib/frames';
+import { t } from '@/lib/i18n';
 import { HOME_VIEW, VIEWS, camera, vanMesh, yawFacing, type Face3, type Line3, type Pos, type V3 } from '@/lib/van3d';
 
 export interface Dot { key: string; label: string; pos: Pos }
@@ -111,7 +112,7 @@ export function Van3D({ sp, dots, selected, onSelect, bubble, focus, height = 34
       const on = d.key === selected, size = on ? 32 : 26;
       if (on) at.push({ x, y });
       dotViews.push(
-        <Pressable key={d.key} accessibilityRole="button" accessibilityLabel={`Damage ${d.label}`} hitSlop={8} onPress={() => onSelect(on ? null : d.key)}
+        <Pressable key={d.key} accessibilityRole="button" accessibilityLabel={t('Damage {no}', { no: d.label })} hitSlop={8} onPress={() => onSelect(on ? null : d.key)}
           style={{ position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center',
             backgroundColor: on ? MARKER : c.alert, borderWidth: 2, borderColor: on ? '#000' : '#FFFFFF', borderStyle: d.pos.approx ? 'dashed' : 'solid', zIndex: on ? 3 : 2 }}>
           <Text style={{ fontFamily: F.cond, fontSize: on ? 16 : 14, color: on ? '#000' : '#FFFFFF', lineHeight: on ? 18 : 16 }}>{d.label}</Text>
@@ -139,7 +140,7 @@ export function Van3D({ sp, dots, selected, onSelect, bubble, focus, height = 34
         {bubbleStyle ? <View style={bubbleStyle}>{bubble}</View> : null}
         {sel && !anchor ? (
           <View style={{ position: 'absolute', bottom: 8, left: 8, right: 8, alignItems: 'center' }} pointerEvents="none">
-            <T v="small" style={{ backgroundColor: c.page, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 3 }}>Damage {sel.label} is on the other side. Turn the van.</T>
+            <T v="small" style={{ backgroundColor: c.page, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 3 }}>{t('Damage {no} is on the other side. Turn the van.', { no: sel.label })}</T>
           </View>
         ) : null}
         {/* View buttons sit on top of the drawing, so a bubble hanging below a dot never covers them. */}
@@ -147,13 +148,13 @@ export function Van3D({ sp, dots, selected, onSelect, bubble, focus, height = 34
           {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((k) => (
             <Pressable key={k} accessibilityRole="button" onPress={() => animateTo(VIEWS[k].yaw, VIEWS[k].pitch)}
               style={{ paddingHorizontal: 9, paddingVertical: 5, borderWidth: 1.5, borderColor: c.rule, borderRadius: 4, backgroundColor: c.paper }}>
-              <T v="small" color={ink}>{VIEWS[k].label}</T>
+              <T v="small" color={ink}>{t(VIEWS[k].label)}</T>
             </Pressable>
           ))}
         </View>
         {!dots.length || !sel ? (
           <View pointerEvents="none" style={{ position: 'absolute', right: 8, bottom: 6 }}>
-            <T v="small">{dots.length ? 'Drag to turn. Tap a dot.' : 'Drag to turn.'}</T>
+            <T v="small">{dots.length ? t('Drag to turn. Tap a dot.') : t('Drag to turn.')}</T>
           </View>
         ) : null}
       </View>

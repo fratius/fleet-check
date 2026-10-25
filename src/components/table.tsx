@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { F, MARKER, useColors } from '@/components/ui';
+import { t } from '@/lib/i18n';
 
 /**
  * A spreadsheet-like table: the first column (who or what) stays put while the rest scrolls sideways; tap a
@@ -50,7 +51,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
   const head = (col: Col<R>, i: number, frozen: boolean) => {
     const on = sort?.key === col.key;
     return (
-      <Pressable key={col.key} accessibilityRole="button" accessibilityLabel={`Sort by ${col.label}`} onPress={() => onSort({ key: col.key, dir: on ? (sort!.dir === 1 ? -1 : 1) : col.align === 'left' ? 1 : -1 })}
+      <Pressable key={col.key} accessibilityRole="button" accessibilityLabel={t('Sort by {column}', { column: col.label })} onPress={() => onSort({ key: col.key, dir: on ? (sort!.dir === 1 ? -1 : 1) : col.align === 'left' ? 1 : -1 })}
         style={{ width: col.width, height: HEAD, paddingHorizontal: 8, justifyContent: 'flex-end', paddingBottom: 6, alignItems: col.align === 'left' ? 'flex-start' : 'flex-end',
           backgroundColor: on ? MARKER : c.ink, borderLeftWidth: i && !frozen ? 1 : 0, borderColor: c.dark ? '#2A2E35' : '#2A2E35' }}>
         <Text numberOfLines={2} style={{ fontFamily: F.cond, fontSize: 15, lineHeight: 17, color: on ? '#000' : c.paper, textAlign: col.align === 'left' ? 'left' : 'right' }}>

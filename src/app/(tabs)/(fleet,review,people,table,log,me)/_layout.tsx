@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 
 import { F, useColors } from '@/components/ui';
+import { N_, t } from '@/lib/i18n';
 
 /**
  * Each tab has its own stack, so the tab bar stays at the bottom on every page and each tab remembers where you
@@ -19,12 +20,12 @@ export const unstable_settings = {
 };
 
 const ROOT: Record<string, { name: string; title: string }> = {
-  '(fleet)': { name: 'index', title: 'Fleet' },
-  '(review)': { name: 'review', title: 'Review' },
-  '(people)': { name: 'people', title: 'People' },
-  '(table)': { name: 'data', title: 'Data' },
-  '(log)': { name: 'log', title: 'Test log' },
-  '(me)': { name: 'account', title: 'Account' },
+  '(fleet)': { name: 'index', title: N_('Fleet') },
+  '(review)': { name: 'review', title: N_('Review') },
+  '(people)': { name: 'people', title: N_('People') },
+  '(table)': { name: 'data', title: N_('Data') },
+  '(log)': { name: 'log', title: N_('Test log') },
+  '(me)': { name: 'account', title: N_('Account') },
 };
 
 export default function TabStack({ segment }: { segment: string }) {
@@ -40,14 +41,14 @@ export default function TabStack({ segment }: { segment: string }) {
       contentStyle: { backgroundColor: c.page },
     }}>
       {/* The first page of the tab has its own big title. */}
-      <Stack.Screen name={root.name} options={{ headerShown: false, title: root.title }} />
-      {segment === '(fleet)' ? <Stack.Screen name="add" options={{ title: 'Add vehicle' }} /> : null}
-      <Stack.Screen name="vehicle/[id]" options={{ title: 'Van' }} />
-      <Stack.Screen name="walk/[id]" options={{ title: 'Walk-around' }} />
-      <Stack.Screen name="check/[id]" options={{ title: 'Damage check' }} />
-      <Stack.Screen name="person/[uid]" options={{ title: 'Person' }} />
-      <Stack.Screen name="video/[id]" options={{ title: 'Video' }} />
-      <Stack.Screen name="buy/[id]" options={{ title: 'Refuel' }} />
+      <Stack.Screen name={root.name} options={{ headerShown: false, title: t(root.title) }} />
+      {segment === '(fleet)' ? <Stack.Screen name="add" options={{ title: t('Add vehicle') }} /> : null}
+      <Stack.Screen name="vehicle/[id]" options={{ title: t('Van') }} />
+      <Stack.Screen name="walk/[id]" options={{ title: t('Walk-around') }} />
+      <Stack.Screen name="check/[id]" options={{ title: t('Damage check') }} />
+      <Stack.Screen name="person/[uid]" options={{ title: t('Person') }} />
+      <Stack.Screen name="video/[id]" options={{ title: t('Video') }} />
+      <Stack.Screen name="buy/[id]" options={{ title: t('Refuel') }} />
     </Stack>
   );
 }

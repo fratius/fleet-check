@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { F, MARKER, useColors } from '@/components/ui';
+import { t } from '@/lib/i18n';
 import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
 import { missingHandovers, needsPickup } from '@/lib/videos';
@@ -45,8 +46,8 @@ export default function TabsLayout() {
     // Drivers' licence checks, licences and briefings that are overdue or due within a week.
     + (staff ? peopleDue(s.records.filter((r) => s.runs(r.stationId)), null, s.org?.licenceCheckMonths || CHECK_MONTHS).filter((d) => pressing(d.x)).length : 0)
     // Warning lights on the dashboard, and tours missing their photos (where dashboard photos are on).
-    + (staff ? vanWarnings(s.tours.filter((t) => s.runs(t.stationId))).length : 0)
-    + (staff && s.org?.dashScans ? tourGaps(s.tours.filter((t) => s.runs(t.stationId)), s.assignments.filter((a) => s.runs(a.stationId)), Date.now() - 7 * 86400_000, s.org.dashScansAt || 0).length : 0);
+    + (staff ? vanWarnings(s.tours.filter((x) => s.runs(x.stationId))).length : 0)
+    + (staff && s.org?.dashScans ? tourGaps(s.tours.filter((x) => s.runs(x.stationId)), s.assignments.filter((a) => s.runs(a.stationId)), Date.now() - 7 * 86400_000, s.org.dashScansAt || 0).length : 0);
   // The driver's badge: a van they were given that still needs its pick-up video or photos.
   const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
   return (
@@ -61,12 +62,12 @@ export default function TabsLayout() {
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: 13 },
       sceneStyle: { backgroundColor: c.page },
     }}>
-      <Tabs.Screen name="(fleet)" options={{ title: staff ? 'Fleet' : 'Vans', tabBarBadge: toFilm || undefined, tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
-      <Tabs.Screen name="(review)" options={{ title: 'Review', href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
-      <Tabs.Screen name="(people)" options={{ title: 'People', href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
-      <Tabs.Screen name="(table)" options={{ title: 'Data', href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="data" color={color} /> }} />
-      <Tabs.Screen name="(log)" options={{ title: 'Test log', href: s.seesAiStats ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
-      <Tabs.Screen name="(me)" options={{ title: 'Account', tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
+      <Tabs.Screen name="(fleet)" options={{ title: staff ? t('Fleet') : t('Vans'), tabBarBadge: toFilm || undefined, tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
+      <Tabs.Screen name="(review)" options={{ title: t('Review'), href: staff ? undefined : null, tabBarBadge: staff && toReview ? toReview : undefined, tabBarIcon: ({ color }) => <Icon name="review" color={color} /> }} />
+      <Tabs.Screen name="(people)" options={{ title: t('People'), href: staff && s.mode === 'firebase' ? undefined : null, tabBarIcon: ({ color }) => <Icon name="people" color={color} /> }} />
+      <Tabs.Screen name="(table)" options={{ title: t('Data'), href: staff ? undefined : null, tabBarIcon: ({ color }) => <Icon name="data" color={color} /> }} />
+      <Tabs.Screen name="(log)" options={{ title: t('Test log'), href: s.seesAiStats ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
+      <Tabs.Screen name="(me)" options={{ title: t('Account'), tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
     </Tabs>
   );
 }

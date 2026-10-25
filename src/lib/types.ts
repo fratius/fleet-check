@@ -1,14 +1,16 @@
 import type { RearKind, Tri } from './frames';
+import { N_ } from './i18n';
 
 export type Tier = 'quick' | 'default' | 'complex';
-export const TIERS: [Tier, string][] = [['quick', 'Fast'], ['default', 'Balanced'], ['complex', 'Best']];
-export const TIER_NAME: Record<Tier, string> = { quick: 'Fast', default: 'Balanced', complex: 'Best' };
+export const TIERS: [Tier, string][] = [['quick', N_('Fast')], ['default', N_('Balanced')], ['complex', N_('Best')]];
+/** Shown with t(). */
+export const TIER_NAME: Record<Tier, string> = { quick: N_('Fast'), default: N_('Balanced'), complex: N_('Best') };
 /** Same table as functions/src/models.ts. Prices are list prices per million tokens, input and output. */
-/** `note` mentions speed and price (the app creator sees it); `plain` is what everyone else sees. */
+/** `note` mentions speed and price (the app creator sees it); `plain` is what everyone else sees. Both shown with t(). */
 export const TIER_MODEL: Record<Tier, { id: string; name: string; inPerM: number; outPerM: number; note: string; plain: string }> = {
-  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: 'Cheapest and fastest.', plain: 'Quick answers; can miss small damage.' },
-  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: 'The default. Mid price.', plain: 'The default, recommended for most fleets.' },
-  complex: { id: 'claude-opus-5-5', name: 'Opus 5.5', inPerM: 4, outPerM: 20, note: 'The largest model. Slowest and most expensive.', plain: 'The most thorough look at every photo.' },
+  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: N_('Cheapest and fastest.'), plain: N_('Quick answers; can miss small damage.') },
+  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: N_('The default. Mid price.'), plain: N_('The default, recommended for most fleets.') },
+  complex: { id: 'claude-opus-5-5', name: 'Opus 5.5', inPerM: 4, outPerM: 20, note: N_('The largest model. Slowest and most expensive.'), plain: N_('The most thorough look at every photo.') },
 };
 /** Rough cost of one photo: the server sizes it to the 4,784-token image limit, plus about 150 output tokens. */
 export const perPhotoCost = (t: Tier) => (4784 * TIER_MODEL[t].inPerM + 150 * TIER_MODEL[t].outPerM) / 1e6;
@@ -255,11 +257,14 @@ export interface Purchase {
     needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null;
     read: { kind: 'fuel' | 'bank' | 'other'; issuer: string | null; last4: string | null; plate: string | null; expiry: string | null } | null;
     tries: number; why: string | null; expired: boolean | null; at: number | null;
+    /** `why` as a template and its values, so each reader sees it in their own language. */
+    whyT?: string; whyV?: Record<string, string | number>;
   };
   decision: { allow: boolean; by: string; byName: string; at: number; note: string } | null;
   receipt: { path: string; at: number; ai: ReceiptRead } | null;
   parts: string[]; note: string | null;
-  flags: { key: string; text: string }[]; corrected: string[];
+  /** `text` in English; `t` and `v`: the template and its values, so each reader sees it in their own language. */
+  flags: { key: string; text: string; t?: string; v?: Record<string, string | number> }[]; corrected: string[];
   odometerKm: number | null; fuelPct: number | null; litres: number | null; total: number | null; currency: string | null; merchant: string | null;
   cancel: { by: string; byName: string; at: number; reason: string | null } | null;
   createdAt: number; updatedAt: number; doneAt: number | null;
@@ -287,11 +292,11 @@ export interface DamageLog {
  * edited or deleted: together they are the permanent history of every van and every driver.
  */
 export type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
-/** Why an assignment ended, for the history lists. */
+/** Why an assignment ended, for the history lists (shown with t()). */
 export const END_REASON: Record<EndReason, string> = {
-  reassigned: 'given to someone else', ended: 'made free', 'dropped off': 'dropped off', 'taken over': 'taken over',
-  'switched van': 'swapped for another van', 'driver removed': 'removed from the company', 'driver moved': 'moved to another station',
-  'role changed': 'role changed', 'van retired': 'van retired', 'van moved': 'van moved to another station',
+  reassigned: N_('given to someone else'), ended: N_('made free'), 'dropped off': N_('dropped off'), 'taken over': N_('taken over'),
+  'switched van': N_('swapped for another van'), 'driver removed': N_('removed from the company'), 'driver moved': N_('moved to another station'),
+  'role changed': N_('role changed'), 'van retired': N_('van retired'), 'van moved': N_('van moved to another station'),
 };
 
 export interface Assignment {
@@ -321,7 +326,8 @@ export interface Assignment {
 }
 
 /** A handover video: one walk around the van at pick-up or drop-off. Written by the server after checking it. */
-export const VIDEO_TITLE: Record<Video['kind'], string> = { pickup: 'Pick-up video', dropoff: 'Drop-off video', walkaround: 'Walk-around video' };
+/** Shown with t(). */
+export const VIDEO_TITLE: Record<Video['kind'], string> = { pickup: N_('Pick-up video'), dropoff: N_('Drop-off video'), walkaround: N_('Walk-around video') };
 export interface Video {
   id: string;
   vehicleId: string;
@@ -373,7 +379,8 @@ export interface Station {
  * - driver: scans the vans of their station
  */
 export type Role = 'owner' | 'manager' | 'driver';
-export const ROLE_NAME: Record<Role | 'creator', string> = { creator: 'App creator', owner: 'Fleet owner', manager: 'Fleet manager', driver: 'Driver' };
+/** Shown with t(). */
+export const ROLE_NAME: Record<Role | 'creator', string> = { creator: N_('App creator'), owner: N_('Fleet owner'), manager: N_('Fleet manager'), driver: N_('Driver') };
 
 /** A photo either still on this phone (uri) or uploaded (path in storage). */
 export interface Photo {

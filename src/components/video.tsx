@@ -10,6 +10,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
 import { mb, recordVideo, uploadVideo } from '@/lib/videos';
+import { N_, t } from '@/lib/i18n';
 
 /** Plays a stored video. */
 export function VideoPlayer({ path, aspect }: { path: string; aspect: number }) {
@@ -29,7 +30,7 @@ export function VideoRow({ v }: { v: Video }) {
     <Pressable onPress={() => router.push(`/video/${v.id}`)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 8 }}>
       {v.posterPath ? <Photo src={v.posterPath} style={{ width: 54, height: 72 }} /> : <View style={{ width: 54, height: 72, borderRadius: 3, backgroundColor: '#16181C', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">▶</T></View>}
       <View style={{ flex: 1, gap: 2 }}>
-        <T v="h3">{VIDEO_TITLE[v.kind] || 'Video'}{v.late ? ', added later' : ''}</T>
+        <T v="h3">{v.late ? t('{title}, added later', { title: VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video') }) : VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video')}</T>
         <T v="small">{[v.byName, fmtWhen(v.recordedAt || v.createdAt), `${Math.round(v.durationMs / 1000)} s`].filter(Boolean).join(', ')}</T>
       </View>
       <T v="h3" color={c.ink2}>›</T>
@@ -50,7 +51,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
   const [err, setErr] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
   const send = async (id: string) => {
-    setStep('Checking the video…');
+    setStep(t('Checking the video…'));
     if (kind === 'walkaround') await ai.addVanVideo({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
     else if (assignmentId) await ai.addHandoverVideo({ orgId: s.org!.id, assignmentId, kind, videoId: id });
     else if (kind === 'pickup') await ai.pickUpVan({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
@@ -58,7 +59,9 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
     // The playback copy is made in the background; nobody waits for it.
     ai.processVideo({ orgId: s.org!.id, videoId: id }).catch(() => {});
     setVideoId(null);
-    flash(`van:${v.id}`, kind === 'walkaround' ? `The video of ${v.name} is saved with the van.` : assignmentId ? (kind === 'pickup' ? `The pick-up video of ${v.name} is saved with its history.` : 'The video was added.') : kind === 'pickup' ? `You picked up ${v.name}. The video is kept with its history.` : `You dropped off ${v.name}. The video is kept with its history.`);
+    flash(`van:${v.id}`, kind === 'walkaround' ? t('The video of {van} is saved with the van.', { van: v.name })
+      : assignmentId ? (kind === 'pickup' ? t('The pick-up video of {van} is saved with its history.', { van: v.name }) : t('The video was added.'))
+        : kind === 'pickup' ? t('You picked up {van}. The video is kept with its history.', { van: v.name }) : t('You dropped off {van}. The video is kept with its history.', { van: v.name }));
     onDone?.();
   };
   const go = async () => {
@@ -67,13 +70,13 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
       if (videoId) { await send(videoId); return; }
       const rec = await recordVideo();
       if (!rec) return;
-      setStep(`Uploading${rec.size ? ` ${mb(rec.size)}` : ''}…`);
-      const id = await uploadVideo(s.org!.id, s.user!.uid, rec, (sent, total) => setStep(`Uploading ${Math.round((sent / Math.max(1, total)) * 100)}% of ${mb(total)}`));
+      setStep(rec.size ? t('Uploading {size}…', { size: mb(rec.size) }) : t('Uploading…'));
+      const id = await uploadVideo(s.org!.id, s.user!.uid, rec, (sent, total) => setStep(t('Uploading {pct}% of {size}', { pct: Math.round((sent / Math.max(1, total)) * 100), size: mb(total) })));
       setVideoId(id);
       await send(id);
     } catch (e) {
-      const m = e instanceof Error && e.message === 'camera' ? 'Allow camera access in Settings to record the video.'
-        : e instanceof AiError ? e.message : 'The upload didn\'t finish. Check the connection and try again.';
+      const m = e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to record the video.')
+        : e instanceof AiError ? e.message : t('The upload didn\'t finish. Check the connection and try again.');
       setErr(m);
     } finally { setStep(null); }
   };
@@ -81,11 +84,12 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
   // without uploading it again, or replaced with a new recording.
   return (
     <View style={{ gap: 6 }}>
-      <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || (videoId ? 'Try again with this video' : title)} loading={!!step} disabled={!!step} onPress={go} />
-      {videoId && !step ? <Button small v="link" title="Record a new video instead" onPress={() => { setVideoId(null); setErr(null); }} /> : null}
+      <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || (videoId ? t('Try again with this video') : title)} loading={!!step} disabled={!!step} onPress={go} />
+      {videoId && !step ? <Button small v="link" title={t('Record a new video instead')} onPress={() => { setVideoId(null); setErr(null); }} /> : null}
       {err ? <T v="small" color={c.alert}>{err}</T> : null}
     </View>
   );
 }
 
-export const VIDEO_HOW = 'Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.';
+/** How to film the van (English; show it with t(VIDEO_HOW)). */
+export const VIDEO_HOW = N_('Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.');

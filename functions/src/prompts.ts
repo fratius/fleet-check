@@ -1,3 +1,4 @@
+import { N_ } from './i18n';
 /** Prompts and answer schemas, ported from the browser test tool that ran the first Audi Q3 checks. */
 
 export const CLASSES: { id: string; name: string; desc: string }[] = [
@@ -132,6 +133,10 @@ export const spotSchema = {
     closeupBox: { anyOf: [{ type: 'array', items: { type: 'number' } }, { type: 'null' }] },
   },
 };
+
+/** The names the AI is asked to use for warning lights: the app shows them in each person's language. */
+export const WARNING_NAMES = [N_('Check engine'), N_('Tyre pressure'), N_('AdBlue'), N_('Oil pressure'), N_('Battery charge'), N_('Brake system'), N_('ABS'), N_('Airbag'),
+  N_('Coolant temperature'), N_('Service due'), N_('Glow plug'), N_('Particle filter'), N_('Steering'), N_('Low fuel'), N_('Washer fluid'), N_('High-voltage system')];
 
 /* ---------- 4. Read the dashboard: odometer, fuel or battery, range, warning lights ---------- */
 export function dashPrompt(van: { name: string; make?: string | null; model?: string | null; fuel?: string | null }) {

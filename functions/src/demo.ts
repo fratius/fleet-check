@@ -6,7 +6,7 @@ import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 
 import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
-import { cardDigits, purchaseFlags, type BuyKind, type Receipt } from './purchases';
+import { cardDigits, purchaseFlags, said, type BuyKind, type Receipt } from './purchases';
 
 /**
  * A demo company to try the app with: two stations, fleet managers, drivers, vans, walk-arounds and
@@ -581,10 +581,11 @@ async function demoBuys(org: FirebaseFirestore.DocumentReference, orgId: string,
     } : null;
     const cardAt = m.at + 40_000;
     const read = m.card && m.card !== 'missing' ? { kind: m.bank ? 'bank' : 'fuel', issuer: m.bank ? 'Visa' : 'DKV', last4: m.card === 'match' ? expected : m.read4 || '8812', plate: null, expiry: '12/28' } : null;
-    const why = m.card === 'match' ? `Card ending ${expected}.` : m.card === 'missing' ? `${m.by.name} has no fuel card for the van.`
-      : m.bank ? 'A bank card, not the van\'s fuel card.' : `Card ending ${read?.last4} (DKV); this van's card ends ${expected}.`;
+    const why = m.card === 'match' ? said('Card ending {last4}.', { last4: expected }) : m.card === 'missing' ? said('{name} has no fuel card for the van.', { name: m.by.name })
+      : m.bank ? said('A bank card, not the van\'s fuel card.') : said('Card ending {last4} ({issuer}); this van\'s card ends {expected}.', { last4: read?.last4, issuer: 'DKV', expected });
     const decision = m.decision ? { allow: m.decision.allow, by: m.decision.by.id, byName: m.decision.by.name, at: cardAt + 6 * 60_000, note: m.decision.note } : null;
-    const card = { needed: !!expected && m.kind !== 'parts', expected, result: expected ? m.card : null, read: expected ? read : null, tries: 1, why: expected ? why : null, expired: false, at: expected ? cardAt : null };
+    const card = { needed: !!expected && m.kind !== 'parts', expected, result: expected ? m.card : null, read: expected ? read : null, tries: 1,
+      why: expected ? why.text : null, whyT: expected ? why.t : null, whyV: expected ? why.v : null, expired: false, at: expected ? cardAt : null };
     const flags = m.status === 'done' ? purchaseFlags({
       kind: m.kind, byName: m.by.name, vanFuel: 'diesel', tankL: m.tank ?? null, fuelPct: m.fuelPct, odometerKm: m.odo, lastKm: null, litres: m.litres, total: m.total, createdAt: m.at,
       vanDriverName: null, notTheirVan: false, card: card.needed ? { needed: true, expected, result: card.result, expired: false, plate: null } : null, vanPlate: m.van.plate,

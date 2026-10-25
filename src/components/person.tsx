@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { Button, Chip, Row, T, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
+import { t } from '@/lib/i18n';
 import { AiError, ai } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Member } from '@/lib/types';
 
@@ -32,31 +33,31 @@ export function ManagePerson({ m, onDone }: { m: Member; onDone?: () => void }) 
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
   const act = async (fn: () => Promise<unknown>, done = false) => {
     setErr(null); setBusy(true);
-    try { await fn(); if (done) onDone?.(); } catch (e) { setErr(e instanceof AiError ? e.message : 'Couldn\'t save that change.'); } finally { setBusy(false); }
+    try { await fn(); if (done) onDone?.(); } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that change.')); } finally { setBusy(false); }
   };
   return (
     <View style={{ gap: 8, paddingBottom: 4, opacity: busy ? 0.6 : 1 }}>
       {canEdit ? (
         <>
-          <T v="small">Role</T>
-          <Row>{(['owner', 'manager', 'driver'] as const).map((k) => <Chip key={k} text={ROLE_NAME[k]} on={r === k} onPress={() => (busy || r === k ? null : act(() => ai.changePerson({ orgId: s.org!.id, uid: m.uid, role: k })))} />)}</Row>
+          <T v="small">{t('Role')}</T>
+          <Row>{(['owner', 'manager', 'driver'] as const).map((k) => <Chip key={k} text={t(ROLE_NAME[k])} on={r === k} onPress={() => (busy || r === k ? null : act(() => ai.changePerson({ orgId: s.org!.id, uid: m.uid, role: k })))} />)}</Row>
           {r !== 'owner' ? (
             <>
-              <T v="small">Station</T>
+              <T v="small">{t('Station')}</T>
               <Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={(m.stationIds || []).includes(st.id)} onPress={() => (busy || (m.stationIds || []).includes(st.id) ? null : act(() => ai.changePerson({ orgId: s.org!.id, uid: m.uid, stationId: st.id })))} />)}</Row>
             </>
           ) : null}
-          {van ? <T v="small">{m.name} has {van.name}. Moving them to another station or making them an owner makes the van free.</T> : null}
+          {van ? <T v="small">{t('{name} has {van}. Moving them to another station or making them an owner makes the van free.', { name: m.name, van: van.name })}</T> : null}
         </>
       ) : null}
       {canRemove ? (
-        <Button small v="danger" title={armed ? 'Tap again to remove' : `Remove from ${s.org?.name}`} loading={busy} onPress={() => {
+        <Button small v="danger" title={armed ? t('Tap again to remove') : t('Remove from {company}', { company: s.org?.name || '' })} loading={busy} onPress={() => {
           if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
           setArmed(false);
           act(() => ai.removePerson({ orgId: s.org!.id, uid: m.uid }), true);
         }} />
       ) : null}
-      {canRemove ? <T v="small">Their {van ? 'van becomes free; their ' : ''}history, walk-arounds and checks stay.</T> : null}
+      {canRemove ? <T v="small">{van ? t('Their van becomes free; their history, walk-arounds and checks stay.') : t('Their history, walk-arounds and checks stay.')}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
   );

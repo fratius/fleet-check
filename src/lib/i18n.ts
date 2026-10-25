@@ -78,7 +78,11 @@ export function applyDict(code: string, d: Dict) { current = code; dict = d; }
 /** Marks a text for translation where it can't be translated yet; translate it with t() where it is shown. */
 export const N_ = <S extends string>(s: S): S => s;
 
-const fill = (s: string, v?: Vars) => (v ? s.replace(/\{(\w+)\}/g, (m, k: string) => (k in v && v[k] != null ? String(v[k]) : m)) : s);
+/** Fills in {placeholders}; numbers are written the way the language writes them (48.213 in German). */
+const fill = (s: string, v?: Vars) => (v ? s.replace(/\{(\w+)\}/g, (m, k: string) => {
+  const x = k in v ? v[k] : null;
+  return x == null ? m : typeof x === 'number' ? x.toLocaleString(loc(), { maximumFractionDigits: 2 }) : String(x);
+}) : s);
 
 /** The text in the chosen language, with {placeholders} filled in. */
 export function t(s: string, v?: Vars): string {

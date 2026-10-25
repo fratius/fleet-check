@@ -15,6 +15,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type DocRead } from '@/lib/store';
 import type { Member, Vehicle } from '@/lib/types';
+import { N_, t, tp } from '@/lib/i18n';
 
 /**
  * Filling in a van's or a driver's record from a photo of a document. The AI says what the document is and reads
@@ -26,29 +27,40 @@ import type { Member, Vehicle } from '@/lib/types';
 type To = 'facts' | 'details' | 'costs' | 'record';
 interface Section { title: string; fields: FieldSpec[]; to: To }
 const NAME: FieldSpec[] = [
-  { key: 'plate', label: 'Number plate', kind: 'upper' },
-  { key: 'make', label: 'Make', kind: 'text' },
-  { key: 'model', label: 'Model', kind: 'text' },
+  { key: 'plate', label: N_('Number plate'), kind: 'upper' },
+  { key: 'make', label: N_('Make'), kind: 'text' },
+  { key: 'model', label: N_('Model'), kind: 'text' },
 ];
+/** What the AI says the document is (the server's list, functions/src/documents.ts), as shown. */
+const DOC_NAMES: Record<string, string> = {
+  'registration certificate': N_('Registration certificate'), 'registration certificate part II': N_('Registration certificate part II'),
+  'lease contract': N_('Lease contract'), 'rental contract': N_('Rental contract'), 'financing contract': N_('Financing contract'),
+  'purchase contract or invoice': N_('Purchase contract or invoice'), 'insurance policy or certificate': N_('Insurance policy or certificate'),
+  'inspection report (HU/AU)': N_('Inspection report (HU/AU)'), 'safety check (UVV)': N_('Safety check (UVV)'),
+  'service invoice or record': N_('Service invoice or record'), 'tyre invoice': N_('Tyre invoice'), 'vehicle tax notice': N_('Vehicle tax notice'),
+  'fuel or charging card': N_('Fuel or charging card'), 'driving licence': N_('Driving licence'), 'employment contract': N_('Employment contract'),
+  'briefing record': N_('Briefing record'), other: N_('Other document'),
+};
+const docName = (kind: string | null | undefined) => (kind && DOC_NAMES[kind] ? t(DOC_NAMES[kind]) : cap(kind || t('the document')));
 /**
  * The sections in the order of the van's Details page; costs only for owners. Built when used (not when this file
  * loads): the record pages import this file and it imports their field lists.
  */
 const vanSections = (): Section[] => [
-  { title: 'Vehicle', fields: [...NAME, ...VEHICLE], to: 'facts' },
-  { title: 'Size and load', fields: SIZE, to: 'facts' },
-  { title: 'If something happens', fields: HELP, to: 'facts' },
-  { title: 'Mileage', fields: MILEAGE, to: 'details' },
-  { title: 'Contract', fields: CONTRACT, to: 'details' },
-  { title: 'Insurance', fields: INSURANCE, to: 'details' },
-  { title: 'Costs', fields: COSTS, to: 'costs' },
-  { title: 'Deadlines', fields: DUE, to: 'details' },
-  { title: 'Fuel card and notes', fields: OTHER, to: 'details' },
+  { title: t('Vehicle'), fields: [...NAME, ...VEHICLE], to: 'facts' },
+  { title: t('Size and load'), fields: SIZE, to: 'facts' },
+  { title: t('If something happens'), fields: HELP, to: 'facts' },
+  { title: t('Mileage'), fields: MILEAGE, to: 'details' },
+  { title: t('Contract'), fields: CONTRACT, to: 'details' },
+  { title: t('Insurance'), fields: INSURANCE, to: 'details' },
+  { title: t('Costs'), fields: COSTS, to: 'costs' },
+  { title: t('Deadlines'), fields: DUE, to: 'details' },
+  { title: t('Fuel card and notes'), fields: OTHER, to: 'details' },
 ];
 const driverSections = (): Section[] => [
-  { title: 'Driving licence', fields: LICENCE, to: 'record' },
-  { title: 'Employment', fields: WORK, to: 'record' },
-  { title: 'Briefings', fields: TRAINING, to: 'record' },
+  { title: t('Driving licence'), fields: LICENCE, to: 'record' },
+  { title: t('Employment'), fields: WORK, to: 'record' },
+  { title: t('Briefings'), fields: TRAINING, to: 'record' },
 ];
 const EDITABLE = new Set(['text', 'upper', 'num', 'eur', 'day', 'month', 'phone', 'long']);
 const norm = (x: unknown, f?: FieldSpec) => (Array.isArray(x) ? [...x].sort() : f?.kind === 'month' && typeof x === 'string' ? x.slice(0, 7) : x ?? null);
@@ -91,19 +103,19 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
     try {
       const got = await pick(camera);
       setPages((p) => [...p, ...got].slice(0, 6));
-    } catch (e) { setErr(e instanceof Error && e.message === 'camera' ? 'Allow camera access in Settings to photograph the document.' : 'Couldn\'t open the photos.'); }
+    } catch (e) { setErr(e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to photograph the document.') : t('Couldn\'t open the photos.')); }
   };
   const reset = () => { setPages([]); setRead(null); setRows([]); setErr(null); setCheck(false); };
   const readIt = async () => {
     setErr(null);
     try {
-      setStep('Uploading…');
+      setStep(t('Uploading…'));
       const id = newId();
       const paths = await Promise.all(pages.map(async (p, i) => {
         const small = await prepare(p.uri, p.w, p.h, 2400, 0.9);
         return upload(small.uri, `orgs/${s.org!.id}/docs/${s.user!.uid}/${id}-${i + 1}.jpg`);
       }));
-      setStep('Reading the document…');
+      setStep(t('Reading the document…'));
       const r = await ai.readDocument({ orgId: s.org!.id, target, id: target === 'van' ? v!.id : m!.uid, paths });
       // Each detail in its section, ticked when it's new or different from what's there now.
       const out: Row[] = [];
@@ -122,7 +134,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
       setRead(r);
       setCheck(false);
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : 'The photos didn\'t upload. Check the connection and try again.');
+      setErr(e instanceof AiError ? e.message : t('The photos didn\'t upload. Check the connection and try again.'));
     } finally { setStep(null); }
   };
   const isLicence = read?.kind === 'driving licence';
@@ -137,59 +149,60 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
     }
     // An odometer reading without its date is from the document's day if it gave one, otherwise today.
     if ('odometerKm' in patch.details && !('odometerAt' in patch.details)) patch.details.odometerAt = today();
-    setStep('Saving…');
+    setStep(t('Saving…'));
     try {
       if (v && Object.keys(patch.facts).length) await s.store!.vehicles.update(v.id, patch.facts as Partial<Vehicle>);
       if (v && Object.keys(patch.details).length) await saveDetails(s, v, d, patch.details);
       if (v && owner && Object.keys(patch.costs).length) await saveCosts(s, v, cost, patch.costs);
       if (m && Object.keys(patch.record).length) await saveRecord(s, m, rec, patch.record);
       if (m && isLicence && check) await ai.recordLicenceCheck({ orgId: s.org!.id, uid: m.uid, ok: true, note: 'Original licence seen and photographed', day: today() });
-      const what = read?.title || cap(read?.kind || 'the document');
-      flash(target === 'van' ? `van:${v!.id}` : `person:${m!.uid}`,
-        `Saved ${chosen.length} detail${chosen.length === 1 ? '' : 's'} from ${what}${m && isLicence && check ? ', and the licence check' : ''}. The photo wasn't kept.`);
+      const what = read?.title || docName(read?.kind);
+      flash(target === 'van' ? `van:${v!.id}` : `person:${m!.uid}`, m && isLicence && check
+        ? tp(chosen.length, 'Saved {n} detail from {what}, and the licence check. The photo wasn\'t kept.', 'Saved {n} details from {what}, and the licence check. The photo wasn\'t kept.', { what })
+        : tp(chosen.length, 'Saved {n} detail from {what}. The photo wasn\'t kept.', 'Saved {n} details from {what}. The photo wasn\'t kept.', { what }));
       reset();
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : 'Couldn\'t save. Check the connection and try again.');
+      setErr(e instanceof AiError ? e.message : t('Couldn\'t save. Check the connection and try again.'));
     } finally { setStep(null); }
   };
   const setRow = (key: string, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
   const intro = target === 'van'
-    ? 'Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it\'s saved.'
-    : 'Driving licence (both sides), employment contract or briefing record. Licence numbers, dates of birth and addresses aren\'t read or kept. You check everything before it\'s saved.';
+    ? t('Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it\'s saved.')
+    : t('Driving licence (both sides), employment contract or briefing record. Licence numbers, dates of birth and addresses aren\'t read or kept. You check everything before it\'s saved.');
 
   if (!read) {
     return (
       <View style={{ backgroundColor: MARKER, borderRadius: 4, borderWidth: 2, borderColor: '#000', padding: 14, gap: 10 }}>
-        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>Fill in from a document</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>{t('Fill in from a document')}</Text>
         <T v="small" color="#000">{intro}</T>
         {pages.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {pages.map((p, i) => (
               <View key={p.uri + i} style={{ alignItems: 'center', gap: 2 }}>
                 <Image source={{ uri: p.uri }} style={{ width: 72, height: 96, borderRadius: 3, backgroundColor: '#000' }} contentFit="cover" />
-                <T v="small" color="#000">Page {i + 1}</T>
+                <T v="small" color="#000">{t('Page {n}', { n: i + 1 })}</T>
               </View>
             ))}
           </ScrollView>
         ) : null}
         {step ? <Button v="primary" wide title={step} loading disabled /> : pages.length ? (
           <>
-            <Button v="primary" wide title={`Read the document${pages.length > 1 ? ` (${pages.length} pages)` : ''}`} onPress={readIt} />
+            <Button v="primary" wide title={pages.length > 1 ? tp(pages.length, 'Read the document ({n} page)', 'Read the document ({n} pages)') : t('Read the document')} onPress={readIt} />
             <Row>
-              {pages.length < 6 ? <Button small title="Add a page" onPress={() => add(true)} /> : null}
+              {pages.length < 6 ? <Button small title={t('Add a page')} onPress={() => add(true)} /> : null}
               <Pressable accessibilityRole="button" onPress={reset} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 6 }}>
-                <Text style={{ fontFamily: F.cond, fontSize: 17, color: '#000', textDecorationLine: 'underline' }}>Start over</Text>
+                <Text style={{ fontFamily: F.cond, fontSize: 17, color: '#000', textDecorationLine: 'underline' }}>{t('Start over')}</Text>
               </Pressable>
             </Row>
           </>
         ) : (
           <Row>
-            <Button v="primary" title="Take a photo" onPress={() => add(true)} />
-            <Button title="Choose photos" onPress={() => add(false)} />
+            <Button v="primary" title={t('Take a photo')} onPress={() => add(true)} />
+            <Button title={t('Choose photos')} onPress={() => add(false)} />
           </Row>
         )}
-        {pages.length && !step ? <T v="small" color="#000">Flat, in good light, the whole page in the picture. More pages? Add them before reading.</T> : null}
+        {pages.length && !step ? <T v="small" color="#000">{t('Flat, in good light, the whole page in the picture. More pages? Add them before reading.')}</T> : null}
         {err ? <T v="small" color="#9B1C12">{err}</T> : null}
       </View>
     );
@@ -199,45 +212,45 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
   return (
     <View style={{ backgroundColor: c.paper, borderRadius: 4, borderWidth: 2, borderColor: c.ink, overflow: 'hidden' }}>
       <View style={{ backgroundColor: MARKER, padding: 14, gap: 4, borderBottomWidth: 2, borderColor: '#000' }}>
-        <T v="small" color="#000">This looks like</T>
-        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>{cap(read.kind)}{read.title && read.title.toLowerCase() !== read.kind ? ` (${read.title})` : ''}</Text>
+        <T v="small" color="#000">{t('This looks like')}</T>
+        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>{docName(read.kind)}{read.title && read.title.toLowerCase() !== read.kind ? ` (${read.title})` : ''}</Text>
         <T v="small" color="#000">
-          {!read.readable ? 'Hard to read: check every value, or take the photo again.' : rows.length
-            ? `Found ${rows.length} detail${rows.length === 1 ? '' : 's'} in ${groups.length} section${groups.length === 1 ? '' : 's'}. Ticked: new or different from what's saved. Correct anything that's wrong.`
-            : 'Nothing on it that the record keeps.'}
+          {!read.readable ? t('Hard to read: check every value, or take the photo again.') : rows.length
+            ? tp(rows.length, 'Found {n} detail. Ticked: new or different from what\'s saved. Correct anything that\'s wrong.', 'Found {n} details. Ticked: new or different from what\'s saved. Correct anything that\'s wrong.')
+            : t('Nothing on it that the record keeps.')}
         </T>
       </View>
       <View style={{ padding: 12, gap: 14 }}>
-        {read.sameName === 'no' && m ? <T v="medium" color={c.alert}>The name on the document doesn&apos;t look like {m.name}. Check it&apos;s theirs before saving.</T> : null}
+        {read.sameName === 'no' && m ? <T v="medium" color={c.alert}>{t('The name on the document doesn\'t look like {name}. Check it\'s theirs before saving.', { name: m.name })}</T> : null}
         {read.notes ? <T v="small">{read.notes}</T> : null}
         {groups.map(({ sec, rows: rs }) => (
           <View key={sec.title} style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ width: 5, alignSelf: 'stretch', backgroundColor: c.ink, borderRadius: 2 }} />
               <T v="h3">{sec.title}</T>
-              {sec.to === 'costs' ? <T v="small">only owners see this</T> : null}
+              {sec.to === 'costs' ? <T v="small">{t('only owners see this')}</T> : null}
             </View>
-            {rs.filter((r) => !same(r.now, r.value, r.f)).map((r) => <FoundRow key={r.key} r={r} onToggle={() => setRow(r.key, { on: !r.on })} onInput={(t) => setRow(r.key, { input: t, on: true })} />)}
+            {rs.filter((r) => !same(r.now, r.value, r.f)).map((r) => <FoundRow key={r.key} r={r} onToggle={() => setRow(r.key, { on: !r.on })} onInput={(text) => setRow(r.key, { input: text, on: true })} />)}
             {/* What the document says that's already saved, in one line. */}
-            {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">Same as saved: {rs.filter((r) => same(r.now, r.value, r.f)).map((r) => r.f.label).join(', ')}.</T> : null}
+            {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">{t('Same as saved: {list}.', { list: rs.filter((r) => same(r.now, r.value, r.f)).map((r) => t(r.f.label)).join(', ') })}</T> : null}
           </View>
         ))}
         {m && isLicence ? (
           <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: check }} onPress={() => setCheck(!check)} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
             <Box on={check} />
             <View style={{ flex: 1 }}>
-              <T v="medium">I saw the original licence today</T>
-              <T v="small">Records today&apos;s licence check under your name. Only tick it if you held the licence itself, not a copy.</T>
+              <T v="medium">{t('I saw the original licence today')}</T>
+              <T v="small">{t('Records today\'s licence check under your name. Only tick it if you held the licence itself, not a copy.')}</T>
             </View>
           </Pressable>
         ) : null}
         {err ? <T v="small" color={c.alert}>{err}</T> : null}
         <Row>
-          <Button v="primary" title={step || (chosen.length ? `Save ${chosen.length} detail${chosen.length === 1 ? '' : 's'}` : check ? 'Save the licence check' : 'Nothing to save')}
+          <Button v="primary" title={step || (chosen.length ? tp(chosen.length, 'Save {n} detail', 'Save {n} details') : check ? t('Save the licence check') : t('Nothing to save'))}
             loading={!!step} disabled={!!step || (!chosen.length && !check)} onPress={save} />
-          <Button small v="link" title="Cancel" onPress={reset} />
+          <Button small v="link" title={t('Cancel')} onPress={reset} />
         </Row>
-        <T v="small">The photo was read and deleted; it isn&apos;t kept with the {target === 'van' ? 'van' : 'record'}.</T>
+        <T v="small">{target === 'van' ? t('The photo was read and deleted; it isn\'t kept with the van.') : t('The photo was read and deleted; it isn\'t kept with the record.')}</T>
       </View>
     </View>
   );
@@ -253,26 +266,26 @@ function Box({ on }: { on: boolean }) {
 }
 
 /** One detail found: tick to save it, the value (typed values can be corrected), what's there now, where it came from. */
-function FoundRow({ r, onToggle, onInput }: { r: Row; onToggle: () => void; onInput: (t: string) => void }) {
+function FoundRow({ r, onToggle, onInput }: { r: Row; onToggle: () => void; onInput: (text: string) => void }) {
   const c = useColors();
   const nowText = r.now == null || r.now === '' ? '' : show(r.f, r.now);
   const unchanged = same(r.now, r.value, r.f);
   const unsure = r.confidence != null && r.confidence < 0.7;
   return (
     <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 4 }}>
-      <Pressable accessibilityRole="checkbox" accessibilityLabel={`Save ${r.f.label}`} accessibilityState={{ checked: r.on }} onPress={onToggle} hitSlop={8}>
+      <Pressable accessibilityRole="checkbox" accessibilityLabel={t('Save {field}', { field: t(r.f.label) })} accessibilityState={{ checked: r.on }} onPress={onToggle} hitSlop={8}>
         <Box on={r.on} />
       </Pressable>
       <View style={{ flex: 1, gap: 2 }}>
-        <T v="small">{r.f.label}{r.f.unit ? ` (${r.f.unit})` : r.f.kind === 'eur' ? ' (€)' : ''}</T>
+        <T v="small">{t(r.f.label)}{r.f.unit ? ` (${r.f.unit})` : r.f.kind === 'eur' ? ' (€)' : ''}</T>
         {EDITABLE.has(r.f.kind) ? (
           <TextInput value={String(r.input ?? '')} onChangeText={onInput} autoCapitalize={r.f.kind === 'upper' ? 'characters' : 'sentences'}
             keyboardType={r.f.kind === 'num' || r.f.kind === 'eur' ? 'decimal-pad' : r.f.kind === 'phone' ? 'phone-pad' : 'default'}
             style={{ fontFamily: r.key === 'vin' ? F.cond : F.medium, fontSize: r.key === 'vin' ? 19 : 17, color: c.ink, borderBottomWidth: 1.5, borderColor: unsure ? c.amber : c.rule, paddingVertical: 4 }} />
         ) : <Text style={{ fontFamily: F.medium, fontSize: 17, color: c.ink }}>{show(r.f, r.value)}</Text>}
         <T v="small" color={unsure ? c.amber : undefined}>
-          {[unchanged ? 'Same as saved' : nowText ? `Now: ${nowText}` : 'Not filled in yet', r.older ? 'Older than the saved reading' : '', unsure ? 'Not sure: check it' : '',
-            r.evidence ? `On the document: "${r.evidence}"` : ''].filter(Boolean).join('. ')}
+          {[unchanged ? t('Same as saved') : nowText ? t('Now: {value}', { value: nowText }) : t('Not filled in yet'), r.older ? t('Older than the saved reading') : '', unsure ? t('Not sure: check it') : '',
+            r.evidence ? t('On the document: "{text}"', { text: r.evidence }) : ''].filter(Boolean).join('. ')}
         </T>
       </View>
     </View>

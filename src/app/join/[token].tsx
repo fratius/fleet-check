@@ -2,7 +2,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from 'react-native';
 
+import { LanguageLink } from '@/components/language';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, fmtWhen, useColors } from '@/components/ui';
+import { t, tj } from '@/lib/i18n';
 import { canPromptInstall, device, onInstallChange, promptInstall } from '@/lib/install';
 import { authMessage, useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -45,10 +47,10 @@ export default function Join() {
 
   const join = async () => {
     setErr(null);
-    if (!first.trim() || !last.trim()) { setErr('Enter your first and last name.'); return; }
+    if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
     if (!signedIn) {
-      if (!email.trim()) { setErr('Enter your email address.'); return; }
-      if (password.length < 6) { setErr('Use at least 6 characters for the password.'); return; }
+      if (!email.trim()) { setErr(t('Enter your email address.')); return; }
+      if (password.length < 6) { setErr(t('Use at least 6 characters for the password.')); return; }
     }
     setBusy(true);
     try {
@@ -67,7 +69,8 @@ export default function Join() {
   const header = (
     <View style={{ gap: 6, paddingTop: 16 }}>
       <T v="hint">Fleet Check</T>
-      <T v="h1">{done ? `You're in ${done.orgName}` : peek?.status === 'ok' || peek?.status === 'mine' ? `Join ${peek.orgName}` : 'Invite link'}</T>
+      <T v="h1">{done ? t('You\'re in {company}', { company: done.orgName }) : peek?.status === 'ok' || peek?.status === 'mine' ? t('Join {company}', { company: peek.orgName }) : t('Invite link')}</T>
+      <LanguageLink />
     </View>
   );
 
@@ -78,24 +81,25 @@ export default function Join() {
       <Screen>
         {header}
         <Card>
-          <T>You joined as a {ROLE_NAME[done.role as 'driver'].toLowerCase()} at {done.stationName}.</T>
-          {done.role === 'driver' ? <T v="hint">You'll see the vans of your station. Scan a van before and after your route; your fleet manager reviews any damage.</T> : null}
+          <T>{done.role === 'manager' ? t('You joined as a fleet manager at {station}.', { station: done.stationName }) : t('You joined as a driver at {station}.', { station: done.stationName })}</T>
+          {done.role === 'driver' ? <T v="hint">{t('You\'ll see the vans of your station. Scan a van before and after your route; your fleet manager reviews any damage.')}</T> : null}
         </Card>
         <Install />
-        <Button v="primary" wide title="Open Fleet Check" onPress={() => router.replace('/')} />
+        <Button v="primary" wide title={t('Open Fleet Check')} onPress={() => router.replace('/')} />
       </Screen>
     );
   }
 
   if (peek.status !== 'ok' && peek.status !== 'mine') {
-    const why = peek.status === 'used' ? 'This link was already used. Each link works for one person.'
-      : peek.status === 'expired' ? 'This link has expired. Links work for 24 hours.'
-        : 'This link doesn\'t exist or was cancelled.';
+    const why = peek.status === 'used' ? t('This link was already used. Each link works for one person.')
+      : peek.status === 'expired' ? t('This link has expired. Links work for 24 hours.')
+        : t('This link doesn\'t exist or was cancelled.');
+    const ask = peek.invitedBy ? t('Ask {name} for a new one.', { name: peek.invitedBy }) : t('Ask your fleet manager for a new one.');
     return (
       <Screen>
         {header}
-        <Notice tone="bad" text={`${why} Ask ${peek.invitedBy || 'your fleet manager'} for a new one.`} />
-        <Button title={signedIn ? 'Open Fleet Check' : 'Sign in'} onPress={() => router.replace(signedIn ? '/' : '/sign-in')} />
+        <Notice tone="bad" text={`${why} ${ask}`} />
+        <Button title={signedIn ? t('Open Fleet Check') : t('Sign in')} onPress={() => router.replace(signedIn ? '/' : '/sign-in')} />
       </Screen>
     );
   }
@@ -105,37 +109,40 @@ export default function Join() {
       <Screen>
         {header}
         <Card>
-          <T>{peek.invitedBy ? `${peek.invitedBy} invited you` : 'You\'re invited'} to join <T v="medium">{peek.orgName}</T> as a {ROLE_NAME[role].toLowerCase()} at <T v="medium">{peek.stationName}</T>.</T>
-          <Row><Pill text={ROLE_NAME[role]} /><Pill v="muted" text={`Link works until ${fmtWhen(peek.expiresAt)}`} /></Row>
+          <T>{tj(peek.invitedBy
+            ? (role === 'manager' ? '{name} invited you to join {company} as a fleet manager at {station}.' : '{name} invited you to join {company} as a driver at {station}.')
+            : (role === 'manager' ? 'You\'re invited to join {company} as a fleet manager at {station}.' : 'You\'re invited to join {company} as a driver at {station}.'),
+          { name: peek.invitedBy || '', company: <T key="c" v="medium">{peek.orgName}</T>, station: <T key="s" v="medium">{peek.stationName}</T> })}</T>
+          <Row><Pill text={t(ROLE_NAME[role])} /><Pill v="muted" text={t('Link works until {when}', { when: fmtWhen(peek.expiresAt) })} /></Row>
         </Card>
 
         <Card>
-          <T v="h3">1. Your details</T>
-          <Field label="First name" value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
-          <Field label="Last name" value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
-          <Field label="Mobile number" hint="so your manager can reach you" value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
-          {role === 'driver' ? <Field label="Amazon Transporter ID" hint="optional" value={tid} onChangeText={(t) => setTid(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} /> : null}
+          <T v="h3">{t('1. Your details')}</T>
+          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
+          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
+          <Field label={t('Mobile number')} hint={t('so your manager can reach you')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
+          {role === 'driver' ? <Field label="Amazon Transporter ID" hint={t('optional')} value={tid} onChangeText={(x) => setTid(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} /> : null}
         </Card>
 
         <Card>
-          <T v="h3">2. Your account</T>
+          <T v="h3">{t('2. Your account')}</T>
           {signedIn ? (
             <>
-              <T>Signed in as {s.user?.email}. You'll join with this account.</T>
-              <Row><Button small v="link" title="Use another account" onPress={() => s.signOut()} /></Row>
+              <T>{t('Signed in as {email}. You\'ll join with this account.', { email: s.user?.email })}</T>
+              <Row><Button small v="link" title={t('Use another account')} onPress={() => s.signOut()} /></Row>
             </>
           ) : (
             <>
-              <Segmented label="Account" value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['up', 'New account'], ['in', 'I have one']]} />
-              <Field label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" />
-              <Field label="Password" hint={mode === 'up' ? 'at least 6 characters' : undefined} value={password} onChangeText={setPassword} secureTextEntry textContentType={mode === 'up' ? 'newPassword' : 'password'} />
+              <Segmented label={t('Account')} value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['up', t('New account')], ['in', t('I have one')]]} />
+              <Field label={t('Email')} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" />
+              <Field label={t('Password')} hint={mode === 'up' ? t('at least 6 characters') : undefined} value={password} onChangeText={setPassword} secureTextEntry textContentType={mode === 'up' ? 'newPassword' : 'password'} />
             </>
           )}
         </Card>
 
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-        <Button v="primary" wide title={`Join ${peek.orgName}`} loading={busy} onPress={join} />
-        <T v="small">You can install the app on your phone in the next step.</T>
+        <Button v="primary" wide title={t('Join {company}', { company: peek.orgName })} loading={busy} onPress={join} />
+        <T v="small">{t('You can install the app on your phone in the next step.')}</T>
       </Screen>
     </KeyboardAvoidingView>
   );
@@ -149,20 +156,20 @@ function Install() {
   if (d === 'native' || d === 'installed') return null;
   return (
     <Card>
-      <T v="h3">Install the app</T>
+      <T v="h3">{t('Install the app')}</T>
       {d === 'ios' ? (
         <>
-          <T>1. Tap the Share button at the bottom of Safari (the square with an arrow).</T>
-          <T>2. Tap <T v="medium">Add to Home Screen</T>, then <T v="medium">Add</T>.</T>
-          <T>3. Open Fleet Check from your home screen and sign in with the same email and password.</T>
-          <T v="small">Use Safari: other browsers on iPhone can't add apps to the home screen.</T>
+          <T>{t('1. Tap the Share button at the bottom of Safari (the square with an arrow).')}</T>
+          <T>{tj('2. Tap {add}, then {ok}.', { add: <T key="a" v="medium">{t('Add to Home Screen')}</T>, ok: <T key="o" v="medium">{t('Add')}</T> })}</T>
+          <T>{t('3. Open Fleet Check from your home screen and sign in with the same email and password.')}</T>
+          <T v="small">{t('Use Safari: other browsers on iPhone can\'t add apps to the home screen.')}</T>
         </>
       ) : d === 'android' ? (
         canPromptInstall()
-          ? <><T>Put Fleet Check on your home screen like any other app.</T><Button v="primary" title="Install the app" onPress={() => promptInstall()} /></>
-          : <><T>1. In Chrome, tap the menu (three dots, top right).</T><T>2. Tap <T v="medium">Install app</T> or <T v="medium">Add to Home screen</T>.</T><T>3. Open Fleet Check from your home screen and sign in.</T></>
+          ? <><T>{t('Put Fleet Check on your home screen like any other app.')}</T><Button v="primary" title={t('Install the app')} onPress={() => promptInstall()} /></>
+          : <><T>{t('1. In Chrome, tap the menu (three dots, top right).')}</T><T>{tj('2. Tap {install} or {add}.', { install: <T key="i" v="medium">{t('Install app')}</T>, add: <T key="a" v="medium">{t('Add to Home screen')}</T> })}</T><T>{t('3. Open Fleet Check from your home screen and sign in.')}</T></>
       ) : (
-        <T>Open this page on your phone to install the app there, or keep using it in this browser.</T>
+        <T>{t('Open this page on your phone to install the app there, or keep using it in this browser.')}</T>
       )}
     </Card>
   );

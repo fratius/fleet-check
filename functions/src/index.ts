@@ -8,7 +8,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
-import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/https';
+import { onCall, type CallableRequest } from 'firebase-functions/https';
 import { defineSecret } from 'firebase-functions/params';
 import webpush from 'web-push';
 
@@ -20,8 +20,9 @@ import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, 
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, probe } from './video';
+import { N_, fail, langOf, tr } from './i18n';
 import {
-  BUY_KINDS, BUY_WORD, cardDigits, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
+  BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
 
@@ -71,16 +72,16 @@ async function viewAsOf(uid: string): Promise<ViewAs | null> {
 /** Signed in, a member of the company (or the app creator), a known model tier. */
 async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>): Promise<Who> {
   const uid = req.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in again, then try again.');
+  if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const orgId = String(req.data?.orgId || '');
-  if (!ID.test(orgId)) throw new HttpsError('invalid-argument', 'Unknown company.');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
   const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'default') as Tier;
   const creator = req.auth?.token?.creator === true;
   const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
   if (creator) {
     const va = await viewAsOf(uid);
     if (va) {
-      if (va.org !== orgId) throw new HttpsError('permission-denied', 'You\'re viewing another company as someone else. Switch back to yourself in the Account tab first.');
+      if (va.org !== orgId) throw fail('permission-denied', 'You\'re viewing another company as someone else. Switch back to yourself in the Account tab first.');
       const real = (await db().doc(`orgs/${orgId}/members/${uid}`).get()).data() as { name?: string } | undefined;
       return { uid, name: real?.name || tokenName || 'App creator', orgId, tier, role: va.role, stationIds: va.st ? [va.st] : [], creator: false };
     }
@@ -88,28 +89,28 @@ async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>):
   const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
   if (!m.exists) {
     if (creator) return { uid, name: tokenName || 'App creator', orgId, tier, role: 'owner', stationIds: [], creator };
-    throw new HttpsError('permission-denied', 'Your account isn\'t a member of this company.');
+    throw fail('permission-denied', 'Your account isn\'t a member of this company.');
   }
   const d = m.data() as { role?: string; stationIds?: string[]; name?: string };
   const role: Role = creator || d.role === 'owner' || d.role === 'admin' ? 'owner' : d.role === 'manager' ? 'manager' : 'driver';
   return { uid, name: d.name || tokenName, orgId, tier, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
 }
 /** Can this person work at this station? Owners and the app creator can work everywhere. */
-function needStation(w: Who, stationId: string | undefined | null, message = 'This van belongs to another station.') {
+function needStation(w: Who, stationId: string | undefined | null, message: string = N_('This van belongs to another station.')) {
   if (w.role === 'owner') return;
-  if (!stationId || !w.stationIds.includes(stationId)) throw new HttpsError('permission-denied', message);
+  if (!stationId || !w.stationIds.includes(stationId)) throw fail('permission-denied', message);
 }
 function needStaff(w: Who) {
-  if (w.role === 'driver') throw new HttpsError('permission-denied', 'Only fleet managers and owners can do this.');
+  if (w.role === 'driver') throw fail('permission-denied', 'Only fleet managers and owners can do this.');
 }
 function checkPath(p: unknown, prefix: string): string {
   const s = String(p || '');
-  if (!s.startsWith(prefix) || s.includes('..') || s.length > 300) throw new HttpsError('invalid-argument', 'A photo path is outside this company.');
+  if (!s.startsWith(prefix) || s.includes('..') || s.length > 300) throw fail('invalid-argument', 'A photo path is outside this company.');
   return s;
 }
 async function download(path: string): Promise<Buffer> {
   try { const [b] = await bucket().file(path).download(); return b; } catch {
-    throw new HttpsError('not-found', 'A photo is missing from storage. Upload it again.');
+    throw fail('not-found', 'A photo is missing from storage. Upload it again.');
   }
 }
 async function save(path: string, buf: Buffer) {
@@ -133,9 +134,9 @@ export const identifyVehicle = onCall(opts(120), async (req) => {
   const stationId = req.data?.stationId ? String(req.data.stationId) : null;
   if (stationId) needStation(who, stationId);
   const scanId = String(req.data?.scanId || '');
-  if (!ID.test(scanId)) throw new HttpsError('invalid-argument', 'Unknown scan.');
+  if (!ID.test(scanId)) throw fail('invalid-argument', 'Unknown scan.');
   const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
-  if (!raw.length || raw.length > 3) throw new HttpsError('invalid-argument', 'Send 1 to 3 photos.');
+  if (!raw.length || raw.length > 3) throw fail('invalid-argument', 'Send 1 to 3 photos.');
   const paths = raw.map((p: unknown) => checkPath(p, `orgs/${orgId}/scans/${scanId}/`));
 
   // The body shape doesn't need full detail: about 2,000 image tokens per photo keeps it fast and cheap.
@@ -185,13 +186,13 @@ export const findDamage = onCall(opts(300), async (req) => {
   const who = await guard(req);
   const { uid, orgId, tier } = who;
   const walkId = String(req.data?.walkId || '');
-  if (!ID.test(walkId)) throw new HttpsError('invalid-argument', 'Unknown walk-around.');
+  if (!ID.test(walkId)) throw fail('invalid-argument', 'Unknown walk-around.');
   const walk = await db().doc(`orgs/${orgId}/walkarounds/${walkId}`).get();
-  if (!walk.exists) throw new HttpsError('not-found', 'This walk-around was deleted.');
+  if (!walk.exists) throw fail('not-found', 'This walk-around was deleted.');
   const w = walk.data() as { vehicleId: string; vehicleName: string; cls: string; stationId?: string; photos: { n: number; label: string; path?: string }[] };
   needStation(who, w.stationId);
   const photos = (w.photos || []).filter((p) => p.path).slice(0, 30);
-  if (!photos.length) throw new HttpsError('failed-precondition', 'This walk-around has no uploaded photos.');
+  if (!photos.length) throw fail('failed-precondition', 'This walk-around has no uploaded photos.');
 
   const originals = await pool(photos, 6, (p) => download(checkPath(p.path, `orgs/${orgId}/walkarounds/${walkId}/`)));
   const sent: Sent[] = await pool(originals, 4, (b) => fit(b));
@@ -251,20 +252,20 @@ export const checkSpot = onCall(opts(180), async (req) => {
   const who = await guard(req);
   const { orgId, tier } = who;
   const checkId = String(req.data?.checkId || '');
-  if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
+  if (!ID.test(checkId)) throw fail('invalid-argument', 'Unknown check.');
   const j = Number(req.data?.spot);
   const raw = Array.isArray(req.data?.closeups) ? req.data.closeups : [];
-  if (!raw.length || raw.length > 2) throw new HttpsError('invalid-argument', 'Send 1 or 2 close-ups.');
+  if (!raw.length || raw.length > 2) throw fail('invalid-argument', 'Send 1 or 2 close-ups.');
   const closeups = raw.map((p: unknown) => checkPath(p, `orgs/${orgId}/checks/${checkId}/`));
   const cref = db().doc(`orgs/${orgId}/checks/${checkId}`);
   const snap = await cref.get();
-  if (!snap.exists) throw new HttpsError('not-found', 'This check was deleted.');
+  if (!snap.exists) throw fail('not-found', 'This check was deleted.');
   const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string };
   needStation(who, k.stationId);
-  if (k.status === 'reviewed') throw new HttpsError('failed-precondition', 'A manager has already reviewed this check.');
+  if (k.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
   const spot = k.spots?.[j];
-  if (!Number.isInteger(j) || !spot) throw new HttpsError('invalid-argument', 'Unknown spot.');
-  if (!spot.refPath) throw new HttpsError('failed-precondition', 'The marked photo for this spot is missing.');
+  if (!Number.isInteger(j) || !spot) throw fail('invalid-argument', 'Unknown spot.');
+  if (!spot.refPath) throw fail('failed-precondition', 'The marked photo for this spot is missing.');
 
   const [refBuf, ...closeBufs] = await Promise.all([download(spot.refPath), ...closeups.map((p: string) => download(p))]);
   const [refImg, ...closeImgs] = await Promise.all([fit(refBuf), ...closeBufs.map((b) => fit(b))]);
@@ -299,15 +300,15 @@ export const checkSpot = onCall(opts(180), async (req) => {
 export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   const checkId = String(req.data?.checkId || '');
-  if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
+  if (!ID.test(checkId)) throw fail('invalid-argument', 'Unknown check.');
   const note = typeof req.data?.missedNote === 'string' ? req.data.missedNote.trim().slice(0, 500) : '';
   const cref = db().doc(`orgs/${who.orgId}/checks/${checkId}`);
   await db().runTransaction(async (tx) => {
     const cur = await tx.get(cref);
-    if (!cur.exists) throw new HttpsError('not-found', 'This check was deleted.');
+    if (!cur.exists) throw fail('not-found', 'This check was deleted.');
     const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string };
     needStation(who, d.stationId);
-    if (d.status === 'reviewed') throw new HttpsError('failed-precondition', 'A manager has already reviewed this check.');
+    if (d.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
     const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null };
     tx.update(cref, {
       spots: d.spots.map((p) => (p.verdict ? p : { ...p, verdict: skipped })),
@@ -320,10 +321,10 @@ export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
 /* ---------- 5. setupStations: moves a company made before stations existed onto stations ---------- */
 export const setupStations = onCall({ timeoutSeconds: 120 }, async (req) => {
   const who = await guard(req);
-  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner can do this.');
+  if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can do this.');
   const org = db().doc(`orgs/${who.orgId}`);
   const o = await org.get();
-  if (!o.exists) throw new HttpsError('not-found', 'Unknown company.');
+  if (!o.exists) throw fail('not-found', 'Unknown company.');
   if (o.data()?.stationsReady) return { done: false };
   const stations = await org.collection('stations').orderBy('createdAt').limit(1).get();
   let mainId: string;
@@ -372,13 +373,13 @@ export const createInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
   const role = req.data?.role === 'manager' ? 'manager' : req.data?.role === 'driver' ? 'driver' : null;
   const stationId = String(req.data?.stationId || '');
   const count = Math.max(1, Math.min(20, Math.round(Number(req.data?.count) || 1)));
-  if (!role || !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Pick a role and a station.');
+  if (!role || !ID.test(stationId)) throw fail('invalid-argument', 'Pick a role and a station.');
   // Owners invite fleet managers and drivers; managers invite drivers to their own station.
-  if (role === 'manager' && who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner can invite fleet managers.');
+  if (role === 'manager' && who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can invite fleet managers.');
   needStaff(who);
-  needStation(who, stationId, 'You can only invite drivers to your own station.');
+  needStation(who, stationId, N_('You can only invite drivers to your own station.'));
   const [org, station] = await Promise.all([db().doc(`orgs/${who.orgId}`).get(), db().doc(`orgs/${who.orgId}/stations/${stationId}`).get()]);
-  if (!org.exists || !station.exists) throw new HttpsError('not-found', 'Unknown station.');
+  if (!org.exists || !station.exists) throw fail('not-found', 'Unknown station.');
   const now = Date.now();
   const batch = db().batch();
   const invites = Array.from({ length: count }, () => {
@@ -411,27 +412,27 @@ const clean = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().repla
 /** Uses an invite link: the signed-in person joins with the link's role and station, with their details. */
 export const acceptInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
   const uid = req.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in or create an account first.');
+  if (!uid) throw fail('unauthenticated', 'Sign in or create an account first.');
   const token = String(req.data?.token || '');
-  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) throw new HttpsError('invalid-argument', 'This invite link isn\'t complete. Ask for a new one.');
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) throw fail('invalid-argument', 'This invite link isn\'t complete. Ask for a new one.');
   const email = String(req.auth?.token?.email || '');
   const d = (req.data?.details || {}) as Record<string, unknown>;
   const firstName = clean(d.firstName, 40), lastName = clean(d.lastName, 40);
   const phone = clean(d.phone, 30), transporterId = clean(d.transporterId, 20).toUpperCase();
   const name = [firstName, lastName].filter(Boolean).join(' ') || String(req.auth?.token?.name || email.split('@')[0] || 'New member');
-  if (!firstName || !lastName) throw new HttpsError('invalid-argument', 'Enter your first and last name.');
-  if (phone && !/^[+0-9 ()/-]{6,30}$/.test(phone)) throw new HttpsError('invalid-argument', 'That phone number doesn\'t look right.');
+  if (!firstName || !lastName) throw fail('invalid-argument', 'Enter your first and last name.');
+  if (phone && !/^[+0-9 ()/-]{6,30}$/.test(phone)) throw fail('invalid-argument', 'That phone number doesn\'t look right.');
   const iref = db().doc(`invites/${token}`);
   const out = await db().runTransaction(async (tx) => {
     const snap = await tx.get(iref);
-    if (!snap.exists) throw new HttpsError('not-found', 'This invite link doesn\'t exist or was cancelled. Ask for a new one.');
+    if (!snap.exists) throw fail('not-found', 'This invite link doesn\'t exist or was cancelled. Ask for a new one.');
     const i = snap.data() as { orgId: string; orgName: string; role: string; stationId: string; stationName: string; expiresAt: number; usedBy: string | null };
     if (i.usedBy === uid) return { orgId: i.orgId, orgName: i.orgName, role: i.role, stationName: i.stationName, already: true };
-    if (i.usedBy) throw new HttpsError('failed-precondition', 'This invite link was already used. Each link works for one person; ask for a new one.');
-    if (Date.now() > i.expiresAt) throw new HttpsError('deadline-exceeded', 'This invite link has expired. Links work for 24 hours; ask for a new one.');
+    if (i.usedBy) throw fail('failed-precondition', 'This invite link was already used. Each link works for one person; ask for a new one.');
+    if (Date.now() > i.expiresAt) throw fail('deadline-exceeded', 'This invite link has expired. Links work for 24 hours; ask for a new one.');
     const mref = db().doc(`orgs/${i.orgId}/members/${uid}`);
     const m = await tx.get(mref);
-    if (m.exists) throw new HttpsError('already-exists', `You're already in ${i.orgName}. Ask the fleet owner to change your role or station.`);
+    if (m.exists) throw fail('already-exists', 'You\'re already in {company}. Ask the fleet owner to change your role or station.', { company: i.orgName });
     tx.create(mref, { role: i.role, stationIds: [i.stationId], email, name, firstName, lastName, phone, transporterId, joinedAt: Date.now(), invite: token });
     tx.update(iref, { usedBy: uid, usedByName: name, usedAt: Date.now() });
     tx.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(i.orgId), orgId: i.orgId, email, name, firstName, lastName, phone }, { merge: true });
@@ -444,7 +445,7 @@ export const acceptInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
 /* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
 export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' }, async (req) => {
   const uid = req.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in again, then try again.');
+  if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const email = String(req.auth?.token?.email || '');
   const name = String(req.auth?.token?.name || email.split('@')[0] || 'You');
   return createDemo(uid, name, email, req.data?.fresh === true);
@@ -452,9 +453,9 @@ export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' },
 
 export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => {
   const who = await guard(req);
-  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the owner can remove the demo company.');
+  if (who.role !== 'owner') throw fail('permission-denied', 'Only the owner can remove the demo company.');
   const org = await db().doc(`orgs/${who.orgId}`).get();
-  if (!org.exists || org.data()?.demo !== true) throw new HttpsError('failed-precondition', 'Only a demo company can be removed this way.');
+  if (!org.exists || org.data()?.demo !== true) throw fail('failed-precondition', 'Only a demo company can be removed this way.');
   await deleteDemo(who.orgId);
   return { ok: true };
 });
@@ -490,24 +491,24 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
   const driverId = req.data?.driverId ? String(req.data.driverId) : null;
-  if (!ID.test(vehicleId) || (driverId && !/^[A-Za-z0-9_-]{1,128}$/.test(driverId))) throw new HttpsError('invalid-argument', 'Unknown van or driver.');
+  if (!ID.test(vehicleId) || (driverId && !/^[A-Za-z0-9_-]{1,128}$/.test(driverId))) throw fail('invalid-argument', 'Unknown van or driver.');
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   const aCol = org.collection('assignments');
   const r = await db().runTransaction(async (tx) => {
     const v = await tx.get(vref);
-    if (!v.exists) throw new HttpsError('not-found', 'This van was removed.');
+    if (!v.exists) throw fail('not-found', 'This van was removed.');
     const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null };
     needStation(who, van.stationId);
-    if (van.retired && driverId) throw new HttpsError('failed-precondition', 'This van is retired. Bring it back first.');
+    if (van.retired && driverId) throw fail('failed-precondition', 'This van is retired. Bring it back first.');
     let person: { name: string; role: string; stationIds?: string[] } | null = null;
     let personOpen: FirebaseFirestore.QueryDocumentSnapshot[] = [];
     if (driverId) {
       const m = await tx.get(org.collection('members').doc(driverId));
-      if (!m.exists) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+      if (!m.exists) throw fail('not-found', 'This person isn\'t in the company any more.');
       person = m.data() as { name: string; role: string; stationIds?: string[] };
-      if (!['driver', 'manager'].includes(person.role)) throw new HttpsError('invalid-argument', 'Vans go to drivers or fleet managers.');
-      if (!van.stationId || !(person.stationIds || []).includes(van.stationId)) throw new HttpsError('failed-precondition', `${person.name} works at another station. Move the van or the person first.`);
+      if (!['driver', 'manager'].includes(person.role)) throw fail('invalid-argument', 'Vans go to drivers or fleet managers.');
+      if (!van.stationId || !(person.stationIds || []).includes(van.stationId)) throw fail('failed-precondition', '{name} works at another station. Move the van or the person first.', { name: person.name });
       personOpen = (await tx.get(aCol.where('driverId', '==', driverId).where('end', '==', null))).docs;
     }
     if (driverId && van.assignedTo?.driverId === driverId) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
@@ -533,11 +534,12 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
   let notified = 0;
   if (driverId && r.assignmentId && !('unchanged' in r) && driverId !== who.uid && 'vanName' in r) {
-    notified = await notify(driverId, {
-      title: `${r.vanName} is yours`,
-      body: `${who.name} gave you ${r.vanName}${r.plate ? ` (${r.plate})` : ''}. Before you drive, take the pick-up video or photos.`,
+    const van = `${r.vanName}${r.plate ? ` (${r.plate})` : ''}`;
+    notified = await notify(driverId, (lang) => ({
+      title: tr(lang, '{van} is yours', { van: r.vanName }),
+      body: tr(lang, '{name} gave you {van}. Before you drive, take the pick-up video or photos.', { name: who.name, van }),
       url: `/vehicle/${vehicleId}`, tag: `van-${vehicleId}`,
-    }).catch(() => 0);
+    })).catch(() => 0);
   }
   return { assignmentId: r.assignmentId, notified };
 });
@@ -548,12 +550,12 @@ export const retireVan = onCall({ timeoutSeconds: 30 }, async (req) => {
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
   const restore = req.data?.restore === true;
-  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   await db().runTransaction(async (tx) => {
     const v = await tx.get(vref);
-    if (!v.exists) throw new HttpsError('not-found', 'Unknown van.');
+    if (!v.exists) throw fail('not-found', 'Unknown van.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     needStation(who, van.stationId);
     if (restore) { tx.update(vref, { retired: false, retiredAt: null, retiredBy: null }); return; }
@@ -569,13 +571,13 @@ export const moveVan = onCall({ timeoutSeconds: 30 }, async (req) => {
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
   const stationId = String(req.data?.stationId || '');
-  if (!ID.test(vehicleId) || !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown van or station.');
-  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner moves vans between stations.');
+  if (!ID.test(vehicleId) || !ID.test(stationId)) throw fail('invalid-argument', 'Unknown van or station.');
+  if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner moves vans between stations.');
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   await db().runTransaction(async (tx) => {
     const [v, st] = await Promise.all([tx.get(vref), tx.get(org.collection('stations').doc(stationId))]);
-    if (!v.exists || !st.exists) throw new HttpsError('not-found', 'Unknown van or station.');
+    if (!v.exists || !st.exists) throw fail('not-found', 'Unknown van or station.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     if (van.stationId === stationId) return;
     const dref = org.collection('vehicleDetails').doc(vehicleId);
@@ -593,8 +595,8 @@ export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const uid = String(req.data?.uid || '');
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
-  if (uid === who.uid) throw new HttpsError('failed-precondition', 'You can\'t remove yourself here.');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw fail('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw fail('failed-precondition', 'You can\'t remove yourself here.');
   const org = db().doc(`orgs/${who.orgId}`);
   const mref = org.collection('members').doc(uid);
   await db().runTransaction(async (tx) => {
@@ -603,7 +605,7 @@ export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
     const p = m.data() as { role: string; stationIds?: string[] };
     // Owners remove anyone; managers remove drivers of their station.
     if (who.role !== 'owner' && !(p.role === 'driver' && (p.stationIds || []).some((s) => who.stationIds.includes(s)))) {
-      throw new HttpsError('permission-denied', 'Fleet managers can only remove drivers of their station.');
+      throw fail('permission-denied', 'Fleet managers can only remove drivers of their station.');
     }
     const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
     for (const d of open) {
@@ -621,21 +623,21 @@ export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
  */
 export const changePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
-  if (who.role !== 'owner') throw new HttpsError('permission-denied', 'Only the fleet owner changes roles and stations.');
+  if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner changes roles and stations.');
   const uid = String(req.data?.uid || '');
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
-  if (uid === who.uid) throw new HttpsError('failed-precondition', 'You can\'t change your own role or station.');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw fail('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw fail('failed-precondition', 'You can\'t change your own role or station.');
   const role = req.data?.role == null ? null : String(req.data.role);
   const stationId = req.data?.stationId == null ? null : String(req.data.stationId);
-  if (role && !['owner', 'manager', 'driver'].includes(role)) throw new HttpsError('invalid-argument', 'Unknown role.');
-  if (stationId && !ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown station.');
+  if (role && !['owner', 'manager', 'driver'].includes(role)) throw fail('invalid-argument', 'Unknown role.');
+  if (stationId && !ID.test(stationId)) throw fail('invalid-argument', 'Unknown station.');
   if (!role && !stationId) return { ok: true };
   const org = db().doc(`orgs/${who.orgId}`);
   const mref = org.collection('members').doc(uid);
   await db().runTransaction(async (tx) => {
     const m = await tx.get(mref);
-    if (!m.exists) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
-    if (stationId && !(await tx.get(org.collection('stations').doc(stationId))).exists) throw new HttpsError('not-found', 'Unknown station.');
+    if (!m.exists) throw fail('not-found', 'This person isn\'t in the company any more.');
+    if (stationId && !(await tx.get(org.collection('stations').doc(stationId))).exists) throw fail('not-found', 'Unknown station.');
     const p = m.data() as { role: string; stationIds?: string[] };
     const nextRole = role || (p.role === 'admin' ? 'owner' : p.role);
     const nextStations = stationId ? [stationId] : p.stationIds || [];
@@ -665,26 +667,26 @@ export const setSelfAssign = onCall({ timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const stationId = String(req.data?.stationId || '');
-  if (!ID.test(stationId)) throw new HttpsError('invalid-argument', 'Unknown station.');
-  needStation(who, stationId, 'Fleet managers can only change this for their station.');
+  if (!ID.test(stationId)) throw fail('invalid-argument', 'Unknown station.');
+  needStation(who, stationId, N_('Fleet managers can only change this for their station.'));
   const ref = db().doc(`orgs/${who.orgId}/stations/${stationId}`);
-  if (!(await ref.get()).exists) throw new HttpsError('not-found', 'Unknown station.');
+  if (!(await ref.get()).exists) throw fail('not-found', 'Unknown station.');
   await ref.update({ selfAssign: req.data?.on === true, selfAssignBy: who.name, selfAssignAt: Date.now() });
   return { ok: true };
 });
 
 /** Reads the van and checks this person may pick it up or drop it off at its station right now. */
 async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleId: string) {
-  if (!['driver', 'manager'].includes(who.role)) throw new HttpsError('permission-denied', 'Only drivers and fleet managers pick up vans.');
-  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  if (!['driver', 'manager'].includes(who.role)) throw fail('permission-denied', 'Only drivers and fleet managers pick up vans.');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   const v = await tx.get(vref);
-  if (!v.exists) throw new HttpsError('not-found', 'Unknown van.');
+  if (!v.exists) throw fail('not-found', 'Unknown van.');
   const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null };
   needStation(who, van.stationId);
   const st = await tx.get(org.collection('stations').doc(van.stationId!));
-  if (st.data()?.selfAssign !== true) throw new HttpsError('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
+  if (st.data()?.selfAssign !== true) throw fail('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
   return { org, vref, van };
 }
 
@@ -693,13 +695,13 @@ async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleI
 const HANDOVER_MAX_AGE = 2 * 3600_000;
 interface WalkDoc { vehicleId: string; createdBy: string | null; source: string; frames: number; taken: number; skipped: number; photos: { path?: string }[]; handover?: unknown }
 async function checkHandoverPhotos(who: Who, vehicleId: string, walkId: string) {
-  if (!ID.test(walkId)) throw new HttpsError('invalid-argument', 'Take the photos of the van first.');
+  if (!ID.test(walkId)) throw fail('invalid-argument', 'Take the photos of the van first.');
   const w = await db().doc(`orgs/${who.orgId}/walkarounds/${walkId}`).get();
   const d = w.data() as WalkDoc | undefined;
-  if (!d || d.vehicleId !== vehicleId || d.createdBy !== who.uid) throw new HttpsError('failed-precondition', 'These photos aren\'t yours or aren\'t of this van.');
-  if (d.handover) throw new HttpsError('failed-precondition', 'These photos were already used. Take new ones.');
+  if (!d || d.vehicleId !== vehicleId || d.createdBy !== who.uid) throw fail('failed-precondition', 'These photos aren\'t yours or aren\'t of this van.');
+  if (d.handover) throw fail('failed-precondition', 'These photos were already used. Take new ones.');
   if (d.source !== 'camera' || d.skipped > 0 || d.frames < 1 || d.taken < d.frames || (d.photos || []).length < d.frames) {
-    throw new HttpsError('failed-precondition', 'Every photo of the walk-around is needed, taken with the camera. Take the missing ones.');
+    throw fail('failed-precondition', 'Every photo of the walk-around is needed, taken with the camera. Take the missing ones.');
   }
   const prefix = `orgs/${who.orgId}/walkarounds/${walkId}/`;
   const files = await Promise.all(d.photos.map(async (p) => {
@@ -707,14 +709,14 @@ async function checkHandoverPhotos(who: Who, vehicleId: string, walkId: string) 
     try { const [m] = await bucket().file(p.path).getMetadata(); return m; } catch { return null; }
   }));
   if (files.some((m) => !m || Date.now() - new Date(String(m.timeCreated)).getTime() > HANDOVER_MAX_AGE)) {
-    throw new HttpsError('failed-precondition', 'Some photos didn\'t finish uploading or are more than two hours old. Take them again.');
+    throw fail('failed-precondition', 'Some photos didn\'t finish uploading or are more than two hours old. Take them again.');
   }
 }
 /** In the transaction: the walk-around is still unused; mark it as this handover's photos. */
 async function useHandoverPhotos(tx: FirebaseFirestore.Transaction, org: FirebaseFirestore.DocumentReference, walkId: string) {
   const ref = org.collection('walkarounds').doc(walkId);
   const w = await tx.get(ref);
-  if ((w.data() as WalkDoc | undefined)?.handover) throw new HttpsError('failed-precondition', 'These photos were already used. Take new ones.');
+  if ((w.data() as WalkDoc | undefined)?.handover) throw fail('failed-precondition', 'These photos were already used. Take new ones.');
   return ref;
 }
 
@@ -734,7 +736,7 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
     return (kind: 'pickup' | 'dropoff', assignmentId: string) => tx.update(wref, { handover: { kind, assignmentId } });
   }
   const vref = org.collection('videos').doc(m.media.videoId!);
-  if ((await tx.get(vref)).exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+  if ((await tx.get(vref)).exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
   return (kind: 'pickup' | 'dropoff', assignmentId: string) => tx.create(vref, videoDoc(who, van, m.video!, kind, assignmentId, false));
 }
 
@@ -748,11 +750,11 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
   const m = await checkMedia(who, vehicleId, req.data);
   return db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
-    if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
+    if (van.retired) throw fail('failed-precondition', 'This van is retired.');
     if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
     const aCol = org.collection('assignments');
     const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
-    if (mine.length) throw new HttpsError('failed-precondition', `Drop off ${(mine[0].data() as Assignment).vehicleName} first, with its photos or a video.`);
+    if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
     const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
     if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
     const now = Date.now();
@@ -776,7 +778,7 @@ export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async 
   const m = await checkMedia(who, vehicleId, req.data);
   await db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
-    if (van.assignedTo?.driverId !== who.uid) throw new HttpsError('failed-precondition', 'You don\'t have this van.');
+    if (van.assignedTo?.driverId !== who.uid) throw fail('failed-precondition', 'You don\'t have this van.');
     const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
     tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', m.media));
     tx.update(vref, { assignedTo: null });
@@ -809,22 +811,22 @@ async function withLocal<T>(path: string, fn: (file: string) => Promise<T>): Pro
 
 /** The uploaded video (for a handover or a walk-around): this person's, uploaded and recorded in the last two hours, 8 seconds to 5 minutes long. */
 async function checkHandoverVideo(who: Who, videoId: string): Promise<VideoCheck> {
-  if (!ID.test(videoId)) throw new HttpsError('invalid-argument', 'Record the video of the van first.');
+  if (!ID.test(videoId)) throw fail('invalid-argument', 'Record the video of the van first.');
   const prefix = `orgs/${who.orgId}/videos/${who.uid}/${videoId}/`;
   const [files] = await bucket().getFiles({ prefix });
   const f = files.find((x) => /\/original\.[A-Za-z0-9]{2,5}$/.test(x.name));
-  if (!f) throw new HttpsError('failed-precondition', 'The video didn\'t finish uploading. Try again.');
+  if (!f) throw fail('failed-precondition', 'The video didn\'t finish uploading. Try again.');
   const meta = f.metadata;
   const size = Number(meta.size || 0), contentType = String(meta.contentType || '');
-  if (!contentType.startsWith('video/')) throw new HttpsError('failed-precondition', 'That file isn\'t a video.');
-  if (Date.now() - new Date(String(meta.timeCreated)).getTime() > HANDOVER_MAX_AGE) throw new HttpsError('failed-precondition', 'This video was uploaded more than two hours ago. Record a new one.');
+  if (!contentType.startsWith('video/')) throw fail('failed-precondition', 'That file isn\'t a video.');
+  if (Date.now() - new Date(String(meta.timeCreated)).getTime() > HANDOVER_MAX_AGE) throw fail('failed-precondition', 'This video was uploaded more than two hours ago. Record a new one.');
   const p = await withLocal(f.name, (file) => probe(file));
-  if (!p.hasVideo || !p.durationMs) throw new HttpsError('failed-precondition', 'This video can\'t be read. Record it again.');
-  if (p.durationMs < VIDEO_MIN_MS) throw new HttpsError('failed-precondition', `The video is ${Math.round(p.durationMs / 1000)} seconds long. Walk all the way around the van: at least ${VIDEO_MIN_MS / 1000} seconds.`);
-  if (p.durationMs > VIDEO_MAX_MS) throw new HttpsError('failed-precondition', 'The video is longer than 5 minutes. One walk around the van is enough.');
+  if (!p.hasVideo || !p.durationMs) throw fail('failed-precondition', 'This video can\'t be read. Record it again.');
+  if (p.durationMs < VIDEO_MIN_MS) throw fail('failed-precondition', 'The video is {s} seconds long. Walk all the way around the van: at least {min} seconds.', { s: Math.round(p.durationMs / 1000), min: VIDEO_MIN_MS / 1000 });
+  if (p.durationMs > VIDEO_MAX_MS) throw fail('failed-precondition', 'The video is longer than 5 minutes. One walk around the van is enough.');
   // Phones write when they recorded it. Allow some clock difference; not every phone or browser writes it.
   if (p.recordedAt && Date.now() - p.recordedAt > HANDOVER_MAX_AGE + 10 * 60_000) {
-    throw new HttpsError('failed-precondition', 'This video was recorded more than two hours ago. Record a new one at the van.');
+    throw fail('failed-precondition', 'This video was recorded more than two hours ago. Record a new one at the van.');
   }
   return { path: f.name, size, contentType, durationMs: p.durationMs, recordedAt: p.recordedAt, device: p.device, width: p.width, height: p.height, hdr: p.hdr };
 }
@@ -848,20 +850,20 @@ export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, 
   const assignmentId = String(req.data?.assignmentId || '');
   const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
   const videoId = String(req.data?.videoId || '');
-  if (!ID.test(assignmentId) || !kind) throw new HttpsError('invalid-argument', 'Unknown handover.');
+  if (!ID.test(assignmentId) || !kind) throw fail('invalid-argument', 'Unknown handover.');
   const org = db().doc(`orgs/${who.orgId}`);
   const aref = org.collection('assignments').doc(assignmentId);
   const a = (await aref.get()).data() as Assignment | undefined;
-  if (!a) throw new HttpsError('not-found', 'Unknown handover.');
+  if (!a) throw fail('not-found', 'Unknown handover.');
   // The station's staff, or the driver for their own handover.
-  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, 'This handover belongs to another station.'); }
-  if (kind === 'dropoff' && a.end == null) throw new HttpsError('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
-  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw new HttpsError('failed-precondition', `This ${kind === 'pickup' ? 'pick-up' : 'drop-off'} already has photos or a video.`);
+  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
+  if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
+  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
   const v = await checkHandoverVideo(who, videoId);
   await db().runTransaction(async (tx) => {
     const vref = org.collection('videos').doc(videoId);
     const used = await tx.get(vref);
-    if (used.exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+    if (used.exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
     await noProofYet(tx, org, assignmentId, kind);
     tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, isLate(who, a, kind)));
   });
@@ -881,7 +883,7 @@ async function noProofYet(tx: FirebaseFirestore.Transaction, org: FirebaseFirest
     tx.get(org.collection('videos').where('assignmentId', '==', assignmentId).where('kind', '==', kind).limit(1)),
     tx.get(org.collection('walkarounds').where('handover.assignmentId', '==', assignmentId).where('handover.kind', '==', kind).limit(1)),
   ]);
-  if (!vids.empty || !walks.empty) throw new HttpsError('failed-precondition', 'Someone already added photos or a video for this.');
+  if (!vids.empty || !walks.empty) throw fail('failed-precondition', 'Someone already added photos or a video for this.');
 }
 
 /**
@@ -894,13 +896,13 @@ export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
   const assignmentId = String(req.data?.assignmentId || '');
   const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
   const walkId = String(req.data?.walkId || '');
-  if (!ID.test(assignmentId) || !kind) throw new HttpsError('invalid-argument', 'Unknown handover.');
+  if (!ID.test(assignmentId) || !kind) throw fail('invalid-argument', 'Unknown handover.');
   const org = db().doc(`orgs/${who.orgId}`);
   const a = (await org.collection('assignments').doc(assignmentId).get()).data() as Assignment | undefined;
-  if (!a) throw new HttpsError('not-found', 'Unknown handover.');
-  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, 'This handover belongs to another station.'); }
-  if (kind === 'dropoff' && a.end == null) throw new HttpsError('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
-  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw new HttpsError('failed-precondition', `This ${kind === 'pickup' ? 'pick-up' : 'drop-off'} already has photos or a video.`);
+  if (!a) throw fail('not-found', 'Unknown handover.');
+  if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
+  if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
+  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
   await checkHandoverPhotos(who, a.vehicleId, walkId);
   await db().runTransaction(async (tx) => {
     const wref = await useHandoverPhotos(tx, org, walkId);
@@ -920,16 +922,16 @@ export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   const videoId = String(req.data?.videoId || '');
-  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
   const org = db().doc(`orgs/${who.orgId}`);
   const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as { name: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string } | null } | undefined;
-  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  if (!van) throw fail('not-found', 'Unknown van.');
   needStation(who, van.stationId);
-  if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
+  if (van.retired) throw fail('failed-precondition', 'This van is retired.');
   const v = await checkHandoverVideo(who, videoId);
   await db().runTransaction(async (tx) => {
     const vref = org.collection('videos').doc(videoId);
-    if ((await tx.get(vref)).exists) throw new HttpsError('failed-precondition', 'This video was already used. Record a new one.');
+    if ((await tx.get(vref)).exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
     tx.create(vref, videoDoc(who, { id: vehicleId, name: van.name, stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
   });
   return { ok: true };
@@ -942,12 +944,12 @@ export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async
 export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4, concurrency: 1 }, async (req) => {
   const who = await guard(req);
   const videoId = String(req.data?.videoId || '');
-  if (!ID.test(videoId)) throw new HttpsError('invalid-argument', 'Unknown video.');
+  if (!ID.test(videoId)) throw fail('invalid-argument', 'Unknown video.');
   const ref = db().doc(`orgs/${who.orgId}/videos/${videoId}`);
   const go = await db().runTransaction(async (tx) => {
     const d = (await tx.get(ref)).data() as { stationId: string | null; by: string; status: string; processingAt?: number } | undefined;
-    if (!d) throw new HttpsError('not-found', 'Unknown video.');
-    if (d.by !== who.uid) needStation(who, d.stationId, 'This video belongs to another station.');
+    if (!d) throw fail('not-found', 'Unknown video.');
+    if (d.by !== who.uid) needStation(who, d.stationId, N_('This video belongs to another station.'));
     if (d.status === 'ready') return false;
     if (d.status === 'processing' && Date.now() - (d.processingAt || 0) < 10 * 60_000) return false;
     tx.update(ref, { status: 'processing', processingAt: Date.now() });
@@ -970,7 +972,7 @@ export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4
     });
   } catch (e) {
     await ref.update({ status: 'failed', error: String((e as Error)?.message || e).slice(0, 300) });
-    throw new HttpsError('internal', 'Couldn\'t convert the video. The original is kept.');
+    throw fail('internal', 'Couldn\'t convert the video. The original is kept.');
   }
   return { started: true };
 });
@@ -985,11 +987,15 @@ const pushAllowed = (endpoint: string) => PUSH_SERVICES.test(endpoint)
   || (process.env.FUNCTIONS_EMULATOR === 'true' && /^http:\/\/127\.0\.0\.1:\d+\//.test(endpoint));
 
 /** Sends a notification to every phone this person turned notifications on for. Returns how many took it. */
-async function notify(uid: string, msg: { title: string; body: string; url: string; tag?: string }): Promise<number> {
+type Note = { title: string; body: string; url: string; tag?: string };
+/** Sends a notification to every phone this person turned notifications on for, in their language (see langOf). */
+async function notify(uid: string, make: Note | ((lang: string) => Note)): Promise<number> {
   let keys: { publicKey?: string; privateKey?: string } = {};
   try { keys = JSON.parse(WEBPUSH_KEYS.value() || '{}'); } catch { return 0; }
   if (!keys.publicKey || !keys.privateKey) return 0;
   const subs = await db().collection(`users/${uid}/push`).limit(10).get();
+  if (!subs.size) return 0;
+  const msg = typeof make === 'function' ? make(await langOf(uid)) : make;
   const project = process.env.GCLOUD_PROJECT || 'fleet-check';
   const sent = await Promise.all(subs.docs.map(async (d) => {
     const s = d.data() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
@@ -1020,21 +1026,21 @@ export const recordLicenceCheck = onCall({ timeoutSeconds: 30 }, async (req) => 
   const who = await guard(req);
   needStaff(who);
   const uid = String(req.data?.uid || '');
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw new HttpsError('invalid-argument', 'Unknown person.');
-  if (uid === who.uid) throw new HttpsError('failed-precondition', 'Someone else has to check your own licence.');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw fail('invalid-argument', 'Unknown person.');
+  if (uid === who.uid) throw fail('failed-precondition', 'Someone else has to check your own licence.');
   const day = String(req.data?.day || '');
   const t = DAY_RE.test(day) ? Date.parse(`${day}T12:00:00Z`) : NaN;
   if (!Number.isFinite(t) || t > Date.now() + 36 * 3600_000 || t < Date.now() - 366 * 86400_000) {
-    throw new HttpsError('invalid-argument', 'Enter the day of the check: today or a day in the last 12 months.');
+    throw fail('invalid-argument', 'Enter the day of the check: today or a day in the last 12 months.');
   }
   const ok = req.data?.ok !== false;
   const note = clean(req.data?.note, 300);
-  if (!ok && !note) throw new HttpsError('invalid-argument', 'Say what the problem with the licence is.');
+  if (!ok && !note) throw fail('invalid-argument', 'Say what the problem with the licence is.');
   const org = db().doc(`orgs/${who.orgId}`);
   const m = (await org.collection('members').doc(uid).get()).data() as { stationIds?: string[] } | undefined;
-  if (!m) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
+  if (!m) throw fail('not-found', 'This person isn\'t in the company any more.');
   const stations = m.stationIds || [];
-  if (who.role !== 'owner' && !stations.some((st) => who.stationIds.includes(st))) throw new HttpsError('permission-denied', 'This person works at another station.');
+  if (who.role !== 'owner' && !stations.some((st) => who.stationIds.includes(st))) throw fail('permission-denied', 'This person works at another station.');
   const ref = org.collection('driverRecords').doc(uid);
   const entry = { day, at: Date.now(), by: who.uid, byName: who.name, ok, note };
   await db().runTransaction(async (tx) => {
@@ -1058,11 +1064,10 @@ interface VanDoc {
 }
 const READ_MAX_AGE = 2 * 3600_000;
 const staffAt = (w: Who, stationId: string | null | undefined) => w.role === 'owner' || (w.role === 'manager' && !!stationId && w.stationIds.includes(stationId));
-const fmtKm = (n: number) => `${Math.round(n).toLocaleString('en-GB')} km`;
 
 async function dashOn(orgId: string) {
   if ((await db().doc(`orgs/${orgId}`).get()).data()?.dashScans !== true) {
-    throw new HttpsError('failed-precondition', 'Dashboard photos are off for this company. The owner turns them on in the Account tab.');
+    throw fail('failed-precondition', 'Dashboard photos are off for this company. The owner turns them on in the Account tab.');
   }
 }
 
@@ -1070,16 +1075,16 @@ type Q = FirebaseFirestore.Query;
 type R = FirebaseFirestore.DocumentReference;
 /** The van, its open tours, what saving a photo would do, and its last reading. Reads only (for transactions too). */
 async function readingContext(org: R, who: Who, vehicleId: string, getQ: (q: Q) => Promise<FirebaseFirestore.QuerySnapshot>, getR: (r: R) => Promise<FirebaseFirestore.DocumentSnapshot>) {
-  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
   const van = (await getR(org.collection('vehicles').doc(vehicleId))).data() as VanDoc | undefined;
-  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  if (!van) throw fail('not-found', 'Unknown van.');
   needStation(who, van.stationId);
   const openSnap = await getQ(org.collection('tours').where('vehicleId', '==', vehicleId).where('open', '==', true).limit(5));
   const open = openSnap.docs.map((d) => ({ id: d.id, ref: d.ref, data: d.data() as TourDoc }));
   const hasVan = van.assignedTo?.driverId === who.uid && !van.retired;
   const plan = planReading({ id: who.uid, name: who.name }, staffAt(who, van.stationId), hasVan,
     open.map((o) => ({ id: o.id, driverId: o.data.driverId, driverName: o.data.driverName, vehicleId, startAt: o.data.startAt })), Date.now());
-  if (!plan) throw new HttpsError('permission-denied', 'You don\'t have this van. The driver who has it, or the station\'s fleet manager, takes its dashboard photo.');
+  if (!plan) throw fail('permission-denied', 'You don\'t have this van. The driver who has it, or the station\'s fleet manager, takes its dashboard photo.');
   // Starting a tour ends any tour of this person still open on another van (without an end photo).
   const elsewhere = plan.startFor
     ? (await getQ(org.collection('tours').where('driverId', '==', who.uid).where('open', '==', true).limit(10))).docs.filter((d) => d.data().vehicleId !== vehicleId)
@@ -1133,16 +1138,16 @@ export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   await dashOn(who.orgId);
   const readId = String(req.data?.readId || '');
-  if (!ID.test(readId)) throw new HttpsError('invalid-argument', 'Take the dashboard photo again.');
+  if (!ID.test(readId)) throw fail('invalid-argument', 'Take the dashboard photo again.');
   const v = (req.data?.values || {}) as Record<string, unknown>;
   const odometerKm = Math.round(Number(v.odometerKm));
   if (v.odometerKm == null || v.odometerKm === '' || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) {
-    throw new HttpsError('invalid-argument', 'Enter the odometer reading in km.');
+    throw fail('invalid-argument', 'Enter the odometer reading in km.');
   }
   const pct = (x: unknown, what: string) => {
     if (x == null || x === '') return null;
     const n = Number(x);
-    if (!Number.isFinite(n) || n < 0 || n > 100) throw new HttpsError('invalid-argument', `The ${what} is a percentage from 0 to 100.`);
+    if (!Number.isFinite(n) || n < 0 || n > 100) throw fail('invalid-argument', what === 'fuel level' ? 'The fuel level is a percentage from 0 to 100.' : 'The battery level is a percentage from 0 to 100.');
     return Math.round(n * 10) / 10;
   };
   const fuelPct = pct(v.fuelPct, 'fuel level'), batteryPct = pct(v.batteryPct, 'battery level');
@@ -1158,16 +1163,17 @@ export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
 
   const out = await db().runTransaction(async (tx) => {
     const rd = (await tx.get(rref)).data() as { by: string; vehicleId: string; path: string; at: number; used?: boolean; ai: Record<string, unknown>; confidence: number | null } | undefined;
-    if (!rd || rd.by !== who.uid) throw new HttpsError('not-found', 'Take the dashboard photo again.');
-    if (rd.used) throw new HttpsError('failed-precondition', 'This photo is already saved.');
-    if (Date.now() - rd.at > READ_MAX_AGE) throw new HttpsError('failed-precondition', 'This photo is more than two hours old. Take a new one.');
+    if (!rd || rd.by !== who.uid) throw fail('not-found', 'Take the dashboard photo again.');
+    if (rd.used) throw fail('failed-precondition', 'This photo is already saved.');
+    if (Date.now() - rd.at > READ_MAX_AGE) throw fail('failed-precondition', 'This photo is more than two hours old. Take a new one.');
     const { van, open, plan, elsewhere, last } = await readingContext(org, who, rd.vehicleId, (q) => tx.get(q), (r) => tx.get(r));
     if (last && odometerKm < last.km && !(sure && staffAt(who, van.stationId))) {
-      throw new HttpsError('failed-precondition', `The odometer can't go down: it showed ${fmtKm(last.km)} on ${new Date(last.at).toISOString().slice(0, 10)}${last.byName ? ` (${last.byName})` : ''}. Check the number.`);
+      throw fail('failed-precondition', last.byName ? 'The odometer can\'t go down: it showed {km} km on {day} ({name}). Check the number.' : 'The odometer can\'t go down: it showed {km} km on {day}. Check the number.',
+        { km: Math.round(last.km), day: new Date(last.at).toISOString().slice(0, 10), name: last.byName });
     }
     const days = last ? Math.max(1, (Date.now() - last.at) / 86400_000) : 1;
     if (last && odometerKm - last.km > Math.max(1500, 1200 * days) && !sure) {
-      throw new HttpsError('out-of-range', `That's ${fmtKm(odometerKm - last.km)} more than the last reading (${fmtKm(last.km)}). Check the number, or confirm it's right.`);
+      throw fail('out-of-range', 'That\'s {more} km more than the last reading ({km} km). Check the number, or confirm it\'s right.', { more: Math.round(odometerKm - last.km), km: Math.round(last.km) });
     }
     const detRef = org.collection('vehicleDetails').doc(rd.vehicleId);
     const det = await tx.get(detRef);
@@ -1225,9 +1231,9 @@ export const logReview = onCall({ timeoutSeconds: 40 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const checkId = String(req.data?.checkId || '');
-  if (!ID.test(checkId)) throw new HttpsError('invalid-argument', 'Unknown check.');
+  if (!ID.test(checkId)) throw fail('invalid-argument', 'Unknown check.');
   const k = (await db().doc(`orgs/${who.orgId}/checks/${checkId}`).get()).data() as { stationId?: string } | undefined;
-  if (!k) throw new HttpsError('not-found', 'Unknown check.');
+  if (!k) throw fail('not-found', 'Unknown check.');
   needStation(who, k.stationId);
   await damageLogFor(who.orgId, checkId);
   return { ok: true };
@@ -1269,22 +1275,22 @@ export const readDocument = onCall(opts(180), async (req) => {
   needStaff(who);
   const target = req.data?.target === 'driver' ? 'driver' : req.data?.target === 'van' ? 'van' : null;
   const id = String(req.data?.id || '');
-  if (!target || !/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw new HttpsError('invalid-argument', 'Unknown van or person.');
+  if (!target || !/^[A-Za-z0-9_-]{1,128}$/.test(id)) throw fail('invalid-argument', 'Unknown van or person.');
   const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
-  if (!raw.length || raw.length > 6) throw new HttpsError('invalid-argument', 'Send 1 to 6 photos of the document.');
+  if (!raw.length || raw.length > 6) throw fail('invalid-argument', 'Send 1 to 6 photos of the document.');
   const paths: string[] = raw.map((p: unknown) => checkPath(p, `orgs/${who.orgId}/docs/${who.uid}/`));
   const org = db().doc(`orgs/${who.orgId}`);
   try {
     let about: string;
     if (target === 'van') {
       const van = (await org.collection('vehicles').doc(id).get()).data() as { name?: string; plate?: string; make?: string; model?: string; stationId?: string } | undefined;
-      if (!van) throw new HttpsError('not-found', 'Unknown van.');
+      if (!van) throw fail('not-found', 'Unknown van.');
       needStation(who, van.stationId);
       about = `the van ${van.name || ''}${van.plate ? `, number plate ${van.plate}` : ''}${van.make || van.model ? `, a ${[van.make, van.model].filter(Boolean).join(' ')}` : ''}`;
     } else {
       const m = (await org.collection('members').doc(id).get()).data() as { name?: string; stationIds?: string[] } | undefined;
-      if (!m) throw new HttpsError('not-found', 'This person isn\'t in the company any more.');
-      if (who.role !== 'owner' && !(m.stationIds || []).some((st) => who.stationIds.includes(st))) throw new HttpsError('permission-denied', 'This person works at another station.');
+      if (!m) throw fail('not-found', 'This person isn\'t in the company any more.');
+      if (who.role !== 'owner' && !(m.stationIds || []).some((st) => who.stationIds.includes(st))) throw fail('permission-denied', 'This person works at another station.');
       about = `the driver ${m.name || ''}`;
     }
     // Managers don't see costs: they aren't even asked for.
@@ -1332,7 +1338,6 @@ interface BuyDoc {
 const OPEN_BUY: BuyStatus[] = ['open', 'waiting', 'refused'];
 const buyPath = (w: Who) => `orgs/${w.orgId}/buys/${w.uid}/`;
 const plateText = (p: { plate: string | null }) => (p.plate ? ` (${p.plate})` : '');
-const verb = (k: BuyKind) => (k === 'fuel' ? 'refuel' : k === 'wash' ? 'wash' : 'purchase');
 
 /** Who hears about it: the station's fleet managers, or the owners where the station has none (parts: the owners). */
 async function bossesOf(orgId: string, stationId: string | null, kind: BuyKind, except: string) {
@@ -1349,23 +1354,23 @@ async function bossesOf(orgId: string, stationId: string | null, kind: BuyKind, 
   }
   return (await org.collection('members').where('role', 'in', ['owner', 'admin']).get()).docs.filter((d) => d.id !== except).map(toP);
 }
-async function tell(people: { uid: string }[], msg: { title: string; body: string; url: string; tag?: string }) {
+async function tell(people: { uid: string }[], msg: Note | ((lang: string) => Note)) {
   const n = await Promise.all(people.map((x) => notify(x.uid, msg).catch(() => 0)));
   return n.reduce((a, b) => a + b, 0);
 }
 
 async function loadBuy(org: R, id: unknown) {
   const sid = String(id || '');
-  if (!ID.test(sid)) throw new HttpsError('invalid-argument', 'Unknown refuel.');
+  if (!ID.test(sid)) throw fail('invalid-argument', 'Unknown refuel.');
   const ref = org.collection('purchases').doc(sid);
   const snap = await ref.get();
-  if (!snap.exists) throw new HttpsError('not-found', 'Unknown refuel.');
+  if (!snap.exists) throw fail('not-found', 'Unknown refuel.');
   return { ref, p: snap.data() as BuyDoc };
 }
 /** Only the person who started it takes its photos. */
 async function myBuy(org: R, who: Who, id: unknown) {
   const x = await loadBuy(org, id);
-  if (x.p.by !== who.uid) throw new HttpsError('permission-denied', 'Only the person who started it can carry on with it.');
+  if (x.p.by !== who.uid) throw fail('permission-denied', 'Only the person who started it can carry on with it.');
   return x;
 }
 async function logBuyRead(org: R, who: Who, purchaseId: string, step: string, model: string, usage: Usage, extra: object = {}) {
@@ -1374,26 +1379,26 @@ async function logBuyRead(org: R, who: Who, purchaseId: string, step: string, mo
 
 async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   const kind = BUY_KINDS.includes(d.kind as BuyKind) ? (d.kind as BuyKind) : null;
-  if (!kind) throw new HttpsError('invalid-argument', 'Refuel, wash or parts?');
+  if (!kind) throw fail('invalid-argument', 'Refuel, wash or parts?');
   if (kind === 'parts') needStaff(who);
   const vehicleId = String(d.vehicleId || '');
-  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
   const path = checkPath(d.path, buyPath(who));
   const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as VanDoc | undefined;
-  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  if (!van) throw fail('not-found', 'Unknown van.');
   needStation(who, van.stationId);
-  if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
-  if (kind === 'fuel' && van.fuel === 'electric') throw new HttpsError('failed-precondition', 'Electric vans are charged, not refuelled.');
+  if (van.retired) throw fail('failed-precondition', 'This van is retired.');
+  if (kind === 'fuel' && van.fuel === 'electric') throw fail('failed-precondition', 'Electric vans are charged, not refuelled.');
   const det = (await org.collection('vehicleDetails').doc(vehicleId).get()).data() as { fuelCard?: string; odometerKm?: number } | undefined;
   const expected = kind === 'parts' ? null : cardDigits(det?.fuelCard);
   // One at a time: anything this person left half done is closed (and stays in the history).
   const now = Date.now();
   const left = (await org.collection('purchases').where('by', '==', who.uid).orderBy('createdAt', 'desc').limit(10).get()).docs
     .filter((x) => OPEN_BUY.includes(x.data().status));
-  await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: 'Started another one' }, updatedAt: now })));
+  await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: N_('Started another one') }, updatedAt: now })));
 
   // The photo must be there; the AI reads it in a second call (dash) while the driver already takes the card photo.
-  try { await bucket().file(path).getMetadata(); } catch { throw new HttpsError('not-found', 'The dashboard photo is missing. Take it again.'); }
+  try { await bucket().file(path).getMetadata(); } catch { throw fail('not-found', 'The dashboard photo is missing. Take it again.'); }
   const ref = org.collection('purchases').doc();
   const dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: null, done: false };
   const doc: BuyDoc & Record<string, unknown> = {
@@ -1434,22 +1439,24 @@ async function buyDash(who: Who, org: R, d: Record<string, unknown>) {
 
 async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
-  if (p.status !== 'open' || !p.card.needed || p.card.result === 'match' || p.decision) throw new HttpsError('failed-precondition', 'The card was already checked.');
+  if (p.status !== 'open' || !p.card.needed || p.card.result === 'match' || p.decision) throw fail('failed-precondition', 'The card was already checked.');
   const expected = p.card.expected!;
-  const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: string, read: CardRead | null, tries: number, extra: object = {}) => {
+  const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: Said, read: CardRead | null, tries: number, extra: object = {}) => {
     const now = Date.now();
     const keep = read ? { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry } : null;
-    await ref.update({ status: 'waiting', card: { ...p.card, result, read: keep, tries, why, expired: read ? expired(read.expiry, now) : null, at: now, ...extra }, updatedAt: now });
+    await ref.update({ status: 'waiting', card: { ...p.card, result, read: keep, tries, why: why.text, whyT: why.t, whyV: why.v, expired: read ? expired(read.expiry, now) : null, at: now, ...extra }, updatedAt: now });
     const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
-    const what = result === 'missing' ? 'no fuel card' : result === 'unclear' ? 'card not checked' : 'not the van\'s card';
-    await tell(bosses, {
-      title: `Stop: ${p.vehicleName}${plateText(p)}, ${what}`,
-      body: `${p.byName} is at the ${p.kind === 'wash' ? 'car wash' : 'pump'}. ${why} Allow or refuse the ${verb(p.kind)}.`,
+    const van = `${p.vehicleName}${plateText(p)}`;
+    await tell(bosses, (lang) => ({
+      title: result === 'missing' ? tr(lang, 'Stop: {van}, no fuel card', { van }) : result === 'unclear' ? tr(lang, 'Stop: {van}, card not checked', { van })
+        : tr(lang, 'Stop: {van}, not the van\'s card', { van }),
+      body: p.kind === 'wash' ? tr(lang, '{name} is at the car wash. {why} Allow or refuse the wash.', { name: p.byName, why: tr(lang, why.t, why.v) })
+        : tr(lang, '{name} is at the pump. {why} Allow or refuse the refuel.', { name: p.byName, why: tr(lang, why.t, why.v) }),
       url: `/buy/${ref.id}`, tag: `buy-${ref.id}`,
-    });
-    return { result, why, people: bosses.map(({ name, phone }) => ({ name, phone })) };
+    }));
+    return { result, why: why.text, whyT: why.t, whyV: why.v, people: bosses.map(({ name, phone }) => ({ name, phone })) };
   };
-  if (d.missing === true) return stop('missing', `${p.byName} has no fuel card for the van.`, null, p.card.tries);
+  if (d.missing === true) return stop('missing', said('{name} has no fuel card for the van.', { name: p.byName }), null, p.card.tries);
   const path = checkPath(d.path, buyPath(who));
   try {
     const img = await fit(await download(path), 1600, 1600);
@@ -1473,16 +1480,16 @@ async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
     await logBuyRead(org, who, ref.id, 'card', models.join(' + '), usage, { result: v.result, ms });
     const tries = p.card.tries + 1;
     if (v.result === 'unclear' && tries < 3) {
-      await ref.update({ 'card.tries': tries, 'card.why': v.why, updatedAt: Date.now() });
-      return { result: 'retake', why: v.why, ...(who.creator ? { ms, usage } : {}) };
+      await ref.update({ 'card.tries': tries, 'card.why': v.why.text, 'card.whyT': v.why.t, 'card.whyV': v.why.v, updatedAt: Date.now() });
+      return { result: 'retake', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
     if (v.result === 'match') {
       const now = Date.now();
       await ref.update({ card: { ...p.card, result: 'match', read: { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry },
-        tries, why: v.why, expired: expired(read.expiry, now), at: now }, updatedAt: now });
-      return { result: 'match', why: v.why, ...(who.creator ? { ms, usage } : {}) };
+        tries, why: v.why.text, whyT: v.why.t, whyV: v.why.v, expired: expired(read.expiry, now), at: now }, updatedAt: now });
+      return { result: 'match', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
-    return { ...(await stop(v.result, v.result === 'unclear' ? `The card couldn't be read after ${tries} photos.` : v.why, read, tries)), ...(who.creator ? { ms, usage } : {}) };
+    return { ...(await stop(v.result, v.result === 'unclear' ? said('The card couldn\'t be read after {n} photos.', { n: tries }) : v.why, read, tries)), ...(who.creator ? { ms, usage } : {}) };
   } finally {
     // No copy of the card is kept.
     await bucket().file(path).delete().catch(() => {});
@@ -1495,34 +1502,35 @@ async function buyDecide(who: Who, org: R, d: Record<string, unknown>) {
   const note = clean(d.note, 300);
   const p = await db().runTransaction(async (tx) => {
     const cur = (await tx.get(ref)).data() as BuyDoc;
-    if (!staffAt(who, cur.stationId)) throw new HttpsError('permission-denied', 'Only the station\'s fleet managers and owners decide this.');
-    if (cur.by === who.uid && who.role !== 'owner') throw new HttpsError('failed-precondition', 'Someone else has to allow your own.');
-    if (cur.status !== 'waiting') throw new HttpsError('failed-precondition', cur.status === 'cancelled' ? 'It was cancelled.' : 'It was already decided.');
+    if (!staffAt(who, cur.stationId)) throw fail('permission-denied', 'Only the station\'s fleet managers and owners decide this.');
+    if (cur.by === who.uid && who.role !== 'owner') throw fail('failed-precondition', 'Someone else has to allow your own.');
+    if (cur.status !== 'waiting') throw fail('failed-precondition', cur.status === 'cancelled' ? 'It was cancelled.' : 'It was already decided.');
     tx.update(ref, { status: allow ? 'open' : 'refused', decision: { allow, by: who.uid, byName: who.name, at: Date.now(), note }, updatedAt: Date.now() });
     return cur;
   });
-  const word = BUY_WORD[p.kind];
-  const notified = await tell([{ uid: p.by }], {
-    title: allow ? `${word} allowed: ${p.vehicleName}` : `${word} refused: ${p.vehicleName}`,
-    body: allow ? `${who.name} allowed it. ${p.kind === 'wash' ? 'Wash the van' : 'Fill up'}, then take the photo of the receipt.${note ? ` "${note}"` : ''}`
-      : `${who.name} refused it. Don't ${p.kind === 'wash' ? 'wash the van' : 'fill up'}: cancel it in the app.${note ? ` "${note}"` : ''}`,
+  const wash = p.kind === 'wash', van = p.vehicleName, name = who.name, quote = note ? ` "${note}"` : '';
+  const notified = await tell([{ uid: p.by }], (lang) => ({
+    title: allow ? (wash ? tr(lang, 'Wash allowed: {van}', { van }) : tr(lang, 'Refuel allowed: {van}', { van }))
+      : wash ? tr(lang, 'Wash refused: {van}', { van }) : tr(lang, 'Refuel refused: {van}', { van }),
+    body: (allow ? (wash ? tr(lang, '{name} allowed it. Wash the van, then take the photo of the receipt.', { name }) : tr(lang, '{name} allowed it. Fill up, then take the photo of the receipt.', { name }))
+      : wash ? tr(lang, '{name} refused it. Don\'t wash the van: cancel it in the app.', { name }) : tr(lang, '{name} refused it. Don\'t fill up: cancel it in the app.', { name })) + quote,
     url: `/buy/${ref.id}`, tag: `buy-${ref.id}`,
-  });
+  }));
   return { ok: true, notified };
 }
 
 async function buyReceipt(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
-  if (p.status !== 'open') throw new HttpsError('failed-precondition', p.status === 'waiting' ? 'Wait for your fleet manager first.' : 'This one is closed.');
-  if (p.card.needed && p.card.result !== 'match' && !p.decision?.allow) throw new HttpsError('failed-precondition', 'Check the fuel card first.');
+  if (p.status !== 'open') throw fail('failed-precondition', p.status === 'waiting' ? 'Wait for your fleet manager first.' : 'This one is closed.');
+  if (p.card.needed && p.card.result !== 'match' && !p.decision?.allow) throw fail('failed-precondition', 'Check the fuel card first.');
   const path = checkPath(d.path, buyPath(who));
   let parts: string[] = [], note: string | null = null;
   if (p.kind === 'parts') {
     const raw = Array.isArray(d.parts) ? d.parts : [];
-    if (!raw.length || raw.length > 6) throw new HttpsError('invalid-argument', 'Take 1 to 6 photos of the parts.');
+    if (!raw.length || raw.length > 6) throw fail('invalid-argument', 'Take 1 to 6 photos of the parts.');
     parts = raw.map((x: unknown) => checkPath(x, buyPath(who)));
     note = clean(d.note, 1000);
-    if (note.length < 5) throw new HttpsError('invalid-argument', 'Say why the parts were needed.');
+    if (note.length < 5) throw fail('invalid-argument', 'Say why the parts were needed.');
   }
   const img = await fit(await download(path));
   const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }],
@@ -1535,18 +1543,18 @@ async function buyReceipt(who: Who, org: R, d: Record<string, unknown>) {
 
 async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
-  if (p.status !== 'open') throw new HttpsError('failed-precondition', 'This one is closed.');
-  if (!p.receipt) throw new HttpsError('failed-precondition', 'Take the photo of the receipt first.');
+  if (p.status !== 'open') throw fail('failed-precondition', 'This one is closed.');
+  if (!p.receipt) throw fail('failed-precondition', 'Take the photo of the receipt first.');
   const v = (d.values || {}) as Record<string, unknown>;
   const n = (x: unknown) => (x == null || x === '' ? null : Number(x));
   const odometerKm = n(v.odometerKm);
-  if (odometerKm == null || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) throw new HttpsError('invalid-argument', 'Enter the odometer reading in km.');
+  if (odometerKm == null || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) throw fail('invalid-argument', 'Enter the odometer reading in km.');
   const fuelPct = p.kind === 'fuel' ? n(v.fuelPct) : null;
-  if (fuelPct != null && (!Number.isFinite(fuelPct) || fuelPct < 0 || fuelPct > 100)) throw new HttpsError('invalid-argument', 'The fuel level is a percentage from 0 to 100.');
+  if (fuelPct != null && (!Number.isFinite(fuelPct) || fuelPct < 0 || fuelPct > 100)) throw fail('invalid-argument', 'The fuel level is a percentage from 0 to 100.');
   const litres = p.kind === 'fuel' ? n(v.litres) : null;
-  if (p.kind === 'fuel' && (litres == null || !Number.isFinite(litres) || litres <= 0 || litres > 1000)) throw new HttpsError('invalid-argument', 'Enter the litres from the receipt.');
+  if (p.kind === 'fuel' && (litres == null || !Number.isFinite(litres) || litres <= 0 || litres > 1000)) throw fail('invalid-argument', 'Enter the litres from the receipt.');
   const total = n(v.total);
-  if (total == null || !Number.isFinite(total) || total < 0 || total >= 100_000) throw new HttpsError('invalid-argument', 'Enter the total from the receipt.');
+  if (total == null || !Number.isFinite(total) || total < 0 || total >= 100_000) throw fail('invalid-argument', 'Enter the total from the receipt.');
   const r2 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
   const vals = { odometerKm: Math.round(odometerKm), fuelPct: fuelPct == null ? null : Math.round(fuelPct * 10) / 10, litres: r2(litres), total: r2(total)! };
   const ai = { odometerKm: p.dash.ai?.odometerKm ?? null, fuelPct: p.dash.ai?.fuelPct ?? null, litres: p.kind === 'fuel' ? fuelLitres(p.receipt.ai, p.vanFuel) : null, total: p.receipt.ai.total };
@@ -1569,16 +1577,15 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
     else if (Number(det.data()?.odometerKm ?? -1) <= vals.odometerKm) tx.update(detRef, { odometerKm: vals.odometerKm, odometerAt: today });
   });
   const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
-  const msg = doneMessage({ kind: p.kind, vehicleName: p.vehicleName, plate: p.plate, byName: p.byName, odometerKm: vals.odometerKm, litres: vals.litres,
-    total: vals.total, currency, merchant: p.receipt.ai.merchant, note: p.note, flags });
-  const notified = await tell(bosses, { ...msg, url: `/buy/${ref.id}`, tag: `buy-${ref.id}` });
+  const notified = await tell(bosses, (lang) => ({ ...doneMessage(lang, { kind: p.kind, vehicleName: p.vehicleName, plate: p.plate, byName: p.byName, odometerKm: vals.odometerKm, litres: vals.litres,
+    total: vals.total, currency, merchant: p.receipt!.ai.merchant, note: p.note, flags }), url: `/buy/${ref.id}`, tag: `buy-${ref.id}` }));
   return { flags, notified };
 }
 
 async function buyCancel(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await loadBuy(org, d.id);
-  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw new HttpsError('permission-denied', 'Only the person who started it, or the station\'s fleet manager, can cancel it.');
-  if (!OPEN_BUY.includes(p.status)) throw new HttpsError('failed-precondition', p.status === 'done' ? 'It\'s already finished.' : 'It\'s already cancelled.');
+  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw fail('permission-denied', 'Only the person who started it, or the station\'s fleet manager, can cancel it.');
+  if (!OPEN_BUY.includes(p.status)) throw fail('failed-precondition', p.status === 'done' ? 'It\'s already finished.' : 'It\'s already cancelled.');
   const now = Date.now();
   await ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: clean(d.reason, 200) || null }, updatedAt: now });
   return { ok: true };
@@ -1587,7 +1594,7 @@ async function buyCancel(who: Who, org: R, d: Record<string, unknown>) {
 /** The people to call about it (the station's fleet managers, or the owners): names and phone numbers. */
 async function buyContacts(who: Who, org: R, d: Record<string, unknown>) {
   const { p } = await loadBuy(org, d.id);
-  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw new HttpsError('permission-denied', 'Not yours.');
+  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw fail('permission-denied', 'Not yours.');
   return { people: (await bossesOf(who.orgId, p.stationId, p.kind, p.by)).map(({ name, phone }) => ({ name, phone })) };
 }
 
@@ -1604,6 +1611,6 @@ export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBP
     case 'finish': return buyFinish(who, org, d);
     case 'cancel': return buyCancel(who, org, d);
     case 'contacts': return buyContacts(who, org, d);
-    default: throw new HttpsError('invalid-argument', 'Unknown step.');
+    default: throw fail('invalid-argument', 'Unknown step.');
   }
 });

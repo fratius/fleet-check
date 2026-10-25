@@ -8,6 +8,7 @@
  *   not proof of who caused it; the before and after photos are the proof.
  */
 import { buildFrames, makeSpec, type Spec } from './frames';
+import { N_ } from './i18n';
 import type { Assignment, Check, Photo, Vehicle, Walkaround } from './types';
 import { frameOfPhoto, locateByPanel, locateInFrame, type Pos } from './van3d';
 
@@ -115,7 +116,7 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
     }
     items.set(key, {
       key, no: 0, panel, manual: !p,
-      type: (p?.verdict?.verdict === 'damage' && p.verdict.type) || p?.type || m?.type || 'damage',
+      type: (p?.verdict?.verdict === 'damage' && p.verdict.type) || p?.type || m?.type || N_('damage'),
       sizeCm: p ? p.verdict?.sizeCm ?? p.sizeCm : null,
       severity: p?.verdict?.severity || null,
       note: (d?.note || m?.note || '').trim(),

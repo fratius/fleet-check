@@ -7,6 +7,7 @@
  * runs the same in Expo Go and on the web.
  */
 import { CA, CK, OVERLAY_FILL, buildFrames, fitBox, frameBox, type Frame, type Spec } from './frames';
+import { N_ } from './i18n';
 
 export type V3 = [number, number, number];
 const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -296,10 +297,10 @@ export function yawFacing(n: V3) {
 }
 
 export const VIEWS = {
-  front: { yaw: Math.PI, pitch: 0.18, label: 'Front' },
-  left: { yaw: Math.PI / 2, pitch: 0.18, label: 'Left' },
-  rear: { yaw: 0, pitch: 0.18, label: 'Rear' },
-  right: { yaw: -Math.PI / 2, pitch: 0.18, label: 'Right' },
-  top: { yaw: (3 * Math.PI) / 4, pitch: 1.2, label: 'Top' },
+  front: { yaw: Math.PI, pitch: 0.18, label: N_('Front') },
+  left: { yaw: Math.PI / 2, pitch: 0.18, label: N_('Left') },
+  rear: { yaw: 0, pitch: 0.18, label: N_('Rear') },
+  right: { yaw: -Math.PI / 2, pitch: 0.18, label: N_('Right') },
+  top: { yaw: (3 * Math.PI) / 4, pitch: 1.2, label: N_('Top') },
 } as const;
 export const HOME_VIEW = { yaw: (3 * Math.PI) / 4, pitch: 0.36 };

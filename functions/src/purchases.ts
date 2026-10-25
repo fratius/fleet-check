@@ -6,9 +6,19 @@
 
 export type BuyKind = 'fuel' | 'wash' | 'parts';
 export const BUY_KINDS: BuyKind[] = ['fuel', 'wash', 'parts'];
-export const BUY_WORD: Record<BuyKind, string> = { fuel: 'Refuel', wash: 'Wash', parts: 'Parts' };
+export const BUY_WORD: Record<BuyKind, string> = { fuel: N_('Refuel'), wash: N_('Wash'), parts: N_('Parts') };
+
+import { fill, N_, tr, type Vars } from './i18n';
 
 const nullable = (type: string, extra: object = {}) => ({ anyOf: [{ type, ...extra }, { type: 'null' }] });
+
+/** A text for a record: the English, and the template and values, so the app shows it in each reader's language. */
+export interface Said { text: string; t: string; v: Record<string, string | number> }
+export function said(t: string, v: Vars = {}): Said {
+  const vals: Record<string, string | number> = {};
+  for (const [k, x] of Object.entries(v)) if (x != null) vals[k] = x;
+  return { text: fill(t, vals), t, v: vals };
+}
 
 /* ---------- The fuel card ---------- */
 
@@ -76,13 +86,18 @@ export type CardResult = 'match' | 'mismatch' | 'unclear';
  * Is it the van's card? The digits decide. A bank card is never the van's card. A photo where the digits can't be
  * read with confidence is "unclear": the driver takes it again.
  */
-export function cardVerdict(expected: string, read: CardRead): { result: CardResult; why: string } {
-  if (!read.isCard) return { result: 'unclear', why: 'No card in the photo.' };
-  if (read.kind === 'bank') return { result: 'mismatch', why: 'A bank card, not the van\'s fuel card.' };
-  if (!read.last4 || read.confidence < 0.6) return { result: 'unclear', why: read.issue || 'The card number couldn\'t be read.' };
+export function cardVerdict(expected: string, read: CardRead): { result: CardResult; why: Said } {
+  if (!read.isCard) return { result: 'unclear', why: said('No card in the photo.') };
+  if (read.kind === 'bank') return { result: 'mismatch', why: said('A bank card, not the van\'s fuel card.') };
+  // What made it hard to read is the AI's own words: kept as written.
+  if (!read.last4 || read.confidence < 0.6) return { result: 'unclear', why: read.issue ? said('{issue}', { issue: read.issue }) : said('The card number couldn\'t be read.') };
   const n = Math.min(expected.length, 4);
-  if (read.last4.slice(-n) === expected.slice(-n)) return { result: 'match', why: `Card ending ${read.last4}.` };
-  return { result: 'mismatch', why: `Card ending ${read.last4}${read.issuer ? ` (${read.issuer})` : ''}; this van's card ends ${expected}.` };
+  if (read.last4.slice(-n) === expected.slice(-n)) return { result: 'match', why: said('Card ending {last4}.', { last4: read.last4 }) };
+  return {
+    result: 'mismatch',
+    why: read.issuer ? said('Card ending {last4} ({issuer}); this van\'s card ends {expected}.', { last4: read.last4, issuer: read.issuer, expected })
+      : said('Card ending {last4}; this van\'s card ends {expected}.', { last4: read.last4, expected }),
+  };
 }
 
 /** "12/28" is still valid in December 2028; null when it can't tell. */
@@ -195,7 +210,8 @@ export function fuelLitres(r: Receipt, vanFuel: string | null | undefined): numb
 
 /* ---------- What looks wrong: shown to the fleet manager, never a block ---------- */
 
-export interface Flag { key: string; text: string }
+export interface Flag { key: string; text: string; t: string; v: Record<string, string | number> }
+const flag = (key: string, t: string, v: Vars = {}): Flag => ({ key, ...said(t, v) });
 export interface FlagInput {
   kind: BuyKind; byName: string; vanFuel: string | null; tankL: number | null; fuelPct: number | null; odometerKm: number | null; lastKm: number | null;
   litres: number | null; total: number | null; createdAt: number; vanDriverName: string | null; notTheirVan: boolean;
@@ -209,61 +225,66 @@ const r0 = (n: number) => Math.round(n);
 
 export function purchaseFlags(p: FlagInput): Flag[] {
   const out: Flag[] = [];
-  if (p.notTheirVan) out.push({ key: 'van', text: p.vanDriverName ? `${p.vanDriverName} has this van, not ${p.byName}.` : `${p.byName} doesn't have this van.` });
+  if (p.notTheirVan) out.push(p.vanDriverName ? flag('van', '{driver} has this van, not {name}.', { driver: p.vanDriverName, name: p.byName }) : flag('van', '{name} doesn\'t have this van.', { name: p.byName }));
   const c = p.card;
   if (c?.needed && c.result && c.result !== 'match') {
-    const what = c.result === 'missing' ? 'No fuel card at the pump' : c.result === 'unclear' ? 'The card couldn\'t be checked' : 'Not the van\'s card';
-    out.push({ key: 'card', text: p.decision?.allow ? `${what}; ${p.decision.byName} allowed it.` : `${what}.` });
+    const by = p.decision?.allow ? p.decision.byName : null;
+    out.push(c.result === 'missing' ? (by ? flag('card', 'No fuel card at the pump; {name} allowed it.', { name: by }) : flag('card', 'No fuel card at the pump.'))
+      : c.result === 'unclear' ? (by ? flag('card', 'The card couldn\'t be checked; {name} allowed it.', { name: by }) : flag('card', 'The card couldn\'t be checked.'))
+        : by ? flag('card', 'Not the van\'s card; {name} allowed it.', { name: by }) : flag('card', 'Not the van\'s card.'));
   }
-  if (c?.expired) out.push({ key: 'expired', text: 'The fuel card has expired.' });
-  if (c?.plate && p.vanPlate && normPlate(c.plate) !== normPlate(p.vanPlate)) out.push({ key: 'plate', text: `The fuel card is for ${c.plate}; this van is ${p.vanPlate}.` });
+  if (c?.expired) out.push(flag('expired', 'The fuel card has expired.'));
+  if (c?.plate && p.vanPlate && normPlate(c.plate) !== normPlate(p.vanPlate)) out.push(flag('plate', 'The fuel card is for {cardPlate}; this van is {plate}.', { cardPlate: c.plate, plate: p.vanPlate }));
   const r = p.receipt;
   if (p.kind === 'fuel' && p.litres != null && p.tankL && p.fuelPct != null) {
     const room = p.tankL * (1 - p.fuelPct / 100);
     if (p.litres > room * 1.1 + 3) {
-      out.push({ key: 'litres', text: `${p.litres.toLocaleString('en-GB')} l, but the tank had room for about ${r0(room)} l (${p.tankL} l tank, ${r0(p.fuelPct)}% on the dashboard photo).` });
+      out.push(flag('litres', '{litres} l, but the tank had room for about {room} l ({tank} l tank, {pct}% on the dashboard photo).', { litres: p.litres, room: r0(room), tank: p.tankL, pct: r0(p.fuelPct) }));
     }
   }
   if (p.kind === 'fuel' && p.litres != null && p.tankL && p.litres > p.tankL * 1.15) {
-    if (!out.some((f) => f.key === 'litres')) out.push({ key: 'litres', text: `${p.litres.toLocaleString('en-GB')} l is more than the ${p.tankL} l tank holds.` });
+    if (!out.some((f) => f.key === 'litres')) out.push(flag('litres', '{litres} l is more than the {tank} l tank holds.', { litres: p.litres, tank: p.tankL }));
   }
   if (r) {
     if (c?.expected && r.cardLast4 && r.cardLast4.slice(-c.expected.length) !== c.expected) {
-      out.push({ key: 'receiptCard', text: `The receipt shows a card ending ${r.cardLast4}; this van's card ends ${c.expected}.` });
+      out.push(flag('receiptCard', 'The receipt shows a card ending {last4}; this van\'s card ends {expected}.', { last4: r.cardLast4, expected: c.expected }));
     }
-    if (r.date && Math.abs(Date.parse(r.date) - Date.parse(day(p.createdAt))) > 86400_000) out.push({ key: 'date', text: `The receipt is dated ${r.date}.` });
+    if (r.date && Math.abs(Date.parse(r.date) - Date.parse(day(p.createdAt))) > 86400_000) out.push(flag('date', 'The receipt is dated {date}.', { date: r.date }));
     if (p.kind === 'fuel') {
       const other = p.vanFuel === 'diesel' ? 'petrol' : p.vanFuel === 'petrol' ? 'diesel' : null;
-      if (other && r.items.some((i) => i.product === other)) out.push({ key: 'fuelType', text: `${other === 'petrol' ? 'Petrol' : 'Diesel'} on the receipt; the van runs on ${p.vanFuel}.` });
+      if (other && r.items.some((i) => i.product === other)) out.push(other === 'petrol' ? flag('fuelType', 'Petrol on the receipt; the van runs on diesel.') : flag('fuelType', 'Diesel on the receipt; the van runs on petrol.'));
       const read = fuelLitres(r, p.vanFuel);
-      if (read == null) out.push({ key: 'noFuel', text: 'No fuel for this van on the receipt.' });
+      if (read == null) out.push(flag('noFuel', 'No fuel for this van on the receipt.'));
       else if (p.litres != null && Math.abs(p.litres - read) > Math.max(0.5, read * 0.02)) {
-        out.push({ key: 'typedLitres', text: `${p.byName} saved ${p.litres.toLocaleString('en-GB')} l; the receipt says ${read.toLocaleString('en-GB')} l.` });
+        out.push(flag('typedLitres', '{name} saved {litres} l; the receipt says {read} l.', { name: p.byName, litres: p.litres, read }));
       }
       const extra = r.items.filter((i) => ['other', 'parts', 'oil', 'wash'].includes(i.product) && (i.total || 0) > 0);
-      if (extra.length) out.push({ key: 'extra', text: `Also on the receipt: ${extra.map((i) => i.description).slice(0, 4).join(', ')}.` });
+      if (extra.length) out.push(flag('extra', 'Also on the receipt: {items}.', { items: extra.map((i) => i.description).slice(0, 4).join(', ') }));
     }
   }
   if (r?.total != null && p.total != null && Math.abs(p.total - r.total) > Math.max(0.5, r.total * 0.02)) {
-    out.push({ key: 'typedTotal', text: `${p.byName} saved a total of ${p.total.toFixed(2)}; the receipt says ${r.total.toFixed(2)}.` });
+    out.push(flag('typedTotal', '{name} saved a total of {total}; the receipt says {read}.', { name: p.byName, total: p.total.toFixed(2), read: r.total.toFixed(2) }));
   }
   if (p.odometerKm != null && p.lastKm != null && p.odometerKm < p.lastKm - 50) {
-    out.push({ key: 'odometer', text: `The odometer (${p.odometerKm.toLocaleString('en-GB')} km) is lower than the van's last reading (${p.lastKm.toLocaleString('en-GB')} km).` });
+    out.push(flag('odometer', 'The odometer ({km} km) is lower than the van\'s last reading ({last} km).', { km: p.odometerKm, last: p.lastKm }));
   }
   return out;
 }
 
 const eur = (n: number | null, cur: string | null) => (n == null ? '' : `${cur && cur !== 'EUR' ? cur + ' ' : '€'}${n.toFixed(2)}`);
 
-/** The notification to the fleet manager when it's done: everything that matters in two lines. */
-export function doneMessage(p: { kind: BuyKind; vehicleName: string; plate: string | null; byName: string; odometerKm: number | null; litres: number | null; total: number | null; currency: string | null; merchant: string | null; note: string | null; flags: Flag[] }) {
-  const head = [BUY_WORD[p.kind], `${p.vehicleName}${p.plate ? ` (${p.plate})` : ''}`].join(': ');
-  const amount = [p.litres != null ? `${p.litres.toLocaleString('en-GB')} l` : '', eur(p.total, p.currency)].filter(Boolean).join(', ');
+/** The notification to the fleet manager when it's done, in their language: everything that matters in two lines. */
+export function doneMessage(lang: string, p: { kind: BuyKind; vehicleName: string; plate: string | null; byName: string; odometerKm: number | null; litres: number | null; total: number | null; currency: string | null; merchant: string | null; note: string | null; flags: Flag[] }) {
+  const van = `${p.vehicleName}${p.plate ? ` (${p.plate})` : ''}`;
+  const head = p.kind === 'fuel' ? tr(lang, 'Refuel: {van}', { van }) : p.kind === 'wash' ? tr(lang, 'Wash: {van}', { van }) : tr(lang, 'Parts: {van}', { van });
+  const num = (n: number) => n.toLocaleString(lang === 'en' ? 'en-GB' : lang);
+  const amount = [p.litres != null ? `${num(p.litres)} l` : '', eur(p.total, p.currency)].filter(Boolean).join(', ');
   const title = amount ? `${head}, ${amount}` : head;
+  const who = p.merchant ? tr(lang, '{name} at {place}', { name: p.byName, place: p.merchant }) : p.byName;
   const body = [
-    `${p.byName}${p.merchant ? ` at ${p.merchant}` : ''}${p.odometerKm != null ? `, ${p.odometerKm.toLocaleString('en-GB')} km` : ''}.`,
-    p.kind === 'parts' && p.note ? `Why: ${p.note.slice(0, 120)}` : '',
-    p.flags.length ? `Check: ${p.flags.map((f) => f.text).join(' ')}` : '',
+    `${who}${p.odometerKm != null ? `, ${num(p.odometerKm)} km` : ''}.`,
+    p.kind === 'parts' && p.note ? tr(lang, 'Why: {note}', { note: p.note.slice(0, 120) }) : '',
+    p.flags.length ? tr(lang, 'Check: {list}', { list: p.flags.map((f) => (f.t ? tr(lang, f.t, f.v) : f.text)).join(' ') }) : '',
   ].filter(Boolean).join(' ');
   return { title: title.slice(0, 120), body: body.slice(0, 400) };
 }

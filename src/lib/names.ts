@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import { t } from './i18n';
 import { watchMembers } from './people';
 import { useSession } from './session';
 import type { Member } from './types';
@@ -37,5 +38,5 @@ export function useNameOf(): (uid: string | null | undefined) => string | null {
 export function useWhoDid(): (uid: string | null | undefined) => string | null {
   const s = useSession();
   const nameOf = useNameOf();
-  return (uid) => (s.staff ? nameOf(uid) : uid && uid === s.user?.uid && s.mode === 'firebase' ? 'you' : null);
+  return (uid) => (s.staff ? nameOf(uid) : uid && uid === s.user?.uid && s.mode === 'firebase' ? t('you') : null);
 }

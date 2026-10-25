@@ -4,7 +4,12 @@
  * Drawings are SVG strings (1 m = 100 units, y up is negative) rendered with
  * react-native-svg's SvgXml. Stroke widths are given in screen pixels and
  * converted to drawing units, so lines look the same at any size.
+ *
+ * Languages: class names and frame names stay in English here (frame names are stored with each walk-around photo
+ * and matched against them later, and sent to the AI); show them with t(): t(CLS[id].name), t(f.label). Hints and
+ * attrPills() come back already translated (they're only shown).
  */
+import { N_, t, tp } from '@/lib/i18n';
 
 export type BodyKind = 'car' | 'suv' | 'pickup' | 'compact' | 'mid' | 'large' | 'step' | 'box';
 export type RearKind = 'barn' | 'tailgate' | 'roller' | 'open_bed';
@@ -31,33 +36,33 @@ export interface VehicleAttrs {
 }
 
 export const CLASSES: VehicleClass[] = [
-  { id: 'car', name: 'Car', lower: 'car', body: 'car', L: 4.4, W: 1.8, H: 1.46, rear: 'tailgate',
+  { id: 'car', name: N_('Car'), lower: N_('car'), body: 'car', L: 4.4, W: 1.8, H: 1.46, rear: 'tailgate',
     eg: 'Golf, Octavia, Corsa, Model 3', desc: 'passenger car: hatchback, saloon or estate (Golf, Octavia, Corsa, Model 3)' },
-  { id: 'suv', name: 'SUV or crossover', lower: 'SUV or crossover', body: 'suv', L: 4.6, W: 1.86, H: 1.66, rear: 'tailgate',
+  { id: 'suv', name: N_('SUV or crossover'), lower: N_('SUV or crossover'), body: 'suv', L: 4.6, W: 1.86, H: 1.66, rear: 'tailgate',
     eg: 'Tiguan, Qashqai, RAV4, Kodiaq', desc: 'SUV or crossover (Tiguan, Qashqai, RAV4, Kodiaq)' },
-  { id: 'pickup', name: 'Pickup', lower: 'pickup', body: 'pickup', L: 5.3, W: 1.9, H: 1.82, rear: 'open_bed',
+  { id: 'pickup', name: N_('Pickup'), lower: N_('pickup'), body: 'pickup', L: 5.3, W: 1.9, H: 1.82, rear: 'open_bed',
     eg: 'Hilux, Ranger, Amarok, Navara', desc: 'pickup truck with an open load bed (Hilux, Ranger, Amarok, Navara)' },
-  { id: 'compact_van', name: 'Compact van', lower: 'compact van', body: 'compact', L: 4.5, W: 1.85, H: 1.85, rear: 'barn',
+  { id: 'compact_van', name: N_('Compact van'), lower: N_('compact van'), body: 'compact', L: 4.5, W: 1.85, H: 1.85, rear: 'barn',
     eg: 'Caddy, Berlingo, Kangoo, Transit Connect', desc: 'small panel van on a car platform, up to about 4.8 m long (Caddy, Berlingo, Kangoo, Transit Connect, Partner)' },
-  { id: 'midsize_van', name: 'Mid-size van', lower: 'mid-size van', body: 'mid', L: 5.1, W: 1.95, H: 1.98, rear: 'barn',
+  { id: 'midsize_van', name: N_('Mid-size van'), lower: N_('mid-size van'), body: 'mid', L: 5.1, W: 1.95, H: 1.98, rear: 'barn',
     eg: 'Vito, Transit Custom, Transporter, Trafic', desc: 'medium panel van about 4.9 to 5.4 m long with a roof under about 2.1 m (Vito, Transit Custom, Transporter, Trafic, Vivaro, Expert)' },
-  { id: 'large_van', name: 'Large van', lower: 'large van', body: 'large', L: 5.95, W: 2.02, H: 2.6, rear: 'barn',
+  { id: 'large_van', name: N_('Large van'), lower: N_('large van'), body: 'large', L: 5.95, W: 2.02, H: 2.6, rear: 'barn',
     eg: 'Sprinter, Crafter, Transit, Ducato, Master, Daily', desc: 'large panel van in short or standard length, about 5.3 to 6.4 m (Sprinter L1/L2, eSprinter, Crafter, Transit L2/L3, Ducato, Master, Daily, Movano)' },
-  { id: 'large_van_long', name: 'Large van, extra long', lower: 'extra-long large van', body: 'large', L: 7.0, W: 2.02, H: 2.7, rear: 'barn',
+  { id: 'large_van_long', name: N_('Large van, extra long'), lower: N_('extra-long large van'), body: 'large', L: 7.0, W: 2.02, H: 2.7, rear: 'barn',
     eg: 'Sprinter L3, Transit L4, Ducato XLWB, Master L4', desc: 'large panel van in its longest version, about 6.9 m or more, with a long cargo side between the sliding door and the rear wheel (Sprinter L3, Transit L4, Ducato XLWB, Master L4)' },
-  { id: 'step_van', name: 'Walk-in delivery van', lower: 'walk-in delivery van', body: 'step', L: 6.6, W: 2.2, H: 2.9, rear: 'roller',
+  { id: 'step_van', name: N_('Walk-in delivery van'), lower: N_('walk-in delivery van'), body: 'step', L: 6.6, W: 2.2, H: 2.9, rear: 'roller',
     eg: 'Rivian EDV, Ford step van, Morgan Olson', desc: 'walk-in delivery van with an upright front and a tall boxy body (Rivian EDV, Ford step van, Morgan Olson)' },
-  { id: 'box_truck', name: 'Box van or Luton', lower: 'box van or Luton', body: 'box', L: 6.9, W: 2.2, H: 3.2, rear: 'roller',
+  { id: 'box_truck', name: N_('Box van or Luton'), lower: N_('box van or Luton'), body: 'box', L: 6.9, W: 2.2, H: 3.2, rear: 'roller',
     eg: 'Transit or Sprinter chassis with a box body', desc: 'van or light-truck chassis with a separate box body behind the cab, including Luton (Transit or Sprinter box van)' },
 ];
 export const CLS: Record<string, VehicleClass> = Object.fromEntries(CLASSES.map((c) => [c.id, c]));
 
 export const SLIDE_BODIES: Partial<Record<BodyKind, true>> = { compact: true, mid: true, large: true };
 export const REAR_LABEL: Record<RearKind, string> = {
-  barn: 'Rear doors', tailgate: 'Tailgate and rear bumper', roller: 'Rear shutter and bumper', open_bed: 'Tailgate and load bed',
+  barn: N_('Rear doors'), tailgate: N_('Tailgate and rear bumper'), roller: N_('Rear shutter and bumper'), open_bed: N_('Tailgate and load bed'),
 };
 export const REAR_PILL: Record<RearKind, string> = {
-  barn: 'Twin rear doors', tailgate: 'Tailgate', roller: 'Roller shutter', open_bed: 'Open load bed',
+  barn: N_('Twin rear doors'), tailgate: N_('Tailgate'), roller: N_('Roller shutter'), open_bed: N_('Open load bed'),
 };
 
 export const defaultAttrs = (): VehicleAttrs => ({ roof: 'unknown', slideL: 'unknown', slideR: 'unknown', rear: 'unknown' });
@@ -155,6 +160,23 @@ function segText(raw: string, sp: Spec, side: 'left' | 'right') {
   const s = raw.replace('@', st === 'yes' ? 'sliding door' : st === 'no' ? 'cargo side panel' : 'sliding door or side panel');
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
+/**
+ * Every frame name buildFrames() can make, for the translations (the names themselves stay in English: they are
+ * stored with each photo). Show one with t(f.label).
+ */
+export const FRAME_LABELS = [
+  N_('Front'), N_('Front left corner'), N_('Rear left corner'), N_('Rear right corner'), N_('Front right corner'),
+  N_('Left front door and wing'), N_('Left rear door and quarter'), N_('Left cab doors and wing'), N_('Left load bed side'),
+  N_('Left cab door and wing'), N_('Left sliding door and rear quarter'), N_('Left cargo side panel and rear quarter'),
+  N_('Left sliding door or side panel and rear quarter'), N_('Left sliding door'), N_('Left cargo side panel'),
+  N_('Left sliding door or side panel'), N_('Left rear quarter'), N_('Left cargo side, rear half'), N_('Left cab door and front corner'),
+  N_('Left cargo side, front half'), N_('Left box side, front half'), N_('Left box side, rear half'),
+  N_('Right front door and wing'), N_('Right rear door and quarter'), N_('Right cab doors and wing'), N_('Right load bed side'),
+  N_('Right cab door and wing'), N_('Right sliding door and rear quarter'), N_('Right cargo side panel and rear quarter'),
+  N_('Right sliding door or side panel and rear quarter'), N_('Right sliding door'), N_('Right cargo side panel'),
+  N_('Right sliding door or side panel'), N_('Right rear quarter'), N_('Right cargo side, rear half'), N_('Right cab door and front corner'),
+  N_('Right cargo side, front half'), N_('Right box side, front half'), N_('Right box side, rear half'),
+];
 const HFOV = (67 * Math.PI) / 180, VFOV = (53 * Math.PI) / 180;
 /** Corner views: the flank is foreshortened by CA, skewed by CK, and shows its first CL metres. */
 export const CA = 0.6, CK = 0.16, CL = 2.4;
@@ -170,15 +192,22 @@ function measure(sp: Spec, f: Omit<Frame, 'orient' | 'dist' | 'hint'>) {
   const d = Math.max((w * 1.15) / 2 / Math.tan(hf / 2), (h * 1.15) / 2 / Math.tan(vf / 2));
   return { orient, dist: Math.max(1, Math.round(d * 2) / 2) };
 }
+/** What to fit in the frame, in the chosen language (only shown, never stored). */
 function hintFor(sp: Spec, f: Omit<Frame, 'hint' | 'orient' | 'dist'>): string {
   const tall = sp.H > 2.2;
-  if (f.kind === 'front') return 'Whole front in frame: bumper, grille, lights and windscreen' + (tall ? ', up to the roof edge.' : '.');
-  if (f.kind === 'rear') return ({ barn: 'Both doors, bumper and lights in frame', tailgate: 'Tailgate, rear window, bumper and lights in frame',
-    roller: 'Shutter, bumper and lights in frame', open_bed: 'Tailgate, bumper and lights in frame' })[sp.rear] + (tall ? ', up to the roof edge.' : '.');
-  if (f.kind === 'corner') return 'Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.';
+  if (f.kind === 'front') return tall ? t('Whole front in frame: bumper, grille, lights and windscreen, up to the roof edge.') : t('Whole front in frame: bumper, grille, lights and windscreen.');
+  if (f.kind === 'rear') {
+    switch (sp.rear) {
+      case 'tailgate': return tall ? t('Tailgate, rear window, bumper and lights in frame, up to the roof edge.') : t('Tailgate, rear window, bumper and lights in frame.');
+      case 'roller': return tall ? t('Shutter, bumper and lights in frame, up to the roof edge.') : t('Shutter, bumper and lights in frame.');
+      case 'open_bed': return tall ? t('Tailgate, bumper and lights in frame, up to the roof edge.') : t('Tailgate, bumper and lights in frame.');
+      default: return tall ? t('Both doors, bumper and lights in frame, up to the roof edge.') : t('Both doors, bumper and lights in frame.');
+    }
+  }
+  if (f.kind === 'corner') return t('Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.');
   const from = f.seg![1] * sp.L, to = f.seg![2] * sp.L;
   const wheel = sp.b.wheels.some((x) => x >= from && x <= to);
-  return 'Sill to roof edge in frame. ' + (wheel ? 'Keep the whole wheel arch in view.' : 'Overlap the next frame a little.');
+  return wheel ? t('Sill to roof edge in frame. Keep the whole wheel arch in view.') : t('Sill to roof edge in frame. Overlap the next frame a little.');
 }
 export function buildFrames(sp: Spec): Frame[] {
   const out: Frame[] = [];
@@ -440,14 +469,16 @@ export function mapSVG(sp: Spec, frames: Frame[], c: { ink: string; ink2: string
   return s + '</svg>';
 }
 
+/** Short facts about the body, for pills; already in the chosen language. */
 export function attrPills(sp: Spec, attrs: Partial<VehicleAttrs> | null, nFrames?: number): string[] {
   const p: string[] = [];
-  if ((sp.body === 'large' || sp.body === 'mid') && attrs && attrs.roof && attrs.roof !== 'unknown') p.push(attrs.roof === 'high' ? 'Raised roof' : 'Standard roof');
+  if ((sp.body === 'large' || sp.body === 'mid') && attrs && attrs.roof && attrs.roof !== 'unknown') p.push(attrs.roof === 'high' ? t('Raised roof') : t('Standard roof'));
   if (SLIDE_BODIES[sp.body]) {
-    const t = (s: Tri) => (s === 'yes' ? 'sliding door' : s === 'no' ? 'no sliding door' : 'not seen');
-    p.push('Left: ' + t(sp.slide.left), 'Right: ' + t(sp.slide.right));
+    const l = sp.slide.left, r = sp.slide.right;
+    p.push(l === 'yes' ? t('Left: sliding door') : l === 'no' ? t('Left: no sliding door') : t('Left: not seen'));
+    p.push(r === 'yes' ? t('Right: sliding door') : r === 'no' ? t('Right: no sliding door') : t('Right: not seen'));
   }
-  p.push(REAR_PILL[sp.rear]);
-  if (nFrames) p.push(`${nFrames} frames`);
+  p.push(t(REAR_PILL[sp.rear]));
+  if (nFrames) p.push(tp(nFrames, '{n} frame', '{n} frames'));
   return p;
 }
