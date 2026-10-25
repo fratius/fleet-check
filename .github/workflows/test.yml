@@ -59,8 +59,9 @@ jobs:
           grep -E "^not ok|# (pass|fail)" history.log | while read -r l; do echo "::notice title=History::$l"; done || true
           grep -E -A 14 "^\s*not ok" history.log | grep -E "error|Error|code|expected|actual|failureType|message|at " | head -30 | while read -r l; do echo "::notice title=History detail::$l"; done || true
           # The first failure in full (the GitHub log itself isn't always reachable).
-          grep -m1 -E -A 30 "^\s*not ok" history.log | while read -r l; do echo "::notice title=First failure::$l"; done || true
-          grep -E "Error|error:|failed to load|Failed to load" history.log | grep -v "^\s*not ok" | head -15 | while read -r l; do echo "::notice title=Emulator::$l"; done || true
+          # (GitHub keeps 10 notes of each kind per step: warnings and errors carry these.)
+          grep -m1 -E -A 30 "^\s*not ok" history.log | grep -vE "^\s*$|duration_ms|^\s*---|^\s*\.\.\." | head -10 | while read -r l; do echo "::warning title=First failure::$l"; done || true
+          grep -E "Error|error:|failed to load|Failed to load" history.log | grep -v "not ok" | head -10 | while read -r l; do echo "::error title=Emulator::$l"; done || true
 
   types:
     name: Type checks
