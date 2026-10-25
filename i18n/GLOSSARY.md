@@ -31,6 +31,9 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
 7. Dates are filled in by the app; never write a date format into a translation unless the English has one
    (e.g. "03/2027": keep it).
 8. Translate meaning, not words. If an English sentence is awkward in your language, rephrase it naturally.
+9. The companies are mostly in Germany, so German words in the English (Betriebsrat, Fahrzeugschein, Minijob, HU,
+   UVV) name German things: translate the meaning and keep the German word as the English does. Never swap in your
+   own country's equivalent (a German company has a Betriebsrat, not a works council of your country's kind).
 
 ## Terms (keep each term the same everywhere)
 
