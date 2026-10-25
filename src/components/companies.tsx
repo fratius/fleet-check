@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { Button, Card, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { t, tp } from '@/lib/i18n';
+import { fwd, t, tp } from '@/lib/i18n';
 import { allCompanies, type CompanyRow } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME } from '@/lib/types';
@@ -19,7 +19,7 @@ export function MyCompanies() {
         <Pressable key={x.id} disabled={x.id === s.org?.id} onPress={() => s.switchOrg(x.id)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 10 : 0 }}>
           <View style={{ flex: 1 }}><T v="medium">{x.name}</T><T v="small">{t(ROLE_NAME[x.role])}</T></View>
-          {x.id === s.org?.id ? <Pill v="solid" text={t('Open')} /> : <T v="h3" color={c.ink2}>›</T>}
+          {x.id === s.org?.id ? <Pill v="solid" text={t('Open')} /> : <T v="h3" color={c.ink2}>{fwd()}</T>}
         </Pressable>
       ))}
     </Card>
@@ -54,7 +54,7 @@ export function AllCompanies() {
             <T v="medium" numberOfLines={1}>{x.name}</T>
             <T v="small">{[cnt(x.vans, '{n} van', '{n} vans'), cnt(x.people, '{n} person', '{n} people'), cnt(x.checks, '{n} damage check', '{n} damage checks'), x.createdAt ? t('since {day}', { day: fmtWhen(x.createdAt).split(',')[0] }) : ''].filter(Boolean).join(', ')}</T>
           </View>
-          {x.id === s.org?.id ? <Pill v="solid" text={t('Open')} /> : <T v="h3" color={c.ink2}>›</T>}
+          {x.id === s.org?.id ? <Pill v="solid" text={t('Open')} /> : <T v="h3" color={c.ink2}>{fwd()}</T>}
         </Pressable>
       ))}
       <Row><Button v="link" small title={t('Refresh')} onPress={() => { setRows(null); setN(n + 1); }} /></Row>

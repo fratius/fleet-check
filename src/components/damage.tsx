@@ -6,7 +6,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { dur } from '@/components/history';
 import { Button, F, MARKER, Pill, Row, T, ZoomPhoto, cap, fmtWhen, useColors } from '@/components/ui';
 import { cropRegion, likelySame, whoHadIt, type Damage } from '@/lib/damage';
-import { loc, t, tp } from '@/lib/i18n';
+import { fwd, loc, t, tp } from '@/lib/i18n';
 import { photoUrl } from '@/lib/images';
 import { addDamageNote, watchVanRecords } from '@/lib/people';
 import { useSession } from '@/lib/session';
@@ -177,7 +177,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
               <T v="small" style={{ flex: 1 }}>{a.startedBy === a.driverId
                 ? t('{name}: {from} to {to}, picked up themselves', { name: a.driverName, from: fmtWhen(a.start), to: a.end ? fmtWhen(a.end) : t('now') })
                 : t('{name}: {from} to {to}, given by {by}', { name: a.driverName, from: fmtWhen(a.start), to: a.end ? fmtWhen(a.end) : t('now'), by: a.startedByName })}</T>
-              <T v="h3" color={c.ink2}>›</T>
+              <T v="h3" color={c.ink2}>{fwd()}</T>
             </Pressable>
           )) : null}
           {s.staff ? <T v="small">{t('That\'s who had the van, not proof of who caused it. Compare the photos.')}</T> : null}

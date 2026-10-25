@@ -12,7 +12,7 @@ import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
-import { t, tp } from '@/lib/i18n';
+import { fwd, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
 
@@ -147,7 +147,7 @@ export default function Fleet() {
                 {due.length > 1 ? <Pill v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null}
               </Row>
             </View>
-            <T v="h2" color={c.ink2}>›</T>
+            <T v="h2" color={c.ink2}>{fwd()}</T>
           </Pressable>
         );
       })}

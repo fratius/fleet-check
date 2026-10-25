@@ -8,7 +8,7 @@ import { useSession } from '@/lib/session';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
 import { flash } from '@/lib/flash';
-import { t, tp } from '@/lib/i18n';
+import { fwd, t, tp } from '@/lib/i18n';
 import { AiError, ai } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 
@@ -76,7 +76,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       <Row>
         <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{title}</T>
         {open ? <Pill v="solid" text={t('Now')} /> : null}
-        {canOpen ? <T v="h3" color={c.ink2}>›</T> : null}
+        {canOpen ? <T v="h3" color={c.ink2}>{fwd()}</T> : null}
       </Row>
       <T v="small">{open ? t('{from} to now, {time}', { from: fmtWhen(a.start), time: dur(end - a.start) }) : t('{from} to {to}, {time}', { from: fmtWhen(a.start), to: fmtWhen(a.end), time: dur(end - a.start) })}</T>
       <T v="small">

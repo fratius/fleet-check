@@ -10,7 +10,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
 import { mb, recordVideo, uploadVideo } from '@/lib/videos';
-import { N_, t } from '@/lib/i18n';
+import { fwd, N_, t } from '@/lib/i18n';
 
 /** Plays a stored video. */
 export function VideoPlayer({ path, aspect }: { path: string; aspect: number }) {
@@ -33,7 +33,7 @@ export function VideoRow({ v }: { v: Video }) {
         <T v="h3">{v.late ? t('{title}, added later', { title: VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video') }) : VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video')}</T>
         <T v="small">{[v.byName, fmtWhen(v.recordedAt || v.createdAt), `${Math.round(v.durationMs / 1000)} s`].filter(Boolean).join(', ')}</T>
       </View>
-      <T v="h3" color={c.ink2}>›</T>
+      <T v="h3" color={c.ink2}>{fwd()}</T>
     </Pressable>
   );
 }

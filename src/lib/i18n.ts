@@ -70,6 +70,9 @@ let dict: Dict = {};
 /** The language shown now. */
 export const lang = () => current;
 export const isRtl = () => !!LANGS.find((l) => l.code === current)?.rtl;
+/** The "go on" and "go back" arrows, pointing the way the language reads. */
+export const fwd = () => (isRtl() ? '‹' : '›');
+export const back = () => (isRtl() ? '›' : '‹');
 /** For dates and numbers (toLocaleString). Serbian is translated in the Latin script. */
 export const loc = () => (current === 'sr' ? 'sr-Latn' : current);
 /** Switches the texts. The app remounts its screens after this (see lang.tsx). */

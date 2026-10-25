@@ -87,6 +87,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.documentElement.lang = shown;
       document.documentElement.dir = LANGS.find((l) => l.code === shown)?.rtl ? 'rtl' : 'ltr';
+      // The pages flip by themselves; the header's back arrow is a picture, so it's turned round here.
+      if (!document.getElementById('fc-rtl')) {
+        const st = document.createElement('style');
+        st.id = 'fc-rtl';
+        st.textContent = 'html[dir="rtl"] [data-testid="header-back"] img { transform: scaleX(-1); }';
+        document.head.appendChild(st);
+      }
     }
     setState({ code: shown, picked });
   }, []);

@@ -8,7 +8,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
-import { t, tp } from '@/lib/i18n';
+import { fwd, t, tp } from '@/lib/i18n';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
@@ -293,7 +293,7 @@ function BossRow({ m, label }: { m: Member; label: string }) {
           {van ? <Plate small text={van.plate || van.name} /> : null}
         </View>
       </View>
-      <Text style={{ fontFamily: F.cond, fontSize: 26, color: fg }}>›</Text>
+      <Text style={{ fontFamily: F.cond, fontSize: 26, color: fg }}>{fwd()}</Text>
     </Pressable>
   );
 }
@@ -319,7 +319,7 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
             {van ? <Row gap={6}><Plate small text={van.plate || van.name} />{van.plate ? <T v="small" numberOfLines={1}>{van.name}</T> : null}</Row> : <T v="small">{t('No van')}</T>}
             {due ? <T v="small" color={due.state === 'overdue' ? c.alert : c.amber} numberOfLines={1}>{due.label}: {due.note}</T> : null}
           </View>
-          <T v="h3" color={c.ink2}>›</T>
+          <T v="h3" color={c.ink2}>{fwd()}</T>
         </Pressable>
       </View>
     </View>
@@ -348,7 +348,7 @@ function Former({ members }: { members: Member[] }) {
             <T v="medium" numberOfLines={1}>{a.driverName}</T>
             <T v="small" numberOfLines={1}>{t('Last van: {van}, until {when}', { van: a.vehicleName, when: fmtWhen(a.end) })}</T>
           </View>
-          <T v="h3" color={c.ink2}>›</T>
+          <T v="h3" color={c.ink2}>{fwd()}</T>
         </Pressable>
       ))}
     </Card>

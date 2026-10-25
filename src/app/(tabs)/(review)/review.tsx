@@ -11,7 +11,7 @@ import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
-import { t, tp } from '@/lib/i18n';
+import { fwd, t, tp } from '@/lib/i18n';
 
 type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'due' | 'buys' | 'van' | 'done';
 
@@ -213,7 +213,7 @@ function ActionCard({ band, alert, onPress, label, children }: { band: string; a
       style={({ pressed }) => ({ flexDirection: 'row', backgroundColor: c.paper, borderWidth: 2, borderColor: alert ? c.alert : c.ink, borderRadius: 4, overflow: 'hidden', opacity: pressed ? 0.8 : 1 })}>
       <View style={{ width: 10, backgroundColor: band, borderRightWidth: band === MARKER ? 2 : 0, borderColor: '#000' }} />
       <View style={{ flex: 1, padding: 12, gap: 6 }}>{children}</View>
-      <View style={{ justifyContent: 'center', paddingRight: 12 }}><T v="h2" color={c.ink2}>›</T></View>
+      <View style={{ justifyContent: 'center', paddingRight: 12 }}><T v="h2" color={c.ink2}>{fwd()}</T></View>
     </Pressable>
   );
 }
