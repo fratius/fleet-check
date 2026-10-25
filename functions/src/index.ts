@@ -7,7 +7,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
-import { setGlobalOptions } from 'firebase-functions';
+import { logger, setGlobalOptions } from 'firebase-functions';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/https';
 import { defineSecret } from 'firebase-functions/params';
 import webpush from 'web-push';
@@ -20,6 +20,10 @@ import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, 
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, probe } from './video';
+import {
+  BUY_KINDS, BUY_WORD, cardDigits, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
+  receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
+} from './purchases';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -1300,5 +1304,292 @@ export const readDocument = onCall(opts(180), async (req) => {
   } finally {
     // No copy of the document is kept.
     await Promise.all(paths.map((p) => bucket().file(p).delete().catch(() => {})));
+  }
+});
+
+/* ---------- 16. Refuel, wash and parts ---------- */
+// Refuelling and washing (anyone who works at the van's station) and buying parts (owners and the station's
+// managers). Each attempt is a record in orgs/{org}/purchases, written only here and never deleted, whether it
+// finished, was refused or was given up. It starts with a photo of the dashboard. For refuelling and washing, the
+// van's fuel card is then checked from a photo: the quick model reads the last 4 digits, and anything but a clear
+// match is read again by a stronger model before the driver is stopped. The card photo is deleted straight away
+// (it could be someone's own bank card); only the last 4 digits are kept. A card that isn't the van's, or no card,
+// stops the driver: the station's managers get a notification and allow or refuse it. Then the receipt: the AI
+// reads it, the driver confirms the numbers, and the managers get a notification with the details and anything
+// that looks wrong (flags; they never block).
+
+type BuyStatus = 'open' | 'waiting' | 'refused' | 'done' | 'cancelled';
+interface BuyDoc {
+  kind: BuyKind; status: BuyStatus; vehicleId: string; vehicleName: string; plate: string | null; stationId: string | null;
+  vanFuel: string | null; tankL: number | null; by: string; byName: string; role: Role; vanDriverName: string | null; notTheirVan: boolean;
+  dash: { path: string; at: number; ai: ReturnType<typeof dashValues> | null; confidence: number | null; readable: boolean; issue: string | null };
+  lastKm: number | null;
+  card: { needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null; read: Omit<CardRead, 'confidence' | 'issue' | 'isCard'> | null; tries: number; why: string | null; expired: boolean | null; at: number | null };
+  decision: { allow: boolean; by: string; byName: string; at: number; note: string } | null;
+  receipt: { path: string; at: number; ai: Receipt } | null;
+  parts: string[]; note: string | null; createdAt: number;
+}
+const OPEN_BUY: BuyStatus[] = ['open', 'waiting', 'refused'];
+const buyPath = (w: Who) => `orgs/${w.orgId}/buys/${w.uid}/`;
+const plateText = (p: { plate: string | null }) => (p.plate ? ` (${p.plate})` : '');
+const verb = (k: BuyKind) => (k === 'fuel' ? 'refuel' : k === 'wash' ? 'wash' : 'purchase');
+
+/** Who hears about it: the station's fleet managers, or the owners where the station has none (parts: the owners). */
+async function bossesOf(orgId: string, stationId: string | null, kind: BuyKind, except: string) {
+  const org = db().doc(`orgs/${orgId}`);
+  type P = { uid: string; name: string; phone: string | null };
+  const toP = (d: FirebaseFirestore.QueryDocumentSnapshot): P => {
+    const x = d.data() as { name?: string; phone?: string };
+    return { uid: d.id, name: x.name || 'Fleet manager', phone: typeof x.phone === 'string' && x.phone.trim() ? x.phone.trim() : null };
+  };
+  if (kind !== 'parts' && stationId) {
+    const ms = (await org.collection('members').where('stationIds', 'array-contains', stationId).get()).docs
+      .filter((d) => d.data().role === 'manager' && d.id !== except);
+    if (ms.length) return ms.map(toP);
+  }
+  return (await org.collection('members').where('role', 'in', ['owner', 'admin']).get()).docs.filter((d) => d.id !== except).map(toP);
+}
+async function tell(people: { uid: string }[], msg: { title: string; body: string; url: string; tag?: string }) {
+  const n = await Promise.all(people.map((x) => notify(x.uid, msg).catch(() => 0)));
+  return n.reduce((a, b) => a + b, 0);
+}
+
+async function loadBuy(org: R, id: unknown) {
+  const sid = String(id || '');
+  if (!ID.test(sid)) throw new HttpsError('invalid-argument', 'Unknown refuel.');
+  const ref = org.collection('purchases').doc(sid);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Unknown refuel.');
+  return { ref, p: snap.data() as BuyDoc };
+}
+/** Only the person who started it takes its photos. */
+async function myBuy(org: R, who: Who, id: unknown) {
+  const x = await loadBuy(org, id);
+  if (x.p.by !== who.uid) throw new HttpsError('permission-denied', 'Only the person who started it can carry on with it.');
+  return x;
+}
+async function logBuyRead(org: R, who: Who, purchaseId: string, step: string, model: string, usage: Usage, extra: object = {}) {
+  await org.collection('buyReads').add({ purchaseId, step, by: who.uid, byName: who.name, model, tier: who.tier, usage, createdAt: Date.now(), ...extra }).catch(() => {});
+}
+
+async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
+  const kind = BUY_KINDS.includes(d.kind as BuyKind) ? (d.kind as BuyKind) : null;
+  if (!kind) throw new HttpsError('invalid-argument', 'Refuel, wash or parts?');
+  if (kind === 'parts') needStaff(who);
+  const vehicleId = String(d.vehicleId || '');
+  if (!ID.test(vehicleId)) throw new HttpsError('invalid-argument', 'Unknown van.');
+  const path = checkPath(d.path, buyPath(who));
+  const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as VanDoc | undefined;
+  if (!van) throw new HttpsError('not-found', 'Unknown van.');
+  needStation(who, van.stationId);
+  if (van.retired) throw new HttpsError('failed-precondition', 'This van is retired.');
+  if (kind === 'fuel' && van.fuel === 'electric') throw new HttpsError('failed-precondition', 'Electric vans are charged, not refuelled.');
+  const det = (await org.collection('vehicleDetails').doc(vehicleId).get()).data() as { fuelCard?: string; odometerKm?: number } | undefined;
+  const expected = kind === 'parts' ? null : cardDigits(det?.fuelCard);
+  // One at a time: anything this person left half done is closed (and stays in the history).
+  const now = Date.now();
+  const left = (await org.collection('purchases').where('by', '==', who.uid).orderBy('createdAt', 'desc').limit(10).get()).docs
+    .filter((x) => OPEN_BUY.includes(x.data().status));
+  await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: 'Started another one' }, updatedAt: now })));
+
+  const ref = org.collection('purchases').doc();
+  const img = await fit(await download(path));
+  let dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: 'The AI couldn\'t read it.' };
+  try {
+    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }], dashPrompt(van), dashSchema, 700);
+    const values = dashValues(a.obj);
+    dash = { path, at: now, ai: values, confidence: numIn(a.obj.confidence, 0, 1), readable: a.obj.readable !== false && values.odometerKm != null, issue: str(a.obj.issue, 200) };
+    await logBuyRead(org, who, ref.id, 'dash', a.model, a.usage);
+  } catch (e) {
+    // At the pump the driver carries on: the odometer is typed in at the end instead.
+    logger.warn('Dashboard not read for a refuel', { message: String((e as Error)?.message || e) });
+  }
+  const doc: BuyDoc & Record<string, unknown> = {
+    kind, status: 'open', vehicleId, vehicleName: van.name, plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
+    vanFuel: van.fuel || null, tankL: van.tankL ?? null, by: who.uid, byName: who.name, role: who.role,
+    vanDriverId: van.assignedTo?.driverId || null, vanDriverName: van.assignedTo?.driverName || null,
+    notTheirVan: who.role === 'driver' && !!van.assignedTo && van.assignedTo.driverId !== who.uid,
+    dash, lastKm: typeof det?.odometerKm === 'number' ? det.odometerKm : null,
+    card: { needed: !!expected, expected, result: null, read: null, tries: 0, why: null, expired: null, at: null },
+    decision: null, receipt: null, parts: [], note: null, flags: [], corrected: [],
+    odometerKm: null, fuelPct: null, litres: null, total: null, currency: null, merchant: null, cancel: null,
+    createdAt: now, updatedAt: now, doneAt: null,
+  };
+  await ref.set(doc);
+  return { id: ref.id, needsCard: !!expected, dash: { values: dash.ai, readable: dash.readable, confidence: dash.confidence, issue: dash.issue }, lastKm: doc.lastKm };
+}
+
+async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref, p } = await myBuy(org, who, d.id);
+  if (p.status !== 'open' || !p.card.needed || p.card.result === 'match' || p.decision) throw new HttpsError('failed-precondition', 'The card was already checked.');
+  const expected = p.card.expected!;
+  const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: string, read: CardRead | null, tries: number, extra: object = {}) => {
+    const now = Date.now();
+    const keep = read ? { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry } : null;
+    await ref.update({ status: 'waiting', card: { ...p.card, result, read: keep, tries, why, expired: read ? expired(read.expiry, now) : null, at: now, ...extra }, updatedAt: now });
+    const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
+    const what = result === 'missing' ? 'no fuel card' : result === 'unclear' ? 'card not checked' : 'not the van\'s card';
+    await tell(bosses, {
+      title: `Stop: ${p.vehicleName}${plateText(p)}, ${what}`,
+      body: `${p.byName} is at the ${p.kind === 'wash' ? 'car wash' : 'pump'}. ${why} Allow or refuse the ${verb(p.kind)}.`,
+      url: `/buy/${ref.id}`, tag: `buy-${ref.id}`,
+    });
+    return { result, why, people: bosses.map(({ name, phone }) => ({ name, phone })) };
+  };
+  if (d.missing === true) return stop('missing', `${p.byName} has no fuel card for the van.`, null, p.card.tries);
+  const path = checkPath(d.path, buyPath(who));
+  try {
+    const img = await fit(await download(path), 1600, 1600);
+    const t0 = Date.now();
+    const prompt = cardPrompt({ name: p.vehicleName, plate: p.plate });
+    const a1 = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), 'quick', [{ image: img }], prompt, cardSchema, 300);
+    let read = cleanCard(a1.obj);
+    let v = cardVerdict(expected, read);
+    const models = [a1.model];
+    let usage = a1.usage;
+    if (v.result !== 'match') {
+      // Never stop a driver on one quick reading: a stronger model reads it again.
+      const a2 = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier === 'complex' ? 'complex' : 'default', [{ image: img }], prompt, cardSchema, 300);
+      const read2 = cleanCard(a2.obj);
+      const v2 = cardVerdict(expected, read2);
+      if (v2.result !== 'unclear' || v.result === 'unclear') { read = read2; v = v2; }
+      models.push(a2.model);
+      usage = addUsage(usage, a2.usage);
+    }
+    const ms = Date.now() - t0;
+    await logBuyRead(org, who, ref.id, 'card', models.join(' + '), usage, { result: v.result, ms });
+    const tries = p.card.tries + 1;
+    if (v.result === 'unclear' && tries < 3) {
+      await ref.update({ 'card.tries': tries, 'card.why': v.why, updatedAt: Date.now() });
+      return { result: 'retake', why: v.why, ...(who.creator ? { ms, usage } : {}) };
+    }
+    if (v.result === 'match') {
+      const now = Date.now();
+      await ref.update({ card: { ...p.card, result: 'match', read: { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry },
+        tries, why: v.why, expired: expired(read.expiry, now), at: now }, updatedAt: now });
+      return { result: 'match', why: v.why, ...(who.creator ? { ms, usage } : {}) };
+    }
+    return { ...(await stop(v.result, v.result === 'unclear' ? `The card couldn't be read after ${tries} photos.` : v.why, read, tries)), ...(who.creator ? { ms, usage } : {}) };
+  } finally {
+    // No copy of the card is kept.
+    await bucket().file(path).delete().catch(() => {});
+  }
+}
+
+async function buyDecide(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref } = await loadBuy(org, d.id);
+  const allow = d.allow === true;
+  const note = clean(d.note, 300);
+  const p = await db().runTransaction(async (tx) => {
+    const cur = (await tx.get(ref)).data() as BuyDoc;
+    if (!staffAt(who, cur.stationId)) throw new HttpsError('permission-denied', 'Only the station\'s fleet managers and owners decide this.');
+    if (cur.by === who.uid && who.role !== 'owner') throw new HttpsError('failed-precondition', 'Someone else has to allow your own.');
+    if (cur.status !== 'waiting') throw new HttpsError('failed-precondition', cur.status === 'cancelled' ? 'It was cancelled.' : 'It was already decided.');
+    tx.update(ref, { status: allow ? 'open' : 'refused', decision: { allow, by: who.uid, byName: who.name, at: Date.now(), note }, updatedAt: Date.now() });
+    return cur;
+  });
+  const word = BUY_WORD[p.kind];
+  const notified = await tell([{ uid: p.by }], {
+    title: allow ? `${word} allowed: ${p.vehicleName}` : `${word} refused: ${p.vehicleName}`,
+    body: allow ? `${who.name} allowed it. ${p.kind === 'wash' ? 'Wash the van' : 'Fill up'}, then take the photo of the receipt.${note ? ` "${note}"` : ''}`
+      : `${who.name} refused it. Don't ${p.kind === 'wash' ? 'wash the van' : 'fill up'}: cancel it in the app.${note ? ` "${note}"` : ''}`,
+    url: `/buy/${ref.id}`, tag: `buy-${ref.id}`,
+  });
+  return { ok: true, notified };
+}
+
+async function buyReceipt(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref, p } = await myBuy(org, who, d.id);
+  if (p.status !== 'open') throw new HttpsError('failed-precondition', p.status === 'waiting' ? 'Wait for your fleet manager first.' : 'This one is closed.');
+  if (p.card.needed && p.card.result !== 'match' && !p.decision?.allow) throw new HttpsError('failed-precondition', 'Check the fuel card first.');
+  const path = checkPath(d.path, buyPath(who));
+  let parts: string[] = [], note: string | null = null;
+  if (p.kind === 'parts') {
+    const raw = Array.isArray(d.parts) ? d.parts : [];
+    if (!raw.length || raw.length > 6) throw new HttpsError('invalid-argument', 'Take 1 to 6 photos of the parts.');
+    parts = raw.map((x: unknown) => checkPath(x, buyPath(who)));
+    note = clean(d.note, 1000);
+    if (note.length < 5) throw new HttpsError('invalid-argument', 'Say why the parts were needed.');
+  }
+  const img = await fit(await download(path));
+  const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }],
+    receiptPrompt(p.kind, { name: p.vehicleName, plate: p.plate, fuel: p.vanFuel }), receiptSchema, 2000);
+  const r = cleanReceipt(a.obj);
+  await ref.update({ receipt: { path, at: Date.now(), ai: r }, parts, note, updatedAt: Date.now() });
+  await logBuyRead(org, who, ref.id, 'receipt', a.model, a.usage);
+  return { receipt: r, litres: p.kind === 'fuel' ? fuelLitres(r, p.vanFuel) : null, ...(who.creator ? { usage: a.usage } : {}) };
+}
+
+async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref, p } = await myBuy(org, who, d.id);
+  if (p.status !== 'open') throw new HttpsError('failed-precondition', 'This one is closed.');
+  if (!p.receipt) throw new HttpsError('failed-precondition', 'Take the photo of the receipt first.');
+  const v = (d.values || {}) as Record<string, unknown>;
+  const n = (x: unknown) => (x == null || x === '' ? null : Number(x));
+  const odometerKm = n(v.odometerKm);
+  if (odometerKm == null || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) throw new HttpsError('invalid-argument', 'Enter the odometer reading in km.');
+  const fuelPct = p.kind === 'fuel' ? n(v.fuelPct) : null;
+  if (fuelPct != null && (!Number.isFinite(fuelPct) || fuelPct < 0 || fuelPct > 100)) throw new HttpsError('invalid-argument', 'The fuel level is a percentage from 0 to 100.');
+  const litres = p.kind === 'fuel' ? n(v.litres) : null;
+  if (p.kind === 'fuel' && (litres == null || !Number.isFinite(litres) || litres <= 0 || litres > 1000)) throw new HttpsError('invalid-argument', 'Enter the litres from the receipt.');
+  const total = n(v.total);
+  if (total == null || !Number.isFinite(total) || total < 0 || total >= 100_000) throw new HttpsError('invalid-argument', 'Enter the total from the receipt.');
+  const r2 = (x: number | null) => (x == null ? null : Math.round(x * 100) / 100);
+  const vals = { odometerKm: Math.round(odometerKm), fuelPct: fuelPct == null ? null : Math.round(fuelPct * 10) / 10, litres: r2(litres), total: r2(total)! };
+  const ai = { odometerKm: p.dash.ai?.odometerKm ?? null, fuelPct: p.dash.ai?.fuelPct ?? null, litres: p.kind === 'fuel' ? fuelLitres(p.receipt.ai, p.vanFuel) : null, total: p.receipt.ai.total };
+  const corrected = (Object.keys(vals) as (keyof typeof vals)[]).filter((k) => (k !== 'fuelPct' || p.kind === 'fuel') && (k !== 'litres' || p.kind === 'fuel') && (ai[k] ?? null) !== vals[k]);
+  const flags: Flag[] = purchaseFlags({
+    kind: p.kind, byName: p.byName, vanFuel: p.vanFuel, tankL: p.tankL, fuelPct: vals.fuelPct, odometerKm: vals.odometerKm, lastKm: p.lastKm,
+    litres: vals.litres, createdAt: p.createdAt, vanDriverName: p.vanDriverName, notTheirVan: p.notTheirVan,
+    card: p.card.needed ? { needed: true, expected: p.card.expected, result: p.card.result, expired: p.card.expired, plate: p.card.read?.plate || null } : null,
+    vanPlate: p.plate, decision: p.decision ? { allow: p.decision.allow, byName: p.decision.byName } : null, receipt: p.receipt.ai,
+  });
+  const now = Date.now();
+  const currency = p.receipt.ai.currency || 'EUR';
+  await ref.update({ status: 'done', doneAt: now, updatedAt: now, ...vals, currency, merchant: p.receipt.ai.merchant, flags, corrected });
+  // The van's odometer in its record (only ever up).
+  const detRef = org.collection('vehicleDetails').doc(p.vehicleId);
+  await db().runTransaction(async (tx) => {
+    const det = await tx.get(detRef);
+    const today = new Date(now).toISOString().slice(0, 10);
+    if (!det.exists) tx.set(detRef, { stationId: p.stationId, createdAt: now, odometerKm: vals.odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
+    else if (Number(det.data()?.odometerKm ?? -1) <= vals.odometerKm) tx.update(detRef, { odometerKm: vals.odometerKm, odometerAt: today });
+  });
+  const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
+  const msg = doneMessage({ kind: p.kind, vehicleName: p.vehicleName, plate: p.plate, byName: p.byName, odometerKm: vals.odometerKm, litres: vals.litres,
+    total: vals.total, currency, merchant: p.receipt.ai.merchant, note: p.note, flags });
+  const notified = await tell(bosses, { ...msg, url: `/buy/${ref.id}`, tag: `buy-${ref.id}` });
+  return { flags, notified };
+}
+
+async function buyCancel(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref, p } = await loadBuy(org, d.id);
+  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw new HttpsError('permission-denied', 'Only the person who started it, or the station\'s fleet manager, can cancel it.');
+  if (!OPEN_BUY.includes(p.status)) throw new HttpsError('failed-precondition', p.status === 'done' ? 'It\'s already finished.' : 'It\'s already cancelled.');
+  const now = Date.now();
+  await ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: clean(d.reason, 200) || null }, updatedAt: now });
+  return { ok: true };
+}
+
+/** The people to call about it (the station's fleet managers, or the owners): names and phone numbers. */
+async function buyContacts(who: Who, org: R, d: Record<string, unknown>) {
+  const { p } = await loadBuy(org, d.id);
+  if (p.by !== who.uid && !staffAt(who, p.stationId)) throw new HttpsError('permission-denied', 'Not yours.');
+  return { people: (await bossesOf(who.orgId, p.stationId, p.kind, p.by)).map(({ name, phone }) => ({ name, phone })) };
+}
+
+export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req);
+  const org = db().doc(`orgs/${who.orgId}`);
+  const d = (req.data || {}) as Record<string, unknown>;
+  switch (d.action) {
+    case 'start': return buyStart(who, org, d);
+    case 'card': return buyCard(who, org, d);
+    case 'decide': return buyDecide(who, org, d);
+    case 'receipt': return buyReceipt(who, org, d);
+    case 'finish': return buyFinish(who, org, d);
+    case 'cancel': return buyCancel(who, org, d);
+    case 'contacts': return buyContacts(who, org, d);
+    default: throw new HttpsError('invalid-argument', 'Unknown step.');
   }
 });

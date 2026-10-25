@@ -61,6 +61,9 @@ beforeEach(async () => {
     await put(`orgs/${O}/tours/t1`, { driverId: 'drv1', vehicleId: 'v1', stationId: S1, km: 120, createdAt: 1, startAt: 1 });
     await put(`orgs/${O}/tours/t2`, { driverId: 'drv2', vehicleId: 'v2', stationId: S2, km: 90, createdAt: 2, startAt: 2 });
     await put(`orgs/${O}/readings/r1`, { driverId: 'drv1', by: 'drv1', vehicleId: 'v1', stationId: S1, odometerKm: 48000, createdAt: 1, at: 1 });
+    await put(`orgs/${O}/purchases/b1`, { kind: 'fuel', status: 'waiting', vehicleId: 'v1', stationId: S1, by: 'drv1', byName: 'Driver 1', createdAt: 1, card: { needed: true, expected: '4471', result: 'mismatch' } });
+    await put(`orgs/${O}/purchases/b2`, { kind: 'wash', status: 'done', vehicleId: 'v2', stationId: S2, by: 'drv2', byName: 'Driver 2', createdAt: 2, total: 12.9 });
+    await put(`orgs/${O}/buyReads/br1`, { purchaseId: 'b1', step: 'card', by: 'drv1', createdAt: 1 });
     await put(`orgs/${O}/dashReads/d1`, { by: 'drv1', vehicleId: 'v1', createdAt: 1 });
     await put(`orgs/${O}/docReads/k1`, { by: 'mgr1', target: 'van', kind: 'registration certificate', found: 9, createdAt: 1 });
     await put(`orgs/${O}/damageLog/c1`, { checkId: 'c1', vehicleId: 'v1', stationId: S1, n: 1, drivers: [{ id: 'drv1', name: 'Driver 1' }], driverIds: ['drv1'], foundAt: 1, createdAt: 1 });
@@ -400,4 +403,23 @@ describe('company settings: dashboard photos and licence checks', () => {
   test('the owner turns dashboard photos on', () => assertSucceeds(updateDoc(doc(as('own'), `orgs/${O}`), { dashScans: true, dashScansBy: 'Owner', dashScansAt: 1, licenceCheckMonths: 3 })));
   test('a manager can\'t', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}`), { dashScans: true })));
   test('a driver can\'t', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}`), { dashScans: false })));
+});
+
+describe('refuels, washes and parts: every attempt kept, written by the server', () => {
+  const buys = (db, f, v) => getDocs(query(collection(db, `orgs/${O}/purchases`), where(f, f === 'stationId' ? 'in' : '==', v)));
+  test('the owner reads every one', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/purchases`))));
+  test('a manager reads their station\'s (to allow or refuse a wrong card)', () => assertSucceeds(buys(as('mgr1'), 'stationId', [S1])));
+  test('not another station\'s', () => assertFails(buys(as('mgr1'), 'stationId', [S2])));
+  test('a driver reads their own', () => assertSucceeds(buys(as('drv1'), 'by', 'drv1')));
+  test('not other drivers\'', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/purchases/b2`))));
+  test('not the whole station\'s', () => assertFails(buys(as('drv1'), 'stationId', [S1])));
+  test('nobody writes one from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/purchases/b9`), { kind: 'fuel', status: 'done', vehicleId: 'v1', stationId: S1, by: 'own', createdAt: 3 })));
+  test('a manager can\'t allow a wrong card from the app (only through the server)', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/purchases/b1`), { status: 'open', decision: { allow: true } })));
+  test('a driver can\'t mark their own card as right', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/purchases/b1`), { 'card.result': 'match' })));
+  test('nobody deletes one', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/purchases/b2`))));
+  test('what the AI read and its cost: the app creator only', () => assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/buyReads/br1`))));
+  test('…not the driver', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/buyReads/br1`))));
+  test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/buyReads/br1`))));
+  test('the app creator viewing as a driver of S1 doesn\'t see others\' refuels', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/purchases/b1`))));
+  test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/purchases/b1`))));
 });
