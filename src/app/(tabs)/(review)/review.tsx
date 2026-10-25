@@ -10,8 +10,9 @@ import { missingHandovers, type Missing } from '@/lib/videos';
 import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
+import { BuyRow, WaitingCard } from '@/components/buy';
 
-type Cat = 'all' | 'review' | 'missing' | 'warn' | 'due' | 'van' | 'done';
+type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'due' | 'buys' | 'van' | 'done';
 
 /**
  * The fleet manager's queue, by category: checks to decide, handovers and tours missing their video or photos,
@@ -46,14 +47,21 @@ export default function ReviewQueue() {
   const due = fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details);
   const known = new Map([...s.assignments.map((a) => [a.driverId, a.driverName] as const), ...s.tours.map((t) => [t.driverId, t.driverName] as const)]);
   const pdue = peopleDue(s.records.filter((r) => s.runs(r.stationId)), members, s.org?.licenceCheckMonths || CHECK_MONTHS, Date.now(), known);
+  // Drivers stopped at the pump (not the van's fuel card, or none), oldest first; and the last week's refuels,
+  // washes and parts, the ones to check first.
+  const pump = s.purchases.filter((p) => p.status === 'waiting' && s.runs(p.stationId) && p.by !== s.user?.uid).sort((a, b) => (a.card.at || a.createdAt) - (b.card.at || b.createdAt));
+  const weekAgo = Date.now() - 7 * 86400_000;
+  const buys = s.purchases.filter((p) => p.status !== 'waiting' && s.runs(p.stationId) && p.createdAt > weekAgo && (p.status !== 'open' || Date.now() - p.createdAt > 6 * 3600_000))
+    .sort((a, b) => (b.flags?.length ? 1 : 0) - (a.flags?.length ? 1 : 0) || b.createdAt - a.createdAt);
   const showStation = s.stations.length > 1;
   const plate = (vehicleId: string) => s.vehicles.find((v) => v.id === vehicleId)?.plate || '';
   const where = (stationId: string | null | undefined) => (showStation ? s.stationName(stationId) : '');
 
-  const color = { review: MARKER, missing: c.alert, warn: c.warn, due: c.amber, van: c.ink2, done: c.ok };
+  const color = { pump: c.alert, review: MARKER, missing: c.alert, warn: c.warn, due: c.amber, buys: c.ink, van: c.ink2, done: c.ok };
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
+    ...(pump.length ? [['pump', 'At the pump', pump.length] as [Exclude<Cat, 'all'>, string, number]] : []),
     ['review', 'To review', waiting.length], ['missing', 'Missing proof', missing.length + gaps.length], ['warn', 'Warning lights', warn.length],
-    ['due', 'Due soon', due.length + pdue.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
+    ['due', 'Due soon', due.length + pdue.length], ['buys', 'Fuel, wash, parts', buys.length], ['van', 'At the van', atVan.length], ['done', 'Reviewed', done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
   const shownDone = allDone ? done : done.slice(0, 8);
@@ -80,6 +88,12 @@ export default function ReviewQueue() {
           );
         })}
       </ScrollView>
+
+      {show('pump') && pump.length ? (
+        <Section color={c.alert} title="At the pump" count={pump.length} note="Drivers stopped because the fuel card isn't the van's, or they have none. They're waiting for you: allow or refuse.">
+          {pump.map((p) => <WaitingCard key={p.id} p={p} where={where(p.stationId)} />)}
+        </Section>
+      ) : null}
 
       {show('review') ? (
         <Section color={MARKER} title="To review" count={waiting.length} note="Checks drivers sent. Oldest first.">
@@ -117,6 +131,15 @@ export default function ReviewQueue() {
                 title={`${v.name} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
+          </List>
+        </Section>
+      ) : null}
+
+      {show('buys') && (buys.length || cat === 'buys') ? (
+        <Section color={c.ink} title="Fuel, wash, parts" count={buys.length} note="The last 7 days. The ones with something to check come first: the receipt and the dashboard photo don't fit together, or a card was allowed.">
+          <List>
+            {!buys.length ? <T v="hint">No refuels, washes or parts in the last 7 days.</T> : null}
+            {buys.map((p, i) => <BuyRow key={p.id} p={p} show="van" first={i === 0} />)}
           </List>
         </Section>
       ) : null}

@@ -199,6 +199,18 @@ service cloud.firestore {
         allow read: if creator();
       }
 
+      // Refuelling, washing and parts bought for a van: every attempt, finished, refused or given up. Written only by
+      // the server (the purchase function checks the fuel card and reads the receipt), never edited or deleted.
+      // Owners and the station's managers read them (they allow or refuse a wrong card there); the person who
+      // bought something reads their own.
+      match /purchases/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.by == me());
+      }
+      // What the AI read from the dashboard, the card and the receipt, with its speed and cost: the app creator only.
+      match /buyReads/{id} {
+        allow read: if creator();
+      }
+
       // New damage found by a reviewed check and who had the van in that time (written by the server from the
       // review), for the drivers' numbers. Owners and the station's managers read it; drivers the ones they're in.
       match /damageLog/{id} {

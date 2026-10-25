@@ -6,7 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
 import { newId } from './images';
-import type { Assignment, Check, CheckUsage, DashValues, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -102,6 +102,8 @@ export interface Store {
   assignments: Coll<Assignment>;
   /** Recent handover videos: the station's for owners and managers, the ones they recorded for drivers. */
   videos: Coll<Video>;
+  /** Refuels, washes and parts: the station's for owners and managers, their own for everyone else. */
+  purchases: Coll<Purchase>;
 }
 
 /**
@@ -114,12 +116,13 @@ export function makeStore(orgId: string | null, scope: string[] | null = null, d
       walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), details: fsColl(orgId, 'vehicleDetails', scope),
       costs: fsColl(orgId, 'vehicleCosts'), records: fsColl(orgId, 'driverRecords', scope), incidents: fsColl(orgId, 'incidents', scope),
       tours: fsColl(orgId, 'tours', scope, driverId),
-      assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by') };
+      assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by'),
+      purchases: fsColl(orgId, 'purchases', scope, driverId, 'by') };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
     vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), details: localColl('vehicleDetails'),
     costs: localColl('vehicleCosts'), records: localColl('driverRecords'), incidents: localColl('incidents'), tours: localColl('tours'),
-    assignments: localColl('assignments'), videos: localColl('videos') };
+    assignments: localColl('assignments'), videos: localColl('videos'), purchases: localColl('purchases') };
 }
 
 /** What the server read from a dashboard photo, before the person confirms it. */
@@ -149,6 +152,12 @@ export interface DocRead {
   fields: { key: string; value: unknown; confidence: number | null; evidence: string }[];
   usage?: Usage;
 }
+
+/** Who to call about a refuel: the station's fleet managers (or the owners). */
+export interface Contact { name: string; phone: string | null }
+export type CardAnswer =
+  | { result: 'match' | 'retake'; why: string }
+  | { result: 'mismatch' | 'unclear' | 'missing'; why: string; people: Contact[] };
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
 export class AiError extends Error {
@@ -212,5 +221,16 @@ export const ai = {
   readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
+  /** Refuel, wash and parts, step by step (one function, so it stays warm between the steps). */
+  buy: {
+    start: call<{ orgId: string; action: 'start'; kind: BuyKind; vehicleId: string; path: string }, { id: string; needsCard: boolean; lastKm: number | null }>('purchase', 60000),
+    dash: call<{ orgId: string; action: 'dash'; id: string }, { values: DashValues | null; readable: boolean; confidence: number | null; issue: string | null }>('purchase', 130000),
+    card: call<{ orgId: string; action: 'card'; id: string; path?: string; missing?: boolean }, CardAnswer>('purchase', 130000),
+    decide: call<{ orgId: string; action: 'decide'; id: string; allow: boolean; note: string }, { ok: boolean; notified: number }>('purchase', 40000),
+    receipt: call<{ orgId: string; action: 'receipt'; id: string; path: string; parts?: string[]; note?: string }, { receipt: ReceiptRead; litres: number | null }>('purchase', 130000),
+    finish: call<{ orgId: string; action: 'finish'; id: string; values: { odometerKm: number; fuelPct: number | null; litres: number | null; total: number } }, { flags: Purchase['flags']; notified: number }>('purchase', 60000),
+    cancel: call<{ orgId: string; action: 'cancel'; id: string; reason?: string }, { ok: boolean }>('purchase', 40000),
+    contacts: call<{ orgId: string; action: 'contacts'; id: string }, { people: Contact[] }>('purchase', 40000),
+  },
   checkSpot: call<{ orgId: string; checkId: string; spot: number; closeups: string[]; tier: Tier }, { verdict: Verdict; usage?: Usage; ms?: number; model: string }>('checkSpot'),
 };

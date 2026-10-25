@@ -112,6 +112,11 @@ function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
         { key: 'monthly', value: '705.50', confidence: 0.9, evidence: 'Monatsrate 705,50 EUR' },
         { key: 'fuel', value: 'Diesel', confidence: 0.9, evidence: 'P.3 Diesel' },
       ].filter((f) => ((props.fields as { items?: { properties?: { key?: { enum?: string[] } } } })?.items?.properties?.key?.enum || []).includes(f.key)) }
+    : 'last4' in props
+    ? { isCard: true, kind: 'fuel', issuer: 'DKV', last4: '4471', plate: null, expiry: '12/29', confidence: 0.95, issue: null }
+    : 'items' in props && 'merchant' in props
+    ? { readable: true, merchant: 'Test Tankstelle', date: new Date().toISOString().slice(0, 10), time: '14:05', currency: 'EUR', cardLast4: '4471', payment: 'card',
+      items: [{ product: 'diesel', description: 'Diesel', quantity: 45.2, unit: 'l', unitPrice: 1.75, total: 79.1 }], total: 79.1, confidence: 0.9, issue: null }
     : 'odometerKm' in props
     ? { readable: true, odometerKm: 48213, unit: 'km', fuelPct: 62.5, batteryPct: null, rangeKm: 410, warnings: ['Tyre pressure'], confidence: 0.92, issue: null }
     : 'spots' in props

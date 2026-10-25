@@ -232,6 +232,39 @@ export interface Tour {
  * New damage found by a reviewed check, and who had the van while it could have happened
  * (orgs/{org}/damageLog/{checkId}). Written by the server from the review, for the driver numbers.
  */
+/** Refuelling, washing, or parts bought for a van (written by the server; every attempt is kept). */
+export type BuyKind = 'fuel' | 'wash' | 'parts';
+export type BuyStatus = 'open' | 'waiting' | 'refused' | 'done' | 'cancelled';
+export interface ReceiptItem { product: string; description: string; quantity: number | null; unit: 'l' | 'kWh' | 'pcs' | null; unitPrice: number | null; total: number | null }
+export interface ReceiptRead {
+  readable: boolean; merchant: string | null; date: string | null; time: string | null; items: ReceiptItem[]; total: number | null;
+  currency: string | null; cardLast4: string | null; payment: 'card' | 'cash' | 'unknown'; confidence: number; issue: string | null;
+}
+export interface Purchase {
+  id: string;
+  kind: BuyKind;
+  /** open: going on; waiting: a wrong card or no card, for a manager to allow or refuse; refused: the driver still has to cancel. */
+  status: BuyStatus;
+  vehicleId: string; vehicleName: string; plate: string | null; stationId: string | null; model?: string | null;
+  vanFuel: Vehicle['fuel']; tankL: number | null;
+  by: string; byName: string; role: Role;
+  vanDriverId: string | null; vanDriverName: string | null; notTheirVan: boolean;
+  dash: { path: string; at: number; ai: DashValues | null; confidence: number | null; readable: boolean; issue: string | null; done: boolean };
+  lastKm: number | null;
+  card: {
+    needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null;
+    read: { kind: 'fuel' | 'bank' | 'other'; issuer: string | null; last4: string | null; plate: string | null; expiry: string | null } | null;
+    tries: number; why: string | null; expired: boolean | null; at: number | null;
+  };
+  decision: { allow: boolean; by: string; byName: string; at: number; note: string } | null;
+  receipt: { path: string; at: number; ai: ReceiptRead } | null;
+  parts: string[]; note: string | null;
+  flags: { key: string; text: string }[]; corrected: string[];
+  odometerKm: number | null; fuelPct: number | null; litres: number | null; total: number | null; currency: string | null; merchant: string | null;
+  cancel: { by: string; byName: string; at: number; reason: string | null } | null;
+  createdAt: number; updatedAt: number; doneAt: number | null;
+}
+
 export interface DamageLog {
   id: string;
   checkId: string;

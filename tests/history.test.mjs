@@ -695,6 +695,137 @@ test('records from a photo of a document: read, sorted, costs only for owners, t
   assert.ok(rd.fields.every((f) => ['licenceClasses', 'licenceValid', 'employment', 'employedFrom', 'employedTo', 'vanBriefing', 'safetyBriefing'].includes(f.key)));
 });
 
+test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows a wrong one, the receipt, every attempt kept', async () => {
+  const { v2 } = S.vans;
+  const shot = async (p) => {
+    const path = `orgs/${S.org}/buys/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const buy = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'purchases', id))).data();
+  // The van's fuel card in its record (the business side): only the last digits.
+  await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id), { fuelCard: 'DKV card ending 4471' }, { merge: true });
+  // The manager's phone gets notifications (a push service on this computer, as in the test above).
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (c) => ch.push(c));
+    req.on('end', () => { got.push({ url: req.url, body: Buffer.concat(ch) }); res.statusCode = 201; res.end(); });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+  const auth = crypto.randomBytes(16).toString('base64url');
+  await adminDb().collection(`users/${S.mgr.uid}/push`).doc('mgr').set({ endpoint: `http://${HOST}:${srv.address().port}/push/mgr`,
+    keys: { p256dh: ecdh.getPublicKey().toString('base64url'), auth }, createdAt: Date.now(), device: 'manager phone' });
+  const opened = () => got.map((g) => JSON.parse(fnRequire('http_ece').decrypt(g.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString()));
+  try {
+    // 1. The right card: dashboard, card, receipt, done. The manager hears about it with the details.
+    const st = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
+    assert.equal(st.needsCard, true);
+    const dr = await S.d1.call('purchase', { orgId: S.org, action: 'dash', id: st.id });
+    assert.equal(dr.values.odometerKm, 48213);
+    // Not on another station's van, not someone else's photo, and parts only for owners and managers.
+    await fails(S.d3.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d3) }), 'permission-denied');
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.mgr) }), 'invalid-argument');
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'parts', vehicleId: v2.id, path: await shot(S.d1) }), 'permission-denied');
+    // The receipt comes after the card.
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: await shot(S.d1) }), 'failed-precondition');
+    const card = await shot(S.d1);
+    const c1 = await S.d1.call('purchase', { orgId: S.org, action: 'card', id: st.id, path: card });
+    assert.equal(c1.result, 'match');
+    // The card photo isn't kept, only its last 4 digits.
+    await fails(getBytes(ref(S.own.st, card)));
+    assert.equal((await buy(S.d1, st.id)).card.read.last4, '4471');
+    // Someone else can't carry on with it.
+    await fails(S.mgr.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: await shot(S.mgr) }), 'permission-denied');
+    const rc = await S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: await shot(S.d1) });
+    assert.equal(rc.litres, 45.2);
+    assert.equal(rc.receipt.total, 79.1);
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'finish', id: st.id, values: { odometerKm: 60300, fuelPct: 25, total: 79.1 } }), 'invalid-argument');
+    const f1 = await S.d1.call('purchase', { orgId: S.org, action: 'finish', id: st.id, values: { odometerKm: 60300, fuelPct: 25, litres: 45.2, total: 79.1 } });
+    assert.deepEqual(f1.flags, []);
+    assert.equal(f1.notified, 1);
+    const b1 = await buy(S.mgr, st.id);
+    assert.equal(b1.status, 'done');
+    assert.equal(b1.litres, 45.2);
+    assert.equal(b1.total, 79.1);
+    assert.deepEqual(b1.corrected, ['odometerKm', 'fuelPct']);
+    assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id))).data().odometerKm, 60300);
+    const m1 = opened().at(-1);
+    assert.equal(m1.title, 'Refuel: Van v2 (V2), 45.2 l, €79.10');
+    assert.match(m1.body, /^Dana Driver at Test Tankstelle, 60,300 km\.$/);
+    assert.equal(m1.url, `/buy/${st.id}`);
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'cancel', id: st.id }), 'failed-precondition');
+
+    // 2. Not the van's card: the driver is stopped and told whom to call; the manager refuses; the driver cancels.
+    await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id), { fuelCard: 'Shell card ending 1234' }, { merge: true });
+    const w = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'wash', vehicleId: v2.id, path: await shot(S.d1) });
+    const c2 = await S.d1.call('purchase', { orgId: S.org, action: 'card', id: w.id, path: await shot(S.d1) });
+    assert.equal(c2.result, 'mismatch');
+    assert.match(c2.why, /ending 4471.*ends 1234/);
+    assert.deepEqual(c2.people, [{ name: 'Max Manager', phone: '+49 151 1' }]);
+    const stop = opened().at(-1);
+    assert.match(stop.title, /^Stop: Van v2 \(V2\), not the van's card$/);
+    assert.match(stop.body, /Allow or refuse the wash\.$/);
+    assert.equal((await buy(S.mgr, w.id)).status, 'waiting');
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: w.id, path: await shot(S.d1) }), 'failed-precondition');
+    // Only the station's managers and owners decide; not the driver, not another station's people.
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'decide', id: w.id, allow: true }), 'permission-denied');
+    await fails(S.d3.call('purchase', { orgId: S.org, action: 'decide', id: w.id, allow: true }), 'permission-denied');
+    await S.mgr.call('purchase', { orgId: S.org, action: 'decide', id: w.id, allow: false, note: 'Use the card in the glovebox.' });
+    await fails(S.own.call('purchase', { orgId: S.org, action: 'decide', id: w.id, allow: true }), 'failed-precondition');
+    await fails(S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: w.id, path: await shot(S.d1) }), 'failed-precondition');
+    await S.d1.call('purchase', { orgId: S.org, action: 'cancel', id: w.id });
+    const bw = await buy(S.d1, w.id);
+    assert.equal(bw.status, 'cancelled');
+    assert.equal(bw.decision.allow, false);
+    assert.equal(bw.decision.note, 'Use the card in the glovebox.');
+
+    // 3. No card at all: same as a wrong one. The owner allows it; the driver carries on and the flag stays.
+    const n = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
+    const c3 = await S.d1.call('purchase', { orgId: S.org, action: 'card', id: n.id, missing: true });
+    assert.equal(c3.result, 'missing');
+    await S.own.call('purchase', { orgId: S.org, action: 'decide', id: n.id, allow: true });
+    await S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: n.id, path: await shot(S.d1) });
+    const f3 = await S.d1.call('purchase', { orgId: S.org, action: 'finish', id: n.id, values: { odometerKm: 60410, fuelPct: 75, litres: 45.2, total: 79.1 } });
+    const keys = f3.flags.map((x) => x.key).sort();
+    // The card, 45 litres into a tank with room for 20, and the receipt paid with another card.
+    assert.deepEqual(keys, ['card', 'litres', 'receiptCard']);
+    assert.match(f3.flags.find((x) => x.key === 'card').text, /Olga Owner allowed it\.$/);
+
+    // 4. One at a time: starting again closes what was left open (it stays in the history).
+    const a = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
+    const b = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'wash', vehicleId: v2.id, path: await shot(S.d1) });
+    const left = await buy(S.d1, a.id);
+    assert.equal(left.status, 'cancelled');
+    assert.equal(left.cancel.reason, 'Started another one');
+    // The station's manager can close one a driver left.
+    await S.mgr.call('purchase', { orgId: S.org, action: 'cancel', id: b.id, reason: 'Driver went home' });
+
+    // 5. Parts (a manager): dashboard, the parts, the receipt and why. No card check; the owners hear about it.
+    const pt = await S.mgr.call('purchase', { orgId: S.org, action: 'start', kind: 'parts', vehicleId: v2.id, path: await shot(S.mgr) });
+    assert.equal(pt.needsCard, false);
+    await fails(S.mgr.call('purchase', { orgId: S.org, action: 'receipt', id: pt.id, path: await shot(S.mgr), parts: [await shot(S.mgr)], note: '' }), 'invalid-argument');
+    await fails(S.mgr.call('purchase', { orgId: S.org, action: 'receipt', id: pt.id, path: await shot(S.mgr), parts: [], note: 'Mirror broke' }), 'invalid-argument');
+    await S.mgr.call('purchase', { orgId: S.org, action: 'receipt', id: pt.id, path: await shot(S.mgr), parts: [await shot(S.mgr), await shot(S.mgr)], note: 'Left mirror glass broke on the tour.' });
+    await S.mgr.call('purchase', { orgId: S.org, action: 'finish', id: pt.id, values: { odometerKm: 60420, total: 34.5 } });
+    const bp = await buy(S.own, pt.id);
+    assert.equal(bp.status, 'done');
+    assert.equal(bp.parts.length, 2);
+    assert.equal(bp.note, 'Left mirror glass broke on the tour.');
+
+    // Every attempt is kept: the driver reads their own (5), the manager the station's; nobody changes them.
+    const mine = await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'purchases'), where('by', '==', S.d1.uid), orderBy('createdAt', 'desc')));
+    assert.deepEqual(mine.docs.map((d) => d.data().status).sort(), ['cancelled', 'cancelled', 'cancelled', 'done', 'done']);
+    const station = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'purchases'), where('stationId', 'in', [S.s1]), orderBy('createdAt', 'desc')));
+    assert.equal(station.size, 6);
+    await fails(updateDoc(doc(S.mgr.db, 'orgs', S.org, 'purchases', w.id), { status: 'done' }), 'permission-denied');
+    await fails(deleteDoc(doc(S.own.db, 'orgs', S.org, 'purchases', st.id)), 'permission-denied');
+  } finally {
+    srv.close();
+  }
+});
+
 test('costs move out of the record managers read (Deploy runs this once)', async () => {
   const { v3 } = S.vans;
   const det = adminDb().doc(`orgs/${S.org}/vehicleDetails/${v3.id}`);
@@ -732,6 +863,13 @@ test('the demo company: a driver login with a van, history, and pick-up at the f
   assert.ok((await getDocs(collection(me.db, 'orgs', orgId, 'damageLog'))).size >= 3);
   const withFuel = (await getDocs(collection(me.db, 'orgs', orgId, 'tours'))).docs.map((d) => d.data()).filter((t) => t.per100 != null);
   assert.ok(withFuel.length > 50, 'most demo tours have a fuel figure');
+  // Refuels with receipts, washes, a parts purchase, one allowed and one refused card, and a driver at the pump now.
+  const buys = (await getDocs(collection(me.db, 'orgs', orgId, 'purchases'))).docs.map((d) => d.data());
+  assert.ok(buys.filter((b) => b.kind === 'fuel' && b.status === 'done').length >= 10, 'demo refuels');
+  assert.ok(buys.some((b) => b.kind === 'wash') && buys.some((b) => b.kind === 'parts'));
+  assert.equal(buys.filter((b) => b.status === 'waiting').length, 1);
+  assert.ok(buys.some((b) => b.decision?.allow === true) && buys.some((b) => b.decision?.allow === false));
+  assert.ok(buys.some((b) => b.flags.some((f) => f.key === 'litres')), 'one refuel with more litres than the tank had room for');
   const van = { id: open[0].vehicleId, name: open[0].vehicleName, stationId: open[0].stationId };
   await alex.call('dropOffVan', { orgId, vehicleId: van.id, walkId: await photos(alex, orgId, van) });
   const v = (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id))).data();

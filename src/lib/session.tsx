@@ -10,7 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type Purchase, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -67,6 +67,8 @@ interface Session {
   records: DriverRecord[];
   /** Recent tours (the latest 500 in scope; drivers: their own). */
   tours: Tour[];
+  /** Recent refuels, washes and parts (the latest 500 in scope; drivers: their own). */
+  purchases: Purchase[];
   /** This person's own driver record, if there is one. */
   myRecord: DriverRecord | null;
   /** Owners change company settings: dashboard photos on tours, how often licences are checked. */
@@ -323,6 +325,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [costs, setCosts] = useState<VehicleCosts[]>([]);
   const [records, setRecords] = useState<DriverRecord[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [ownRecord, setOwnRecord] = useState<DriverRecord | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -330,7 +333,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
-    setCosts([]); setRecords([]); setTours([]); setOwnRecord(null);
+    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setOwnRecord(null);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -343,6 +346,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.assignments.subscribe((r) => setAssignments(r), () => {}),
       store.videos.subscribe((r) => setVideos(r), () => {}),
       store.tours.subscribe((r) => setTours(r), () => {}),
+      store.purchases.subscribe((r) => setPurchases(r), () => {}),
     ];
     // The business side of the vans and the driver records: owners and managers (the rules refuse drivers).
     if (staff) {
@@ -410,7 +414,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
