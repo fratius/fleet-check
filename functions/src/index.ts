@@ -1322,7 +1322,7 @@ type BuyStatus = 'open' | 'waiting' | 'refused' | 'done' | 'cancelled';
 interface BuyDoc {
   kind: BuyKind; status: BuyStatus; vehicleId: string; vehicleName: string; plate: string | null; stationId: string | null;
   vanFuel: string | null; tankL: number | null; by: string; byName: string; role: Role; vanDriverName: string | null; notTheirVan: boolean;
-  dash: { path: string; at: number; ai: ReturnType<typeof dashValues> | null; confidence: number | null; readable: boolean; issue: string | null };
+  dash: { path: string; at: number; ai: ReturnType<typeof dashValues> | null; confidence: number | null; readable: boolean; issue: string | null; done: boolean };
   lastKm: number | null;
   card: { needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null; read: Omit<CardRead, 'confidence' | 'issue' | 'isCard'> | null; tries: number; why: string | null; expired: boolean | null; at: number | null };
   decision: { allow: boolean; by: string; byName: string; at: number; note: string } | null;
@@ -1392,18 +1392,10 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
     .filter((x) => OPEN_BUY.includes(x.data().status));
   await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: 'Started another one' }, updatedAt: now })));
 
+  // The photo must be there; the AI reads it in a second call (dash) while the driver already takes the card photo.
+  try { await bucket().file(path).getMetadata(); } catch { throw new HttpsError('not-found', 'The dashboard photo is missing. Take it again.'); }
   const ref = org.collection('purchases').doc();
-  const img = await fit(await download(path));
-  let dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: 'The AI couldn\'t read it.' };
-  try {
-    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }], dashPrompt(van), dashSchema, 700);
-    const values = dashValues(a.obj);
-    dash = { path, at: now, ai: values, confidence: numIn(a.obj.confidence, 0, 1), readable: a.obj.readable !== false && values.odometerKm != null, issue: str(a.obj.issue, 200) };
-    await logBuyRead(org, who, ref.id, 'dash', a.model, a.usage);
-  } catch (e) {
-    // At the pump the driver carries on: the odometer is typed in at the end instead.
-    logger.warn('Dashboard not read for a refuel', { message: String((e as Error)?.message || e) });
-  }
+  const dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: null, done: false };
   const doc: BuyDoc & Record<string, unknown> = {
     kind, status: 'open', vehicleId, vehicleName: van.name, plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
     vanFuel: van.fuel || null, tankL: van.tankL ?? null, by: who.uid, byName: who.name, role: who.role,
@@ -1416,7 +1408,28 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
     createdAt: now, updatedAt: now, doneAt: null,
   };
   await ref.set(doc);
-  return { id: ref.id, needsCard: !!expected, dash: { values: dash.ai, readable: dash.readable, confidence: dash.confidence, issue: dash.issue }, lastKm: doc.lastKm };
+  return { id: ref.id, needsCard: !!expected, lastKm: doc.lastKm };
+}
+
+/** The AI reads the dashboard photo (odometer, fuel gauge). If it can't, the driver types the numbers at the end. */
+async function buyDash(who: Who, org: R, d: Record<string, unknown>) {
+  const { ref, p } = await myBuy(org, who, d.id);
+  const out = (x: BuyDoc['dash']) => ({ values: x.ai, readable: x.readable, confidence: x.confidence, issue: x.issue });
+  if (p.dash.done) return out(p.dash);
+  const img = await fit(await download(p.dash.path));
+  let dash: BuyDoc['dash'] = { ...p.dash, done: true, issue: 'The AI couldn\'t read it.' };
+  try {
+    const van = { name: p.vehicleName, make: null, model: (p as unknown as { model?: string | null }).model || null, fuel: p.vanFuel as VanDoc['fuel'] };
+    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [{ image: img }], dashPrompt(van), dashSchema, 700);
+    const values = dashValues(a.obj);
+    dash = { ...p.dash, done: true, ai: values, confidence: numIn(a.obj.confidence, 0, 1), readable: a.obj.readable !== false && values.odometerKm != null, issue: str(a.obj.issue, 200) };
+    await logBuyRead(org, who, ref.id, 'dash', a.model, a.usage);
+  } catch (e) {
+    // At the pump the driver carries on: the odometer is typed in at the end instead.
+    logger.warn('Dashboard not read for a refuel', { message: String((e as Error)?.message || e) });
+  }
+  await ref.update({ dash, updatedAt: Date.now() });
+  return out(dash);
 }
 
 async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
@@ -1584,6 +1597,7 @@ export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBP
   const d = (req.data || {}) as Record<string, unknown>;
   switch (d.action) {
     case 'start': return buyStart(who, org, d);
+    case 'dash': return buyDash(who, org, d);
     case 'card': return buyCard(who, org, d);
     case 'decide': return buyDecide(who, org, d);
     case 'receipt': return buyReceipt(who, org, d);

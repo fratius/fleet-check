@@ -722,7 +722,8 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     // 1. The right card: dashboard, card, receipt, done. The manager hears about it with the details.
     const st = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
     assert.equal(st.needsCard, true);
-    assert.equal(st.dash.values.odometerKm, 48213);
+    const dr = await S.d1.call('purchase', { orgId: S.org, action: 'dash', id: st.id });
+    assert.equal(dr.values.odometerKm, 48213);
     // Not on another station's van, not someone else's photo, and parts only for owners and managers.
     await fails(S.d3.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d3) }), 'permission-denied');
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.mgr) }), 'invalid-argument');
