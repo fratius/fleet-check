@@ -198,7 +198,7 @@ export function fuelLitres(r: Receipt, vanFuel: string | null | undefined): numb
 export interface Flag { key: string; text: string }
 export interface FlagInput {
   kind: BuyKind; byName: string; vanFuel: string | null; tankL: number | null; fuelPct: number | null; odometerKm: number | null; lastKm: number | null;
-  litres: number | null; createdAt: number; vanDriverName: string | null; notTheirVan: boolean;
+  litres: number | null; total: number | null; createdAt: number; vanDriverName: string | null; notTheirVan: boolean;
   card: { needed: boolean; expected: string | null; result: string | null; expired: boolean | null; plate: string | null } | null;
   vanPlate: string | null;
   decision: { allow: boolean; byName: string } | null;
@@ -235,10 +235,17 @@ export function purchaseFlags(p: FlagInput): Flag[] {
     if (p.kind === 'fuel') {
       const other = p.vanFuel === 'diesel' ? 'petrol' : p.vanFuel === 'petrol' ? 'diesel' : null;
       if (other && r.items.some((i) => i.product === other)) out.push({ key: 'fuelType', text: `${other === 'petrol' ? 'Petrol' : 'Diesel'} on the receipt; the van runs on ${p.vanFuel}.` });
-      if (p.litres == null) out.push({ key: 'noFuel', text: 'No fuel for this van on the receipt.' });
+      const read = fuelLitres(r, p.vanFuel);
+      if (read == null) out.push({ key: 'noFuel', text: 'No fuel for this van on the receipt.' });
+      else if (p.litres != null && Math.abs(p.litres - read) > Math.max(0.5, read * 0.02)) {
+        out.push({ key: 'typedLitres', text: `${p.byName} saved ${p.litres.toLocaleString('en-GB')} l; the receipt says ${read.toLocaleString('en-GB')} l.` });
+      }
       const extra = r.items.filter((i) => ['other', 'parts', 'oil', 'wash'].includes(i.product) && (i.total || 0) > 0);
       if (extra.length) out.push({ key: 'extra', text: `Also on the receipt: ${extra.map((i) => i.description).slice(0, 4).join(', ')}.` });
     }
+  }
+  if (r?.total != null && p.total != null && Math.abs(p.total - r.total) > Math.max(0.5, r.total * 0.02)) {
+    out.push({ key: 'typedTotal', text: `${p.byName} saved a total of ${p.total.toFixed(2)}; the receipt says ${r.total.toFixed(2)}.` });
   }
   if (p.odometerKm != null && p.lastKm != null && p.odometerKm < p.lastKm - 50) {
     out.push({ key: 'odometer', text: `The odometer (${p.odometerKm.toLocaleString('en-GB')} km) is lower than the van's last reading (${p.lastKm.toLocaleString('en-GB')} km).` });

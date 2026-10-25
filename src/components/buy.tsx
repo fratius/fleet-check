@@ -65,28 +65,32 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
 }
 
 /**
- * On a van: the buttons, and what's going on now. The person's own unfinished one comes first (they may have closed
- * the app while filling up); the station's staff see a driver waiting at the pump for their answer.
+ * At the top of a van: the person's own unfinished one (they may have closed the app while filling up), and for the
+ * station's staff, drivers stopped at the pump waiting for their answer.
  */
+export function BuyNow({ v }: { v: Vehicle }) {
+  const s = useSession();
+  if (s.mode !== 'firebase' || !s.user) return null;
+  const mine = s.purchases.find((p) => p.vehicleId === v.id && p.by === s.user!.uid && isOpenBuy(p) && Date.now() - p.createdAt < STALE_BUY);
+  const asking = s.runs(v.stationId) ? s.purchases.filter((p) => p.vehicleId === v.id && p.status === 'waiting' && p.by !== s.user!.uid) : [];
+  if (!mine && !asking.length) return null;
+  return <View style={{ gap: 10 }}>{asking.map((p) => <WaitingCard key={p.id} p={p} />)}{mine ? <MineCard p={mine} /> : null}</View>;
+}
+
+/** On a van: Refuel, Wash and (owners and the station's managers) Buy parts. */
 export function BuyActions({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
   if (s.mode !== 'firebase' || v.retired || !s.user) return null;
-  const mine = s.purchases.find((p) => p.vehicleId === v.id && p.by === s.user!.uid && isOpenBuy(p) && Date.now() - p.createdAt < STALE_BUY);
-  const asking = s.runs(v.stationId) ? s.purchases.filter((p) => p.vehicleId === v.id && p.status === 'waiting' && p.by !== s.user!.uid) : [];
   const start = (kind: BuyKind) => router.push({ pathname: '/buy/[id]', params: { id: 'new', van: v.id, kind } });
   return (
-    <View style={{ gap: 10 }}>
-      {asking.map((p) => <WaitingCard key={p.id} p={p} />)}
-      {mine ? <MineCard p={mine} /> : null}
-      <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 8, backgroundColor: c.paper }}>
-        <Row>
-          {v.fuel !== 'electric' ? <Button title="Refuel" onPress={() => start('fuel')} /> : null}
-          <Button title="Wash" onPress={() => start('wash')} />
-          {s.runs(v.stationId) ? <Button title="Buy parts" onPress={() => start('parts')} /> : null}
-        </Row>
-        <T v="small">{v.fuel === 'electric' ? 'Starts with a photo of the dashboard; then the fuel card and the receipt.' : 'Before you start the pump: a photo of the dashboard. Then the fuel card and the receipt.'}</T>
-      </View>
+    <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 8, backgroundColor: c.paper }}>
+      <Row>
+        {v.fuel !== 'electric' ? <Button title="Refuel" onPress={() => start('fuel')} /> : null}
+        <Button title="Wash" onPress={() => start('wash')} />
+        {s.runs(v.stationId) ? <Button title="Buy parts" onPress={() => start('parts')} /> : null}
+      </Row>
+      <T v="small">{v.fuel === 'electric' ? 'Each starts with a photo of the dashboard; a wash then checks the fuel card and takes the receipt.' : 'Before you start the pump: a photo of the dashboard. Then the fuel card and the receipt.'}</T>
     </View>
   );
 }
@@ -100,7 +104,7 @@ export function MineCard({ p, withVan }: { p: Purchase; withVan?: boolean }) {
       : !p.receipt ? (p.card.needed && !p.card.result ? 'The fuel card is next.' : 'Take the photo of the receipt when you\'re done.') : 'Check the numbers and save.';
   return (
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
-      style={{ backgroundColor: waiting || refused ? c.paper : MARKER, borderWidth: 2, borderColor: waiting || refused ? c.alert : '#000', borderRadius: 4, padding: 14, gap: 4 }}>
+      style={{ backgroundColor: waiting || refused ? c.paper : MARKER, borderWidth: waiting || refused ? 3 : 2, borderColor: waiting || refused ? c.alert : '#000', borderRadius: 4, padding: 14, gap: 4 }}>
       <Text style={{ fontFamily: F.condBold, fontSize: 22, lineHeight: 25, color: waiting || refused ? c.alert : '#000' }}>
         Your {BUY_NOUN[p.kind]}{withVan ? ` of ${p.vehicleName}` : ''} isn&apos;t finished ›
       </Text>
@@ -134,13 +138,13 @@ export function MyOpenBuy() {
 }
 
 /** Small buttons for a driver's own van on the Vans tab. */
-export function BuyButtons({ v, onMarker }: { v: Vehicle; onMarker?: boolean }) {
+export function BuyButtons({ v }: { v: Vehicle }) {
   const s = useSession();
   if (s.mode !== 'firebase' || v.retired) return null;
   const start = (kind: BuyKind) => router.push({ pathname: '/buy/[id]', params: { id: 'new', van: v.id, kind } });
   return (
     <>
-      {v.fuel !== 'electric' ? <Button small title="Refuel" onPress={() => start('fuel')} style={onMarker ? { borderColor: '#000' } : undefined} /> : null}
+      {v.fuel !== 'electric' ? <Button small title="Refuel" onPress={() => start('fuel')} /> : null}
       <Button small title="Wash" onPress={() => start('wash')} />
     </>
   );

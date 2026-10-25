@@ -145,10 +145,25 @@ How far to trust it (also on the screen):
 in missing ones with `syncDamageLog`): how many new damages the check found, and the drivers who had the van
 between the walk-around before and the one it was found in. That is who had the van, not proof of who caused it.
 
+### Refuels, washes and parts
+
+`orgs/{org}/purchases/{id}`, written only by the server, one per attempt (finished, refused, cancelled or never
+finished), never deleted. Kept: the van, who, when, the dashboard photo and what was read from it (odometer, fuel
+gauge), the fuel card check (the result, the last 4 digits and the issuer; **never the card photo or the full
+number**, since a driver might photograph their own bank card), the manager's answer when the card wasn't the
+van's, the receipt photo and what was on it (station, date, items, litres, total, the card's last digits),
+photos of parts and why they were needed, the confirmed numbers, which numbers were typed in by hand, and the
+flags for the manager. The van's odometer in its record follows the confirmed reading (only ever up). A refuel
+during a tour fills in the tour's "did you refuel" answer with the receipt's litres.
+
+Who sees them: owners all, managers their station's (they see the amounts: they allow or refuse them), drivers
+their own. Money on receipts is a running cost; the van's fixed costs stay in `vehicleCosts`, owners only.
+
 ### The Data tab (owners and managers)
 
 Drivers, tours and vans as tables for 7 days, 30 days, 90 days or this year, per station; sorted by any column,
-with totals. Download for Excel makes an .xlsx with the three sheets (filters on the header row).
+with totals, and every refuel, wash and parts purchase. Download for Excel makes an .xlsx with the four sheets
+(filters on the header row).
 
 - Drivers: tours, days with a van, km, km and hours per tour, l/100 km and kWh/100 km, against the others on the
   same van, vans driven, new damage (and damage while nobody else had the van, per 10,000 km), tours without the
@@ -158,6 +173,8 @@ with totals. Download for Excel makes an .xlsx with the three sheets (filters on
 - Vans: plate, model, fuel, odometer, km in the period, tours, drivers, per 100 km, against the same model (a van
   using more may need the workshop), new damage, warning lights, the next deadline; for owners the monthly rate
   and what it comes to per kilometre.
+- Fuel, wash: when, what, van, by, status, litres, total, € per litre, odometer, the fuel card check, what to
+  check, where, and why (parts). Totals count only finished ones.
 - **Who was driving?** Pick a van, a day and a time: the van history says who had it (for traffic fines and
   complaints that arrive days later).
 
@@ -175,7 +192,10 @@ the works council where there is one. A deletion period for the records of peopl
 
 ## Later
 
-- **Fuel card import**: real litres and euros per van and driver from the fuel card provider, instead of the gauge.
+- **Fuel card import**: the provider's own list of transactions per card, to match against the receipts in the app
+  (a fill-up that's on the card statement but not in the app is the one to ask about).
+- **Consumption from receipts**: litres refuelled between two odometer readings, per van (more accurate than the
+  gauge over a month); the receipts are now recorded, the calculation isn't built yet.
 - **Amazon's own driving data**: where a DSP gets safety scores per driver, importing them measures driving
   behaviour directly (fuel use only hints at it).
 - **Documents kept on the van** (registration certificate, insurance card) and PDFs: today a document photo only fills in the record and is deleted.

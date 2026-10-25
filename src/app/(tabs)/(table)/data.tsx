@@ -271,7 +271,7 @@ function buyCols(c: C, station: boolean, stationName: (id: string | null) => str
   const card = (p: Purchase) => (p.kind === 'parts' ? '' : !p.card?.needed ? 'none on record' : p.card.result === 'match' ? 'the van\'s'
     : p.card.result ? `${p.card.result === 'missing' ? 'no card' : p.card.result === 'unclear' ? 'not read' : 'wrong card'}${p.decision ? (p.decision.allow ? ', allowed' : ', refused') : ''}` : '');
   const cols: Col<Purchase>[] = [
-    { key: 'date', label: 'When', width: 116, align: 'left', get: (p) => p.createdAt, text: (p) => fmtWhen(p.createdAt) },
+    { key: 'date', label: 'When', width: 140, align: 'left', get: (p) => p.createdAt, text: (p) => fmtWhen(p.createdAt) },
     { key: 'kind', label: 'What', width: 70, align: 'left', get: (p) => BUY_NAME[p.kind] },
     { key: 'van', label: 'Van', width: 120, align: 'left', get: (p) => p.vehicleName },
     { key: 'by', label: 'By', width: 130, align: 'left', get: (p) => p.byName },

@@ -38,7 +38,7 @@ export default function TabsLayout() {
   // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
     // Drivers stopped at the pump, waiting for an answer.
-    + (staff ? s.purchases.filter((p) => p.status === 'waiting' && s.runs(p.stationId)).length : 0)
+    + (staff ? s.purchases.filter((p) => p.status === 'waiting' && s.runs(p.stationId) && p.by !== s.user?.uid).length : 0)
     + (staff ? missingHandovers(s.assignments.filter((a) => s.runs(a.stationId)), s.videos, s.walks, s.stations, Date.now() - 7 * 86400_000).length : 0)
     // Deadlines that are overdue or due within a week (inspections, service, tax, insurance, contract end).
     + (staff ? fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details).filter((d) => pressing(d.x)).length : 0)

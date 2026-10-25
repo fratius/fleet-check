@@ -383,13 +383,16 @@ function Summary({ p }: { p: Purchase }) {
   };
   const decide = (allow: boolean) => act(allow ? 'Allowing…' : 'Refusing…', () => ai.buy.decide({ orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() }));
   const ownAsk = p.by === s.user?.uid && s.role !== 'owner';
-  const facts: [string, string][] = [
-    ['Odometer', p.odometerKm != null ? kmText(p.odometerKm) : p.dash.ai?.odometerKm != null ? `${kmText(p.dash.ai.odometerKm)} (read, not confirmed)` : '–'],
-    ...(p.kind === 'fuel' ? [['Litres', litresText(p.litres) || '–'] as [string, string], ['Gauge before', p.fuelPct != null ? `${Math.round(p.fuelPct)}%` : '–'] as [string, string]] : []),
-    ['Total', money(p.total, p.currency)],
-    ['Where', p.merchant || p.receipt?.ai.merchant || '–'],
-    ['Receipt', [p.receipt?.ai.date, p.receipt?.ai.time].filter(Boolean).join(' ') || '–'],
-  ];
+  // Finished: what was confirmed. Not finished: only what the AI read from the dashboard photo so far.
+  const done = p.status === 'done';
+  const facts = ([
+    ['Odometer', done ? (p.odometerKm != null ? kmText(p.odometerKm) : '') : p.dash.ai?.odometerKm != null ? `${kmText(p.dash.ai.odometerKm)} (read)` : ''],
+    ['Fuel gauge before', p.kind !== 'fuel' ? '' : done ? (p.fuelPct != null ? `${Math.round(p.fuelPct)}%` : '') : p.dash.ai?.fuelPct != null ? `${Math.round(p.dash.ai.fuelPct)}% (read)` : ''],
+    ['Litres', p.kind === 'fuel' && done ? litresText(p.litres) : ''],
+    ['Total', done ? money(p.total, p.currency) : ''],
+    ['Where', done ? p.merchant || p.receipt?.ai.merchant || '' : ''],
+    ['Receipt', done ? [p.receipt?.ai.date, p.receipt?.ai.time].filter(Boolean).join(' ') : ''],
+  ] as [string, string][]).filter(([, v]) => v);
   return (
     <>
       <View style={{ gap: 6 }}>
@@ -423,7 +426,7 @@ function Summary({ p }: { p: Purchase }) {
         </View>
       ) : null}
 
-      <Card>
+      {facts.length ? <Card>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
           {facts.map(([k, v]) => (
             <View key={k} style={{ width: '50%', paddingRight: 8, gap: 1 }}>
@@ -432,7 +435,7 @@ function Summary({ p }: { p: Purchase }) {
             </View>
           ))}
         </View>
-      </Card>
+      </Card> : null}
 
       <Card>
         <T v="h3">What happened</T>
@@ -480,7 +483,7 @@ function Line({ when, text }: { when: number | null | undefined; text: string })
   const c = useColors();
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
-      <Text style={{ width: 92, fontFamily: F.medium, fontSize: 13, lineHeight: 20, color: c.ink2 }}>{when ? fmtWhen(when) : ''}</Text>
+      <Text style={{ width: 104, fontFamily: F.medium, fontSize: 13, lineHeight: 20, color: c.ink2 }}>{when ? fmtWhen(when) : ''}</Text>
       <T v="body" style={{ flex: 1 }}>{text}</T>
     </View>
   );

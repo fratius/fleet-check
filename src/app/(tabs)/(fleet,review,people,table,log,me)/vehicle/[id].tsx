@@ -10,7 +10,7 @@ import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, TourLine } from '@/components/dash';
-import { BuyActions, BuyRow } from '@/components/buy';
+import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { isOpen } from '@/lib/stats';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
@@ -119,6 +119,8 @@ export default function VehicleScreen() {
       <Stack.Screen options={{ title: v.name }} />
       {/* A van a manager just gave this driver: the pick-up video or photos come first (the notification opens here). */}
       {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : <TourCard v={v} />}
+      {/* A refuel left half done, or (staff) a driver waiting at the pump for an answer. */}
+      <BuyNow v={v} />
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
         <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
@@ -150,7 +152,7 @@ export default function VehicleScreen() {
             : `${frames.length} photos for this ${CLS[v.cls].lower}, about ${est} min. The camera shows the outline to fit for each one.`} />
         </View>
       )}
-      {/* Refuel, wash and (owners and managers) parts; a driver stopped at the pump comes first for the station's staff. */}
+      {/* Refuel, wash and (owners and the station's managers) parts. */}
       <BuyActions v={v} />
 
       {s.mode === 'firebase' && !v.retired ? (

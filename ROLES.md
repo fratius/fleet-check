@@ -23,16 +23,20 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
 2. **Fleet owner** (member role `owner`; `admin` is its old name). Owns one or more companies (DSPs).
    Sees all stations of their company. Adds and removes stations, fleet managers, drivers and vans; moves people
    and vans between stations; picks the AI model; can review damage at any station. Turns dashboard photos on or
-   off and sets how often licences are checked. **The only role that sees what vans cost.**
+   off and sets how often licences are checked. **The only role that sees what vans cost** (lease, purchase price,
+   insurance); running costs on receipts (fuel, washes, parts) are seen by the station's managers too, since they
+   allow or refuse them.
 3. **Fleet manager** (role `manager`). Same powers as the owner, limited to their station (operating area) and
    its drivers: adds, edits and removes vans there, invites and removes drivers there. Cannot add stations or
    managers. **Has the final word on damage**: approves or rejects every spot the AI found, adds damage it
-   missed, finishes the review. Approved damage goes on the van's damage record.
+   missed, finishes the review. Approved damage goes on the van's damage record. **Allows or refuses a refuel or
+   wash when the fuel card isn't the van's** (never their own), and buys parts for their station's vans.
 4. **Driver** (role `driver`). Scans: sees the vans of their station, does walk-arounds, runs the AI damage
    check and takes close-ups at the van, then sends the check to the manager. Where the station allows it, picks
    up and drops off vans themselves (see below). Where the owner turned dashboard photos on, photographs the
-   dashboard at the start and end of each tour. Reads their own record, tours and incidents. Cannot change vans,
-   people, records or reviews.
+   dashboard at the start and end of each tour. Refuels and washes the vans of their station (dashboard photo, the
+   van's fuel card checked from a photo, the receipt). Reads their own record, tours, incidents and refuels. Cannot
+   change vans, people, records or reviews, cannot buy parts, and cannot allow their own refuel.
 
 ## How it is built
 
@@ -118,8 +122,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 - `tests/rules.test.mjs`: what each role can read and write, including that nobody writes history.
 - `tests/history.test.mjs`: the whole flow on the emulators (sign-in, rules, functions, storage): assigning,
   reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, driver
-  records and licence checks, tours from dashboard photos, the damage log, moving costs, and the demo logins.
-  Deploy stops if either fails.
+  records and licence checks, tours from dashboard photos, the damage log, refuels with the card check and the
+  manager's answer, moving costs, and the demo logins. Deploy stops if either fails.
 
 ## Van and driver records (FLEET_DATA.md)
 
@@ -132,6 +136,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | Incidents `incidents` | read, add, correct | read, add, correct | their own, read only | the app; never deleted |
 | Tours `tours`, readings `readings` | read | read | their own | the server only |
 | Damage log `damageLog` | read | read | the ones they're in | the server only |
+| Refuels, washes, parts `purchases` | read | read | their own | the server only; never deleted |
+| What the AI read from dashboard, card and receipt `buyReads` | no | no | no | the server; app creator reads |
 | What the AI read first `dashReads` | no | no | no | the server; app creator reads |
 | Documents read from a photo `docReads` (kind, count, cost; no values) | no | no | no | the server; app creator reads |
 
@@ -151,6 +157,16 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   `saveReading` check all of it; the odometer can't go down and big jumps need a confirmation.
 - **Filling in from a document photo** (`readDocument`): owners and the managers of the van's or driver's station;
   costs are only read for owners; the photos are deleted after reading; nothing is saved until the person confirms.
+- **Refuel, wash and parts** (the `purchase` function, one record per attempt in `orgs/{org}/purchases`, kept
+  whether it finished, was refused or was given up). Anyone at the van's station refuels (not electric vans) and
+  washes; parts only owners and the station's managers. Each starts with a dashboard photo. Refuel and wash then
+  check the van's fuel card (the last digits in `vehicleDetails.fuelCard`) from a photo: the photo is deleted
+  straight away and only the last 4 digits are kept. A card that isn't the van's, or none, stops the driver: the
+  station's managers (or the owners where there is none) get a notification and allow or refuse it; nobody allows
+  their own (owners excepted). Then the receipt; the AI reads it, the person confirms, and the managers get a
+  notification with the details and what looks wrong (flags: more litres than the tank had room for, another card
+  on the receipt, an old receipt, the wrong fuel, numbers typed over the receipt). Flags never block. Parts need a
+  note saying why, and the owners get the notification.
 - Deadlines (vans and drivers), warning lights and tours without their photos show to owners and managers only:
   on the van or person, in the fleet list, and in Review.
 

@@ -1553,7 +1553,7 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const corrected = (Object.keys(vals) as (keyof typeof vals)[]).filter((k) => (k !== 'fuelPct' || p.kind === 'fuel') && (k !== 'litres' || p.kind === 'fuel') && (ai[k] ?? null) !== vals[k]);
   const flags: Flag[] = purchaseFlags({
     kind: p.kind, byName: p.byName, vanFuel: p.vanFuel, tankL: p.tankL, fuelPct: vals.fuelPct, odometerKm: vals.odometerKm, lastKm: p.lastKm,
-    litres: vals.litres, createdAt: p.createdAt, vanDriverName: p.vanDriverName, notTheirVan: p.notTheirVan,
+    litres: vals.litres, total: vals.total, createdAt: p.createdAt, vanDriverName: p.vanDriverName, notTheirVan: p.notTheirVan,
     card: p.card.needed ? { needed: true, expected: p.card.expected, result: p.card.result, expired: p.card.expired, plate: p.card.read?.plate || null } : null,
     vanPlate: p.plate, decision: p.decision ? { allow: p.decision.allow, byName: p.decision.byName } : null, receipt: p.receipt.ai,
   });

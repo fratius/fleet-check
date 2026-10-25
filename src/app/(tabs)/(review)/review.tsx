@@ -49,7 +49,7 @@ export default function ReviewQueue() {
   const pdue = peopleDue(s.records.filter((r) => s.runs(r.stationId)), members, s.org?.licenceCheckMonths || CHECK_MONTHS, Date.now(), known);
   // Drivers stopped at the pump (not the van's fuel card, or none), oldest first; and the last week's refuels,
   // washes and parts, the ones to check first.
-  const pump = s.purchases.filter((p) => p.status === 'waiting' && s.runs(p.stationId)).sort((a, b) => (a.card.at || a.createdAt) - (b.card.at || b.createdAt));
+  const pump = s.purchases.filter((p) => p.status === 'waiting' && s.runs(p.stationId) && p.by !== s.user?.uid).sort((a, b) => (a.card.at || a.createdAt) - (b.card.at || b.createdAt));
   const weekAgo = Date.now() - 7 * 86400_000;
   const buys = s.purchases.filter((p) => p.status !== 'waiting' && s.runs(p.stationId) && p.createdAt > weekAgo && (p.status !== 'open' || Date.now() - p.createdAt > 6 * 3600_000))
     .sort((a, b) => (b.flags?.length ? 1 : 0) - (a.flags?.length ? 1 : 0) || b.createdAt - a.createdAt);

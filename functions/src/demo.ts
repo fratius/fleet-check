@@ -586,7 +586,7 @@ async function demoBuys(org: FirebaseFirestore.DocumentReference, orgId: string,
     const decision = m.decision ? { allow: m.decision.allow, by: m.decision.by.id, byName: m.decision.by.name, at: cardAt + 6 * 60_000, note: m.decision.note } : null;
     const card = { needed: !!expected && m.kind !== 'parts', expected, result: expected ? m.card : null, read: expected ? read : null, tries: 1, why: expected ? why : null, expired: false, at: expected ? cardAt : null };
     const flags = m.status === 'done' ? purchaseFlags({
-      kind: m.kind, byName: m.by.name, vanFuel: 'diesel', tankL: m.tank ?? null, fuelPct: m.fuelPct, odometerKm: m.odo, lastKm: null, litres: m.litres, createdAt: m.at,
+      kind: m.kind, byName: m.by.name, vanFuel: 'diesel', tankL: m.tank ?? null, fuelPct: m.fuelPct, odometerKm: m.odo, lastKm: null, litres: m.litres, total: m.total, createdAt: m.at,
       vanDriverName: null, notTheirVan: false, card: card.needed ? { needed: true, expected, result: card.result, expired: false, plate: null } : null, vanPlate: m.van.plate,
       decision: decision ? { allow: decision.allow, byName: decision.byName } : null, receipt,
     }) : [];
