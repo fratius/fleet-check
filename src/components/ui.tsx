@@ -9,6 +9,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 
 import { photoUrl } from '@/lib/images';
+import { loc } from '@/lib/i18n';
 
 export const MARKER = '#E2FF1C';
 const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00', warn: '#D9480F' };
@@ -218,7 +219,7 @@ export function usd(v: number | null | undefined) {
 export function fmtWhen(ms?: number | null) {
   if (!ms) return '';
   const d = new Date(ms);
-  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + ', ' + d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' });
 }
 export const cap = (s: string | null | undefined) => { const t = String(s || ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 

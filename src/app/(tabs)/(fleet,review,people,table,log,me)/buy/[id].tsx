@@ -10,6 +10,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * Refuel, wash or buy parts for a van, step by step, and afterwards the record of it. At the pump only the card check
@@ -464,7 +465,7 @@ function Summary({ p }: { p: Purchase }) {
           <T v="h3">On the receipt</T>
           {p.receipt.ai.items.map((i, k) => (
             <Row key={k} style={{ flexWrap: 'nowrap' }}>
-              <T v="body" style={{ flex: 1 }}>{i.description}{i.quantity != null && i.unit ? `, ${i.quantity.toLocaleString()} ${i.unit}` : ''}</T>
+              <T v="body" style={{ flex: 1 }}>{i.description}{i.quantity != null && i.unit ? `, ${i.quantity.toLocaleString(loc())} ${i.unit}` : ''}</T>
               <T v="medium">{i.total != null ? money(i.total, p.receipt!.ai.currency) : ''}</T>
             </Row>
           ))}

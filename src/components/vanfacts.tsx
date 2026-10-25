@@ -7,6 +7,7 @@ import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, h
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import type { Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * The van's record, organised like the papers that come with a van: what it is, its size, what to do when
@@ -96,7 +97,7 @@ export function show(f: FieldSpec, x: unknown): string {
   if (!filled(x)) return '';
   const n = typeof x === 'number' ? x : null;
   switch (f.kind) {
-    case 'num': return `${f.plain ? String(n) : n!.toLocaleString(undefined, { maximumFractionDigits: f.digits ?? 0 })}${f.unit ? ' ' + f.unit : ''}`;
+    case 'num': return `${f.plain ? String(n) : n!.toLocaleString(loc(), { maximumFractionDigits: f.digits ?? 0 })}${f.unit ? ' ' + f.unit : ''}`;
     case 'eur': return eur(n, f.digits ?? 0);
     case 'day': return fmtDay(String(x));
     case 'month': return fmtDay(String(x), true);
@@ -307,7 +308,7 @@ export function VanRecord({ v }: { v: Vehicle }) {
           <FactSection title="Deadlines" note="Due dates show on the van, in the fleet list and in Review." fields={DUE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz}
             empty="Main inspection, safety check, service, tyres and tax." />
           <FactSection title="Fuel card and notes" fields={OTHER} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty="The van's fuel or charging card and anything else to remember." />
-          {d?.updatedAt ? <T v="small">Last changed {new Date(d.updatedAt).toLocaleDateString()}{d.updatedByName ? ` by ${d.updatedByName}` : ''}.</T> : null}
+          {d?.updatedAt ? <T v="small">Last changed {new Date(d.updatedAt).toLocaleDateString(loc())}{d.updatedByName ? ` by ${d.updatedByName}` : ''}.</T> : null}
         </>
       ) : null}
     </View>

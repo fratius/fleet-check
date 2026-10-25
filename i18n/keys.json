@@ -1,0 +1,40 @@
+[
+ {
+  "key": "as on the phone",
+  "where": [
+   "src/components/language.tsx:54"
+  ]
+ },
+ {
+  "key": "Change language",
+  "where": [
+   "src/components/language.tsx:55"
+  ]
+ },
+ {
+  "key": "Close",
+  "where": [
+   "src/components/language.tsx:35"
+  ]
+ },
+ {
+  "key": "Language",
+  "where": [
+   "src/components/language.tsx:34",
+   "src/components/language.tsx:53",
+   "src/components/language.tsx:69"
+  ]
+ },
+ {
+  "key": "Same as the phone",
+  "where": [
+   "src/components/language.tsx:38"
+  ]
+ },
+ {
+  "key": "Your notifications come in this language too. Names, notes and what the AI wrote stay as they were written.",
+  "where": [
+   "src/components/language.tsx:56"
+  ]
+ }
+]

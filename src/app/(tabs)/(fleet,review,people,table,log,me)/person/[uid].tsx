@@ -15,6 +15,7 @@ import { watchMember } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { driverRows } from '@/lib/stats';
 import { ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * One person, in three parts under their details and the van they have now: their record (licence and checks,
@@ -158,7 +159,7 @@ function Numbers({ uid, member, data, history }: { uid: string; member: Member |
       {!s.org?.dashScans && !tours.length ? <Notice text="Tours come from dashboard photos at the start and end of each tour. The owner turns them on in the Account tab." /> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper }}>
         <Num value={String(row?.tours ?? 0)} label="tours" />
-        <Num value={row ? Math.round(row.km).toLocaleString() : '0'} label="km" />
+        <Num value={row ? Math.round(row.km).toLocaleString(loc()) : '0'} label="km" />
         <Num value={row?.diesel != null ? per100Text(row.diesel, 'l').replace('/100 km', '') : row?.electric != null ? per100Text(row.electric, 'kwh').replace('/100 km', '') : '–'} label="per 100 km" />
         <Num value={pct(row?.vsModel ?? null)} label="vs others, same van" tone={row?.vsModel != null && row.vsModel > 0.08 ? c.alert : undefined} />
         <Num value={String(row?.damage ?? 0)} label="new damage while they had the van" />

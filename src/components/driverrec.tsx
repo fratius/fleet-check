@@ -9,6 +9,7 @@ import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
 import { AiError, ai } from '@/lib/store';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * A driver's record: licence and licence checks, employment, briefings, emergency contact, notes and incidents.
@@ -73,7 +74,7 @@ export function DriverRecordView({ m, incidents }: { m: Member; incidents: Incid
       <FactSection title="Emergency contact" fields={EMERGENCY} values={values} canEdit={canEdit} onSave={save} empty="Who to call after an accident." />
       {!me ? <FactSection title="Notes" fields={NOTES} values={values} canEdit={canEdit} onSave={save} empty="Anything else to remember about working with them." /> : null}
       <Incidents m={m} incidents={incidents} canAdd={canEdit} />
-      {rec?.updatedAt && !me ? <T v="small">Last changed {new Date(rec.updatedAt).toLocaleDateString()}{rec.updatedByName ? ` by ${rec.updatedByName}` : ''}.</T> : null}
+      {rec?.updatedAt && !me ? <T v="small">Last changed {new Date(rec.updatedAt).toLocaleDateString(loc())}{rec.updatedByName ? ` by ${rec.updatedByName}` : ''}.</T> : null}
     </View>
   );
 }

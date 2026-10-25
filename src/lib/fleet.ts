@@ -1,4 +1,5 @@
 import type { DriverRecord, Employment, Member, Vehicle, VehicleDetails } from './types';
+import { loc } from '@/lib/i18n';
 
 /**
  * The fleet records of a van: what its fields mean, its deadlines and its mileage against the contract.
@@ -26,7 +27,7 @@ export function fmtDay(day: string | null | undefined, month = false): string {
   if (!day) return '';
   const [y, m, d] = day.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
-  return dt.toLocaleDateString(undefined, month ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short', year: 'numeric' });
+  return dt.toLocaleDateString(loc(), month ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short', year: 'numeric' });
 }
 /** Whole days from today to that day (negative when it's past). */
 export function daysTo(day: string, now = Date.now()): number {
@@ -93,8 +94,8 @@ export function fleetDue(vans: Vehicle[], details: VehicleDetails[], now = Date.
 /** What counts on the Review badge: overdue, or due within a week. */
 export const pressing = (x: Deadline) => x.state === 'overdue' || (x.days != null && x.days <= 7);
 
-export const km = (n: number) => `${Math.round(n).toLocaleString()} km`;
-export const eur = (n: number | null | undefined, digits = 0) => (n == null ? '' : `€${n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`);
+export const km = (n: number) => `${Math.round(n).toLocaleString(loc())} km`;
+export const eur = (n: number | null | undefined, digits = 0) => (n == null ? '' : `€${n.toLocaleString(loc(), { minimumFractionDigits: digits, maximumFractionDigits: digits })}`);
 
 /**
  * How the van is driven against its mileage allowance: kilometres a year at the current pace (from the contract

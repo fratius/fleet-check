@@ -5,6 +5,7 @@ import { dur } from '@/components/history';
 import { Button, F, MARKER, Pill, Row, T, fmtWhen, useColors, type PillV } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import type { BuyKind, Purchase, Vehicle } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * Refuelling, washing and parts bought for a van. Anyone at the van's station refuels and washes it; owners and the
@@ -17,8 +18,8 @@ export const BUY_NOUN: Record<BuyKind, string> = { fuel: 'refuel', wash: 'wash',
 
 /** "€79.10" (or "PLN 120.00"). */
 export const money = (n: number | null | undefined, cur?: string | null) =>
-  (n == null ? '–' : `${cur && cur !== 'EUR' ? cur + ' ' : '€'}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-export const litresText = (n: number | null | undefined) => (n == null ? '' : `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} l`);
+  (n == null ? '–' : `${cur && cur !== 'EUR' ? cur + ' ' : '€'}${n.toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+export const litresText = (n: number | null | undefined) => (n == null ? '' : `${n.toLocaleString(loc(), { maximumFractionDigits: 2 })} l`);
 
 /** Not finished after this long: the driver gave up or forgot. */
 export const STALE_BUY = 6 * 3600_000;
@@ -56,7 +57,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
         {amount ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{amount}</Text> : null}
       </Row>
       <Row gap={6}>
-        <T v="small" style={{ flexShrink: 1 }}>{[fmtWhen(p.createdAt), p.odometerKm != null ? `${p.odometerKm.toLocaleString()} km` : '', p.merchant || ''].filter(Boolean).join(', ')}</T>
+        <T v="small" style={{ flexShrink: 1 }}>{[fmtWhen(p.createdAt), p.odometerKm != null ? `${p.odometerKm.toLocaleString(loc())} km` : '', p.merchant || ''].filter(Boolean).join(', ')}</T>
         {st.text !== 'Done' ? <Pill v={st.v} text={st.text} /> : null}
       </Row>
       {p.status === 'done' && p.flags?.length ? <T v="small" color={c.amber}>{p.flags.map((f) => f.text).join(' ')}</T> : null}

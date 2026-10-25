@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColors } from '@/components/ui';
 import '@/lib/install';
+import { LanguageProvider } from '@/lib/lang';
 import { SessionProvider, useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -49,9 +50,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={c.dark ? { ...DarkTheme, colors: { ...DarkTheme.colors, background: c.page } } : { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: c.page } }}>
         <StatusBar style={c.dark ? 'light' : 'dark'} />
-        <SessionProvider>
-          <Routes />
-        </SessionProvider>
+        <LanguageProvider>
+          <SessionProvider>
+            <Routes />
+          </SessionProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

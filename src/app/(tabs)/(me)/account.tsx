@@ -10,6 +10,7 @@ import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useC
 import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 export default function Account() {
   const s = useSession();
@@ -217,7 +218,7 @@ function FleetSettings() {
         <T v="small">
           {on ? 'Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.'
             : 'When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.'}
-          {s.org?.dashScansBy ? ` Changed by ${s.org.dashScansBy}${s.org.dashScansAt ? `, ${new Date(s.org.dashScansAt).toLocaleDateString()}` : ''}.` : ''}
+          {s.org?.dashScansBy ? ` Changed by ${s.org.dashScansBy}${s.org.dashScansAt ? `, ${new Date(s.org.dashScansAt).toLocaleDateString(loc())}` : ''}.` : ''}
         </T>
         {owner && !on ? <T v="small" color={c.amber}>Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.</T> : null}
       </View>
@@ -237,7 +238,7 @@ function versionLine() {
   const b = (Constants.expoConfig?.extra as { build?: { sha?: string; at?: string } } | undefined)?.build;
   const at = b?.at ? new Date(b.at) : null;
   const when = at && !Number.isNaN(at.getTime())
-    ? `${at.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, ${at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : '';
+    ? `${at.toLocaleDateString(loc(), { day: 'numeric', month: 'short' })}, ${at.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' })}` : '';
   const where = Platform.OS === 'web' ? 'web app' : Constants.appOwnership === 'expo' ? 'Expo Go' : 'phone app';
   return `Fleet Check ${Constants.expoConfig?.version || ''}, version ${b?.sha || 'unknown'}${when ? ` of ${when}` : ''}, ${where}`;
 }

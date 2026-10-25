@@ -11,6 +11,7 @@ import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
+import { loc } from '@/lib/i18n';
 
 /**
  * Tours from dashboard photos (where the owner turned them on): the driver photographs the dashboard when the tour
@@ -22,10 +23,10 @@ import type { DashValues, Tour, Vehicle } from '@/lib/types';
 const EIGHTHS: [number, string][] = [[0, 'Empty'], [12.5, '1/8'], [25, '1/4'], [37.5, '3/8'], [50, '1/2'], [62.5, '5/8'], [75, '3/4'], [87.5, '7/8'], [100, 'Full']];
 const num = (t: string) => { const s = t.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); return s ? Number(s) : null; };
 const show = (n: number | null | undefined) => (n == null ? '' : String(n).replace('.', ','));
-export const kmText = (n: number | null | undefined) => (n == null ? '–' : `${Math.round(n).toLocaleString()} km`);
+export const kmText = (n: number | null | undefined) => (n == null ? '–' : `${Math.round(n).toLocaleString(loc())} km`);
 /** "10.4 l/100 km" or "29.0 kWh/100 km". */
 export const per100Text = (v: number | null | undefined, unit: 'l' | 'kwh' | null | undefined) =>
-  (v == null ? '–' : `${v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit === 'kwh' ? 'kWh' : 'l'}/100 km`);
+  (v == null ? '–' : `${v.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit === 'kwh' ? 'kWh' : 'l'}/100 km`);
 
 /** Takes the dashboard photo with the camera (on the web: the phone's camera through the browser). */
 export async function takePhoto(): Promise<{ uri: string; w: number; h: number } | null> {
@@ -232,7 +233,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
 function savedText(role: 'start' | 'end' | 'none', t: Tour | null, km: number) {
   if (role === 'start') return `Tour started at ${kmText(km)}. Take the end photo when you're back.`;
   if (role === 'end' && t) {
-    return [`Tour ended: ${kmText(t.km)}`, t.hours != null ? `in ${t.hours.toLocaleString()} h` : '', t.per100 != null ? per100Text(t.per100, t.unit) : ''].filter(Boolean).join(', ') + '.';
+    return [`Tour ended: ${kmText(t.km)}`, t.hours != null ? `in ${t.hours.toLocaleString(loc())} h` : '', t.per100 != null ? per100Text(t.per100, t.unit) : ''].filter(Boolean).join(', ') + '.';
   }
   return `Odometer saved: ${kmText(km)}.`;
 }
@@ -247,7 +248,7 @@ export function TourLine({ t, show: who }: { t: Tour; show: 'driver' | 'van' }) 
         <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? t.driverName : t.vehicleName}</T>
         <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? 'On tour' : kmText(t.km)}</Text>
       </Row>
-      <T v="small">{[fmtWhen(t.startAt), t.end ? `to ${new Date(t.end.at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : '',
+      <T v="small">{[fmtWhen(t.startAt), t.end ? `to ${new Date(t.end.at).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' })}` : '',
         t.per100 != null ? per100Text(t.per100, t.unit) : '', t.endedHow === 'next' ? 'no end photo (estimated)' : t.endedHow === 'none' ? 'no end photo' : '',
         t.warnings?.length ? `warning: ${t.warnings.join(', ')}` : ''].filter(Boolean).join(', ')}</T>
     </View>

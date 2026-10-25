@@ -3,6 +3,7 @@ import { Pressable, View, useWindowDimensions } from 'react-native';
 
 import { Svg, T, useColors } from '@/components/ui';
 import { buildFrames, frameThumbSVG, mapSVG, type Spec } from '@/lib/frames';
+import { loc } from '@/lib/i18n';
 
 /** Walk-around map plus the numbered frame outlines, folded away until opened. */
 export function FramesPanel({ sp, title }: { sp: Spec; title: string }) {
@@ -32,7 +33,7 @@ export function FramesPanel({ sp, title }: { sp: Spec; title: string }) {
               <View style={{ flex: 1, gap: 4 }}>
                 <T v="h3">{f.n}. {f.label}</T>
                 <T v="hint">{f.hint}</T>
-                <T v="medium" style={{ fontSize: 14 }}>About {f.dist.toLocaleString(undefined, { maximumFractionDigits: 1 })} m away</T>
+                <T v="medium" style={{ fontSize: 14 }}>About {f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 })} m away</T>
               </View>
             </View>
           ))}

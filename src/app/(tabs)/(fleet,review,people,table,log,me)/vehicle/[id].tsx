@@ -23,6 +23,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
+import { loc } from '@/lib/i18n';
 
 export default function VehicleScreen() {
   const { id, tab: openTab } = useLocalSearchParams<{ id: string; tab?: string }>();
@@ -129,7 +130,7 @@ export default function VehicleScreen() {
         <T v="h1">{v.name}</T>
         <Row><Plate text={v.plate} /><T v="hint">{CLS[v.cls].name}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}{s.stations.length > 1 ? ', ' + s.stationName(v.stationId) : ''}</T></Row>
         <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={p} />)}</Row>
-        {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: 'Diesel', electric: 'Electric', petrol: 'Petrol', hybrid: 'Hybrid', cng: 'Gas' }[v.fuel] : '', v.heightM ? `${v.heightM.toLocaleString(undefined, { maximumFractionDigits: 2 })} m high` : ''].filter(Boolean).join(', ')}</T> : null}
+        {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: 'Diesel', electric: 'Electric', petrol: 'Petrol', hybrid: 'Hybrid', cng: 'Gas' }[v.fuel] : '', v.heightM ? `${v.heightM.toLocaleString(loc(), { maximumFractionDigits: 2 })} m high` : ''].filter(Boolean).join(', ')}</T> : null}
       </View>
 
       {done ? <Notice text={done} /> : null}

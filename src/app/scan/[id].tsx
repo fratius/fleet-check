@@ -12,6 +12,7 @@ import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
 import { AiError, ai } from '@/lib/store';
 import { saveWalk, type LocalShot } from '@/lib/walks';
+import { loc } from '@/lib/i18n';
 
 type Slot = LocalShot | 'skip' | null;
 
@@ -257,7 +258,7 @@ export default function ScanScreen() {
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: 196 }}>
         {camErr ? <Text style={[st.hint, { color: '#FF8A80' }]}>{camErr}</Text> : null}
         <Text style={st.hint}>
-          {phase === 'review' ? 'Does the vehicle line up with the outline?' : <><Text style={{ color: MARKER, fontFamily: F.semi }}>Fit the vehicle to the outline. </Text>About {f.dist.toLocaleString(undefined, { maximumFractionDigits: 1 })} m away. {f.hint}</>}
+          {phase === 'review' ? 'Does the vehicle line up with the outline?' : <><Text style={{ color: MARKER, fontFamily: F.semi }}>Fit the vehicle to the outline. </Text>About {f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 })} m away. {f.hint}</>}
         </Text>
         {phase === 'review' ? (
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>

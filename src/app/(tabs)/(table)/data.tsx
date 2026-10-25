@@ -12,6 +12,7 @@ import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Input
 import type { Member, Purchase, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
+import { loc } from '@/lib/i18n';
 
 /**
  * The fleet in numbers, like a spreadsheet: drivers, tours and vans for a period, sortable by any column, with a
@@ -22,11 +23,11 @@ type Period = '7' | '30' | '90' | 'year';
 type View3 = 'drivers' | 'tours' | 'vans' | 'buys';
 const PERIODS: [Period, string][] = [['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['year', 'This year']];
 
-const int = (n: number | null | undefined) => (n == null ? '' : Math.round(n).toLocaleString());
-const one = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
+const int = (n: number | null | undefined) => (n == null ? '' : Math.round(n).toLocaleString(loc()));
+const one = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 const pct = (n: number | null | undefined) => (n == null ? '' : `${n > 0 ? '+' : ''}${Math.round(n * 100)}%`);
-const eur2 = (n: number | null | undefined) => (n == null ? '' : `€${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-const time = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '');
+const eur2 = (n: number | null | undefined) => (n == null ? '' : `€${n.toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+const time = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) : '');
 const sum = <R,>(rows: R[], f: (r: R) => number | null | undefined) => rows.reduce((s, r) => s + (f(r) || 0), 0);
 
 export default function DataScreen() {

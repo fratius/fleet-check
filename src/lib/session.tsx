@@ -8,6 +8,7 @@ import { arrayUnion, collection, doc, getDoc, onSnapshot, setDoc, updateDoc } fr
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fb } from './firebase';
+import { useLang } from './lang';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
 import { roleOf, type Assignment, type Check, type Purchase, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
@@ -154,11 +155,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   /** Reads the person's companies and opens `want` (or the one they had open last). */
   // Several loads can overlap (sign-in, joining, switching); only the latest one may set the state.
   const loadSeq = useRef(0);
+  const langCtx = useLang();
+  const langRef = useRef(langCtx);
+  langRef.current = langCtx;
   const load = useCallback(async (u: User, want?: string) => {
     const f2 = fb()!;
     const my = ++loadSeq.current;
     const prof = await getDoc(doc(f2.db, 'users', u.uid));
-    const p = (prof.exists() ? prof.data() : {}) as { orgIds?: string[]; orgId?: string; viewAs?: unknown };
+    const p = (prof.exists() ? prof.data() : {}) as { orgIds?: string[]; orgId?: string; viewAs?: unknown; lang?: unknown; appLang?: unknown };
+    // The language on the profile follows the person to this phone.
+    langRef.current.fromProfile(u.uid, p);
     // The app creator viewing a company as someone else: only that company, with that role and station.
     const va = isCreator.current ? parseViewAs(p.viewAs) : null;
     if (va) {
