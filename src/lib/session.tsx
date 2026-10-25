@@ -8,6 +8,7 @@ import { arrayUnion, collection, doc, getDoc, onSnapshot, setDoc, updateDoc } fr
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fb } from './firebase';
+import { t } from './i18n';
 import { useLang } from './lang';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
@@ -105,16 +106,17 @@ export const useSession = () => {
 export function authMessage(e: unknown): string {
   const code = (e as { code?: string })?.code || '';
   switch (code) {
-    case 'auth/invalid-email': return 'That email address doesn\'t look right.';
-    case 'auth/missing-password': return 'Enter your password.';
-    case 'auth/weak-password': return 'Use at least 6 characters for the password.';
-    case 'auth/email-already-in-use': return 'An account with this email already exists. Sign in instead.';
-    case 'auth/invalid-credential': case 'auth/wrong-password': case 'auth/user-not-found': return 'Email or password is wrong.';
-    case 'auth/too-many-requests': return 'Too many attempts. Wait a minute, then try again.';
-    case 'auth/network-request-failed': return 'No connection. Check your internet and try again.';
-    case 'auth/operation-not-allowed': return 'Email sign-in isn\'t turned on in Firebase yet.';
-    case 'permission-denied': return (e as Error)?.message || 'You don\'t have access to that.';
-    default: return (e as Error)?.message || 'Something went wrong. Try again.';
+    case 'auth/invalid-email': return t('That email address doesn\'t look right.');
+    case 'auth/missing-password': return t('Enter your password.');
+    case 'auth/weak-password': return t('Use at least 6 characters for the password.');
+    case 'auth/email-already-in-use': return t('An account with this email already exists. Sign in instead.');
+    case 'auth/invalid-credential': case 'auth/wrong-password': case 'auth/user-not-found': return t('Email or password is wrong.');
+    case 'auth/too-many-requests': return t('Too many attempts. Wait a minute, then try again.');
+    case 'auth/network-request-failed': return t('No connection. Check your internet and try again.');
+    case 'auth/operation-not-allowed': return t('Email sign-in isn\'t turned on in Firebase yet.');
+    // Messages from the server and the app are written for people already; translated where the app has them.
+    case 'permission-denied': return (e as Error)?.message ? t((e as Error).message) : t('You don\'t have access to that.');
+    default: return (e as Error)?.message ? t((e as Error).message) : t('Something went wrong. Try again.');
   }
 }
 
@@ -238,7 +240,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const ref = doc(collection(f2.db, 'orgs'));
     await setDoc(ref, { name: company.trim().slice(0, 60), createdBy: u.uid, createdAt: Date.now(), stationsReady: true });
     await setDoc(doc(f2.db, 'orgs', ref.id, 'members', u.uid), { role: 'owner', stationIds: [], email: u.email || '', name: displayName(u), joinedAt: Date.now() });
-    await setDoc(doc(collection(f2.db, 'orgs', ref.id, 'stations')), { name: station.trim().slice(0, 40) || 'Main station', code: '', createdAt: Date.now() });
+    await setDoc(doc(collection(f2.db, 'orgs', ref.id, 'stations')), { name: station.trim().slice(0, 40) || t('Main station'), code: '', createdAt: Date.now() });
     await setDoc(doc(f2.db, 'users', u.uid), { orgIds: arrayUnion(ref.id), orgId: ref.id, email: u.email || '', name: displayName(u) }, { merge: true });
     await load(u, ref.id);
   }, [load]);
@@ -276,7 +278,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const setViewAs = useCallback(async (r: Role | null, stationId?: string | null) => {
     const next: ViewAs | null = r && orgRef.current ? { org: orgRef.current.id, role: r, st: r === 'owner' ? null : stationId || null } : null;
-    if (next && next.role !== 'owner' && !next.st) throw new Error('Pick a station.');
+    if (next && next.role !== 'owner' && !next.st) throw new Error(t('Pick a station.'));
     if (!fb()) {
       setViewAsState(next);
       setMember(next ? { ...LOCAL_MEMBER, role: next.role, stationIds: next.st ? [next.st] : [] } : LOCAL_MEMBER);
@@ -343,7 +345,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
-    const err = () => setDataError('Couldn\'t load the fleet data. Check your internet, then reopen the app.');
+    const err = () => setDataError(t('Couldn\'t load the fleet data. Check your internet, then reopen the app.'));
     const subs = [
       store.stations.subscribe((r) => { setStations(r.slice().sort((a, b) => a.createdAt - b.createdAt)); setLoaded((l) => ({ ...l, stations: true })); }, err),
       store.vehicles.subscribe((r) => { setVehicles(r); setLoaded((l) => ({ ...l, vehicles: true })); }, err),
@@ -402,7 +404,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [stations, member, role, mode]);
   const stationName = useCallback((id: string | null | undefined) => {
     const st = stations.find((x) => x.id === (id || (mode === 'local' ? LOCAL_STATION : '')));
-    return st ? st.name : id ? 'Unknown station' : 'No station';
+    return st ? st.name : id ? t('Unknown station') : t('No station');
   }, [stations, mode]);
   const runs = useCallback((stationId: string | null | undefined) => {
     if (role === 'owner') return true;

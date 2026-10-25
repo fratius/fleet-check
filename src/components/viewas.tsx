@@ -3,15 +3,16 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { Card, Chip, F, MARKER, Pill, Row, T, useColors } from '@/components/ui';
+import { N_, t, tj } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, type Role } from '@/lib/types';
 
 /** What each role sees and can do (the full rules are in ROLES.md). */
 const ACCESS: Record<Role | 'creator', string> = {
-  creator: 'Every company in the app. Opens and manages any of them.',
-  owner: 'Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, picks the AI model, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.',
-  manager: 'One station: its vans and drivers, invite links for drivers, who drives which van and whether drivers pick up vans themselves. Final word on damage. Keeps the drivers\' records; sees the station\'s history, videos and numbers, not the costs.',
-  driver: 'The vans of one station. Walk-arounds with photos or a video, the AI damage check and close-ups, sends checks to the manager. Picks up and drops off vans where the station allows it, and takes the dashboard photo at the start and end of each tour where the owner turned that on. Sees only their own history, record and tours.',
+  creator: N_('Every company in the app. Opens and manages any of them.'),
+  owner: N_('Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, picks the AI model, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.'),
+  manager: N_('One station: its vans and drivers, invite links for drivers, who drives which van and whether drivers pick up vans themselves. Final word on damage. Allows or refuses a refuel with the wrong fuel card. Keeps the drivers\' records; sees the station\'s history, videos and numbers, not the costs.'),
+  driver: N_('The vans of one station. Walk-arounds with photos or a video, the AI damage check and close-ups, sends checks to the manager. Picks up and drops off vans where the station allows it, refuels and washes vans, and takes the dashboard photo at the start and end of each tour where the owner turned that on. Sees only their own history, record and tours.'),
 };
 
 /**
@@ -43,10 +44,10 @@ export function ViewAsCard() {
   const options: (Role | 'creator')[] = s.mode === 'local' ? ['owner', 'manager', 'driver'] : ['creator', 'owner', 'manager', 'driver'];
   return (
     <Card>
-      <Row><T v="h3" style={{ flex: 1 }}>View the app as</T><Pill v="solid" text={s.mode === 'local' ? 'Test mode' : 'Only you'} /></Row>
+      <Row><T v="h3" style={{ flex: 1 }}>{t('View the app as')}</T><Pill v="solid" text={s.mode === 'local' ? t('Test mode') : t('Only you')} /></Row>
       <T v="hint">
-        {s.mode === 'local' ? 'See the app the way each role sees it.'
-          : `See ${s.org?.name || 'this company'} exactly as a fleet owner, fleet manager or driver does: the same screens and the same access, checked by the server. Only the app creator has this switch.`}
+        {s.mode === 'local' ? t('See the app the way each role sees it.')
+          : t('See {company} exactly as a fleet owner, fleet manager or driver does: the same screens and the same access, checked by the server. Only the app creator has this switch.', { company: s.org?.name || t('this company') })}
       </T>
       {options.map((k) => {
         const on = k === current;
@@ -60,16 +61,16 @@ export function ViewAsCard() {
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Row>
-                  <T v="h3">{k === 'creator' ? 'Yourself (app creator)' : ROLE_NAME[k]}</T>
+                  <T v="h3">{k === 'creator' ? t('Yourself (app creator)') : t(ROLE_NAME[k])}</T>
                   {stationOn ? <T v="hint">{stationOn}</T> : null}
                   {busy && busy.startsWith(k === 'creator' ? 'me' : k) ? <ActivityIndicator color={c.ink} /> : null}
                 </Row>
-                <T v="hint">{ACCESS[k]}</T>
+                <T v="hint">{t(ACCESS[k])}</T>
               </View>
             </Pressable>
             {pick === k ? (
               <View style={{ gap: 6, paddingLeft: 12 }}>
-                <T v="small">Which station?</T>
+                <T v="small">{t('Which station?')}</T>
                 <Row>
                   {stations.map((st) => (
                     <Chip key={st.id} text={st.name} on={on && s.viewAs?.st === st.id} onPress={() => go(k, st.id)} />
@@ -83,10 +84,7 @@ export function ViewAsCard() {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       {s.mode === 'firebase' ? (
         <T v="small">
-          What you do while viewing is real and saved under your name in {s.org?.name}: a walk-around, a video, a pick-up (it goes
-          into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo
-          company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up
-          yourself where the station allows it.
+          {t('What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van\'s permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren\'t on the people list, so nobody can give you a van: pick one up yourself where the station allows it.', { company: s.org?.name })}
         </T>
       ) : null}
     </Card>
@@ -98,15 +96,15 @@ export function ViewingStrip() {
   const s = useSession();
   const [busy, setBusy] = useState(false);
   if (!s.viewAs) return null;
-  const who = `${ROLE_NAME[s.viewAs.role]}${s.viewAs.st ? `, ${s.stationName(s.viewAs.st)}` : ''}`;
+  const who = `${t(ROLE_NAME[s.viewAs.role])}${s.viewAs.st ? `, ${s.stationName(s.viewAs.st)}` : ''}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: MARKER, paddingHorizontal: 14, paddingVertical: 6, borderTopWidth: 2, borderColor: '#000' }}>
       <Pressable accessibilityRole="link" onPress={() => router.navigate('/account')} style={{ flex: 1 }}>
-        <Text numberOfLines={1} style={{ fontFamily: F.medium, fontSize: 14, color: '#000' }}>Viewing as <Text style={{ fontFamily: F.semi }}>{who}</Text></Text>
+        <Text numberOfLines={1} style={{ fontFamily: F.medium, fontSize: 14, color: '#000' }}>{tj('Viewing as {who}', { who: <Text key="w" style={{ fontFamily: F.semi }}>{who}</Text> })}</Text>
       </Pressable>
       <Pressable accessibilityRole="button" disabled={busy} onPress={async () => { setBusy(true); try { await s.setViewAs(null); } finally { setBusy(false); } }}
         style={({ pressed }) => ({ borderWidth: 2, borderColor: '#000', borderRadius: 4, paddingHorizontal: 10, minHeight: 34, justifyContent: 'center', opacity: busy ? 0.5 : pressed ? 0.7 : 1 })}>
-        <Text style={{ fontFamily: F.cond, fontSize: 16, color: '#000' }}>{busy ? 'Switching…' : s.mode === 'local' ? 'Back' : 'Back to me'}</Text>
+        <Text style={{ fontFamily: F.cond, fontSize: 16, color: '#000' }}>{busy ? t('Switching…') : s.mode === 'local' ? t('Back') : t('Back to me')}</Text>
       </Pressable>
     </View>
   );
