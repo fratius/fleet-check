@@ -154,6 +154,10 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/move-costs.cjs
+      - name: Move companies to the Fast model once (the default since 2026-10-25)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/haiku-default.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

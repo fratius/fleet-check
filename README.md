@@ -98,11 +98,11 @@ Prices per million tokens, input and output: Haiku 5.5 $0.10 and $0.50, Sonnet 5
 
 | Model in the app | Per photo | Finding spots on 14 photos | Whole check, with close-ups of 5 spots |
 |---|---|---|---|
-| Fast (Haiku 5.5) | $0.0006 | $0.008 | $0.014 |
+| Fast (Haiku 5.5), the default | $0.0006 | $0.008 | $0.014 |
 | Balanced (Sonnet 5.5) | $0.011 | $0.15 | $0.27 |
 | Best (Opus 5.5) | $0.022 | $0.31 | $0.54 |
 
-These are estimates. Every run stores the token counts the API reported and the cost, and the **Test log** tab (app creator only) adds them up per model.
+Fast is the default model since 2026-10-25; the fleet owner can pick another in **Account**. The fuel card check always reads the card with Haiku first and, when it isn't a clear match, again with Sonnet (Opus on Best) before a driver is stopped. These are estimates. Every run stores the token counts the API reported and the cost, and the **Test log** tab (app creator only) adds them up per model.
 
 ## How it works
 

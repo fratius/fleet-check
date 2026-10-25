@@ -202,7 +202,7 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     logins.push({ role, name: `${first} ${last}`, email: em, password: pw, uid: u.uid });
     if (role === 'driver') drivers.push({ id: u.uid, name: `${first} ${last}`, st: 0 });
   }
-  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, demoVersion: DEMO_VERSION, aiTier: 'default', demoLogins: logins,
+  batch.set(org, { name: 'Demo DSP (test data)', createdBy: uid, createdAt: now, stationsReady: true, demo: true, demoVersion: DEMO_VERSION, aiTier: 'quick', demoLogins: logins,
     dashScans: true, dashScansBy: ownerName, dashScansAt: now - 30 * day, licenceCheckMonths: 6 });
 
   const vans = VANS.map(([name, plate, cls, st, make, model, a], n) => {

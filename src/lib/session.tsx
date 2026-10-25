@@ -137,7 +137,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>(f ? [] : [{ id: 'local', name: LOCAL_ORG.name, role: roleOf(LOCAL_MEMBER)! }]);
   const [org, setOrg] = useState<Org | null>(f ? null : LOCAL_ORG);
   const [member, setMember] = useState<Member | null>(f ? null : LOCAL_MEMBER);
-  const [localTier, setLocalTier] = useState<Tier>('default');
+  const [localTier, setLocalTier] = useState<Tier>('quick');
   const [viewAs, setViewAsState] = useState<ViewAs | null>(null);
   const fbUser = useRef<User | null>(null);
   const orgRef = useRef<Org | null>(null);
@@ -305,7 +305,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   orgRef.current = org;
   const role = roleOf(member);
-  const tier: Tier = mode === 'local' ? localTier : (org?.aiTier || 'default');
+  const tier: Tier = mode === 'local' ? localTier : (org?.aiTier || 'quick');
   const setTier = useCallback(async (t: Tier) => {
     if (mode === 'local') { setLocalTier(t); AsyncStorage.setItem('fc.tier', t).catch(() => {}); return; }
     if (!org || role !== 'owner') return;

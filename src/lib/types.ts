@@ -8,8 +8,8 @@ export const TIER_NAME: Record<Tier, string> = { quick: N_('Fast'), default: N_(
 /** Same table as functions/src/models.ts. Prices are list prices per million tokens, input and output. */
 /** `note` mentions speed and price (the app creator sees it); `plain` is what everyone else sees. Both shown with t(). */
 export const TIER_MODEL: Record<Tier, { id: string; name: string; inPerM: number; outPerM: number; note: string; plain: string }> = {
-  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: N_('Cheapest and fastest.'), plain: N_('Quick answers; can miss small damage.') },
-  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: N_('The default. Mid price.'), plain: N_('The default, recommended for most fleets.') },
+  quick: { id: 'claude-haiku-5-5', name: 'Haiku 5.5', inPerM: 0.1, outPerM: 0.5, note: N_('The default. Cheapest and fastest.'), plain: N_('The default. Quick answers; can miss small damage.') },
+  default: { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', inPerM: 2, outPerM: 10, note: N_('Mid price.'), plain: N_('A closer look at every photo.') },
   complex: { id: 'claude-opus-5-5', name: 'Opus 5.5', inPerM: 4, outPerM: 20, note: N_('The largest model. Slowest and most expensive.'), plain: N_('The most thorough look at every photo.') },
 };
 /** Rough cost of one photo: the server sizes it to the 4,784-token image limit, plus about 150 output tokens. */

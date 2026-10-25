@@ -150,6 +150,7 @@ cb2d5d23	3. Open Fleet Check from your home screen and sign in with the same ema
 1cf11ed8	4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.
 0a8dd6ad	7 days	[data.tsx]
 170621ac	90 days	[data.tsx]
+db242f5d	A closer look at every photo.
 7fc4ef1f	A manager has already reviewed this check.
 56599b1b	A notification on this phone, so you know before you get to the station.
 54173bc8	A photo is missing from storage. Upload it again.
@@ -306,7 +307,6 @@ c5dd099a	Change the review	[check/[id].tsx]
 a02f6889	Changed by {name}, {when}.
 2f9607e7	Changed by {name}.	[account.tsx]
 8f4ac2d1	Changing the type changes the photo frames.
-16dc12a5	Cheapest and fastest.	[lib/types.ts]
 21ec34e7	Check and save	[buy/[id].tsx]
 6b57d1d2	Check close-ups	[check/[id].tsx]
 be27a37d	Check drivers' licences every
@@ -830,6 +830,7 @@ eddecaff	Manager's note: {note}	[components/damage.tsx]
 09f3246f	median	[log.tsx]
 3c3bfa7c	median time	[log.tsx]
 1de7b06e	Medium confidence, {pct}%	[add.tsx]
+d15d7a02	Mid price.	[lib/types.ts]
 57948bf4	mid-size van	[lib/frames.ts]
 9bc11ee5	Mid-size van	[lib/frames.ts]
 f67a0513	Mileage	[components/docscan.tsx, components/vanfacts.tsx]
@@ -1116,7 +1117,6 @@ fad43131	Provider and the last digits, never the full number or PIN
 d6f409d1	Purchase contract or invoice
 b21bc692	Purchase price	[components/vanfacts.tsx]
 876af140	Put Fleet Check on your home screen like any other app.
-145768b7	Quick answers; can miss small damage.
 5177429b	Raised roof	[lib/frames.ts]
 a16c5bbe	Range	[components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
@@ -1434,8 +1434,8 @@ d2bba804	The card photo isn't kept, only its last 4 digits.
 1d7e4397	The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.
 d58de059	The dashboard photo is missing. Take it again.
 2458d642	The date on the card, or the class that runs out first
-60891d7b	The default, recommended for most fleets.
-9e709ba9	The default. Mid price.
+4ce76643	The default. Cheapest and fastest.
+0bccc8d6	The default. Quick answers; can miss small damage.
 c85fa974	the document	[components/docscan.tsx]
 03eb19d3	The dot is placed from the panel name, so its spot on the van is rough.
 7ba5c9b2	the driver	[check/[id].tsx]

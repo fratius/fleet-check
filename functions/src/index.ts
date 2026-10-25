@@ -75,7 +75,8 @@ async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>):
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const orgId = String(req.data?.orgId || '');
   if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
-  const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'default') as Tier;
+  // Fast (Haiku) is the default model since 2026-10-25 (product owner); owners can still pick another.
+  const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'quick') as Tier;
   const creator = req.auth?.token?.creator === true;
   const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
   if (creator) {
