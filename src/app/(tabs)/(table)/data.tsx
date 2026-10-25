@@ -9,7 +9,8 @@ import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
-import type { Member, Tour } from '@/lib/types';
+import type { Member, Purchase, Tour } from '@/lib/types';
+import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
 
 /**
@@ -18,7 +19,7 @@ import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
  */
 
 type Period = '7' | '30' | '90' | 'year';
-type View3 = 'drivers' | 'tours' | 'vans';
+type View3 = 'drivers' | 'tours' | 'vans' | 'buys';
 const PERIODS: [Period, string][] = [['7', '7 days'], ['30', '30 days'], ['90', '90 days'], ['year', 'This year']];
 
 const int = (n: number | null | undefined) => (n == null ? '' : Math.round(n).toLocaleString());
@@ -35,7 +36,7 @@ export default function DataScreen() {
   const [station, setStation] = useState<string | null>(null);
   const [view, setView] = useState<View3>('drivers');
   const [q, setQ] = useState('');
-  const [sorts, setSorts] = useState<Record<View3, Sort | null>>({ drivers: { key: 'km', dir: -1 }, tours: { key: 'date', dir: -1 }, vans: { key: 'km', dir: -1 } });
+  const [sorts, setSorts] = useState<Record<View3, Sort | null>>({ drivers: { key: 'km', dir: -1 }, tours: { key: 'date', dir: -1 }, vans: { key: 'km', dir: -1 }, buys: { key: 'date', dir: -1 } });
   const [members, setMembers] = useState<Member[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -68,6 +69,9 @@ export default function DataScreen() {
   const drivers = useMemo(() => driverRows(inputs).filter((r) => r.role !== 'manager' || r.tours || r.damage || r.accidents + r.fines + r.complaints), [inputs]);
   const vans = useMemo(() => vanRows(inputs, owner).filter((v) => !v.retired || v.km || v.tours), [inputs, owner]);
   const tours = useMemo(() => inputs.tours.filter((t) => t.startAt >= from), [inputs, from]);
+  const buys = useMemo(() => data.purchases.filter((p) => inScope(p.stationId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.purchases, station, s.mode]);
 
   if (!s.staff) return <Screen><T v="h1">Data</T><Card dashed><T v="hint">Fleet managers and owners see the fleet in numbers.</T></Card></Screen>;
 
@@ -78,6 +82,8 @@ export default function DataScreen() {
   const dRows = sortRows(drivers.filter((r) => match(r.name)), dCols, sorts.drivers);
   const tRows = sortRows(tours.filter((t) => match(`${t.driverName} ${t.vehicleName} ${t.plate}`)), tCols, sorts.tours);
   const vRows = sortRows(vans.filter((v) => match(`${v.name} ${v.plate} ${v.model}`)), vCols, sorts.vans);
+  const bCols = buyCols(c, multi && !station, s.stationName);
+  const bRows = sortRows(buys.filter((p) => match(`${p.byName} ${p.vehicleName} ${p.plate || ''} ${p.merchant || ''}`)), bCols, sorts.buys);
   const setSort = (k: View3) => (x: Sort) => setSorts((p) => ({ ...p, [k]: x }));
 
   const download = async () => {
@@ -98,6 +104,7 @@ export default function DataScreen() {
           date: (t) => ({ date: t.startAt, time: true }), end: (t) => (t.end ? { date: t.end.at, time: true } : null),
         }),
         sheet('Vans', vCols, sortRows(vans, vCols, sorts.vans), { vs: (r) => (r.vsModel == null ? null : Math.round(r.vsModel * 1000) / 10) }),
+        sheet('Fuel, wash, parts', bCols, sortRows(buys, bCols, sorts.buys), { date: (p) => ({ date: p.createdAt, time: true }) }),
       ]);
     } catch (e) { setErr(e instanceof Error ? e.message : 'Couldn\'t make the file.'); } finally { setSaving(false); }
   };
@@ -136,8 +143,8 @@ export default function DataScreen() {
         <Notice text={owner ? 'Kilometres and fuel come from dashboard photos at the start and end of each tour. Turn them on in the Account tab.' : 'Kilometres and fuel come from dashboard photos on each tour. The owner turns them on.'} />
       ) : null}
 
-      <Tabs value={view} onChange={setView} items={[['drivers', 'Drivers', drivers.length || null], ['tours', 'Tours', tours.length || null], ['vans', 'Vans', vans.length || null]]} />
-      <Field label={view === 'drivers' ? 'Find a driver' : view === 'tours' ? 'Find a driver or van' : 'Find a van'} value={q} onChangeText={setQ} placeholder="Name or plate" autoCorrect={false} />
+      <Tabs value={view} onChange={setView} items={[['drivers', 'Drivers', drivers.length || null], ['tours', 'Tours', tours.length || null], ['vans', 'Vans', vans.length || null], ['buys', 'Fuel, wash', buys.length || null]]} />
+      <Field label={view === 'drivers' ? 'Find a driver' : view === 'vans' ? 'Find a van' : 'Find a driver or van'} value={q} onChangeText={setQ} placeholder="Name or plate" autoCorrect={false} />
 
       {view === 'drivers' ? (
         <DataTable key="drivers" rows={dRows} cols={dCols} rowKey={(r) => r.id} sort={sorts.drivers} onSort={setSort('drivers')} totalLabel={`All ${dRows.length}`}
@@ -145,9 +152,12 @@ export default function DataScreen() {
       ) : view === 'tours' ? (
         <DataTable key="tours" rows={tRows} cols={tCols} rowKey={(t) => t.id} sort={sorts.tours} onSort={setSort('tours')} totalLabel={`All ${tRows.length}`}
           onRow={(t) => router.push(`/vehicle/${t.vehicleId}`)} empty={s.org?.dashScans ? 'No tours in this period yet.' : 'No tours: dashboard photos are off.'} />
-      ) : (
+      ) : view === 'vans' ? (
         <DataTable key="vans" rows={vRows} cols={vCols} rowKey={(v) => v.id} sort={sorts.vans} onSort={setSort('vans')} totalLabel={`All ${vRows.length}`}
           onRow={(v) => router.push(`/vehicle/${v.id}`)} empty="No vans here." />
+      ) : (
+        <DataTable key="buys" rows={bRows} cols={bCols} rowKey={(p) => p.id} sort={sorts.buys} onSort={setSort('buys')} totalLabel={`All ${bRows.length}`}
+          onRow={(p) => router.push(`/buy/${p.id}`)} empty="No refuels, washes or parts in this period." />
       )}
       <T v="small">Tap a column heading to sort, again to reverse. Swipe the table sideways for more columns; tap a row to open it.</T>
 
@@ -252,6 +262,30 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
     cols.push({ key: 'monthly', label: '€ a month', width: 84, get: (v) => v.monthly, text: (v) => (v.monthly == null ? '' : `€${int(v.monthly)}`), total: (vs) => `€${int(sum(vs, (v) => v.monthly))}` });
     cols.push({ key: 'perKm', label: '€ per km (monthly rate)', width: 104, get: (v) => (v.costPerKm == null ? null : Math.round(v.costPerKm * 100) / 100), text: (v) => eur2(v.costPerKm) });
   }
+  return cols;
+}
+
+/** Every refuel, wash and parts purchase, with the refused and unfinished ones (totals count only finished ones). */
+function buyCols(c: C, station: boolean, stationName: (id: string | null) => string): Col<Purchase>[] {
+  const done = (ps: Purchase[]) => ps.filter((p) => p.status === 'done');
+  const card = (p: Purchase) => (p.kind === 'parts' ? '' : !p.card?.needed ? 'none on record' : p.card.result === 'match' ? 'the van\'s'
+    : p.card.result ? `${p.card.result === 'missing' ? 'no card' : p.card.result === 'unclear' ? 'not read' : 'wrong card'}${p.decision ? (p.decision.allow ? ', allowed' : ', refused') : ''}` : '');
+  const cols: Col<Purchase>[] = [
+    { key: 'date', label: 'When', width: 116, align: 'left', get: (p) => p.createdAt, text: (p) => fmtWhen(p.createdAt) },
+    { key: 'kind', label: 'What', width: 70, align: 'left', get: (p) => BUY_NAME[p.kind] },
+    { key: 'van', label: 'Van', width: 120, align: 'left', get: (p) => p.vehicleName },
+    { key: 'by', label: 'By', width: 130, align: 'left', get: (p) => p.byName },
+    { key: 'status', label: 'Status', width: 120, align: 'left', get: (p) => buyState(p).text, tone: (p) => (p.status === 'done' && !p.flags?.length ? undefined : p.status === 'done' ? c.amber : p.status === 'cancelled' ? c.ink2 : c.alert) },
+    { key: 'litres', label: 'Litres', width: 70, get: (p) => p.litres, text: (p) => one(p.litres), total: (ps) => one(sum(done(ps), (p) => p.litres)) },
+    { key: 'total', label: 'Total', width: 84, get: (p) => p.total, text: (p) => eur2(p.total), total: (ps) => eur2(sum(done(ps), (p) => p.total)) },
+    { key: 'perL', label: '€ per litre', width: 76, get: (p) => (p.litres && p.total != null ? Math.round((p.total / p.litres) * 1000) / 1000 : null), text: (p) => (p.litres && p.total != null ? `€${(p.total / p.litres).toFixed(3)}` : '') },
+    { key: 'odo', label: 'Odometer', width: 90, get: (p) => p.odometerKm, text: (p) => int(p.odometerKm) },
+    { key: 'card', label: 'Fuel card', width: 130, align: 'left', get: card, tone: (p) => (p.card?.result && p.card.result !== 'match' ? c.alert : undefined) },
+    { key: 'flags', label: 'To check', width: 260, align: 'left', get: (p) => (p.flags || []).map((f) => f.text).join(' '), tone: (p) => (p.flags?.length ? c.amber : undefined) },
+    { key: 'where', label: 'Where', width: 150, align: 'left', get: (p) => p.merchant || '' },
+    { key: 'why', label: 'Why (parts)', width: 200, align: 'left', get: (p) => p.note || '' },
+  ];
+  if (station) cols.splice(3, 0, { key: 'station', label: 'Station', width: 110, align: 'left', get: (p) => stationName(p.stationId) });
   return cols;
 }
 

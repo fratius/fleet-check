@@ -28,7 +28,7 @@ export const per100Text = (v: number | null | undefined, unit: 'l' | 'kwh' | nul
   (v == null ? '–' : `${v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ${unit === 'kwh' ? 'kWh' : 'l'}/100 km`);
 
 /** Takes the dashboard photo with the camera (on the web: the phone's camera through the browser). */
-async function takePhoto(): Promise<{ uri: string; w: number; h: number } | null> {
+export async function takePhoto(): Promise<{ uri: string; w: number; h: number } | null> {
   if (Platform.OS !== 'web') {
     const p = await ImagePicker.requestCameraPermissionsAsync();
     if (!p.granted) throw new Error('camera');
@@ -107,6 +107,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const [refuel, setRefuel] = useState<'no' | 'litres' | 'unknown' | null>(null);
   const [litres, setLitres] = useState('');
   const [jump, setJump] = useState<string | null>(null);
+  const [fromReceipts, setFromReceipts] = useState(0);
   const ev = v.fuel === 'electric';
   const shoot = async () => {
     setErr(null); setJump(null);
@@ -122,6 +123,14 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       setRead(r);
       setForm({ odo: show(r.values.odometerKm), fuel: show(r.values.fuelPct), battery: show(r.values.batteryPct), range: show(r.values.rangeKm) });
       setWarnings(r.values.warnings);
+      // Refuels recorded with their receipt during this tour answer the refuelling question.
+      const mine = s.tours.find((t) => t.vehicleId === v.id && isOpen(t) && t.driverId === s.user?.uid);
+      const fills = mine && r.endsMine ? s.purchases.filter((x) => x.kind === 'fuel' && x.status === 'done' && x.vehicleId === v.id && x.by === s.user?.uid && x.createdAt >= mine.startAt && x.litres) : [];
+      if (fills.length && !ev) {
+        setRefuel('litres');
+        setLitres(show(Math.round(fills.reduce((n, x) => n + (x.litres || 0), 0) * 100) / 100));
+        setFromReceipts(fills.length);
+      }
     } catch (e) {
       setErr(e instanceof Error && e.message === 'camera' ? 'Allow camera access in Settings to take the photo.'
         : e instanceof AiError ? e.message : 'The photo didn\'t upload. Check the connection and try again.');
@@ -200,6 +209,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
             {!ev ? <Chip text="Yes, don't know how much" on={refuel === 'unknown'} onPress={() => setRefuel('unknown')} /> : null}
           </Row>
           {refuel === 'litres' && !ev ? <Field label="Litres" value={litres} onChangeText={setLitres} keyboardType="decimal-pad" /> : null}
+          {refuel === 'litres' && fromReceipts ? <T v="small">From {fromReceipts === 1 ? 'your refuel' : `your ${fromReceipts} refuels`} during this tour (the receipt{fromReceipts === 1 ? '' : 's'}).</T> : null}
         </View>
       ) : null}
       {read.will === 'end' && !read.endsMine && read.tourDriver ? <T v="small">This ends {read.tourDriver}&apos;s tour.</T> : null}

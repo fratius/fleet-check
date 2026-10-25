@@ -863,6 +863,13 @@ test('the demo company: a driver login with a van, history, and pick-up at the f
   assert.ok((await getDocs(collection(me.db, 'orgs', orgId, 'damageLog'))).size >= 3);
   const withFuel = (await getDocs(collection(me.db, 'orgs', orgId, 'tours'))).docs.map((d) => d.data()).filter((t) => t.per100 != null);
   assert.ok(withFuel.length > 50, 'most demo tours have a fuel figure');
+  // Refuels with receipts, washes, a parts purchase, one allowed and one refused card, and a driver at the pump now.
+  const buys = (await getDocs(collection(me.db, 'orgs', orgId, 'purchases'))).docs.map((d) => d.data());
+  assert.ok(buys.filter((b) => b.kind === 'fuel' && b.status === 'done').length >= 10, 'demo refuels');
+  assert.ok(buys.some((b) => b.kind === 'wash') && buys.some((b) => b.kind === 'parts'));
+  assert.equal(buys.filter((b) => b.status === 'waiting').length, 1);
+  assert.ok(buys.some((b) => b.decision?.allow === true) && buys.some((b) => b.decision?.allow === false));
+  assert.ok(buys.some((b) => b.flags.some((f) => f.key === 'litres')), 'one refuel with more litres than the tank had room for');
   const van = { id: open[0].vehicleId, name: open[0].vehicleName, stationId: open[0].stationId };
   await alex.call('dropOffVan', { orgId, vehicleId: van.id, walkId: await photos(alex, orgId, van) });
   const v = (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id))).data();

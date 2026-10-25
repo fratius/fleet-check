@@ -6,6 +6,7 @@ import { getStorage } from 'firebase-admin/storage';
 import sharp from 'sharp';
 
 import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
+import { cardDigits, purchaseFlags, type BuyKind, type Receipt } from './purchases';
 
 /**
  * A demo company to try the app with: two stations, fleet managers, drivers, vans, walk-arounds and
@@ -143,7 +144,7 @@ function demoCosts(n: number, now: number) {
 const FRAMES = ['Front', 'Front left corner', 'Left side', 'Rear left corner', 'Rear', 'Rear right corner', 'Right side', 'Front right corner'];
 const usage = (ms: number, calls: number, images: number) => ({ ms, calls, images, inTok: 0, outTok: 0, cost: 0 });
 
-const DEMO_VERSION = 5;
+const DEMO_VERSION = 6;
 const password = () => {
   const a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from(randomBytes(10), (b) => a[b % a.length]).join('');
@@ -372,7 +373,11 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
   const reviewed = await org.collection('checks').where('status', '==', 'reviewed').get();
   await Promise.all(reviewed.docs.map((d) => damageLogFor(orgId, d.id)));
 
-  await demoTours(org, orgId, now, vans.map((v, i) => ({ ...v, n: i, make: VANS[i][4], model: VANS[i][5], plate: VANS[i][1], stationId: stationIds[v.st] })), schedule, drivers);
+  const demoVans = vans.map((v, i) => ({ ...v, n: i, make: VANS[i][4], model: VANS[i][5], plate: VANS[i][1], stationId: stationIds[v.st] }));
+  const { fills, dieselPath } = await demoTours(org, orgId, now, demoVans, schedule, drivers);
+  const cards = new Map(demoVans.map((v) => [v.id, cardDigits(demoDetails(v.n, now).fuelCard)]));
+  const current = (vanId: string) => { const i = vans.findIndex((v) => v.id === vanId); return schedule.find((a) => a.van === i && a.end == null)?.driver || null; };
+  await demoBuys(org, orgId, now, fills, dieselPath, managers, cards, current, demoVans);
   await demoPeople(org, now, drivers, managers, vans, stationIds, schedule);
 
   await uref.set({ orgIds: FieldValue.arrayUnion(orgId), orgId, demoOrgId: orgId }, { merge: true });
@@ -434,8 +439,10 @@ const STYLE: Record<string, number> = { 'Lukas Schmidt': 1.17, 'Sofia Rossi': 0.
  * vans are charged at the depot overnight. A few tours have no end photo, a few refuels have no receipt, and some
  * vans show warning lights.
  */
+type Fill = { van: DemoVan; driver: { id: string; name: string }; at: number; odo: number; fuelPct: number; litres: number; tank: number };
 async function demoTours(org: FirebaseFirestore.DocumentReference, orgId: string, now: number, vans: DemoVan[], schedule: Slot[], drivers: { id: string; name: string; st: number }[]) {
   const day = 86400_000;
+  const fills: Fill[] = [];
   const [dieselPath, evPath] = await Promise.all([
     put(`orgs/${orgId}/dash/demo/diesel.jpg`, await jpeg(dashPhoto(false))), put(`orgs/${orgId}/dash/demo/electric.jpg`, await jpeg(dashPhoto(true))),
   ]);
@@ -481,6 +488,8 @@ async function demoTours(org: FirebaseFirestore.DocumentReference, orgId: string
         const litres = Math.round(((100 - before) / 100) * tank! * 10) / 10;
         endTrue = 100 - usedPct / 2;
         refuel = rnd() < 0.1 ? { litres: null, kwh: null, unknown: true } : { litres, kwh: null, unknown: false };
+        // The refuel itself, with its receipt (made below), half way through the tour.
+        if (p.end != null && refuel.litres) fills.push({ van, driver: p.slot.driver, at: p.start + Math.round((p.end - p.start) / 2), odo: odo + Math.round(km / 2), fuelPct: read(before), litres, tank: tank! });
       }
       odo += km;
       const tref = org.collection('tours').doc();
@@ -523,6 +532,122 @@ async function demoTours(org: FirebaseFirestore.DocumentReference, orgId: string
   }
   await w.flush();
   void drivers;
+  return { fills, dieselPath };
+}
+
+/** A receipt or a photo of parts for the demo: a drawing with the numbers on it. */
+function paperPhoto(lines: string[], title: string) {
+  const rows = lines.map((l, i) => `<text x="60" y="${260 + i * 56}" font-family="Courier New, monospace" font-size="38" fill="#222">${esc(l)}</text>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200">
+  <rect width="800" height="1200" fill="#c9c6bf"/><rect x="30" y="40" width="740" height="1120" fill="#fbfaf6"/>
+  <text x="400" y="150" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#222" text-anchor="middle">${esc(title)}</text>
+  ${rows}
+  <rect x="40" y="1050" width="460" height="90" rx="12" fill="#000" opacity="0.75"/>
+  <text x="70" y="1110" font-family="Arial, sans-serif" font-size="44" fill="#E2FF1C" font-weight="bold">DEMO PHOTO</text>
+</svg>`;
+}
+
+/**
+ * Refuels with their receipts (one for each refuel on the tours), some washes, a parts purchase, and the card
+ * check in every state: the right card, a wrong one a manager allowed, one refused, and a driver waiting at the
+ * pump right now.
+ */
+async function demoBuys(org: FirebaseFirestore.DocumentReference, orgId: string, now: number, fills: Fill[], dieselPath: string,
+  managers: { id: string; name: string }[], vanCards: Map<string, string | null>, current: (vanId: string) => { id: string; name: string } | null, allVans: DemoVan[]) {
+  const [receiptPath, washPath, partsPath] = await Promise.all([
+    put(`orgs/${orgId}/buys/demo/receipt.jpg`, await jpeg(paperPhoto(['DIESEL      45,20 L', '  x 1,729 EUR/L', '', 'TOTAL       78,15 EUR', '', 'DKV ************2012', '14:05   ' + new Date(now).toISOString().slice(0, 10)], 'ARAL Spandau'))),
+    put(`orgs/${orgId}/buys/demo/wash.jpg`, await jpeg(paperPhoto(['WASCHSTRASSE PREMIUM', '', 'TOTAL       14,90 EUR', '', 'DKV ************2012'], 'Car wash'))),
+    put(`orgs/${orgId}/buys/demo/parts.jpg`, await jpeg(paperPhoto(['Mirror cover, right', 'for Transit 2019+', '', '1 pc'], 'Parts'))),
+  ]);
+  let seed = 11;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const PLACES = ['Aral, Berlin-Spandau', 'Shell, Falkensee', 'JET, Potsdam', 'TotalEnergies, Berlin-Staaken', 'Esso, Werder'];
+  const w = writer();
+  const mgrOf = (v: DemoVan) => managers[v.st] || managers[0];
+  const lastOdo = (v: DemoVan) => Math.max(38000 + v.n * 4100, ...fills.filter((f) => f.van.id === v.id).map((f) => f.odo));
+  const day = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const hm = (t: number) => new Date(t).toISOString().slice(11, 16);
+  type Make = {
+    kind: BuyKind; van: DemoVan; by: { id: string; name: string }; role: string; at: number; odo: number; fuelPct: number | null; litres: number | null; total: number;
+    merchant: string; items: Receipt['items']; status: string; card: 'match' | 'mismatch' | 'missing' | null; read4?: string | null; bank?: boolean;
+    decision?: { allow: boolean; by: { id: string; name: string }; note: string } | null; note?: string | null; tank?: number | null; receiptCard?: string | null;
+    receiptAt?: number | null; parts?: string[]; cancelled?: string | null;
+  };
+  const make = (m: Make) => {
+    const expected = m.kind === 'parts' ? null : vanCards.get(m.van.id) || null;
+    const receipt: Receipt | null = m.status === 'done' ? {
+      readable: true, merchant: m.merchant, date: day(m.at), time: hm(m.at), items: m.items, total: m.total, currency: 'EUR',
+      cardLast4: m.kind === 'parts' ? null : (m.receiptCard ?? expected), payment: 'card', confidence: 0.93, issue: null,
+    } : null;
+    const cardAt = m.at + 40_000;
+    const read = m.card && m.card !== 'missing' ? { kind: m.bank ? 'bank' : 'fuel', issuer: m.bank ? 'Visa' : 'DKV', last4: m.card === 'match' ? expected : m.read4 || '8812', plate: null, expiry: '12/28' } : null;
+    const why = m.card === 'match' ? `Card ending ${expected}.` : m.card === 'missing' ? `${m.by.name} has no fuel card for the van.`
+      : m.bank ? 'A bank card, not the van\'s fuel card.' : `Card ending ${read?.last4} (DKV); this van's card ends ${expected}.`;
+    const decision = m.decision ? { allow: m.decision.allow, by: m.decision.by.id, byName: m.decision.by.name, at: cardAt + 6 * 60_000, note: m.decision.note } : null;
+    const card = { needed: !!expected && m.kind !== 'parts', expected, result: expected ? m.card : null, read: expected ? read : null, tries: 1, why: expected ? why : null, expired: false, at: expected ? cardAt : null };
+    const flags = m.status === 'done' ? purchaseFlags({
+      kind: m.kind, byName: m.by.name, vanFuel: 'diesel', tankL: m.tank ?? null, fuelPct: m.fuelPct, odometerKm: m.odo, lastKm: null, litres: m.litres, createdAt: m.at,
+      vanDriverName: null, notTheirVan: false, card: card.needed ? { needed: true, expected, result: card.result, expired: false, plate: null } : null, vanPlate: m.van.plate,
+      decision: decision ? { allow: decision.allow, byName: decision.byName } : null, receipt,
+    }) : [];
+    const doneAt = m.status === 'done' ? m.at + 25 * 60_000 : null;
+    w.set(org.collection('purchases').doc(), {
+      kind: m.kind, status: m.status, vehicleId: m.van.id, vehicleName: m.van.name, plate: m.van.plate, stationId: m.van.stationId, model: modelOf(m.van),
+      vanFuel: m.kind === 'parts' && m.van.model === 'eSprinter' ? 'electric' : 'diesel', tankL: m.tank ?? null, by: m.by.id, byName: m.by.name, role: m.role,
+      vanDriverId: m.role === 'driver' ? m.by.id : null, vanDriverName: m.role === 'driver' ? m.by.name : null, notTheirVan: false,
+      dash: { path: dieselPath, at: m.at, ai: { odometerKm: m.odo, fuelPct: m.fuelPct, batteryPct: null, rangeKm: null, warnings: [] }, confidence: 0.93, readable: true, issue: null, done: true },
+      lastKm: null, card, decision,
+      receipt: receipt ? { path: m.kind === 'wash' ? washPath : receiptPath, at: m.receiptAt || m.at + 20 * 60_000, ai: receipt } : null,
+      parts: m.parts || [], note: m.note || null, flags, corrected: [],
+      odometerKm: m.status === 'done' ? m.odo : null, fuelPct: m.status === 'done' ? m.fuelPct : null, litres: m.status === 'done' ? m.litres : null,
+      total: m.status === 'done' ? m.total : null, currency: m.status === 'done' ? 'EUR' : null, merchant: m.status === 'done' ? m.merchant : null,
+      cancel: m.status === 'cancelled' ? { by: m.by.id, byName: m.by.name, at: m.at + 9 * 60_000, reason: m.cancelled || null } : null,
+      createdAt: m.at, updatedAt: doneAt || m.at + 10 * 60_000, doneAt, demo: true,
+    });
+  };
+  fills.forEach((f, i) => {
+    const price = Math.round((1.64 + rnd() * 0.15) * 1000) / 1000;
+    // One refuel with more litres than the tank had room for (the manager should ask about it).
+    const litres = i === 5 ? Math.round((f.litres + 32) * 10) / 10 : f.litres;
+    const total = Math.round(litres * price * 100) / 100;
+    const merchant = PLACES[(i * 3 + f.van.n) % PLACES.length];
+    const allowed = i === 9;
+    const other = [...vanCards.values()].find((x) => x && x !== vanCards.get(f.van.id)) || '9911';
+    make({ kind: 'fuel', van: f.van, by: f.driver, role: 'driver', at: f.at, odo: f.odo, fuelPct: f.fuelPct, litres, total, merchant, tank: f.tank,
+      items: [{ product: 'diesel', description: 'Diesel', quantity: litres, unit: 'l', unitPrice: price, total }], status: 'done',
+      card: allowed ? 'mismatch' : 'match', read4: allowed ? other : null, receiptCard: allowed ? other : null,
+      decision: allowed ? { allow: true, by: mgrOf(f.van), note: 'That\'s another van\'s card, fine this once. Swap them back tonight.' } : null });
+    // Every fourth stop, a wash after the refuel.
+    if (i % 4 === 1) {
+      const wt = Math.round((12.9 + rnd() * 6) * 10) / 10;
+      make({ kind: 'wash', van: f.van, by: f.driver, role: 'driver', at: f.at + 30 * 60_000, odo: f.odo + 1, fuelPct: null, litres: null, total: wt, merchant,
+        items: [{ product: 'wash', description: 'Waschstrasse Premium', quantity: 1, unit: 'pcs', unitPrice: wt, total: wt }], status: 'done', card: 'match' });
+    }
+  });
+  // A driver who used a bank card: refused, and the driver cancelled.
+  const d0 = fills.filter((f) => f.van.st === 0);
+  const ref0 = d0[Math.max(0, d0.length - 3)];
+  if (ref0) {
+    make({ kind: 'fuel', van: ref0.van, by: ref0.driver, role: 'driver', at: ref0.at - 2 * 86400_000, odo: ref0.odo - 260, fuelPct: 25, litres: null, total: 0, merchant: '', items: [],
+      status: 'cancelled', card: 'mismatch', bank: true, decision: { allow: false, by: mgrOf(ref0.van), note: 'Not with your own card. The van\'s card is in the glovebox.' }, cancelled: null });
+  }
+  // A driver at the pump right now with another van's card, waiting for the station's manager.
+  // The demo driver login first, so signing in as them shows the driver's side of it.
+  const diesel0 = allVans.filter((v) => v.st === 0 && (USE[v.model] || [10, 80])[1] != null)
+    .sort((a, b) => Number(current(a.id)?.id.startsWith('demo-') ?? true) - Number(current(b.id)?.id.startsWith('demo-') ?? true));
+  for (const v of diesel0) {
+    const who = current(v.id);
+    if (!who) continue;
+    const wrong = [...vanCards.values()].find((x) => x && x !== vanCards.get(v.id)) || '9911';
+    make({ kind: 'fuel', van: v, by: who, role: 'driver', at: now - 9 * 60_000, odo: lastOdo(v) + 140, fuelPct: 25, litres: null, total: 0, merchant: '', items: [], status: 'waiting', card: 'mismatch', read4: wrong });
+    break;
+  }
+  // Parts bought by the manager for the cracked mirror cover.
+  const v1 = allVans[2];
+  make({ kind: 'parts', van: v1, by: mgrOf(v1), role: 'manager', at: now - 1.5 * 86400_000, odo: lastOdo(v1), fuelPct: null, litres: null, total: 46.9, merchant: 'Auto-Teile Schmidt, Spandau',
+    items: [{ product: 'parts', description: 'Spiegelkappe rechts', quantity: 1, unit: 'pcs', unitPrice: 46.9, total: 46.9 }], status: 'done', card: null, parts: [partsPath],
+    note: 'Right mirror cover cracked (on the damage record). New cover, fitted at the depot; cheaper than the bodyshop.' });
+  await w.flush();
 }
 
 /**

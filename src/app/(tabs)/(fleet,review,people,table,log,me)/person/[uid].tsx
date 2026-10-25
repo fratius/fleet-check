@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { TourLine, kmText, per100Text } from '@/components/dash';
+import { BuyRow } from '@/components/buy';
 import { DriverRecordView } from '@/components/driverrec';
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
@@ -102,6 +103,16 @@ export default function PersonScreen() {
       ) : null}
 
       {tab === 'tours' && r !== 'owner' ? <Numbers uid={uid!} member={shown} data={data} history={rows} /> : null}
+      {tab === 'tours' || r === 'owner' ? (() => {
+        const buys = s.purchases.filter((p) => p.by === uid);
+        return buys.length ? (
+          <View style={{ gap: 8 }}>
+            <T v="h2">Fuel, wash and parts</T>
+            <T v="hint">{me ? 'Yours, newest first.' : 'Newest first, with the ones refused or given up.'}</T>
+            <Card style={{ paddingVertical: 6 }}>{buys.slice(0, 15).map((p, i) => <BuyRow key={p.id} p={p} show="van" first={i === 0} />)}</Card>
+          </View>
+        ) : null;
+      })() : null}
 
       {tab === 'vans' || r === 'owner' ? (
         <>

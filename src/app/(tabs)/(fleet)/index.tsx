@@ -6,6 +6,7 @@ import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, 
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard } from '@/components/dash';
+import { BuyButtons, MyOpenBuy } from '@/components/buy';
 import { ScanChoice } from '@/components/scanchoice';
 import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
@@ -66,6 +67,8 @@ export default function Fleet() {
       {/* The tour comes first when there is one to start or end (a dashboard photo, where the owner turned it on). */}
       {s.myVan && !pickup ? <TourCard v={s.myVan} compact /> : null}
       {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
+      {/* A refuel, wash or parts purchase left half done (the app was closed at the pump). */}
+      <MyOpenBuy />
       {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
           style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
@@ -74,6 +77,7 @@ export default function Fleet() {
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <ScanChoice v={s.myVan} small onMarker={!touring} />
+            <BuyButtons v={s.myVan} />
             {canDrop ? <Button small title="Drop off" onPress={() => router.push(`/vehicle/${s.myVan!.id}`)} /> : null}
           </Row>
         </Pressable>

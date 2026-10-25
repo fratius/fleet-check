@@ -10,6 +10,7 @@ import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, TourLine } from '@/components/dash';
+import { BuyActions, BuyRow } from '@/components/buy';
 import { isOpen } from '@/lib/stats';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
@@ -77,6 +78,7 @@ export default function VehicleScreen() {
   const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
   const vanTours = s.tours.filter((t) => t.vehicleId === v.id);
+  const vanBuys = s.purchases.filter((p) => p.vehicleId === v.id);
   // A warning light on the latest dashboard photo in the last three days (the station's staff).
   const latest = vanTours[0];
   const warned = s.runs(v.stationId) && latest?.warnings?.length && Date.now() - (latest.end?.at || latest.startAt) < 3 * 86_400_000 ? latest : null;
@@ -148,6 +150,8 @@ export default function VehicleScreen() {
             : `${frames.length} photos for this ${CLS[v.cls].lower}, about ${est} min. The camera shows the outline to fit for each one.`} />
         </View>
       )}
+      {/* Refuel, wash and (owners and managers) parts; a driver stopped at the pump comes first for the station's staff. */}
+      <BuyActions v={v} />
 
       {s.mode === 'firebase' && !v.retired ? (
         <Card>
@@ -264,6 +268,13 @@ export default function VehicleScreen() {
               <View key={t.id} style={{ borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}><TourLine t={t} show="driver" /></View>
             ))}
           </Card>
+        </View>
+      ) : null}
+      {tab === 'history' && vanBuys.length ? (
+        <View style={{ gap: 8 }}>
+          <T v="h2">Fuel, wash and parts</T>
+          <T v="hint">{s.role === 'driver' ? 'Yours for this van.' : 'Every refuel, wash and parts purchase, with the ones refused or given up. Kept for good.'}</T>
+          <Card style={{ paddingVertical: 6 }}>{vanBuys.slice(0, 15).map((p, i) => <BuyRow key={p.id} p={p} show="driver" first={i === 0} />)}</Card>
         </View>
       ) : null}
       {tab === 'history' ? (s.mode === 'firebase' ? (

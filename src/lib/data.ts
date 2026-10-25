@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fb } from './firebase';
 import { useSession } from './session';
 import { ai } from './store';
-import type { Assignment, DamageLog, Incident, Tour } from './types';
+import type { Assignment, DamageLog, Incident, Purchase, Tour } from './types';
 
 /**
  * Records for the Data tab and the driver pages, read straight from Firestore for a period. Owners read every
@@ -22,7 +22,7 @@ function watch<T>(orgId: string, name: string, scope: Scope, cons: QueryConstrai
   return onSnapshot(query(base, ...who, ...cons, limit(max)), (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)), () => onError());
 }
 
-export interface PeriodData { tours: Tour[]; assignments: Assignment[]; logs: DamageLog[]; incidents: Incident[]; loading: boolean; error: string | null }
+export interface PeriodData { tours: Tour[]; assignments: Assignment[]; logs: DamageLog[]; incidents: Incident[]; purchases: Purchase[]; loading: boolean; error: string | null }
 
 /**
  * Everything the Data tab needs from `from` until now. In test mode it comes from the records on this phone.
@@ -38,6 +38,7 @@ export function usePeriodData(from: number): PeriodData {
   const [assignments, setAssignments] = useState<Assignment[] | null>(null);
   const [logs, setLogs] = useState<DamageLog[] | null>(null);
   const [incidents, setIncidents] = useState<Incident[] | null>(null);
+  const [purchases, setPurchases] = useState<Purchase[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Local (test mode) copies.
   const [local, setLocal] = useState<{ tours: Tour[]; incidents: Incident[] }>({ tours: [], incidents: [] });
@@ -51,7 +52,7 @@ export function usePeriodData(from: number): PeriodData {
       const b = s.store!.incidents.subscribe((r) => setLocal((l) => ({ ...l, incidents: r })));
       return () => { a(); b(); };
     }
-    setTours(null); setAssignments(null); setLogs(null); setIncidents(null);
+    setTours(null); setAssignments(null); setLogs(null); setIncidents(null); setPurchases(null);
     const fail = () => setError('Couldn\'t load all the numbers. Check the connection, then open the tab again.');
     const sc = { stations: stations ? stations : null };
     const fromDay = new Date(from).toISOString().slice(0, 10);
@@ -61,6 +62,7 @@ export function usePeriodData(from: number): PeriodData {
       watch<Assignment>(orgId, 'assignments', sc, [where('createdAt', '>=', from - 31 * 86_400_000), orderBy('createdAt', 'desc')], setAssignments, fail),
       watch<DamageLog>(orgId, 'damageLog', sc, [where('foundAt', '>=', from), orderBy('foundAt', 'desc')], setLogs, fail),
       watch<Incident>(orgId, 'incidents', sc, [where('day', '>=', fromDay), orderBy('day', 'desc')], setIncidents, fail),
+      watch<Purchase>(orgId, 'purchases', sc, [where('createdAt', '>=', from), orderBy('createdAt', 'desc')], setPurchases, fail),
     ];
     // Checks reviewed before the damage log existed (or changed since) get theirs now. Once per period per visit.
     const key = `${orgId}:${from}`;
@@ -74,16 +76,16 @@ export function usePeriodData(from: number): PeriodData {
 
   return useMemo(() => {
     if (!firebase) {
-      return { tours: local.tours, assignments: s.assignments, logs: [], incidents: local.incidents, loading: false, error: null };
+      return { tours: local.tours, assignments: s.assignments, logs: [], incidents: local.incidents, purchases: s.purchases.filter((p) => p.createdAt >= from), loading: false, error: null };
     }
     // Open van assignments from the session, in case one started before the window.
     const byId = new Map((assignments || []).map((a) => [a.id, a]));
     for (const a of s.assignments) if (!byId.has(a.id)) byId.set(a.id, a);
     return {
-      tours: tours || [], assignments: [...byId.values()], logs: logs || [], incidents: incidents || [],
-      loading: !tours || !assignments || !logs || !incidents, error,
+      tours: tours || [], assignments: [...byId.values()], logs: logs || [], incidents: incidents || [], purchases: purchases || [],
+      loading: !tours || !assignments || !logs || !incidents || !purchases, error,
     };
-  }, [firebase, local, s.assignments, tours, assignments, logs, incidents, error]);
+  }, [firebase, local, s.assignments, s.purchases, from, tours, assignments, logs, incidents, purchases, error]);
 }
 
 /** One driver's tours, incidents and damage log (their page). Drivers get their own. */
