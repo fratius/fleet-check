@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getLocales } from 'expo-localization';
 import { doc, setDoc } from 'firebase/firestore';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { fb } from './firebase';
@@ -75,6 +75,8 @@ export const useLang = () => {
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const device = deviceLang();
   const [state, setState] = useState<{ code: string; picked: string | null } | null>(null);
+  const now = useRef(state);
+  useEffect(() => { now.current = state; }, [state]);
 
   const show = useCallback(async (code: string, picked: string | null) => {
     const d = await fetchDict(code);
@@ -112,18 +114,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [show, device]);
 
   const fromProfile = useCallback((uid: string, profile: { lang?: unknown; appLang?: unknown }) => {
+    const s = now.current;
+    if (!s) return;
     const c = supported(typeof profile.lang === 'string' ? profile.lang : null);
-    setState((s) => {
-      if (!s) return s;
-      if (c && c !== s.picked) {
-        AsyncStorage.setItem(PICK, c).catch(() => {});
-        show(c, c).catch(() => {});
-      } else if (profile.appLang !== s.code) {
-        const f = fb();
-        if (f) setDoc(doc(f.db, 'users', uid), { appLang: s.code }, { merge: true }).catch(() => {});
-      }
-      return s;
-    });
+    if (c && c !== s.picked) {
+      AsyncStorage.setItem(PICK, c).catch(() => {});
+      show(c, c).catch(() => {});
+    } else if (profile.appLang !== s.code) {
+      const f = fb();
+      if (f) setDoc(doc(f.db, 'users', uid), { appLang: s.code }, { merge: true }).catch(() => {});
+    }
   }, [show]);
 
   if (!state) return null;

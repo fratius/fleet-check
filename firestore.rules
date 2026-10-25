@@ -49,9 +49,14 @@ service cloud.firestore {
         || (creatorClaim() && d.viewAs is map && d.viewAs.keys().hasOnly(['org', 'role', 'st']) && d.viewAs.org is string
           && (d.viewAs.role == 'owner' || ((d.viewAs.role == 'manager' || d.viewAs.role == 'driver') && d.viewAs.get('st', null) is string)));
     }
+    // The app's language: a short code ("de", "pt"), or null to follow the phone. The server writes notifications in it.
+    function okLang(d) {
+      return (!('lang' in d) || d.lang == null || (d.lang is string && d.lang.matches('[a-z]{2,3}')))
+        && (!('appLang' in d) || d.appLang == null || (d.appLang is string && d.appLang.matches('[a-z]{2,3}')));
+    }
     match /users/{uid} {
       allow read: if (signedIn() && uid == me()) || creator();
-      allow create, update: if signedIn() && uid == me() && okViewAs(request.resource.data);
+      allow create, update: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data);
       allow delete: if signedIn() && uid == me();
     }
 

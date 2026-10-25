@@ -267,6 +267,13 @@ describe('the app creator viewing the app as someone else', () => {
   test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(vehiclesAt(as('drv2'), [S2]))));
 });
 
+describe('language', () => {
+  test('a person picks their language', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1'), { lang: 'pl', appLang: 'pl' }, { merge: true })));
+  test('or follows the phone again', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1'), { lang: null, appLang: 'de' }, { merge: true })));
+  test('only a language code', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1'), { lang: '../../etc' }, { merge: true })));
+  test('nobody sets it for someone else', () => assertFails(setDoc(doc(as('mgr1'), 'users/drv1'), { lang: 'ro' }, { merge: true })));
+});
+
 describe('phone notifications', () => {
   const sub = (endpoint) => ({ endpoint, keys: { p256dh: 'BKEY', auth: 'AUTH' }, createdAt: 5, device: 'iPhone' });
   test('a driver turns them on for their phone', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1/push/p2'), sub('https://web.push.apple.com/QGx'))));
