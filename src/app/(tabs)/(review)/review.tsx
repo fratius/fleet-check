@@ -290,9 +290,9 @@ function WarnCard({ tour, plate, where }: { tour: Tour; plate: string; where: st
   const c = useColors();
   const at = tour.end?.at || tour.startAt;
   return (
-    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: tour.vehicleName, lights: tour.warnings.join(', ') })}>
+    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: tour.vehicleName, lights: tour.warnings.map((w) => t(w)).join(', ') })}>
       <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
-        {tour.vehicleName}<Text style={{ color: c.warn }}>{` – ${tour.warnings.join(', ')}`}</Text>
+        {tour.vehicleName}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(', ')}`}</Text>
       </Text>
       <Row>
         {plate ? <Plate text={plate} /> : null}

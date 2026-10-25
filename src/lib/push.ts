@@ -2,6 +2,7 @@ import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { Platform } from 'react-native';
 
 import { fb } from './firebase';
+import { t } from './i18n';
 import { device } from './install';
 
 /**
@@ -45,7 +46,7 @@ function deviceName() {
 }
 async function save(uid: string, sub: PushSubscription) {
   const j = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-  if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) throw new Error('This browser gave no notification address.');
+  if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) throw new Error(t('This browser gave no notification address.'));
   await setDoc(doc(fb()!.db, 'users', uid, 'push', await idOf(j.endpoint)), {
     endpoint: j.endpoint, keys: { p256dh: j.keys.p256dh, auth: j.keys.auth }, createdAt: Date.now(), device: deviceName(),
   });
@@ -58,7 +59,7 @@ export async function enablePush(uid: string): Promise<PushState> {
   if (perm !== 'granted') return perm === 'denied' ? 'blocked' : 'off';
   const [reg, cfg] = await Promise.all([registration(), getDoc(doc(fb()!.db, 'config', 'push'))]);
   const key = (cfg.data() as { vapidPublicKey?: string } | undefined)?.vapidPublicKey;
-  if (!key) throw new Error('Notifications aren\'t set up on the server yet. Try again after the next update.');
+  if (!key) throw new Error(t('Notifications aren\'t set up on the server yet. Try again after the next update.'));
   let sub = await reg.pushManager.getSubscription();
   // A subscription made with another key can't receive our notifications: make a new one.
   const own = sub?.options?.applicationServerKey;

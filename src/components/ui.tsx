@@ -9,7 +9,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 
 import { photoUrl } from '@/lib/images';
-import { loc } from '@/lib/i18n';
+import { loc, t } from '@/lib/i18n';
 
 export const MARKER = '#E2FF1C';
 const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00', warn: '#D9480F' };
@@ -175,7 +175,7 @@ export function ZoomPhoto({ src, style, caption, contentFit, thumb }: {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Pressable accessibilityRole="imagebutton" accessibilityLabel={caption ? `Open photo: ${caption}` : 'Open photo'} onPress={() => setOpen(true)}>
+      <Pressable accessibilityRole="imagebutton" accessibilityLabel={caption ? t('Open photo: {caption}', { caption }) : t('Open photo')} onPress={() => setOpen(true)}>
         {thumb || <Photo src={src} style={style} contentFit={contentFit} />}
       </Pressable>
       <Modal visible={open} animationType="fade" onRequestClose={() => setOpen(false)} supportedOrientations={['portrait', 'landscape']}>
@@ -184,7 +184,7 @@ export function ZoomPhoto({ src, style, caption, contentFit, thumb }: {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
             <Text style={{ flex: 1, color: '#fff', fontFamily: F.body, fontSize: 15 }} numberOfLines={2}>{caption || ''}</Text>
             <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={{ borderWidth: 2, borderColor: '#fff', borderRadius: 4, paddingHorizontal: 18, minHeight: 48, justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontFamily: F.cond, fontSize: 20 }}>Close</Text>
+              <Text style={{ color: '#fff', fontFamily: F.cond, fontSize: 20 }}>{t('Close')}</Text>
             </Pressable>
           </View>
         </SafeAreaView>

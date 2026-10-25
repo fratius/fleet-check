@@ -137,7 +137,7 @@ export default function VehicleScreen() {
       {done ? <Notice text={done} /> : null}
       {warned ? (
         <View style={{ borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
-          <T v="medium" color={c.alert}>{t('Warning light on the dashboard: {lights}', { lights: warned.warnings.join(', ') })}</T>
+          <T v="medium" color={c.alert}>{t('Warning light on the dashboard: {lights}', { lights: warned.warnings.map((w) => t(w)).join(', ') })}</T>
           <T v="small">{warned.end && !isOpen(warned)
             ? t('On the end photo of {name}\'s tour, {when}. Check it before the van goes out again.', { name: warned.driverName, when: fmtWhen(warned.end?.at || warned.startAt) })
             : t('On the start photo of {name}\'s tour, {when}. Check it before the van goes out again.', { name: warned.driverName, when: fmtWhen(warned.end?.at || warned.startAt) })}</T>

@@ -232,7 +232,7 @@ function tourCols(c: C, station: boolean, stationName: (id: string | null) => st
       text: (r) => (r.refuel?.litres ? `${one(r.refuel.litres)} l` : r.refuel?.unknown ? t('yes, amount unknown') : r.refuel ? t('no') : '') },
     { key: 'endPhoto', label: t('End photo'), width: 86, align: 'left', get: ended, tone: (r) => (r.endedHow === 'next' || r.endedHow === 'none' ? c.amber : undefined) },
     // The warning lights are named as the AI read them (not translated).
-    { key: 'warnings', label: t('Warning lights'), width: 150, align: 'left', get: (r) => (r.warnings || []).join(', '), tone: (r) => (r.warnings?.length ? c.warn : undefined) },
+    { key: 'warnings', label: t('Warning lights'), width: 150, align: 'left', get: (r) => (r.warnings || []).map((w) => t(w)).join(', '), tone: (r) => (r.warnings?.length ? c.warn : undefined) },
   ];
   const order = ['driver', 'date', 'van', 'km', 'per100', 'used', 'refuel', 'endPhoto', 'warnings', 'hours', 'end', 'startKm'];
   cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
@@ -253,7 +253,7 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
     { key: 'per100', label: t('per 100 km'), width: 84, get: (v) => (v.per100 == null ? null : Math.round(v.per100 * 10) / 10), text: (v) => (v.per100 == null ? '' : `${one(v.per100)} ${v.unit === 'kwh' ? 'kWh' : 'l'}`) },
     { key: 'vs', label: t('vs same model'), width: 84, get: (v) => v.vsModel, text: (v) => pct(v.vsModel), tone: (v) => vsTone(c, v.vsModel) },
     { key: 'damage', label: t('New damage'), width: 74, get: (v) => v.damage, tone: (v) => (v.damage ? c.alert : undefined), total: (vs) => int(sum(vs, (v) => v.damage)) },
-    { key: 'warnings', label: t('Warning lights'), width: 140, align: 'left', get: (v) => v.warnings.join(', '), tone: (v) => (v.warnings.length ? c.warn : undefined) },
+    { key: 'warnings', label: t('Warning lights'), width: 140, align: 'left', get: (v) => v.warnings.map((w) => t(w)).join(', '), tone: (v) => (v.warnings.length ? c.warn : undefined) },
     { key: 'noEnd', label: t('Tours without end photo'), width: 96, get: (v) => v.noEndPhoto },
     { key: 'due', label: t('Next deadline'), width: 190, align: 'left', get: (v) => v.nextDue?.days ?? null, text: (v) => (v.nextDue ? `${t(v.nextDue.label)}, ${t(v.nextDue.note)}` : ''),
       tone: (v) => (v.nextDue?.state === 'overdue' ? c.alert : v.nextDue?.state === 'soon' ? c.amber : undefined) },

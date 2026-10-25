@@ -48,3 +48,4 @@ firebase-debug*.log
 functions/lib/
 functions/.secret.local
 *service-account*.json
+i18n/out/

@@ -198,7 +198,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
         <T v="medium">{t('Warning lights')}</T>
         {warnings.length ? (
           <>
-            <Row gap={6}>{warnings.map((w) => <Chip key={w} text={`${w}  ✕`} on onPress={() => setWarnings((x) => x.filter((y) => y !== w))} />)}</Row>
+            <Row gap={6}>{warnings.map((w) => <Chip key={w} text={`${t(w)}  ✕`} on onPress={() => setWarnings((x) => x.filter((y) => y !== w))} />)}</Row>
             <T v="small">{t('Tap one that isn\'t lit to remove it. Your fleet manager sees the rest.')}</T>
           </>
         ) : <T v="small">{t('None found. If one is lit, tell your fleet manager.')}</T>}
@@ -258,7 +258,7 @@ export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'va
       </Row>
       <T v="small">{[when,
         tour.per100 != null ? per100Text(tour.per100, tour.unit) : '', tour.endedHow === 'next' ? t('no end photo (estimated)') : tour.endedHow === 'none' ? t('no end photo') : '',
-        tour.warnings?.length ? t('warning: {lights}', { lights: tour.warnings.join(', ') }) : ''].filter(Boolean).join(', ')}</T>
+        tour.warnings?.length ? t('warning: {lights}', { lights: tour.warnings.map((w) => t(w)).join(', ') }) : ''].filter(Boolean).join(', ')}</T>
     </View>
   );
 }

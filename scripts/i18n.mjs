@@ -11,6 +11,7 @@
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 
 const require = createRequire(import.meta.url);
 const { parse } = require('@babel/parser');
@@ -85,13 +86,21 @@ function scan(file, server) {
 for (const f of files(join(ROOT, 'src'))) scan(f, false);
 for (const f of files(join(ROOT, 'functions/src'))) scan(f, true);
 
+/** A short stable id per text, for translators' files. */
+const idOf = (key) => createHash('sha1').update(key).digest('hex').slice(0, 8);
 const list = [...keys.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([key, v]) => ({
-  key, ...(v.one ? { one: v.one } : {}), ...(v.server ? { server: true } : {}), where: [...v.files].sort(),
+  id: idOf(key), key, ...(v.one ? { one: v.one } : {}), ...(v.server ? { server: true } : {}), where: [...v.files].sort(),
 }));
+if (new Set(list.map((k) => k.id)).size !== list.length) throw new Error('Two texts share an id: lengthen idOf.');
 const only = [...args].find((a) => a.startsWith('--lang='))?.slice(7) || null;
 if (!only) {
   mkdirSync(join(ROOT, 'i18n'), { recursive: true });
   writeFileSync(join(ROOT, 'i18n/keys.json'), JSON.stringify(list, null, 1) + '\n');
+  // The same, compact, for translators: id, the English (counts: singular || plural), and where a short text is shown.
+  const short = (k) => k.key.split(/\s+/).length <= 3;
+  writeFileSync(join(ROOT, 'i18n/source.txt'), list.map((k) => [k.id, k.one ? `${k.one} || ${k.key}` : k.key,
+    short(k) ? `[${[...new Set(k.where.map((w) => w.replace(/^src\/|^functions\/src\//, '').replace(/:\d+$/, '').replace(/^app\/\(tabs\)\/\([^)]*\)\//, '')))].slice(0, 3).join(', ')}]` : '']
+    .filter(Boolean).join('\t').replace(/\n/g, '\\n')).join('\n') + '\n');
 }
 console.log(`${list.length} texts (${list.filter((k) => k.one).length} with a count), ${list.filter((k) => k.server).length} from the functions.`);
 problems.forEach((p) => console.log(`  ! ${p}`));
