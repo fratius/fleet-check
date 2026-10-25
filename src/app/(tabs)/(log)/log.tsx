@@ -150,7 +150,7 @@ function Scans({ rows }: { rows: Scan[] }) {
         <View key={r.id} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 4 }}>
           <Row>
             <T v="h3" style={{ flex: 1 }}>{r.predicted && CLS[r.predicted] ? t(CLS[r.predicted].name) : t('Not identified')}{[r.vMake, r.vModel].filter(Boolean).length ? ', ' + [r.vMake, r.vModel].filter(Boolean).join(' ') : ''}</T>
-            {r.verdict ? <Pill v={r.verdict === 'correct' ? 'good' : 'bad'} text={r.verdict === 'correct' ? t('Right') : r.actual && CLS[r.actual] ? t('Wrong, was {type}', { type: t(CLS[r.actual].lower) }) : t('Wrong')} /> : <Pill v="muted" text={t('Not rated')} />}
+            {r.verdict ? <Pill v={r.verdict === 'correct' ? 'good' : 'bad'} text={r.verdict === 'correct' ? t('Correct') : r.actual && CLS[r.actual] ? t('Wrong, was {type}', { type: t(CLS[r.actual].lower) }) : t('Wrong')} /> : <Pill v="muted" text={t('Not rated')} />}
           </Row>
           <T v="hint">{[fmtWhen(r.createdAt), tp(r.photos, '{n} photo', '{n} photos'), t(TIER_NAME[r.tier]), secs(r.ms), usd(r.cost), r.confidence != null ? t('{pct}% sure', { pct: Math.round(r.confidence * 100) }) : ''].filter(Boolean).join(', ')}</T>
         </View>
