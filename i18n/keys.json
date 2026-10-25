@@ -2708,6 +2708,13 @@
   ]
  },
  {
+  "id": "48e09e45",
+  "key": "Correct",
+  "where": [
+   "src/app/(tabs)/(log)/log.tsx:153"
+  ]
+ },
+ {
   "id": "d263c39c",
   "key": "Correct the incident",
   "where": [
@@ -8744,7 +8751,6 @@
   "id": "954daa8b",
   "key": "Right",
   "where": [
-   "src/app/(tabs)/(log)/log.tsx:153",
    "src/lib/van3d.ts:303"
   ]
  },

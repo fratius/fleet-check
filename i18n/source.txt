@@ -361,6 +361,7 @@ b37456c4	Contact	[components/vanfacts.tsx]
 e5c0324a	Contract number	[components/vanfacts.tsx]
 ac9fdef2	Contract, start date and, when they leave, the last working day.
 44998786	Coolant temperature	[prompts.ts]
+48e09e45	Correct	[log.tsx]
 d263c39c	Correct the incident	[components/driverrec.tsx]
 af6b940f	Cosmetic	[check/[id].tsx, components/damage.tsx]
 69508780	Cost per check, all in
@@ -1185,7 +1186,7 @@ e29a79fe	Review	[_layout.tsx, review.tsx, app/(tabs)/_layout.tsx]
 4e3b3fdd	reviewed by {name}	[review.tsx]
 b8e9acea	Reviewed by {name}, {when}. This is the final word on this van's damage.
 9aef74df	Reviewed by {name}. This is the final word on this van's damage.
-954daa8b	Right	[log.tsx, lib/van3d.ts]
+954daa8b	Right	[lib/van3d.ts]
 98864b88	Right box side, front half
 6a662739	Right box side, rear half
 609a9399	Right cab door and front corner
