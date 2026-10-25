@@ -94,8 +94,8 @@ export function Pill({ text, v = 'default' }: { text: string; v?: PillV }) {
   const c = useColors();
   const color = v === 'good' ? c.ok : v === 'bad' ? c.alert : v === 'amber' ? c.amber : v === 'muted' ? c.ink2 : v === 'solid' ? c.paper : c.ink;
   return (
-    <View style={{ borderWidth: 1.5, borderColor: v === 'solid' ? c.ink : color, backgroundColor: v === 'solid' ? c.ink : 'transparent', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>
-      <Text style={{ fontFamily: F.medium, fontSize: 13, lineHeight: 17, color }}>{text}</Text>
+    <View style={{ borderWidth: 1.5, borderColor: v === 'solid' ? c.ink : color, backgroundColor: v === 'solid' ? c.ink : 'transparent', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, flexShrink: 1, maxWidth: '100%' }}>
+      <Text style={{ fontFamily: F.medium, fontSize: 13, lineHeight: 17, color, flexShrink: 1 }}>{text}</Text>
     </View>
   );
 }
@@ -232,8 +232,10 @@ export function Tabs<K extends string>({ value, onChange, items }: { value: K; o
         const on = k === value;
         return (
           <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
-            style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
-            <Text style={{ fontFamily: F.cond, fontSize: 19, color: on ? c.paper : c.ink }}>{label}</Text>
+            style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
+              backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
+            {/* Long names (in some languages) wrap, and the count goes under the name. */}
+            <Text style={{ fontFamily: F.cond, fontSize: 18, lineHeight: 20, textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink }}>{label}</Text>
             {n ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
           </Pressable>
         );

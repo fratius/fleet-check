@@ -1279,6 +1279,7 @@ cdd7bb28	Setup	[account.tsx]
 e6dbeca8	Sharing isn't available on this phone.
 d97d1ee3	Show	[log.tsx]
 62b01e8b	Show all {n}	[person/[uid].tsx, review.tsx]
+05da90b2	Show all {n} row || Show all {n} rows
 9d3e93dd	Show on the van
 49234967	Shutter, bumper and lights in frame, up to the roof edge.
 f2c394b1	Shutter, bumper and lights in frame.

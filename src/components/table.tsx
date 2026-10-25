@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { F, MARKER, useColors } from '@/components/ui';
-import { t } from '@/lib/i18n';
+import { t, tp } from '@/lib/i18n';
 
 /**
  * A spreadsheet-like table: the first column (who or what) stays put while the rest scrolls sideways; tap a
@@ -27,6 +27,15 @@ export interface Sort { key: string; dir: 1 | -1 }
 
 const ROW = 44, HEAD = 56;
 
+/**
+ * A column's width: what the screen asks for, made wider when the heading (in the person's language) wouldn't fit in
+ * two lines or would break a word. Roughly 7.6 px per letter of the narrow heading font.
+ */
+export function colWidth(col: { width: number; label: string }): number {
+  const word = Math.max(0, ...col.label.split(/\s+/).map((w) => w.length));
+  return Math.min(200, Math.max(col.width, Math.ceil(word * 7.6) + 28, Math.ceil((col.label.length * 7.6) / 2) + 28));
+}
+
 export function sortRows<R>(rows: R[], cols: Col<R>[], sort: Sort | null): R[] {
   const col = sort && cols.find((c) => c.key === sort.key);
   if (!col || !sort) return rows;
@@ -45,7 +54,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
 }) {
   const c = useColors();
   const [limit, setLimit] = useState(60);
-  const [first, ...rest] = cols;
+  const [first, ...rest] = cols.map((x) => ({ ...x, width: colWidth(x) }));
   const shown = rows.slice(0, limit);
   const hasTotal = !!totalLabel && cols.some((x) => x.total);
   const head = (col: Col<R>, i: number, frozen: boolean) => {
@@ -106,7 +115,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
       </View>
       {rows.length > shown.length ? (
         <Pressable accessibilityRole="button" onPress={() => setLimit(rows.length)}>
-          <Text style={{ fontFamily: F.medium, fontSize: 15, color: c.ink, textDecorationLine: 'underline' }}>Show all {rows.length} rows</Text>
+          <Text style={{ fontFamily: F.medium, fontSize: 15, color: c.ink, textDecorationLine: 'underline' }}>{tp(rows.length, 'Show all {n} row', 'Show all {n} rows')}</Text>
         </Pressable>
       ) : null}
     </View>

@@ -9424,6 +9424,14 @@
   ]
  },
  {
+  "id": "05da90b2",
+  "key": "Show all {n} rows",
+  "one": "Show all {n} row",
+  "where": [
+   "src/components/table.tsx:118"
+  ]
+ },
+ {
   "id": "9d3e93dd",
   "key": "Show on the van",
   "where": [
@@ -9651,7 +9659,7 @@
   "id": "18bc1586",
   "key": "Sort by {column}",
   "where": [
-   "src/components/table.tsx:54"
+   "src/components/table.tsx:63"
   ]
  },
  {
