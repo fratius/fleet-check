@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
 import { ViewAsCard } from '@/components/viewas';
@@ -82,7 +82,7 @@ export default function Account() {
         {s.mode === 'firebase'
           ? <T v="hint">Connected to Firebase project {projectId}. Photos and results sync across phones and the web.</T>
           : <Notice text="Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work." />}
-        <T v="small">Fleet Check {Constants.expoConfig?.version || ''}</T>
+        <T v="small">{versionLine()}</T>
       </Card>
 
       {s.mode === 'firebase' ? (
@@ -230,4 +230,14 @@ function FleetSettings() {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </Card>
   );
+}
+
+/** "Version d81ff4b of Oct 25, 13:27, web app": the same on the phone and the web once both run the latest. */
+function versionLine() {
+  const b = (Constants.expoConfig?.extra as { build?: { sha?: string; at?: string } } | undefined)?.build;
+  const at = b?.at ? new Date(b.at) : null;
+  const when = at && !Number.isNaN(at.getTime())
+    ? `${at.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}, ${at.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}` : '';
+  const where = Platform.OS === 'web' ? 'web app' : Constants.appOwnership === 'expo' ? 'Expo Go' : 'phone app';
+  return `Fleet Check ${Constants.expoConfig?.version || ''}, version ${b?.sha || 'unknown'}${when ? ` of ${when}` : ''}, ${where}`;
 }

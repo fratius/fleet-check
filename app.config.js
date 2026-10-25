@@ -24,5 +24,8 @@ module.exports = ({ config }) => {
     extra.eas = { ...(extra.eas || {}), projectId };
     config.updates = { ...(config.updates || {}), url: `https://u.expo.dev/${projectId}` };
   }
+  // Which version this is (the commit and when it was built), shown in the Account tab, so the phone app and the
+  // web app can be compared: Expo Go only switches to a new version the next time it starts.
+  extra.build = { sha: (process.env.GITHUB_SHA || '').slice(0, 7) || 'dev', at: new Date().toISOString() };
   return { ...config, extra };
 };
