@@ -764,6 +764,13 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.equal(b1.total, 79.1);
     assert.deepEqual(b1.corrected, ['odometerKm', 'fuelPct']);
     assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', v2.id))).data().odometerKm, 60300);
+    // On the van for everyone at the station: the km, the fuel after filling up (25% and 45.2 l in 80 l: 82%),
+    // and the warning lights the AI read on the dashboard photo.
+    const vf = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', v2.id))).data();
+    assert.equal(vf.dash.km, 60300);
+    assert.equal(vf.dash.from, 'fuel');
+    assert.equal(vf.dash.fuelPct, 82);
+    assert.deepEqual(vf.dash.warnings, ['Tyre pressure']);
     const m1 = opened().at(-1);
     assert.equal(m1.title, 'Refuel: Van v2 (V2), 45.2 l, €79.10');
     assert.match(m1.body, /^Dana Driver at Test Tankstelle, 60,300 km\.$/);
@@ -829,7 +836,6 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.equal(vn.dash.km, 60420);
     assert.equal(vn.dash.from, 'parts');
     assert.equal(vn.dash.byName, 'Max Manager');
-    assert.deepEqual(vn.dash.warnings, ['Tyre pressure'], 'warning lights the AI read on the dashboard photo');
     assert.equal(vn.assignedTo.kmEnd, 60420);
     assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', vn.assignedTo.assignmentId))).data().kmEnd, 60420);
     assert.equal(bp.parts.length, 2);
@@ -849,12 +855,13 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
 
 test('km per driver: the next driver starts at the last photo\'s km; earlier data is filled in once', async () => {
   const { v2, v3 } = S.vans;
-  // Erik gets the van straight after Dana: he starts at its last reading (from the last 24 hours), Dana's ends there.
+  // The manager takes the van straight after Dana: the start is its last reading (from the last 24 hours), and
+  // Dana's km end there.
   const before = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicles', v2.id))).data();
-  const r = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d2.uid });
-  const erik = (await getDoc(doc(S.d2.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
-  assert.equal(erik.kmStart, 60420);
-  assert.equal(erik.kmEnd, null);
+  const r = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.mgr.uid });
+  const next = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
+  assert.equal(next.kmStart, 60420);
+  assert.equal(next.kmEnd, null);
   const dana = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', before.assignedTo.assignmentId))).data();
   assert.equal(dana.end != null, true);
   assert.equal(dana.kmEnd, 60420);
