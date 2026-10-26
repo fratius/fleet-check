@@ -176,6 +176,10 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/move-costs.cjs
+      - name: Fill in each van's km and dashboard, and each driver's km, from earlier photos (once per company)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/van-dash.cjs
       - name: Move companies to the Fast model once (the default since 2026-10-25)
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

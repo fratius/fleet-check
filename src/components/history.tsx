@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { Button, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, F, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { watchHistory, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
@@ -22,6 +22,19 @@ export function dur(ms: number) {
   return tp(d, '{n} day', '{n} days');
 }
 export const sinceText = (ms: number) => t('since {when} ({ago})', { when: fmtWhen(ms), ago: dur(Date.now() - ms) });
+
+/**
+ * The km a driver had a van from and to, from the dashboard photos while they had it (null: no photo then). The
+ * start is the van's last reading if it was from the 24 hours before, so the km of the driver before aren't theirs.
+ */
+export function kmLine(a: { kmStart?: number | null; kmEnd?: number | null; end: number | null }): string | null {
+  const from = a.kmStart, to = a.kmEnd;
+  if (from == null) return null;
+  if (to != null && to > from) {
+    return a.end == null ? t('{from} to {to} km so far: {km} km', { from, to, km: to - from }) : t('{from} to {to} km: {km} km driven', { from, to, km: to - from });
+  }
+  return a.end == null ? t('Got it at {km} km', { km: from }) : t('Got it at {km} km; no dashboard photo after that', { km: from });
+}
 
 /**
  * The full assignment history of one van or one person, newest first. Owners read all of it, managers what
@@ -79,6 +92,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
         {canOpen ? <T v="h3" color={c.ink2}>{fwd()}</T> : null}
       </Row>
       <T v="small">{open ? t('{from} to now, {time}', { from: fmtWhen(a.start), time: dur(end - a.start) }) : t('{from} to {to}, {time}', { from: fmtWhen(a.start), to: fmtWhen(a.end), time: dur(end - a.start) })}</T>
+      {kmLine(a) ? <T v="small" style={{ fontFamily: F.semi }} color={c.ink}>{kmLine(a)}</T> : null}
       <T v="small">
         {[a.startedBy === a.driverId ? t('Picked up by the driver') : t('Given by {name}', { name: a.startedByName }),
           !open && a.endReason ? (a.endedByName ? t('{reason} by {name}', { reason: t(END_REASON[a.endReason] || a.endReason), name: a.endedByName }) : t(END_REASON[a.endReason] || a.endReason)) : '',

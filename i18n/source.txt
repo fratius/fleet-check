@@ -7,6 +7,8 @@ ae4223c9	{day}, problem	[components/driverrec.tsx]
 3b2cab20	{done} of {n} spot || {done} of {n} spots
 4d088bbf	{field}: enter a date like {example}.
 3e0fe956	{field}: enter a number.
+b7384514	{from} to {to} km so far: {km} km
+36399bd6	{from} to {to} km: {km} km driven
 dc190662	{from} to {to}, {time}
 04ccdb8d	{from} to now, {time}
 12e9e5a9	{kind}, {fault}	[components/driverrec.tsx]
@@ -67,6 +69,7 @@ e4bfd1a2	{n} spot, {images} images || {n} spots, {images} images
 a8f99025	{n} unclear || {n} unclear	[log.tsx]
 3c32e1d0	{n} van || {n} vans	[index.tsx, people.tsx]
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
+f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
 c67738c1	{name} (retired)	[data.tsx]
 26d4d69c	{name} (you)	[person/[uid].tsx, people.tsx]
@@ -250,7 +253,7 @@ b52b36b7	Back	[check/[id].tsx, app/scan/[id].tsx, components/viewas.tsx]
 1a9c58de	Back to {title}	[components/nav.tsx]
 412be025	Back to me	[components/viewas.tsx]
 03342dbb	Balanced	[lib/types.ts]
-4a9be042	Battery	[components/vanfacts.tsx]
+4a9be042	Battery	[components/dash.tsx, components/vanfacts.tsx]
 3d2d4ffc	Battery (%)	[components/dash.tsx]
 fe1c2af1	Battery charge	[prompts.ts]
 74f39697	Before	[components/damage.tsx]
@@ -264,6 +267,7 @@ fe1c2af1	Battery charge	[prompts.ts]
 b2376bef	Before: {panel}, {when}	[components/damage.tsx]
 77003d07	Best	[lib/types.ts]
 cf741b61	Between {from} and {to}
+718a7e8a	Body	[vehicle/[id].tsx]
 c832844d	Bodyshop repair	[check/[id].tsx]
 c2abb664	Both doors, bumper and lights in frame, up to the roof edge.
 60781137	Both doors, bumper and lights in frame.
@@ -319,6 +323,7 @@ feac7d74	Check photos from your library
 15e1e27b	Check the fuel card first.
 d55e8f36	Check the numbers	[buy/[id].tsx]
 5c8ff6f0	Check the numbers and save.
+a69f9b9d	Check the van before it goes out again.
 881050c7	Check what the AI read
 4b32120c	Check your inbox for a link to set a new password.
 33372464	Check, {van}	[check/[id].tsx, person/[uid].tsx]
@@ -610,12 +615,17 @@ e12e759b	Free ({n})	[index.tsx]
 923e75de	Free vans first. Taking a van from someone else leaves them without one.
 9b3f00d9	from library	[vehicle/[id].tsx]
 64544340	From the dashboard photo
+46989fb6	From the dashboard photo {when}, {name}.
+96509e27	From the dashboard photo at a refuel {when}, {name}.
+1409f187	From the dashboard photo at a wash {when}, {name}.
+46383582	From the dashboard photo for parts {when}, {name}.
 0d13fc5b	From the dashboard photos at the start and end of each tour, newest first.
 83918d47	From your refuel during this tour (the receipt). || From your {n} refuels during this tour (the receipts).
 dd19f988	Front	[lib/frames.ts, lib/van3d.ts]
 2ec943d6	Front left corner	[lib/frames.ts]
 794829ba	Front right corner	[lib/frames.ts]
-0b645d1b	Fuel	[data.tsx, components/vanfacts.tsx]
+0b645d1b	Fuel	[data.tsx, components/dash.tsx, components/vanfacts.tsx]
+abcb89f0	Fuel after the refuel
 a3e3b072	Fuel card	[buy/[id].tsx, data.tsx]
 ca9d1d62	Fuel card and notes
 249b928a	Fuel card, if any
@@ -657,6 +667,8 @@ ce0c1c5d	Given by {name}.	[data.tsx]
 8e1106e3	given to someone else
 1b8be632	Glow plug	[prompts.ts]
 63e7b1f4	Going on	[components/buy.tsx]
+a499c415	Got it at {km} km
+6d0d66c7	Got it at {km} km; no dashboard photo after that
 1b9810c3	Gross weight	[components/vanfacts.tsx]
 942f0237	Had {van} from {from} to {to}.
 03edcfcc	Had {van} from {from} until now.
@@ -881,6 +893,7 @@ e6fdff10	no damage	[check/[id].tsx]
 017a65e2	No damage found	[check/[id].tsx]
 10043a46	No damage in the close-ups
 c461915c	No damage on record. Damage goes on the record when a fleet manager approves it in a check.
+2d3759fb	No dashboard photo yet. The km, the fuel level and any warning lights show here after the first one: at the start or end of a tour, or at a refuel.
 9b00735f	No driver is at a van right now.
 c096d71b	No drivers in this period.
 39a8a708	No drivers yet. Invite them with a link.
@@ -897,6 +910,7 @@ bd4d9336	No fleet manager at {station} yet.
 6c5ff2b0	No fuel card at the pump.
 3c29d55a	No fuel card on the van's record, nothing to check.
 791b6a4b	No history for this van around then.
+e2d281e8	No km yet	[index.tsx]
 b7caebb3	No photo	[app/scan/[id].tsx, components/damage.tsx]
 b1e0aaf7	No pick-up video	[review.tsx]
 a7f6c6c2	No pick-up video or photos yet.
@@ -920,6 +934,7 @@ b4a5a8e3	No walk-around yet	[index.tsx]
 e8b2a86b	No walk-around yet. Start one above.
 20ebca31	No walk-arounds yet. Open a vehicle and tap Start scanning.
 9fefab05	No warning lights on the latest dashboard photos.
+a19f8183	No warning lights.	[components/dash.tsx]
 d265ea75	No, wrong	[add.tsx]
 77be0177	Nobody at this station yet. Invite drivers under People.
 3e4e8c1f	Nobody had {van} then.
@@ -974,11 +989,13 @@ e3b82040	Now	[components/history.tsx]
 29df038b	Now: {value}	[components/docscan.tsx]
 445a0f2c	Number plate	[add.tsx, vehicle/[id].tsx, components/docscan.tsx]
 c70bba01	odometer	[buy/[id].tsx]
-8ca2cb92	Odometer	[buy/[id].tsx, data.tsx, components/vanfacts.tsx]
+8ca2cb92	Odometer	[buy/[id].tsx, data.tsx, components/dash.tsx]
 6a1f9fb7	Odometer (km)	[buy/[id].tsx, components/dash.tsx]
 d4da6c09	Odometer at start	[data.tsx]
 93b98a5c	Odometer at the start
+bfb5e333	Odometer on {day}, from the van's record
 29a5fa26	Odometer saved: {km}.	[components/dash.tsx]
+811a7cbb	Odometer, from the van's record
 601e502d	of {n} frame || of {n} frames	[log.tsx]
 7f0cfd38	of {n} rated || of {n} rated	[log.tsx]
 e3de5ab0	Off	[account.tsx]
@@ -989,9 +1006,7 @@ a033bc67	On {name}'s end photo, {when}
 2ff643a6	On {name}'s start photo, {when}
 9371fb1e	On iPhone, notifications work once Fleet Check is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.
 b366de2a	On the document: "{text}"
-f8c754b4	On the end photo of {name}'s tour, {when}. Check it before the van goes out again.
 ea6b8ab1	On the receipt	[buy/[id].tsx]
-7fd1c23c	On the start photo of {name}'s tour, {when}. Check it before the van goes out again.
 48f906a7	On tour	[data.tsx, components/dash.tsx]
 ad1e5a02	On tour {time}	[components/dash.tsx]
 c02d932d	On tour for {time}
@@ -1118,7 +1133,7 @@ d6f409d1	Purchase contract or invoice
 b21bc692	Purchase price	[components/vanfacts.tsx]
 876af140	Put Fleet Check on your home screen like any other app.
 5177429b	Raised roof	[lib/frames.ts]
-a16c5bbe	Range	[components/vanfacts.tsx]
+a16c5bbe	Range	[components/dash.tsx, components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
 1de9b5aa	Read on	[components/vanfacts.tsx]
 1e43e14b	Read the document	[components/docscan.tsx]
@@ -1275,6 +1290,7 @@ c149b95b	Sent. The fleet manager approves or rejects each spot.
 4202eb24	Service due	[prompts.ts]
 66394926	Service invoice or record
 1241872d	Set by the fleet owner for the whole company.
+d4ce959d	Sets the photo frames of a walk-around. Change it under Name, plate and type.
 cdd7bb28	Setup	[account.tsx]
 09ca55ca	Share	[people.tsx]
 e6dbeca8	Sharing isn't available on this phone.
@@ -1663,8 +1679,8 @@ d2c2811e	Walk-around, {van}	[person/[uid].tsx]
 66bfa354	Walk-arounds and checks	[person/[uid].tsx]
 ba7d869d	walk-in delivery van	[lib/frames.ts]
 ddd0e819	Walk-in delivery van	[lib/frames.ts]
-e2b065b7	Warning light on the dashboard: {lights}
 0e649cf5	Warning lights	[review.tsx, data.tsx, components/dash.tsx]
+31b32be2	Warning light: {lights} || Warning lights: {lights}	[components/dash.tsx]
 04e3d7d6	warning: {lights}	[components/dash.tsx]
 6814a21e	wash	[components/buy.tsx]
 b34c11ba	Wash	[purchases.ts, components/buy.tsx]

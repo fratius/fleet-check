@@ -5,6 +5,7 @@ import { Platform, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Button, Chip, F, Field, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { fmtDay } from '@/lib/fleet';
 import { flash } from '@/lib/flash';
 import { newId, prepare, upload } from '@/lib/images';
 import { useSession } from '@/lib/session';
@@ -246,6 +247,58 @@ function savedText(role: 'start' | 'end' | 'none', tour: Tour | null, km: number
 }
 
 /** A compact line about a tour, for lists. */
+/** A needle gauge in eighths ("3/4"), as it's read off the dashboard. */
+export function gaugeText(pct: number) {
+  const e = EIGHTHS.reduce((a, b) => (Math.abs(b[0] - pct) < Math.abs(a[0] - pct) ? b : a));
+  return e[0] === 0 || e[0] === 100 ? t(e[1]) : e[1];
+}
+
+/**
+ * What the van's dashboard showed last: its latest photo at the start or end of a tour, or at a refuel, wash or
+ * parts purchase. The km, the fuel or battery, the range and the warning lights, for everyone at the station.
+ * Without a photo yet, the owner and the station's managers see the km from the van's record, if there is one.
+ */
+export function VanNow({ v }: { v: Vehicle }) {
+  const s = useSession();
+  const c = useColors();
+  const d = v.dash;
+  const det = s.runs(v.stationId) ? s.details.find((x) => x.id === v.id) : undefined;
+  const stat = (value: string, label: string) => (
+    <View key={label} style={{ minWidth: 76 }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 30, lineHeight: 33, color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <T v="small">{label}</T>
+    </View>
+  );
+  if (!d) {
+    return (
+      <View style={{ gap: 4 }}>
+        {det?.odometerKm != null ? stat(kmText(det.odometerKm), det.odometerAt ? t('Odometer on {day}, from the van\'s record', { day: fmtDay(det.odometerAt) }) : t('Odometer, from the van\'s record')) : null}
+        <T v="small">{t('No dashboard photo yet. The km, the fuel level and any warning lights show here after the first one: at the start or end of a tour, or at a refuel.')}</T>
+      </View>
+    );
+  }
+  const ev = v.fuel === 'electric';
+  const level = ev ? d.batteryPct : d.fuelPct;
+  const where = { tour: N_('From the dashboard photo {when}, {name}.'), fuel: N_('From the dashboard photo at a refuel {when}, {name}.'),
+    wash: N_('From the dashboard photo at a wash {when}, {name}.'), parts: N_('From the dashboard photo for parts {when}, {name}.') }[d.from] || N_('From the dashboard photo {when}, {name}.');
+  return (
+    <View style={{ gap: 8 }}>
+      <Row gap={20} style={{ alignItems: 'flex-start' }}>
+        {stat(kmText(d.km), t('Odometer'))}
+        {level != null ? stat(ev || d.batteryPct != null ? `${Math.round(level)} %` : gaugeText(level), d.from === 'fuel' ? t('Fuel after the refuel') : ev ? t('Battery') : t('Fuel')) : null}
+        {d.rangeKm != null ? stat(kmText(d.rangeKm), t('Range')) : null}
+      </Row>
+      {d.warnings.length ? (
+        <View style={{ borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 10, gap: 2, backgroundColor: c.paper }}>
+          <T v="medium" color={c.alert}>{tp(d.warnings.length, 'Warning light: {lights}', 'Warning lights: {lights}', { lights: d.warnings.map((w) => t(w)).join(', ') })}</T>
+          <T v="small">{t('Check the van before it goes out again.')}</T>
+        </View>
+      ) : <T v="small">{t('No warning lights.')}</T>}
+      <T v="small">{t(where, { when: fmtWhen(d.at), name: d.byName })}</T>
+    </View>
+  );
+}
+
 export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'van' }) {
   const c = useColors();
   const open = isOpen(tour);

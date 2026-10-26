@@ -27,6 +27,7 @@ import {
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail } from './website';
+import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -468,7 +469,8 @@ export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => 
 /* ---------- 8. Vans and drivers: assignments with a permanent history ---------- */
 // An assignment links one van to one person from `start` to `end` (null while it lasts). A van has at most one
 // open assignment and so does a person. Assignments are written only here and never edited or deleted: the only
-// change is closing an open one. That record is the history of every van and every driver.
+// changes are closing an open one and, while it's open, its km from each dashboard photo (vandash.ts). That record
+// is the history of every van and every driver.
 
 type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
 interface Assignment {
@@ -480,6 +482,8 @@ interface Assignment {
   startVideoId?: string | null; endVideoId?: string | null;
   /** Given by someone else (a manager or owner): the driver is asked for pick-up photos or a video (section 11). */
   pickupRequested?: boolean;
+  /** The km when the driver got the van and the latest while they have it, from dashboard photos (vandash.ts). */
+  kmStart?: number | null; kmEnd?: number | null;
 }
 /** Proof at a handover: the photos of a walk-around, or a video. */
 interface Media { walkId: string | null; videoId: string | null }
@@ -503,7 +507,7 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
   const r = await db().runTransaction(async (tx) => {
     const v = await tx.get(vref);
     if (!v.exists) throw fail('not-found', 'This van was removed.');
-    const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null };
+    const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null; dash?: VanDash | null };
     needStation(who, van.stationId);
     if (van.retired && driverId) throw fail('failed-precondition', 'This van is retired. Bring it back first.');
     let person: { name: string; role: string; stationIds?: string[] } | null = null;
@@ -527,13 +531,14 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
     if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null as string | null }; }
     const now = Date.now();
     const aref = aCol.doc();
+    const kmStart = startKm(van.dash, now);
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: van.name, plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid,
+      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid, kmStart, kmEnd: null,
     };
     tx.set(aref, a);
-    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now } });
+    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now, kmStart, kmEnd: null } });
     return { assignmentId: aref.id as string | null, vanName: van.name, plate: van.plate || '' };
   });
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
@@ -688,7 +693,7 @@ async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleI
   const vref = org.collection('vehicles').doc(vehicleId);
   const v = await tx.get(vref);
   if (!v.exists) throw fail('not-found', 'Unknown van.');
-  const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null };
+  const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null; dash?: VanDash | null };
   needStation(who, van.stationId);
   const st = await tx.get(org.collection('stations').doc(van.stationId!));
   if (st.data()?.selfAssign !== true) throw fail('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
@@ -764,13 +769,14 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
     if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
     const now = Date.now();
     const aref = aCol.doc();
+    const kmStart = startKm(van.dash, now);
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null,
+      startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
     };
     tx.set(aref, a);
-    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now } });
+    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now, kmStart, kmEnd: null } });
     mark('pickup', aref.id);
     return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
   });
@@ -1065,7 +1071,8 @@ export const recordLicenceCheck = onCall({ timeoutSeconds: 30 }, async (req) => 
 interface VanDoc {
   name: string; plate?: string; stationId?: string; retired?: boolean; make?: string | null; model?: string | null; cls?: string;
   fuel?: Fuel; tankL?: number | null; batteryKwh?: number | null;
-  assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null;
+  assignedTo?: { assignmentId: string; driverId: string; driverName: string; kmStart?: number | null; kmEnd?: number | null } | null;
+  dash?: VanDash | null;
 }
 const READ_MAX_AGE = 2 * 3600_000;
 const staffAt = (w: Who, stationId: string | null | undefined) => w.role === 'owner' || (w.role === 'manager' && !!stationId && w.stationIds.includes(stationId));
@@ -1223,6 +1230,8 @@ export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
     const today = new Date(now).toISOString().slice(0, 10);
     if (!det.exists) tx.set(detRef, { stationId: van.stationId || null, createdAt: now, odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
     else if (Number(det.data()?.odometerKm ?? -1) <= odometerKm) tx.update(detRef, { odometerKm, odometerAt: today });
+    // On the van for everyone at the station (km, levels, warning lights), and the km of whoever has it.
+    noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km: odometerKm, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, byName: who.name, from: 'tour' });
     return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started };
   });
   return out;
@@ -1573,13 +1582,21 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const now = Date.now();
   const currency = p.receipt.ai.currency || 'EUR';
   await ref.update({ status: 'done', doneAt: now, updatedAt: now, ...vals, currency, merchant: p.receipt.ai.merchant, flags, corrected });
-  // The van's odometer in its record (only ever up).
+  // The van's odometer in its record (only ever up); its latest dashboard and the km of whoever has it.
   const detRef = org.collection('vehicleDetails').doc(p.vehicleId);
+  const vref = org.collection('vehicles').doc(p.vehicleId);
   await db().runTransaction(async (tx) => {
     const det = await tx.get(detRef);
+    const van = (await tx.get(vref)).data() as VanDoc | undefined;
     const today = new Date(now).toISOString().slice(0, 10);
     if (!det.exists) tx.set(detRef, { stationId: p.stationId, createdAt: now, odometerKm: vals.odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
     else if (Number(det.data()?.odometerKm ?? -1) <= vals.odometerKm) tx.update(detRef, { odometerKm: vals.odometerKm, odometerAt: today });
+    const read = p.dash.ai;
+    if (van) noteDash(tx, vref, van, {
+      km: vals.odometerKm, fuelPct: p.kind === 'fuel' ? afterRefuel(vals.fuelPct, vals.litres, p.tankL) : read?.fuelPct ?? null,
+      batteryPct: read?.batteryPct ?? null, rangeKm: p.kind === 'fuel' ? null : read?.rangeKm ?? null, warnings: read?.warnings || [],
+      at: p.dash.at, by: p.by, byName: p.byName, from: p.kind,
+    });
   });
   const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
   const notified = await tell(bosses, (lang) => ({ ...doneMessage(lang, { kind: p.kind, vehicleName: p.vehicleName, plate: p.plate, byName: p.byName, odometerKm: vals.odometerKm, litres: vals.litres,

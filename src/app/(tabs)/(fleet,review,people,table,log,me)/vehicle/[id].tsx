@@ -4,14 +4,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View, type ScrollViewInstance } from 'react-native';
 
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
-import { DriverPicker, HistoryList, sinceText, useHistory } from '@/components/history';
+import { DriverPicker, HistoryList, kmLine, sinceText, useHistory } from '@/components/history';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
-import { TourCard, TourLine } from '@/components/dash';
+import { TourCard, TourLine, VanNow } from '@/components/dash';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
-import { isOpen } from '@/lib/stats';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { ScanChoice } from '@/components/scanchoice';
@@ -23,7 +22,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
-import { loc, t, tp } from '@/lib/i18n';
+import { fwd, loc, t, tp } from '@/lib/i18n';
 
 export default function VehicleScreen() {
   const { id, tab: openTab } = useLocalSearchParams<{ id: string; tab?: string }>();
@@ -80,9 +79,6 @@ export default function VehicleScreen() {
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
   const vanTours = s.tours.filter((t) => t.vehicleId === v.id);
   const vanBuys = s.purchases.filter((p) => p.vehicleId === v.id);
-  // A warning light on the latest dashboard photo in the last three days (the station's staff).
-  const latest = vanTours[0];
-  const warned = s.runs(v.stationId) && latest?.warnings?.length && Date.now() - (latest.end?.at || latest.startAt) < 3 * 86_400_000 ? latest : null;
   const perPhoto = (() => { const xs = s.walks.filter((w) => w.cls === v.cls && w.taken && w.totalMs).map((w) => w.totalMs! / w.taken).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : 12000; })();
   const est = Math.max(1, Math.round((frames.length * perPhoto) / 60000));
   const makeModel = [v.make, v.model].filter(Boolean).join(' ');
@@ -129,20 +125,14 @@ export default function VehicleScreen() {
       <View style={{ gap: 6 }}>
         <T v="h1">{v.name}</T>
         <Row><Plate text={v.plate} /><T v="hint">{t(CLS[v.cls].name)}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}{s.stations.length > 1 ? ', ' + s.stationName(v.stationId) : ''}</T></Row>
-        <Row>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={t(p)} />)}</Row>
         {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: t('Diesel'), electric: t('Electric'), petrol: t('Petrol'), hybrid: t('Hybrid'), cng: t('Gas') }[v.fuel] : '',
           v.heightM ? t('{m} m high', { m: v.heightM.toLocaleString(loc(), { maximumFractionDigits: 2 }) }) : ''].filter(Boolean).join(', ')}</T> : null}
       </View>
 
+      {/* What the dashboard showed last: km, fuel or battery, range, warning lights. */}
+      {!v.retired || v.dash ? <VanNow v={v} /> : null}
+
       {done ? <Notice text={done} /> : null}
-      {warned ? (
-        <View style={{ borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
-          <T v="medium" color={c.alert}>{t('Warning light on the dashboard: {lights}', { lights: warned.warnings.map((w) => t(w)).join(', ') })}</T>
-          <T v="small">{warned.end && !isOpen(warned)
-            ? t('On the end photo of {name}\'s tour, {when}. Check it before the van goes out again.', { name: warned.driverName, when: fmtWhen(warned.end?.at || warned.startAt) })
-            : t('On the start photo of {name}\'s tour, {when}. Check it before the van goes out again.', { name: warned.driverName, when: fmtWhen(warned.end?.at || warned.startAt) })}</T>
-        </View>
-      ) : null}
       {s.runs(v.stationId) && !v.retired ? <Deadlines v={v} d={s.details.find((x) => x.id === v.id)} compact onOpen={openDetails} /> : null}
       {v.retired ? (
         <Card dashed>
@@ -167,8 +157,9 @@ export default function VehicleScreen() {
           <T v="hint">{t('Driver')}</T>
           {v.assignedTo ? (
             <Pressable disabled={!s.staff && v.assignedTo.driverId !== s.user?.uid} onPress={() => router.push(`/person/${v.assignedTo!.driverId}`)}>
-              <T v="h2">{v.assignedTo.driverId === s.user?.uid ? t('You') : v.assignedTo.driverName}{s.staff ? ' ›' : ''}</T>
+              <T v="h2">{v.assignedTo.driverId === s.user?.uid ? t('You') : v.assignedTo.driverName}{s.staff ? ` ${fwd()}` : ''}</T>
               <T v="hint">{sinceText(v.assignedTo.since)}</T>
+              {kmLine({ ...v.assignedTo, end: null }) ? <T v="small">{kmLine({ ...v.assignedTo, end: null })}</T> : null}
             </Pressable>
           ) : <><T v="h2">{t('Free')}</T><T v="hint">{t('Nobody has this van.')}</T></>}
           {canSelf ? (
@@ -298,6 +289,13 @@ export default function VehicleScreen() {
       ) : <Card dashed><T v="hint">{t('The drivers of each van need the Firebase backend.')}</T></Card>) : null}
 
       {tab === 'details' ? <VanRecord v={v} /> : null}
+      {tab === 'details' && s.runs(v.stationId) ? (
+        <View style={{ gap: 6 }}>
+          <T v="h3">{t('Body')}</T>
+          <Row gap={6}>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={t(p)} />)}</Row>
+          <T v="small">{t('Sets the photo frames of a walk-around. Change it under Name, plate and type.')}</T>
+        </View>
+      ) : null}
 
       {tab !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>

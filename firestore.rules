@@ -125,10 +125,12 @@ service cloud.firestore {
       // Who drives a van (assignedTo), retiring and moving between stations are done by the server too.
       match /vehicles/{id} {
         allow read: if at(orgId, resource.data.stationId);
+        // Who has it (assignedTo, with their km) and its latest dashboard (dash: km, levels, warning lights) are the
+        // server's, from handovers and dashboard photos.
         allow create: if runs(orgId, request.resource.data.stationId)
-          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy']);
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash']);
         allow update: if runs(orgId, resource.data.stationId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy']);
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash']);
       }
 
       // The business side of a van (doc id = the van's id): contract, insurance, deadlines, odometer, notes.

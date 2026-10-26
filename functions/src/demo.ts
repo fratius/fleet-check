@@ -7,6 +7,7 @@ import sharp from 'sharp';
 
 import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
 import { cardDigits, purchaseFlags, said, type BuyKind, type Receipt } from './purchases';
+import { fillVanDash } from './vandash';
 
 /**
  * A demo company to try the app with: two stations, fleet managers, drivers, vans, walk-arounds and
@@ -379,6 +380,9 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
   const current = (vanId: string) => { const i = vans.findIndex((v) => v.id === vanId); return schedule.find((a) => a.van === i && a.end == null)?.driver || null; };
   await demoBuys(org, orgId, now, fills, dieselPath, managers, cards, current, demoVans);
   await demoPeople(org, now, drivers, managers, vans, stationIds, schedule);
+  // Each van's latest dashboard and each driver's km with it, from the photos above (as the functions keep them).
+  await fillVanDash(org, () => db().batch());
+  await org.update({ vanDash: Date.now() });
 
   await uref.set({ orgIds: FieldValue.arrayUnion(orgId), orgId, demoOrgId: orgId }, { merge: true });
   return { orgId, existed: false };

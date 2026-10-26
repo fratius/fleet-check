@@ -29,8 +29,10 @@ export interface Vehicle {
   scanId: string | null;
   /** The station (operating area) the van belongs to. Missing on vans saved before stations existed. */
   stationId?: string;
-  /** Who drives it now (set by the server, mirrors the open assignment). */
-  assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number } | null;
+  /** Who drives it now (set by the server, mirrors the open assignment, with their km so far). */
+  assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number; kmStart?: number | null; kmEnd?: number | null } | null;
+  /** The latest dashboard photo (set by the server): everyone at the station sees the km, levels and warning lights. */
+  dash?: VanDash | null;
   /** Retired vans stay with their history; they are never deleted. */
   retired?: boolean;
   // The van's own facts, which everyone at its station sees (owners and its managers fill them in).
@@ -170,6 +172,15 @@ export interface Incident {
   updatedByName?: string | null;
 }
 
+/**
+ * A van's latest dashboard (vehicles/{id}.dash, written by the server; functions/src/vandash.ts): from a tour's start
+ * or end photo, or the dashboard photo at a refuel (the fuel level is then worked out for after filling up), a wash or
+ * a parts purchase.
+ */
+export interface VanDash {
+  km: number; fuelPct: number | null; batteryPct: number | null; rangeKm: number | null; warnings: string[];
+  at: number; by: string; byName: string; from: 'tour' | 'fuel' | 'wash' | 'parts';
+}
 /** What the dashboard photo says (read by the AI, then confirmed or corrected by the person who took it). */
 export interface DashValues { odometerKm: number | null; fuelPct: number | null; batteryPct: number | null; rangeKm: number | null; warnings: string[] }
 /** One dashboard photo, confirmed (orgs/{org}/readings/{id}). Written only by the server; kept for good. */
@@ -323,6 +334,12 @@ export interface Assignment {
   endVideoId?: string | null;
   /** Given by a manager or owner: the driver is asked for pick-up photos or a video (added afterwards, pointing here). */
   pickupRequested?: boolean;
+  /**
+   * The km when the driver got the van (its last reading if from the 24 hours before, else their first) and the
+   * latest while they had it, from dashboard photos (written by the server). Null: no photo in that time.
+   */
+  kmStart?: number | null;
+  kmEnd?: number | null;
 }
 
 /** A handover video: one walk around the van at pick-up or drop-off. Written by the server after checking it. */

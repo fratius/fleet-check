@@ -633,6 +633,19 @@ test('tours from dashboard photos: start, end, kilometres, fuel, and the van\'s 
   // Readings: the driver reads their own, nobody writes them.
   const mineR = await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'readings'), where('driverId', '==', S.d1.uid)));
   assert.ok(mineR.size >= 3);
+  // On the van, for everyone at the station (the driver too): the latest photo's km, fuel and warning lights.
+  const van = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', v2.id))).data();
+  assert.equal(van.dash.km, 60120);
+  assert.equal(van.dash.fuelPct, 40);
+  assert.deepEqual(van.dash.warnings, []);
+  assert.equal(van.dash.byName, 'Max Manager');
+  assert.equal(van.dash.from, 'tour');
+  // The driver's km with the van: from their first photo to the latest one (the manager's counts: Dana still has it).
+  const mine = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', van.assignedTo.assignmentId))).data();
+  assert.equal(mine.kmStart, 48213);
+  assert.equal(mine.kmEnd, 60120);
+  assert.equal(van.assignedTo.kmStart, 48213);
+  assert.equal(van.assignedTo.kmEnd, 60120);
 });
 
 test('damage log: new damage and who had the van, after the review', async () => {
@@ -811,6 +824,14 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     await S.mgr.call('purchase', { orgId: S.org, action: 'finish', id: pt.id, values: { odometerKm: 60420, total: 34.5 } });
     const bp = await buy(S.own, pt.id);
     assert.equal(bp.status, 'done');
+    // Each finished one moves the van's km on, and the km of the driver who has it (Dana, whoever bought).
+    const vn = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', v2.id))).data();
+    assert.equal(vn.dash.km, 60420);
+    assert.equal(vn.dash.from, 'parts');
+    assert.equal(vn.dash.byName, 'Max Manager');
+    assert.deepEqual(vn.dash.warnings, ['Tyre pressure'], 'warning lights the AI read on the dashboard photo');
+    assert.equal(vn.assignedTo.kmEnd, 60420);
+    assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', vn.assignedTo.assignmentId))).data().kmEnd, 60420);
     assert.equal(bp.parts.length, 2);
     assert.equal(bp.note, 'Left mirror glass broke on the tour.');
 
@@ -824,6 +845,42 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
   } finally {
     srv.close();
   }
+});
+
+test('km per driver: the next driver starts at the last photo\'s km; earlier data is filled in once', async () => {
+  const { v2, v3 } = S.vans;
+  // Erik gets the van straight after Dana: he starts at its last reading (from the last 24 hours), Dana's ends there.
+  const before = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicles', v2.id))).data();
+  const r = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d2.uid });
+  const erik = (await getDoc(doc(S.d2.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
+  assert.equal(erik.kmStart, 60420);
+  assert.equal(erik.kmEnd, null);
+  const dana = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', before.assignedTo.assignmentId))).data();
+  assert.equal(dana.end != null, true);
+  assert.equal(dana.kmEnd, 60420);
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });
+  // A van and a driver from before: their km are worked out from the photos, once (Deploy runs this).
+  const a = adminDb().collection(`orgs/${S.org}/assignments`).doc();
+  const t0 = Date.now();
+  await adminDb().collection(`orgs/${S.org}/readings`).add({ vehicleId: v3.id, stationId: S.s2, by: S.d3.uid, byName: 'Fay Driver', at: t0 - 3 * 3600_000, odometerKm: 1000, fuelPct: 50, warnings: [] });
+  await a.set({ vehicleId: v3.id, vehicleName: v3.name, plate: 'V3', driverId: S.d3.uid, driverName: 'Fay Driver', stationId: S.s2, start: t0 - 2 * 3600_000, end: null,
+    startedBy: S.own.uid, startedByName: 'Olga Owner', endedBy: null, endedByName: null, endReason: null, createdAt: t0 - 2 * 3600_000 });
+  await adminDb().collection(`orgs/${S.org}/readings`).add({ vehicleId: v3.id, stationId: S.s2, by: S.d3.uid, byName: 'Fay Driver', at: t0 - 3600_000, odometerKm: 1100, fuelPct: 40, warnings: ['AdBlue'] });
+  const vref = adminDb().doc(`orgs/${S.org}/vehicles/${v3.id}`);
+  const { FieldValue } = fnRequire('firebase-admin/firestore');
+  await vref.update({ assignedTo: { assignmentId: a.id, driverId: S.d3.uid, driverName: 'Fay Driver', since: t0 - 2 * 3600_000 }, dash: FieldValue.delete() });
+  await adminDb().doc(`orgs/${S.org}`).update({ vanDash: FieldValue.delete() });
+  const fill = () => execFileSync(process.execPath, [new URL('../functions/scripts/van-dash.cjs', import.meta.url).pathname],
+    { env: { ...process.env, FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || `${HOST}:8080`, PROJECT: cfg.projectId }, encoding: 'utf8' });
+  assert.match(fill(), /Filled in the km and dashboard of \d+ van/);
+  const fay = (await a.get()).data();
+  assert.equal(fay.kmStart, 1000);
+  assert.equal(fay.kmEnd, 1100);
+  const v = (await vref.get()).data();
+  assert.equal(v.dash.km, 1100);
+  assert.deepEqual(v.dash.warnings, ['AdBlue']);
+  assert.equal(v.assignedTo.kmEnd, 1100);
+  assert.match(fill(), /No companies to fill in/);
 });
 
 test('costs move out of the record managers read (Deploy runs this once)', async () => {
@@ -870,6 +927,9 @@ test('the demo company: a driver login with a van, history, and pick-up at the f
   assert.equal(buys.filter((b) => b.status === 'waiting').length, 1);
   assert.ok(buys.some((b) => b.decision?.allow === true) && buys.some((b) => b.decision?.allow === false));
   assert.ok(buys.some((b) => b.flags.some((f) => f.key === 'litres')), 'one refuel with more litres than the tank had room for');
+  // Each van shows its km from the latest photo, and each driver's earlier times with a van their km.
+  assert.ok(typeof (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', open[0].vehicleId))).data().dash?.km === 'number');
+  assert.ok(mine.some((a) => a.end != null && a.kmEnd > a.kmStart), 'km from and to on the demo driver\'s history');
   const van = { id: open[0].vehicleId, name: open[0].vehicleName, stationId: open[0].stationId };
   await alex.call('dropOffVan', { orgId, vehicleId: van.id, walkId: await photos(alex, orgId, van) });
   const v = (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id))).data();

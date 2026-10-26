@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
-import { TourCard } from '@/components/dash';
+import { TourCard, kmText } from '@/components/dash';
 import { BuyButtons, MyOpenBuy } from '@/components/buy';
 import { ScanChoice } from '@/components/scanchoice';
 import { isOpen } from '@/lib/stats';
@@ -130,7 +130,8 @@ export default function Fleet() {
             <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
               <T v="h3" numberOfLines={2}>{v.name}</T>
               {v.plate ? <Plate text={v.plate} /> : null}
-              <T v="hint">{[t(CLS[v.cls].name), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
+              {/* The km on its latest dashboard photo (refuels count too). */}
+              <T v="medium" style={{ fontSize: 15 }}>{[v.dash ? kmText(v.dash.km) : t('No km yet'), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
               {tracking && !v.retired ? (
                 <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : t('Free')}</T>
               ) : null}
@@ -142,6 +143,7 @@ export default function Fleet() {
                 {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? t('In use') : t('Free')} /> : null}
                 {k?.status === 'submitted' ? <Pill v="amber" text={t('Waiting for review')} /> : null}
                 {k?.status === 'checking' ? <Pill v="muted" text={t('Close-ups pending')} /> : null}
+                {v.dash?.warnings?.length && Date.now() - v.dash.at < 7 * 86_400_000 ? <Pill v="bad" text={tp(v.dash.warnings.length, '{n} warning light', '{n} warning lights')} /> : null}
                 {damages ? <Pill v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null}
                 {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null}
                 {due.length > 1 ? <Pill v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null}
