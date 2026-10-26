@@ -67,8 +67,9 @@ the product owner's explicit decision first.
   lasts), who started and who ended it, why it ended (`endReason`), and the pick-up and drop-off photos
   (`startWalkId`, `endWalkId`) when the driver picked the van up themselves.
 - **History is permanent.** Assignments are written only by Cloud Functions, never by the app, and never edited
-  or deleted; the only change is closing an open one. They are the history of every van (which drivers it had)
-  and of every driver (which vans they had).
+  or deleted; the only changes are closing an open one and, while it's open, its km (`kmStart`, `kmEnd`) from each
+  dashboard photo. They are the history of every van (which drivers it had) and of every driver (which vans they
+  had, and from what km to what km).
 - **Nothing that belongs to the history is deleted.** Vans are retired, never deleted (`retireVan`; they can be
   brought back). Walk-arounds, damage checks and companies can't be deleted from the app. Removing a person
   (`removePerson`) ends their assignment and frees the van; their history, walk-arounds and checks stay.
@@ -170,8 +171,12 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   notification with the details and what looks wrong (flags: more litres than the tank had room for, another card
   on the receipt, an old receipt, the wrong fuel, numbers typed over the receipt). Flags never block. Parts need a
   note saying why, and the owners get the notification.
-- Deadlines (vans and drivers), warning lights and tours without their photos show to owners and managers only:
-  on the van or person, in the fleet list, and in Review.
+- **The van's latest dashboard** (`vehicles/{id}.dash`: km, fuel or battery, range, warning lights, when and by
+  whom) is written only by the server, from tour photos and from the dashboard photo of a finished refuel, wash or
+  parts purchase. Everyone at the station sees it on the van and the km in the fleet list (drivers too: they need
+  to know about a warning light before they drive). The rules refuse `dash` from the app.
+- Deadlines (vans and drivers), the Review list of warning lights and tours without their photos show to owners
+  and managers only: on the van or person, in the fleet list, and in Review.
 
 ## The damage record of a van
 

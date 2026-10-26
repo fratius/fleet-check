@@ -123,8 +123,15 @@ the history says someone else had it.
   start and end each tour with the photo. A tour of the same driver older than 16 hours is ended by their next
   photo; a tour someone left open is ended by the next driver's start photo (its kilometres are then an estimate,
   without a fuel figure); the station's manager can end it with a photo when the van is back.
-- Warning lights on a van's latest photo show on the van and in Review ("Warning lights"). Tours without their
-  start or end photo show in Review ("Missing proof").
+- The van's latest dashboard photo (a tour's, or the one at a refuel, wash or parts purchase) is on the van for
+  everyone at its station: km, fuel or battery (after a refuel, worked out for the full tank from the litres and
+  the tank size), range, warning lights, when and by whom. The fleet list shows the km and, for a week, the warning
+  lights. Warning lights from tours also show in Review ("Warning lights"). Tours without their start or end photo
+  show in Review ("Missing proof").
+- Each driver's time with a van shows the km from and to (on the van's and the person's history): the start is the
+  van's last reading if it's from the 24 hours before the handover, else the driver's first; the end is the latest
+  while they had it. Only dashboard photos count, so a driver without any has no km, and the end is their last
+  photo, not the handover. Earlier assignments were filled in once from the photos (`functions/scripts/van-dash.cjs`).
 - Records: `tours` and `readings` (written only by the server; owners and the station's managers read them, drivers
   their own), `dashReads` (what the AI read before the person confirmed it, with speed and cost: app creator only).
 - Facts the numbers need: the tank size (diesel, petrol) or usable battery (electric) on the van.
