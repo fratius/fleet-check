@@ -877,3 +877,49 @@ test('the demo company: a driver login with a van, history, and pick-up at the f
   await me.call('deleteDemoCompany', { orgId });
   await fails(person(null, login.email, login.password));
 });
+
+test('the website request form: stored for the team, spam and bad input refused, a daily limit per connection', async () => {
+  const url = `http://${HOST}:5001/${cfg.projectId}/us-central1/websiteSignup`;
+  // What the server stored (read past the rules, as the Firebase console does).
+  const stored = async () => {
+    const r = await fetch(`http://${HOST}:8080/v1/projects/${cfg.projectId}/databases/(default)/documents/siteRequests?pageSize=300`, { headers: { Authorization: 'Bearer owner' } });
+    return ((await r.json()).documents || []).map((d) => d.fields);
+  };
+  const send = (body, ip = '203.0.113.7') => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': ip }, body: JSON.stringify(body) });
+  const good = {
+    plan: 'pro', aiWaitlist: true, company: `Spree Logistik ${run}`, country: 'Germany', stations: 5, vans: 64,
+    firstName: 'Ana', lastName: 'Popescu', email: 'ana@spree.de', phone: '+49 151 2345 6789', website: '', elapsed: 25_000,
+  };
+  const before = (await stored()).length;
+  let r = await send(good);
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { ok: true });
+  const all = await stored();
+  assert.equal(all.length, before + 1);
+  const mine = all.find((f) => f.company?.stringValue === good.company);
+  assert.ok(mine, 'the request is stored');
+  assert.equal(mine.plan.stringValue, 'pro');
+  assert.equal(mine.vans.integerValue, '64');
+  assert.equal(mine.aiWaitlist.booleanValue, true);
+  assert.equal(mine.mailed.booleanValue, false, 'no email without SMTP_URL');
+  assert.ok(!('website' in mine) && !('elapsed' in mine), 'only the request itself is kept');
+  // A filled hidden field or a form sent faster than a person types: answered "sent", nothing kept.
+  assert.equal((await send({ ...good, website: 'https://spam.example' })).status, 200);
+  assert.equal((await send({ ...good, elapsed: 400 })).status, 200);
+  assert.equal((await stored()).length, before + 1);
+  // Wrong input gets a message the form shows; only POST is answered.
+  r = await send({ ...good, email: 'not-an-email' }, '203.0.113.8');
+  assert.equal(r.status, 400);
+  assert.match((await r.json()).error, /email/);
+  assert.equal((await send({ ...good, plan: 'gold' }, '203.0.113.8')).status, 400);
+  assert.equal((await fetch(url)).status, 405);
+  // Five a day from one connection; another connection still gets through.
+  for (let i = 0; i < 4; i++) assert.equal((await send(good)).status, 200);
+  r = await send(good);
+  assert.equal(r.status, 429);
+  assert.match((await r.json()).error, /info@fratius\.com/);
+  assert.equal((await send(good, '203.0.113.9')).status, 200);
+  // Nobody reads the requests from the app.
+  const owner = await person('Website Visitor');
+  await fails(getDocs(collection(owner.db, 'siteRequests')));
+});

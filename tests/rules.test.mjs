@@ -51,6 +51,8 @@ beforeEach(async () => {
     await put('users/boss2', { orgId: O, viewAs: null });
     await put('users/drv2', { orgId: O, viewAs: { org: O, role: 'owner', st: null } });
     await put('config/push', { vapidPublicKey: 'BPUBLIC', updatedAt: 1 });
+    await put('siteRequests/q1', { company: 'Some DSP', email: 'boss@dsp.de', phone: '+49 1', plan: 'basic', createdAt: 1 });
+    await put('siteLimits/day-2026-10-26', { n: 3, day: '2026-10-26', at: 1 });
     await put(`orgs/${O}/vehicleDetails/v1`, { stationId: S1, createdAt: 1, ownership: 'leased', due: { hu: '2027-03-31' } });
     await put(`orgs/${O}/vehicleCosts/v1`, { createdAt: 1, monthly: 700, excessPerKm: 0.08 });
     await put(`orgs/${O}/members/mgr2`, { role: 'manager', stationIds: [S2], name: 'Manager 2', email: 'm2@x' });
@@ -429,4 +431,28 @@ describe('refuels, washes and parts: every attempt kept, written by the server',
   test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/buyReads/br1`))));
   test('the app creator viewing as a driver of S1 doesn\'t see others\' refuels', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/purchases/b1`))));
   test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/purchases/b1`))));
+});
+
+describe('requests from the website', () => {
+  // Written only by the websiteSignup function; read in the Firebase console. No app user reads or writes them,
+  // not even the app creator, and nobody fakes a request or the spam counters from the app.
+  const C = { creator: true };
+  test('signed-out visitors can\'t read or write requests', async () => {
+    const anon = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anon, 'siteRequests/q1')));
+    await assertFails(setDoc(doc(anon, 'siteRequests/q2'), { company: 'x' }));
+  });
+  test('owners and the app creator can\'t read them either', async () => {
+    await assertFails(getDoc(doc(as('own'), 'siteRequests/q1')));
+    await assertFails(getDocs(collection(as('boss2', C), 'siteRequests')));
+  });
+  test('nobody writes, changes or deletes them from the app', async () => {
+    await assertFails(setDoc(doc(as('own'), 'siteRequests/q3'), { company: 'x' }));
+    await assertFails(updateDoc(doc(as('boss2', C), 'siteRequests/q1'), { status: 'done' }));
+    await assertFails(deleteDoc(doc(as('boss2', C), 'siteRequests/q1')));
+  });
+  test('the spam counters are server-only', async () => {
+    await assertFails(getDoc(doc(as('own'), 'siteLimits/day-2026-10-26')));
+    await assertFails(setDoc(doc(as('own'), 'siteLimits/day-2026-10-26'), { n: 0 }));
+  });
 });

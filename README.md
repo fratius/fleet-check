@@ -92,6 +92,10 @@ The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Sa
 
 The app is built on Expo SDK 58 because that's what Expo Go in the App Store runs (58.0.5, from late October 2026). Expo Go only opens one SDK, so upgrade the project only after the App Store version of Expo Go has moved to the new SDK, and update Expo Go on every phone when the project moves: an older Expo Go can't open the new version, and the new Expo Go can't open the old one.
 
+## The website (fratius.com)
+
+The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
+
 ## What the AI costs
 
 Prices per million tokens, input and output: Haiku 5.5 $0.10 and $0.50, Sonnet 5.5 $2 and $10, Opus 5.5 $4 and $20. The server sizes each photo to the most detail Claude takes, 4,784 image tokens, so one photo costs about:

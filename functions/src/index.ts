@@ -8,8 +8,9 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
-import { onCall, type CallableRequest } from 'firebase-functions/https';
+import { onCall, onRequest, type CallableRequest } from 'firebase-functions/https';
 import { defineSecret } from 'firebase-functions/params';
+import nodemailer from 'nodemailer';
 import webpush from 'web-push';
 
 import { ask } from './claude';
@@ -25,6 +26,7 @@ import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
+import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail } from './website';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -33,6 +35,8 @@ setGlobalOptions({ region: 'us-central1', maxInstances: 10 });
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 /** The key pair for phone notifications (web push), made once by the Deploy workflow: {publicKey, privateKey}. */
 const WEBPUSH_KEYS = defineSecret('WEBPUSH_KEYS');
+/** How the website's request form sends email, e.g. smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465, or "none". */
+const SMTP_URL = defineSecret('SMTP_URL');
 const db = () => getFirestore();
 const bucket = () => getStorage().bucket();
 const opts = (timeoutSeconds: number) => ({ secrets: [ANTHROPIC_API_KEY], memory: '2GiB' as const, cpu: 1, timeoutSeconds, concurrency: 4 });
@@ -1615,3 +1619,60 @@ export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBP
     default: throw fail('invalid-argument', 'Unknown step.');
   }
 });
+
+/* ---------- Website: the request form on fratius.com ---------- */
+// Reached through Firebase Hosting (/api/signup on the website), so it's the same origin as the page. Stores the
+// request where only the server and the Firebase console read it (siteRequests; the rules let no app user in),
+// emails it to info@fratius.com when SMTP_URL is set, and tells the app creator with a notification.
+// Spam: a hidden field, a minimum time on the page, and a daily limit per connection (a one-way code of the IP
+// address that changes every day; the address itself isn't kept) and for everyone together.
+export const websiteSignup = onRequest({ timeoutSeconds: 30, memory: '256MiB', maxInstances: 3, concurrency: 20, secrets: [SMTP_URL, WEBPUSH_KEYS] }, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (req.method !== 'POST') { res.status(405).json({ error: 'Send the form from the website.' }); return; }
+  const body: unknown = req.body;
+  if (looksAutomated(body)) { res.json({ ok: true }); return; }
+  const r = readSignup(body);
+  if (!r.ok) { res.status(400).json({ error: r.error }); return; }
+
+  const now = Date.now();
+  const day = new Date(now).toISOString().slice(0, 10);
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
+  const limits = db().collection('siteLimits');
+  const mine = limits.doc(connectionKey(ip, day)), all = limits.doc(`day-${day}`);
+  const allowed = await db().runTransaction(async (tx) => {
+    const [a, b] = await Promise.all([tx.get(mine), tx.get(all)]);
+    if ((a.data()?.n || 0) >= PER_CONNECTION || (b.data()?.n || 0) >= PER_DAY) return false;
+    tx.set(mine, { n: FieldValue.increment(1), day, at: now }, { merge: true });
+    tx.set(all, { n: FieldValue.increment(1), day, at: now }, { merge: true });
+    return true;
+  });
+  // Yesterday's counters aren't needed any more.
+  limits.where('day', '<', day).limit(100).get().then((q) => Promise.all(q.docs.map((d) => d.ref.delete()))).catch(() => {});
+  if (!allowed) { res.status(429).json({ error: `Too many requests today. Write to ${SIGNUP_TO} instead.` }); return; }
+
+  const ref = db().collection('siteRequests').doc();
+  await ref.set({ ...r.req, status: 'new', source: 'website', createdAt: now, mailed: false });
+
+  let mailed = false;
+  const smtp = (SMTP_URL.value() || '').trim();
+  if (smtp && smtp !== 'none') {
+    try {
+      const mail = signupMail(r.req, ref.id);
+      const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
+      await nodemailer.createTransport(smtp).sendMail({ from: `Fratius website <${from}>`, to: SIGNUP_TO, replyTo: r.req.email, subject: mail.subject, text: mail.text });
+      mailed = true;
+      await ref.update({ mailed: true });
+    } catch (e) {
+      logger.error('Website request not emailed', { id: ref.id, message: String((e as Error)?.message || e) });
+    }
+  }
+  const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
+  await Promise.all(creators.map((uid) => notify(uid, {
+    title: `Website request: ${r.req.company}`,
+    body: `${PLANS[r.req.plan]} · ${r.req.vans} vans · ${r.req.firstName} ${r.req.lastName}, ${r.req.email}`,
+    url: '/', tag: `site-${ref.id}`,
+  }).catch(() => 0)));
+  logger.info('Website request', { id: ref.id, plan: r.req.plan, vans: r.req.vans, mailed });
+  res.json({ ok: true });
+});
+

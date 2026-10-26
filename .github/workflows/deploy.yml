@@ -1,14 +1,17 @@
 # Deploys everything on every push to main, or by hand from the Actions tab (Run workflow).
 #   backend: Firestore and Storage rules, and the AI functions (with the Anthropic key from GitHub secrets)
-#   web:     the web app on Firebase Hosting
+#   web:     the web app and the website (fratius.com) on Firebase Hosting
 #   phone:   an update on the "main" channel that opens in Expo Go
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
 #   ANTHROPIC_API_KEY         key from console.anthropic.com
 #   EXPO_TOKEN                personal access token from expo.dev/settings/access-tokens
+#   SMTP_URL                  optional: how the website's request form sends email to info@fratius.com,
+#                             e.g. smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465 (requests are stored either way)
 # Variable (same page, Variables tab), optional:
 #   APP_CREATOR_EMAILS        who gets the app creator view, comma separated (default casian.colto@gmail.com)
+#   WEBSITE_SITE              the Firebase Hosting site for fratius.com (default fratius-web)
 name: Deploy
 
 on:
@@ -59,6 +62,7 @@ jobs:
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
           # A throwaway key pair for the notification test (the test reads it back to check the signature).
           echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
+          echo "SMTP_URL=none" >> functions/.secret.local
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
       - name: Show failures
         if: always()
@@ -119,6 +123,24 @@ jobs:
             echo "Anthropic key updated."
           else
             echo "Anthropic key unchanged."
+          fi
+      - name: Store the website's email sending address in Secret Manager
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          SMTP: ${{ secrets.SMTP_URL }}
+        run: |
+          set -euo pipefail
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          WANT="${SMTP:-none}"
+          CUR=$(fb functions:secrets:access SMTP_URL 2>/dev/null || true)
+          if [ "$CUR" != "$WANT" ]; then
+            F="$RUNNER_TEMP/smtp.url"
+            printf '%s' "$WANT" > "$F"
+            fb functions:secrets:set SMTP_URL --data-file "$F" --force
+            rm -f "$F"
+            [ "$WANT" = "none" ] && echo "No SMTP_URL secret: website requests are stored but not emailed." || echo "Website email updated."
+          else
+            echo "Website email unchanged."
           fi
       - name: Make the key pair for phone notifications (once)
         env:
@@ -188,16 +210,39 @@ jobs:
         id: auth
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - name: Deploy to Firebase Hosting
+      - name: Deploy the web app to Firebase Hosting
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
+          SITE: ${{ vars.WEBSITE_SITE || 'fratius-web' }}
         run: |
-          if ! npx -y "$FIREBASE_TOOLS" deploy --only hosting --project "$PROJECT" --non-interactive; then
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          # Two Hosting sites: the app (the project's default site) and the website for fratius.com.
+          fb hosting:sites:get "$SITE" > /dev/null 2>&1 || fb hosting:sites:create "$SITE" \
+            || { echo "::error title=Website::Couldn't create the Hosting site $SITE (the name may be taken by another Firebase project). Set the WEBSITE_SITE variable to another name and run Deploy again."; exit 1; }
+          fb target:apply hosting app "$PROJECT"
+          fb target:apply hosting website "$SITE"
+          if ! fb deploy --only hosting:app; then
             echo "::error title=Hosting::Deploy failed. If it says it can't find the default site, open Hosting in the Firebase console, click Get started, then run this workflow again."
             exit 1
           fi
           echo "### Web app" >> "$GITHUB_STEP_SUMMARY"
           echo "https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
+      - name: Deploy the website (fratius.com)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          SITE: ${{ vars.WEBSITE_SITE || 'fratius-web' }}
+        run: |
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          fb target:apply hosting website "$SITE"
+          fb deploy --only hosting:website || { echo "::error title=Website::Deploy failed."; exit 1; }
+          echo "### Website" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://$SITE.web.app (connect fratius.com in the Firebase console: Hosting > $SITE > Add custom domain)" >> "$GITHUB_STEP_SUMMARY"
+          # The Impressum and privacy policy carry marked gaps until the company details are filled in.
+          LEFT=$(grep -o 'class="todo"' website/*.html | wc -l)
+          if [ "$LEFT" -gt 0 ]; then
+            echo "::warning title=Website::The Impressum and privacy policy still have $LEFT gaps for company details (marked red). Fill them before connecting fratius.com."
+            echo "**$LEFT gaps for company details left in the Impressum and privacy policy.**" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   phone:
     name: Phone app (Expo Go)

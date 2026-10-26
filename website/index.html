@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fratius · Fleet management for delivery partners</title>
+<meta name="description" content="Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.">
+<link rel="canonical" href="https://fratius.com/">
+<meta name="theme-color" content="#ECEEF1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111316" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fratius">
+<meta property="og:title" content="Fratius · Every van. Every driver. Right now.">
+<meta property="og:description" content="Fleet management for delivery partners who run their own vans: handovers with proof, fuel card checks, deadlines and a van history nobody can rewrite.">
+<meta property="og:url" content="https://fratius.com/">
+<meta property="og:image" content="https://fratius.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Barlow and Barlow Condensed (SIL Open Font License), served from this site: no requests to Google Fonts. */
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/barlow-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/barlow-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/barlow-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/barlow-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 600; font-display: swap; src: url(/fonts/barlow-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow'; font-style: normal; font-weight: 600; font-display: swap; src: url(/fonts/barlow-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/barlow-condensed-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/barlow-condensed-latin-500-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url(/fonts/barlow-condensed-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url(/fonts/barlow-condensed-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(/fonts/barlow-condensed-latin-ext-700-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Barlow Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url(/fonts/barlow-condensed-latin-700-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+/* Layout: an inspection sheet. The app's own UI scaled up: cool grey page, white paper cards with 2px ink edges and
+   4px corners, marker yellow only for highlights and the main action. The live station board is the one loud object. */
+:root {
+  --page: #ECEEF1; --paper: #FFFFFF; --ink: #000000; --ink2: #565C66; --rule: #CDD1D7;
+  --marker: #E2FF1C; --on-marker: #000000; --marker-edge: #000000;
+  --alert: #C42A1F; --ok: #1B7A3B; --amber: #8A5A00;
+  --band: #000000; --on-band: #F2F3F5; --band-muted: #A2A8B2; --band-rule: #383D45;
+  --plate-bg: #FFFFFF; --plate-ink: #000000; --plate-eu: #1F4FB4;
+  --screen: #16181C; --on-screen: #FFFFFF;
+  --store-bg: #000000; --store-ink: #FFFFFF;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --r: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #111316; --paper: #1B1E23; --ink: #F2F3F5; --ink2: #A2A8B2; --rule: #383D45;
+    --alert: #FF7468; --ok: #5FD18E; --amber: #F2B54A;
+    --band: #ECEEF1; --on-band: #000000; --band-muted: #565C66; --band-rule: #CDD1D7;
+    --screen: #000000;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #111316; --paper: #1B1E23; --ink: #F2F3F5; --ink2: #A2A8B2; --rule: #383D45;
+  --alert: #FF7468; --ok: #5FD18E; --amber: #F2B54A;
+  --band: #ECEEF1; --on-band: #000000; --band-muted: #565C66; --band-rule: #CDD1D7;
+  --screen: #000000;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+.hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font-family: var(--body); font-size: 17px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; overflow-x: clip;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--page); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.02; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+section[id], [id="live"] { scroll-margin-top: 84px; }
+
+.wrap {
+  width: 100%; max-width: 1240px; margin-inline: auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.sec { padding-block: clamp(72px, 10vw, 128px); }
+.eyebrow { font-family: var(--body); font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); }
+.sec-head { display: grid; gap: 16px; max-width: 780px; margin-bottom: clamp(36px, 5vw, 60px); }
+h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; letter-spacing: -.005em; }
+.sec-lede { font-size: clamp(18px, 1.5vw, 20px); color: var(--ink2); max-width: 62ch; }
+.mark { background: var(--marker); color: var(--on-marker); padding: 0 .08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.muted { color: var(--ink2); font-size: 14px; }
+
+/* Buttons, pills, plates: the app's components */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 10px 20px; border: 2px solid var(--ink); border-radius: var(--r);
+  background: var(--paper); color: var(--ink); font-family: var(--display); font-weight: 600; font-size: 20px; line-height: 1;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+.btn:active { transform: none; box-shadow: none; }
+.btn-marker { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
+.btn-primary { background: var(--ink); color: var(--paper); }
+.btn-lg { min-height: 58px; font-size: 23px; padding: 12px 26px; }
+.btn-sm { min-height: 40px; font-size: 17px; padding: 6px 14px; }
+.btn.danger { color: var(--alert); border-color: var(--alert); }
+.btn.fake { pointer-events: none; }
+.btn[disabled] { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+
+.pill {
+  display: inline-flex; align-items: center; border: 1.5px solid currentColor; border-radius: 999px;
+  padding: 2px 10px; font: 500 13px/17px var(--body); color: var(--ink); white-space: nowrap;
+}
+.pill.ok { color: var(--ok); }
+.pill.bad { color: var(--alert); }
+.pill.amber { color: var(--amber); }
+.pill.dim { color: var(--ink2); }
+.pill.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.pill.mk { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
+
+.plate {
+  display: inline-flex; align-items: stretch; gap: 6px; padding-right: 7px;
+  border: 2px solid var(--plate-ink); border-radius: 4px; background: var(--plate-bg); color: var(--plate-ink);
+  overflow: hidden; font: 600 16px/22px var(--display); letter-spacing: .07em; white-space: nowrap; flex: none;
+}
+.plate::before { content: ""; width: 9px; background: var(--plate-eu); }
+
+.tick { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 2px; background: var(--marker); border: 1.5px solid var(--marker-edge); flex: none; }
+.tick::after { content: ""; width: 8px; height: 4px; border-left: 2px solid var(--on-marker); border-bottom: 2px solid var(--on-marker); transform: translateY(-1px) rotate(-45deg); }
+
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--page); border-bottom: 2px solid var(--ink); }
+.top-in { display: flex; align-items: center; gap: 28px; min-height: 66px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand-text { display: grid; gap: 3px; }
+.brand-text b { font: 700 27px/.9 var(--display); letter-spacing: .01em; }
+.brand-text small { font: 600 10.5px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--ink2); white-space: nowrap; }
+.logo { width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--marker-edge); flex: none; display: block; }
+.nav { display: flex; gap: 24px; margin-left: auto; }
+.nav a { text-decoration: none; font: 600 18px/1 var(--display); }
+.nav a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.top .btn .short { display: none; }
+@media (max-width: 920px) {
+  .nav { display: none; }
+  .top .btn { margin-left: auto; }
+}
+@media (max-width: 420px) {
+  .top .btn .long { display: none; }
+  .top .btn .short { display: inline; }
+}
+
+/* Hero */
+.hero { padding-block: clamp(40px, 6vw, 88px) clamp(72px, 9vw, 120px); }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(44px, 5vw, 80px); align-items: center; }
+.hero-copy { display: grid; gap: 26px; align-content: center; }
+h1 { font-size: clamp(56px, 7.6vw, 110px); font-weight: 700; line-height: .93; letter-spacing: -.012em; position: relative; z-index: 0; }
+h1 .mark { position: relative; z-index: -1; }
+.lede { font-size: clamp(18px, 1.55vw, 21px); max-width: 52ch; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 0; color: var(--ink2); font-size: 15px; }
+.meta li { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 1000px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Live board */
+.board {
+  background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r);
+  box-shadow: 12px 12px 0 0 var(--marker), 12px 12px 0 2px var(--marker-edge);
+  margin-right: 14px;
+}
+.board-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 2px solid var(--ink); }
+.label { display: block; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); font-weight: 600; line-height: 1.3; }
+.station { font: 700 26px/1.05 var(--display); }
+.live { display: inline-flex; align-items: center; gap: 8px; font: 700 16px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.live time { font-variant-numeric: tabular-nums; color: var(--ink2); letter-spacing: .02em; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--alert); animation: ping 1.6s ease-out infinite; }
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--alert) 55%, transparent); }
+  100% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--alert) 0%, transparent); }
+}
+.pulse { display: block; width: 100%; height: 92px; border-bottom: 2px solid var(--ink); }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-bottom: 2px solid var(--ink); }
+.stats > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 4px; padding: 12px 14px; border-left: 2px solid var(--ink); min-width: 0; }
+.stats > div:first-child { border-left: 0; }
+.stats dd { margin: 0 0 0 -4px; padding: 0 4px; align-self: flex-start; border-radius: 2px; font: 700 38px/1 var(--display); font-variant-numeric: tabular-nums; }
+.stats dt { font-size: 13px; line-height: 1.25; color: var(--ink2); }
+.bump { animation: bump 1.1s ease-out; }
+@keyframes bump { 0%, 30% { background: var(--marker); color: var(--on-marker); } 100% { background: transparent; } }
+.feed { list-style: none; margin: 0; padding: 4px 0; min-height: 270px; }
+.ev { display: grid; grid-template-columns: 44px auto minmax(0, 1fr); gap: 6px 12px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--rule); }
+.ev:first-child { border-top: 0; }
+.ev time { font: 600 15px/1 var(--display); font-variant-numeric: tabular-nums; color: var(--ink2); }
+.ev-body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.ev-text { font-size: 15px; line-height: 1.3; }
+.ev.new { animation: evin .7s cubic-bezier(.2, .7, .2, 1); }
+@keyframes evin { from { background: var(--marker); color: var(--on-marker); transform: translateY(-8px); } to { background: transparent; transform: none; } }
+.board-foot { padding: 10px 16px; border-top: 2px solid var(--ink); font-size: 13px; color: var(--ink2); }
+@media (max-width: 520px) {
+  .board { margin-right: 8px; box-shadow: 8px 8px 0 0 var(--marker), 8px 8px 0 2px var(--marker-edge); }
+  .stats > div { padding: 10px 8px; }
+  .stats dd { font-size: 30px; }
+  .stats dt { font-size: 12px; }
+  .ev { grid-template-columns: auto minmax(0, 1fr); padding: 10px 12px; }
+  .ev .plate { justify-self: start; }
+  .ev-body { grid-column: 1 / -1; }
+  .feed { min-height: 330px; }
+}
+
+/* Feature slider: one card, a tab strip on top, slides that snap side by side, arrows and a counter below */
+.paper-band { background: var(--paper); border-block: 2px solid var(--ink); }
+.slider { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); overflow: hidden; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px; border-bottom: 2px solid var(--ink); scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: 600 17px/1 var(--display); padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+.tab:hover { background: var(--page); }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.tab.soon { border-style: dashed; }
+.track { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.track::-webkit-scrollbar { display: none; }
+.track:focus-visible { outline: 3px solid var(--ink); outline-offset: -3px; }
+.slide { scroll-snap-align: start; scroll-snap-stop: always; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: clamp(28px, 4vw, 60px); align-items: center; padding: clamp(20px, 4vw, 48px); min-width: 0; }
+.slide-copy { display: grid; gap: 14px; align-content: start; max-width: 56ch; min-width: 0; }
+.kicker { font: 600 13px/1.3 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); }
+.kicker b { color: var(--ink); font-weight: 700; }
+.slide h3 { font-size: clamp(32px, 3.4vw, 48px); font-weight: 700; line-height: .98; }
+.slide-copy > p { color: var(--ink2); font-size: 17px; }
+.points { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 9px; }
+.points li { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; line-height: 1.4; }
+.points .tick { margin-top: 2px; }
+.steps-mini { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 8px; }
+.steps-mini li { counter-increment: s; display: flex; gap: 10px; align-items: center; font-size: 16px; line-height: 1.35; }
+.steps-mini li::before { content: counter(s); flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 50%; font: 700 15px/1 var(--display); }
+.slide-vis { min-width: 0; }
+.slider-foot { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-top: 2px solid var(--ink); }
+.count { font: 600 19px/1 var(--display); font-variant-numeric: tabular-nums; min-width: 56px; }
+.progress { flex: 1; height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 10%; background: var(--ink); transition: width .3s ease; }
+.arrows { display: flex; gap: 8px; }
+.arrow { width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 50%; background: var(--paper); color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.arrow:hover { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
+@media (max-width: 860px) {
+  .slide { grid-template-columns: minmax(0, 1fr); align-items: start; align-content: start; }
+  .slide h3 { font-size: 32px; }
+}
+
+/* Mock screens */
+.mock { background: var(--page); border: 2px solid var(--ink); border-radius: 14px; padding: 14px; display: grid; gap: 12px; align-content: start; }
+.mock-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.mock-title { font: 600 20px/1.1 var(--display); }
+.mock-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.mcard { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); padding: 12px; display: grid; gap: 10px; }
+.mcard.row-card { display: flex; gap: 16px; align-items: center; }
+.qlist { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
+.qlist li { display: grid; gap: 5px; padding: 10px 12px; border-top: 1px solid var(--rule); }
+.qlist li:first-child { border-top: 0; }
+.qlist .q { font-size: 13px; color: var(--ink2); }
+.qlist .a { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 15px; line-height: 1.3; }
+.qlist .a b { font: 600 19px/1 var(--display); }
+.frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.frame { position: relative; aspect-ratio: 4 / 3; max-width: 100%; border: 2px dashed var(--ink2); border-radius: 3px; background: var(--paper); display: flex; align-items: flex-end; padding: 4px 5px; font-size: 11px; line-height: 1.1; color: var(--ink2); overflow: hidden; }
+.frame .tick { position: absolute; top: 4px; right: 4px; }
+.frame svg { position: absolute; left: 10%; top: 18%; width: 62%; height: auto; color: var(--rule); }
+.odo { display: flex; gap: 3px; align-items: flex-end; flex-wrap: wrap; }
+.odo span { display: grid; place-items: center; width: 30px; height: 40px; background: var(--screen); color: var(--on-screen); font: 700 26px/1 var(--display); border-radius: 3px; }
+.odo em { font: 600 16px/1 var(--display); font-style: normal; margin-left: 6px; color: var(--ink2); }
+.gauge { display: flex; align-items: center; gap: 8px; font: 600 15px/1 var(--display); }
+.gbar { flex: 1; height: 12px; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.gbar i { display: block; height: 100%; width: 72%; background: var(--ink); }
+.lights { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.stop { background: var(--paper); border: 2px solid var(--alert); border-radius: var(--r); padding: 12px; display: grid; gap: 8px; justify-items: start; }
+.stop-title { font: 700 23px/1.05 var(--display); color: var(--alert); }
+.stop p { font-size: 15px; line-height: 1.4; }
+.two-btn { display: flex; gap: 8px; flex-wrap: wrap; }
+.rlist { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
+.rlist li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--rule); font-size: 15px; }
+.rlist li:first-child { border-top: 0; }
+.rlist b { min-width: 28px; height: 24px; display: grid; place-items: center; padding: 0 8px; border-radius: 999px; background: var(--ink); color: var(--paper); font: 700 15px/1 var(--display); }
+.rlist b.hot { background: var(--alert); color: var(--paper); }
+.hu { flex: none; }
+.hu text { font-family: var(--display); }
+.vlist { display: grid; gap: 6px; font-size: 14px; min-width: 0; }
+.vlist div { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.vlist b { font: 600 16px/1 var(--display); }
+.doc { width: 64px; height: 82px; flex: none; border: 2px solid var(--ink); border-radius: 3px; background: var(--page); padding: 10px 8px; display: grid; gap: 6px; align-content: start; }
+.doc i { display: block; height: 3px; background: var(--rule); border-radius: 2px; }
+.doc i:nth-child(2n) { width: 70%; }
+.mini { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
+.mini th { text-align: left; font-weight: 600; color: var(--ink2); padding: 0 6px 6px 0; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+.mini td { padding: 5px 6px 5px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.mini td.up { color: var(--alert); font-weight: 600; }
+.mini td.dn { color: var(--ok); font-weight: 600; }
+.rolelist { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
+.rolelist li { display: grid; gap: 2px; padding: 10px 12px; border-top: 1px solid var(--rule); }
+.rolelist li:first-child { border-top: 0; }
+.rolelist b { font: 700 20px/1.05 var(--display); }
+.rolelist span { font-size: 14px; color: var(--ink2); }
+.langs { display: flex; flex-wrap: wrap; gap: 5px; list-style: none; padding: 0; margin: 0; }
+.langs li { border: 1.5px solid var(--ink); border-radius: 999px; padding: 2px 9px; font: 500 13px/1.35 var(--body); background: var(--paper); }
+
+/* AI damage visual */
+.soon-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border: 2px dashed var(--ink); border-radius: 999px; font: 700 14px/1.2 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.dmg-visual { background: var(--page); border: 2px solid var(--ink); border-radius: 14px; padding: clamp(14px, 2.5vw, 22px); display: grid; gap: 16px; }
+.vansvg { width: 100%; height: auto; color: var(--ink); display: block; }
+.vansvg text { font-family: var(--display); font-weight: 700; }
+.spot { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 14px; align-items: center; padding-top: 16px; border-top: 2px dashed var(--rule); }
+.crop { aspect-ratio: 1; max-width: 100%; border-radius: 4px; background: var(--screen); position: relative; overflow: hidden; }
+.crop::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 40% at 55% 55%, rgba(255, 255, 255, .22), transparent 70%), linear-gradient(160deg, #3A3F47, #22262C); }
+.crop::after { content: ""; position: absolute; inset: 22% 18%; border: 2px dashed var(--marker); border-radius: 3px; }
+.spot-text { display: grid; gap: 6px; min-width: 0; }
+.spot-text strong { font: 600 20px/1.1 var(--display); }
+.spot-text .row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* History ledger (an ink card inside the slider) */
+.band { background: var(--band); color: var(--on-band); }
+.ledger { border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; }
+.ledger-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 16px; border-bottom: 2px solid var(--band-rule); }
+.ledger-head strong { font: 600 22px/1 var(--display); }
+.lrow { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; gap: 4px 14px; padding: 11px 16px; border-top: 1px solid var(--band-rule); align-items: center; }
+.ledger-head + .lrow { border-top: 0; }
+.lday { font: 600 16px/1.15 var(--display); color: var(--band-muted); }
+.lwho { display: grid; gap: 2px; min-width: 0; }
+.lwho b { font: 600 20px/1.1 var(--display); }
+.lwho span { font-size: 13px; color: var(--band-muted); font-variant-numeric: tabular-nums; }
+.lproof { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.band .pill { color: var(--on-band); }
+.band .pill.mk { color: var(--on-marker); }
+.lrow.hit { background: color-mix(in srgb, var(--marker) 14%, transparent); }
+.lnote { grid-column: 2 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.ledger-foot { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-top: 2px solid var(--band-rule); font-size: 13px; color: var(--band-muted); }
+.ledger-foot svg { flex: none; }
+@media (max-width: 560px) {
+  .lrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .lday, .lnote { grid-column: 1 / -1; }
+}
+
+/* Download band */
+.dl { background: var(--marker); color: var(--on-marker); border-block: 2px solid var(--marker-edge); }
+.dl .eyebrow, .dl .sec-lede { color: var(--on-marker); }
+.dl-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+.app-icon { width: clamp(104px, 15vw, 176px); height: auto; aspect-ratio: 1; border: 2px solid var(--marker-edge); border-radius: 23%; box-shadow: 8px 8px 0 var(--marker-edge); display: block; }
+.dl .sec-head { margin-bottom: 26px; }
+.stores { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.store { display: inline-flex; align-items: center; gap: 12px; min-height: 62px; padding: 10px 20px 10px 14px; border-radius: 10px; background: var(--store-bg); color: var(--store-ink); text-decoration: none; border: 2px solid var(--store-bg); }
+.store small { display: block; font: 500 12px/1.2 var(--body); letter-spacing: .02em; opacity: .8; }
+.store b { display: block; font: 600 25px/1 var(--display); }
+.store.soon { cursor: default; }
+.dl .btn { background: transparent; color: var(--on-marker); border-color: var(--marker-edge); }
+.dl .btn:hover { box-shadow: 3px 3px 0 var(--marker-edge); }
+.dl .note { margin-top: 18px; font-size: 15px; }
+@media (max-width: 640px) { .dl-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Pricing */
+.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.plan { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); padding: 24px; display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 14px; }
+.plan h3 { font-size: 34px; font-weight: 700; }
+.limit { font: 600 21px/1.1 var(--display); }
+.price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.price b { font: 700 66px/.9 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.price span { color: var(--ink2); font-size: 16px; }
+.plan .btn { width: 100%; }
+.plan.ai { background: transparent; border-style: dashed; border-color: var(--ink2); }
+.plan.ai .price b { font-size: 40px; line-height: 1; }
+.plan.ai p.desc { font-size: 15px; color: var(--ink2); }
+@supports (grid-template-rows: subgrid) {
+  .plans { row-gap: 16px; }
+  .plan { grid-row: span 5; grid-template-rows: subgrid; row-gap: 14px; }
+}
+.includes { margin-top: 32px; padding-top: 26px; border-top: 2px solid var(--ink); display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px 32px; }
+.includes h3 { font-size: 26px; font-weight: 600; }
+.includes ul { columns: 3 220px; column-gap: 32px; list-style: none; margin: 0; padding: 0; }
+.includes li { break-inside: avoid; display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 16px; line-height: 1.35; }
+.includes li .tick { margin-top: 2px; }
+.price-note { margin-top: 18px; font-size: 14px; color: var(--ink2); }
+@media (max-width: 1100px) { .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .includes { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .plans { grid-template-columns: minmax(0, 1fr); } }
+
+/* Sign-up */
+.signup-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(36px, 5vw, 76px); align-items: start; }
+.need { list-style: none; padding: 0; margin: 24px 0 0; }
+.need li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 16px; }
+.need li .tick { margin-top: 3px; }
+.form-card { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
+.preview-note { margin: 16px 16px 0; padding: 12px 14px; border: 2px dashed var(--ink2); border-radius: var(--r); font-size: 14px; color: var(--ink2); }
+.stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: 16px 0 0; padding: 0; border-block: 2px solid var(--ink); }
+.stepper li { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-left: 2px solid var(--ink); font: 600 18px/1 var(--display); color: var(--ink2); min-width: 0; }
+.stepper li:first-child { border-left: 0; }
+.stepper .n { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; font-size: 15px; }
+.stepper li.done { color: var(--ink); }
+.stepper li.done .n { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper li.on { background: var(--marker); color: var(--on-marker); }
+.step-pane { padding: clamp(18px, 3vw, 28px); display: grid; gap: 20px; }
+.step-pane h3 { font-size: 28px; font-weight: 600; outline: none; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.field { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-weight: 500; font-size: 16px; }
+.field input, .field select {
+  width: 100%; min-height: 50px; border: 2px solid var(--ink); border-radius: var(--r);
+  background: var(--paper); color: var(--ink); font: 400 18px/1.2 var(--body); padding: 10px 12px;
+}
+.field input:focus, .field select:focus { outline: none; box-shadow: 0 0 0 4px var(--marker); }
+.field input[aria-invalid="true"] { border-color: var(--alert); }
+.err { color: var(--alert); font-size: 14px; }
+.hint { color: var(--ink2); font-size: 15px; }
+.plan-opts { display: grid; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.plan-opts legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.plan-opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 2px solid var(--ink); border-radius: var(--r); cursor: pointer; background: var(--paper); }
+.plan-opt input { width: 22px; height: 22px; margin: 0; accent-color: var(--ink); }
+.plan-opt b { display: block; font: 700 25px/1 var(--display); }
+.plan-opt .sub { font-size: 14px; color: var(--ink2); }
+.plan-opt .pp { font: 700 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.plan-opt .pp small { font: 400 13px var(--body); color: var(--ink2); }
+.plan-opt.on { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
+.plan-opt.on .sub, .plan-opt.on .pp small { color: var(--on-marker); }
+.plan-opt.on input { accent-color: var(--on-marker); }
+.check { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; cursor: pointer; }
+.check input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: var(--ink); }
+.actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.fit { border: 2px solid var(--amber); border-radius: var(--r); padding: 12px 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 15px; }
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 20px; margin: 0; font-size: 16px; }
+.summary dt { color: var(--ink2); }
+.summary dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
+.pay { border: 2px dashed var(--ink2); border-radius: var(--r); padding: 16px; display: grid; gap: 6px; background: var(--page); }
+.pay strong { font: 600 22px/1.1 var(--display); }
+.pay p { font-size: 15px; color: var(--ink2); }
+.done-box { display: grid; gap: 14px; justify-items: start; }
+.done-box .big { font: 700 40px/1 var(--display); }
+@media (max-width: 1000px) { .signup-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .fields { grid-template-columns: minmax(0, 1fr); }
+  .stepper li { padding: 10px 8px; font-size: 16px; gap: 6px; }
+  .stepper .n { width: 22px; height: 22px; font-size: 13px; }
+}
+
+/* FAQ */
+.faq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; align-items: start; }
+.faq details { border-top: 2px solid var(--ink); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 0; font: 600 23px/1.15 var(--display); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; flex: none; font: 600 30px/1 var(--display); }
+.faq details[open] summary::after { content: "\2212"; }
+.faq details p { padding: 0 0 20px; color: var(--ink2); max-width: 60ch; }
+@media (max-width: 760px) { .faq { grid-template-columns: minmax(0, 1fr); } }
+
+/* Footer */
+.foot { border-top: 2px solid var(--ink); padding-block: 36px 44px; }
+.foot-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px 40px; align-items: flex-start; }
+.foot p { font-size: 14px; color: var(--ink2); max-width: 60ch; }
+.foot .legal { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="van" viewBox="130 300 760 420">
+    <path d="M155 625V497L282 337Q300 318 328 318H826Q866 318 866 360V625Z" style="fill:var(--van-body,none)" stroke="currentColor" stroke-width="30" stroke-linejoin="round"/>
+    <path d="M228 497L307 395Q320 377 348 377H398V497Z" fill="currentColor"/>
+    <path d="M468 580V377H668V580" fill="none" stroke="currentColor" stroke-width="18" stroke-dasharray="40 36"/>
+    <circle cx="298" cy="640" r="50" style="fill:var(--van-bg,transparent)" stroke="currentColor" stroke-width="30"/>
+    <circle cx="740" cy="640" r="50" style="fill:var(--van-bg,transparent)" stroke="currentColor" stroke-width="30"/>
+  </symbol>
+  <symbol id="appicon" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" fill="#E2FF1C"/>
+    <path d="M155 625V497L282 337Q300 318 328 318H826Q866 318 866 360V625Z" fill="none" stroke="#000" stroke-width="30" stroke-linejoin="round"/>
+    <path d="M228 497L307 395Q320 377 348 377H398V497Z" fill="#000"/>
+    <path d="M468 580V377H668V580" fill="none" stroke="#000" stroke-width="18" stroke-dasharray="40 36"/>
+    <circle cx="298" cy="640" r="50" fill="#E2FF1C" stroke="#000" stroke-width="30"/>
+    <circle cx="740" cy="640" r="50" fill="#E2FF1C" stroke="#000" stroke-width="30"/>
+    <path d="M85 711H910" stroke="#000" stroke-width="20" stroke-dasharray="42 36"/>
+  </symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#hero" aria-label="Fratius Fleet management, back to the top">
+      <svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><use href="#appicon"/></svg>
+      <span class="brand-text"><b>Fratius</b><small>Fleet management</small></span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#download">Download</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-marker btn-sm" href="#start"><span class="long">Start 30 days free</span><span class="short">Try free</span></a>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">For delivery partners who run their own vans</p>
+      <h1>Every van. Every driver. <span class="mark">Right now.</span></h1>
+      <p class="lede">Feel the pulse of your fleet in real time. Who has which van, every handover with photos, fuel at the pump, warning lights and deadlines, all on one screen. Backed by a history nobody can rewrite.</p>
+      <div class="cta-row">
+        <a class="btn btn-marker btn-lg" href="#start">Start 30 days free</a>
+        <a class="btn btn-lg" href="#features">See the features</a>
+      </div>
+      <ul class="meta">
+        <li><span class="tick" aria-hidden="true"></span>30 days free on every plan</li>
+        <li><span class="tick" aria-hidden="true"></span>iPhone, Android and web</li>
+        <li><span class="tick" aria-hidden="true"></span>32 languages</li>
+      </ul>
+    </div>
+
+    <div class="board" id="live" role="region" aria-label="Example of the live station board">
+      <div class="board-head">
+        <div><span class="label">Station</span><strong class="station">Berlin Spandau</strong></div>
+        <div class="live"><span class="dot" aria-hidden="true"></span>Live <time id="clock">17:35</time></div>
+      </div>
+      <canvas id="pulse" class="pulse" aria-hidden="true"></canvas>
+      <dl class="stats">
+        <div><dt>Out with a driver</dt><dd id="s-out">21</dd></div>
+        <div><dt>Free</dt><dd id="s-free">3</dd></div>
+        <div><dt>At the pump</dt><dd id="s-pump">0</dd></div>
+        <div><dt>To review</dt><dd id="s-review">2</dd></div>
+      </dl>
+      <ol class="feed" id="feed"></ol>
+      <p class="board-foot">Example data. Your board shows your own vans and drivers as things happen.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Features</p>
+      <h2>What Fratius does</h2>
+      <p class="sec-lede">From the first pick-up of the day to the fine that arrives three weeks later. Swipe through, or pick a topic.</p>
+    </div>
+
+    <div class="slider" id="slider">
+      <div class="tabs" role="tablist" aria-label="Features" id="tabs">
+        <button class="tab" role="tab" id="t-1" aria-controls="f-1" type="button">At a glance</button>
+        <button class="tab" role="tab" id="t-2" aria-controls="f-2" type="button">Handovers</button>
+        <button class="tab" role="tab" id="t-3" aria-controls="f-3" type="button">Tours</button>
+        <button class="tab" role="tab" id="t-4" aria-controls="f-4" type="button">At the pump</button>
+        <button class="tab" role="tab" id="t-5" aria-controls="f-5" type="button">Review</button>
+        <button class="tab" role="tab" id="t-6" aria-controls="f-6" type="button">History</button>
+        <button class="tab" role="tab" id="t-7" aria-controls="f-7" type="button">Deadlines</button>
+        <button class="tab" role="tab" id="t-8" aria-controls="f-8" type="button">Paperwork &amp; data</button>
+        <button class="tab" role="tab" id="t-9" aria-controls="f-9" type="button">Team &amp; languages</button>
+        <button class="tab soon" role="tab" id="t-10" aria-controls="f-10" type="button">AI damage · soon</button>
+      </div>
+
+      <div class="track" id="track" tabindex="0" aria-label="Features, use the arrow keys to move">
+        <article class="slide" role="tabpanel" id="f-1" aria-labelledby="t-1">
+          <div class="slide-copy">
+            <p class="kicker"><b>At any moment</b> · owners and managers</p>
+            <h3>The answers you used to phone around for</h3>
+            <p>Every van and every driver as it happens. No spreadsheets, no group chats, no ringing round the drivers.</p>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example answers">
+              <div class="mock-head"><span class="mock-title">Berlin Spandau</span><span class="pill ok">Live</span></div>
+              <ul class="qlist">
+                <li><span class="q">Who has B-FC 2041 right now?</span><span class="a"><b>Andrei M.</b> since 05:45 <span class="pill ok">Proof on record</span></span></li>
+                <li><span class="q">Which vans are free?</span><span class="a"><span class="plate">B-FC 776</span><span class="plate">B-FC 1187</span><span class="plate">P-DL 552</span></span></li>
+                <li><span class="q">Was that the van's fuel card?</span><span class="a">Card ending 4471 matched · 62.4 l · €108.20</span></li>
+                <li><span class="q">What falls due this month?</span><span class="a">HU for 1 van · UVV for 4 · 2 licence checks</span></li>
+                <li><span class="q">Which van should see the workshop?</span><span class="a"><span class="plate">B-FC 3310</span> 14% more diesel than its twins</span></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-2" aria-labelledby="t-2">
+          <div class="slide-copy">
+            <p class="kicker"><b>05:45 and 16:40</b> · driver</p>
+            <h3>Pick-up and drop-off with proof</h3>
+            <p>The driver walks around the van with the app: a photo in every guide frame, or one walk-around video. Any new damage gets a name and a time: whoever had the van between two walk-arounds.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Drivers pick up vans themselves, or managers hand them out. Your choice per station.</li>
+              <li><span class="tick" aria-hidden="true"></span>Video for vans that two or three drivers share in a day.</li>
+              <li><span class="tick" aria-hidden="true"></span>Drop-offs without proof show up in the review.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example pick-up screen">
+              <div class="mock-head"><span class="mock-title">Pick-up</span><span class="plate">B-FC 2041</span></div>
+              <div class="frames" id="frames"></div>
+              <div class="mock-foot"><span class="pill ok">Full photo set</span><span class="muted">05:45 · Andrei M.</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-3" aria-labelledby="t-3">
+          <div class="slide-copy">
+            <p class="kicker"><b>06:05</b> · driver</p>
+            <h3>The tour starts with a dashboard photo</h3>
+            <p>One photo at the start, one at the end. The AI reads the odometer, fuel or battery, range and warning lights, and the driver confirms.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Kilometres, hours and fuel for every tour.</li>
+              <li><span class="tick" aria-hidden="true"></span>Warning lights reach the manager the same day.</li>
+              <li><span class="tick" aria-hidden="true"></span>On or off per company.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example dashboard reading">
+              <div class="mock-head"><span class="mock-title">Tour start</span><span class="plate">B-FC 2041</span></div>
+              <div class="mcard">
+                <div class="odo" aria-label="Odometer 84,213 km"><span>0</span><span>8</span><span>4</span><span>2</span><span>1</span><span>3</span><em>km</em></div>
+                <div class="gauge" aria-label="Fuel about three quarters"><span>E</span><div class="gbar"><i></i></div><span>F</span></div>
+                <div class="lights"><span class="pill amber">Warning light: AdBlue</span><span class="muted">Range 410 km</span></div>
+              </div>
+              <div class="mock-foot"><span class="btn btn-primary btn-sm fake">Confirm reading</span><span class="muted">Read from the photo</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-4" aria-labelledby="t-4">
+          <div class="slide-copy">
+            <p class="kicker"><b>11:20</b> · driver and manager</p>
+            <h3>Every refuel checked at the pump</h3>
+            <p>Dashboard first, then the fuel card. If it's the van's card, the receipt is read and the manager gets the litres, the total and anything odd. If it isn't, the driver is told to stop, and the manager allows or refuses from their phone.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Also for washes and parts.</li>
+              <li><span class="tick" aria-hidden="true"></span>Flags such as more litres than the tank holds, or the wrong fuel.</li>
+              <li><span class="tick" aria-hidden="true"></span>Card photos are never kept, only the last four digits.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example of a stopped refuel">
+              <div class="stop">
+                <p class="stop-title">Stop. Don't start the pump.</p>
+                <p>The card ending 7702 isn't the card of B-FC 2041. Your manager decides.</p>
+                <span class="btn btn-sm fake">Call Sofia K.</span>
+              </div>
+              <div class="mcard">
+                <div class="mock-head"><span class="mock-title">At the pump</span><span class="pill bad">Waiting</span></div>
+                <p class="muted">Andrei M. · B-FC 2041 · card ending 7702</p>
+                <div class="two-btn"><span class="btn btn-primary btn-sm fake">Allow</span><span class="btn btn-sm fake danger">Refuse</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-5" aria-labelledby="t-5">
+          <div class="slide-copy">
+            <p class="kicker"><b>17:15</b> · manager</p>
+            <h3>One list at the end of the day</h3>
+            <p>Damage to approve, drop-offs without proof, vans out longer than 14 hours, warning lights, flagged refuels and what falls due soon.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Managers have the final word on every damage spot.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example review list">
+              <div class="mock-head"><span class="mock-title">Review</span><span class="muted">Berlin Spandau</span></div>
+              <ul class="rlist">
+                <li><span>Damage to approve</span><b>2</b></li>
+                <li><span>Missing proof</span><b class="hot">1</b></li>
+                <li><span>Warning lights</span><b>1</b></li>
+                <li><span>Fuel, wash, parts</span><b>7</b></li>
+                <li><span>Due soon</span><b>3</b></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-6" aria-labelledby="t-6">
+          <div class="slide-copy">
+            <p class="kicker"><b>Weeks later</b> · owner or manager</p>
+            <h3>The van history nobody can rewrite</h3>
+            <p>Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Every handover is a record the server writes. Nobody edits or deletes it.</li>
+              <li><span class="tick" aria-hidden="true"></span>One driver per van, one van per driver.</li>
+              <li><span class="tick" aria-hidden="true"></span>Photos and videos are kept 30 days, marked damage up to 90.</li>
+              <li><span class="tick" aria-hidden="true"></span>Vans are retired, never deleted. People who leave keep their history.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="ledger band" role="table" aria-label="Example history of van B-FC 2041">
+              <div class="ledger-head" role="row"><span class="plate">B-FC 2041</span><strong role="columnheader">Week 43</strong></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Tue 20 Oct</span><span class="lwho" role="cell"><b>Andrei M.</b><span>05:47 → 17:03</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Wed 21 Oct</span><span class="lwho" role="cell"><b>Elif D.</b><span>06:02 → 17:10</span></span><span class="lproof" role="cell"><span class="pill">Video</span><span class="pill">Video</span></span></div>
+              <div class="lrow hit" role="row"><span class="lday" role="cell">Thu 22 Oct</span><span class="lwho" role="cell"><b>Mehmet Y.</b><span>05:51 → 16:38</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span>
+                <span class="lnote" role="cell"><span class="pill mk">New damage</span>Sliding door, found at drop-off. Photos kept 90 days.</span></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Fri 23 Oct</span><span class="lwho" role="cell"><b>Andrei M.</b><span>05:40 → 16:21</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
+              <div class="ledger-foot">
+                <svg width="18" height="20" viewBox="0 0 18 20" aria-hidden="true"><rect x="2" y="8" width="14" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 8V5.5a4 4 0 0 1 8 0V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                Records written by the server. No edits, no deletes.
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-7" aria-labelledby="t-7">
+          <div class="slide-copy">
+            <p class="kicker"><b>Every week</b> · owner and manager</p>
+            <h3>Deadlines and driver records</h3>
+            <p>HU, UVV, service by date and kilometres, tyres, tax, insurance and contract end show up before they're late. Each driver has a record: licence classes and expiry, licence checks every 3, 6 or 12 months, briefings, accidents, fines and complaints.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>No licence copies, birth dates or home addresses.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example deadlines and driver record">
+              <div class="mcard row-card">
+                <span class="hu" id="hu"></span>
+                <div class="vlist">
+                  <div><b>HU</b> March 2027</div>
+                  <div><b>UVV</b> 12 Nov</div>
+                  <div><b>Service</b> at 90,000 km</div>
+                  <div><span class="pill amber">Due soon</span></div>
+                </div>
+              </div>
+              <div class="mcard">
+                <div class="mock-head"><span class="mock-title">Ivana P.</span><span class="pill ok">Licence check fine</span></div>
+                <div class="vlist">
+                  <div><b>Classes</b> B, C1 · valid to 2031</div>
+                  <div><b>Next check</b> April 2027</div>
+                  <div><b>Safety briefing</b> done 2 Sep</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-8" aria-labelledby="t-8">
+          <div class="slide-copy">
+            <p class="kicker"><b>In the office</b> · owner and manager</p>
+            <h3>Paperwork from a photo, numbers to Excel</h3>
+            <p>Photograph the registration certificate, the lease contract or the insurance policy. The fields fill in, you check them and save, and the photo is deleted. Drivers, tours, vans and fuel come as tables for 7, 30 or 90 days.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>Fuel per 100 km against vans of the same model.</li>
+              <li><span class="tick" aria-hidden="true"></span>One tap to Excel.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Example document reading and data table">
+              <div class="mcard row-card">
+                <div class="doc" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="vlist">
+                  <div><b>Fahrzeugschein</b></div>
+                  <div><span class="tick" aria-hidden="true"></span>VIN</div>
+                  <div><span class="tick" aria-hidden="true"></span>First registration</div>
+                  <div><span class="tick" aria-hidden="true"></span>HU due</div>
+                </div>
+              </div>
+              <div class="mcard">
+                <table class="mini" aria-label="Example driver table">
+                  <thead><tr><th>Driver</th><th>km</th><th>l/100</th><th>vs model</th></tr></thead>
+                  <tbody>
+                    <tr><td>Andrei M.</td><td>2,140</td><td>10.8</td><td class="dn">−3%</td></tr>
+                    <tr><td>Elif D.</td><td>1,860</td><td>11.1</td><td>±0%</td></tr>
+                    <tr><td>Mehmet Y.</td><td>1,980</td><td>12.1</td><td class="up">+9%</td></tr>
+                  </tbody>
+                </table>
+                <div class="mock-foot"><span class="muted">Last 30 days</span><span class="btn btn-sm fake">Download for Excel</span></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-9" aria-labelledby="t-9">
+          <div class="slide-copy">
+            <p class="kicker"><b>Everyone</b> · owner, manager, driver</p>
+            <h3>Each role sees what it needs, in its own language</h3>
+            <p>Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.</p>
+            <ul class="points">
+              <li><span class="tick" aria-hidden="true"></span>People join only by invite link: one person, one use, valid for 24 hours.</li>
+              <li><span class="tick" aria-hidden="true"></span>32 languages. The app opens in the phone's language.</li>
+              <li><span class="tick" aria-hidden="true"></span>iPhone, Android and the web.</li>
+            </ul>
+          </div>
+          <div class="slide-vis">
+            <div class="mock" aria-label="Roles and languages">
+              <ul class="rolelist">
+                <li><b>Owner</b><span>Every station and company, and what the vans cost</span></li>
+                <li><b>Manager</b><span>One station, final word on damage</span></li>
+                <li><b>Driver</b><span>Their van and their own records</span></li>
+              </ul>
+              <ul class="langs" id="langs"></ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" role="tabpanel" id="f-10" aria-labelledby="t-10">
+          <div class="slide-copy">
+            <p class="kicker"><span class="soon-badge">Coming soon · its own plan</span></p>
+            <h3>AI damage detection</h3>
+            <p>The next version checks every walk-around for new dents, scratches and broken parts, so damage is found at the handover, not at the end of the lease.</p>
+            <ol class="steps-mini">
+              <li>Guide frames for every panel of the van type</li>
+              <li>The AI marks possible damage on each photo</li>
+              <li>Close-ups at the van rule out dirt and reflections</li>
+              <li>Your manager approves or rejects each spot</li>
+              <li>Approved damage gets a numbered dot on the van</li>
+            </ol>
+          </div>
+          <div class="slide-vis">
+            <div class="dmg-visual">
+              <svg class="vansvg" viewBox="0 0 800 380" role="img" aria-label="Side view of a van with three numbered damage spots">
+                <g stroke="currentColor" stroke-width="4" fill="none" opacity=".45">
+                  <path d="M20 64V20H64"/><path d="M736 20H780V64"/><path d="M20 316V360H64"/><path d="M736 360H780V316"/>
+                </g>
+                <path d="M70 290V178L178 66Q195 48 222 48H698Q736 48 736 86V290Z" style="fill:var(--paper)" stroke="currentColor" stroke-width="10" stroke-linejoin="round"/>
+                <path d="M128 178L196 94Q207 80 230 80H286V178Z" fill="currentColor"/>
+                <path d="M344 282V84H544V282" fill="none" stroke="currentColor" stroke-width="6" stroke-dasharray="16 14"/>
+                <path d="M70 232H118M690 232H736" stroke="currentColor" stroke-width="6"/>
+                <circle cx="216" cy="298" r="42" style="fill:var(--paper)" stroke="currentColor" stroke-width="10"/>
+                <circle cx="216" cy="298" r="12" fill="currentColor"/>
+                <circle cx="622" cy="298" r="42" style="fill:var(--paper)" stroke="currentColor" stroke-width="10"/>
+                <circle cx="622" cy="298" r="12" fill="currentColor"/>
+                <rect x="428" y="168" width="84" height="70" rx="4" fill="none" style="stroke:var(--alert)" stroke-width="4" stroke-dasharray="10 7"/>
+                <g><circle cx="470" cy="203" r="22" fill="#E2FF1C" stroke="#000" stroke-width="3"/><text x="470" y="212" font-size="26" fill="#000" text-anchor="middle">2</text></g>
+                <g><circle cx="704" cy="160" r="22" fill="#E2FF1C" stroke="#000" stroke-width="3"/><text x="704" y="169" font-size="26" fill="#000" text-anchor="middle">1</text></g>
+                <g><circle cx="98" cy="262" r="22" fill="#E2FF1C" stroke="#000" stroke-width="3"/><text x="98" y="271" font-size="26" fill="#000" text-anchor="middle">3</text></g>
+              </svg>
+              <div class="spot">
+                <div class="crop" aria-hidden="true"></div>
+                <div class="spot-text">
+                  <strong>Spot 2 · sliding door · dent</strong>
+                  <p class="muted">Found at Thursday's drop-off. Mehmet Y. had the van.</p>
+                  <div class="row"><span class="pill ok">Approved by Sofia K.</span><span class="pill">Photos kept 90 days</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="slider-foot">
+        <span class="count" id="count" aria-live="polite">1 / 10</span>
+        <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+        <div class="arrows">
+          <button class="arrow" type="button" id="prev" aria-label="Previous feature"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="arrow" type="button" id="next" aria-label="Next feature"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec dl" id="download">
+  <div class="wrap dl-grid">
+    <svg class="app-icon" viewBox="0 0 1024 1024" role="img" aria-label="Fratius app icon"><use href="#appicon"/></svg>
+    <div>
+      <div class="sec-head">
+        <p class="eyebrow">Download</p>
+        <h2>Get Fratius</h2>
+        <p class="sec-lede">The apps for iPhone and Android are on their way to the App Store and Google Play.</p>
+      </div>
+      <div class="stores" id="stores"></div>
+      <p class="note" id="webapp-note"></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="pricing">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Pricing</p>
+      <h2>Pick a plan by stations. Try it 30 days free.</h2>
+      <p class="sec-lede">Every plan comes with every feature. The only difference is how many stations you run.</p>
+    </div>
+    <div class="plans" id="plans"></div>
+    <div class="includes">
+      <h3>Every plan includes</h3>
+      <ul>
+        <li><span class="tick" aria-hidden="true"></span>Live fleet board</li>
+        <li><span class="tick" aria-hidden="true"></span>Handovers with photos or video</li>
+        <li><span class="tick" aria-hidden="true"></span>Permanent van and driver history</li>
+        <li><span class="tick" aria-hidden="true"></span>Tours from dashboard photos</li>
+        <li><span class="tick" aria-hidden="true"></span>Refuel, wash and parts with card check</li>
+        <li><span class="tick" aria-hidden="true"></span>Deadlines: HU, UVV, service, tyres</li>
+        <li><span class="tick" aria-hidden="true"></span>Driver records and licence checks</li>
+        <li><span class="tick" aria-hidden="true"></span>Paperwork from a photo</li>
+        <li><span class="tick" aria-hidden="true"></span>Data tables and Excel export</li>
+        <li><span class="tick" aria-hidden="true"></span>Owner, manager and driver roles</li>
+        <li><span class="tick" aria-hidden="true"></span>32 languages</li>
+        <li><span class="tick" aria-hidden="true"></span>iPhone, Android and web</li>
+      </ul>
+    </div>
+    <p class="price-note" id="price-note"></p>
+  </div>
+</section>
+
+<section class="sec paper-band" id="start">
+  <div class="wrap signup-grid">
+    <div>
+      <div class="sec-head" style="margin-bottom:0">
+        <p class="eyebrow">Sign up</p>
+        <h2>Start your 30 days</h2>
+        <p class="sec-lede">Three short steps: pick a plan, tell us about your company, send. Nothing is charged now; we email you how to start.</p>
+      </div>
+      <ul class="need">
+        <li><span class="tick" aria-hidden="true"></span>Your company's name and country</li>
+        <li><span class="tick" aria-hidden="true"></span>How many stations and vans you run</li>
+        <li><span class="tick" aria-hidden="true"></span>A work email and a mobile number</li>
+      </ul>
+    </div>
+
+    <form class="form-card" id="signup" novalidate>
+      <p class="preview-note" id="preview-note" hidden>Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.</p>
+      <ol class="stepper" aria-label="Sign-up steps">
+        <li data-s="1"><span class="n">1</span>Plan</li>
+        <li data-s="2"><span class="n">2</span>Company</li>
+        <li data-s="3"><span class="n">3</span>Send</li>
+      </ol>
+
+      <div class="step-pane" data-step="1">
+        <h3 tabindex="-1">Choose your plan</h3>
+        <fieldset class="plan-opts" id="plan-opts">
+          <legend>Plan</legend>
+        </fieldset>
+        <label class="check" for="f-ai"><input type="checkbox" id="f-ai" name="aiWaitlist"> Tell me when AI damage detection is ready</label>
+        <div class="actions"><span></span><button class="btn btn-primary" type="button" data-go="2">Continue</button></div>
+      </div>
+
+      <div class="step-pane" data-step="2" hidden>
+        <h3 tabindex="-1">Your company</h3>
+        <div class="fields">
+          <div class="field full"><label for="f-company">Company name</label><input id="f-company" name="company" autocomplete="organization"><span class="err" id="e-company" hidden></span></div>
+          <div class="field"><label for="f-country">Country</label>
+            <select id="f-country" name="country" autocomplete="country-name">
+              <option>Germany</option><option>Austria</option><option>Switzerland</option><option>Netherlands</option><option>Belgium</option>
+              <option>France</option><option>Italy</option><option>Spain</option><option>Poland</option><option>United Kingdom</option><option>Ireland</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label for="f-stations">Stations</label><input id="f-stations" name="stations" inputmode="numeric" autocomplete="off" placeholder="1"><span class="err" id="e-stations" hidden></span></div>
+          <div class="field"><label for="f-vans">Vans</label><input id="f-vans" name="vans" inputmode="numeric" autocomplete="off" placeholder="30"><span class="err" id="e-vans" hidden></span></div>
+          <div class="field"><label for="f-first">First name</label><input id="f-first" name="first" autocomplete="given-name"><span class="err" id="e-first" hidden></span></div>
+          <div class="field"><label for="f-last">Last name</label><input id="f-last" name="last" autocomplete="family-name"><span class="err" id="e-last" hidden></span></div>
+          <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" autocomplete="email"><span class="err" id="e-email" hidden></span></div>
+          <div class="field full"><label for="f-phone">Mobile number</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="+49 151 2345 6789"><span class="err" id="e-phone" hidden></span></div>
+        </div>
+        <div class="fit" id="fit" hidden></div>
+        <div class="actions"><button class="btn" type="button" data-go="1">Back</button><button class="btn btn-primary" type="button" data-go="3">Continue</button></div>
+      </div>
+
+      <div class="step-pane" data-step="3" hidden>
+        <h3 tabindex="-1">Check and send</h3>
+        <dl class="summary" id="summary"></dl>
+        <div class="pay" id="pay" hidden>
+          <strong>Payment</strong>
+          <p id="pay-text">Card or bank details go here once the payment provider is connected.</p>
+        </div>
+        <p class="hint" id="next-text">Nothing is charged now. We set up your company and email you how to start your 30 days.</p>
+        <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
+        <label class="check" for="f-terms"><input type="checkbox" id="f-terms" name="terms"> <span id="terms-text">I have read the privacy policy.</span></label>
+        <span class="err" id="e-terms" hidden></span>
+        <span class="err" id="e-send" hidden></span>
+        <div class="actions"><button class="btn" type="button" data-go="2">Back</button><button class="btn btn-marker" type="submit" id="submit">Send request</button></div>
+      </div>
+
+      <div class="step-pane" data-step="4" hidden>
+        <div class="done-box">
+          <h3 tabindex="-1" class="big" id="done-title">Done</h3>
+          <p id="done-text"></p>
+          <button class="btn" type="button" id="again">Start again</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="sec" id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Questions</p>
+      <h2>Good to know</h2>
+    </div>
+    <div class="faq">
+      <details><summary>Does Fratius replace the DVIC?</summary><p>No. The DVIC stays in Amazon's tools. Fratius covers your own vans between drivers: handovers with proof, damage, fuel, deadlines and paperwork.</p></details>
+      <details><summary>What counts as a station?</summary><p>A place your vans run from. Each station has its own managers, drivers and vans. Owners see all stations; managers and drivers see their own.</p></details>
+      <details><summary>Do drivers need an iPhone?</summary><p>No. Fratius runs on iPhone, Android and as a web app in any phone's browser.</p></details>
+      <details><summary>Can anything in the history be changed?</summary><p>No. Handovers are written by the server and never edited or deleted. Vans are retired instead of deleted, and people who leave keep their history.</p></details>
+      <details><summary>What do you keep about drivers?</summary><p>Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.</p></details>
+      <details><summary>How long do you keep photos and videos?</summary><p>30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.</p></details>
+      <details><summary>What about damage found at the end of a lease?</summary><p>Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.</p></details>
+      <details><summary>How do people join?</summary><p>By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div style="display:grid;gap:10px">
+      <a class="brand" href="#hero"><svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><use href="#appicon"/></svg><span class="brand-text"><b>Fratius</b><small>Fleet management</small></span></a>
+      <p>Handovers, damage and van history for delivery partners who run their own vans.</p>
+    </div>
+    <div style="display:grid;gap:10px;justify-items:start">
+      <nav class="legal" id="legal" aria-label="Legal"></nav>
+      <p>Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.</p>
+      <p>© <span id="year">2026</span> Fratius</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  /* ───────── Everything you'll want to change lives here ───────── */
+  const CONFIG = {
+    currency: 'EUR',
+    trialDays: 30,
+    priceNote: 'Prices per month, excluding VAT. 30 days free on every plan.',
+    plans: [
+      { id: 'basic', name: 'Basic', price: 35, stations: 3 },
+      { id: 'pro', name: 'Pro', price: 70, stations: 10 },
+      { id: 'premium', name: 'Premium', price: 140, stations: null }, // null = unlimited
+    ],
+    aiPlan: { name: 'AI damage detection', text: 'Automatic damage checks on every walk-around. Price to follow.' },
+    stores: {
+      appStore: null,     // App Store link once the iPhone app is live
+      googlePlay: null,   // Google Play link once the Android app is live
+      webApp: 'https://fleet-check-2aa34.web.app',
+    },
+    signup: {
+      live: true,              // false shows a preview that sends nothing
+      endpoint: '/api/signup', // the websiteSignup function, through Firebase Hosting
+      payment: false,          // true once a payment provider is connected
+    },
+    contactEmail: 'info@fratius.com',
+    legal: { imprint: '/impressum', privacy: '/datenschutz', terms: null }, // Impressum, Datenschutz, AGB
+  };
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const money = (n) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CONFIG.currency, maximumFractionDigits: 0 }).format(n);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const limitText = (p) => (p.stations ? `Up to ${p.stations} stations` : 'Unlimited stations');
+  const hhmm = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+  /* ───────── In-page links (also pick the plan when a pricing button is used) ───────── */
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    if (a.dataset.plan) setPlan(a.dataset.plan);
+    if (a.dataset.waitlist) { $('#f-ai').checked = true; }
+    const el = document.getElementById(a.getAttribute('href').slice(1));
+    if (!el) return;
+    e.preventDefault();
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  /* ───────── Pricing, store buttons, legal links, languages ───────── */
+  $('#plans').innerHTML = CONFIG.plans.map((p) => `
+    <article class="plan">
+      <h3>${esc(p.name)}</h3>
+      <p class="limit">${limitText(p)}</p>
+      <p class="price"><b>${money(p.price)}</b><span>a month</span></p>
+      <p><span class="pill mk">${CONFIG.trialDays} days free</span></p>
+      <a class="btn btn-marker" href="#start" data-plan="${p.id}">Start with ${esc(p.name)}</a>
+    </article>`).join('') + `
+    <article class="plan ai">
+      <h3>${esc(CONFIG.aiPlan.name)}</h3>
+      <p class="limit">Its own plan</p>
+      <p class="price"><b>Coming soon</b></p>
+      <p class="desc">${esc(CONFIG.aiPlan.text)}</p>
+      <a class="btn" href="#start" data-waitlist="1">Tell me when it's ready</a>
+    </article>`;
+  $('#price-note').textContent = CONFIG.priceNote;
+
+  const phone = '<svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="1.5" width="22" height="31" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 28h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const store = (url, before, name) => url
+    ? `<a class="store" href="${esc(url)}" target="_blank" rel="noopener">${phone}<span><small>${before.live}</small><b>${name}</b></span></a>`
+    : `<span class="store soon" aria-label="${name}: coming soon">${phone}<span><small>${before.soon}</small><b>${name}</b></span></span>`;
+  $('#stores').innerHTML =
+    store(CONFIG.stores.appStore, { live: 'Download on the', soon: 'Coming soon to the' }, 'App Store') +
+    store(CONFIG.stores.googlePlay, { live: 'Get it on', soon: 'Coming soon on' }, 'Google Play') +
+    (CONFIG.stores.webApp ? `<a class="btn btn-lg" href="${esc(CONFIG.stores.webApp)}" target="_blank" rel="noopener">Open the web app</a>` : '');
+  $('#webapp-note').textContent = CONFIG.stores.webApp
+    ? 'Until then, Fratius runs as a web app: open it in the phone\'s browser and add it to the home screen.'
+    : '';
+
+  const legal = [['imprint', 'Impressum'], ['privacy', 'Privacy'], ['terms', 'Terms']].filter(([k]) => CONFIG.legal[k]);
+  $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${label}</a>`).join('')
+    + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
+  $('#pay').hidden = !CONFIG.signup.payment;
+  $('#next-text').hidden = !!CONFIG.signup.payment;
+  if (CONFIG.legal.privacy && !CONFIG.legal.terms) {
+    $('#terms-text').innerHTML = `I have read the <a href="${esc(CONFIG.legal.privacy)}" target="_blank" rel="noopener">privacy policy</a>.`;
+  } else if (CONFIG.legal.terms && CONFIG.legal.privacy) {
+    $('#terms-text').innerHTML = `I agree to the <a href="${esc(CONFIG.legal.terms)}" target="_blank" rel="noopener">terms</a> and the <a href="${esc(CONFIG.legal.privacy)}" target="_blank" rel="noopener">privacy policy</a>.`;
+  }
+  $('#year').textContent = new Date().getFullYear();
+
+  const LANGS = [['en', 'English'], ['de', 'Deutsch'], ['fr', 'Français'], ['es', 'Español'], ['it', 'Italiano'], ['pt', 'Português'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['ro', 'Română'], ['bg', 'Български'], ['cs', 'Čeština'], ['sk', 'Slovenčina'], ['hu', 'Magyar'], ['hr', 'Hrvatski'], ['sr', 'Srpski'], ['sl', 'Slovenščina'], ['sq', 'Shqip'], ['el', 'Ελληνικά'], ['lt', 'Lietuvių'], ['lv', 'Latviešu'], ['et', 'Eesti'], ['fi', 'Suomi'], ['sv', 'Svenska'], ['da', 'Dansk'], ['nb', 'Norsk'], ['tr', 'Türkçe'], ['ru', 'Русский'], ['uk', 'Українська'], ['ar', 'العربية', 1], ['fa', 'فارسی', 1], ['hi', 'हिन्दी'], ['vi', 'Tiếng Việt']];
+  $('#langs').innerHTML = LANGS.map(([c, n, rtl]) => `<li lang="${c}"${rtl ? ' dir="rtl"' : ''}>${n}</li>`).join('');
+
+  const FRAMES = ['Front', 'Front left', 'Left side', 'Rear left', 'Rear', 'Rear right', 'Right side', 'Front right'];
+  $('#frames').innerHTML = FRAMES.map((f) => `<span class="frame"><svg aria-hidden="true" viewBox="130 300 760 420"><use href="#van"/></svg><span class="tick" aria-hidden="true"></span>${f}</span>`).join('');
+
+  /* The German inspection sticker, drawn the way the app draws it (colour by year, due month at the top). */
+  function huSticker(year, month, size) {
+    const COLS = ['#E58FB8', '#3E9B4F', '#F08A24', '#2F6FC6', '#F2D129', '#8A5A33'];
+    const fill = COLS[(((year - 2023) % 6) + 6) % 6];
+    const ink = fill === '#2F6FC6' || fill === '#8A5A33' ? '#FFFFFF' : '#000000';
+    const r = size / 2;
+    let t = '';
+    for (let i = 0; i < 12; i++) {
+      const k = ((month - 1 + i) % 12) + 1;
+      const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      t += `<text x="${(r + Math.cos(a) * r * 0.74).toFixed(1)}" y="${(r + Math.sin(a) * r * 0.74 + size * 0.045).toFixed(1)}" font-size="${(size * (i ? 0.12 : 0.16)).toFixed(1)}" font-weight="${i ? 500 : 700}" fill="${ink}" text-anchor="middle">${k}</text>`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Inspection sticker due ${month}/${year}"><circle cx="${r}" cy="${r}" r="${r - 1}" fill="${fill}" stroke="#000" stroke-width="2"/><circle cx="${r}" cy="${r}" r="${r * 0.52}" fill="none" stroke="${ink}" stroke-width="1" opacity=".5"/>${t}<text x="${r}" y="${r + size * 0.11}" font-size="${size * 0.3}" font-weight="700" fill="${ink}" text-anchor="middle">${String(year).slice(2)}</text></svg>`;
+  }
+  $('#hu').innerHTML = huSticker(2027, 3, 84);
+
+  /* ───────── Live board (example data) ───────── */
+  const EVENTS = [
+    { plate: 'B-FC 2041', text: 'Picked up by Andrei M.', pill: ['Full photo set', 'ok'], d: { out: 1, free: -1 } },
+    { plate: 'B-FC 2041', text: 'Tour started at 84,213 km', pill: ['Dashboard read', ''], d: {} },
+    { plate: 'B-FC 1187', text: 'Refuel 62.4 l · €108.20', pill: ['Card matched', 'ok'], d: {} },
+    { plate: 'B-FC 3310', text: 'Wrong fuel card, driver waiting', pill: ['At the pump', 'bad'], d: { pump: 1, review: 1 } },
+    { plate: 'B-FC 3310', text: 'Refuel allowed by Sofia K.', pill: ['Allowed', 'ok'], d: { pump: -1, review: -1 } },
+    { plate: 'P-DL 552', text: 'Warning light: AdBlue', pill: ['Check', 'amber'], d: { review: 1 } },
+    { plate: 'B-FC 776', text: 'Dropped off by Elif D.', pill: ['Video 1:12', 'ok'], d: { out: -1, free: 1 } },
+    { plate: 'B-FC 4120', text: 'Damage approved: rear left door', pill: ['#4 on record', 'solid'], d: { review: -1 } },
+    { plate: 'B-FC 1187', text: 'Taken over from Lukas B.', pill: ['Full photo set', 'ok'], d: {} },
+    { plate: 'B-FC 2958', text: 'Tour ended · 138 km · 9 h 05', pill: ['11.4 l/100 km', ''], d: {} },
+    { plate: 'B-FC 776', text: 'Picked up by Tomasz W.', pill: ['Full photo set', 'ok'], d: { out: 1, free: -1 } },
+    { plate: 'P-DL 552', text: 'HU due in March', pill: ['Due soon', 'amber'], d: {} },
+    { plate: 'B-FC 3310', text: 'Dropped off without proof', pill: ['Missing proof', 'bad'], d: { out: -1, free: 1, review: 1 } },
+    { plate: 'B-FC 3310', text: 'Handover video added by Sofia K.', pill: ['Proof added', 'ok'], d: { review: -1 } },
+  ];
+  const stats = { out: 21, free: 3, pump: 0, review: 2 };
+  const feed = $('#feed');
+  const row = (ev, when, fresh) => {
+    const li = document.createElement('li');
+    li.className = 'ev' + (fresh ? ' new' : '');
+    li.innerHTML = `<time>${hhmm(when)}</time><span class="plate">${ev.plate}</span><div class="ev-body"><span class="ev-text">${ev.text}</span><span class="pill ${ev.pill[1]}">${ev.pill[0]}</span></div>`;
+    return li;
+  };
+  const now = Date.now();
+  [2, 6, 11, 17, 24].forEach((ago, i) => feed.appendChild(row(EVENTS[EVENTS.length - 1 - i], new Date(now - ago * 60000))));
+  const clock = $('#clock');
+  const tickClock = () => { clock.textContent = hhmm(new Date()); };
+  tickClock();
+  setInterval(tickClock, 15000);
+
+  let next = 0, visible = true, timer = null;
+  function push() {
+    const ev = EVENTS[next];
+    next = (next + 1) % EVENTS.length;
+    feed.prepend(row(ev, new Date(), !reduce));
+    while (feed.children.length > 5) feed.lastElementChild.remove();
+    for (const [k, v] of Object.entries(ev.d)) {
+      stats[k] = Math.max(0, stats[k] + v);
+      const dd = $('#s-' + k);
+      dd.textContent = stats[k];
+      if (!reduce) { dd.classList.remove('bump'); void dd.offsetWidth; dd.classList.add('bump'); }
+    }
+    beat(true);
+  }
+  const start = () => { if (!timer) timer = setInterval(push, reduce ? 7000 : 3600); };
+  const stop = () => { clearInterval(timer); timer = null; };
+
+  /* The pulse line: ECG paper, a steady heartbeat, and a big beat for every event. */
+  const cv = $('#pulse');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, pts = [], queue = [], col = {}, sinceBeat = 0;
+  const SHAPE = [0, -1, -2, -1, 0, 0, 0, 1, 2, -4, -18, -30, 14, 22, 6, 0, 0, -2, -3, -4, -3, -2, -1, 0];
+  function readColors() {
+    const s = getComputedStyle(document.documentElement);
+    col = { ink: s.getPropertyValue('--ink').trim(), rule: s.getPropertyValue('--rule').trim(), marker: s.getPropertyValue('--marker').trim(), edge: s.getPropertyValue('--marker-edge').trim() };
+  }
+  function resize() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.ceil(W / 2) + 2;
+    pts = pts.length ? pts.slice(-n) : [];
+    while (pts.length < n) pts.unshift(0);
+  }
+  function beat(big) {
+    const k = big ? 1 : 0.42;
+    for (const v of SHAPE) queue.push(v * k, v * k);
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = col.rule; ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    for (let x = 0.5; x < W; x += 12) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = 0.5; y < H; y += 12) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    const mid = H * 0.58, sc = H / 78;
+    ctx.strokeStyle = col.ink; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    pts.forEach((v, i) => { const x = i * 2, y = mid + v * sc; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+    ctx.stroke();
+    const lx = (pts.length - 1) * 2, ly = mid + pts[pts.length - 1] * sc;
+    ctx.beginPath(); ctx.arc(Math.min(lx, W - 7), ly, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = col.marker; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = col.edge; ctx.stroke();
+  }
+  function frame() {
+    if (!visible) return;
+    sinceBeat++;
+    if (sinceBeat > 70 && !queue.length) { beat(false); sinceBeat = 0; }
+    pts.push(queue.length ? queue.shift() : (Math.random() - 0.5) * 0.5);
+    pts.shift();
+    draw();
+    requestAnimationFrame(frame);
+  }
+  readColors(); resize();
+  if (reduce) {
+    // A still trace with a few beats in it.
+    for (let i = 0; i < pts.length; i++) pts[i] = 0;
+    [0.18, 0.46, 0.8].forEach((f, j) => { const at = Math.floor(pts.length * f); SHAPE.forEach((v, i) => { pts[at + i * 2] = pts[at + i * 2 + 1] = v * (j === 2 ? 1 : 0.42); }); });
+    draw();
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); if (reduce) draw(); });
+  new MutationObserver(() => { readColors(); if (reduce) draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new ResizeObserver(() => { resize(); if (reduce) draw(); }).observe(cv);
+
+  const board = $('#live');
+  const setVisible = (v) => {
+    const was = visible;
+    visible = v && document.visibilityState === 'visible';
+    if (visible) { start(); if (!was && !reduce) requestAnimationFrame(frame); } else stop();
+  };
+  visible = false;
+  setVisible(true);
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => setVisible(e.isIntersecting)).observe(board);
+  document.addEventListener('visibilitychange', () => setVisible(document.visibilityState === 'visible'));
+
+  /* ───────── Sign-up ───────── */
+  const form = $('#signup');
+  const f = (n) => form.elements[n];
+  let plan = CONFIG.plans[0].id;
+  const openedAt = Date.now();
+  if (!CONFIG.signup.live) $('#preview-note').hidden = false;
+
+  $('#plan-opts').insertAdjacentHTML('beforeend', CONFIG.plans.map((p, i) => `
+    <label class="plan-opt" for="f-plan-${p.id}">
+      <input type="radio" name="plan" id="f-plan-${p.id}" value="${p.id}"${i ? '' : ' checked'}>
+      <span><b>${esc(p.name)}</b><span class="sub">${limitText(p)}</span></span>
+      <span class="pp">${money(p.price)} <small>a month</small></span>
+    </label>`).join(''));
+  const markPlans = () => $$('.plan-opt').forEach((l) => l.classList.toggle('on', l.querySelector('input').checked));
+  function setPlan(id) {
+    if (!CONFIG.plans.some((p) => p.id === id)) return;
+    plan = id;
+    const r = $('#f-plan-' + id); if (r) r.checked = true;
+    markPlans();
+    checkFit();
+  }
+  form.addEventListener('change', (e) => { if (e.target.name === 'plan') setPlan(e.target.value); });
+  markPlans();
+
+  const RULES = {
+    company: (v) => v.trim().length >= 2 || "Enter your company's name.",
+    stations: (v) => (/^\d{1,3}$/.test(v.trim()) && +v >= 1) || 'Enter how many stations you run, 1 or more.',
+    vans: (v) => (/^\d{1,4}$/.test(v.trim()) && +v >= 1) || 'Enter how many vans you run, 1 or more.',
+    first: (v) => !!v.trim() || 'Enter your first name.',
+    last: (v) => !!v.trim() || 'Enter your last name.',
+    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Enter an email address like name@company.de.',
+    phone: (v) => v.replace(/\D/g, '').length >= 7 || 'Enter a mobile number with the country code, like +49 151 2345 6789.',
+  };
+  function check(name) {
+    const ok = RULES[name](f(name).value);
+    const err = $('#e-' + name);
+    f(name).setAttribute('aria-invalid', ok === true ? 'false' : 'true');
+    if (ok === true) { err.hidden = true; f(name).removeAttribute('aria-describedby'); }
+    else { err.textContent = ok; err.hidden = false; f(name).setAttribute('aria-describedby', 'e-' + name); }
+    return ok === true;
+  }
+  Object.keys(RULES).forEach((n) => f(n).addEventListener('blur', () => { if (f(n).value) check(n); }));
+  f('stations').addEventListener('input', checkFit);
+
+  const curPlan = () => CONFIG.plans.find((p) => p.id === plan);
+  function fitPlan(n) { return CONFIG.plans.find((p) => !p.stations || p.stations >= n); }
+  function checkFit() {
+    const box = $('#fit');
+    const n = parseInt(f('stations').value, 10);
+    const p = curPlan();
+    if (!n || !p.stations || n <= p.stations) { box.hidden = true; return true; }
+    const better = fitPlan(n);
+    box.innerHTML = `<span>${esc(p.name)} covers up to ${p.stations} stations, and you run ${n}. ${esc(better.name)} covers ${better.stations ? 'up to ' + better.stations : 'any number of'} stations.</span><button class="btn btn-sm" type="button" data-switch="${better.id}">Switch to ${esc(better.name)}</button>`;
+    box.hidden = false;
+    return false;
+  }
+  $('#fit').addEventListener('click', (e) => { const b = e.target.closest('[data-switch]'); if (b) setPlan(b.dataset.switch); });
+
+  const trialEnd = () => { const d = new Date(); d.setDate(d.getDate() + CONFIG.trialDays); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  function fillSummary() {
+    const p = curPlan();
+    const items = [
+      ['Plan', `${p.name} · ${limitText(p).toLowerCase()}`],
+      ['Company', `${f('company').value.trim()} · ${f('country').value}`],
+      ['Fleet', `${f('stations').value.trim()} station${+f('stations').value === 1 ? '' : 's'} · ${f('vans').value.trim()} vans`],
+      ['Contact', `${f('first').value.trim()} ${f('last').value.trim()} · ${f('email').value.trim()} · ${f('phone').value.trim()}`],
+      ['Free until', trialEnd()],
+      ['Then', `${money(p.price)} a month, excluding VAT`],
+    ];
+    if (f('aiWaitlist').checked) items.push(['AI damage detection', "We'll tell you when it's ready"]);
+    $('#summary').innerHTML = items.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+  }
+
+  let step = 1;
+  function show(n, focus = true) {
+    step = n;
+    $$('.step-pane', form).forEach((s) => { s.hidden = +s.dataset.step !== n; });
+    $$('.stepper li', form).forEach((li) => {
+      const s = +li.dataset.s;
+      li.classList.toggle('on', s === n);
+      li.classList.toggle('done', s < n);
+      li.toggleAttribute('aria-current', s === n);
+    });
+    if (n === 3) fillSummary();
+    if (focus) {
+      const h = $(`.step-pane[data-step="${n}"] h3`, form);
+      h.focus({ preventScroll: true });
+      const top = form.getBoundingClientRect().top;
+      if (top < 70) form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }
+  }
+  form.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-go]');
+    if (!b) return;
+    const to = +b.dataset.go;
+    if (to > step && step === 2) {
+      const bad = Object.keys(RULES).filter((n) => !check(n));
+      if (bad.length) { f(bad[0]).focus(); return; }
+      if (!checkFit()) { $('#fit button').focus(); return; }
+    }
+    show(to);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const terms = $('#e-terms');
+    if (!f('terms').checked) { terms.textContent = CONFIG.legal.terms ? 'Tick the box to agree to the terms and the privacy policy.' : 'Tick the box to confirm you have read the privacy policy.'; terms.hidden = false; f('terms').focus(); return; }
+    terms.hidden = true;
+    const data = {
+      plan, aiWaitlist: f('aiWaitlist').checked,
+      company: f('company').value.trim(), country: f('country').value,
+      stations: +f('stations').value, vans: +f('vans').value,
+      firstName: f('first').value.trim(), lastName: f('last').value.trim(),
+      email: f('email').value.trim(), phone: f('phone').value.trim(),
+      website: f('website').value, elapsed: Date.now() - openedAt,
+    };
+    if (CONFIG.signup.live && CONFIG.signup.endpoint) {
+      const btn = $('#submit'); const sendErr = $('#e-send');
+      btn.disabled = true; sendErr.hidden = true;
+      try {
+        const res = await fetch(CONFIG.signup.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || '');
+        $('#done-title').textContent = `Thanks, ${data.firstName}`;
+        $('#done-text').innerHTML = `We've got your request for ${esc(data.company)}. We'll email <b>${esc(data.email)}</b> with how to start your ${CONFIG.trialDays} days.`;
+        show(4);
+      } catch (err) {
+        sendErr.textContent = (err && err.message) || "Your request didn't go through. Check your connection and try again.";
+        if (CONFIG.contactEmail) sendErr.textContent += ` You can also write to ${CONFIG.contactEmail}.`;
+        sendErr.hidden = false;
+      } finally { btn.disabled = false; }
+      return;
+    }
+    $('#done-title').textContent = `That's it, ${data.firstName}`;
+    $('#done-text').innerHTML = `This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where ${esc(data.company)}'s ${CONFIG.trialDays} days begin.`;
+    show(4);
+  });
+  $('#again').addEventListener('click', () => { form.reset(); setPlan(CONFIG.plans[0].id); $$('[aria-invalid]', form).forEach((i) => i.removeAttribute('aria-invalid')); $$('.err', form).forEach((x) => { x.hidden = true; }); $('#fit').hidden = true; show(1); });
+  show(1, false);
+
+  /* ───────── Feature slider ───────── */
+  const track = $('#track');
+  const slides = $$('.slide', track);
+  const tabs = $$('.tab');
+  const tabStrip = $('#tabs');
+  let at = 0;
+  function mark(i) {
+    at = i;
+    tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+    slides.forEach((sl, k) => { sl.setAttribute('aria-hidden', String(k !== i)); sl.inert = k !== i; });
+    $('#count').textContent = `${i + 1} / ${slides.length}`;
+    $('#progress').style.width = `${((i + 1) / slides.length) * 100}%`;
+    const t = tabs[i];
+    const left = t.offsetLeft - (tabStrip.clientWidth - t.offsetWidth) / 2;
+    tabStrip.scrollTo({ left: Math.max(0, left), behavior: reduce ? 'auto' : 'smooth' });
+  }
+  function go(i) {
+    i = (i + slides.length) % slides.length;
+    track.scrollTo({ left: i * track.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+    mark(i);
+  }
+  tabs.forEach((t, k) => t.addEventListener('click', () => go(k)));
+  $('#prev').addEventListener('click', () => go(at - 1));
+  $('#next').addEventListener('click', () => go(at + 1));
+  tabStrip.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    go(at + (e.key === 'ArrowRight' ? 1 : -1));
+    tabs[at].focus();
+  });
+  track.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(at + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(at - 1); }
+  });
+  let settle = null;
+  track.addEventListener('scroll', () => {
+    clearTimeout(settle);
+    settle = setTimeout(() => {
+      const i = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+      if (i !== at) mark(Math.min(slides.length - 1, Math.max(0, i)));
+    }, 90);
+  }, { passive: true });
+  // Keep the current slide in place when the page or the phone's toolbar changes size.
+  const pin = () => { if (Math.abs(track.scrollLeft - at * track.clientWidth) > 2) track.scrollTo({ left: at * track.clientWidth }); };
+  new ResizeObserver(pin).observe(track);
+  let resizing = null;
+  window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(pin, 120); });
+  mark(0);
+})();
+</script>
+</body>
+</html>
