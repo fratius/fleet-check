@@ -751,6 +751,7 @@ c6a0023b	Is it right that there's no vehicle?
 365786f8	Join {company}	[app/join/[token].tsx]
 c30cc528	Join or create another company
 1b16a62f	Just looking?	[app/sign-in.tsx]
+445f6bf2	Keep filming: at least {n} seconds.
 731594dc	Keeping the photos	[components/keep.tsx]
 cdb37ef3	Keeping the video	[components/keep.tsx]
 22049077	Kept until {date}, 90 days after they were taken.
@@ -1363,6 +1364,7 @@ a0065a65	Spots per check	[log.tsx]
 0ca28021	Standard roof	[lib/frames.ts]
 952f3754	Start	[data.tsx, components/vanfacts.tsx]
 51dd91dc	Start over	[components/docscan.tsx]
+e92d02d3	Start recording	[components/recorder.tsx]
 419f430d	Start scanning	[components/scanchoice.tsx]
 c83920dd	Start the demo over
 4aed8766	Start your tour	[components/dash.tsx]
@@ -1383,6 +1385,7 @@ bae7d5be	Status	[data.tsx]
 584b188e	Steering	[prompts.ts]
 5e9ae37b	Step {i} of {n}: {label}
 860fddea	Still going on.	[buy/[id].tsx]
+ee0d9dc8	Stop recording	[components/recorder.tsx]
 f89b5339	Stop: {van}, card not checked
 85c9eea8	Stop: {van}, no fuel card
 7e5606e9	Stop: {van}, not the van's card

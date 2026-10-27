@@ -636,7 +636,7 @@
   "key": "{name} allowed it. Fill up, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1562"
+   "functions/src/index.ts:1563"
   ]
  },
  {
@@ -644,7 +644,7 @@
   "key": "{name} allowed it. Wash the van, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1562"
+   "functions/src/index.ts:1563"
   ]
  },
  {
@@ -725,7 +725,7 @@
   "key": "{name} is at the car wash. {why} Allow or refuse the wash.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1500"
+   "functions/src/index.ts:1501"
   ]
  },
  {
@@ -733,7 +733,7 @@
   "key": "{name} is at the pump. {why} Allow or refuse the refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1501"
+   "functions/src/index.ts:1502"
   ]
  },
  {
@@ -790,7 +790,7 @@
   "key": "{name} refused it. Don't fill up: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1563"
+   "functions/src/index.ts:1564"
   ]
  },
  {
@@ -798,7 +798,7 @@
   "key": "{name} refused it. Don't wash the van: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1563"
+   "functions/src/index.ts:1564"
   ]
  },
  {
@@ -971,7 +971,7 @@
   "key": "{title}, added later",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:54",
-   "src/components/video.tsx:33"
+   "src/components/video.tsx:34"
   ]
  },
  {
@@ -1688,7 +1688,8 @@
   "id": "cbd211d6",
   "key": "Allow camera access in Settings to record the video.",
   "where": [
-   "src/components/video.tsx:78"
+   "src/components/recorder.tsx:63",
+   "src/components/video.tsx:84"
   ]
  },
  {
@@ -2213,6 +2214,8 @@
    "src/components/driverrec.tsx:232",
    "src/components/history.tsx:189",
    "src/components/history.tsx:231",
+   "src/components/recorder.tsx:64",
+   "src/components/recorder.tsx:83",
    "src/components/scanchoice.tsx:45",
    "src/components/vanfacts.tsx:235"
   ]
@@ -2434,7 +2437,7 @@
   "key": "Check the fuel card first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1572"
+   "functions/src/index.ts:1573"
   ]
  },
  {
@@ -2535,7 +2538,7 @@
   "id": "abb464b5",
   "key": "Checking the video…",
   "where": [
-   "src/components/video.tsx:54"
+   "src/components/video.tsx:60"
   ]
  },
  {
@@ -2857,7 +2860,7 @@
   "key": "Couldn't convert the video. The original is kept.",
   "server": true,
   "where": [
-   "functions/src/index.ts:990"
+   "functions/src/index.ts:991"
   ]
  },
  {
@@ -3360,7 +3363,7 @@
   "key": "Dashboard photos are off for this company. The owner turns them on in the Account tab.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1115"
+   "functions/src/index.ts:1116"
   ]
  },
  {
@@ -3896,7 +3899,7 @@
   "key": "Electric vans are charged, not refuelled.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1438",
+   "functions/src/index.ts:1439",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:59"
   ]
  },
@@ -4015,7 +4018,7 @@
   "key": "Enter the day of the check: today or a day in the last 12 months.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1078"
+   "functions/src/index.ts:1079"
   ]
  },
  {
@@ -4023,7 +4026,7 @@
   "key": "Enter the litres from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1602",
+   "functions/src/index.ts:1603",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:334",
    "src/components/dash.tsx:151"
   ]
@@ -4033,8 +4036,8 @@
   "key": "Enter the odometer reading in km.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1190",
-   "functions/src/index.ts:1598",
+   "functions/src/index.ts:1191",
+   "functions/src/index.ts:1599",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:333",
    "src/components/dash.tsx:147"
   ]
@@ -4051,7 +4054,7 @@
   "key": "Enter the total from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1604",
+   "functions/src/index.ts:1605",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:335"
   ]
  },
@@ -4091,7 +4094,7 @@
   "key": "Enter your password again to delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1775"
+   "functions/src/index.ts:1776"
   ]
  },
  {
@@ -4257,7 +4260,8 @@
   "id": "9eef175e",
   "key": "Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.",
   "where": [
-   "src/components/video.tsx:95"
+   "src/components/recorder.tsx:76",
+   "src/components/video.tsx:102"
   ]
  },
  {
@@ -5570,6 +5574,13 @@
   "key": "Just looking?",
   "where": [
    "src/app/sign-in.tsx:66"
+  ]
+ },
+ {
+  "id": "445f6bf2",
+  "key": "Keep filming: at least {n} seconds.",
+  "where": [
+   "src/components/recorder.tsx:81"
   ]
  },
  {
@@ -7272,7 +7283,7 @@
   "key": "Not yours.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1652"
+   "functions/src/index.ts:1653"
   ]
  },
  {
@@ -7704,7 +7715,7 @@
   "key": "Only the app creator can do this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1847"
+   "functions/src/index.ts:1848"
   ]
  },
  {
@@ -7759,7 +7770,7 @@
   "key": "Only the person who started it can carry on with it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1420"
+   "functions/src/index.ts:1421"
   ]
  },
  {
@@ -7767,7 +7778,7 @@
   "key": "Only the person who started it, or the station's fleet manager, can cancel it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1642"
+   "functions/src/index.ts:1643"
   ]
  },
  {
@@ -7782,7 +7793,7 @@
   "key": "Only the station's fleet managers and owners decide this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1552"
+   "functions/src/index.ts:1553"
   ]
  },
  {
@@ -8260,7 +8271,7 @@
   "key": "Photos and videos are deleted after {n} days. These are gone already.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1829"
+   "functions/src/index.ts:1830"
   ]
  },
  {
@@ -8681,7 +8692,7 @@
   "id": "292dbbc7",
   "key": "Record a new video instead",
   "where": [
-   "src/components/video.tsx:88"
+   "src/components/video.tsx:95"
   ]
  },
  {
@@ -8772,7 +8783,7 @@
   "key": "Refuel allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1560"
+   "functions/src/index.ts:1561"
   ]
  },
  {
@@ -8780,7 +8791,7 @@
   "key": "Refuel refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1561"
+   "functions/src/index.ts:1562"
   ]
  },
  {
@@ -8788,7 +8799,7 @@
   "key": "Refuel, wash or parts?",
   "server": true,
   "where": [
-   "functions/src/index.ts:1429"
+   "functions/src/index.ts:1430"
   ]
  },
  {
@@ -9468,7 +9479,7 @@
   "key": "Say what the problem with the licence is.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1082"
+   "functions/src/index.ts:1083"
   ]
  },
  {
@@ -9490,7 +9501,7 @@
   "key": "Say why the parts were needed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1580",
+   "functions/src/index.ts:1581",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:249"
   ]
  },
@@ -9607,7 +9618,7 @@
   "key": "Send 1 to 6 photos of the document.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1327"
+   "functions/src/index.ts:1328"
   ]
  },
  {
@@ -9782,7 +9793,7 @@
   "key": "Sign in again, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1767",
+   "functions/src/index.ts:1768",
    "functions/src/index.ts:456",
    "functions/src/index.ts:82",
    "src/lib/store.ts:191"
@@ -9939,7 +9950,7 @@
   "key": "Someone else has to allow your own.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1553"
+   "functions/src/index.ts:1554"
   ]
  },
  {
@@ -9947,7 +9958,7 @@
   "key": "Someone else has to check your own licence.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1074"
+   "functions/src/index.ts:1075"
   ]
  },
  {
@@ -10045,6 +10056,13 @@
   ]
  },
  {
+  "id": "e92d02d3",
+  "key": "Start recording",
+  "where": [
+   "src/components/recorder.tsx:84"
+  ]
+ },
+ {
   "id": "419f430d",
   "key": "Start scanning",
   "where": [
@@ -10112,7 +10130,7 @@
   "key": "Started another one",
   "server": true,
   "where": [
-   "functions/src/index.ts:1445"
+   "functions/src/index.ts:1446"
   ]
  },
  {
@@ -10193,11 +10211,18 @@
   ]
  },
  {
+  "id": "ee0d9dc8",
+  "key": "Stop recording",
+  "where": [
+   "src/components/recorder.tsx:84"
+  ]
+ },
+ {
   "id": "f89b5339",
   "key": "Stop: {van}, card not checked",
   "server": true,
   "where": [
-   "functions/src/index.ts:1498"
+   "functions/src/index.ts:1499"
   ]
  },
  {
@@ -10205,7 +10230,7 @@
   "key": "Stop: {van}, no fuel card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1498"
+   "functions/src/index.ts:1499"
   ]
  },
  {
@@ -10213,7 +10238,7 @@
   "key": "Stop: {van}, not the van's card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1499"
+   "functions/src/index.ts:1500"
   ]
  },
  {
@@ -10341,7 +10366,7 @@
   "key": "Take 1 to 6 photos of the parts.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1577"
+   "functions/src/index.ts:1578"
   ]
  },
  {
@@ -10437,8 +10462,8 @@
   "key": "Take the dashboard photo again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1186",
-   "functions/src/index.ts:1211"
+   "functions/src/index.ts:1187",
+   "functions/src/index.ts:1212"
   ]
  },
  {
@@ -10453,7 +10478,7 @@
   "key": "Take the photo of the receipt first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1594"
+   "functions/src/index.ts:1595"
   ]
  },
  {
@@ -10678,7 +10703,7 @@
   "key": "That's {more} km more than the last reading ({km} km). Check the number, or confirm it's right.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1221"
+   "functions/src/index.ts:1222"
   ]
  },
  {
@@ -10806,7 +10831,7 @@
   "key": "The app creator's account can't be deleted in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1768"
+   "functions/src/index.ts:1769"
   ]
  },
  {
@@ -10820,7 +10845,9 @@
   "id": "3e5c42fa",
   "key": "The camera couldn't start.",
   "where": [
-   "src/app/scan/[id].tsx:256"
+   "src/app/scan/[id].tsx:256",
+   "src/components/recorder.tsx:54",
+   "src/components/recorder.tsx:72"
   ]
  },
  {
@@ -10856,7 +10883,7 @@
   "key": "The card was already checked.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1489"
+   "functions/src/index.ts:1490"
   ]
  },
  {
@@ -10885,7 +10912,7 @@
   "key": "The dashboard photo is missing. Take it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1448"
+   "functions/src/index.ts:1449"
   ]
  },
  {
@@ -10985,7 +11012,7 @@
   "key": "The fuel level is a percentage from 0 to 100.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1600"
+   "functions/src/index.ts:1601"
   ]
  },
  {
@@ -11149,7 +11176,7 @@
   "id": "702a5b9e",
   "key": "The pick-up video of {van} is saved with its history.",
   "where": [
-   "src/components/video.tsx:63"
+   "src/components/video.tsx:69"
   ]
  },
  {
@@ -11184,7 +11211,7 @@
   "id": "d0e8ba44",
   "key": "The upload didn't finish. Check the connection and try again.",
   "where": [
-   "src/components/video.tsx:79"
+   "src/components/video.tsx:85"
   ]
  },
  {
@@ -11280,14 +11307,14 @@
   "id": "22522fdc",
   "key": "The video of {van} is saved with the van.",
   "where": [
-   "src/components/video.tsx:62"
+   "src/components/video.tsx:68"
   ]
  },
  {
   "id": "2ebd10a0",
   "key": "The video was added.",
   "where": [
-   "src/components/video.tsx:63"
+   "src/components/video.tsx:69"
   ]
  },
  {
@@ -11352,7 +11379,7 @@
   "key": "These photos belong to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1827"
+   "functions/src/index.ts:1828"
   ]
  },
  {
@@ -11526,7 +11553,7 @@
   "key": "This one is closed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1593"
+   "functions/src/index.ts:1594"
   ]
  },
  {
@@ -11534,8 +11561,8 @@
   "key": "This person isn't in the company any more.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1085",
-   "functions/src/index.ts:1339",
+   "functions/src/index.ts:1086",
+   "functions/src/index.ts:1340",
    "functions/src/index.ts:519",
    "functions/src/index.ts:651"
   ]
@@ -11545,8 +11572,8 @@
   "key": "This person works at another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1087",
-   "functions/src/index.ts:1340"
+   "functions/src/index.ts:1088",
+   "functions/src/index.ts:1341"
   ]
  },
  {
@@ -11561,7 +11588,7 @@
   "key": "This photo is already saved.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1212"
+   "functions/src/index.ts:1213"
   ]
  },
  {
@@ -11569,7 +11596,7 @@
   "key": "This photo is more than two hours old. Take a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1213"
+   "functions/src/index.ts:1214"
   ]
  },
  {
@@ -11585,7 +11612,7 @@
   "key": "This van is retired.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1437",
+   "functions/src/index.ts:1438",
    "functions/src/index.ts:765",
    "functions/src/index.ts:943"
   ]
@@ -11937,7 +11964,7 @@
   "id": "37a672f6",
   "key": "Try again with this video",
   "where": [
-   "src/components/video.tsx:87"
+   "src/components/video.tsx:94"
   ]
  },
  {
@@ -12081,8 +12108,8 @@
   "key": "Unknown check.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1281",
-   "functions/src/index.ts:1283",
+   "functions/src/index.ts:1282",
+   "functions/src/index.ts:1284",
    "functions/src/index.ts:263",
    "functions/src/index.ts:311"
   ]
@@ -12092,7 +12119,7 @@
   "key": "Unknown company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1849",
+   "functions/src/index.ts:1850",
    "functions/src/index.ts:335",
    "functions/src/index.ts:84"
   ]
@@ -12120,7 +12147,7 @@
   "key": "Unknown person.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1073",
+   "functions/src/index.ts:1074",
    "functions/src/index.ts:610",
    "functions/src/index.ts:640"
   ]
@@ -12130,8 +12157,8 @@
   "key": "Unknown photos or video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1819",
-   "functions/src/index.ts:1825"
+   "functions/src/index.ts:1820",
+   "functions/src/index.ts:1826"
   ]
  },
  {
@@ -12139,8 +12166,8 @@
   "key": "Unknown refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1411",
-   "functions/src/index.ts:1414"
+   "functions/src/index.ts:1412",
+   "functions/src/index.ts:1415"
   ]
  },
  {
@@ -12191,7 +12218,7 @@
   "key": "Unknown step.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1669"
+   "functions/src/index.ts:1670"
   ]
  },
  {
@@ -12207,7 +12234,7 @@
   "key": "Unknown van or person.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1325"
+   "functions/src/index.ts:1326"
   ]
  },
  {
@@ -12224,11 +12251,11 @@
   "key": "Unknown van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1123",
-   "functions/src/index.ts:1125",
-   "functions/src/index.ts:1334",
-   "functions/src/index.ts:1432",
-   "functions/src/index.ts:1435",
+   "functions/src/index.ts:1124",
+   "functions/src/index.ts:1126",
+   "functions/src/index.ts:1335",
+   "functions/src/index.ts:1433",
+   "functions/src/index.ts:1436",
    "functions/src/index.ts:565",
    "functions/src/index.ts:570",
    "functions/src/index.ts:693",
@@ -12289,14 +12316,14 @@
   "id": "7d00b873",
   "key": "Uploading {pct}% of {size}",
   "where": [
-   "src/components/video.tsx:74"
+   "src/components/video.tsx:80"
   ]
  },
  {
   "id": "f4a8b084",
   "key": "Uploading {size}…",
   "where": [
-   "src/components/video.tsx:73"
+   "src/components/video.tsx:79"
   ]
  },
  {
@@ -12329,7 +12356,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:211",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:243",
    "src/components/docscan.tsx:112",
-   "src/components/video.tsx:73"
+   "src/components/video.tsx:79"
   ]
  },
  {
@@ -12507,7 +12534,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:50",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:40",
    "src/components/scanchoice.tsx:40",
-   "src/components/video.tsx:33"
+   "src/components/video.tsx:34"
   ]
  },
  {
@@ -12728,7 +12755,7 @@
   "key": "Wash allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1560"
+   "functions/src/index.ts:1561"
   ]
  },
  {
@@ -12736,7 +12763,7 @@
   "key": "Wash refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1561"
+   "functions/src/index.ts:1562"
   ]
  },
  {
@@ -13159,7 +13186,7 @@
   "key": "You don't have this van. The driver who has it, or the station's fleet manager, takes its dashboard photo.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1132"
+   "functions/src/index.ts:1133"
   ]
  },
  {
@@ -13173,7 +13200,7 @@
   "id": "37242b32",
   "key": "You dropped off {van}. The video is kept with its history.",
   "where": [
-   "src/components/video.tsx:64"
+   "src/components/video.tsx:70"
   ]
  },
  {
@@ -13230,7 +13257,7 @@
   "key": "You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1778"
+   "functions/src/index.ts:1779"
   ]
  },
  {
@@ -13244,7 +13271,7 @@
   "id": "a7b89960",
   "key": "You picked up {van}. The video is kept with its history.",
   "where": [
-   "src/components/video.tsx:64"
+   "src/components/video.tsx:70"
   ]
  },
  {

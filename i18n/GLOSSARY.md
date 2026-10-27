@@ -1,6 +1,6 @@
-# Translating Fleet Check
+# Translating Fratius
 
-Fleet Check is an app for Amazon delivery partners in Europe (DSPs, "Delivery Service Partners"): companies with
+Fratius is an app for Amazon delivery partners in Europe (DSPs, "Delivery Service Partners"): companies with
 a few dozen delivery vans and drivers at one or more Amazon stations. Drivers photograph the van at pick-up and
 drop-off (a "walk-around"), the AI looks for damage, the fleet manager decides; drivers also photograph the
 dashboard at the start and end of a tour, refuel and wash the vans (with a fuel card check), and managers keep the
@@ -23,7 +23,7 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
 3. Sentence case as in the English. Keep the punctuation style (full stops on sentences, none on buttons).
 4. Address the reader the way modern apps in your language do (e.g. German "du", French "vous"), and stay
    consistent across the whole file.
-5. Don't translate: Fleet Check, Amazon, Expo Go, Excel, Firebase, Claude, Haiku, Sonnet, Opus, GitHub, Anthropic,
+5. Don't translate: Fratius, Amazon, Expo Go, Excel, Firebase, Claude, Haiku, Sonnet, Opus, GitHub, Anthropic,
    DKV, Shell, Aral, units (km, l, kWh, €, %, km/h, l/100 km, kWh/100 km), HU, UVV, AU, VIN, AdBlue, Euro 6,
    "Transporter ID" (Amazon's term; you may add your language's word only if drivers would otherwise not
    understand), plates and example names (Dana, Berlin Spandau, DBE1).
@@ -65,7 +65,7 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
 | invite link | one-time link to join the company |
 | Data (tab) | the tables with numbers |
 | Test log (tab) | the app creator's log of AI tests |
-| app creator | the person who runs Fleet Check itself |
+| app creator | the person who runs Fratius itself |
 | View as | the app creator seeing the app as another role |
 | licence check | the manager checking a driver's driving licence |
 | incident | accident, traffic fine, customer complaint |

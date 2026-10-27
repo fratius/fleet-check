@@ -1,6 +1,7 @@
-# Fleet Check
+# Fratius
 
 Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhone, Android and the web.
+(The repository keeps its old name, fleet-check.)
 
 - **Fleet:** each vehicle gets photo frames that fit its body type (car to step van).
 - **Walk-around:** the camera shows the outline to line up for each photo.
@@ -34,8 +35,8 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 - **History is kept for good:** each van lists every driver it had, each person every van they had, with the dates, who handed it over and why it ended. Nobody can edit or delete it, not even the owner. Vans are retired, not deleted; people who leave keep their history.
 - **Damage on each van:** the van page shows the van in 3D with a dot on each damage; tap a dot for when it happened, who had the van, the before and after photos and comments. The damage list below has the full details, newest first. When a check finds damage the van already has, the manager links it in the review so it stays one damage.
 - **Drivers can pick up and drop off vans themselves** where a station allows it (People > station > Who hands out the vans). Picking up and dropping off both need proof: a video walking around the van, or the full photo set. Both are linked from the history.
-- **Videos** instead of photos: Start scanning asks "photos or a video?", so anyone who can scan a van can film a walk-around video of it, and drivers can pick up and drop off with one. They're uploaded as recorded; the server makes a copy that plays on every phone (720p, normal colours from iPhone HDR). The Review tab tells managers when a drop-off has no video or photos, and managers can add a missing video afterwards.
-- **A driver given a van is told and asked for the pick-up video or photos**: a phone notification (web app, after turning notifications on in Account) and a card on their Vans tab. Managers see it in Review if they're still missing after 2 hours.
+- **Videos** instead of photos: Start scanning asks "photos or a video?", so anyone who can scan a van can film a walk-around video of it, and drivers can pick up and drop off with one. On phones the app records them itself (720p, no sound, small uploads); the server makes the copy that plays on every phone (only repackaged for the app's own recordings; converted to 720p with normal colours for videos from a camera app or the web). The Review tab tells managers when a drop-off has no video or photos, and managers can add a missing video afterwards.
+- **A driver given a van is told and asked for the pick-up video or photos**: a phone notification (store app or web app, after turning notifications on in Account) and a card on their Vans tab. Managers see it in Review if they're still missing after 2 hours.
 - **Van records** (FLEET_DATA.md): each van's VIN, registration, fuel, tank, size, breakdown and accident numbers (everyone at the station), and its contract, insurance, mileage against the allowance and deadlines (owners and managers). What it costs only owners see. Deadlines (main inspection, safety check, service, tyres, tax, insurance, contract end) show on the van, in the fleet list and as Due soon in Review.
 - **Fill in from a document**: on a van's Details or a driver's Record, photograph the registration certificate, a lease or insurance contract, an inspection report, a service invoice, a driving licence... The AI says what it is and fills the right sections; you check and save. The photo isn't kept; costs are only read for owners; from a licence only the classes and expiry.
 - **Driver records** (FLEET_DATA.md): licence classes and expiry, licence checks (the date and who checked, as proof; the interval is set by the owner), employment, briefings, emergency contact, notes, and incidents (accidents, fines, complaints). Overdue checks, expiring licences and safety briefings show in Review. Drivers read their own.
@@ -91,6 +92,12 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
 
 The app is built on Expo SDK 58 because that's what Expo Go in the App Store runs (58.0.5, from late October 2026). Expo Go only opens one SDK, so upgrade the project only after the App Store version of Expo Go has moved to the new SDK, and update Expo Go on every phone when the project moves: an older Expo Go can't open the new version, and the new Expo Go can't open the old one.
+
+- **Photos and videos are kept 30 days**, the ones that show damage 90 days (approved in a check, or marked as damage by a manager on a walk-around or video); the records stay. **People delete their own account** in the Account tab.
+
+## App Store and Google Play
+
+The store app is built by the **Store build** workflow (Actions tab) on EAS, as Fratius, `com.fratius.app`. The steps for the developer accounts, signing and submitting, and the texts for the store pages, are in [store/README.md](store/README.md) and [store/listing.md](store/listing.md). Every Deploy also updates the store app, as long as no native package changed since its builds (`scripts/native.mjs`).
 
 ## The website (fratius.com)
 
