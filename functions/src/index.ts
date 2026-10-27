@@ -22,7 +22,7 @@ import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, 
 import { KEEP_DAYS, cleanMedia, keepUntil, mediaGone } from './media';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
-import { makePlayback, probe } from './video';
+import { makePlayback, playsAsIs, probe } from './video';
 import { N_, fail, langOf, tr } from './i18n';
 import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
@@ -975,13 +975,14 @@ export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4
     await withLocal(d.path, async (file) => {
       const out = file.replace(/[^/]+$/, 'play.mp4'), jpg = file.replace(/[^/]+$/, 'poster.jpg');
       const pr = await probe(file);
-      await makePlayback(file, out, jpg, pr.hdr || !!d.hdr);
+      const asIs = playsAsIs(pr, (await fsp.stat(file)).size);
+      await makePlayback(file, out, jpg, pr.hdr || !!d.hdr, asIs);
       const playSize = (await fsp.stat(out)).size;
       await Promise.all([
         bucket().upload(out, { destination: `${base}play.mp4`, contentType: 'video/mp4', resumable: false }),
         bucket().upload(jpg, { destination: `${base}poster.jpg`, contentType: 'image/jpeg', resumable: false }),
       ]);
-      await ref.update({ status: 'ready', playPath: `${base}play.mp4`, posterPath: `${base}poster.jpg`, playSize, readyAt: Date.now(), error: null });
+      await ref.update({ status: 'ready', playPath: `${base}play.mp4`, posterPath: `${base}poster.jpg`, playSize, readyAt: Date.now(), error: null, converted: asIs ? 'repackaged' : 'converted' });
     });
     // The playback copy is what everyone watches; the phone's original (larger, with the phone's location data) goes.
     await bucket().file(d.path).delete({ ignoreNotFound: true }).then(() => ref.update({ originalDeleted: true })).catch(() => {});

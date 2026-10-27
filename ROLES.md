@@ -108,8 +108,10 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   only (marked `handover` on the walk-around by the server); **or one video** walking around the van, recorded by
   that driver, 8 seconds to 5 minutes long, recorded and uploaded in the last two hours, used once. The server
   checks it (`pickUpVan`, `dropOffVan`) before anything changes. A drop-off always needs one of the two.
-- **Videos:** uploaded as recorded to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder);
-  the server writes the video record (`orgs/{org}/videos`) and makes a 720p playback copy (`processVideo`). Owners
+- **Videos:** recorded in the app on phones (720p H.264, no sound; the browser's camera in the web app), uploaded
+  to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder); the server writes the video record
+  (`orgs/{org}/videos`) and makes the 720p playback copy (`processVideo`; the app's own recordings are only
+  repackaged). Owners
   and the station's managers watch every video of their station's vans; drivers watch their own. Nobody edits or
   deletes the records. Once the playback copy is made, the phone's original (larger, with its location data) is
   deleted.

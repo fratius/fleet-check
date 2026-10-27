@@ -102,9 +102,9 @@ const S = {};
 // Test videos, made with the same ffmpeg the functions use.
 const fnRequire = createRequire(new URL('../functions/package.json', import.meta.url));
 const FFMPEG = fnRequire('ffmpeg-static');
-function clip({ seconds = 10, recordedHoursAgo = 0 } = {}) {
+function clip({ seconds = 10, recordedHoursAgo = 0, size = '320x240' } = {}) {
   const out = join(mkdtempSync(join(tmpdir(), 'clip-')), 'c.mp4');
-  execFileSync(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=320x240:rate=15:duration=${seconds}`,
+  execFileSync(FFMPEG, ['-v', 'error', '-f', 'lavfi', '-i', `testsrc=size=${size}:rate=15:duration=${seconds}`,
     '-metadata', `creation_time=${new Date(Date.now() - recordedHoursAgo * 3600_000).toISOString()}`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-y', out]);
   return new Uint8Array(readFileSync(out));
 }
@@ -1091,11 +1091,13 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   await S.mgr.call('logReview', { orgId: S.org, checkId: k.id });
   for (const id of [before, found]) assert.deepEqual((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', id))).data().keepDamage, [k.id]);
   assert.ok((await k.get()).data().keepUntil > Date.now() + 80 * DAY);
-  // Videos: the original goes once the playback copy is made; one is marked as damage.
-  const keepV = await video(S.d1);
+  // Videos: the original goes once the playback copy is made; one is marked as damage. A phone camera's video
+  // (larger than 720p) is converted; the app's own 720p H.264 recording is only repackaged.
+  const keepV = await video(S.d1, { size: '1280x960' });
   await S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: keepV });
   await S.d1.call('processVideo', { orgId: S.org, videoId: keepV });
   const kv = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', keepV))).data();
+  assert.equal(kv.converted, 'converted');
   assert.equal(kv.originalDeleted, true);
   assert.equal(await exists(kv.path), false);
   assert.equal(await exists(kv.playPath), true);
@@ -1103,6 +1105,8 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   await S.mgr.call('markDamage', { orgId: S.org, kind: 'video', id: keepV });
   const dropV = await video(S.d1);
   await S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: dropV });
+  await S.d1.call('processVideo', { orgId: S.org, videoId: dropV });
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dropV))).data().converted, 'repackaged');
   const dash = `orgs/${S.org}/dash/${S.d1.uid}/old.jpg`;
   await uploadBytes(ref(S.d1.st, dash), new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
 
@@ -1114,7 +1118,7 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   assert.equal(await exists(walkFile(plain)), false);
   assert.equal(await exists(walkFile(other)), false);
   assert.equal(await exists(dash), false);
-  assert.equal(await exists(`orgs/${S.org}/videos/${S.d1.uid}/${dropV}/original.mp4`), false);
+  assert.equal(await exists(`orgs/${S.org}/videos/${S.d1.uid}/${dropV}/play.mp4`), false);
   for (const id of [marked, before, found]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} is kept`);
   assert.equal(await exists(closeup), true);
   assert.equal(await exists(kv.playPath), true);

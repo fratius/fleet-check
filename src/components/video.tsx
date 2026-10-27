@@ -1,15 +1,16 @@
 import { router } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, Pressable, View } from 'react-native';
 
+import { VideoRecorder } from '@/components/recorder';
 import { Button, Photo, T, fmtWhen, useColors } from '@/components/ui';
 import { flash } from '@/lib/flash';
 import { photoUrl } from '@/lib/images';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
-import { mb, recordVideo, uploadVideo } from '@/lib/videos';
+import { mb, recordVideo, uploadVideo, type Recorded } from '@/lib/videos';
 import { fwd, N_, t } from '@/lib/i18n';
 
 /** Plays a stored video. */
@@ -50,6 +51,11 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
   const [step, setStep] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [videoId, setVideoId] = useState<string | null>(null);
+  // On the phone the video is recorded in the app (components/recorder.tsx); on the web with the browser's camera.
+  const [recording, setRecording] = useState(false);
+  const recorded = useRef<((r: Recorded | null) => void) | null>(null);
+  const record = (): Promise<Recorded | null> => (Platform.OS === 'web' ? recordVideo()
+    : new Promise((resolve) => { recorded.current = resolve; setRecording(true); }));
   const send = async (id: string) => {
     setStep(t('Checking the video…'));
     if (kind === 'walkaround') await ai.addVanVideo({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
@@ -68,7 +74,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
     setErr(null);
     try {
       if (videoId) { await send(videoId); return; }
-      const rec = await recordVideo();
+      const rec = await record();
       if (!rec) return;
       setStep(rec.size ? t('Uploading {size}…', { size: mb(rec.size) }) : t('Uploading…'));
       const id = await uploadVideo(s.org!.id, s.user!.uid, rec, (sent, total) => setStep(t('Uploading {pct}% of {size}', { pct: Math.round((sent / Math.max(1, total)) * 100), size: mb(total) })));
@@ -84,6 +90,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
   // without uploading it again, or replaced with a new recording.
   return (
     <View style={{ gap: 6 }}>
+      <VideoRecorder open={recording} onDone={(r) => { setRecording(false); recorded.current?.(r); recorded.current = null; }} />
       <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || (videoId ? t('Try again with this video') : title)} loading={!!step} disabled={!!step} onPress={go} />
       {videoId && !step ? <Button small v="link" title={t('Record a new video instead')} onPress={() => { setVideoId(null); setErr(null); }} /> : null}
       {err ? <T v="small" color={c.alert}>{err}</T> : null}

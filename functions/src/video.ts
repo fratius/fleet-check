@@ -1,7 +1,8 @@
 /**
  * Handover videos: reading what a video is (length, when it was recorded, which phone) and making a playback copy
- * that plays everywhere. Phones record HEVC, often HDR (iPhone), which doesn't play in every browser; the copy is
- * 720p H.264 with the HDR tone-mapped to normal colours and no location data.
+ * that plays everywhere. Phones' camera apps record HEVC, often HDR (iPhone), which doesn't play in every browser;
+ * the copy is 720p H.264 with the HDR tone-mapped to normal colours and no location data. The app's own recorder
+ * already records 720p H.264: that is only repackaged (seconds instead of a minute of conversion).
  */
 import { spawn } from 'node:child_process';
 
@@ -29,6 +30,8 @@ export interface Probe {
   hdr: boolean;
   device: string | null;
   hasVideo: boolean;
+  /** The video codec as ffmpeg names it (h264, hevc, ...). */
+  codec: string | null;
 }
 
 /** Reads a video's header (ffmpeg -i prints it and stops). */
@@ -51,6 +54,7 @@ export async function probe(file: string): Promise<Probe> {
     hdr: /arib-std-b67|smpte2084/.test(vline),
     device: [make, model].filter(Boolean).join(' ').slice(0, 60) || null,
     hasVideo: !!vline,
+    codec: vline.match(/Video:\s*([a-z0-9_]+)/i)?.[1]?.toLowerCase() || null,
   };
 }
 
@@ -58,12 +62,26 @@ export async function probe(file: string): Promise<Probe> {
 const SCALE = "scale='if(gt(iw,ih),-2,720)':'if(gt(iw,ih),720,-2)'";
 const TONEMAP = 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv';
 
-/** Makes the playback copy (H.264 720p, starts playing before it has fully loaded) and a poster frame. */
-export async function makePlayback(input: string, outMp4: string, outJpg: string, hdr: boolean) {
+/** Already what the playback copy would be: H.264, at most 720p (short side), not HDR, at most about 4 Mbit/s. */
+export function playsAsIs(p: Probe, bytes: number): boolean {
+  const short = Math.min(p.width, p.height), long = Math.max(p.width, p.height);
+  const mbit = p.durationMs ? (bytes * 8) / (p.durationMs / 1000) / 1e6 : Infinity;
+  return p.codec === 'h264' && !p.hdr && short > 0 && short <= 720 && long <= 1280 && mbit <= 4.5;
+}
+
+/**
+ * Makes the playback copy (H.264 720p, starts playing before it has fully loaded) and a poster frame. A video that
+ * already plays everywhere (see playsAsIs) is only repackaged: same picture, without the phone's location and
+ * other metadata.
+ */
+export async function makePlayback(input: string, outMp4: string, outJpg: string, hdr: boolean, asIs = false) {
   const vf = hdr ? `${SCALE},${TONEMAP},format=yuv420p` : `${SCALE},format=yuv420p`;
-  const a = await run(['-hide_banner', '-v', 'error', '-y', '-i', input, '-map_metadata', '-1', '-map', '0:v:0', '-map', '0:a:0?',
-    '-vf', vf, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-maxrate', '3M', '-bufsize', '6M',
-    '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outMp4]);
+  const a = asIs
+    ? await run(['-hide_banner', '-v', 'error', '-y', '-i', input, '-map_metadata', '-1', '-map', '0:v:0', '-map', '0:a:0?',
+      '-c:v', 'copy', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outMp4])
+    : await run(['-hide_banner', '-v', 'error', '-y', '-i', input, '-map_metadata', '-1', '-map', '0:v:0', '-map', '0:a:0?',
+      '-vf', vf, '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '26', '-maxrate', '3M', '-bufsize', '6M',
+      '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outMp4]);
   if (a.code !== 0) throw new Error(`Converting the video failed: ${a.err.slice(-300)}`);
   const b = await run(['-hide_banner', '-v', 'error', '-y', '-ss', '1', '-i', outMp4, '-frames:v', '1', '-vf', 'scale=480:-2', '-q:v', '4', outJpg]);
   if (b.code !== 0) throw new Error(`Making the poster failed: ${b.err.slice(-300)}`);

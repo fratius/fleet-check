@@ -15,10 +15,38 @@
   ]
  },
  {
+  "id": "cdc67bd4",
+  "key": "{company}: you leave the company.",
+  "where": [
+   "src/components/deleteaccount.tsx:50"
+  ]
+ },
+ {
+  "id": "eca8eab2",
+  "key": "{company}: you're its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.",
+  "where": [
+   "src/components/deleteaccount.tsx:48"
+  ]
+ },
+ {
+  "id": "60731bb6",
+  "key": "{company}: you're its only member, so the company is deleted with everything in it.",
+  "where": [
+   "src/components/deleteaccount.tsx:49"
+  ]
+ },
+ {
+  "id": "4b70f10c",
+  "key": "{company}: your demo company is deleted.",
+  "where": [
+   "src/components/deleteaccount.tsx:49"
+  ]
+ },
+ {
   "id": "7fa3fb40",
   "key": "{cost} est.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:60"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:63"
   ]
  },
  {
@@ -189,7 +217,7 @@
   "key": "{n} cleared as dirt, reflection or no damage.",
   "one": "{n} cleared as dirt, reflection or no damage.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:232"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:235"
   ]
  },
  {
@@ -213,7 +241,7 @@
   "key": "{n} damages approved",
   "one": "{n} damage approved",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:221"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:224"
   ]
  },
  {
@@ -221,7 +249,7 @@
   "key": "{n} damages will go on the van's record.",
   "one": "{n} damage will go on the van's record.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:352"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:359"
   ]
  },
  {
@@ -307,7 +335,7 @@
   "key": "{n} months",
   "one": "{n} month",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:229"
+   "src/app/(tabs)/(me)/account.tsx:233"
   ]
  },
  {
@@ -370,7 +398,7 @@
   "key": "{n} photos",
   "one": "{n} photo",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:391",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:398",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:239",
    "src/app/(tabs)/(log)/log.tsx:114",
    "src/app/(tabs)/(log)/log.tsx:155"
@@ -421,7 +449,7 @@
   "key": "{n} possible damages",
   "one": "{n} possible damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:224"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:227"
   ]
  },
  {
@@ -454,7 +482,7 @@
   "key": "{n} seconds",
   "one": "{n} second",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:52"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:56"
   ]
  },
  {
@@ -470,7 +498,7 @@
   "key": "{n} spots have no close-up yet. You can still send it; the manager decides from the photos.",
   "one": "{n} spot has no close-up yet. You can still send it; the manager decides from the photos.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:344"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:351"
   ]
  },
  {
@@ -478,7 +506,7 @@
   "key": "{n} spots to check",
   "one": "{n} spot to check",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:224"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:227"
   ]
  },
  {
@@ -494,7 +522,7 @@
   "key": "{n} spots, {images} images",
   "one": "{n} spot, {images} images",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:392"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:399"
   ]
  },
  {
@@ -510,7 +538,7 @@
   "key": "{n} still open.",
   "one": "{n} still open.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:233"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:236"
   ]
  },
  {
@@ -608,7 +636,7 @@
   "key": "{name} allowed it. Fill up, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1529"
+   "functions/src/index.ts:1562"
   ]
  },
  {
@@ -616,7 +644,7 @@
   "key": "{name} allowed it. Wash the van, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1529"
+   "functions/src/index.ts:1562"
   ]
  },
  {
@@ -646,7 +674,7 @@
   "key": "{name} gave you {van}. Before you drive, take the pick-up video or photos.",
   "server": true,
   "where": [
-   "functions/src/index.ts:550"
+   "functions/src/index.ts:552"
   ]
  },
  {
@@ -697,7 +725,7 @@
   "key": "{name} is at the car wash. {why} Allow or refuse the wash.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1467"
+   "functions/src/index.ts:1500"
   ]
  },
  {
@@ -705,7 +733,7 @@
   "key": "{name} is at the pump. {why} Allow or refuse the refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1468"
+   "functions/src/index.ts:1501"
   ]
  },
  {
@@ -762,7 +790,7 @@
   "key": "{name} refused it. Don't fill up: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1530"
+   "functions/src/index.ts:1563"
   ]
  },
  {
@@ -770,7 +798,7 @@
   "key": "{name} refused it. Don't wash the van: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1530"
+   "functions/src/index.ts:1563"
   ]
  },
  {
@@ -799,7 +827,7 @@
   "key": "{name} works at another station. Move the van or the person first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:520"
+   "functions/src/index.ts:522"
   ]
  },
  {
@@ -935,14 +963,14 @@
   "id": "766cdd0f",
   "key": "{title}, {van}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:41"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:43"
   ]
  },
  {
   "id": "e8969c92",
   "key": "{title}, added later",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:50",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:54",
    "src/components/video.tsx:33"
   ]
  },
@@ -950,7 +978,7 @@
   "id": "cd991b1e",
   "key": "{type}, about {cm} cm",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:271",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:278",
    "src/components/damage.tsx:71"
   ]
  },
@@ -966,8 +994,8 @@
   "id": "d3c25c1b",
   "key": "{value} per image",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:404",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:405"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:411",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:412"
   ]
  },
  {
@@ -975,7 +1003,7 @@
   "key": "{van} is yours",
   "server": true,
   "where": [
-   "functions/src/index.ts:549"
+   "functions/src/index.ts:551"
   ]
  },
  {
@@ -1011,14 +1039,14 @@
   "id": "f0215a48",
   "key": "{what}, {van}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:41"
   ]
  },
  {
   "id": "b8c7725f",
   "key": "{what}, {van}, by {who}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:41"
   ]
  },
  {
@@ -1061,7 +1089,7 @@
   "id": "0edbd1ae",
   "key": "1. Find the spot in the yellow box.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:158"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:161"
   ]
  },
  {
@@ -1110,7 +1138,7 @@
   "id": "57b51b86",
   "key": "2. Wipe it with your hand or a cloth.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:159"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:162"
   ]
  },
  {
@@ -1138,7 +1166,7 @@
   "id": "704983e9",
   "key": "3. Take one photo straight on, about 30 to 50 cm away.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:160"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:163"
   ]
  },
  {
@@ -1152,7 +1180,7 @@
   "id": "1cf11ed8",
   "key": "4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:161"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:164"
   ]
  },
  {
@@ -1181,15 +1209,15 @@
   "key": "A manager has already reviewed this check.",
   "server": true,
   "where": [
-   "functions/src/index.ts:271",
-   "functions/src/index.ts:317"
+   "functions/src/index.ts:273",
+   "functions/src/index.ts:319"
   ]
  },
  {
   "id": "56599b1b",
   "key": "A notification on this phone, so you know before you get to the station.",
   "where": [
-   "src/components/pickup.tsx:78"
+   "src/components/pickup.tsx:79"
   ]
  },
  {
@@ -1197,7 +1225,7 @@
   "key": "A photo is missing from storage. Upload it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:119"
+   "functions/src/index.ts:121"
   ]
  },
  {
@@ -1226,7 +1254,7 @@
   "key": "A photo path is outside this company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:114"
+   "functions/src/index.ts:116"
   ]
  },
  {
@@ -1276,7 +1304,7 @@
   "id": "046fd29b",
   "key": "About {photo} per photo, so {check} for a 14-photo van check before close-ups.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:76"
+   "src/app/(tabs)/(me)/account.tsx:78"
   ]
  },
  {
@@ -1320,10 +1348,10 @@
   "key": "Account",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:28",
-   "src/app/(tabs)/(me)/account.tsx:28",
+   "src/app/(tabs)/(me)/account.tsx:30",
    "src/app/(tabs)/_layout.tsx:70",
    "src/app/join/[token].tsx:136",
-   "src/app/sign-in.tsx:81"
+   "src/app/sign-in.tsx:85"
   ]
  },
  {
@@ -1338,7 +1366,7 @@
   "id": "61cc55aa",
   "key": "Add",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:377",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:384",
    "src/app/join/[token].tsx:163",
    "src/components/vanfacts.tsx:129"
   ]
@@ -1410,7 +1438,7 @@
   "id": "5b42884f",
   "key": "Add damage the AI missed",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:370"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:377"
   ]
  },
  {
@@ -1476,14 +1504,14 @@
   "id": "1e1e8a73",
   "key": "Added after the handover",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:53"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:57"
   ]
  },
  {
   "id": "19b77b48",
   "key": "Added by {name}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:325",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:332",
    "src/components/driverrec.tsx:167"
   ]
  },
@@ -1548,7 +1576,7 @@
   "id": "0aa50b71",
   "key": "AI model for checks",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:65"
+   "src/app/(tabs)/(me)/account.tsx:67"
   ]
  },
  {
@@ -1562,7 +1590,7 @@
   "id": "f9844940",
   "key": "AI: {verdict}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:266"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:273"
   ]
  },
  {
@@ -1631,7 +1659,7 @@
   "id": "2f5b5080",
   "key": "All spots",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:154"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:157"
   ]
  },
  {
@@ -1667,7 +1695,7 @@
   "id": "dfdf4ed5",
   "key": "Allow camera access in Settings to take close-ups.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:106"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:109"
   ]
  },
  {
@@ -1731,7 +1759,7 @@
   "id": "a988d67a",
   "key": "An account with this email already exists. Sign in instead.",
   "where": [
-   "src/lib/session.tsx:112"
+   "src/lib/session.tsx:114"
   ]
  },
  {
@@ -1754,8 +1782,8 @@
   "id": "949fa485",
   "key": "Another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:119",
-   "src/app/(tabs)/(me)/account.tsx:120"
+   "src/app/(tabs)/(me)/account.tsx:123",
+   "src/app/(tabs)/(me)/account.tsx:124"
   ]
  },
  {
@@ -1769,17 +1797,17 @@
   "id": "b10294be",
   "key": "Anything the AI missed? Where it is and what it is.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:341"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:348"
   ]
  },
  {
   "id": "a168c0e9",
   "key": "App creator",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:23",
-   "src/app/(tabs)/(me)/account.tsx:37",
+   "src/app/(tabs)/(me)/account.tsx:25",
+   "src/app/(tabs)/(me)/account.tsx:39",
    "src/components/companies.tsx:46",
-   "src/lib/types.ts:400"
+   "src/lib/types.ts:405"
   ]
  },
  {
@@ -1800,7 +1828,7 @@
   "id": "b998824b",
   "key": "Approved damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:306"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:313"
   ]
  },
  {
@@ -1859,7 +1887,7 @@
   "key": "At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.",
   "server": true,
   "where": [
-   "functions/src/index.ts:699"
+   "functions/src/index.ts:701"
   ]
  },
  {
@@ -1880,7 +1908,7 @@
   "id": "b52b36b7",
   "key": "Back",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:177",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:180",
    "src/app/scan/[id].tsx:275",
    "src/components/viewas.tsx:107"
   ]
@@ -1976,7 +2004,7 @@
   "id": "4ab0f1ad",
   "key": "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:225"
+   "src/app/(tabs)/(me)/account.tsx:229"
   ]
  },
  {
@@ -2019,7 +2047,7 @@
   "id": "c832844d",
   "key": "Bodyshop repair",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:273"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:280"
   ]
  },
  {
@@ -2112,7 +2140,7 @@
   "id": "e31752d3",
   "key": "broken part",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -2170,15 +2198,16 @@
   "key": "Cancel",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:166",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:382",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:389",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:186",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:373",
-   "src/app/(tabs)/(me)/account.tsx:134",
+   "src/app/(tabs)/(me)/account.tsx:138",
    "src/app/(tabs)/(people)/people.tsx:110",
    "src/app/(tabs)/(people)/people.tsx:253",
    "src/app/(tabs)/(people)/people.tsx:86",
    "src/app/scan/[id].tsx:275",
    "src/components/dash.tsx:171",
+   "src/components/deleteaccount.tsx:62",
    "src/components/docscan.tsx:251",
    "src/components/driverrec.tsx:133",
    "src/components/driverrec.tsx:232",
@@ -2297,7 +2326,7 @@
   "id": "c5dd099a",
   "key": "Change the review",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:357"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:364"
   ]
  },
  {
@@ -2311,7 +2340,7 @@
   "id": "59853957",
   "key": "Changed by {name}, {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:223"
+   "src/app/(tabs)/(me)/account.tsx:227"
   ]
  },
  {
@@ -2325,7 +2354,7 @@
   "id": "2f9607e7",
   "key": "Changed by {name}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:223"
+   "src/app/(tabs)/(me)/account.tsx:227"
   ]
  },
  {
@@ -2347,14 +2376,14 @@
   "id": "6b57d1d2",
   "key": "Check close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:392"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:399"
   ]
  },
  {
   "id": "be27a37d",
   "key": "Check drivers' licences every",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:228"
+   "src/app/(tabs)/(me)/account.tsx:232"
   ]
  },
  {
@@ -2369,14 +2398,14 @@
   "id": "13e3c5f7",
   "key": "Check for damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:50"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:53"
   ]
  },
  {
   "id": "26520ad2",
   "key": "Check for damage again",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:50"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:53"
   ]
  },
  {
@@ -2397,7 +2426,7 @@
   "id": "028315f8",
   "key": "Check the close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:175"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:178"
   ]
  },
  {
@@ -2405,7 +2434,7 @@
   "key": "Check the fuel card first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1539"
+   "functions/src/index.ts:1572"
   ]
  },
  {
@@ -2440,14 +2469,14 @@
   "id": "4b32120c",
   "key": "Check your inbox for a link to set a new password.",
   "where": [
-   "src/app/sign-in.tsx:98"
+   "src/app/sign-in.tsx:102"
   ]
  },
  {
   "id": "33372464",
   "key": "Check, {van}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:238",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:241",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:214"
   ]
  },
@@ -2464,7 +2493,7 @@
   "key": "Check: {n} spots, {dmg} damage",
   "one": "Check: {n} spot, {dmg} damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:59"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:62"
   ]
  },
  {
@@ -2499,7 +2528,7 @@
   "id": "3e5748ab",
   "key": "Checking the close-ups, spot {i} of {n}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:141"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:144"
   ]
  },
  {
@@ -2520,7 +2549,7 @@
   "id": "c6b6df0a",
   "key": "chip",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -2549,7 +2578,7 @@
    "src/app/scan/[id].tsx:84",
    "src/components/damage.tsx:113",
    "src/components/language.tsx:35",
-   "src/components/ui.tsx:191"
+   "src/components/ui.tsx:192"
   ]
  },
  {
@@ -2563,7 +2592,7 @@
   "id": "62159302",
   "key": "Close-up {i} of {n}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:155"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:158"
   ]
  },
  {
@@ -2584,7 +2613,7 @@
   "id": "fbc622af",
   "key": "Close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:153"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:156"
   ]
  },
  {
@@ -2592,7 +2621,7 @@
   "key": "Close-ups pending",
   "where": [
    "src/app/(tabs)/(fleet)/index.tsx:145",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:245",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:248",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:215",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:237"
   ]
@@ -2665,16 +2694,16 @@
   "id": "7a199499",
   "key": "Company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:33",
-   "src/app/sign-in.tsx:42"
+   "src/app/(tabs)/(me)/account.tsx:35",
+   "src/app/sign-in.tsx:44"
   ]
  },
  {
   "id": "1e5f7dc4",
   "key": "Company name",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:128",
-   "src/app/sign-in.tsx:46"
+   "src/app/(tabs)/(me)/account.tsx:132",
+   "src/app/sign-in.tsx:48"
   ]
  },
  {
@@ -2695,7 +2724,7 @@
   "id": "5f23fab4",
   "key": "Connected to Firebase project {project}. Photos and results sync across phones and the web.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:86"
+   "src/app/(tabs)/(me)/account.tsx:88"
   ]
  },
  {
@@ -2709,8 +2738,8 @@
   "id": "2e026239",
   "key": "Continue",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:124",
-   "src/app/sign-in.tsx:55"
+   "src/app/(tabs)/(me)/account.tsx:128",
+   "src/app/sign-in.tsx:57"
   ]
  },
  {
@@ -2762,7 +2791,7 @@
   "id": "af6b940f",
   "key": "Cosmetic",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:273",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:280",
    "src/components/damage.tsx:160"
   ]
  },
@@ -2792,7 +2821,7 @@
   "id": "96b78de2",
   "key": "Could also be {what}.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:276"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:283"
   ]
  },
  {
@@ -2828,7 +2857,7 @@
   "key": "Couldn't convert the video. The original is kept.",
   "server": true,
   "where": [
-   "functions/src/index.ts:986"
+   "functions/src/index.ts:990"
   ]
  },
  {
@@ -2864,7 +2893,7 @@
   "id": "e1f3f136",
   "key": "Couldn't load the fleet data. Check your internet, then reopen the app.",
   "where": [
-   "src/lib/session.tsx:348"
+   "src/lib/session.tsx:359"
   ]
  },
  {
@@ -2920,7 +2949,7 @@
   "id": "f04ae2f9",
   "key": "Couldn't open the camera.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:112"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:115"
   ]
  },
  {
@@ -3000,7 +3029,8 @@
   "key": "Couldn't save that. Check the connection.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:65",
-   "src/app/(tabs)/(me)/account.tsx:212"
+   "src/app/(tabs)/(me)/account.tsx:216",
+   "src/components/keep.tsx:51"
   ]
  },
  {
@@ -3028,7 +3058,7 @@
   "id": "692bfbde",
   "key": "Couldn't save the review. Check the connection and try again.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:200"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:203"
   ]
  },
  {
@@ -3074,7 +3104,7 @@
   "id": "08ee6b58",
   "key": "Couldn't send it. Check the connection and try again.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:217"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:220"
   ]
  },
  {
@@ -3088,7 +3118,7 @@
   "id": "832bda04",
   "key": "Couldn't turn notifications on.",
   "where": [
-   "src/components/pickup.tsx:68"
+   "src/components/pickup.tsx:69"
   ]
  },
  {
@@ -3124,31 +3154,31 @@
   "id": "e8521910",
   "key": "crack",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
   "id": "c8170422",
   "key": "Create a company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:120",
-   "src/app/sign-in.tsx:42"
+   "src/app/(tabs)/(me)/account.tsx:124",
+   "src/app/sign-in.tsx:44"
   ]
  },
  {
   "id": "aaf37447",
   "key": "Create account",
   "where": [
-   "src/app/sign-in.tsx:81",
-   "src/app/sign-in.tsx:87"
+   "src/app/sign-in.tsx:85",
+   "src/app/sign-in.tsx:91"
   ]
  },
  {
   "id": "77af29dd",
   "key": "Create company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:130",
-   "src/app/sign-in.tsx:49"
+   "src/app/(tabs)/(me)/account.tsx:134",
+   "src/app/sign-in.tsx:51"
   ]
  },
  {
@@ -3162,7 +3192,7 @@
   "id": "54198309",
   "key": "damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22",
    "src/lib/damage.ts:119"
   ]
  },
@@ -3170,10 +3200,11 @@
   "id": "7bf6d1d3",
   "key": "Damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:297",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:304",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:205",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:210"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:210",
+   "src/components/keep.tsx:58"
   ]
  },
  {
@@ -3202,29 +3233,29 @@
   "key": "Damage check",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:48",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:54"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:56"
   ]
  },
  {
   "id": "62851a34",
   "key": "Damage check, {van}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:141",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:54"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:144",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:56"
   ]
  },
  {
   "id": "8cc28020",
   "key": "Damage check, {van}, {when}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:241"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:244"
   ]
  },
  {
   "id": "e51cea3a",
   "key": "Damage check, {van}, by {name}, {when}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:240"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:243"
   ]
  },
  {
@@ -3247,7 +3278,7 @@
   "key": "Damage checks need the Firebase backend.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:226",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:54"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:57"
   ]
  },
  {
@@ -3276,14 +3307,28 @@
   "id": "35e3b624",
   "key": "Damage the AI missed",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:319"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:326"
   ]
  },
  {
   "id": "cc1ac535",
   "key": "Damage the AI missed ({n})",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:319"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:326"
+  ]
+ },
+ {
+  "id": "bdc4ec88",
+  "key": "Damage was approved in a check of these photos.",
+  "where": [
+   "src/components/keep.tsx:62"
+  ]
+ },
+ {
+  "id": "4f74f230",
+  "key": "Damage was approved: the photos are kept until {date}.",
+  "where": [
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:254"
   ]
  },
  {
@@ -3307,7 +3352,7 @@
   "id": "b353847f",
   "key": "Dashboard photos",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:219"
+   "src/app/(tabs)/(me)/account.tsx:223"
   ]
  },
  {
@@ -3315,14 +3360,14 @@
   "key": "Dashboard photos are off for this company. The owner turns them on in the Account tab.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1082"
+   "functions/src/index.ts:1115"
   ]
  },
  {
   "id": "a2e230ae",
   "key": "Dashboard photos on every tour",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:218"
+   "src/app/(tabs)/(me)/account.tsx:222"
   ]
  },
  {
@@ -3386,14 +3431,14 @@
   "key": "Decide every spot first: {n} left.",
   "one": "Decide every spot first: {n} left.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:353"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:360"
   ]
  },
  {
   "id": "cca43b1f",
   "key": "Decided by {name}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:307"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:314"
   ]
  },
  {
@@ -3404,24 +3449,52 @@
   ]
  },
  {
+  "id": "1753c206",
+  "key": "Delete account",
+  "where": [
+   "src/components/deleteaccount.tsx:39"
+  ]
+ },
+ {
+  "id": "2ae3a019",
+  "key": "Delete my account",
+  "where": [
+   "src/components/deleteaccount.tsx:58"
+  ]
+ },
+ {
+  "id": "a0b7ba67",
+  "key": "Delete your account",
+  "where": [
+   "src/components/deleteaccount.tsx:42"
+  ]
+ },
+ {
   "id": "1189c74f",
   "key": "Demo account",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:154"
+   "src/app/(tabs)/(me)/account.tsx:158"
   ]
  },
  {
   "id": "c747cec0",
   "key": "Demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:161"
+   "src/app/(tabs)/(me)/account.tsx:165"
+  ]
+ },
+ {
+  "id": "206a6d0c",
+  "key": "Demo company: photos and videos aren't deleted.",
+  "where": [
+   "src/components/keep.tsx:63"
   ]
  },
  {
   "id": "53f3a5d4",
   "key": "dent",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -3457,14 +3530,14 @@
   "id": "e603af86",
   "key": "dirt or residue",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22"
   ]
  },
  {
   "id": "c6a00d4e",
   "key": "Dirt or residue",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22"
   ]
  },
  {
@@ -3514,7 +3587,7 @@
   "id": "7a3f2854",
   "key": "Done with close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:345"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:352"
   ]
  },
  {
@@ -3528,7 +3601,14 @@
   "id": "9e6f732f",
   "key": "Download the original",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:61"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:66"
+  ]
+ },
+ {
+  "id": "67f7e737",
+  "key": "Download the video",
+  "where": [
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:66"
   ]
  },
  {
@@ -3554,7 +3634,7 @@
    "src/app/(tabs)/(table)/data.tsx:188",
    "src/app/(tabs)/(table)/data.tsx:222",
    "src/lib/fleet.ts:166",
-   "src/lib/types.ts:400"
+   "src/lib/types.ts:405"
   ]
  },
  {
@@ -3565,10 +3645,17 @@
   ]
  },
  {
+  "id": "0b88689d",
+  "key": "driver deleted their account",
+  "where": [
+   "src/lib/types.ts:311"
+  ]
+ },
+ {
   "id": "639a2c19",
   "key": "Driver: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:171"
+   "src/app/(tabs)/(me)/account.tsx:175"
   ]
  },
  {
@@ -3593,7 +3680,7 @@
   "id": "ea640e03",
   "key": "Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.",
   "where": [
-   "src/app/sign-in.tsx:39"
+   "src/app/sign-in.tsx:41"
   ]
  },
  {
@@ -3607,7 +3694,7 @@
   "id": "075aaa9e",
   "key": "Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:221"
+   "src/app/(tabs)/(me)/account.tsx:225"
   ]
  },
  {
@@ -3681,7 +3768,7 @@
   "key": "Drop off {van} first, with its photos or a video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:767"
+   "functions/src/index.ts:769"
   ]
  },
  {
@@ -3703,8 +3790,8 @@
   "id": "887ec954",
   "key": "Drop-off photos",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:34",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
    "src/app/scan/[id].tsx:173",
    "src/components/history.tsx:105"
   ]
@@ -3714,7 +3801,7 @@
   "key": "Drop-off video",
   "where": [
    "src/components/history.tsx:106",
-   "src/lib/types.ts:347"
+   "src/lib/types.ts:348"
   ]
  },
  {
@@ -3764,14 +3851,14 @@
   "id": "b1fce049",
   "key": "Each link works for one person, for 24 hours.",
   "where": [
-   "src/app/sign-in.tsx:57"
+   "src/app/sign-in.tsx:59"
   ]
  },
  {
   "id": "6c14de32",
   "key": "Each run records its model, time and cost, so the test log can compare them.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:66"
+   "src/app/(tabs)/(me)/account.tsx:68"
   ]
  },
  {
@@ -3809,7 +3896,7 @@
   "key": "Electric vans are charged, not refuelled.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1405",
+   "functions/src/index.ts:1438",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:59"
   ]
  },
@@ -3818,21 +3905,21 @@
   "key": "Email",
   "where": [
    "src/app/join/[token].tsx:137",
-   "src/app/sign-in.tsx:84"
+   "src/app/sign-in.tsx:88"
   ]
  },
  {
   "id": "416f2b2b",
   "key": "Email or password is wrong.",
   "where": [
-   "src/lib/session.tsx:113"
+   "src/lib/session.tsx:115"
   ]
  },
  {
   "id": "aa0f98d0",
   "key": "Email sign-in isn't turned on in Firebase yet.",
   "where": [
-   "src/lib/session.tsx:116"
+   "src/lib/session.tsx:118"
   ]
  },
  {
@@ -3905,7 +3992,7 @@
   "id": "d1f552c3",
   "key": "Enter the company name.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:130"
+   "src/app/(tabs)/(me)/account.tsx:134"
   ]
  },
  {
@@ -3928,7 +4015,7 @@
   "key": "Enter the day of the check: today or a day in the last 12 months.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1045"
+   "functions/src/index.ts:1078"
   ]
  },
  {
@@ -3936,7 +4023,7 @@
   "key": "Enter the litres from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1569",
+   "functions/src/index.ts:1602",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:334",
    "src/components/dash.tsx:151"
   ]
@@ -3946,8 +4033,8 @@
   "key": "Enter the odometer reading in km.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1157",
-   "functions/src/index.ts:1565",
+   "functions/src/index.ts:1190",
+   "functions/src/index.ts:1598",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:333",
    "src/components/dash.tsx:147"
   ]
@@ -3964,7 +4051,7 @@
   "key": "Enter the total from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1571",
+   "functions/src/index.ts:1604",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:335"
   ]
  },
@@ -3972,14 +4059,14 @@
   "id": "0cbe0847",
   "key": "Enter your company name.",
   "where": [
-   "src/app/sign-in.tsx:50"
+   "src/app/sign-in.tsx:52"
   ]
  },
  {
   "id": "8a28b80b",
   "key": "Enter your email address first.",
   "where": [
-   "src/app/sign-in.tsx:99"
+   "src/app/sign-in.tsx:103"
   ]
  },
  {
@@ -3987,7 +4074,7 @@
   "key": "Enter your email address.",
   "where": [
    "src/app/join/[token].tsx:52",
-   "src/app/sign-in.tsx:89"
+   "src/app/sign-in.tsx:93"
   ]
  },
  {
@@ -3995,16 +4082,25 @@
   "key": "Enter your first and last name.",
   "server": true,
   "where": [
-   "functions/src/index.ts:429",
+   "functions/src/index.ts:431",
    "src/app/join/[token].tsx:50"
+  ]
+ },
+ {
+  "id": "bdbe3bd1",
+  "key": "Enter your password again to delete your account.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1775"
   ]
  },
  {
   "id": "46affb94",
   "key": "Enter your password.",
   "where": [
-   "src/app/sign-in.tsx:90",
-   "src/lib/session.tsx:110"
+   "src/app/sign-in.tsx:94",
+   "src/components/deleteaccount.tsx:33",
+   "src/lib/session.tsx:112"
   ]
  },
  {
@@ -4069,7 +4165,7 @@
   "key": "Every photo of the walk-around is needed, taken with the camera. Take the missing ones.",
   "server": true,
   "where": [
-   "functions/src/index.ts:714"
+   "functions/src/index.ts:716"
   ]
  },
  {
@@ -4210,7 +4306,7 @@
   "id": "fbff86de",
   "key": "Find spots",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:391"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:398"
   ]
  },
  {
@@ -4238,14 +4334,14 @@
   "id": "6d0af23f",
   "key": "Finish review",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:354"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:361"
   ]
  },
  {
   "id": "9fac7805",
   "key": "Finish the review",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:351"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:358"
   ]
  },
  {
@@ -4259,7 +4355,7 @@
   "id": "20c5eac1",
   "key": "Firebase isn't connected yet, so this app keeps everything on this phone.",
   "where": [
-   "src/app/sign-in.tsx:101"
+   "src/app/sign-in.tsx:105"
   ]
  },
  {
@@ -4287,8 +4383,8 @@
   "id": "c6b3590a",
   "key": "First station",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:129",
-   "src/app/sign-in.tsx:47"
+   "src/app/(tabs)/(me)/account.tsx:133",
+   "src/app/sign-in.tsx:49"
   ]
  },
  {
@@ -4327,14 +4423,14 @@
   "where": [
    "src/app/(tabs)/(people)/people.tsx:156",
    "src/app/(tabs)/(people)/people.tsx:364",
-   "src/lib/types.ts:400"
+   "src/lib/types.ts:405"
   ]
  },
  {
   "id": "7aeaaa6f",
   "key": "Fleet manager: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:171"
+   "src/app/(tabs)/(me)/account.tsx:175"
   ]
  },
  {
@@ -4371,7 +4467,7 @@
   "key": "Fleet managers can only change this for their station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:681"
+   "functions/src/index.ts:683"
   ]
  },
  {
@@ -4379,7 +4475,7 @@
   "key": "Fleet managers can only remove drivers of their station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:618"
+   "functions/src/index.ts:620"
   ]
  },
  {
@@ -4387,7 +4483,7 @@
   "key": "Fleet owner",
   "where": [
    "src/app/(tabs)/(people)/people.tsx:49",
-   "src/lib/types.ts:400"
+   "src/lib/types.ts:405"
   ]
  },
  {
@@ -4423,22 +4519,22 @@
   "id": "a0d15ccf",
   "key": "For example: dent in the right rear door, 3 cm, below the handle",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:342"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:349"
   ]
  },
  {
   "id": "a3af3156",
   "key": "For example: DXX1 Berlin",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:129",
-   "src/app/sign-in.tsx:47"
+   "src/app/(tabs)/(me)/account.tsx:133",
+   "src/app/sign-in.tsx:49"
   ]
  },
  {
   "id": "2b961cc4",
   "key": "For example: Hart Logistics GmbH",
   "where": [
-   "src/app/sign-in.tsx:46"
+   "src/app/sign-in.tsx:48"
   ]
  },
  {
@@ -4452,7 +4548,7 @@
   "id": "a2b84716",
   "key": "For example: right rear door, below the handle",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:373"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:380"
   ]
  },
  {
@@ -4473,7 +4569,7 @@
   "id": "a2f060b7",
   "key": "Forgot your password?",
   "where": [
-   "src/app/sign-in.tsx:97"
+   "src/app/sign-in.tsx:101"
   ]
  },
  {
@@ -4517,7 +4613,7 @@
   "key": "found in {time}",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:239",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:60"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:63"
   ]
  },
  {
@@ -4836,14 +4932,14 @@
   "id": "009dff8b",
   "key": "Get a notification on this phone when someone gives you a van.",
   "where": [
-   "src/components/pickup.tsx:51"
+   "src/components/pickup.tsx:52"
   ]
  },
  {
   "id": "cc65d844",
   "key": "Get told when you're given a van",
   "where": [
-   "src/components/pickup.tsx:77"
+   "src/components/pickup.tsx:78"
   ]
  },
  {
@@ -5168,7 +5264,7 @@
   "id": "c3dae8b3",
   "key": "I have an invite link",
   "where": [
-   "src/app/sign-in.tsx:42"
+   "src/app/sign-in.tsx:44"
   ]
  },
  {
@@ -5222,6 +5318,13 @@
   ]
  },
  {
+  "id": "56468fe4",
+  "key": "If they show damage, mark them to keep them until {date}.",
+  "where": [
+   "src/components/keep.tsx:66"
+  ]
+ },
+ {
   "id": "227dbfbb",
   "key": "Ignition on, the whole display in the picture: odometer, battery and any warning lights. No flash.",
   "where": [
@@ -5233,6 +5336,13 @@
   "key": "Ignition on, the whole display in the picture: odometer, fuel gauge and any warning lights. No flash.",
   "where": [
    "src/components/dash.tsx:169"
+  ]
+ },
+ {
+  "id": "db71e0bf",
+  "key": "Imprint",
+  "where": [
+   "src/components/legal.tsx:14"
   ]
  },
  {
@@ -5392,10 +5502,10 @@
   "id": "601e9d6c",
   "key": "Invite link",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:120",
-   "src/app/(tabs)/(me)/account.tsx:123",
+   "src/app/(tabs)/(me)/account.tsx:124",
+   "src/app/(tabs)/(me)/account.tsx:127",
    "src/app/join/[token].tsx:72",
-   "src/app/sign-in.tsx:54"
+   "src/app/sign-in.tsx:56"
   ]
  },
  {
@@ -5452,21 +5562,42 @@
   "id": "c30cc528",
   "key": "Join or create another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:116"
+   "src/app/(tabs)/(me)/account.tsx:120"
   ]
  },
  {
   "id": "1b16a62f",
   "key": "Just looking?",
   "where": [
-   "src/app/sign-in.tsx:64"
+   "src/app/sign-in.tsx:66"
+  ]
+ },
+ {
+  "id": "731594dc",
+  "key": "Keeping the photos",
+  "where": [
+   "src/components/keep.tsx:57"
+  ]
+ },
+ {
+  "id": "cdb37ef3",
+  "key": "Keeping the video",
+  "where": [
+   "src/components/keep.tsx:57"
+  ]
+ },
+ {
+  "id": "22049077",
+  "key": "Kept until {date}, 90 days after they were taken.",
+  "where": [
+   "src/components/keep.tsx:64"
   ]
  },
  {
   "id": "2531c31e",
   "key": "kerbed rim",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -5882,7 +6013,7 @@
   "id": "9be05fd2",
   "key": "Licence check interval",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:229"
+   "src/app/(tabs)/(me)/account.tsx:233"
   ]
  },
  {
@@ -5924,7 +6055,7 @@
   "id": "8c06f60c",
   "key": "Likely, {pct}%",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:267"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:274"
   ]
  },
  {
@@ -5997,13 +6128,14 @@
   "key": "Loading…",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:57",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:97",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:100",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:176",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:73",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:69",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:35",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:29",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:37",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:31",
    "src/app/(tabs)/(people)/people.tsx:55",
+   "src/components/deleteaccount.tsx:54",
    "src/components/driverrec.tsx:155",
    "src/components/history.tsx:130",
    "src/components/history.tsx:173"
@@ -6013,14 +6145,14 @@
   "id": "57514e20",
   "key": "Look at each spot and decide: damage or not. Your decision is final and goes on the van's record.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:229"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:232"
   ]
  },
  {
   "id": "758db1d1",
   "key": "Looking for damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:55"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:57"
   ]
  },
  {
@@ -6028,7 +6160,7 @@
   "key": "Looking for damage in {n} photos",
   "one": "Looking for damage in {n} photo",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:55"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:57"
   ]
  },
  {
@@ -6042,14 +6174,14 @@
   "id": "095cf6de",
   "key": "Low angle",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:284"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:291"
   ]
  },
  {
   "id": "566b5f1c",
   "key": "Low angle, optional",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:164"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:167"
   ]
  },
  {
@@ -6100,7 +6232,7 @@
   "id": "11863752",
   "key": "Main station",
   "where": [
-   "src/lib/session.tsx:243"
+   "src/lib/session.tsx:245"
   ]
  },
  {
@@ -6144,7 +6276,7 @@
   "id": "065de4a4",
   "key": "Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:47"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:51"
   ]
  },
  {
@@ -6188,6 +6320,20 @@
   "key": "Manual",
   "where": [
    "src/lib/fleet.ts:43"
+  ]
+ },
+ {
+  "id": "0b90a8bc",
+  "key": "Mark as damage",
+  "where": [
+   "src/components/keep.tsx:70"
+  ]
+ },
+ {
+  "id": "74b2ea80",
+  "key": "Marked as damage by {name}, {when}.",
+  "where": [
+   "src/components/keep.tsx:61"
   ]
  },
  {
@@ -6267,7 +6413,7 @@
   "id": "e367e50b",
   "key": "Missed damage is also how we measure what the AI misses.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:334"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:341"
   ]
  },
  {
@@ -6485,7 +6631,7 @@
   "id": "a1aa928f",
   "key": "Next spot",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:175"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:178"
   ]
  },
  {
@@ -6543,21 +6689,21 @@
   "id": "2818b621",
   "key": "No connection. Check your internet and try again.",
   "where": [
-   "src/lib/session.tsx:115"
+   "src/lib/session.tsx:117"
   ]
  },
  {
   "id": "e6fdff10",
   "key": "no damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23"
   ]
  },
  {
   "id": "3ae10f71",
   "key": "No damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:235",
    "src/app/(tabs)/(review)/review.tsx:173"
   ]
@@ -6566,7 +6712,7 @@
   "id": "0227c4c3",
   "key": "No damage approved",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:221"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:224"
   ]
  },
  {
@@ -6580,14 +6726,14 @@
   "id": "017a65e2",
   "key": "No damage found",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:222"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:225"
   ]
  },
  {
   "id": "10043a46",
   "key": "No damage in the close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:224"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:227"
   ]
  },
  {
@@ -6770,7 +6916,7 @@
   "id": "b675b026",
   "key": "No station",
   "where": [
-   "src/lib/session.tsx:407"
+   "src/lib/session.tsx:418"
   ]
  },
  {
@@ -6977,7 +7123,7 @@
   "id": "dc5862b5",
   "key": "Not at a station yet. Ask your fleet manager.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:42"
+   "src/app/(tabs)/(me)/account.tsx:44"
   ]
  },
  {
@@ -6991,14 +7137,14 @@
   "id": "fff37784",
   "key": "not checked",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23"
   ]
  },
  {
   "id": "22705e73",
   "key": "Not checked",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23"
   ]
  },
  {
@@ -7019,8 +7165,8 @@
   "id": "254c376b",
   "key": "Not damage",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:298",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:306"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:305",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:313"
   ]
  },
  {
@@ -7118,7 +7264,7 @@
   "id": "702a16e7",
   "key": "Not visible in these photos: {list}.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:315"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:322"
   ]
  },
  {
@@ -7126,14 +7272,14 @@
   "key": "Not yours.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1619"
+   "functions/src/index.ts:1652"
   ]
  },
  {
   "id": "2c924e30",
   "key": "Note",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:375",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:382",
    "src/components/driverrec.tsx:130"
   ]
  },
@@ -7141,7 +7287,7 @@
   "id": "b7e514e5",
   "key": "Note from {name}: {note}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:253"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:260"
   ]
  },
  {
@@ -7185,7 +7331,7 @@
   "id": "0538d409",
   "key": "Nothing in these photos looked like damage. Small chips and dents can still be there.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:231"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:234"
   ]
  },
  {
@@ -7227,7 +7373,7 @@
   "id": "753a22b2",
   "key": "Notifications",
   "where": [
-   "src/components/pickup.tsx:86"
+   "src/components/pickup.tsx:87"
   ]
  },
  {
@@ -7238,10 +7384,17 @@
   ]
  },
  {
+  "id": "b1e25bdb",
+  "key": "Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.",
+  "where": [
+   "src/components/pickup.tsx:51"
+  ]
+ },
+ {
   "id": "1f86c3ed",
   "key": "Notifications aren't set up on the server yet. Try again after the next update.",
   "where": [
-   "src/lib/push.ts:62"
+   "src/lib/push.ts:65"
   ]
  },
  {
@@ -7356,7 +7509,7 @@
   "id": "e3de5ab0",
   "key": "Off",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:219"
+   "src/app/(tabs)/(me)/account.tsx:223"
   ]
  },
  {
@@ -7378,7 +7531,7 @@
   "id": "e0049a66",
   "key": "On",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:219"
+   "src/app/(tabs)/(me)/account.tsx:223"
   ]
  },
  {
@@ -7464,7 +7617,7 @@
   "key": "Only a demo company can be removed this way.",
   "server": true,
   "where": [
-   "functions/src/index.ts:464"
+   "functions/src/index.ts:466"
   ]
  },
  {
@@ -7472,7 +7625,7 @@
   "key": "Only drivers and fleet managers pick up vans.",
   "server": true,
   "where": [
-   "functions/src/index.ts:690"
+   "functions/src/index.ts:692"
   ]
  },
  {
@@ -7480,7 +7633,7 @@
   "key": "Only fleet managers and owners can do this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:110"
+   "functions/src/index.ts:112"
   ]
  },
  {
@@ -7547,6 +7700,14 @@
   ]
  },
  {
+  "id": "44a30114",
+  "key": "Only the app creator can do this.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1847"
+  ]
+ },
+ {
   "id": "994b6999",
   "key": "Only the app creator sees the test log.",
   "where": [
@@ -7558,7 +7719,7 @@
   "key": "Only the fleet owner can do this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:330"
+   "functions/src/index.ts:332"
   ]
  },
  {
@@ -7566,7 +7727,7 @@
   "key": "Only the fleet owner can invite fleet managers.",
   "server": true,
   "where": [
-   "functions/src/index.ts:384"
+   "functions/src/index.ts:386"
   ]
  },
  {
@@ -7574,7 +7735,7 @@
   "key": "Only the fleet owner changes roles and stations.",
   "server": true,
   "where": [
-   "functions/src/index.ts:636"
+   "functions/src/index.ts:638"
   ]
  },
  {
@@ -7582,7 +7743,7 @@
   "key": "Only the fleet owner moves vans between stations.",
   "server": true,
   "where": [
-   "functions/src/index.ts:585"
+   "functions/src/index.ts:587"
   ]
  },
  {
@@ -7590,7 +7751,7 @@
   "key": "Only the owner can remove the demo company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:462"
+   "functions/src/index.ts:464"
   ]
  },
  {
@@ -7598,7 +7759,7 @@
   "key": "Only the person who started it can carry on with it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1387"
+   "functions/src/index.ts:1420"
   ]
  },
  {
@@ -7606,7 +7767,7 @@
   "key": "Only the person who started it, or the station's fleet manager, can cancel it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1609"
+   "functions/src/index.ts:1642"
   ]
  },
  {
@@ -7621,7 +7782,7 @@
   "key": "Only the station's fleet managers and owners decide this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1519"
+   "functions/src/index.ts:1552"
   ]
  },
  {
@@ -7644,7 +7805,7 @@
   "key": "Open {name}",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:484",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:60",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:65",
    "src/components/pickup.tsx:41"
   ]
  },
@@ -7652,14 +7813,14 @@
   "id": "10c92761",
   "key": "Open a demo company",
   "where": [
-   "src/app/sign-in.tsx:66"
+   "src/app/sign-in.tsx:68"
   ]
  },
  {
   "id": "cd287761",
   "key": "Open a demo company with made-up stations, managers, drivers, vans and damage checks. It's yours alone and you can remove it any time.",
   "where": [
-   "src/app/sign-in.tsx:65"
+   "src/app/sign-in.tsx:67"
   ]
  },
  {
@@ -7688,14 +7849,14 @@
   "id": "502ca37f",
   "key": "Open photo",
   "where": [
-   "src/components/ui.tsx:182"
+   "src/components/ui.tsx:183"
   ]
  },
  {
   "id": "7ae2a9b7",
   "key": "Open photo: {caption}",
   "where": [
-   "src/components/ui.tsx:182"
+   "src/components/ui.tsx:183"
   ]
  },
  {
@@ -7716,7 +7877,7 @@
   "id": "bdd5e48d",
   "key": "Open the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:190"
+   "src/app/(tabs)/(me)/account.tsx:194"
   ]
  },
  {
@@ -7732,7 +7893,7 @@
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:190",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:418",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:375",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:382",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:358",
    "src/app/(tabs)/(people)/people.tsx:107",
    "src/app/(tabs)/(people)/people.tsx:84",
@@ -7761,14 +7922,14 @@
   "id": "9a51fa8a",
   "key": "original {size}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:56"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:60"
   ]
  },
  {
   "id": "d0941e68",
   "key": "other",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -7910,22 +8071,23 @@
   "key": "Password",
   "where": [
    "src/app/join/[token].tsx:138",
-   "src/app/sign-in.tsx:85"
+   "src/app/sign-in.tsx:89",
+   "src/components/deleteaccount.tsx:57"
   ]
  },
  {
   "id": "f9078931",
   "key": "Password: {password}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:173"
+   "src/app/(tabs)/(me)/account.tsx:177"
   ]
  },
  {
   "id": "44e3cbda",
   "key": "Paste the whole link you were sent.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:124",
-   "src/app/sign-in.tsx:56"
+   "src/app/(tabs)/(me)/account.tsx:128",
+   "src/app/sign-in.tsx:58"
   ]
  },
  {
@@ -8015,7 +8177,7 @@
   "id": "e48322d5",
   "key": "phone app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:244"
+   "src/app/(tabs)/(me)/account.tsx:248"
   ]
  },
  {
@@ -8026,8 +8188,8 @@
   ]
  },
  {
-  "id": "9f8d2e8e",
-  "key": "Phone notifications work in the web app (on the home screen), not in Expo Go.",
+  "id": "8c0fc408",
+  "key": "Phone notifications work in the Fratius app from the App Store or Google Play and in the web app, not in Expo Go.",
   "where": [
    "src/components/pickup.tsx:47"
   ]
@@ -8037,6 +8199,13 @@
   "key": "Photo",
   "where": [
    "src/app/(tabs)/(table)/data.tsx:220"
+  ]
+ },
+ {
+  "id": "1f644f37",
+  "key": "Photo deleted",
+  "where": [
+   "src/components/ui.tsx:168"
   ]
  },
  {
@@ -8073,7 +8242,7 @@
   "id": "2e58e0c1",
   "key": "photos",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:45",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
    "src/app/scan/[id].tsx:208"
   ]
  },
@@ -8084,6 +8253,22 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:460",
    "src/app/(tabs)/(log)/log.tsx:176",
    "src/components/scanchoice.tsx:34"
+  ]
+ },
+ {
+  "id": "c9027a2b",
+  "key": "Photos and videos are deleted after {n} days. These are gone already.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1829"
+  ]
+ },
+ {
+  "id": "ecdeee38",
+  "key": "Photos and videos are kept 30 days: these until {date}.",
+  "where": [
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:255",
+   "src/components/keep.tsx:65"
   ]
  },
  {
@@ -8104,7 +8289,7 @@
   "id": "7eb70e28",
   "key": "Photos from the library",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39"
   ]
  },
  {
@@ -8126,7 +8311,7 @@
   "key": "photos, {n} skipped",
   "one": "photos, {n} skipped",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:45",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
    "src/app/scan/[id].tsx:208"
   ]
  },
@@ -8135,14 +8320,14 @@
   "key": "Pick a role and a station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:382"
+   "functions/src/index.ts:384"
   ]
  },
  {
   "id": "135f742a",
   "key": "Pick a station.",
   "where": [
-   "src/lib/session.tsx:281"
+   "src/lib/session.tsx:283"
   ]
  },
  {
@@ -8199,8 +8384,8 @@
   "id": "f61ea9e0",
   "key": "Pick-up photos",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:34",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
    "src/app/scan/[id].tsx:173",
    "src/components/history.tsx:103"
   ]
@@ -8217,7 +8402,7 @@
   "key": "Pick-up video",
   "where": [
    "src/components/history.tsx:104",
-   "src/lib/types.ts:347"
+   "src/lib/types.ts:348"
   ]
  },
  {
@@ -8280,7 +8465,7 @@
   "id": "e92d2b4c",
   "key": "playback copy {size}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:57"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:61"
   ]
  },
  {
@@ -8294,7 +8479,7 @@
   "id": "52d57635",
   "key": "Possible, {pct}%",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:267"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:274"
   ]
  },
  {
@@ -8302,6 +8487,13 @@
   "key": "Power",
   "where": [
    "src/components/vanfacts.tsx:34"
+  ]
+ },
+ {
+  "id": "7ceacdca",
+  "key": "Privacy policy",
+  "where": [
+   "src/components/legal.tsx:13"
   ]
  },
  {
@@ -8504,21 +8696,21 @@
   "key": "Record the video of the van first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:825"
+   "functions/src/index.ts:827"
   ]
  },
  {
   "id": "de6ec759",
   "key": "Recorded by {name}, {when}.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:55"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:59"
   ]
  },
  {
   "id": "3a4edf1f",
   "key": "Recorded by {name}.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:55"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:59"
   ]
  },
  {
@@ -8539,14 +8731,14 @@
   "id": "50c0788f",
   "key": "reflection",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22"
   ]
  },
  {
   "id": "fda05af6",
   "key": "Reflection",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:20"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:22"
   ]
  },
  {
@@ -8580,7 +8772,7 @@
   "key": "Refuel allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1527"
+   "functions/src/index.ts:1560"
   ]
  },
  {
@@ -8588,7 +8780,7 @@
   "key": "Refuel refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1528"
+   "functions/src/index.ts:1561"
   ]
  },
  {
@@ -8596,7 +8788,7 @@
   "key": "Refuel, wash or parts?",
   "server": true,
   "where": [
-   "functions/src/index.ts:1396"
+   "functions/src/index.ts:1429"
   ]
  },
  {
@@ -8668,7 +8860,7 @@
   "id": "e963907d",
   "key": "Remove",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:329",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:336",
    "src/app/(tabs)/(people)/people.tsx:121"
   ]
  },
@@ -8697,7 +8889,7 @@
   "id": "80453614",
   "key": "Remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:182"
+   "src/app/(tabs)/(me)/account.tsx:186"
   ]
  },
  {
@@ -8753,7 +8945,7 @@
   "id": "16457335",
   "key": "Retake",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:169",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:172",
    "src/app/scan/[id].tsx:269"
   ]
  },
@@ -8761,7 +8953,7 @@
   "id": "9f01f832",
   "key": "retakes",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:46",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:48",
    "src/app/scan/[id].tsx:209"
   ]
  },
@@ -8816,7 +9008,7 @@
   "key": "Review {n} spots",
   "one": "Review {n} spot",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:223"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:226"
   ]
  },
  {
@@ -8837,7 +9029,7 @@
   "id": "31ef8593",
   "key": "Reviewed",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:245",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:248",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:237",
    "src/app/(tabs)/(review)/review.tsx:164",
    "src/app/(tabs)/(review)/review.tsx:65"
@@ -8854,14 +9046,14 @@
   "id": "b8e9acea",
   "key": "Reviewed by {name}, {when}. This is the final word on this van's damage.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:227"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:230"
   ]
  },
  {
   "id": "9aef74df",
   "key": "Reviewed by {name}. This is the final word on this van's damage.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:228"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:231"
   ]
  },
  {
@@ -9276,7 +9468,7 @@
   "key": "Say what the problem with the licence is.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1049"
+   "functions/src/index.ts:1082"
   ]
  },
  {
@@ -9298,7 +9490,7 @@
   "key": "Say why the parts were needed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1547",
+   "functions/src/index.ts:1580",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:249"
   ]
  },
@@ -9334,14 +9526,14 @@
   "id": "ffdf8c66",
   "key": "scratch",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
   "id": "f5c117f0",
   "key": "scuff",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:362"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:369"
   ]
  },
  {
@@ -9399,7 +9591,7 @@
   "key": "Send 1 or 2 close-ups.",
   "server": true,
   "where": [
-   "functions/src/index.ts:264"
+   "functions/src/index.ts:266"
   ]
  },
  {
@@ -9407,7 +9599,7 @@
   "key": "Send 1 to 3 photos.",
   "server": true,
   "where": [
-   "functions/src/index.ts:145"
+   "functions/src/index.ts:147"
   ]
  },
  {
@@ -9415,43 +9607,43 @@
   "key": "Send 1 to 6 photos of the document.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1294"
+   "functions/src/index.ts:1327"
   ]
  },
  {
   "id": "184ae2f2",
   "key": "Send it to the fleet manager when you're done.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:233"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:236"
   ]
  },
  {
   "id": "a8486942",
   "key": "Send to the fleet manager",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:340",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:345"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:347",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:352"
   ]
  },
  {
   "id": "a83064fa",
   "key": "Sent {when}. The fleet manager approves or rejects each spot.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:230"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:233"
   ]
  },
  {
   "id": "46b8c953",
   "key": "Sent to the fleet manager",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:223"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:226"
   ]
  },
  {
   "id": "c149b95b",
   "key": "Sent. The fleet manager approves or rejects each spot.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:230"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:233"
   ]
  },
  {
@@ -9501,7 +9693,7 @@
   "id": "1241872d",
   "key": "Set by the fleet owner for the whole company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:66"
+   "src/app/(tabs)/(me)/account.tsx:68"
   ]
  },
  {
@@ -9515,7 +9707,7 @@
   "id": "cdd7bb28",
   "key": "Setup",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:84"
+   "src/app/(tabs)/(me)/account.tsx:86"
   ]
  },
  {
@@ -9581,8 +9773,8 @@
   "key": "Sign in",
   "where": [
    "src/app/join/[token].tsx:102",
-   "src/app/sign-in.tsx:81",
-   "src/app/sign-in.tsx:87"
+   "src/app/sign-in.tsx:85",
+   "src/app/sign-in.tsx:91"
   ]
  },
  {
@@ -9590,8 +9782,9 @@
   "key": "Sign in again, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:454",
-   "functions/src/index.ts:80",
+   "functions/src/index.ts:1767",
+   "functions/src/index.ts:456",
+   "functions/src/index.ts:82",
    "src/lib/store.ts:191"
   ]
  },
@@ -9600,22 +9793,22 @@
   "key": "Sign in or create an account first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:421"
+   "functions/src/index.ts:423"
   ]
  },
  {
   "id": "dc1649a1",
   "key": "Sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:92",
-   "src/app/sign-in.tsx:68"
+   "src/app/(tabs)/(me)/account.tsx:94",
+   "src/app/sign-in.tsx:70"
   ]
  },
  {
   "id": "eee52995",
   "key": "Signed in as {email}",
   "where": [
-   "src/app/sign-in.tsx:37"
+   "src/app/sign-in.tsx:39"
   ]
  },
  {
@@ -9665,7 +9858,7 @@
   "id": "61cf7a66",
   "key": "Size, how it looks",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:375"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:382"
   ]
  },
  {
@@ -9679,14 +9872,14 @@
   "id": "6593a95f",
   "key": "Skip and check",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:176"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:179"
   ]
  },
  {
   "id": "ceff5b0c",
   "key": "Skip this spot",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:176"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:179"
   ]
  },
  {
@@ -9715,7 +9908,7 @@
   "id": "bab1a6ba",
   "key": "Some close-ups couldn't be checked. Try again.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:129"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:132"
   ]
  },
  {
@@ -9723,7 +9916,7 @@
   "key": "Some photos didn't finish uploading or are more than two hours old. Take them again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:722"
+   "functions/src/index.ts:724"
   ]
  },
  {
@@ -9738,7 +9931,7 @@
   "key": "Someone already added photos or a video for this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:897"
+   "functions/src/index.ts:899"
   ]
  },
  {
@@ -9746,7 +9939,7 @@
   "key": "Someone else has to allow your own.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1520"
+   "functions/src/index.ts:1553"
   ]
  },
  {
@@ -9754,7 +9947,7 @@
   "key": "Someone else has to check your own licence.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1041"
+   "functions/src/index.ts:1074"
   ]
  },
  {
@@ -9776,7 +9969,7 @@
   "id": "4244e822",
   "key": "Something went wrong. Try again.",
   "where": [
-   "src/lib/session.tsx:119"
+   "src/lib/session.tsx:121"
   ]
  },
  {
@@ -9790,7 +9983,7 @@
   "id": "7bf5ec86",
   "key": "Speed and cost",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:400"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:407"
   ]
  },
  {
@@ -9862,7 +10055,7 @@
   "id": "c83920dd",
   "key": "Start the demo over",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:178"
+   "src/app/(tabs)/(me)/account.tsx:182"
   ]
  },
  {
@@ -9919,7 +10112,7 @@
   "key": "Started another one",
   "server": true,
   "where": [
-   "functions/src/index.ts:1412"
+   "functions/src/index.ts:1445"
   ]
  },
  {
@@ -9967,7 +10160,7 @@
   "id": "a84e5ec6",
   "key": "Station: {stations}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:42"
+   "src/app/(tabs)/(me)/account.tsx:44"
   ]
  },
  {
@@ -10004,7 +10197,7 @@
   "key": "Stop: {van}, card not checked",
   "server": true,
   "where": [
-   "functions/src/index.ts:1465"
+   "functions/src/index.ts:1498"
   ]
  },
  {
@@ -10012,7 +10205,7 @@
   "key": "Stop: {van}, no fuel card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1465"
+   "functions/src/index.ts:1498"
   ]
  },
  {
@@ -10020,7 +10213,7 @@
   "key": "Stop: {van}, not the van's card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1466"
+   "functions/src/index.ts:1499"
   ]
  },
  {
@@ -10048,15 +10241,15 @@
   "id": "8689d10c",
   "key": "Straight on",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:164",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:284"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:167",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:291"
   ]
  },
  {
   "id": "687bb45a",
   "key": "Straight on, damage boxed",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:284"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:291"
   ]
  },
  {
@@ -10148,7 +10341,7 @@
   "key": "Take 1 to 6 photos of the parts.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1544"
+   "functions/src/index.ts:1577"
   ]
  },
  {
@@ -10170,7 +10363,7 @@
   "key": "Take close-ups of {n} spots",
   "one": "Take close-ups of {n} spot",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:250"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:257"
   ]
  },
  {
@@ -10192,7 +10385,7 @@
   "id": "ff6d8326",
   "key": "Take more close-ups",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:251"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:258"
   ]
  },
  {
@@ -10215,7 +10408,7 @@
   "key": "Take photo",
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:145",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:169"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:172"
   ]
  },
  {
@@ -10233,12 +10426,19 @@
   ]
  },
  {
+  "id": "caf49f3e",
+  "key": "Take the damage mark off",
+  "where": [
+   "src/components/keep.tsx:69"
+  ]
+ },
+ {
   "id": "9da8309a",
   "key": "Take the dashboard photo again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1153",
-   "functions/src/index.ts:1178"
+   "functions/src/index.ts:1186",
+   "functions/src/index.ts:1211"
   ]
  },
  {
@@ -10253,7 +10453,7 @@
   "key": "Take the photo of the receipt first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1561"
+   "functions/src/index.ts:1594"
   ]
  },
  {
@@ -10268,7 +10468,7 @@
   "key": "Take the photos of the van first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:708"
+   "functions/src/index.ts:710"
   ]
  },
  {
@@ -10328,6 +10528,13 @@
   ]
  },
  {
+  "id": "308ea189",
+  "key": "Tap again to delete your account for good",
+  "where": [
+   "src/components/deleteaccount.tsx:58"
+  ]
+ },
+ {
   "id": "7185b77f",
   "key": "Tap again to remove",
   "where": [
@@ -10339,7 +10546,7 @@
   "id": "3afaa47c",
   "key": "Tap again to remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:182"
+   "src/app/(tabs)/(me)/account.tsx:186"
   ]
  },
  {
@@ -10353,7 +10560,7 @@
   "id": "2a31ad29",
   "key": "Tap again to sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:92"
+   "src/app/(tabs)/(me)/account.tsx:94"
   ]
  },
  {
@@ -10367,7 +10574,7 @@
   "id": "256d0bed",
   "key": "Tap again: everything in the demo is made new",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:178"
+   "src/app/(tabs)/(me)/account.tsx:182"
   ]
  },
  {
@@ -10426,7 +10633,7 @@
   "id": "9b5a5702",
   "key": "Test mode on this phone",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:29"
+   "src/app/(tabs)/(me)/account.tsx:31"
   ]
  },
  {
@@ -10440,14 +10647,14 @@
   "id": "f02a9817",
   "key": "Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:87"
+   "src/app/(tabs)/(me)/account.tsx:89"
   ]
  },
  {
   "id": "43372c78",
   "key": "That email address doesn't look right.",
   "where": [
-   "src/lib/session.tsx:109"
+   "src/lib/session.tsx:111"
   ]
  },
  {
@@ -10455,7 +10662,7 @@
   "key": "That file isn't a video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:832"
+   "functions/src/index.ts:834"
   ]
  },
  {
@@ -10463,7 +10670,7 @@
   "key": "That phone number doesn't look right.",
   "server": true,
   "where": [
-   "functions/src/index.ts:430"
+   "functions/src/index.ts:432"
   ]
  },
  {
@@ -10471,7 +10678,7 @@
   "key": "That's {more} km more than the last reading ({km} km). Check the number, or confirm it's right.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1188"
+   "functions/src/index.ts:1221"
   ]
  },
  {
@@ -10492,7 +10699,7 @@
   "id": "f4c23a3d",
   "key": "The {model} model looks at every photo at full resolution. This usually takes under a minute.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:63"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:65"
   ]
  },
  {
@@ -10543,7 +10750,7 @@
   "id": "c4251eee",
   "key": "The AI marks possible damage, then asks for close-ups of each spot.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:52"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:55"
   ]
  },
  {
@@ -10595,6 +10802,14 @@
   ]
  },
  {
+  "id": "732a2984",
+  "key": "The app creator's account can't be deleted in the app.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1768"
+  ]
+ },
+ {
   "id": "8e92141c",
   "key": "The app keeps the latest 500 handovers here; older ones are on the van's Drivers tab.",
   "where": [
@@ -10641,28 +10856,28 @@
   "key": "The card was already checked.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1456"
+   "functions/src/index.ts:1489"
   ]
  },
  {
   "id": "10a22691",
   "key": "The check didn't finish",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:55"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:57"
   ]
  },
  {
   "id": "2f443341",
   "key": "The check didn't finish. Try again.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:49"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:51"
   ]
  },
  {
   "id": "1d7e4397",
   "key": "The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:46"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:50"
   ]
  },
  {
@@ -10670,7 +10885,7 @@
   "key": "The dashboard photo is missing. Take it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1415"
+   "functions/src/index.ts:1448"
   ]
  },
  {
@@ -10712,7 +10927,7 @@
   "id": "7ba5c9b2",
   "key": "the driver",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:253"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:260"
   ]
  },
  {
@@ -10733,7 +10948,7 @@
   "id": "4dee9456",
   "key": "the fleet manager",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:225",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:228",
    "src/components/damage.tsx:201"
   ]
  },
@@ -10748,7 +10963,7 @@
   "id": "ed26b746",
   "key": "The fleet owner changes these.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:232"
+   "src/app/(tabs)/(me)/account.tsx:236"
   ]
  },
  {
@@ -10770,7 +10985,7 @@
   "key": "The fuel level is a percentage from 0 to 100.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1567"
+   "functions/src/index.ts:1600"
   ]
  },
  {
@@ -10813,7 +11028,7 @@
   "key": "The marked photo for this spot is missing.",
   "server": true,
   "where": [
-   "functions/src/index.ts:274"
+   "functions/src/index.ts:276"
   ]
  },
  {
@@ -10848,7 +11063,7 @@
   "id": "6d2117d8",
   "key": "The next check shows on each driver's record and in Review. Every 6 months is common practice.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:230"
+   "src/app/(tabs)/(me)/account.tsx:234"
   ]
  },
  {
@@ -10900,6 +11115,13 @@
   "key": "The photos didn't upload. Check the connection and try again.",
   "where": [
    "src/components/docscan.tsx:137"
+  ]
+ },
+ {
+  "id": "3866abda",
+  "key": "The photos of this check were deleted on {date}. The decisions and the van's damage record stay.",
+  "where": [
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:253"
   ]
  },
  {
@@ -10970,7 +11192,7 @@
   "key": "The van hasn't been dropped off yet. Drop it off with the photos instead.",
   "server": true,
   "where": [
-   "functions/src/index.ts:915"
+   "functions/src/index.ts:917"
   ]
  },
  {
@@ -10978,7 +11200,7 @@
   "key": "The van hasn't been dropped off yet. Drop it off with the video instead.",
   "server": true,
   "where": [
-   "functions/src/index.ts:871"
+   "functions/src/index.ts:873"
   ]
  },
  {
@@ -11028,7 +11250,7 @@
   "key": "The video didn't finish uploading. Try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:829"
+   "functions/src/index.ts:831"
   ]
  },
  {
@@ -11036,7 +11258,7 @@
   "key": "The video is {s} seconds long. Walk all the way around the van: at least {min} seconds.",
   "server": true,
   "where": [
-   "functions/src/index.ts:836"
+   "functions/src/index.ts:838"
   ]
  },
  {
@@ -11051,7 +11273,7 @@
   "key": "The video is longer than 5 minutes. One walk around the van is enough.",
   "server": true,
   "where": [
-   "functions/src/index.ts:837"
+   "functions/src/index.ts:839"
   ]
  },
  {
@@ -11114,7 +11336,7 @@
   "id": "469dbdc0",
   "key": "These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:234"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:237"
   ]
  },
  {
@@ -11122,7 +11344,15 @@
   "key": "These photos aren't yours or aren't of this van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:711"
+   "functions/src/index.ts:713"
+  ]
+ },
+ {
+  "id": "de5fd80c",
+  "key": "These photos belong to another station.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1827"
   ]
  },
  {
@@ -11130,8 +11360,15 @@
   "key": "These photos were already used. Take new ones.",
   "server": true,
   "where": [
-   "functions/src/index.ts:712",
-   "functions/src/index.ts:729"
+   "functions/src/index.ts:714",
+   "functions/src/index.ts:731"
+  ]
+ },
+ {
+  "id": "6fd8484d",
+  "key": "These photos were deleted on {date}. The record of the walk-around stays.",
+  "where": [
+   "src/components/keep.tsx:42"
   ]
  },
  {
@@ -11160,14 +11397,14 @@
   "id": "2a89189d",
   "key": "This browser gave no notification address.",
   "where": [
-   "src/lib/push.ts:49"
+   "src/lib/push.ts:51"
   ]
  },
  {
   "id": "5cbd3d6d",
   "key": "This check isn't available.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:97"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:100"
   ]
  },
  {
@@ -11175,8 +11412,8 @@
   "key": "This check was deleted.",
   "server": true,
   "where": [
-   "functions/src/index.ts:268",
-   "functions/src/index.ts:314"
+   "functions/src/index.ts:270",
+   "functions/src/index.ts:316"
   ]
  },
  {
@@ -11191,7 +11428,7 @@
   "id": "cbac1194",
   "key": "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:177"
+   "src/app/(tabs)/(me)/account.tsx:181"
   ]
  },
  {
@@ -11206,8 +11443,8 @@
   "key": "This handover belongs to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:870",
-   "functions/src/index.ts:914"
+   "functions/src/index.ts:872",
+   "functions/src/index.ts:916"
   ]
  },
  {
@@ -11215,7 +11452,7 @@
   "key": "This invite link doesn't exist or was cancelled. Ask for a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:434"
+   "functions/src/index.ts:436"
   ]
  },
  {
@@ -11223,7 +11460,7 @@
   "key": "This invite link has expired. Links work for 24 hours; ask for a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:438"
+   "functions/src/index.ts:440"
   ]
  },
  {
@@ -11231,7 +11468,7 @@
   "key": "This invite link isn't complete. Ask for a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:423"
+   "functions/src/index.ts:425"
   ]
  },
  {
@@ -11239,14 +11476,14 @@
   "key": "This invite link was already used. Each link works for one person; ask for a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:437"
+   "functions/src/index.ts:439"
   ]
  },
  {
   "id": "12fadf41",
   "key": "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:155"
+   "src/app/(tabs)/(me)/account.tsx:159"
   ]
  },
  {
@@ -11289,7 +11526,7 @@
   "key": "This one is closed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1560"
+   "functions/src/index.ts:1593"
   ]
  },
  {
@@ -11297,10 +11534,10 @@
   "key": "This person isn't in the company any more.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1052",
-   "functions/src/index.ts:1306",
-   "functions/src/index.ts:517",
-   "functions/src/index.ts:649"
+   "functions/src/index.ts:1085",
+   "functions/src/index.ts:1339",
+   "functions/src/index.ts:519",
+   "functions/src/index.ts:651"
   ]
  },
  {
@@ -11308,15 +11545,15 @@
   "key": "This person works at another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1054",
-   "functions/src/index.ts:1307"
+   "functions/src/index.ts:1087",
+   "functions/src/index.ts:1340"
   ]
  },
  {
   "id": "da28f1e8",
   "key": "This phone gets a notification when someone gives you a van.",
   "where": [
-   "src/components/pickup.tsx:52"
+   "src/components/pickup.tsx:53"
   ]
  },
  {
@@ -11324,7 +11561,7 @@
   "key": "This photo is already saved.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1179"
+   "functions/src/index.ts:1212"
   ]
  },
  {
@@ -11332,7 +11569,7 @@
   "key": "This photo is more than two hours old. Take a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1180"
+   "functions/src/index.ts:1213"
   ]
  },
  {
@@ -11340,7 +11577,7 @@
   "key": "This van belongs to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:105"
+   "functions/src/index.ts:107"
   ]
  },
  {
@@ -11348,9 +11585,9 @@
   "key": "This van is retired.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1404",
-   "functions/src/index.ts:763",
-   "functions/src/index.ts:941"
+   "functions/src/index.ts:1437",
+   "functions/src/index.ts:765",
+   "functions/src/index.ts:943"
   ]
  },
  {
@@ -11358,7 +11595,7 @@
   "key": "This van is retired. Bring it back first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:512"
+   "functions/src/index.ts:514"
   ]
  },
  {
@@ -11373,7 +11610,7 @@
   "key": "This van was removed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:509"
+   "functions/src/index.ts:511"
   ]
  },
  {
@@ -11389,7 +11626,7 @@
   "key": "This video belongs to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:963"
+   "functions/src/index.ts:965"
   ]
  },
  {
@@ -11397,14 +11634,14 @@
   "key": "This video can't be read. Record it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:835"
+   "functions/src/index.ts:837"
   ]
  },
  {
   "id": "778715da",
   "key": "This video isn't available.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:35"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:37"
   ]
  },
  {
@@ -11412,9 +11649,16 @@
   "key": "This video was already used. Record a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:749",
-   "functions/src/index.ts:877",
-   "functions/src/index.ts:945"
+   "functions/src/index.ts:751",
+   "functions/src/index.ts:879",
+   "functions/src/index.ts:947"
+  ]
+ },
+ {
+  "id": "60260a05",
+  "key": "This video was deleted on {date}. The record of it stays.",
+  "where": [
+   "src/components/keep.tsx:41"
   ]
  },
  {
@@ -11422,7 +11666,7 @@
   "key": "This video was recorded more than two hours ago. Record a new one at the van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:840"
+   "functions/src/index.ts:842"
   ]
  },
  {
@@ -11430,7 +11674,7 @@
   "key": "This video was uploaded more than two hours ago. Record a new one.",
   "server": true,
   "where": [
-   "functions/src/index.ts:833"
+   "functions/src/index.ts:835"
   ]
  },
  {
@@ -11438,14 +11682,14 @@
   "key": "This walk-around has no uploaded photos.",
   "server": true,
   "where": [
-   "functions/src/index.ts:201"
+   "functions/src/index.ts:203"
   ]
  },
  {
   "id": "451d9787",
   "key": "This walk-around isn't available.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:29"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:31"
   ]
  },
  {
@@ -11453,7 +11697,7 @@
   "key": "This walk-around was deleted.",
   "server": true,
   "where": [
-   "functions/src/index.ts:197"
+   "functions/src/index.ts:199"
   ]
  },
  {
@@ -11475,7 +11719,7 @@
   "id": "a31e2a60",
   "key": "Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:408"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:415"
   ]
  },
  {
@@ -11541,7 +11785,7 @@
   "id": "a0961786",
   "key": "Too many attempts. Wait a minute, then try again.",
   "where": [
-   "src/lib/session.tsx:114"
+   "src/lib/session.tsx:116"
   ]
  },
  {
@@ -11563,7 +11807,7 @@
   "key": "Total",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:399",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:396",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:403",
    "src/app/(tabs)/(table)/data.tsx:293"
   ]
  },
@@ -11578,7 +11822,7 @@
   "id": "d6bfaf9d",
   "key": "total time",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:44",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:46",
    "src/app/scan/[id].tsx:207"
   ]
  },
@@ -11649,7 +11893,7 @@
   "id": "c5f48842",
   "key": "Tours and driver records",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:216"
+   "src/app/(tabs)/(me)/account.tsx:220"
   ]
  },
  {
@@ -11685,7 +11929,7 @@
   "id": "042c862e",
   "key": "Try again",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:58",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:60",
    "src/app/scan/[id].tsx:235"
   ]
  },
@@ -11700,22 +11944,22 @@
   "id": "63b84bd9",
   "key": "Try it as someone else",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:167"
+   "src/app/(tabs)/(me)/account.tsx:171"
   ]
  },
  {
   "id": "dd0c3cd3",
   "key": "Turn off on this phone",
   "where": [
-   "src/components/pickup.tsx:89"
+   "src/components/pickup.tsx:90"
   ]
  },
  {
   "id": "5ab087ec",
   "key": "Turn on notifications",
   "where": [
-   "src/components/pickup.tsx:79",
-   "src/components/pickup.tsx:88"
+   "src/components/pickup.tsx:80",
+   "src/components/pickup.tsx:89"
   ]
  },
  {
@@ -11729,14 +11973,14 @@
   "id": "89341260",
   "key": "Two of the made-up people have real logins. Sign out and sign in with one, or use a private browser window so you stay signed in here.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:168"
+   "src/app/(tabs)/(me)/account.tsx:172"
   ]
  },
  {
   "id": "e8edc31d",
   "key": "Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, refuels, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:189"
+   "src/app/(tabs)/(me)/account.tsx:193"
   ]
  },
  {
@@ -11815,21 +12059,21 @@
   "id": "8259dd1a",
   "key": "unclear",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23"
   ]
  },
  {
   "id": "ff75e0dc",
   "key": "Unclear",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:21"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:23"
   ]
  },
  {
   "id": "50d8b4a9",
   "key": "unknown",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:245"
+   "src/app/(tabs)/(me)/account.tsx:249"
   ]
  },
  {
@@ -11837,10 +12081,10 @@
   "key": "Unknown check.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1248",
-   "functions/src/index.ts:1250",
-   "functions/src/index.ts:261",
-   "functions/src/index.ts:309"
+   "functions/src/index.ts:1281",
+   "functions/src/index.ts:1283",
+   "functions/src/index.ts:263",
+   "functions/src/index.ts:311"
   ]
  },
  {
@@ -11848,8 +12092,9 @@
   "key": "Unknown company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:333",
-   "functions/src/index.ts:82"
+   "functions/src/index.ts:1849",
+   "functions/src/index.ts:335",
+   "functions/src/index.ts:84"
   ]
  },
  {
@@ -11857,10 +12102,10 @@
   "key": "Unknown handover.",
   "server": true,
   "where": [
-   "functions/src/index.ts:864",
-   "functions/src/index.ts:868",
-   "functions/src/index.ts:910",
-   "functions/src/index.ts:913"
+   "functions/src/index.ts:866",
+   "functions/src/index.ts:870",
+   "functions/src/index.ts:912",
+   "functions/src/index.ts:915"
   ]
  },
  {
@@ -11875,9 +12120,18 @@
   "key": "Unknown person.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1040",
-   "functions/src/index.ts:608",
-   "functions/src/index.ts:638"
+   "functions/src/index.ts:1073",
+   "functions/src/index.ts:610",
+   "functions/src/index.ts:640"
+  ]
+ },
+ {
+  "id": "57d8bad9",
+  "key": "Unknown photos or video.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1819",
+   "functions/src/index.ts:1825"
   ]
  },
  {
@@ -11885,8 +12139,8 @@
   "key": "Unknown refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1378",
-   "functions/src/index.ts:1381"
+   "functions/src/index.ts:1411",
+   "functions/src/index.ts:1414"
   ]
  },
  {
@@ -11894,7 +12148,7 @@
   "key": "Unknown role.",
   "server": true,
   "where": [
-   "functions/src/index.ts:642"
+   "functions/src/index.ts:644"
   ]
  },
  {
@@ -11902,7 +12156,7 @@
   "key": "Unknown scan.",
   "server": true,
   "where": [
-   "functions/src/index.ts:143"
+   "functions/src/index.ts:145"
   ]
  },
  {
@@ -11910,14 +12164,14 @@
   "key": "Unknown spot.",
   "server": true,
   "where": [
-   "functions/src/index.ts:273"
+   "functions/src/index.ts:275"
   ]
  },
  {
   "id": "b8c800b4",
   "key": "Unknown station",
   "where": [
-   "src/lib/session.tsx:407"
+   "src/lib/session.tsx:418"
   ]
  },
  {
@@ -11925,11 +12179,11 @@
   "key": "Unknown station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:388",
-   "functions/src/index.ts:643",
-   "functions/src/index.ts:650",
-   "functions/src/index.ts:680",
-   "functions/src/index.ts:683"
+   "functions/src/index.ts:390",
+   "functions/src/index.ts:645",
+   "functions/src/index.ts:652",
+   "functions/src/index.ts:682",
+   "functions/src/index.ts:685"
   ]
  },
  {
@@ -11937,7 +12191,7 @@
   "key": "Unknown step.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1636"
+   "functions/src/index.ts:1669"
   ]
  },
  {
@@ -11945,7 +12199,7 @@
   "key": "Unknown van or driver.",
   "server": true,
   "where": [
-   "functions/src/index.ts:503"
+   "functions/src/index.ts:505"
   ]
  },
  {
@@ -11953,7 +12207,7 @@
   "key": "Unknown van or person.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1292"
+   "functions/src/index.ts:1325"
   ]
  },
  {
@@ -11961,8 +12215,8 @@
   "key": "Unknown van or station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:584",
-   "functions/src/index.ts:590"
+   "functions/src/index.ts:586",
+   "functions/src/index.ts:592"
   ]
  },
  {
@@ -11970,17 +12224,17 @@
   "key": "Unknown van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1090",
-   "functions/src/index.ts:1092",
-   "functions/src/index.ts:1301",
-   "functions/src/index.ts:1399",
-   "functions/src/index.ts:1402",
-   "functions/src/index.ts:563",
-   "functions/src/index.ts:568",
-   "functions/src/index.ts:691",
-   "functions/src/index.ts:695",
-   "functions/src/index.ts:936",
-   "functions/src/index.ts:939"
+   "functions/src/index.ts:1123",
+   "functions/src/index.ts:1125",
+   "functions/src/index.ts:1334",
+   "functions/src/index.ts:1432",
+   "functions/src/index.ts:1435",
+   "functions/src/index.ts:565",
+   "functions/src/index.ts:570",
+   "functions/src/index.ts:693",
+   "functions/src/index.ts:697",
+   "functions/src/index.ts:938",
+   "functions/src/index.ts:941"
   ]
  },
  {
@@ -11988,8 +12242,8 @@
   "key": "Unknown video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:958",
-   "functions/src/index.ts:962"
+   "functions/src/index.ts:960",
+   "functions/src/index.ts:964"
   ]
  },
  {
@@ -11997,7 +12251,7 @@
   "key": "Unknown walk-around.",
   "server": true,
   "where": [
-   "functions/src/index.ts:195"
+   "functions/src/index.ts:197"
   ]
  },
  {
@@ -12011,7 +12265,7 @@
   "id": "17d2b73d",
   "key": "Uploaded {when}",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:56"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:60"
   ]
  },
  {
@@ -12097,7 +12351,7 @@
   "key": "Use at least 6 characters for the password.",
   "where": [
    "src/app/join/[token].tsx:53",
-   "src/lib/session.tsx:111"
+   "src/lib/session.tsx:113"
   ]
  },
  {
@@ -12125,7 +12379,7 @@
   "id": "6187e87c",
   "key": "Used for every type scan and damage check in this company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:66"
+   "src/app/(tabs)/(me)/account.tsx:68"
   ]
  },
  {
@@ -12192,7 +12446,7 @@
   "key": "Vans go to drivers or fleet managers.",
   "server": true,
   "where": [
-   "functions/src/index.ts:519"
+   "functions/src/index.ts:521"
   ]
  },
  {
@@ -12236,14 +12490,14 @@
   "id": "7c9f7f38",
   "key": "version {sha}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:246"
+   "src/app/(tabs)/(me)/account.tsx:250"
   ]
  },
  {
   "id": "f47beb68",
   "key": "version {sha} of {when}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:246"
+   "src/app/(tabs)/(me)/account.tsx:250"
   ]
  },
  {
@@ -12251,7 +12505,7 @@
   "key": "Video",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:50",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:38",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/video/[id].tsx:40",
    "src/components/scanchoice.tsx:40",
    "src/components/video.tsx:33"
   ]
@@ -12340,7 +12594,7 @@
   "key": "Waiting for review",
   "where": [
    "src/app/(tabs)/(fleet)/index.tsx:144",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:245",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:248",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:215",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:237"
   ]
@@ -12357,8 +12611,8 @@
   "key": "Walk-around",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:47",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:34",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39"
   ]
  },
  {
@@ -12372,14 +12626,14 @@
   "id": "71cd2007",
   "key": "Walk-around photos, van history and damage checks for your fleet.",
   "where": [
-   "src/app/sign-in.tsx:78"
+   "src/app/sign-in.tsx:82"
   ]
  },
  {
   "id": "63f51634",
   "key": "Walk-around video",
   "where": [
-   "src/lib/types.ts:347"
+   "src/lib/types.ts:348"
   ]
  },
  {
@@ -12474,7 +12728,7 @@
   "key": "Wash allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1527"
+   "functions/src/index.ts:1560"
   ]
  },
  {
@@ -12482,7 +12736,7 @@
   "key": "Wash refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1528"
+   "functions/src/index.ts:1561"
   ]
  },
  {
@@ -12519,7 +12773,7 @@
   "id": "5a9649da",
   "key": "web app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:244"
+   "src/app/(tabs)/(me)/account.tsx:248"
   ]
  },
  {
@@ -12590,7 +12844,7 @@
   "id": "7a714c4a",
   "key": "When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:222"
+   "src/app/(tabs)/(me)/account.tsx:226"
   ]
  },
  {
@@ -12612,7 +12866,7 @@
   "key": "Where",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:400",
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:373",
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:380",
    "src/app/(tabs)/(table)/data.tsx:298"
   ]
  },
@@ -12822,7 +13076,7 @@
   "id": "f86f21c8",
   "key": "You approve or reject damage found at your station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:43"
+   "src/app/(tabs)/(me)/account.tsx:45"
   ]
  },
  {
@@ -12836,15 +13090,15 @@
   "id": "e394bd20",
   "key": "You become the fleet owner. You add stations, fleet managers and drivers under People.",
   "where": [
-   "src/app/sign-in.tsx:48"
+   "src/app/sign-in.tsx:50"
   ]
  },
  {
   "id": "8a5390b3",
   "key": "you can add more later",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:129",
-   "src/app/sign-in.tsx:47"
+   "src/app/(tabs)/(me)/account.tsx:133",
+   "src/app/sign-in.tsx:49"
   ]
  },
  {
@@ -12859,7 +13113,7 @@
   "key": "You can only invite drivers to your own station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:386"
+   "functions/src/index.ts:388"
   ]
  },
  {
@@ -12867,7 +13121,7 @@
   "key": "You can't change your own role or station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:639"
+   "functions/src/index.ts:641"
   ]
  },
  {
@@ -12875,7 +13129,7 @@
   "key": "You can't remove yourself here.",
   "server": true,
   "where": [
-   "functions/src/index.ts:609"
+   "functions/src/index.ts:611"
   ]
  },
  {
@@ -12889,7 +13143,7 @@
   "id": "0838a19a",
   "key": "You don't have access to that.",
   "where": [
-   "src/lib/session.tsx:118"
+   "src/lib/session.tsx:120"
   ]
  },
  {
@@ -12897,7 +13151,7 @@
   "key": "You don't have this van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:792"
+   "functions/src/index.ts:794"
   ]
  },
  {
@@ -12905,7 +13159,7 @@
   "key": "You don't have this van. The driver who has it, or the station's fleet manager, takes its dashboard photo.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1099"
+   "functions/src/index.ts:1132"
   ]
  },
  {
@@ -12972,6 +13226,14 @@
   ]
  },
  {
+  "id": "fcda0bd5",
+  "key": "You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:1778"
+  ]
+ },
+ {
   "id": "941ff603",
   "key": "You picked up {van}. The photos are kept with its history.",
   "where": [
@@ -12989,7 +13251,7 @@
   "id": "e24cfeaa",
   "key": "You scan the vans of your station; your fleet manager reviews the damage checks.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:44"
+   "src/app/(tabs)/(me)/account.tsx:46"
   ]
  },
  {
@@ -12997,21 +13259,21 @@
   "key": "You see and manage all {n} stations.",
   "one": "You see and manage all {n} station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:41"
+   "src/app/(tabs)/(me)/account.tsx:43"
   ]
  },
  {
   "id": "380e4d48",
   "key": "You see and manage all of {station}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:41"
+   "src/app/(tabs)/(me)/account.tsx:43"
   ]
  },
  {
   "id": "0dd26b17",
   "key": "You, viewing as this role",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:38"
+   "src/app/(tabs)/(me)/account.tsx:40"
   ]
  },
  {
@@ -13026,7 +13288,7 @@
   "key": "You're already in {company}. Ask the fleet owner to change your role or station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:441"
+   "functions/src/index.ts:443"
   ]
  },
  {
@@ -13040,7 +13302,7 @@
   "id": "20767b9b",
   "key": "You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:164"
+   "src/app/(tabs)/(me)/account.tsx:168"
   ]
  },
  {
@@ -13076,7 +13338,7 @@
   "key": "You're viewing another company as someone else. Switch back to yourself in the Account tab first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:90"
+   "functions/src/index.ts:92"
   ]
  },
  {
@@ -13084,7 +13346,7 @@
   "key": "Your account isn't a member of this company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:98",
+   "functions/src/index.ts:100",
    "src/lib/store.ts:192"
   ]
  },
@@ -13099,14 +13361,14 @@
   "id": "3f7a84ea",
   "key": "Your company",
   "where": [
-   "src/app/sign-in.tsx:38"
+   "src/app/sign-in.tsx:40"
   ]
  },
  {
   "id": "a2bb6af7",
   "key": "Your decision",
   "where": [
-   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:295"
+   "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:302"
   ]
  },
  {
@@ -13159,10 +13421,17 @@
   ]
  },
  {
+  "id": "d6135246",
+  "key": "Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.",
+  "where": [
+   "src/components/deleteaccount.tsx:43"
+  ]
+ },
+ {
   "id": "ab42293e",
   "key": "Your name",
   "where": [
-   "src/app/sign-in.tsx:83"
+   "src/app/sign-in.tsx:87"
   ]
  },
  {

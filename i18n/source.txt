@@ -1,5 +1,9 @@
 0cc11732	"{column}" compares a driver's fuel with the other drivers on the same van model, over the same kilometres, from 4 tours on. Route, load and weather matter as much as driving style: it shows who to talk to, it doesn't prove anything.
 691f88de	(+{n} more) || (+{n} more)	[components/damage.tsx]
+cdc67bd4	{company}: you leave the company.
+eca8eab2	{company}: you're its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.
+60731bb6	{company}: you're its only member, so the company is deleted with everything in it.
+4b70f10c	{company}: your demo company is deleted.
 7fa3fb40	{cost} est.	[walk/[id].tsx]
 78daaebd	{cost} per photo	[log.tsx]
 bd23c615	{day}, fine	[components/driverrec.tsx]
@@ -424,7 +428,7 @@ aaf37447	Create account	[app/sign-in.tsx]
 77af29dd	Create company	[account.tsx, app/sign-in.tsx]
 ac9a04e4	Customer complaint	[components/driverrec.tsx]
 54198309	damage	[check/[id].tsx, lib/damage.ts]
-7bf6d1d3	Damage	[check/[id].tsx, vehicle/[id].tsx]
+7bf6d1d3	Damage	[check/[id].tsx, vehicle/[id].tsx, components/keep.tsx]
 6a880738	Damage ({n})	[vehicle/[id].tsx]
 d952d39b	Damage {no}	[components/van3d.tsx]
 abf93aca	Damage {no} is on the other side. Turn the van.
@@ -440,6 +444,8 @@ b22aa3a8	Damage it missed ({n} added by a manager) || Damage it missed ({n} adde
 a9b9242e	Damage per 10,000 km
 35e3b624	Damage the AI missed
 cc1ac535	Damage the AI missed ({n})
+bdc4ec88	Damage was approved in a check of these photos.
+4f74f230	Damage was approved: the photos are kept until {date}.
 044d85b4	Damage, only them	[data.tsx]
 d87f47b4	Dashboard	[buy/[id].tsx]
 b353847f	Dashboard photos	[account.tsx]
@@ -455,8 +461,12 @@ a4df0e55	Days with a van
 d887d7d6	Decide every spot first: {n} left. || Decide every spot first: {n} left.
 cca43b1f	Decided by {name}	[check/[id].tsx]
 37e674ba	Decided lately, newest first.
+1753c206	Delete account	[components/deleteaccount.tsx]
+2ae3a019	Delete my account	[components/deleteaccount.tsx]
+a0b7ba67	Delete your account	[components/deleteaccount.tsx]
 1189c74f	Demo account	[account.tsx]
 c747cec0	Demo company	[account.tsx]
+206a6d0c	Demo company: photos and videos aren't deleted.
 53f3a5d4	dent	[check/[id].tsx]
 dc3decbb	Details	[vehicle/[id].tsx]
 9e14d015	Did you charge the van during the tour?
@@ -473,10 +483,12 @@ ed2e582a	Done inviting	[people.tsx]
 7a3f2854	Done with close-ups	[check/[id].tsx]
 2aa3d69f	Download for Excel	[data.tsx]
 9e6f732f	Download the original	[video/[id].tsx]
+67f7e737	Download the video	[video/[id].tsx]
 fbfcd4fd	Drag to turn.	[components/van3d.tsx]
 4ac6e79e	Drag to turn. Tap a dot.
 b5c7d8b5	Driver	[vehicle/[id].tsx, people.tsx, data.tsx]
 22bd4395	Driver at fault	[components/driverrec.tsx]
+0b88689d	driver deleted their account
 639a2c19	Driver: {name}	[account.tsx]
 a40ad45b	Drivers	[vehicle/[id].tsx, people.tsx, data.tsx]
 cf547f5f	Drivers ({n})	[people.tsx]
@@ -534,7 +546,8 @@ a1ea6571	Enter the day like 22.10.2026 and the time like 14:30.
 8a28b80b	Enter your email address first.
 14864a38	Enter your email address.
 b2915597	Enter your first and last name.
-46affb94	Enter your password.	[app/sign-in.tsx, lib/session.tsx]
+bdbe3bd1	Enter your password again to delete your account.
+46affb94	Enter your password.	[app/sign-in.tsx, components/deleteaccount.tsx, lib/session.tsx]
 ad6f5883	Est. cost {cost}	[add.tsx]
 ae64c7cf	Estimated	[data.tsx]
 aeeafd14	Every month someone looks at the original licence. The dates are the company's proof. || Every {n} months someone looks at the original licence. The dates are the company's proof.
@@ -703,8 +716,10 @@ a7b34b5a	Identify the type	[add.tsx]
 5c927cc5	Identifying	[add.tsx]
 29b8a5e4	Identifying from photos needs the Firebase backend. Until it's connected, pick the type below.
 d4aa13c1	If something happens	[components/docscan.tsx, components/vanfacts.tsx]
+56468fe4	If they show damage, mark them to keep them until {date}.
 227dbfbb	Ignition on, the whole display in the picture: odometer, battery and any warning lights. No flash.
 fb00a1bf	Ignition on, the whole display in the picture: odometer, fuel gauge and any warning lights. No flash.
+db71e0bf	Imprint	[components/legal.tsx]
 23ca0de7	in {km}	[lib/fleet.ts]
 61c1f73a	in {n} day || in {n} days	[lib/fleet.ts]
 12ca64b3	in {n} month || in {n} months	[lib/fleet.ts]
@@ -736,6 +751,9 @@ c6a0023b	Is it right that there's no vehicle?
 365786f8	Join {company}	[app/join/[token].tsx]
 c30cc528	Join or create another company
 1b16a62f	Just looking?	[app/sign-in.tsx]
+731594dc	Keeping the photos	[components/keep.tsx]
+cdb37ef3	Keeping the video	[components/keep.tsx]
+22049077	Kept until {date}, 90 days after they were taken.
 2531c31e	kerbed rim	[check/[id].tsx]
 e5651c68	Keys	[components/vanfacts.tsx]
 9b9e64fc	Kilometres allowed a year
@@ -837,6 +855,8 @@ d979c680	Manage stations	[people.tsx]
 eddecaff	Manager's note: {note}	[components/damage.tsx]
 1eb73e34	Managers and drivers only see their own station.
 4e836fdc	Manual	[lib/fleet.ts]
+0b90a8bc	Mark as damage	[components/keep.tsx]
+74b2ea80	Marked as damage by {name}, {when}.
 13018e30	Marked right	[add.tsx]
 76ba2046	Marked wrong. Actual type: {type}
 09f3246f	median	[log.tsx]
@@ -983,6 +1003,7 @@ cdfc7725	Nothing to decide right now. Checks appear here when a driver sends one
 a5dbc60d	Nothing to save	[components/docscan.tsx]
 753a22b2	Notifications	[components/pickup.tsx]
 f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.
+b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.
 1f86c3ed	Notifications aren't set up on the server yet. Try again after the next update.
 c9bc849a	now	[components/damage.tsx]
 e3b82040	Now	[components/history.tsx]
@@ -1025,6 +1046,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 669aa41e	only owners see this
 8707964e	Only owners see what the van costs.
 081f7d3a	Only photos get the AI damage check.
+44a30114	Only the app creator can do this.
 994b6999	Only the app creator sees the test log.
 e9ccc77a	Only the fleet owner can do this.
 101e86fb	Only the fleet owner can invite fleet managers.
@@ -1072,7 +1094,7 @@ ce25132b	parts purchase	[components/buy.tsx]
 40bd31a0	Parts, photo {n}	[buy/[id].tsx]
 fec127a7	Parts, why, receipt	[buy/[id].tsx]
 35177a60	Parts: {van}	[purchases.ts]
-8be3c943	Password	[app/join/[token].tsx, app/sign-in.tsx]
+8be3c943	Password	[app/join/[token].tsx, app/sign-in.tsx, components/deleteaccount.tsx]
 f9078931	Password: {password}	[account.tsx]
 44e3cbda	Paste the whole link you were sent.
 c30415ea	Payload	[components/vanfacts.tsx]
@@ -1088,14 +1110,17 @@ b37554f6	People	[_layout.tsx, people.tsx, app/(tabs)/_layout.tsx]
 77064d52	Phone	[components/driverrec.tsx]
 e48322d5	phone app	[account.tsx]
 da3f1249	Phone at the wheel
-9f8d2e8e	Phone notifications work in the web app (on the home screen), not in Expo Go.
+8c0fc408	Phone notifications work in the Fratius app from the App Store or Google Play and in the web app, not in Expo Go.
 d01d9003	Photo	[data.tsx]
+1f644f37	Photo deleted	[components/ui.tsx]
 c9bb5c97	Photo of the dashboard
 9f404960	Photo of the fuel card
 3cd5c921	Photo of the parts
 40e0c773	Photo of the receipt
 2e58e0c1	photos	[walk/[id].tsx, app/scan/[id].tsx]
 c8b2e864	Photos	[buy/[id].tsx, log.tsx, components/scanchoice.tsx]
+c9027a2b	Photos and videos are deleted after {n} days. These are gone already.
+ecdeee38	Photos and videos are kept 30 days: these until {date}.
 2d8fc3c9	Photos are stored with the scan in your company's storage.
 c7e2cd6c	Photos at takeover	[components/history.tsx]
 7eb70e28	Photos from the library
@@ -1126,6 +1151,7 @@ e92d2b4c	playback copy {size}	[video/[id].tsx]
 9e79750a	Policy number	[components/vanfacts.tsx]
 52d57635	Possible, {pct}%	[check/[id].tsx]
 7548ab52	Power	[components/vanfacts.tsx]
+7ceacdca	Privacy policy	[components/legal.tsx]
 1baa06b4	Problem	[components/driverrec.tsx]
 5f174de1	Proof	[components/damage.tsx]
 fad43131	Provider and the last digits, never the full number or PIN
@@ -1389,6 +1415,7 @@ ff6d8326	Take more close-ups	[check/[id].tsx]
 7ebd5d4c	Take photo	[add.tsx, check/[id].tsx]
 c108c747	Take photo {n}	[app/scan/[id].tsx]
 60c4e08d	Take the {n} pick-up photos
+caf49f3e	Take the damage mark off
 9da8309a	Take the dashboard photo again.
 da748b10	Take the photo	[components/dash.tsx]
 f801a56f	Take the photo of the receipt first.
@@ -1402,6 +1429,7 @@ d26cdfb3	Tap a column heading to sort, again to reverse. Swipe the table sideway
 a364f3b8	Tap a photo to retake it.
 c0c62214	Tap a photo to see it whole.
 6bcd9f5b	Tap again	[people.tsx]
+308ea189	Tap again to delete your account for good
 7185b77f	Tap again to remove
 3afaa47c	Tap again to remove the demo company
 ea6b21e0	Tap again to retire
@@ -1438,6 +1466,7 @@ c4251eee	The AI marks possible damage, then asks for close-ups of each spot.
 85d4d532	The AI took too long to answer. Try again.
 5dde375e	The Anthropic account is out of credit. Add credit in the Claude Console.
 d9260181	The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.
+732a2984	The app creator's account can't be deleted in the app.
 8e92141c	The app keeps the latest 500 handovers here; older ones are on the van's Drivers tab.
 3e5c42fa	The camera couldn't start.
 9b46aa3c	The camera shows the outline to fit for each one.
@@ -1481,6 +1510,7 @@ c3acf501	The photo didn't upload. Check the connection and try again.
 43aecc03	The photo was read and deleted; it isn't kept with the van.
 0e91970e	The photos are saved as a walk-around.
 a73ac728	The photos didn't upload. Check the connection and try again.
+3866abda	The photos of this check were deleted on {date}. The decisions and the van's damage record stay.
 f19fa04d	The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.
 077e462b	The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.
 63859889	The pick-up photos of {van} are saved with its history.
@@ -1512,7 +1542,9 @@ f72c7e3b	Their van becomes free; their history, walk-arounds and checks stay.
 4d4bd5f6	Then take a photo of the whole receipt: the litres, the total and the card number on it.
 469dbdc0	These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.
 dcb6e009	These photos aren't yours or aren't of this van.
+de5fd80c	These photos belong to another station.
 f7d0d2b1	These photos were already used. Take new ones.
+6fd8484d	These photos were deleted on {date}. The record of the walk-around stays.
 738a4e4e	They left the company. Their van history stays.
 f77d05d1	This AI model isn't available on the Anthropic account. Pick another model in Account.
 1b0bcfd0	This browser can't show notifications. Use Chrome on Android, or the app on an iPhone's home screen.
@@ -1549,6 +1581,7 @@ a67535de	This video belongs to another station.
 180c8580	This video can't be read. Record it again.
 778715da	This video isn't available.
 403aed88	This video was already used. Record a new one.
+60260a05	This video was deleted on {date}. The record of it stays.
 945719fb	This video was recorded more than two hours ago. Record a new one at the van.
 79315d97	This video was uploaded more than two hours ago. Record a new one.
 2fa32b6c	This walk-around has no uploaded photos.
@@ -1610,6 +1643,7 @@ ff75e0dc	Unclear	[check/[id].tsx]
 2f98d5ec	Unknown handover.	[index.ts]
 afff50b1	Unknown person	[person/[uid].tsx]
 d7230991	Unknown person.	[index.ts]
+57d8bad9	Unknown photos or video.
 8f7e467c	Unknown refuel.	[index.ts]
 2e02d6c2	Unknown role.	[index.ts]
 01b107cb	Unknown scan.	[index.ts]
@@ -1753,6 +1787,7 @@ a7950f31	You have {van}. Drop it off first, with a video or its photos, then you
 d583cc3a	You haven't had this van yet.
 16a859b4	You joined as a driver at {station}.
 958d542c	You joined as a fleet manager at {station}.
+fcda0bd5	You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.
 941ff603	You picked up {van}. The photos are kept with its history.
 a7b89960	You picked up {van}. The video is kept with its history.
 e24cfeaa	You scan the vans of your station; your fleet manager reviews the damage checks.
@@ -1779,6 +1814,7 @@ c6b6f706	Your fleet manager gets the details.
 289fdd13	Your fleet manager refused it
 cc5527b7	Your fleet manager refused it. Cancel it.
 b3e23e5e	Your last tour on {van} had no end photo. This photo ends it and starts today's.
+d6135246	Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.
 ab42293e	Your name	[app/sign-in.tsx]
 270d6239	Your notifications come in this language too. Names, notes and what the AI wrote stay as they were written.
 df675083	Your own van history
