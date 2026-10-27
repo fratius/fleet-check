@@ -16,6 +16,8 @@ export const MIN_ELAPSED = 3000;
 export interface SignupRequest {
   plan: string; aiWaitlist: boolean; company: string; country: string; stations: number; vans: number;
   firstName: string; lastName: string; email: string; phone: string;
+  /** The website's language when the form was sent (en, de, ro…). */
+  lang: string;
 }
 
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '');
@@ -40,7 +42,7 @@ export function readSignup(body: unknown): { ok: true; req: SignupRequest } | { 
   if (phone.replace(/\D/g, '').length < 7) return { ok: false, error: 'Enter a mobile number with the country code, like +49 151 2345 6789.' };
   return {
     ok: true,
-    req: { plan, aiWaitlist: b.aiWaitlist === true, company, country: text(b.country, 60) || 'Not given', stations, vans, firstName, lastName, email, phone },
+    req: { plan, aiWaitlist: b.aiWaitlist === true, company, country: text(b.country, 60) || 'Not given', stations, vans, firstName, lastName, email, phone, lang: /^[a-z]{2}$/.test(text(b.lang, 5)) ? text(b.lang, 5) : 'en' },
   };
 }
 
@@ -68,6 +70,7 @@ export function signupMail(r: SignupRequest, id: string) {
     `Name:      ${r.firstName} ${r.lastName}`,
     `Email:     ${r.email}`,
     `Mobile:    ${r.phone}`,
+    `Language:  ${r.lang || 'en'}`,
     `AI damage: ${r.aiWaitlist ? 'wants to hear when it is ready' : 'no'}`,
     '',
     'Reply to this email to answer them directly.',
