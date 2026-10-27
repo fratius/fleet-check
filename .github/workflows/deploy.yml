@@ -101,7 +101,8 @@ jobs:
           set -euo pipefail
           gcloud config set project "$PROJECT" --quiet
           gcloud services enable cloudfunctions.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
-            run.googleapis.com eventarc.googleapis.com pubsub.googleapis.com secretmanager.googleapis.com compute.googleapis.com --quiet
+            run.googleapis.com eventarc.googleapis.com pubsub.googleapis.com secretmanager.googleapis.com compute.googleapis.com \
+            cloudscheduler.googleapis.com --quiet
           # New Google Cloud projects no longer let the default build account build functions; give it the role it needs.
           NUM=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
           gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:${NUM}-compute@developer.gserviceaccount.com" \

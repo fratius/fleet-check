@@ -9,6 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
 import { onCall, onRequest, type CallableRequest } from 'firebase-functions/https';
+import { onSchedule } from 'firebase-functions/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import nodemailer from 'nodemailer';
 import webpush from 'web-push';
@@ -28,6 +29,7 @@ import {
 } from './purchases';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
+import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -504,7 +506,9 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   const aCol = org.collection('assignments');
+  let touched = [vehicleId];
   const r = await db().runTransaction(async (tx) => {
+    touched = [vehicleId];
     const v = await tx.get(vref);
     if (!v.exists) throw fail('not-found', 'This van was removed.');
     const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null; dash?: VanDash | null };
@@ -527,6 +531,7 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
       if (d.id === van.assignedTo?.assignmentId) continue;
       tx.update(d.ref, closeWith(who, 'reassigned'));
       tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
+      touched.push((d.data() as Assignment).vehicleId);
     }
     if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null as string | null }; }
     const now = Date.now();
@@ -541,6 +546,8 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now, kmStart, kmEnd: null } });
     return { assignmentId: aref.id as string | null, vanName: van.name, plate: van.plate || '' };
   });
+  // The checks due now go with the van to its new driver (section 17).
+  if (!('unchanged' in r)) await refreshTodo(org, touched).catch((e) => logger.warn('Checks not worked out', e as Error));
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
   let notified = 0;
   if (driverId && r.assignmentId && !('unchanged' in r) && driverId !== who.uid && 'vanName' in r) {
@@ -758,7 +765,7 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   const m = await checkMedia(who, vehicleId, req.data);
-  return db().runTransaction(async (tx) => {
+  const out = await db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
     if (van.retired) throw fail('failed-precondition', 'This van is retired.');
     if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
@@ -780,6 +787,9 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
     mark('pickup', aref.id);
     return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
   });
+  // The checks due now (section 17), for the driver who just got the van.
+  if (!('unchanged' in out)) await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
+  return out;
 });
 
 /** The driver hands back the van they have, with drop-off photos or a video. */
@@ -1635,6 +1645,170 @@ export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBP
     case 'contacts': return buyContacts(who, org, d);
     default: throw fail('invalid-argument', 'Unknown step.');
   }
+});
+
+/* ---------- 17. Checks for drivers ---------- */
+// Owners and fleet managers ask drivers to check things on their van (the oil level, the cargo area…), how often and
+// on which vans (routine). The driver who has the van does it (routineDone): fine, or a problem with a note, with a
+// photo where the check asks for one. What's due is kept on each van (routines.ts); drivers are reminded and the
+// fleet managers told when it's still not done (routineSweep, every half hour).
+
+const routineName = (lang: string, r: { key: string | null; name: string }) => (r.key ? tr(lang, r.key) : r.name);
+const vanLabel = (v: { name: string; plate?: string | null }) => `${v.name}${v.plate ? ` (${v.plate})` : ''}`;
+
+export const routine = onCall({ timeoutSeconds: 60 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const d = (req.data || {}) as Record<string, unknown>;
+  const org = db().doc(`orgs/${who.orgId}`);
+  const col = org.collection('routines');
+  const id = d.id == null ? null : String(d.id);
+  if (id != null && !ID.test(id)) throw fail('invalid-argument', 'Unknown check.');
+  const old = id ? (await col.doc(id).get()).data() as Omit<Routine, 'id'> | undefined : undefined;
+  if (id && !old) throw fail('not-found', 'This check was removed.');
+  // Managers change their station's checks; checks for every station are the owners'.
+  const mayChange = (stationId: string | null) => who.role === 'owner' || (!!stationId && who.stationIds.includes(stationId));
+  if (old && !mayChange(old.stationId)) throw fail('permission-denied', 'Only the fleet owner changes checks for every station.');
+  if (d.action === 'delete') {
+    if (!id) throw fail('invalid-argument', 'Unknown check.');
+    await col.doc(id).delete();
+    await refreshTodo(org, null);
+    return { ok: true };
+  }
+  if (d.action !== 'save') throw fail('invalid-argument', 'Unknown step.');
+  const key = typeof d.key === 'string' && (SUGGESTIONS as readonly string[]).includes(d.key) ? d.key : null;
+  const name = key || clean(d.name, 60);
+  if (name.length < 2) throw fail('invalid-argument', 'Give the check a name.');
+  const how = d.how as How;
+  if (!HOWS.includes(how)) throw fail('invalid-argument', 'Choose how often.');
+  const days = how === 'days' ? Math.round(Number(d.days)) : null;
+  if (how === 'days' && !(days! >= 2 && days! <= 6)) throw fail('invalid-argument', 'Every 2 to 6 days.');
+  const stationId = d.stationId == null ? null : String(d.stationId);
+  if (stationId == null ? who.role !== 'owner' : !mayChange(stationId)) throw fail('permission-denied', 'Choose your station.');
+  let vans: Routine['vans'];
+  if (d.vans === 'all' || d.vans === 'electric') vans = d.vans;
+  else if (Array.isArray(d.vans) && d.vans.length && d.vans.length <= 300 && d.vans.every((x) => typeof x === 'string' && ID.test(x))) {
+    const ids = Array.from(new Set(d.vans as string[]));
+    const docs = await Promise.all(ids.map((x) => org.collection('vehicles').doc(x).get()));
+    for (const v of docs) {
+      if (!v.exists) throw fail('not-found', 'One of the vans was removed.');
+      if (stationId && v.data()?.stationId !== stationId) throw fail('invalid-argument', 'Choose vans of that station.');
+      needStation(who, v.data()?.stationId);
+    }
+    vans = ids;
+  } else throw fail('invalid-argument', 'Choose the vans.');
+  if (!id && (await col.count().get()).data().count >= 60) throw fail('resource-exhausted', 'That\'s a lot of checks already. Remove one first.');
+  const now = Date.now();
+  const doc = { key, name, how, days, vans, stationId, photo: d.photo === true, updatedAt: now, updatedBy: who.uid, updatedByName: who.name };
+  const ref = id ? col.doc(id) : col.doc();
+  if (id) await ref.update(doc);
+  else await ref.set({ ...doc, createdAt: now, createdBy: who.uid, createdByName: who.name });
+  await refreshTodo(org, null);
+  return { id: ref.id };
+});
+
+export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req);
+  const d = (req.data || {}) as Record<string, unknown>;
+  const vehicleId = String(d.vehicleId || ''), routineId = String(d.routineId || '');
+  if (!ID.test(vehicleId) || !ID.test(routineId)) throw fail('invalid-argument', 'Unknown check.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const ok = d.ok !== false;
+  const note = clean(d.note, 500);
+  if (!ok && note.length < 3) throw fail('invalid-argument', 'Say what\'s wrong.');
+  const path = d.path == null || d.path === '' ? null : checkPath(d.path, `orgs/${who.orgId}/routines/${who.uid}/`);
+  if (path && !(await bucket().file(path).exists())[0]) throw fail('not-found', 'The photo didn\'t upload. Take it again.');
+  const rules = await loadRoutines(org);
+  const r = rules.find((x) => x.id === routineId);
+  if (!r) throw fail('not-found', 'This check was removed.');
+  if (r.photo && !path) throw fail('invalid-argument', 'This check needs a photo.');
+  const vref = org.collection('vehicles').doc(vehicleId);
+  const now = Date.now();
+  const out = await db().runTransaction(async (tx) => {
+    const snap = await tx.get(vref);
+    if (!snap.exists) throw fail('not-found', 'This van was removed.');
+    const van = snap.data() as VanForRoutines & { name: string; plate?: string };
+    needStation(who, van.stationId);
+    if (van.assignedTo?.driverId !== who.uid && !staffAt(who, van.stationId)) {
+      throw fail('permission-denied', 'The driver who has this van does its checks (or the station\'s fleet manager).');
+    }
+    if (!applies(r, vehicleId, van)) throw fail('failed-precondition', 'This check isn\'t for this van.');
+    const last: Last = { at: now, by: who.uid, byName: who.name, ok, note: note || null };
+    const routines = { ...(van.routines || {}), [routineId]: last };
+    const todo = vanTodo(rules, vehicleId, { ...van, routines }, now);
+    const ref = org.collection('routineDone').doc();
+    tx.set(ref, {
+      routineId, key: r.key, name: r.name, vehicleId, vehicleName: van.name, plate: van.plate || '', stationId: van.stationId || null,
+      by: who.uid, byName: who.name, driverId: van.assignedTo?.driverId || null, assignmentId: van.assignedTo?.assignmentId || null,
+      ok, note: note || null, path, at: now, createdAt: now,
+    });
+    tx.update(vref, { [`routines.${routineId}`]: last, todo });
+    return { id: ref.id, todo, van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null } };
+  });
+  // A problem goes to the station's fleet managers (or the owners) at once.
+  let notified = 0;
+  if (!ok) {
+    const bosses = await bossesOf(who.orgId, out.van.stationId, 'wash', who.uid);
+    notified = await tell(bosses, (lang) => ({
+      title: tr(lang, 'Problem: {check}, {van}', { check: routineName(lang, r), van: vanLabel(out.van) }),
+      body: tr(lang, '{name}: {note}', { name: who.name, note }),
+      url: `/vehicle/${vehicleId}`, tag: `routine-${vehicleId}-${routineId}`,
+    }));
+  }
+  return { id: out.id, todo: out.todo, notified };
+});
+
+/**
+ * What's due on every van again (a new day), and the reminders: the driver an hour after a check fell due, the
+ * station's fleet managers after three, once each, between 06:00 and 20:00 German time.
+ */
+export async function sweepRoutines(now = Date.now()) {
+  let reminded = 0, told = 0;
+  for (const o of (await db().collection('orgs').get()).docs) {
+    if ((await o.ref.collection('routines').limit(1).get()).empty) continue;
+    const vans = await refreshTodo(o.ref, null, now);
+    for (const v of vans) {
+      const a = v.van.assignedTo;
+      if (!a) continue;
+      for (const t of v.todo) {
+        const due = nagsDue(t, now);
+        if (!due.driver && !due.staff) continue;
+        const nref = o.ref.collection('routineNags').doc(`${t.id}_${v.id}_${t.period}`.replace(/[^A-Za-z0-9_:.-]/g, '-').slice(0, 300));
+        const nag = (await nref.get()).data() as { driverAt?: number; staffAt?: number } | undefined;
+        const patch: Record<string, number> = {};
+        if (due.driver && !nag?.driverAt) {
+          await notify(a.driverId, (lang) => ({
+            title: tr(lang, '{check}: {van}', { check: routineName(lang, t), van: vanLabel(v) }),
+            body: tr(lang, 'Not done yet. Open the van in the app and do it now.'),
+            url: `/vehicle/${v.id}`, tag: `routine-${v.id}-${t.id}`,
+          })).catch(() => 0);
+          patch.driverAt = now; reminded++;
+        }
+        if (due.staff && !nag?.staffAt) {
+          await tell(await bossesOf(o.id, v.stationId, 'wash', a.driverId), (lang) => ({
+            title: tr(lang, '{check} not done: {van}', { check: routineName(lang, t), van: vanLabel(v) }),
+            body: tr(lang, '{name} has the van and hasn\'t done it yet.', { name: a.driverName }),
+            url: `/vehicle/${v.id}`, tag: `routine-${v.id}-${t.id}`,
+          }));
+          patch.staffAt = now; told++;
+        }
+        if (Object.keys(patch).length) await nref.set({ ...patch, vehicleId: v.id, routineId: t.id, period: t.period, ...(nag ? {} : { createdAt: now }) }, { merge: true });
+      }
+    }
+  }
+  return { reminded, told };
+}
+
+export const routineSweep = onSchedule({ schedule: 'every 30 minutes', timeZone: 'Europe/Berlin', secrets: [WEBPUSH_KEYS], timeoutSeconds: 300 }, async () => {
+  const r = await sweepRoutines();
+  logger.info('Checks for drivers', r);
+});
+
+/** The same, now (the app creator; the emulator tests pass a time). */
+export const routineSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const at = process.env.FUNCTIONS_EMULATOR === 'true' && typeof req.data?.now === 'number' ? req.data.now : Date.now();
+  return sweepRoutines(at);
 });
 
 /* ---------- Website: the request form on fratius.com ---------- */

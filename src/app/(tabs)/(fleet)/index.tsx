@@ -8,6 +8,7 @@ import { Notifications, PickupRequest, usePickupRequest } from '@/components/pic
 import { TourCard, kmText } from '@/components/dash';
 import { BuyButtons, MyOpenBuy } from '@/components/buy';
 import { ScanChoice } from '@/components/scanchoice';
+import { DueChecks, dueOn } from '@/components/routines';
 import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useWhoDid } from '@/lib/names';
@@ -70,11 +71,13 @@ export default function Fleet() {
       {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
       {/* A refuel, wash or parts purchase left half done (the app was closed at the pump). */}
       <MyOpenBuy />
+      {/* Checks for drivers due on the driver's van now. */}
+      {s.myVan && !pickup ? <DueChecks v={s.myVan} /> : null}
       {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
           style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
           <T v="medium" color={touring ? undefined : '#000'}>{t('Your van')}</T>
-          <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} ›</T>
+          <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} {fwd()}</T>
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <ScanChoice v={s.myVan} small onMarker={!touring} />
@@ -143,6 +146,7 @@ export default function Fleet() {
                 {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? t('In use') : t('Free')} /> : null}
                 {k?.status === 'submitted' ? <Pill v="amber" text={t('Waiting for review')} /> : null}
                 {k?.status === 'checking' ? <Pill v="muted" text={t('Close-ups pending')} /> : null}
+                {dueOn(v).length ? <Pill v="amber" text={tp(dueOn(v).length, '{n} check to do', '{n} checks to do')} /> : null}
                 {v.dash?.warnings?.length && Date.now() - v.dash.at < 7 * 86_400_000 ? <Pill v="bad" text={tp(v.dash.warnings.length, '{n} warning light', '{n} warning lights')} /> : null}
                 {damages ? <Pill v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null}
                 {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null}

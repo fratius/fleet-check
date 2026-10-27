@@ -6,6 +6,7 @@ import { Platform, Pressable, View } from 'react-native';
 import { AllCompanies, MyCompanies } from '@/components/companies';
 import { LanguageCard } from '@/components/language';
 import { ViewAsCard } from '@/components/viewas';
+import { RoutinesCard } from '@/components/routines';
 import { Notifications } from '@/components/pickup';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
 import { tokenFrom } from '@/lib/people';
@@ -59,6 +60,7 @@ export default function Account() {
       )}
 
       {s.staff ? <FleetSettings /> : null}
+      {s.staff && s.mode === 'firebase' ? <RoutinesCard /> : null}
 
       {s.staff ? (
         <Card>

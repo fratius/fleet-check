@@ -890,6 +890,59 @@ test('km per driver: the next driver starts at the last photo\'s km; earlier dat
   assert.match(fill(), /No companies to fill in/);
 });
 
+test('checks for drivers: set by the manager, done by the driver who has the van, reminders when not done', async () => {
+  const { v2 } = S.vans;
+  const R = (p, x) => p.call('routine', { orgId: S.org, ...x });
+  const vanOf = async (p) => (await getDoc(doc(p.db, 'orgs', S.org, 'vehicles', v2.id))).data();
+  // Owners and fleet managers set them; managers only for their station.
+  await fails(R(S.d1, { action: 'save', key: 'Oil level', how: 'daily', vans: 'all', stationId: S.s1, photo: false }), 'permission-denied');
+  await fails(R(S.mgr, { action: 'save', key: 'Oil level', how: 'daily', vans: 'all', stationId: null, photo: false }), 'permission-denied');
+  await fails(R(S.mgr, { action: 'save', key: 'Oil level', how: 'daily', vans: 'all', stationId: S.s2, photo: false }), 'permission-denied');
+  await fails(R(S.mgr, { action: 'save', name: 'x', how: 'daily', vans: 'all', stationId: S.s1, photo: false }), 'invalid-argument');
+  await fails(R(S.mgr, { action: 'save', key: 'Oil level', how: 'days', days: 9, vans: 'all', stationId: S.s1, photo: false }), 'invalid-argument');
+  const oil = (await R(S.mgr, { action: 'save', key: 'Oil level', how: 'daily', vans: 'all', stationId: S.s1, photo: false })).id;
+  const cargo = (await R(S.mgr, { action: 'save', key: 'Cargo area clean and empty', how: 'every', vans: [v2.id], stationId: S.s1, photo: true })).id;
+  // An electric-only check doesn't touch a diesel van.
+  await R(S.own, { action: 'save', key: 'Plugged in to charge', how: 'daily', vans: 'electric', stationId: null, photo: false });
+  // Due now on Dana's van, and she sees it.
+  let van = await vanOf(S.d1);
+  assert.deepEqual(van.todo.map((x) => x.id).sort(), [oil, cargo].sort());
+  // Someone at another station can't do it; the driver does it.
+  await fails(S.d3.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true }), 'permission-denied');
+  const d1 = await S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true });
+  assert.deepEqual(d1.todo.map((x) => x.id), [cargo]);
+  // The cargo area needs a photo; a problem needs a note.
+  await fails(S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: cargo, ok: true }), 'invalid-argument');
+  const path = `orgs/${S.org}/routines/${S.d1.uid}/${Date.now()}.jpg`;
+  await uploadBytes(ref(S.d1.st, path), jpeg(), { contentType: 'image/jpeg' });
+  await fails(S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: cargo, ok: false, note: '', path }), 'invalid-argument');
+  const d2 = await S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: cargo, ok: false, note: 'Boxes left from yesterday', path });
+  assert.deepEqual(d2.todo, []);
+  van = await vanOf(S.d1);
+  assert.equal(van.routines[cargo].ok, false);
+  assert.equal(van.routines[cargo].note, 'Boxes left from yesterday');
+  assert.equal(van.routines[oil].byName, 'Dana Driver');
+  // Kept: the manager reads the station's, the driver her own; nobody writes them.
+  const done = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'routineDone'), where('stationId', 'in', [S.s1]), orderBy('createdAt', 'desc')));
+  assert.equal(done.size, 2);
+  assert.equal((await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'routineDone'), where('by', '==', S.d1.uid), orderBy('createdAt', 'desc')))).size, 2);
+  // Tomorrow at noon the daily one is due again: the driver is reminded and the manager told, once each.
+  const { hourAt } = fnRequire('./lib/routines.js');
+  const cr = await appCreator('Cleo Checks');
+  await fails(S.own.call('routineSweepNow', { orgId: S.org }), 'permission-denied');
+  const noon = hourAt(Date.now() + 86400_000, 12);
+  const s1 = await cr.call('routineSweepNow', { orgId: S.org, now: noon });
+  assert.ok(s1.reminded >= 1 && s1.told >= 1, JSON.stringify(s1));
+  const s2 = await cr.call('routineSweepNow', { orgId: S.org, now: noon + 1800_000 });
+  assert.deepEqual(s2, { reminded: 0, told: 0 });
+  // Not at night.
+  assert.deepEqual(await cr.call('routineSweepNow', { orgId: S.org, now: hourAt(Date.now() + 2 * 86400_000, 22) }), { reminded: 0, told: 0 });
+  // Removed: nothing due from it any more.
+  await R(S.mgr, { action: 'delete', id: oil });
+  await cr.call('routineSweepNow', { orgId: S.org, now: Date.now() });
+  assert.ok(!(await vanOf(S.d1)).todo.some((x) => x.id === oil));
+});
+
 test('costs move out of the record managers read (Deploy runs this once)', async () => {
   const { v3 } = S.vans;
   const det = adminDb().doc(`orgs/${S.org}/vehicleDetails/${v3.id}`);

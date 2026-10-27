@@ -63,6 +63,8 @@ beforeEach(async () => {
     await put(`orgs/${O}/tours/t1`, { driverId: 'drv1', vehicleId: 'v1', stationId: S1, km: 120, createdAt: 1, startAt: 1 });
     await put(`orgs/${O}/tours/t2`, { driverId: 'drv2', vehicleId: 'v2', stationId: S2, km: 90, createdAt: 2, startAt: 2 });
     await put(`orgs/${O}/readings/r1`, { driverId: 'drv1', by: 'drv1', vehicleId: 'v1', stationId: S1, odometerKm: 48000, createdAt: 1, at: 1 });
+    await put(`orgs/${O}/routines/r1`, { key: 'Oil level', name: 'Oil level', how: 'weekly', days: null, vans: 'all', stationId: S1, photo: false, createdAt: 1 });
+    await put(`orgs/${O}/routineDone/rd1`, { routineId: 'r1', vehicleId: 'v1', stationId: S1, by: 'drv1', byName: 'Driver 1', ok: true, at: 1, createdAt: 1 });
     await put(`orgs/${O}/purchases/b1`, { kind: 'fuel', status: 'waiting', vehicleId: 'v1', stationId: S1, by: 'drv1', byName: 'Driver 1', createdAt: 1, card: { needed: true, expected: '4471', result: 'mismatch' } });
     await put(`orgs/${O}/purchases/b2`, { kind: 'wash', status: 'done', vehicleId: 'v2', stationId: S2, by: 'drv2', byName: 'Driver 2', createdAt: 2, total: 12.9 });
     await put(`orgs/${O}/buyReads/br1`, { purchaseId: 'b1', step: 'card', by: 'drv1', createdAt: 1 });
@@ -270,6 +272,19 @@ describe('the app creator viewing the app as someone else', () => {
   test('nobody else can set it', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1'), { viewAs: { org: O, role: 'owner', st: null } })));
   test('nobody else gets anything from it', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/vehicles/v1`))));
   test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(vehiclesAt(as('drv2'), [S2]))));
+});
+
+describe('checks for drivers', () => {
+  test('drivers see which checks there are', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/routines/r1`))));
+  test('nobody outside the company does', () => assertFails(getDoc(doc(as('drv9'), `orgs/${O}/routines/r1`))));
+  test('managers set them only through the server', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/routines/r2`), { name: 'Oil', how: 'daily', vans: 'all', stationId: S1 })));
+  test('not even the owner writes them directly', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}/routines/r1`), { name: 'Changed' })));
+  test('a driver reads the checks they did', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/routineDone/rd1`))));
+  test('another driver doesn\'t', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/routineDone/rd1`))));
+  test('the station\'s manager does', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/routineDone/rd1`))));
+  test('nobody writes a check as done from the app', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/routineDone/rd2`), { by: 'drv1', stationId: S1, ok: true, at: 1 })));
+  test('nobody clears what\'s due on a van from the app', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v1`), { todo: [] })));
+  test('or marks a check done on the van', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}/vehicles/v1`), { routines: { r1: { at: 1, ok: true } } })));
 });
 
 describe('language', () => {

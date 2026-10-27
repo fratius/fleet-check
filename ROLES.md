@@ -141,6 +141,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | Tours `tours`, readings `readings` | read | read | their own | the server only |
 | Damage log `damageLog` | read | read | the ones they're in | the server only |
 | Refuels, washes, parts `purchases` | read | read | their own | the server only; never deleted |
+| Checks for drivers `routines` | read, set (any station or all) | read, set (own station) | read | the server only (`routine`) |
+| Checks done `routineDone` | read | read | their own | the server only (`routineDone`); never deleted |
 | What the AI read from dashboard, card and receipt `buyReads` | no | no | no | the server; app creator reads |
 | What the AI read first `dashReads` | no | no | no | the server; app creator reads |
 | Documents read from a photo `docReads` (kind, count, cost; no values) | no | no | no | the server; app creator reads |
@@ -175,6 +177,13 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   whom) is written only by the server, from tour photos and from the dashboard photo of a finished refuel, wash or
   parts purchase. Everyone at the station sees it on the van and the km in the fleet list (drivers too: they need
   to know about a warning light before they drive). The rules refuse `dash` from the app.
+- **Checks for drivers** (the `routine` function; `orgs/{org}/routines`): owners set them for one station or every
+  station, managers for their own station: what to check, how often (every time a driver gets the van, once a day,
+  every 2 to 6 days, once a week), which vans (all, electric, or chosen ones), and whether a photo is needed. A
+  check is due only while someone has the van, and that driver does it (`routineDone`; the station's managers and
+  owners may too): fine, or a problem with a note. The server keeps what's due on the van (`todo`) and when each
+  was last done (`routines`); the rules refuse both from the app. Reminders, 06:00 to 20:00 German time: the
+  driver after an hour, the station's managers (or the owners) after three; a problem goes to them at once.
 - Deadlines (vans and drivers), the Review list of warning lights and tours without their photos show to owners
   and managers only: on the van or person, in the fleet list, and in Review.
 

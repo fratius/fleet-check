@@ -111,6 +111,14 @@ station's managers add and correct them; corrections show who made them; nobody 
 their own. When adding one, the app checks the van history: it suggests the van the driver had then and warns if
 the history says someone else had it.
 
+### Checks for drivers
+
+- What owners and fleet managers ask drivers to check on their van (oil level, cargo area, plugged in to charge…),
+  how often and on which vans. Each check done is kept (`routineDone`): which check, van, who, when, fine or the
+  problem they wrote, and the photo where the check asks for one. Never changed or deleted.
+- Not kept: anything about the driver beyond who did it and when. A missed check isn't recorded as such; it shows
+  in Review while it's due, and the reminders are only notifications.
+
 ### Tours from dashboard photos (the owner turns it on)
 
 - The driver photographs the dashboard when a tour starts and when it ends. The AI reads the odometer, the fuel

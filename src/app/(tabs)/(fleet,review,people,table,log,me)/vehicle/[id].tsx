@@ -10,6 +10,7 @@ import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, TourLine, VanNow } from '@/components/dash';
+import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { useWhoDid } from '@/lib/names';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
@@ -118,6 +119,8 @@ export default function VehicleScreen() {
       {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : <TourCard v={v} />}
       {/* A refuel left half done, or (staff) a driver waiting at the pump for an answer. */}
       <BuyNow v={v} />
+      {/* Checks for drivers due on this van now (the driver who has it, and the station's managers). */}
+      <DueChecks v={v} />
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
         <Van3D sp={sp} dots={damages.map((d) => ({ key: d.key, label: String(d.no), pos: d.pos }))} selected={sel} onSelect={setSel} focus={focus}
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
@@ -288,6 +291,7 @@ export default function VehicleScreen() {
         </View>
       ) : <Card dashed><T v="hint">{t('The drivers of each van need the Firebase backend.')}</T></Card>) : null}
 
+      {tab === 'details' && s.mode === 'firebase' ? <VanRoutines v={v} /> : null}
       {tab === 'details' ? <VanRecord v={v} /> : null}
       {tab === 'details' && s.runs(v.stationId) ? (
         <View style={{ gap: 6 }}>
