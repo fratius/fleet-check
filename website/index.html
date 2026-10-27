@@ -1112,7 +1112,7 @@ h1 .mark { position: relative; z-index: -1; }
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = (n) => new Intl.NumberFormat(loc(), { style: 'currency', currency: CONFIG.currency, maximumFractionDigits: 0 }).format(n);
+  const money = (n) => new Intl.NumberFormat(loc(), { style: 'currency', currency: CONFIG.currency, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 }).format(n);
   const num = (n) => new Intl.NumberFormat(loc(), { maximumFractionDigits: 1 }).format(n);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const limitText = (p) => (p.vans ? t('Up to {n} vans', { n: num(p.vans) }) : t('Unlimited vans'));
