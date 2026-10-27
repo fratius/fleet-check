@@ -990,3 +990,65 @@ test('the website request form: stored for the team, spam and bad input refused,
   const owner = await person('Website Visitor');
   await fails(getDocs(collection(owner.db, 'siteRequests')));
 });
+
+test('people delete their own account: login and profile go, the company keeps its history with their name', async () => {
+  // A driver who has a van.
+  const { invites } = await S.own.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+  const gus = await person('Gus Gone');
+  await gus.call('acceptInvite', { token: invites[0].token, details: { firstName: 'Gus', lastName: 'Gone', phone: '+49 151 9', transporterId: 'G1' } });
+  const vr = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+  await setDoc(vr, { name: 'Van G', plate: 'GONE1', cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
+  const { assignmentId } = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: vr.id, driverId: gus.uid });
+  // First what would happen; then the account goes.
+  const plan = await gus.call('deleteAccount', { check: true });
+  assert.deepEqual(plan.companies.map((c) => [c.id, c.outcome, c.role]), [[S.org, 'leave', 'driver']]);
+  assert.deepEqual(await gus.call('deleteAccount', {}), { ok: true, closed: [] });
+  await fails(person(null, `gus.${run}@test.dev`));
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'members', gus.uid))).exists(), false);
+  assert.equal((await adminDb().doc(`users/${gus.uid}`).get()).exists, false);
+  // The handover ends ("deleted their account"), the van is free, the history keeps the name.
+  const a = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'assignments', assignmentId))).data();
+  assert.equal(a.endReason, 'account deleted');
+  assert.equal(a.driverName, 'Gus Gone');
+  assert.equal((await vanDoc(S.mgr, vr.id)).assignedTo, null);
+
+  // The only fleet owner of a company with other people in it hands it over first.
+  const ownPlan = await S.own.call('deleteAccount', { check: true });
+  assert.equal(ownPlan.companies.find((c) => c.id === S.org).outcome, 'blocked');
+  await fails(S.own.call('deleteAccount', {}), 'failed-precondition');
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org))).exists(), true);
+
+  // Sam's own company: blocked while Dora is in it as a driver, fine once she's an owner too; when Dora, the last
+  // member, deletes her account, the company goes with it.
+  const sam = await person('Sam Solo');
+  const org = doc(collection(sam.db, 'orgs'));
+  await setDoc(org, { name: 'Solo DSP', createdBy: sam.uid, createdAt: Date.now(), stationsReady: true });
+  await setDoc(doc(sam.db, 'orgs', org.id, 'members', sam.uid), { role: 'owner', stationIds: [], email: '', name: 'Sam Solo', joinedAt: Date.now() });
+  const st = doc(collection(sam.db, 'orgs', org.id, 'stations'));
+  await setDoc(st, { name: 'SOLO1', code: '', createdAt: Date.now() });
+  await setDoc(doc(sam.db, 'users', sam.uid), { orgIds: [org.id], orgId: org.id }, { merge: true });
+  assert.deepEqual((await sam.call('deleteAccount', { check: true })).companies.map((c) => c.outcome), ['close']);
+  const inv = await sam.call('createInvite', { orgId: org.id, role: 'driver', stationId: st.id, count: 1 });
+  const dora = await person('Dora Next');
+  await dora.call('acceptInvite', { token: inv.invites[0].token, details: { firstName: 'Dora', lastName: 'Next', phone: '+49 151 8', transporterId: 'D1' } });
+  assert.deepEqual((await sam.call('deleteAccount', { check: true })).companies.map((c) => c.outcome), ['blocked']);
+  await sam.call('changePerson', { orgId: org.id, uid: dora.uid, role: 'owner' });
+  assert.deepEqual((await sam.call('deleteAccount', { check: true })).companies.map((c) => c.outcome), ['leave']);
+  await sam.call('deleteAccount', {});
+  assert.equal((await getDoc(doc(dora.db, 'orgs', org.id))).exists(), true);
+  assert.deepEqual(await dora.call('deleteAccount', {}), { ok: true, closed: ['Solo DSP'] });
+  assert.equal((await adminDb().doc(`orgs/${org.id}`).get()).exists, false);
+
+  // A demo company goes with the account of whoever made it, demo logins included.
+  const dee = await person('Dee Demo');
+  const { orgId: demoId } = await dee.call('createDemoCompany', {});
+  const login = (await getDoc(doc(dee.db, 'orgs', demoId))).data().demoLogins[0];
+  assert.deepEqual((await dee.call('deleteAccount', { check: true })).companies.map((c) => [c.outcome, c.demo]), [['close', true]]);
+  await dee.call('deleteAccount', {});
+  assert.equal((await adminDb().doc(`orgs/${demoId}`).get()).exists, false);
+  await fails(person(null, login.email, login.password));
+
+  // The app creator's account isn't deleted from the app.
+  const cr = await appCreator('Cy Creator');
+  await fails(cr.call('deleteAccount', {}), 'failed-precondition');
+});

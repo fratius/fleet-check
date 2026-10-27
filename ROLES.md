@@ -73,6 +73,14 @@ the product owner's explicit decision first.
 - **Nothing that belongs to the history is deleted.** Vans are retired, never deleted (`retireVan`; they can be
   brought back). Walk-arounds, damage checks and companies can't be deleted from the app. Removing a person
   (`removePerson`) ends their assignment and frees the van; their history, walk-arounds and checks stay.
+- **People delete their own account** (`deleteAccount`, Account tab and the "Your company" screen; the App Store
+  and Google Play require it). Decided by the product owner: the login, the profile (`users/{uid}`, the
+  membership with name, phone and Transporter ID) and the phone notifications go; the company keeps its records
+  with their name (assignments, walk-arounds, checks, refuels, the driver record). Their open assignment ends as
+  "account deleted" and the van is free. They enter their password again first (the server wants a sign-in from
+  the last 10 minutes). The only fleet owner of a company with other people in it makes someone else owner first;
+  an owner who is the company's only member closes it with the account (everything in it is deleted), and a demo
+  company goes with the account of whoever made it. The app creator's account isn't deleted from the app.
 - **Who changes it, all on the server:** owners and managers of the station give a van to someone or make it
   free (`assignVan`); retire or bring back a van (`retireVan`). Only owners move vans between stations
   (`moveVan`) and change people's roles and stations (`changePerson`); both end assignments that no longer fit.

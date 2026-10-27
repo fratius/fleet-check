@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
+import { DeleteAccount } from '@/components/deleteaccount';
 import { AllCompanies } from '@/components/companies';
 import { LanguageLink } from '@/components/language';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
@@ -66,6 +67,7 @@ export default function SignIn() {
           <Button title={t('Open a demo company')} loading={demoBusy} onPress={async () => { setDemoBusy(true); setErr(null); try { await s.openDemo(); } catch (e) { setErr(authMessage(e)); } finally { setDemoBusy(false); } }} />
         </Card>
         <Button v="link" title={t('Sign out')} onPress={() => s.signOut()} />
+        <DeleteAccount />
       </Screen>
     );
   }

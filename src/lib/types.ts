@@ -302,12 +302,13 @@ export interface DamageLog {
  * One person driving one van from `start` to `end` (null while it lasts). Written only by the server and never
  * edited or deleted: together they are the permanent history of every van and every driver.
  */
-export type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
+export type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved' | 'account deleted';
 /** Why an assignment ended, for the history lists (shown with t()). */
 export const END_REASON: Record<EndReason, string> = {
   reassigned: N_('given to someone else'), ended: N_('made free'), 'dropped off': N_('dropped off'), 'taken over': N_('taken over'),
   'switched van': N_('swapped for another van'), 'driver removed': N_('removed from the company'), 'driver moved': N_('moved to another station'),
   'role changed': N_('role changed'), 'van retired': N_('van retired'), 'van moved': N_('van moved to another station'),
+  'account deleted': N_('driver deleted their account'),
 };
 
 export interface Assignment {
@@ -626,6 +627,16 @@ export interface Member {
 }
 
 /** An invite link: one person can use it, within 24 hours, to join with this role at this station. */
+/** What deleting your account does in one company (deleteAccount with check). */
+export interface AccountCompany {
+  id: string;
+  name: string;
+  role: Role;
+  /** leave: you leave it; close: you're its only member (or it's your demo), it's deleted; blocked: hand it over first. */
+  outcome: 'leave' | 'close' | 'blocked';
+  demo: boolean;
+}
+
 export interface Invite {
   token: string;
   orgId: string;

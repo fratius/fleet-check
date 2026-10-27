@@ -5,6 +5,7 @@
 # Needs the secrets Deploy already uses (EXPO_TOKEN, FIREBASE_SERVICE_ACCOUNT). Optional, for iPhone builds made
 # entirely here (otherwise run the first iPhone build once from a computer, store/README.md step 3):
 #   ASC_API_KEY_P8, ASC_KEY_ID, ASC_ISSUER_ID, APPLE_TEAM_ID   an App Store Connect API key (Admin)
+# and the variable APPLE_TEAM_TYPE: INDIVIDUAL (default) or COMPANY_OR_ORGANIZATION, as on developer.apple.com.
 name: Store build
 
 on:
@@ -90,7 +91,7 @@ jobs:
               echo "EXPO_ASC_KEY_ID=$KID"
               echo "EXPO_ASC_ISSUER_ID=$ISS"
               echo "EXPO_APPLE_TEAM_ID=$TEAM"
-              echo "EXPO_APPLE_TEAM_TYPE=INDIVIDUAL"
+              echo "EXPO_APPLE_TEAM_TYPE=${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}"
             } >> "$GITHUB_ENV"
             echo "Using the App Store Connect key."
           else

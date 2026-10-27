@@ -7,7 +7,7 @@ import { httpsCallable } from 'firebase/functions';
 import { fb } from './firebase';
 import { t } from './i18n';
 import { newId } from './images';
-import type { Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { AccountCompany, Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
@@ -227,6 +227,9 @@ export const ai = {
   readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
+  /** check: what deleting the account would do in each company; without it, deletes it (after a fresh sign-in). */
+  accountPlan: call<{ check: true }, { companies: AccountCompany[] }>('deleteAccount', 60000),
+  deleteAccount: call<Record<string, never>, { ok: boolean; closed: string[] }>('deleteAccount', 310000),
   /** Refuel, wash and parts, step by step (one function, so it stays warm between the steps). */
   buy: {
     start: call<{ orgId: string; action: 'start'; kind: BuyKind; vehicleId: string; path: string }, { id: string; needsCard: boolean; lastKm: number | null }>('purchase', 60000),

@@ -14,7 +14,7 @@ import nodemailer from 'nodemailer';
 import webpush from 'web-push';
 
 import { ask } from './claude';
-import { createDemo, deleteDemo } from './demo';
+import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
@@ -472,7 +472,7 @@ export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => 
 // changes are closing an open one and, while it's open, its km from each dashboard photo (vandash.ts). That record
 // is the history of every van and every driver.
 
-type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved';
+type EndReason = 'reassigned' | 'ended' | 'dropped off' | 'taken over' | 'switched van' | 'driver removed' | 'driver moved' | 'role changed' | 'van retired' | 'van moved' | 'account deleted';
 interface Assignment {
   vehicleId: string; vehicleName: string; plate: string; driverId: string; driverName: string; stationId: string | null;
   start: number; end: number | null; startedBy: string; startedByName: string; endedBy: string | null; endedByName: string | null; endReason: EndReason | null;
@@ -1693,3 +1693,82 @@ export const websiteSignup = onRequest({ timeoutSeconds: 30, memory: '256MiB', m
   res.json({ ok: true });
 });
 
+
+/* ---------- 17. Deleting your own account (App Store and Google Play require it in the app) ---------- */
+// Decided by the product owner: the login, the profile (name, phone, Transporter ID on the membership) and the
+// phone notifications are deleted; the companies keep their records with the person's name (assignments,
+// walk-arounds, checks, refuels, the driver record), because they are the van history the company relies on.
+// An owner hands the company over first (makes someone else owner). An owner who is the only member closes the
+// company with the account; a demo company they made goes with it.
+
+type AccountOutcome = 'leave' | 'close' | 'blocked';
+interface AccountCompany { id: string; name: string; role: Role; outcome: AccountOutcome; demo: boolean }
+
+/** What deleting this person's account does in each company they belong to. */
+async function accountPlan(uid: string): Promise<AccountCompany[]> {
+  const u = (await db().doc(`users/${uid}`).get()).data() || {};
+  const ids = [...new Set([...(Array.isArray(u.orgIds) ? u.orgIds : []), ...(typeof u.orgId === 'string' ? [u.orgId] : [])])]
+    .filter((x): x is string => typeof x === 'string' && ID.test(x));
+  const out: AccountCompany[] = [];
+  for (const id of ids) {
+    const org = db().doc(`orgs/${id}`);
+    const [o, m] = await Promise.all([org.get(), org.collection('members').doc(uid).get()]);
+    if (!o.exists || !m.exists) continue;
+    const role: Role = ['owner', 'admin'].includes(m.data()?.role) ? 'owner' : m.data()?.role === 'manager' ? 'manager' : 'driver';
+    const demo = o.data()?.demo === true;
+    const name = String(o.data()?.name || '');
+    let outcome: AccountOutcome = 'leave';
+    if (demo && o.data()?.createdBy === uid) outcome = 'close';
+    else if (role === 'owner' && !demo) {
+      const others = (await org.collection('members').limit(500).get()).docs.filter((d) => d.id !== uid);
+      if (others.some((d) => ['owner', 'admin'].includes(d.data().role))) outcome = 'leave';
+      else outcome = others.length ? 'blocked' : 'close';
+    }
+    out.push({ id, name, role, outcome, demo });
+  }
+  return out;
+}
+
+export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
+  if (req.auth?.token?.creator === true) throw fail('failed-precondition', 'The app creator\'s account can\'t be deleted in the app.');
+  const plan = await accountPlan(uid);
+  // First the question "what would happen?", for the confirmation screen.
+  if (req.data?.check === true) return { companies: plan };
+  // The password was entered again just now (the app signs in again before asking), so a phone left unlocked
+  // can't delete someone's account.
+  const authAt = Number(req.auth?.token?.auth_time || 0) * 1000;
+  if (!authAt || Date.now() - authAt > 10 * 60_000) throw fail('unauthenticated', 'Enter your password again to delete your account.');
+  const blocked = plan.filter((c) => c.outcome === 'blocked');
+  if (blocked.length) {
+    throw fail('failed-precondition', 'You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.', { companies: blocked.map((c) => c.name).join(', ') });
+  }
+  for (const c of plan) {
+    if (c.outcome === 'close') { await deleteCompany(c.id); continue; }
+    const org = db().doc(`orgs/${c.id}`);
+    const mref = org.collection('members').doc(uid);
+    await db().runTransaction(async (tx) => {
+      const m = await tx.get(mref);
+      if (!m.exists) return;
+      const d = m.data() as { name?: string; stationIds?: string[] };
+      const who: Who = { uid, name: d.name || 'Deleted account', orgId: c.id, tier: 'quick', role: c.role, stationIds: d.stationIds || [], creator: false };
+      const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+      for (const a of open) {
+        tx.update(a.ref, closeWith(who, 'account deleted'));
+        tx.update(org.collection('vehicles').doc((a.data() as Assignment).vehicleId), { assignedTo: null });
+      }
+      tx.delete(mref);
+    });
+    // A demo login made by someone else's demo: take it off that demo's list of logins.
+    if (c.demo) {
+      const o = (await org.get()).data();
+      const logins = (o?.demoLogins || []) as { uid?: string }[];
+      if (logins.some((l) => l.uid === uid)) await org.update({ demoLogins: logins.filter((l) => l.uid !== uid) }).catch(() => {});
+    }
+  }
+  await db().recursiveDelete(db().doc(`users/${uid}`));
+  await getAuth().deleteUser(uid).catch((e) => { if ((e as { code?: string })?.code !== 'auth/user-not-found') throw e; });
+  logger.info('Account deleted', { companies: plan.map((c) => `${c.id}:${c.outcome}`) });
+  return { ok: true, closed: plan.filter((c) => c.outcome === 'close').map((c) => c.name) };
+});

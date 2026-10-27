@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import {
-  createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut as fbSignOut,
+  EmailAuthProvider, createUserWithEmailAndPassword, onAuthStateChanged, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut as fbSignOut,
   updateProfile, type User,
 } from 'firebase/auth';
 import { arrayUnion, collection, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
@@ -94,6 +94,8 @@ interface Session {
   switchOrg(orgId: string): Promise<void>;
   resetPassword(email: string): Promise<void>;
   signOut(): Promise<void>;
+  /** Deletes the person's account after they entered their password again (deleteAccount on the server). */
+  deleteAccount(password: string): Promise<void>;
 }
 
 const Ctx = createContext<Session | null>(null);
@@ -303,6 +305,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await fbSignOut(fb()!.auth);
   }, []);
 
+  const deleteAccount = useCallback(async (password: string) => {
+    const f2 = fb(), u = f2?.auth.currentUser;
+    if (!f2 || !u?.email) return;
+    // A fresh sign-in, so the server knows the password was entered just now.
+    await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
+    await ai.deleteAccount({});
+    await fbSignOut(f2.auth).catch(() => {});
+  }, []);
+
   orgRef.current = org;
   const role = roleOf(member);
   const tier: Tier = mode === 'local' ? localTier : (org?.aiTier || 'quick');
@@ -423,7 +434,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
     store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
-    signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut,
+    signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -388,8 +388,11 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
   return { orgId, existed: false };
 }
 
-/** Removes a demo company completely: data, photos, invite links, and the link from people's accounts. */
-export async function deleteDemo(orgId: string) {
+/**
+ * Removes a company completely: data, photos, invite links, demo logins, and the link from people's accounts. Used
+ * for demo companies, and for a company whose only member deletes their account.
+ */
+export async function deleteCompany(orgId: string) {
   const org = db().doc(`orgs/${orgId}`);
   const logins = ((await org.get()).data()?.demoLogins || []) as { uid: string }[];
   for (const l of logins) {
@@ -405,6 +408,7 @@ export async function deleteDemo(orgId: string) {
   await db().recursiveDelete(org);
   await bucket().deleteFiles({ prefix: `orgs/${orgId}/` }).catch(() => {});
 }
+export const deleteDemo = deleteCompany;
 
 /** Firestore batches of up to 400 writes, committed as they fill up. */
 function writer() {
