@@ -131,7 +131,7 @@ Sign in with the login below. It is the fleet owner of a demo company with made-
 - You can also create a new account on the sign-in screen and tap "Open a demo company".
 - Account deletion: Account tab > Delete account (at the bottom). Deleting this login also deletes its demo company; a new one is made by signing up again and opening a demo company.
 
-Camera: walk-around photos and videos of the vans, photos of the dashboard, fuel card and receipts. Microphone (iPhone): the sound of those videos. Notifications: Account tab > Notifications (for example when a manager gives a driver a van).
+Camera: walk-around photos and videos of the vans (videos are recorded without sound), photos of the dashboard, fuel card and receipts. Notifications: Account tab > Notifications (for example when a manager gives a driver a van).
 AI: photos for damage checks, dashboards, fuel cards, receipts and documents are analysed by Anthropic's Claude API; a person confirms every result.
 ```
 
@@ -146,14 +146,13 @@ Tracking: **No**. For every type below: **linked to the user**, **not used for t
 | Contact Info | Email Address | login |
 | Contact Info | Phone Number | mobile number in the company |
 | User Content | Photos or Videos | walk-arounds, handovers, damage, dashboard, receipts |
-| User Content | Audio Data | the sound of iPhone videos |
 | User Content | Other User Content | comments, notes, incidents |
 | Identifiers | User ID | the account |
 | Financial Info | Other Financial Info | last 4 digits of the company fuel card |
 | Purchases | Purchase History | refuels, washes and parts bought for the company's vans |
 | Other Data | Other Data Types | driving licence classes and checks, employment dates, kilometres and fuel per tour |
 
-Not collected: location, health, browsing or search history, usage data, diagnostics, contacts, sensitive info.
+Not collected: location, audio (videos are recorded without sound), health, browsing or search history, usage data, diagnostics, contacts, sensitive info.
 
 ## Google Play Data safety
 
@@ -172,12 +171,11 @@ Not collected: location, health, browsing or search history, usage data, diagnos
 | Financial info: Other financial info (fuel card's last 4 digits) | yes | required (refuels) | App functionality |
 | Photos and videos: Photos | yes | required | App functionality |
 | Photos and videos: Videos | yes | optional (photos work instead) | App functionality |
-| Audio: Voice or sound recordings (video sound) | yes | optional | App functionality |
 | App activity: Other user-generated content (comments, notes) | yes | optional | App functionality |
 | Device or other IDs (push token) | yes | optional | App functionality (notifications) |
 
-Not collected: location, web browsing, contacts, calendar, messages, health and fitness, app performance (no crash
-logs), installed apps.
+Not collected: location, audio (videos have no sound), web browsing, contacts, calendar, messages, health and
+fitness, app performance (no crash logs), installed apps.
 
 ## Google Play: other declarations
 

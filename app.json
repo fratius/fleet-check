@@ -19,7 +19,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
         "NSPhotoLibraryUsageDescription": "Fratius opens your photos so you can check van pictures you already took.",
-        "NSMicrophoneUsageDescription": "Fratius records sound with walk-around videos, so you can say what you see while you film."
+        "NSMicrophoneUsageDescription": "Fratius films vans for handovers and damage checks. The videos are recorded without sound."
       }
     },
     "android": {
@@ -68,7 +68,8 @@
         "expo-camera",
         {
           "cameraPermission": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "microphonePermission": "Fratius films vans for handovers and damage checks. The videos are recorded without sound."
         }
       ],
       [
@@ -76,7 +77,7 @@
         {
           "photosPermission": "Fratius opens your photos so you can check van pictures you already took.",
           "cameraPermission": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
-          "microphonePermission": "Fratius records sound with walk-around videos, so you can say what you see while you film."
+          "microphonePermission": "Fratius films vans for handovers and damage checks. The videos are recorded without sound."
         }
       ],
       "expo-font",

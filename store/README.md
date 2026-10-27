@@ -6,8 +6,8 @@ The phone app is the same code as the web app, built by EAS (Expo's build server
 
 ## What's ready in the code
 
-- Name, bundle ID and package `com.fratius.app`, iPhone only (no iPad layout), permission texts (camera, photos,
-  microphone for iPhone videos), no export-controlled encryption. `eas.json`: `production` builds for the stores,
+- Name, bundle ID and package `com.fratius.app`, iPhone only (no iPad layout), permission texts (camera, photos;
+  videos are recorded in the app at 720p without sound), no export-controlled encryption. `eas.json`: `production` builds for the stores,
   `preview` for an Android file to install directly. Build numbers are counted by EAS.
 - **Account deletion in the app** (Account tab, and on the first screen for people without a company), and the
   page for Google Play: https://fratius.com/delete-account
