@@ -928,7 +928,7 @@ test('checks for drivers: set by the manager, done by the driver who has the van
   assert.equal((await getDocs(query(collection(S.d1.db, 'orgs', S.org, 'routineDone'), where('by', '==', S.d1.uid), orderBy('createdAt', 'desc')))).size, 2);
   // Tomorrow at noon the daily one is due again: the driver is reminded and the manager told, once each.
   const { hourAt } = fnRequire('./lib/routines.js');
-  const cr = await appCreator('Cleo Checks');
+  const cr = await appCreator('Quinn Sweeper');
   await fails(S.own.call('routineSweepNow', { orgId: S.org }), 'permission-denied');
   const noon = hourAt(Date.now() + 86400_000, 12);
   const s1 = await cr.call('routineSweepNow', { orgId: S.org, now: noon });
