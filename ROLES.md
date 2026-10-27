@@ -80,6 +80,8 @@ the product owner's explicit decision first.
   damage (`markDamage`, within the 30 days; they can take the mark off). The daily job `cleanMediaDaily`
   (functions/src/media.ts) deletes what is due; the app shows "deleted on …" in their place. Demo companies keep
   their drawings. Only the server writes `keepMark`, `keepDamage` and `keepUntil` (the rules refuse them).
+  Photos and videos from before the rule started (28 October 2026) count from that day, so the first deletions
+  are on 27 November 2026.
 - **People delete their own account** (`deleteAccount`, Account tab and the "Your company" screen; the App Store
   and Google Play require it). Decided by the product owner: the login, the profile (`users/{uid}`, the
   membership with name, phone and Transporter ID) and the phone notifications go; the company keeps its records

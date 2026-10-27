@@ -18,6 +18,13 @@ import { getStorage } from 'firebase-admin/storage';
 export const KEEP_DAYS = 30;
 export const DAMAGE_DAYS = 90;
 export const DAY_MS = 86_400_000;
+/**
+ * The day the rule started (the store release). Photos and videos taken before count from this day, so nothing that
+ * existed before was deleted without 30 days' notice; the first deletions are 30 days after it.
+ */
+export const RULE_START = Date.UTC(2026, 9, 28);
+/** When a file's 30 or 90 days start: when it was taken, or the day the rule started if that's later. */
+export const since = (createdAt: number) => Math.max(createdAt, RULE_START);
 
 const db = () => getFirestore();
 const bucket = () => getStorage().bucket();
@@ -33,12 +40,12 @@ export function approvedDamage(k: { status?: string; spots?: unknown[]; review?:
 
 /** Until when a record's files are kept: 90 days from when they were taken while there's a reason, else none. */
 export function keepUntil(createdAt: number, reasons: boolean): number | null {
-  return reasons && Number.isFinite(createdAt) ? createdAt + DAMAGE_DAYS * DAY_MS : null;
+  return reasons && Number.isFinite(createdAt) ? since(createdAt) + DAMAGE_DAYS * DAY_MS : null;
 }
 
-/** Are this record's photos or video still there (or soon gone), for the app and the functions alike. */
+/** Are this record's photos or video gone (or due at tonight's clean-up), for the app and the functions alike. */
 export function mediaGone(createdAt: number, until: number | null | undefined, now = Date.now()): boolean {
-  return now > (until && until > createdAt ? until : createdAt + KEEP_DAYS * DAY_MS);
+  return now > Math.max(until || 0, since(createdAt) + KEEP_DAYS * DAY_MS);
 }
 
 /**
@@ -103,13 +110,13 @@ export interface CleanResult { companies: number; deleted: number; kept: number;
 export async function cleanMedia(now: number, logReview: (orgId: string, checkId: string) => Promise<unknown>, onlyOrg?: string): Promise<CleanResult> {
   const state = db().doc('platform/media');
   const last = Number((await state.get()).data()?.lastRun || 0);
-  const since = last ? last - 2 * DAY_MS : now - (DAMAGE_DAYS + 1) * DAY_MS;
+  const reviewsSince = last ? last - 2 * DAY_MS : now - (DAMAGE_DAYS + 1) * DAY_MS;
   const orgs = onlyOrg ? [await db().doc(`orgs/${onlyOrg}`).get()] : (await db().collection('orgs').select('demo').get()).docs;
   const res: CleanResult = { companies: 0, deleted: 0, kept: 0, checked: 0, reviews: 0 };
   for (const o of orgs) {
     if (!o.exists || o.data()?.demo === true) continue;
     res.companies++;
-    const reviewed = await o.ref.collection('checks').where('review.at', '>=', since).select('status', 'createdAt').get();
+    const reviewed = await o.ref.collection('checks').where('review.at', '>=', reviewsSince).select('status', 'createdAt').get();
     for (const d of reviewed.docs) {
       if (d.data().status !== 'reviewed' || Number(d.data().createdAt) < now - (DAMAGE_DAYS + 1) * DAY_MS) continue;
       await logReview(o.id, d.id).catch(() => {});
@@ -121,7 +128,7 @@ export async function cleanMedia(now: number, logReview: (orgId: string, checkId
       const [files, next] = await bucket().getFiles({ prefix: `orgs/${o.id}/`, autoPaginate: false, maxResults: 1000, pageToken });
       const due = files.filter((f) => {
         res.checked++;
-        const age = now - Date.parse(String(f.metadata.timeCreated || ''));
+        const age = now - since(Date.parse(String(f.metadata.timeCreated || '')));
         if (!Number.isFinite(age)) return false;
         const rec = recordOf(f.name);
         const keep = !!rec?.key && kept.has(rec.key);
