@@ -1,0 +1,39 @@
+# One-off check of the website's email setup (diag/** branches only). Prints no secrets.
+name: Diagnose email
+
+on:
+  push:
+    branches: ['diag/email']
+
+permissions:
+  contents: write
+
+jobs:
+  email:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Check
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          SMTP_GH: ${{ secrets.SMTP_URL }}
+        run: |
+          mkdir -p /tmp/chk && cp .github/diag/email-check.mjs /tmp/chk/ && cd /tmp/chk
+          npm init -y > /dev/null && npm i --silent nodemailer@8.0.11 firebase-admin@14 > /dev/null 2>&1
+          export SMTP_SM="$(npx -y firebase-tools@15.33.0 functions:secrets:access SMTP_URL --project "$PROJECT" --non-interactive 2>/dev/null || true)"
+          node email-check.mjs | tee report.txt
+          mkdir -p "$GITHUB_WORKSPACE/out" && cp report.txt "$GITHUB_WORKSPACE/out/email-report.txt"
+      - name: Save the report to the diag-results branch
+        if: always()
+        run: |
+          cd out
+          git init -q && git checkout -q -b diag-results && git add -A
+          git -c user.name="diagnose" -c user.email="diagnose@users.noreply.github.com" commit -qm "Email check ${{ github.run_id }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:diag-results
