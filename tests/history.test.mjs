@@ -1056,13 +1056,19 @@ test('people delete their own account: login and profile go, the company keeps i
 });
 
 test('photos and videos: kept 30 days, 90 when marked or approved as damage; the records stay', async () => {
-  const { v1, v2, v3 } = S.vans;
+  // Vans of their own (earlier tests moved van 1 to station 2).
+  const van = async (name, st) => {
+    const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(r, { name, plate: name.replace(/\W/g, ''), cls: 'van', stationId: S[st], createdAt: Date.now(), createdBy: S.own.uid });
+    return { id: r.id, name, stationId: S[st] };
+  };
+  const v1 = await van('Van K1', 's1'), v2 = await van('Van K2', 's1'), v3 = await van('Van K3', 's2');
   const DAY = 86_400_000;
   const exists = async (path) => { try { await getBytes(ref(S.own.st, path)); return true; } catch { return false; } };
   const walkFile = (id) => `orgs/${S.org}/walkarounds/${id}/01.jpg`;
   const plain = await photos(S.d1, S.org, v1);
   const marked = await photos(S.d1, S.org, v1);
-  const other = await photos(S.d3, S.org, v3);
+  const other = await photos(S.own, S.org, v3);
   // Only owners and the station's managers mark photos or videos as damage.
   await fails(S.d1.call('markDamage', { orgId: S.org, kind: 'walk', id: marked }), 'permission-denied');
   await fails(S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: other }), 'permission-denied');
