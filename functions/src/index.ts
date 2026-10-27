@@ -993,42 +993,71 @@ export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4
 });
 
 /* ---------- 11. Phone notifications ---------- */
-// Through the browser's push service: the web app (on iPhones only when it's on the home screen, iOS 16.4 or
-// later), after the person turned notifications on in the Account tab. Each phone or browser is one
-// users/{uid}/push/{id} record. Expo Go can't receive them. Only real push services are used; the emulator tests
-// receive them on this computer.
+// Two ways, one users/{uid}/push/{id} record per phone or browser where the person turned them on:
+// - the web app through the browser's push service (web push; on iPhones only when it's on the home screen,
+//   iOS 16.4 or later), signed with the WEBPUSH_KEYS pair;
+// - the App Store and Google Play app through Expo's push service, which passes them to Apple and to Firebase
+//   Cloud Messaging with the keys kept on expo.dev.
+// Expo Go can't receive them. Only real push services are used; the emulator tests receive them on this computer.
 const PUSH_SERVICES = /^https:\/\/([a-z0-9-]+\.)*(fcm\.googleapis\.com|push\.apple\.com|push\.services\.mozilla\.com|notify\.windows\.com)\//;
+const LOCAL = /^http:\/\/127\.0\.0\.1:\d+\//;
 const pushAllowed = (endpoint: string) => PUSH_SERVICES.test(endpoint)
-  || (process.env.FUNCTIONS_EMULATOR === 'true' && /^http:\/\/127\.0\.0\.1:\d+\//.test(endpoint));
+  || (process.env.FUNCTIONS_EMULATOR === 'true' && LOCAL.test(endpoint));
+const EXPO_PUSH = 'https://exp.host/--/api/v2/push/send';
+const EXPO_TOKEN = /^Expo(nent)?PushToken\[[A-Za-z0-9_-]{10,200}\]$/;
 
-/** Sends a notification to every phone this person turned notifications on for. Returns how many took it. */
 type Note = { title: string; body: string; url: string; tag?: string };
-/** Sends a notification to every phone this person turned notifications on for, in their language (see langOf). */
+type PushDoc = FirebaseFirestore.QueryDocumentSnapshot;
+
+/** Sends a notification to every phone this person turned notifications on for, in their language (see langOf). Returns how many took it. */
 async function notify(uid: string, make: Note | ((lang: string) => Note)): Promise<number> {
-  let keys: { publicKey?: string; privateKey?: string } = {};
-  try { keys = JSON.parse(WEBPUSH_KEYS.value() || '{}'); } catch { return 0; }
-  if (!keys.publicKey || !keys.privateKey) return 0;
   const subs = await db().collection(`users/${uid}/push`).limit(10).get();
   if (!subs.size) return 0;
   const msg = typeof make === 'function' ? make(await langOf(uid)) : make;
-  const project = process.env.GCLOUD_PROJECT || 'fleet-check';
-  const sent = await Promise.all(subs.docs.map(async (d) => {
-    const s = d.data() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-    if (!s.endpoint || !s.keys?.p256dh || !s.keys?.auth || !pushAllowed(s.endpoint)) return 0;
-    try {
-      const r = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } }, JSON.stringify(msg), {
-        vapidDetails: { subject: `https://${project}.web.app`, publicKey: keys.publicKey!, privateKey: keys.privateKey! },
-        TTL: 12 * 3600, urgency: 'high',
-      });
-      const headers: Record<string, string> = {};
-      for (const [k, v] of Object.entries(r.headers || {})) if (k.toLowerCase() !== 'content-length') headers[k] = String(v);
-      const res = await fetch(r.endpoint, { method: r.method, headers, body: new Uint8Array(r.body as Buffer), signal: AbortSignal.timeout(8000) });
-      // The phone turned notifications off or the browser dropped the subscription: forget it.
-      if (res.status === 404 || res.status === 410) { await d.ref.delete().catch(() => {}); return 0; }
-      return res.ok ? 1 : 0;
-    } catch { return 0; }
-  }));
+  const sent = await Promise.all(subs.docs.map((d) => (typeof d.data().expo === 'string' ? sendApp(d, msg) : sendWeb(d, msg))));
   return sent.reduce((n: number, x) => n + x, 0);
+}
+
+/** To the web app on one phone or browser (web push). */
+async function sendWeb(d: PushDoc, msg: Note): Promise<number> {
+  let keys: { publicKey?: string; privateKey?: string } = {};
+  try { keys = JSON.parse(WEBPUSH_KEYS.value() || '{}'); } catch { return 0; }
+  if (!keys.publicKey || !keys.privateKey) return 0;
+  const s = d.data() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+  if (!s.endpoint || !s.keys?.p256dh || !s.keys?.auth || !pushAllowed(s.endpoint)) return 0;
+  const project = process.env.GCLOUD_PROJECT || 'fleet-check';
+  try {
+    const r = webpush.generateRequestDetails({ endpoint: s.endpoint, keys: { p256dh: s.keys.p256dh, auth: s.keys.auth } }, JSON.stringify(msg), {
+      vapidDetails: { subject: `https://${project}.web.app`, publicKey: keys.publicKey, privateKey: keys.privateKey },
+      TTL: 12 * 3600, urgency: 'high',
+    });
+    const headers: Record<string, string> = {};
+    for (const [k, v] of Object.entries(r.headers || {})) if (k.toLowerCase() !== 'content-length') headers[k] = String(v);
+    const res = await fetch(r.endpoint, { method: r.method, headers, body: new Uint8Array(r.body as Buffer), signal: AbortSignal.timeout(8000) });
+    // The phone turned notifications off or the browser dropped the subscription: forget it.
+    if (res.status === 404 || res.status === 410) { await d.ref.delete().catch(() => {}); return 0; }
+    return res.ok ? 1 : 0;
+  } catch { return 0; }
+}
+
+/** To the store app on one phone, through Expo's push service. */
+async function sendApp(d: PushDoc, msg: Note): Promise<number> {
+  const s = d.data() as { expo?: string; expoUrl?: string };
+  if (!s.expo || !EXPO_TOKEN.test(s.expo)) return 0;
+  // On the emulators the tests stand in for Expo's service on this computer (the rules keep expoUrl out of the app).
+  const url = process.env.FUNCTIONS_EMULATOR === 'true' && typeof s.expoUrl === 'string' && LOCAL.test(s.expoUrl) ? s.expoUrl : EXPO_PUSH;
+  try {
+    const res = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, signal: AbortSignal.timeout(8000),
+      body: JSON.stringify({ to: s.expo, title: msg.title, body: msg.body, data: { url: msg.url }, sound: 'default', priority: 'high', channelId: 'default', ttl: 12 * 3600 }),
+    });
+    if (!res.ok) return 0;
+    const j = await res.json() as { data?: { status?: string; details?: { error?: string } } | { status?: string; details?: { error?: string } }[] };
+    const ticket = Array.isArray(j.data) ? j.data[0] : j.data;
+    // The app was removed from the phone or its notifications were turned off: forget it.
+    if (ticket?.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') { await d.ref.delete().catch(() => {}); return 0; }
+    return ticket?.status === 'ok' ? 1 : 0;
+  } catch { return 0; }
 }
 
 /* ---------- 12. Driver records: licence checks ---------- */

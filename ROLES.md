@@ -124,10 +124,13 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   `pickupRequested`, the driver is told on their phone (if they turned notifications on) and in the app (a card on
   the Vans tab and the van's page, a badge on the tab), and adds the pick-up video or photos as above. That's the
   normal pick-up, not "added later". A manager who takes a van themselves isn't asked.
-- **Phone notifications** (web push): only for the web app (Chrome on Android; on iPhone only from the home screen,
-  iOS 16.4 or later), not Expo Go. Each person turns them on per phone in the Account tab
-  (`users/{uid}/push/{id}`, only theirs, only real push services). The key pair is the `WEBPUSH_KEYS` secret, made
-  once by the Deploy workflow; the public half is in `config/push`. For now only "a van was given to you" is sent.
+- **Phone notifications**: in the web app through the browser (web push; Chrome on Android; on iPhone only from
+  the home screen, iOS 16.4 or later), and in the App Store and Google Play app through Expo's push service; not in
+  Expo Go. Each person turns them on per phone in the Account tab (`users/{uid}/push/{id}`, only theirs, only real
+  push services or an Expo push token). The web key pair is the `WEBPUSH_KEYS` secret, made once by the Deploy
+  workflow; the public half is in `config/push`. The store app's keys (Apple, Firebase Cloud Messaging) are kept on
+  expo.dev. Sent: a van given to a driver, fuel card and receipt questions to the station's managers, website
+  requests to the app creator.
 - **Managers are told when handover proof is missing:** the Review tab lists (and its badge counts) vans given to
   a driver more than 2 hours ago without the pick-up video or photos; and at pick-up-yourself stations, handovers
   of the last 7 days that ended without the driver's drop-off (taken over, or ended by a manager) and vans a driver

@@ -60,17 +60,26 @@ service cloud.firestore {
       allow delete: if signedIn() && uid == me();
     }
 
-    // The phones (browsers) where a person turned notifications on: one record each, kept by the person. The
-    // server sends to them (notify in the functions) and forgets the ones the push service says are gone.
+    // The phones where a person turned notifications on: one record each, kept by the person. The server sends to
+    // them (notify in the functions) and forgets the ones the push service says are gone. The web app saves the
+    // browser's push address; the App Store and Google Play app its Expo push token.
+    function webPush(d) {
+      return d.keys().hasOnly(['endpoint', 'keys', 'createdAt', 'device'])
+        && d.endpoint is string && d.endpoint.size() < 1000
+        && d.endpoint.matches('https://([a-z0-9-]+[.])*(fcm[.]googleapis[.]com|push[.]apple[.]com|push[.]services[.]mozilla[.]com|notify[.]windows[.]com)/.*')
+        && d.keys.keys().hasOnly(['p256dh', 'auth'])
+        && d.keys.p256dh is string && d.keys.p256dh.size() < 200
+        && d.keys.auth is string && d.keys.auth.size() < 100;
+    }
+    function appPush(d) {
+      return d.keys().hasOnly(['expo', 'platform', 'createdAt', 'device'])
+        && d.expo is string && d.expo.size() < 250 && d.expo.matches('Expo(nent)?PushToken.[A-Za-z0-9_-]{10,200}.')
+        && d.platform in ['ios', 'android']
+        && (!('device' in d) || (d.device is string && d.device.size() < 200));
+    }
     match /users/{uid}/push/{id} {
       allow read, delete: if signedIn() && uid == me();
-      allow create, update: if signedIn() && uid == me()
-        && request.resource.data.keys().hasOnly(['endpoint', 'keys', 'createdAt', 'device'])
-        && request.resource.data.endpoint is string && request.resource.data.endpoint.size() < 1000
-        && request.resource.data.endpoint.matches('https://([a-z0-9-]+[.])*(fcm[.]googleapis[.]com|push[.]apple[.]com|push[.]services[.]mozilla[.]com|notify[.]windows[.]com)/.*')
-        && request.resource.data.keys.keys().hasOnly(['p256dh', 'auth'])
-        && request.resource.data.keys.p256dh is string && request.resource.data.keys.p256dh.size() < 200
-        && request.resource.data.keys.auth is string && request.resource.data.keys.auth.size() < 100;
+      allow create, update: if signedIn() && uid == me() && (webPush(request.resource.data) || appPush(request.resource.data));
     }
 
     // Settings the app reads (written by the Deploy workflow): the public key for phone notifications.

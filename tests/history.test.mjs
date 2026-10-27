@@ -1120,3 +1120,43 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   for (const p of [walkFile(marked), walkFile(found), closeup, kv.playPath]) assert.equal(await exists(p), false, p);
   assert.ok((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', k.id))).exists());
 });
+
+test('the store app gets notifications through Expo\'s push service; a phone without the app is forgotten', async () => {
+  // Expo's push service, on this computer: it keeps what arrives; /gone answers like a phone the app was removed from.
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (c) => ch.push(c));
+    req.on('end', () => {
+      got.push({ url: req.url, body: JSON.parse(Buffer.concat(ch).toString() || '{}') });
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ data: req.url.endsWith('/gone') ? { status: 'error', message: 'not registered', details: { error: 'DeviceNotRegistered' } } : { status: 'ok', id: 'ticket-1' } }));
+    });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  const port = srv.address().port;
+  try {
+    const { invites } = await S.own.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+    const nia = await person('Nia Notify');
+    await nia.call('acceptInvite', { token: invites[0].token, details: { firstName: 'Nia', lastName: 'Notify', phone: '+49 151 7', transporterId: 'N1' } });
+    // The app saves its token (the rules check it); the test points it at the stand-in, past the rules.
+    const token = 'ExponentPushToken[aaaaaaaaaaaaaaaaaaaaaa]';
+    await setDoc(doc(nia.db, 'users', nia.uid, 'push', 'here'), { expo: token, platform: 'ios', createdAt: Date.now(), device: 'iPhone, Fratius app' });
+    const col = adminDb().collection(`users/${nia.uid}/push`);
+    await col.doc('here').update({ expoUrl: `http://${HOST}:${port}/expo/here` });
+    await col.doc('gone').set({ expo: 'ExponentPushToken[bbbbbbbbbbbbbbbbbbbbbb]', platform: 'android', createdAt: Date.now(), device: 'old phone', expoUrl: `http://${HOST}:${port}/expo/gone` });
+    const vr = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(vr, { name: 'Van N', plate: 'NOTE1', cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
+    const r = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: vr.id, driverId: nia.uid });
+    assert.equal(r.notified, 1);
+    const m = got.find((g) => g.url === '/expo/here');
+    assert.ok(m, 'the notification reached the push service');
+    assert.equal(m.body.to, token);
+    assert.equal(m.body.data.url, `/vehicle/${vr.id}`);
+    assert.match(m.body.body, /Van N/);
+    assert.equal((await col.doc('gone').get()).exists, false);
+    assert.equal((await col.doc('here').get()).exists, true);
+  } finally {
+    srv.close();
+  }
+});

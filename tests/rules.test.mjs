@@ -292,6 +292,12 @@ describe('phone notifications', () => {
   test('only real push services, never another address', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p4'), sub('https://evil.example.com/collect'))));
   test('no plain http', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p5'), sub('http://fcm.googleapis.com/fcm/send/xyz'))));
   test('nothing extra in the record', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/p6'), { ...sub('https://fcm.googleapis.com/fcm/send/1'), role: 'owner' })));
+  const app = (expo, extra = {}) => ({ expo, platform: 'ios', createdAt: 1, device: 'iPhone, Fratius app', ...extra });
+  test('the store app saves its Expo push token', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1/push/a1'), app('ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]'))));
+  test('Android too', () => assertSucceeds(setDoc(doc(as('drv1'), 'users/drv1/push/a2'), app('ExponentPushToken[yyyyyyyyyyyyyyyyyyyyyy]', { platform: 'android' }))));
+  test('only an Expo push token, never an address', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/a3'), app('https://evil.example.com/collect'))));
+  test('no address next to a token', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1/push/a4'), app('ExponentPushToken[zzzzzzzzzzzzzzzzzzzzzz]', { endpoint: 'https://evil.example.com/x' }))));
+  test('nobody adds a store-app phone for someone else', () => assertFails(setDoc(doc(as('mgr1'), 'users/drv1/push/a5'), app('ExponentPushToken[wwwwwwwwwwwwwwwwwwwwww]'))));
   test('they see and remove their own', () => assertSucceeds(deleteDoc(doc(as('drv1'), 'users/drv1/push/p1'))));
   test('nobody else sees them, not even the owner', () => assertFails(getDoc(doc(as('own'), 'users/drv1/push/p1'))));
   test('nobody adds a phone for someone else', () => assertFails(setDoc(doc(as('mgr1'), 'users/drv1/push/p7'), sub('https://fcm.googleapis.com/fcm/send/m'))));

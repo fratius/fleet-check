@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Button, Card, Row, T, fmtWhen, useColors } from '@/components/ui';
@@ -43,11 +43,12 @@ export function PickupRequest({ v, a, compact }: { v: Vehicle; a: Assignment; co
   );
 }
 
-const STATE_TEXT: Record<PushState, string> = {
-  native: N_('Phone notifications work in the web app (on the home screen), not in Expo Go.'),
+const STATE_TEXT: Record<PushState | 'appBlocked', string> = {
+  native: N_('Phone notifications work in the Fratius app from the App Store or Google Play and in the web app, not in Expo Go.'),
   install: N_('On iPhone, notifications work once Fratius is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.'),
   unsupported: N_('This browser can\'t show notifications. Use Chrome on Android, or the app on an iPhone\'s home screen.'),
   blocked: N_('Notifications are blocked for Fratius. Allow them in the phone\'s settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.'),
+  appBlocked: N_('Notifications are blocked for Fratius. Allow them in the phone\'s settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.'),
   off: N_('Get a notification on this phone when someone gives you a van.'),
   on: N_('This phone gets a notification when someone gives you a van.'),
 };
@@ -59,7 +60,7 @@ export function Notifications({ prompt }: { prompt?: boolean }) {
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  useEffect(() => { let live = true; pushState().then((x) => { if (live) setState(x); }).catch(() => {}); return () => { live = false; }; }, []);
+  useEffect(() => { let live = true; pushState(s.user?.uid).then((x) => { if (live) setState(x); }).catch(() => {}); return () => { live = false; }; }, [s.user?.uid]);
   if (s.mode !== 'firebase' || !state || !s.user) return null;
   // The prompt on the Vans tab only asks when the phone can do it and it's off.
   if (prompt && state !== 'off') return null;
@@ -69,7 +70,7 @@ export function Notifications({ prompt }: { prompt?: boolean }) {
   };
   const turnOff = async () => {
     setErr(null); setBusy(true);
-    try { await disablePush(s.user!.uid); setState(await pushState()); } finally { setBusy(false); }
+    try { await disablePush(s.user!.uid); setState(await pushState(s.user!.uid)); } finally { setBusy(false); }
   };
   if (prompt) {
     return (
@@ -84,7 +85,7 @@ export function Notifications({ prompt }: { prompt?: boolean }) {
   return (
     <Card>
       <T v="h3">{t('Notifications')}</T>
-      <T v="hint">{t(STATE_TEXT[state])}</T>
+      <T v="hint">{t(STATE_TEXT[state === 'blocked' && Platform.OS !== 'web' ? 'appBlocked' : state])}</T>
       {state === 'off' ? <Button small v="primary" title={t('Turn on notifications')} loading={busy} onPress={turnOn} /> : null}
       {state === 'on' ? <Button small v="link" title={t('Turn off on this phone')} loading={busy} onPress={turnOff} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}

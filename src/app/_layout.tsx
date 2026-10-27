@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColors } from '@/components/ui';
 import '@/lib/install';
 import { LanguageProvider } from '@/lib/lang';
+import { NotificationTaps } from '@/lib/nativepush';
 import { SessionProvider, useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -22,18 +23,22 @@ function Routes() {
     return <View style={{ flex: 1, backgroundColor: c.page, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={c.ink} /></View>;
   }
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.page } }}>
-      <Stack.Protected guard={status === 'ready'}>
-        {/* Every page lives in a tab (so the tab bar stays); only the camera opens over everything. */}
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="scan/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />
-      </Stack.Protected>
-      <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>
-        <Stack.Screen name="sign-in" />
-      </Stack.Protected>
-      {/* Invite links open here whether or not the person is signed in. */}
-      <Stack.Screen name="join/[token]" />
-    </Stack>
+    <>
+      {/* The store app: a tapped notification opens its page once the app is ready. */}
+      {status === 'ready' ? <NotificationTaps /> : null}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.page } }}>
+        <Stack.Protected guard={status === 'ready'}>
+          {/* Every page lives in a tab (so the tab bar stays); only the camera opens over everything. */}
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="scan/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />
+        </Stack.Protected>
+        <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>
+          <Stack.Screen name="sign-in" />
+        </Stack.Protected>
+        {/* Invite links open here whether or not the person is signed in. */}
+        <Stack.Screen name="join/[token]" />
+      </Stack>
+    </>
   );
 }
 

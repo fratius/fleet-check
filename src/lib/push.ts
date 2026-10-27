@@ -4,11 +4,13 @@ import { Platform } from 'react-native';
 import { fb } from './firebase';
 import { t } from './i18n';
 import { device } from './install';
+import { disableNative, enableNative, forgetNative, nativePush, nativeState, refreshNative } from './nativepush';
 
 /**
- * Phone notifications through the browser (web push). They work in the web app: on Android in Chrome, on iPhone
- * only once the app is on the home screen (iOS 16.4 or later). Not in Expo Go. Each phone where the person turned
- * them on is one users/{uid}/push record; the server sends to those (notify in the functions).
+ * Phone notifications. In the web app through the browser (web push): on Android in Chrome, on iPhone only once
+ * the app is on the home screen (iOS 16.4 or later). In the App Store and Google Play app through Expo's push
+ * service (nativepush.ts). Not in Expo Go. Each phone where the person turned them on is one users/{uid}/push
+ * record; the server sends to those (notify in the functions).
  */
 export type PushState = 'native' | 'install' | 'unsupported' | 'blocked' | 'off' | 'on';
 
@@ -21,8 +23,8 @@ async function registration() {
   return reg;
 }
 
-export async function pushState(): Promise<PushState> {
-  if (Platform.OS !== 'web') return 'native';
+export async function pushState(uid?: string): Promise<PushState> {
+  if (Platform.OS !== 'web') return nativePush() ? nativeState(uid) : 'native';
   if (!supported()) return device() === 'ios' ? 'install' : 'unsupported';
   if (Notification.permission === 'denied') return 'blocked';
   if (Notification.permission !== 'granted') return 'off';
@@ -54,7 +56,8 @@ async function save(uid: string, sub: PushSubscription) {
 
 /** Asks for permission (call it straight from a tap) and turns notifications on for this phone. */
 export async function enablePush(uid: string): Promise<PushState> {
-  if (!supported()) return pushState();
+  if (nativePush()) return enableNative(uid);
+  if (!supported()) return pushState(uid);
   const perm = await Notification.requestPermission();
   if (perm !== 'granted') return perm === 'denied' ? 'blocked' : 'off';
   const [reg, cfg] = await Promise.all([registration(), getDoc(doc(fb()!.db, 'config', 'push'))]);
@@ -74,6 +77,7 @@ export async function enablePush(uid: string): Promise<PushState> {
 
 /** Turns notifications off for this phone (for this person). */
 export async function disablePush(uid: string) {
+  if (nativePush()) return disableNative(uid);
   if (!supported()) return;
   const reg = await navigator.serviceWorker.getRegistration('/');
   const sub = await reg?.pushManager.getSubscription();
@@ -84,6 +88,7 @@ export async function disablePush(uid: string) {
 
 /** On start: if this phone has notifications on, make sure they reach the person signed in now. */
 export async function refreshPush(uid: string) {
+  if (nativePush()) return refreshNative(uid);
   try {
     if (!supported() || Notification.permission !== 'granted') return;
     const reg = await navigator.serviceWorker.getRegistration('/');
@@ -94,6 +99,7 @@ export async function refreshPush(uid: string) {
 
 /** On sign-out: stop sending this person's notifications to this phone. */
 export async function forgetPush(uid: string) {
+  if (nativePush()) return forgetNative(uid);
   try {
     if (!supported()) return;
     const reg = await navigator.serviceWorker.getRegistration('/');
