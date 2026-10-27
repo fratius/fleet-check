@@ -96,7 +96,7 @@ export default function DataScreen() {
         rows: rows.map((r) => cols.map((x) => (xl?.[x.key] ? xl[x.key](r) : x.get(r) as Cell))),
       });
       const label = t(PERIODS.find((p) => p[0] === period)![1]);
-      await saveXlsx(t('Fleet Check {company} {period} to {date}', { company: s.org?.name || '', period: label, date: new Date().toISOString().slice(0, 10) }), [
+      await saveXlsx(t('Fratius {company} {period} to {date}', { company: s.org?.name || '', period: label, date: new Date().toISOString().slice(0, 10) }), [
         sheet(t('Drivers'), dCols, sortRows(drivers, dCols, sorts.drivers), {
           vs: (r) => (r.vsModel == null ? null : Math.round(r.vsModel * 1000) / 10),
           licence: (r) => (r.licenceValid ? { date: Date.parse(r.licenceValid + 'T12:00:00') } : null),

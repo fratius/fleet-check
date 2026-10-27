@@ -244,5 +244,5 @@ function versionLine() {
   const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : t('phone app');
   const sha = b?.sha || t('unknown');
   const v = when ? t('version {sha} of {when}', { sha, when }) : t('version {sha}', { sha });
-  return `Fleet Check ${Constants.expoConfig?.version || ''}, ${v}, ${where}`;
+  return `Fratius ${Constants.expoConfig?.version || ''}, ${v}, ${where}`;
 }

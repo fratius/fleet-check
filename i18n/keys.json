@@ -1121,15 +1121,15 @@
   ]
  },
  {
-  "id": "cb2d5d23",
-  "key": "3. Open Fleet Check from your home screen and sign in with the same email and password.",
+  "id": "914411d9",
+  "key": "3. Open Fratius from your home screen and sign in with the same email and password.",
   "where": [
    "src/app/join/[token].tsx:164"
   ]
  },
  {
-  "id": "2ac9fb03",
-  "key": "3. Open Fleet Check from your home screen and sign in.",
+  "id": "80c2d898",
+  "key": "3. Open Fratius from your home screen and sign in.",
   "where": [
    "src/app/join/[token].tsx:170"
   ]
@@ -4322,13 +4322,6 @@
   ]
  },
  {
-  "id": "ddd5d867",
-  "key": "Fleet Check {company} {period} to {date}",
-  "where": [
-   "src/app/(tabs)/(table)/data.tsx:99"
-  ]
- },
- {
   "id": "67f58c06",
   "key": "Fleet manager",
   "where": [
@@ -4546,6 +4539,13 @@
   "key": "Frames for this type",
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:196"
+  ]
+ },
+ {
+  "id": "b48fd125",
+  "key": "Fratius {company} {period} to {date}",
+  "where": [
+   "src/app/(tabs)/(table)/data.tsx:99"
   ]
  },
  {
@@ -7231,8 +7231,8 @@
   ]
  },
  {
-  "id": "8d0f78a8",
-  "key": "Notifications are blocked for Fleet Check. Allow them in the phone's settings (iPhone: Settings > Notifications > Fleet Check; Android: Chrome > Site settings > Notifications), then come back here.",
+  "id": "f0afb2d2",
+  "key": "Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.",
   "where": [
    "src/components/pickup.tsx:50"
   ]
@@ -7396,8 +7396,8 @@
   ]
  },
  {
-  "id": "9371fb1e",
-  "key": "On iPhone, notifications work once Fleet Check is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.",
+  "id": "3a277f78",
+  "key": "On iPhone, notifications work once Fratius is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.",
   "where": [
    "src/components/pickup.tsx:48"
   ]
@@ -7670,8 +7670,8 @@
   ]
  },
  {
-  "id": "a1236216",
-  "key": "Open Fleet Check",
+  "id": "716df23e",
+  "key": "Open Fratius",
   "where": [
    "src/app/join/[token].tsx:102",
    "src/app/join/[token].tsx:88"
@@ -8340,8 +8340,8 @@
   ]
  },
  {
-  "id": "876af140",
-  "key": "Put Fleet Check on your home screen like any other app.",
+  "id": "7913c9a9",
+  "key": "Put Fratius on your home screen like any other app.",
   "where": [
    "src/app/join/[token].tsx:169"
   ]
@@ -13044,15 +13044,15 @@
   ]
  },
  {
-  "id": "97a93986",
-  "key": "You're invited to join {company} in Fleet Check as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}",
+  "id": "f7b7847b",
+  "key": "You're invited to join {company} in Fratius as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}",
   "where": [
    "src/app/(tabs)/(people)/people.tsx:242"
   ]
  },
  {
-  "id": "e0dd0ef8",
-  "key": "You're invited to join {company} in Fleet Check as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}",
+  "id": "39f1a8b0",
+  "key": "You're invited to join {company} in Fratius as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}",
   "where": [
    "src/app/(tabs)/(people)/people.tsx:241"
   ]

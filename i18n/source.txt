@@ -146,8 +146,8 @@ d7c7f89a	1. Tap the Share button at the bottom of Safari (the square with an arr
 a533bead	2. Tap {install} or {add}.
 57b51b86	2. Wipe it with your hand or a cloth.
 2176fc6a	2. Your account	[app/join/[token].tsx]
-cb2d5d23	3. Open Fleet Check from your home screen and sign in with the same email and password.
-2ac9fb03	3. Open Fleet Check from your home screen and sign in.
+914411d9	3. Open Fratius from your home screen and sign in with the same email and password.
+80c2d898	3. Open Fratius from your home screen and sign in.
 704983e9	3. Take one photo straight on, about 30 to 50 cm away.
 7d4278a8	30 days	[data.tsx]
 1cf11ed8	4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.
@@ -579,7 +579,6 @@ c6b3590a	First station	[account.tsx, app/sign-in.tsx]
 d7819728	Fit the vehicle to the outline.
 2a561bf1	Flat, in good light, the whole page in the picture. More pages? Add them before reading.
 e1991511	Fleet	[index.tsx, _layout.tsx, app/(tabs)/_layout.tsx]
-ddd5d867	Fleet Check {company} {period} to {date}
 67f58c06	Fleet manager	[people.tsx, lib/types.ts]
 7aeaaa6f	Fleet manager: {name}	[account.tsx]
 a3829a05	Fleet managers	[people.tsx]
@@ -610,6 +609,7 @@ a2f060b7	Forgot your password?	[app/sign-in.tsx]
 518fae30	Found: {panel}, {when}	[components/damage.tsx]
 8b485903	Frame {n}, {label}	[app/scan/[id].tsx]
 8ea6990e	Frames for this type
+b48fd125	Fratius {company} {period} to {date}
 75f52718	Free	[index.tsx, vehicle/[id].tsx, components/history.tsx]
 e12e759b	Free ({n})	[index.tsx]
 923e75de	Free vans first. Taking a van from someone else leaves them without one.
@@ -982,7 +982,7 @@ f23f9445	Nothing reviewed yet.	[review.tsx]
 cdfc7725	Nothing to decide right now. Checks appear here when a driver sends one.
 a5dbc60d	Nothing to save	[components/docscan.tsx]
 753a22b2	Notifications	[components/pickup.tsx]
-8d0f78a8	Notifications are blocked for Fleet Check. Allow them in the phone's settings (iPhone: Settings > Notifications > Fleet Check; Android: Chrome > Site settings > Notifications), then come back here.
+f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.
 1f86c3ed	Notifications aren't set up on the server yet. Try again after the next update.
 c9bc849a	now	[components/damage.tsx]
 e3b82040	Now	[components/history.tsx]
@@ -1004,7 +1004,7 @@ e3de5ab0	Off	[account.tsx]
 e0049a66	On	[account.tsx]
 a033bc67	On {name}'s end photo, {when}
 2ff643a6	On {name}'s start photo, {when}
-9371fb1e	On iPhone, notifications work once Fleet Check is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.
+3a277f78	On iPhone, notifications work once Fratius is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.
 b366de2a	On the document: "{text}"
 ea6b8ab1	On the receipt	[buy/[id].tsx]
 48f906a7	On tour	[data.tsx, components/dash.tsx]
@@ -1041,7 +1041,7 @@ cf9b7706	Open	[components/companies.tsx]
 10c92761	Open a demo company
 cd287761	Open a demo company with made-up stations, managers, drivers, vans and damage checks. It's yours alone and you can remove it any time.
 a868af6a	Open a person to put them at a station. Until then they see nothing.
-a1236216	Open Fleet Check	[app/join/[token].tsx]
+716df23e	Open Fratius	[app/join/[token].tsx]
 52e60e67	Open load bed	[lib/frames.ts]
 502ca37f	Open photo	[components/ui.tsx]
 7ae2a9b7	Open photo: {caption}	[components/ui.tsx]
@@ -1131,7 +1131,7 @@ e92d2b4c	playback copy {size}	[video/[id].tsx]
 fad43131	Provider and the last digits, never the full number or PIN
 d6f409d1	Purchase contract or invoice
 b21bc692	Purchase price	[components/vanfacts.tsx]
-876af140	Put Fleet Check on your home screen like any other app.
+7913c9a9	Put Fratius on your home screen like any other app.
 5177429b	Raised roof	[lib/frames.ts]
 a16c5bbe	Range	[components/dash.tsx, components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
@@ -1763,8 +1763,8 @@ e24cfeaa	You scan the vans of your station; your fleet manager reviews the damag
 0f4cf1b4	You're already in {company}. Ask the fleet owner to change your role or station.
 61b3a758	You're in {company}	[app/join/[token].tsx]
 20767b9b	You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.
-97a93986	You're invited to join {company} in Fleet Check as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
-e0dd0ef8	You're invited to join {company} in Fleet Check as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
+f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
+39f1a8b0	You're invited to join {company} in Fratius as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
 4f5672b4	You're signed in as {role} but not at a station yet. Ask your fleet manager to add you to one.
 6bf6957d	You're viewing {company} as the app creator.
 8fef7edb	You're viewing another company as someone else. Switch back to yourself in the Account tab first.

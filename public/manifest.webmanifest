@@ -1,6 +1,6 @@
 {
-  "name": "Fleet Check",
-  "short_name": "Fleet Check",
+  "name": "Fratius",
+  "short_name": "Fratius",
   "description": "Van walk-arounds and AI damage checks for delivery fleets.",
   "start_url": "/",
   "scope": "/",

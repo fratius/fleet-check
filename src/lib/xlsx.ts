@@ -118,7 +118,7 @@ export async function saveXlsx(name: string, sheets: Sheet[]) {
   const bytes = xlsxBytes(sheets);
   // Only what file names can't hold is taken out: the name is in the person's language (any script).
   // eslint-disable-next-line no-control-regex
-  const file = `${name.replace(/[\\/:*?"<>|\u0000-\u001F]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Fleet Check'}.xlsx`;
+  const file = `${name.replace(/[\\/:*?"<>|\u0000-\u001F]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Fratius'}.xlsx`;
   if (Platform.OS === 'web') {
     const blob = new Blob([bytes as BlobPart], { type: MIME });
     const url = URL.createObjectURL(blob);

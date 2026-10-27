@@ -1,7 +1,8 @@
 # Deploys everything on every push to main, or by hand from the Actions tab (Run workflow).
 #   backend: Firestore and Storage rules, and the AI functions (with the Anthropic key from GitHub secrets)
 #   web:     the web app and the website (fratius.com) on Firebase Hosting
-#   phone:   an update on the "main" channel that opens in Expo Go
+#   phone:   an update on the "main" channel that opens in Expo Go, and one on "production" for the App Store and
+#            Google Play app (only while its native packages match store/native.json, see scripts/native.mjs)
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
@@ -249,7 +250,7 @@ jobs:
           fi
 
   phone:
-    name: Phone app (Expo Go)
+    name: Phone app (Expo Go and store app)
     # The app goes live only after the tests passed and the rules and functions it calls are deployed.
     needs: backend
     runs-on: ubuntu-24.04
@@ -303,3 +304,20 @@ jobs:
             echo ""
             echo "Update page: https://expo.dev/projects/$PID/updates/$GROUP"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Update the App Store and Google Play app
+        if: steps.token.outputs.ok == 'true'
+        env:
+          MSG: ${{ github.event.head_commit.message || 'Manual deploy' }}
+        run: |
+          set -uo pipefail
+          # Store apps only take updates made for their version and native packages (scripts/native.mjs).
+          if ! node scripts/native.mjs --check; then
+            echo "::warning title=Store app not updated::Native packages changed since the store builds of version $(jq -r .expo.version app.json). Raise the version in app.json, run node scripts/native.mjs --write and make new store builds (Actions > Store build). Expo Go and the web app are updated as usual."
+            exit 0
+          fi
+          if STORE_BUILD=1 eas update --channel production --platform all --environment production --non-interactive \
+              --message "$(printf '%s' "$MSG" | head -n1 | cut -c1-100)"; then
+            echo "::notice title=Store app updated::Update on the production channel for version $(jq -r .expo.version app.json): the App Store and Google Play app load it on their next start."
+          else
+            echo "::warning title=Store app not updated::Publishing to the production channel failed; the store apps keep their last update."
+          fi

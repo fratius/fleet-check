@@ -68,7 +68,7 @@ export default function Join() {
   const role = (peek?.role || 'driver') as 'driver' | 'manager';
   const header = (
     <View style={{ gap: 6, paddingTop: 16 }}>
-      <T v="hint">Fleet Check</T>
+      <T v="hint">Fratius</T>
       <T v="h1">{done ? t('You\'re in {company}', { company: done.orgName }) : peek?.status === 'ok' || peek?.status === 'mine' ? t('Join {company}', { company: peek.orgName }) : t('Invite link')}</T>
       <LanguageLink />
     </View>
@@ -85,7 +85,7 @@ export default function Join() {
           {done.role === 'driver' ? <T v="hint">{t('You\'ll see the vans of your station. Scan a van before and after your route; your fleet manager reviews any damage.')}</T> : null}
         </Card>
         <Install />
-        <Button v="primary" wide title={t('Open Fleet Check')} onPress={() => router.replace('/')} />
+        <Button v="primary" wide title={t('Open Fratius')} onPress={() => router.replace('/')} />
       </Screen>
     );
   }
@@ -99,7 +99,7 @@ export default function Join() {
       <Screen>
         {header}
         <Notice tone="bad" text={`${why} ${ask}`} />
-        <Button title={signedIn ? t('Open Fleet Check') : t('Sign in')} onPress={() => router.replace(signedIn ? '/' : '/sign-in')} />
+        <Button title={signedIn ? t('Open Fratius') : t('Sign in')} onPress={() => router.replace(signedIn ? '/' : '/sign-in')} />
       </Screen>
     );
   }
@@ -161,13 +161,13 @@ function Install() {
         <>
           <T>{t('1. Tap the Share button at the bottom of Safari (the square with an arrow).')}</T>
           <T>{tj('2. Tap {add}, then {ok}.', { add: <T key="a" v="medium">{t('Add to Home Screen')}</T>, ok: <T key="o" v="medium">{t('Add')}</T> })}</T>
-          <T>{t('3. Open Fleet Check from your home screen and sign in with the same email and password.')}</T>
+          <T>{t('3. Open Fratius from your home screen and sign in with the same email and password.')}</T>
           <T v="small">{t('Use Safari: other browsers on iPhone can\'t add apps to the home screen.')}</T>
         </>
       ) : d === 'android' ? (
         canPromptInstall()
-          ? <><T>{t('Put Fleet Check on your home screen like any other app.')}</T><Button v="primary" title={t('Install the app')} onPress={() => promptInstall()} /></>
-          : <><T>{t('1. In Chrome, tap the menu (three dots, top right).')}</T><T>{tj('2. Tap {install} or {add}.', { install: <T key="i" v="medium">{t('Install app')}</T>, add: <T key="a" v="medium">{t('Add to Home screen')}</T> })}</T><T>{t('3. Open Fleet Check from your home screen and sign in.')}</T></>
+          ? <><T>{t('Put Fratius on your home screen like any other app.')}</T><Button v="primary" title={t('Install the app')} onPress={() => promptInstall()} /></>
+          : <><T>{t('1. In Chrome, tap the menu (three dots, top right).')}</T><T>{tj('2. Tap {install} or {add}.', { install: <T key="i" v="medium">{t('Install app')}</T>, add: <T key="a" v="medium">{t('Add to Home screen')}</T> })}</T><T>{t('3. Open Fratius from your home screen and sign in.')}</T></>
       ) : (
         <T>{t('Open this page on your phone to install the app there, or keep using it in this browser.')}</T>
       )}

@@ -1,18 +1,25 @@
 {
   "expo": {
-    "name": "Fleet Check",
+    "name": "Fratius",
     "slug": "fleet-check",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fleetcheck",
+    "scheme": [
+      "fratius",
+      "fleetcheck"
+    ],
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.fleetcheck.app",
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fratius.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
-        "NSCameraUsageDescription": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
-        "NSPhotoLibraryUsageDescription": "Fleet Check opens your photos so you can check vehicle pictures you already took."
+        "NSCameraUsageDescription": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
+        "NSPhotoLibraryUsageDescription": "Fratius opens your photos so you can check van pictures you already took.",
+        "NSMicrophoneUsageDescription": "Fratius records sound with walk-around videos, so you can say what you see while you film."
       }
     },
     "android": {
@@ -23,12 +30,17 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.fleetcheck.app"
+      "package": "com.fratius.app",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "output": "single",
       "favicon": "./assets/images/favicon.png",
-      "name": "Fleet Check",
+      "name": "Fratius",
       "themeColor": "#000000",
       "backgroundColor": "#ECEEF1"
     },
@@ -36,7 +48,9 @@
       [
         "expo-router",
         {
-          "asyncRoutes": { "web": false }
+          "asyncRoutes": {
+            "web": false
+          }
         }
       ],
       [
@@ -53,19 +67,27 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
+          "cameraPermission": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Fleet Check opens your photos so you can check vehicle pictures you already took.",
-          "cameraPermission": "Fleet Check uses the camera to photograph vehicles for walk-arounds and damage checks.",
-          "microphonePermission": false
+          "photosPermission": "Fratius opens your photos so you can check van pictures you already took.",
+          "cameraPermission": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
+          "microphonePermission": "Fratius records sound with walk-around videos, so you can say what you see while you film."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#E2FF1C",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

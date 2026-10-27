@@ -74,7 +74,7 @@ export default function SignIn() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
         <View style={{ gap: 6, paddingTop: 24 }}>
-          <T v="h1">Fleet Check</T>
+          <T v="h1">Fratius</T>
           <T>{t('Walk-around photos, van history and damage checks for your fleet.')}</T>
         </View>
         <LanguageLink />

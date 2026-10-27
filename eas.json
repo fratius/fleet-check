@@ -1,5 +1,25 @@
 {
   "cli": {
-    "version": ">= 18.0.0"
+    "version": ">= 18.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "production": {
+      "channel": "production",
+      "autoIncrement": true,
+      "env": { "STORE_BUILD": "1" },
+      "android": { "buildType": "app-bundle" }
+    },
+    "preview": {
+      "channel": "production",
+      "distribution": "internal",
+      "env": { "STORE_BUILD": "1" },
+      "android": { "buildType": "apk" }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": { "track": "internal", "releaseStatus": "draft" }
+    }
   }
 }

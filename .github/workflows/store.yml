@@ -1,0 +1,118 @@
+# Builds the App Store and Google Play app on EAS (Expo's build servers), by hand from the Actions tab:
+# Actions > Store build > Run workflow. The builds then show on expo.dev, where they can be downloaded or sent to
+# the stores (see store/README.md for the first time: developer accounts and signing).
+#
+# Needs the secrets Deploy already uses (EXPO_TOKEN, FIREBASE_SERVICE_ACCOUNT). Optional, for iPhone builds made
+# entirely here (otherwise run the first iPhone build once from a computer, store/README.md step 3):
+#   ASC_API_KEY_P8, ASC_KEY_ID, ASC_ISSUER_ID, APPLE_TEAM_ID   an App Store Connect API key (Admin)
+name: Store build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which app
+        type: choice
+        options: [all, ios, android]
+        default: all
+      profile:
+        description: production = for the stores; preview = an Android file (.apk) to install directly, for testing
+        type: choice
+        options: [production, preview]
+        default: production
+
+concurrency:
+  group: store-build
+  cancel-in-progress: false
+
+env:
+  FIREBASE_TOOLS: firebase-tools@15.33.0
+
+jobs:
+  build:
+    name: Build on EAS
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the secrets are there
+        env:
+          T: ${{ secrets.EXPO_TOKEN }}
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          ok=1
+          [ -n "$T" ] || { echo "::error title=Missing secret::Add EXPO_TOKEN (expo.dev/settings/access-tokens) under Settings > Secrets and variables > Actions."; ok=0; }
+          [ -n "$SA" ] || { echo "::error title=Missing secret::Add FIREBASE_SERVICE_ACCOUNT (see README, step 2)."; ok=0; }
+          [ "$ok" = 1 ]
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: The native packages match this version
+        run: node scripts/native.mjs --check
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Android app in Firebase, for notifications (google-services.json)
+        if: inputs.platform != 'ios'
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          set -euo pipefail
+          PKG=$(jq -r .expo.android.package app.json)
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --json; }
+          cfg_of() { fb apps:sdkconfig ANDROID "$1" | jq -r '.result.fileContents'; }
+          APP=""; CFG=""
+          for a in $(fb apps:list ANDROID | jq -r '.result[]?.appId'); do
+            C=$(cfg_of "$a")
+            if printf '%s' "$C" | jq -e --arg p "$PKG" 'any(.client[]?; .client_info.android_client_info.package_name == $p)' > /dev/null; then APP=$a; CFG=$C; break; fi
+          done
+          if [ -z "$APP" ]; then
+            APP=$(fb apps:create ANDROID "Fratius" --package-name "$PKG" | jq -r '.result.appId')
+            echo "::notice title=Firebase::Added the Android app $PKG to the Firebase project."
+            CFG=$(cfg_of "$APP")
+          fi
+          printf '%s' "$CFG" > google-services.json
+          jq -e '.project_info.project_id' google-services.json > /dev/null
+      - name: App Store Connect key (optional)
+        if: inputs.platform != 'android'
+        env:
+          P8: ${{ secrets.ASC_API_KEY_P8 }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+          ISS: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$P8" ] && [ -n "$KID" ] && [ -n "$ISS" ] && [ -n "$TEAM" ]; then
+            printf '%s\n' "$P8" > "$RUNNER_TEMP/asc.p8"
+            {
+              echo "EXPO_ASC_API_KEY_PATH=$RUNNER_TEMP/asc.p8"
+              echo "EXPO_ASC_KEY_ID=$KID"
+              echo "EXPO_ASC_ISSUER_ID=$ISS"
+              echo "EXPO_APPLE_TEAM_ID=$TEAM"
+              echo "EXPO_APPLE_TEAM_TYPE=INDIVIDUAL"
+            } >> "$GITHUB_ENV"
+            echo "Using the App Store Connect key."
+          else
+            echo "No App Store Connect key: the iPhone build uses the signing EAS already has (store/README.md, step 3)."
+          fi
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Start the builds
+        run: |
+          set -euo pipefail
+          eas build --platform "${{ inputs.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait --json > "$RUNNER_TEMP/builds.json"
+          OWNER=$(jq -r .expo.owner app.json); SLUG=$(jq -r .expo.slug app.json)
+          {
+            echo "### Store builds started (${{ inputs.profile }}, version $(jq -r .expo.version app.json))"
+            echo "They take 15 to 40 minutes. Each page shows the progress, then a download and **Submit to store**."
+            echo ""
+            jq -r --arg o "$OWNER" --arg s "$SLUG" '.[] | "- \(.platform): https://expo.dev/accounts/\($o)/projects/\($s)/builds/\(.id)"' "$RUNNER_TEMP/builds.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+          jq -r --arg o "$OWNER" --arg s "$SLUG" '.[] | "::notice title=\(.platform) build::https://expo.dev/accounts/\($o)/projects/\($s)/builds/\(.id)"' "$RUNNER_TEMP/builds.json"
+      - name: If it failed
+        if: failure()
+        run: |
+          echo "::error title=Store build::The first build of each app needs its signing set up once (Apple certificates, the Android upload key). See store/README.md, step 3."

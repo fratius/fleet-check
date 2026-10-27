@@ -1,4 +1,4 @@
-// Fleet Check service worker: shows phone notifications (web push) and opens the app at the right page when one
+// Fratius service worker: shows phone notifications (web push) and opens the app at the right page when one
 // is tapped. It doesn't cache anything; the app loads as usual.
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
@@ -6,7 +6,7 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('push', (e) => {
   let m = {};
   try { m = e.data ? e.data.json() : {}; } catch { m = { body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(m.title || 'Fleet Check', {
+  e.waitUntil(self.registration.showNotification(m.title || 'Fratius', {
     body: m.body || '',
     tag: m.tag || undefined,
     icon: '/icons/icon-192.png',

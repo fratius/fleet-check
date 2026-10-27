@@ -27,5 +27,18 @@ module.exports = ({ config }) => {
   // Which version this is (the commit and when it was built), shown in the Account tab, so the phone app and the
   // web app can be compared: Expo Go only switches to a new version the next time it starts.
   extra.build = { sha: (process.env.GITHUB_SHA || '').slice(0, 7) || 'dev', at: new Date().toISOString() };
+  // STORE_BUILD=1: the App Store and Google Play app (eas.json sets it for its builds; Deploy sets it for the
+  // updates on the "production" channel). Its updates go to the app version ("1.0.0"), not to the Expo SDK like
+  // Expo Go's: a new native package needs a new version and new store builds (scripts/native.mjs checks it).
+  if (process.env.STORE_BUILD === '1') {
+    config.runtimeVersion = { policy: 'appVersion' };
+    extra.store = true;
+    // Android notifications go through Firebase Cloud Messaging: the Store build workflow fetches this file from
+    // the Firebase project before building (public identifiers only). It isn't kept in the repo, and it must not be
+    // in .gitignore: EAS uploads untracked files but leaves out ignored ones.
+    if (require('fs').existsSync(`${__dirname}/google-services.json`)) {
+      config.android = { ...(config.android || {}), googleServicesFile: './google-services.json' };
+    }
+  }
   return { ...config, extra };
 };

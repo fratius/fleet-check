@@ -238,8 +238,8 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
   };
   const share = (i: Invite) => Share.share({
     message: role === 'manager'
-      ? t('You\'re invited to join {company} in Fleet Check as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}', { company: s.org!.name, station: station.name, until: fmtWhen(i.expiresAt), link: inviteUrl(i.token) })
-      : t('You\'re invited to join {company} in Fleet Check as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}', { company: s.org!.name, station: station.name, until: fmtWhen(i.expiresAt), link: inviteUrl(i.token) }),
+      ? t('You\'re invited to join {company} in Fratius as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}', { company: s.org!.name, station: station.name, until: fmtWhen(i.expiresAt), link: inviteUrl(i.token) })
+      : t('You\'re invited to join {company} in Fratius as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}', { company: s.org!.name, station: station.name, until: fmtWhen(i.expiresAt), link: inviteUrl(i.token) }),
   }).catch(() => {});
   return (
     <View style={{ gap: 8, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderStyle: 'dashed', borderRadius: 4, padding: 12 }}>

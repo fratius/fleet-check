@@ -45,9 +45,9 @@ export function PickupRequest({ v, a, compact }: { v: Vehicle; a: Assignment; co
 
 const STATE_TEXT: Record<PushState, string> = {
   native: N_('Phone notifications work in the web app (on the home screen), not in Expo Go.'),
-  install: N_('On iPhone, notifications work once Fleet Check is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.'),
+  install: N_('On iPhone, notifications work once Fratius is on your home screen: tap Share, then Add to Home Screen, open it from there and turn them on here.'),
   unsupported: N_('This browser can\'t show notifications. Use Chrome on Android, or the app on an iPhone\'s home screen.'),
-  blocked: N_('Notifications are blocked for Fleet Check. Allow them in the phone\'s settings (iPhone: Settings > Notifications > Fleet Check; Android: Chrome > Site settings > Notifications), then come back here.'),
+  blocked: N_('Notifications are blocked for Fratius. Allow them in the phone\'s settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.'),
   off: N_('Get a notification on this phone when someone gives you a van.'),
   on: N_('This phone gets a notification when someone gives you a van.'),
 };
