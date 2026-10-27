@@ -9,6 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
 import { onCall, onRequest, type CallableRequest } from 'firebase-functions/https';
+import { onSchedule } from 'firebase-functions/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import nodemailer from 'nodemailer';
 import webpush from 'web-push';
@@ -18,6 +19,7 @@ import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
+import { KEEP_DAYS, cleanMedia, keepUntil, mediaGone } from './media';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, probe } from './video';
@@ -981,6 +983,8 @@ export const processVideo = onCall({ timeoutSeconds: 540, memory: '4GiB', cpu: 4
       ]);
       await ref.update({ status: 'ready', playPath: `${base}play.mp4`, posterPath: `${base}poster.jpg`, playSize, readyAt: Date.now(), error: null });
     });
+    // The playback copy is what everyone watches; the phone's original (larger, with the phone's location data) goes.
+    await bucket().file(d.path).delete({ ignoreNotFound: true }).then(() => ref.update({ originalDeleted: true })).catch(() => {});
   } catch (e) {
     await ref.update({ status: 'failed', error: String((e as Error)?.message || e).slice(0, 300) });
     throw fail('internal', 'Couldn\'t convert the video. The original is kept.');
@@ -1771,4 +1775,49 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, a
   await getAuth().deleteUser(uid).catch((e) => { if ((e as { code?: string })?.code !== 'auth/user-not-found') throw e; });
   logger.info('Account deleted', { companies: plan.map((c) => `${c.id}:${c.outcome}`) });
   return { ok: true, closed: plan.filter((c) => c.outcome === 'close').map((c) => c.name) };
+});
+
+/* ---------- 18. Photos and videos: kept 30 days, damage 90 (media.ts) ---------- */
+// The records stay for good; the files go. Owners and the station's managers mark walk-around photos or a video as
+// damage (within the 30 days), which keeps them 90 days from when they were taken; damage approved in a review
+// does the same for its photos (damageLogFor). A daily job deletes what is due.
+
+export const markDamage = onCall({ timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const col = req.data?.kind === 'video' ? 'videos' : req.data?.kind === 'walk' ? 'walkarounds' : null;
+  const id = String(req.data?.id || '');
+  if (!col || !ID.test(id)) throw fail('invalid-argument', 'Unknown photos or video.');
+  const on = req.data?.on !== false;
+  const ref = db().doc(`orgs/${who.orgId}/${col}/${id}`);
+  const now = Date.now();
+  return db().runTransaction(async (tx) => {
+    const d = await tx.get(ref);
+    if (!d.exists) throw fail('not-found', 'Unknown photos or video.');
+    const x = d.data() as { stationId?: string | null; createdAt: number; keepDamage?: string[]; keepUntil?: number | null };
+    needStation(who, x.stationId, N_('These photos belong to another station.'));
+    if (on && mediaGone(x.createdAt, x.keepUntil, now)) {
+      throw fail('failed-precondition', 'Photos and videos are deleted after {n} days. These are gone already.', { n: KEEP_DAYS });
+    }
+    const keepMark = on ? { by: who.uid, byName: who.name, at: now } : null;
+    const until = keepUntil(x.createdAt, !!keepMark || (x.keepDamage || []).length > 0);
+    tx.update(ref, { keepMark, keepUntil: until });
+    return { keepUntil: until };
+  });
+});
+
+const runClean = (now: number, onlyOrg?: string) => cleanMedia(now, (orgId, checkId) => damageLogFor(orgId, checkId), onlyOrg);
+
+export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'Europe/Berlin', timeoutSeconds: 540, memory: '512MiB', retryCount: 1 }, async () => {
+  const r = await runClean(Date.now());
+  logger.info('Photos and videos cleaned up', r);
+});
+
+/** The app creator runs the clean-up for one company now. On the emulators the tests pass a day in the future. */
+export const cleanMediaNow = onCall({ timeoutSeconds: 540, memory: '512MiB' }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const orgId = String(req.data?.orgId || '');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
+  const now = process.env.FUNCTIONS_EMULATOR === 'true' && Number(req.data?.now) > 0 ? Number(req.data.now) : Date.now();
+  return runClean(now, orgId);
 });

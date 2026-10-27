@@ -208,4 +208,5 @@ the works council where there is one. A deletion period for the records of peopl
 - **Documents kept on the van** (registration certificate, insurance card) and PDFs: today a document photo only fills in the record and is deleted.
 - **Service and repair log** with costs, and the cost per van per month (lease plus repairs plus fuel).
 - **Reminders**: deadline notifications to the station's managers, by phone notification or email.
-- **Deletion periods** for records of people who left, and for old dashboard photos.
+- **Deletion periods** for records of people who left. (Photos and videos already go after 30 days, damage after
+  90: ROLES.md.)

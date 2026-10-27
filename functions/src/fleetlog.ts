@@ -1,5 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { approvedDamage, keepForCheck } from './media';
+
 /**
  * Tours from dashboard photos, and the damage log for the driver numbers. Plain functions, used by the callable
  * functions (index.ts) and the demo company (demo.ts).
@@ -122,13 +124,17 @@ export async function damageLogFor(orgId: string, checkId: string): Promise<bool
   const snap = await org.collection('checks').doc(checkId).get();
   const k = snap.data() as CheckDoc | undefined;
   const lref = org.collection('damageLog').doc(checkId);
-  if (!k || k.status !== 'reviewed') { await lref.delete().catch(() => {}); return false; }
+  if (!k || k.status !== 'reviewed') {
+    await lref.delete().catch(() => {});
+    if (k) await keepForCheck(orgId, checkId, k.createdAt, false, []);
+    return false;
+  }
   const walk = k.walkId ? (await org.collection('walkarounds').doc(k.walkId).get()).data() as { createdAt?: number } | undefined : undefined;
   const foundAt = walk?.createdAt ?? k.createdAt;
   const before = await org.collection('walkarounds').where('vehicleId', '==', k.vehicleId).where('createdAt', '<', foundAt - 1000)
     .orderBy('createdAt', 'desc').limit(5).get();
-  const prev = before.docs.map((d) => d.data() as { createdAt: number; photos?: { path?: string; uri?: string }[] })
-    .find((w) => (w.photos || []).some((p) => p.path || p.uri));
+  const prevDoc = before.docs.find((d) => ((d.data() as { photos?: { path?: string; uri?: string }[] }).photos || []).some((p) => p.path || p.uri));
+  const prev = prevDoc?.data() as { createdAt: number } | undefined;
   const from = prev?.createdAt ?? null;
   const drivers: { id: string; name: string }[] = [];
   if (from != null) {
@@ -141,5 +147,8 @@ export async function damageLogFor(orgId: string, checkId: string): Promise<bool
     checkId, vehicleId: k.vehicleId, vehicleName: k.vehicleName, stationId: k.stationId || null, foundAt, from, n: newDamageCount(k),
     drivers, driverIds: drivers.map((x) => x.id), reviewAt: k.review?.at ?? null, createdAt: foundAt,
   });
+  // Approved damage keeps its photos 90 days: the check's close-ups, the walk-around it was found in and the one
+  // before it (media.ts).
+  await keepForCheck(orgId, checkId, k.createdAt, approvedDamage(k), [k.walkId, prevDoc?.id]);
   return true;
 }

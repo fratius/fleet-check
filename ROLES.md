@@ -73,6 +73,13 @@ the product owner's explicit decision first.
 - **Nothing that belongs to the history is deleted.** Vans are retired, never deleted (`retireVan`; they can be
   brought back). Walk-arounds, damage checks and companies can't be deleted from the app. Removing a person
   (`removePerson`) ends their assignment and frees the van; their history, walk-arounds and checks stay.
+- **Photos and videos are kept 30 days; the records for good** (decided by the product owner, 2026-10). The files
+  of walk-arounds, checks, videos, dashboards, receipts and van-type scans are deleted 30 days after they were
+  taken. Kept 90 days: the photos of a check where the manager approved damage, the walk-around it was found in and
+  the one before it (`damageLogFor`), and walk-around photos or videos an owner or the station's manager marked as
+  damage (`markDamage`, within the 30 days; they can take the mark off). The daily job `cleanMediaDaily`
+  (functions/src/media.ts) deletes what is due; the app shows "deleted on …" in their place. Demo companies keep
+  their drawings. Only the server writes `keepMark`, `keepDamage` and `keepUntil` (the rules refuse them).
 - **People delete their own account** (`deleteAccount`, Account tab and the "Your company" screen; the App Store
   and Google Play require it). Decided by the product owner: the login, the profile (`users/{uid}`, the
   membership with name, phone and Transporter ID) and the phone notifications go; the company keeps its records
@@ -104,7 +111,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 - **Videos:** uploaded as recorded to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder);
   the server writes the video record (`orgs/{org}/videos`) and makes a 720p playback copy (`processVideo`). Owners
   and the station's managers watch every video of their station's vans; drivers watch their own. Nobody edits or
-  deletes them.
+  deletes the records. Once the playback copy is made, the phone's original (larger, with its location data) is
+  deleted.
 - **Walk-around videos** (`addVanVideo`): anyone who can scan a van (its station's drivers and managers, owners)
   can film it instead of taking the photos, at any time and whatever the station's pick-up setting. Same checks as
   a handover video. It is kept with the van and notes the driver who had it then; it doesn't pick up or drop off

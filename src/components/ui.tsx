@@ -8,7 +8,7 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 
-import { photoUrl } from '@/lib/images';
+import { GONE, photoLookup, photoUrl } from '@/lib/images';
 import { loc, t } from '@/lib/i18n';
 
 export const MARKER = '#E2FF1C';
@@ -162,10 +162,11 @@ export function Svg({ xml, width, height, style }: { xml: string; width: number;
 export function Photo({ src, style, contentFit = 'cover' }: { src: { uri?: string; path?: string } | string | null | undefined; style?: StyleProp<ViewStyle>; contentFit?: 'cover' | 'contain' }) {
   const c = useColors();
   const [url, setUrl] = useState<string | null>(typeof src === 'object' && src?.uri ? src.uri : null);
-  useEffect(() => { let live = true; photoUrl(src).then((u) => { if (live) setUrl(u); }); return () => { live = false; }; }, [src]);
+  useEffect(() => { let live = true; photoLookup(src).then((u) => { if (live) setUrl(u); }); return () => { live = false; }; }, [src]);
   return (
     <View style={[{ backgroundColor: c.dark ? '#000' : '#16181C', overflow: 'hidden', borderRadius: 3 }, style]}>
-      {url ? <Image source={{ uri: url }} style={StyleSheet.absoluteFill} contentFit={contentFit} transition={150} /> : <ActivityIndicator style={{ flex: 1 }} color="#888" />}
+      {url === GONE ? <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 4 }}><T v="small" color="#9aa0a6" style={{ textAlign: 'center' }}>{t('Photo deleted')}</T></View>
+        : url ? <Image source={{ uri: url }} style={StyleSheet.absoluteFill} contentFit={contentFit} transition={150} /> : <ActivityIndicator style={{ flex: 1 }} color="#888" />}
     </View>
   );
 }

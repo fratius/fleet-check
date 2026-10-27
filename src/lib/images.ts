@@ -33,20 +33,32 @@ export async function upload(uri: string, path: string, onProgress?: (f: number)
 }
 
 const urlCache = new Map<string, Promise<string>>();
+/** Paths the storage says aren't there (deleted after 30 or 90 days, see lib/media.ts). */
+const goneCache = new Set<string>();
 /** A displayable URL for a stored path, or the local uri as is. */
 export function photoUrl(p: { uri?: string; path?: string } | string | null | undefined): Promise<string | null> {
+  return photoLookup(p).then((u) => (u === GONE ? null : u));
+}
+export const GONE = 'gone';
+/** Like photoUrl, but says GONE when the file was deleted (rather than not loading for another reason). */
+export function photoLookup(p: { uri?: string; path?: string } | string | null | undefined): Promise<string | null> {
   if (!p) return Promise.resolve(null);
   if (typeof p === 'string') p = /^(file|data|blob|https?|content|ph|assets-library):/.test(p) ? { uri: p } : { path: p };
   if (p.uri) return Promise.resolve(p.uri);
   const f = fb();
   if (!p.path || !f) return Promise.resolve(null);
-  let u = urlCache.get(p.path);
+  const path = p.path;
+  if (goneCache.has(path)) return Promise.resolve(GONE);
+  let u = urlCache.get(path);
   if (!u) {
-    u = getDownloadURL(ref(f.storage, p.path));
-    urlCache.set(p.path, u);
-    u.catch(() => urlCache.delete(p.path!));
+    u = getDownloadURL(ref(f.storage, path));
+    urlCache.set(path, u);
+    u.catch(() => urlCache.delete(path));
   }
-  return u.catch(() => null);
+  return u.catch((e: { code?: string }) => {
+    if (e?.code === 'storage/object-not-found') { goneCache.add(path); return GONE; }
+    return null;
+  });
 }
 
 export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

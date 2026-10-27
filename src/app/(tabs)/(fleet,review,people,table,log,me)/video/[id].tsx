@@ -2,6 +2,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, View } from 'react-native';
 
+import { KeepCard, useMediaGone } from '@/components/keep';
 import { VideoPlayer } from '@/components/video';
 import { Button, Card, Notice, Pill, Row, Screen, T, fmtWhen } from '@/components/ui';
 import { photoUrl } from '@/lib/images';
@@ -15,6 +16,7 @@ import { t, tp } from '@/lib/i18n';
 export default function VideoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useSession();
+  const gone = useMediaGone();
   const loaded = s.videos.find((v) => v.id === id);
   const [older, setOlder] = useState<Video | null | undefined>(undefined);
   const orgId = s.org?.id;
@@ -25,7 +27,7 @@ export default function VideoScreen() {
   const v = loaded || older || null;
   // If the playback copy wasn't made (the phone went offline right after the upload), start it again.
   const kicked = useRef(false);
-  const stuck = !!v && ((v.status === 'uploaded' && Date.now() - v.createdAt > 90_000) || v.status === 'failed');
+  const stuck = !!v && ((v.status === 'uploaded' && Date.now() - v.createdAt > 90_000) || v.status === 'failed') && !gone(v.createdAt, v.keepUntil);
   useEffect(() => {
     if (!v || !orgId || kicked.current || !stuck || v.status === 'failed') return;
     kicked.current = true;
@@ -39,10 +41,12 @@ export default function VideoScreen() {
   return (
     <Screen edges={[]}>
       <Stack.Screen options={{ title: t('{title}, {van}', { title, van: v.vehicleName }) }} />
-      <View style={{ alignSelf: 'center', width: aspect < 1 ? '72%' : '100%', maxWidth: 520 }}>
-        <VideoPlayer path={ready ? v.playPath! : v.path} aspect={aspect} />
-      </View>
-      {!ready ? (
+      {gone(v.createdAt, v.keepUntil) ? null : (
+        <View style={{ alignSelf: 'center', width: aspect < 1 ? '72%' : '100%', maxWidth: 520 }}>
+          <VideoPlayer path={ready ? v.playPath! : v.path} aspect={aspect} />
+        </View>
+      )}
+      {!ready && !gone(v.createdAt, v.keepUntil) ? (
         <Notice text={v.status === 'failed' ? t('The copy that plays on every phone couldn\'t be made. This is the original; it plays on iPhones and Macs.')
           : t('Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.')} />
       ) : null}
@@ -56,9 +60,11 @@ export default function VideoScreen() {
         <T v="small">{[t('Uploaded {when}', { when: fmtWhen(v.createdAt) }), v.device || '', v.size ? t('original {size}', { size: mb(v.size) }) : '',
           v.playSize ? t('playback copy {size}', { size: mb(v.playSize) }) : ''].filter(Boolean).join(', ')}.</T>
       </View>
+      <KeepCard kind="video" id={v.id} createdAt={v.createdAt} stationId={v.stationId} keepUntil={v.keepUntil} keepMark={v.keepMark} />
       <Row>
         <Button small title={t('Open {name}', { name: v.vehicleName })} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
-        {s.staff ? <Button small v="link" title={t('Download the original')} onPress={async () => { const u = await photoUrl(v.path); if (u) Linking.openURL(u); }} /> : null}
+        {s.staff && !gone(v.createdAt, v.keepUntil) ? <Button small v="link" title={v.originalDeleted ? t('Download the video') : t('Download the original')}
+          onPress={async () => { const u = await photoUrl(v.originalDeleted && v.playPath ? v.playPath : v.path); if (u) Linking.openURL(u); }} /> : null}
       </Row>
     </Screen>
   );

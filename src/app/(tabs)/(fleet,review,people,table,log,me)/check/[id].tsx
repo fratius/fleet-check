@@ -5,11 +5,13 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 
 import { KnownChooser, useVanRecords } from '@/components/damage';
+import { useMediaGone } from '@/components/keep';
 import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV } from '@/components/ui';
 import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
+import { day, keptUntil } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -72,6 +74,7 @@ type Local = Record<number, (string | null)[]>;
 function CheckView({ id }: { id: string }) {
   const s = useSession();
   const c = useColors();
+  const gone = useMediaGone();
   // Older checks (opened from a van's damage record) aren't among the ones the app keeps loaded: watch them.
   const loadedK = s.checks.find((x) => x.id === id);
   const [older, setOlder] = useState<Check | null | undefined>(undefined);
@@ -246,6 +249,10 @@ function CheckView({ id }: { id: string }) {
           {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
         </Row>
       </View>
+      {s.mode === 'firebase' && !s.org?.demo ? (gone(k.createdAt, k.keepUntil)
+        ? <Notice text={t('The photos of this check were deleted on {date}. The decisions and the van\'s damage record stay.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })} />
+        : <T v="small">{k.keepUntil ? t('Damage was approved: the photos are kept until {date}.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })
+          : t('Photos and videos are kept 30 days: these until {date}.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })}</T>) : null}
       {s.seesAiStats ? <CostPanel k={k} /> : null}
       {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
       {status === 'checking' && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}

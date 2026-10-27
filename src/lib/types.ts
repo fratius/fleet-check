@@ -375,6 +375,10 @@ export interface Video {
   posterPath: string | null;
   playSize?: number;
   error?: string | null;
+  /** The phone's original is deleted once the playback copy is made. */
+  originalDeleted?: boolean;
+  keepMark?: KeepMark | null;
+  keepUntil?: number | null;
 }
 
 /** An operating area of a company, such as an Amazon delivery station. */
@@ -429,7 +433,14 @@ export interface Walkaround {
   /** Set by the server when these photos were taken to pick up or drop off the van. */
   /** The photos of a pick-up or drop-off (set by the server); late: added after the handover, not by the driver at pick-up. */
   handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string; late?: boolean };
+  /** Kept 90 days instead of 30 (lib/media.ts), set by the server: marked as damage, or damage approved in these checks. */
+  keepMark?: KeepMark | null;
+  keepDamage?: string[];
+  keepUntil?: number | null;
 }
+
+/** An owner or fleet manager marked photos or a video as damage (markDamage): kept 90 days. */
+export interface KeepMark { by: string; byName: string; at: number }
 
 export interface Usage {
   ms: number;
@@ -539,6 +550,8 @@ export interface Check {
   spots: Spot[];
   notVisible: string[];
   missedNote: string;
+  /** Damage was approved: its photos are kept 90 days (set by the server). */
+  keepUntil?: number | null;
 }
 
 /** AI speed and cost of one damage check (orgs/{org}/checkUsage/{checkId}): only the app creator reads it. */

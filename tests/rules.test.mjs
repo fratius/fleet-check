@@ -167,6 +167,12 @@ describe('walk-arounds and checks', () => {
   });
   test('nobody marks their own photos as a pick-up or drop-off (only the server does)', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w5`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2, handover: { kind: 'pickup', assignmentId: 'a1' } })));
   test('nobody edits a walk-around', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w1`), { taken: 14 })));
+  test('nobody keeps their own photos longer (only the server marks damage)', async () => {
+    await assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w6`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2, keepUntil: 9e12 }));
+    await assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/walkarounds/w7`), { vehicleId: 'v1', stationId: S1, createdBy: 'mgr1', createdAt: 2, keepMark: { by: 'mgr1' } }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}/walkarounds/w1`), { keepUntil: 9e12 }));
+  });
+  test('nobody writes how long a check\'s photos are kept, not even its manager', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), { keepUntil: 9e12 })));
   test('driver cannot save one in someone else\'s name', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w4`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv9', createdAt: 2 })));
   test('driver cannot create a check (only the server does)', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/checks/c9`), { stationId: S1, createdAt: 2 })));
   test('driver cannot approve damage', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/checks/c1`), review)));

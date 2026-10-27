@@ -2,6 +2,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
+import { KeepCard, useMediaGone } from '@/components/keep';
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
 import { useWhoDid } from '@/lib/names';
@@ -14,6 +15,7 @@ export default function WalkScreen() {
   const s = useSession();
   const whoDid = useWhoDid();
   const c = useColors();
+  const gone = useMediaGone();
   const { width } = useWindowDimensions();
   const loadedW = s.walks.find((x) => x.id === id);
   // Older walk-arounds (linked from a van's history) aren't among the ones the app keeps loaded: fetch them.
@@ -45,7 +47,8 @@ export default function WalkScreen() {
         <Stat value={`${w.taken}/${w.frames}`} label={w.skipped ? tp(w.skipped, 'photos, {n} skipped', 'photos, {n} skipped') : t('photos')} />
         <Stat value={String(w.retakes)} label={t('retakes')} />
       </Stats>
-      {s.mode === 'firebase' ? (
+      <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} />
+      {s.mode === 'firebase' && gone(w.createdAt, w.keepUntil) ? null : s.mode === 'firebase' ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <Button v="primary" wide title={checks.length ? t('Check for damage again') : t('Check for damage')}
             onPress={() => router.push({ pathname: '/check/[id]', params: { id: 'new', walk: w.id } })} />

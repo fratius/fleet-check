@@ -227,6 +227,7 @@ export const ai = {
   readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
+  markDamage: call<{ orgId: string; kind: 'walk' | 'video'; id: string; on: boolean }, { keepUntil: number | null }>('markDamage', 30000),
   /** check: what deleting the account would do in each company; without it, deletes it (after a fresh sign-in). */
   accountPlan: call<{ check: true }, { companies: AccountCompany[] }>('deleteAccount', 60000),
   deleteAccount: call<Record<string, never>, { ok: boolean; closed: string[] }>('deleteAccount', 310000),
