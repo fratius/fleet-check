@@ -1012,7 +1012,9 @@ test('people delete their own account: login and profile go, the company keeps i
   assert.equal(a.driverName, 'Gus Gone');
   assert.equal((await vanDoc(S.mgr, vr.id)).assignedTo, null);
 
-  // The only fleet owner of a company with other people in it hands it over first.
+  // The only fleet owner of a company with other people in it hands it over first. (The app lists a person's
+  // companies on their profile, as it does when they create one.)
+  await setDoc(doc(S.own.db, 'users', S.own.uid), { orgIds: [S.org], orgId: S.org }, { merge: true });
   const ownPlan = await S.own.call('deleteAccount', { check: true });
   assert.equal(ownPlan.companies.find((c) => c.id === S.org).outcome, 'blocked');
   await fails(S.own.call('deleteAccount', {}), 'failed-precondition');
