@@ -1,0 +1,1672 @@
+[
+ {
+  "id": "w001",
+  "key": "Fratius Fleet management, back to the top",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w002",
+  "key": "Sections",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w003",
+  "key": "Example of the live station board",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w004",
+  "key": "Features",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w005",
+  "key": "Features, use the arrow keys to move",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w006",
+  "key": "Example answers",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w007",
+  "key": "Example pick-up screen",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w008",
+  "key": "Example dashboard reading",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w009",
+  "key": "Odometer 84,213 km",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w010",
+  "key": "Fuel about three quarters",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w011",
+  "key": "Example of a stopped refuel",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w012",
+  "key": "Example review list",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w013",
+  "key": "Example history of van B-FC 2041",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w014",
+  "key": "Example deadlines and driver record",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w015",
+  "key": "Example document reading and data table",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w016",
+  "key": "Example driver table",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w017",
+  "key": "Roles and languages",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w018",
+  "key": "Side view of a van with three numbered damage spots",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w019",
+  "key": "Previous feature",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w020",
+  "key": "Next feature",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w021",
+  "key": "Fratius app icon",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w022",
+  "key": "Sign-up steps",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w023",
+  "key": "Legal",
+  "where": "attribute aria-label"
+ },
+ {
+  "id": "w024",
+  "key": "Fleet management",
+  "where": "page"
+ },
+ {
+  "id": "w025",
+  "key": "Pricing",
+  "where": "page"
+ },
+ {
+  "id": "w026",
+  "key": "Download",
+  "where": "page"
+ },
+ {
+  "id": "w027",
+  "key": "FAQ",
+  "where": "page"
+ },
+ {
+  "id": "w028",
+  "key": "Start 30 days free",
+  "where": "page"
+ },
+ {
+  "id": "w029",
+  "key": "Try free",
+  "where": "page"
+ },
+ {
+  "id": "w030",
+  "key": "For delivery partners who run their own vans",
+  "where": "page"
+ },
+ {
+  "id": "w031",
+  "key": "Every van. Every driver.",
+  "where": "page"
+ },
+ {
+  "id": "w032",
+  "key": "Right now.",
+  "where": "page"
+ },
+ {
+  "id": "w033",
+  "key": "Feel the pulse of your fleet in real time. Who has which van, every handover with photos, fuel at the pump, warning lights and deadlines, all on one screen. Backed by a history nobody can rewrite.",
+  "where": "page"
+ },
+ {
+  "id": "w034",
+  "key": "See the features",
+  "where": "page"
+ },
+ {
+  "id": "w035",
+  "key": "30 days free on every plan",
+  "where": "page"
+ },
+ {
+  "id": "w036",
+  "key": "iPhone, Android and web",
+  "where": "page"
+ },
+ {
+  "id": "w037",
+  "key": "32 languages",
+  "where": "page"
+ },
+ {
+  "id": "w038",
+  "key": "Station",
+  "where": "page"
+ },
+ {
+  "id": "w039",
+  "key": "Live",
+  "where": "page"
+ },
+ {
+  "id": "w040",
+  "key": "Out with a driver",
+  "where": "page"
+ },
+ {
+  "id": "w041",
+  "key": "Free",
+  "where": "page"
+ },
+ {
+  "id": "w042",
+  "key": "At the pump",
+  "where": "page"
+ },
+ {
+  "id": "w043",
+  "key": "To review",
+  "where": "page"
+ },
+ {
+  "id": "w044",
+  "key": "Example data. Your board shows your own vans and drivers as things happen.",
+  "where": "page"
+ },
+ {
+  "id": "w045",
+  "key": "What Fratius does",
+  "where": "page"
+ },
+ {
+  "id": "w046",
+  "key": "From the first pick-up of the day to the fine that arrives three weeks later. Swipe through, or pick a topic.",
+  "where": "page"
+ },
+ {
+  "id": "w047",
+  "key": "At a glance",
+  "where": "page"
+ },
+ {
+  "id": "w048",
+  "key": "Handovers",
+  "where": "page"
+ },
+ {
+  "id": "w049",
+  "key": "Tours",
+  "where": "page"
+ },
+ {
+  "id": "w050",
+  "key": "Review",
+  "where": "page"
+ },
+ {
+  "id": "w051",
+  "key": "History",
+  "where": "page"
+ },
+ {
+  "id": "w052",
+  "key": "Deadlines",
+  "where": "page"
+ },
+ {
+  "id": "w053",
+  "key": "Paperwork & data",
+  "where": "page"
+ },
+ {
+  "id": "w054",
+  "key": "Team & languages",
+  "where": "page"
+ },
+ {
+  "id": "w055",
+  "key": "AI damage · soon",
+  "where": "page"
+ },
+ {
+  "id": "w056",
+  "key": "At any moment",
+  "where": "page"
+ },
+ {
+  "id": "w057",
+  "key": "· owners and managers",
+  "where": "page"
+ },
+ {
+  "id": "w058",
+  "key": "The answers you used to phone around for",
+  "where": "page"
+ },
+ {
+  "id": "w059",
+  "key": "Every van and every driver as it happens. No spreadsheets, no group chats, no ringing round the drivers.",
+  "where": "page"
+ },
+ {
+  "id": "w060",
+  "key": "Who has B-FC 2041 right now?",
+  "where": "page"
+ },
+ {
+  "id": "w061",
+  "key": "since 05:45",
+  "where": "page"
+ },
+ {
+  "id": "w062",
+  "key": "Proof on record",
+  "where": "page"
+ },
+ {
+  "id": "w063",
+  "key": "Which vans are free?",
+  "where": "page"
+ },
+ {
+  "id": "w064",
+  "key": "Was that the van's fuel card?",
+  "where": "page"
+ },
+ {
+  "id": "w065",
+  "key": "Card ending 4471 matched · 62.4 l · €108.20",
+  "where": "page"
+ },
+ {
+  "id": "w066",
+  "key": "What falls due this month?",
+  "where": "page"
+ },
+ {
+  "id": "w067",
+  "key": "HU for 1 van · UVV for 4 · 2 licence checks",
+  "where": "page"
+ },
+ {
+  "id": "w068",
+  "key": "Which van should see the workshop?",
+  "where": "page"
+ },
+ {
+  "id": "w069",
+  "key": "14% more diesel than its twins",
+  "where": "page"
+ },
+ {
+  "id": "w070",
+  "key": "05:45 and 16:40",
+  "where": "page"
+ },
+ {
+  "id": "w071",
+  "key": "· driver",
+  "where": "page"
+ },
+ {
+  "id": "w072",
+  "key": "Pick-up and drop-off with proof",
+  "where": "page"
+ },
+ {
+  "id": "w073",
+  "key": "The driver walks around the van with the app: a photo in every guide frame, or one walk-around video. Any new damage gets a name and a time: whoever had the van between two walk-arounds.",
+  "where": "page"
+ },
+ {
+  "id": "w074",
+  "key": "Drivers pick up vans themselves, or managers hand them out. Your choice per station.",
+  "where": "page"
+ },
+ {
+  "id": "w075",
+  "key": "Video for vans that two or three drivers share in a day.",
+  "where": "page"
+ },
+ {
+  "id": "w076",
+  "key": "Drop-offs without proof show up in the review.",
+  "where": "page"
+ },
+ {
+  "id": "w077",
+  "key": "Pick-up",
+  "where": "page"
+ },
+ {
+  "id": "w078",
+  "key": "Full photo set",
+  "where": "page"
+ },
+ {
+  "id": "w079",
+  "key": "05:45 · Andrei M.",
+  "where": "page"
+ },
+ {
+  "id": "w080",
+  "key": "The tour starts with a dashboard photo",
+  "where": "page"
+ },
+ {
+  "id": "w081",
+  "key": "One photo at the start, one at the end. The AI reads the odometer, fuel or battery, range and warning lights, and the driver confirms.",
+  "where": "page"
+ },
+ {
+  "id": "w082",
+  "key": "Kilometres, hours and fuel for every tour.",
+  "where": "page"
+ },
+ {
+  "id": "w083",
+  "key": "Warning lights reach the manager the same day.",
+  "where": "page"
+ },
+ {
+  "id": "w084",
+  "key": "On or off per company.",
+  "where": "page"
+ },
+ {
+  "id": "w085",
+  "key": "Tour start",
+  "where": "page"
+ },
+ {
+  "id": "w086",
+  "key": "km",
+  "where": "page"
+ },
+ {
+  "id": "w087",
+  "key": "Warning light: AdBlue",
+  "where": "page"
+ },
+ {
+  "id": "w088",
+  "key": "Range 410 km",
+  "where": "page"
+ },
+ {
+  "id": "w089",
+  "key": "Confirm reading",
+  "where": "page"
+ },
+ {
+  "id": "w090",
+  "key": "Read from the photo",
+  "where": "page"
+ },
+ {
+  "id": "w091",
+  "key": "· driver and manager",
+  "where": "page"
+ },
+ {
+  "id": "w092",
+  "key": "Every refuel checked at the pump",
+  "where": "page"
+ },
+ {
+  "id": "w093",
+  "key": "Dashboard first, then the fuel card. If it's the van's card, the receipt is read and the manager gets the litres, the total and anything odd. If it isn't, the driver is told to stop, and the manager allows or refuses from their phone.",
+  "where": "page"
+ },
+ {
+  "id": "w094",
+  "key": "Also for washes and parts.",
+  "where": "page"
+ },
+ {
+  "id": "w095",
+  "key": "Flags such as more litres than the tank holds, or the wrong fuel.",
+  "where": "page"
+ },
+ {
+  "id": "w096",
+  "key": "Card photos are never kept, only the last four digits.",
+  "where": "page"
+ },
+ {
+  "id": "w097",
+  "key": "Stop. Don't start the pump.",
+  "where": "page"
+ },
+ {
+  "id": "w098",
+  "key": "The card ending 7702 isn't the card of B-FC 2041. Your manager decides.",
+  "where": "page"
+ },
+ {
+  "id": "w099",
+  "key": "Call Sofia K.",
+  "where": "page"
+ },
+ {
+  "id": "w100",
+  "key": "Waiting",
+  "where": "page"
+ },
+ {
+  "id": "w101",
+  "key": "Andrei M. · B-FC 2041 · card ending 7702",
+  "where": "page"
+ },
+ {
+  "id": "w102",
+  "key": "Allow",
+  "where": "page"
+ },
+ {
+  "id": "w103",
+  "key": "Refuse",
+  "where": "page"
+ },
+ {
+  "id": "w104",
+  "key": "· manager",
+  "where": "page"
+ },
+ {
+  "id": "w105",
+  "key": "One list at the end of the day",
+  "where": "page"
+ },
+ {
+  "id": "w106",
+  "key": "Damage to approve, drop-offs without proof, vans out longer than 14 hours, warning lights, flagged refuels and what falls due soon.",
+  "where": "page"
+ },
+ {
+  "id": "w107",
+  "key": "Managers have the final word on every damage spot.",
+  "where": "page"
+ },
+ {
+  "id": "w108",
+  "key": "Damage to approve",
+  "where": "page"
+ },
+ {
+  "id": "w109",
+  "key": "Missing proof",
+  "where": "page"
+ },
+ {
+  "id": "w110",
+  "key": "Warning lights",
+  "where": "page"
+ },
+ {
+  "id": "w111",
+  "key": "Fuel, wash, parts",
+  "where": "page"
+ },
+ {
+  "id": "w112",
+  "key": "Due soon",
+  "where": "page"
+ },
+ {
+  "id": "w113",
+  "key": "Weeks later",
+  "where": "page"
+ },
+ {
+  "id": "w114",
+  "key": "· owner or manager",
+  "where": "page"
+ },
+ {
+  "id": "w115",
+  "key": "The van history nobody can rewrite",
+  "where": "page"
+ },
+ {
+  "id": "w116",
+  "key": "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.",
+  "where": "page"
+ },
+ {
+  "id": "w117",
+  "key": "Every handover is a record the server writes. Nobody edits or deletes it.",
+  "where": "page"
+ },
+ {
+  "id": "w118",
+  "key": "One driver per van, one van per driver.",
+  "where": "page"
+ },
+ {
+  "id": "w119",
+  "key": "Photos and videos are kept 30 days, marked damage up to 90.",
+  "where": "page"
+ },
+ {
+  "id": "w120",
+  "key": "Vans are retired, never deleted. People who leave keep their history.",
+  "where": "page"
+ },
+ {
+  "id": "w121",
+  "key": "Week 43",
+  "where": "page"
+ },
+ {
+  "id": "w122",
+  "key": "Tue 20 Oct",
+  "where": "page"
+ },
+ {
+  "id": "w123",
+  "key": "Photos",
+  "where": "page"
+ },
+ {
+  "id": "w124",
+  "key": "Wed 21 Oct",
+  "where": "page"
+ },
+ {
+  "id": "w125",
+  "key": "Video",
+  "where": "page"
+ },
+ {
+  "id": "w126",
+  "key": "Thu 22 Oct",
+  "where": "page"
+ },
+ {
+  "id": "w127",
+  "key": "New damage",
+  "where": "page"
+ },
+ {
+  "id": "w128",
+  "key": "Sliding door, found at drop-off. Photos kept 90 days.",
+  "where": "page"
+ },
+ {
+  "id": "w129",
+  "key": "Fri 23 Oct",
+  "where": "page"
+ },
+ {
+  "id": "w130",
+  "key": "Records written by the server. No edits, no deletes.",
+  "where": "page"
+ },
+ {
+  "id": "w131",
+  "key": "Every week",
+  "where": "page"
+ },
+ {
+  "id": "w132",
+  "key": "· owner and manager",
+  "where": "page"
+ },
+ {
+  "id": "w133",
+  "key": "Deadlines and driver records",
+  "where": "page"
+ },
+ {
+  "id": "w134",
+  "key": "HU, UVV, service by date and kilometres, tyres, tax, insurance and contract end show up before they're late. Each driver has a record: licence classes and expiry, licence checks every 3, 6 or 12 months, briefings, accidents, fines and complaints.",
+  "where": "page"
+ },
+ {
+  "id": "w135",
+  "key": "No licence copies, birth dates or home addresses.",
+  "where": "page"
+ },
+ {
+  "id": "w136",
+  "key": "March 2027",
+  "where": "page"
+ },
+ {
+  "id": "w137",
+  "key": "12 Nov",
+  "where": "page"
+ },
+ {
+  "id": "w138",
+  "key": "Service",
+  "where": "page"
+ },
+ {
+  "id": "w139",
+  "key": "at 90,000 km",
+  "where": "page"
+ },
+ {
+  "id": "w140",
+  "key": "Licence check fine",
+  "where": "page"
+ },
+ {
+  "id": "w141",
+  "key": "Classes",
+  "where": "page"
+ },
+ {
+  "id": "w142",
+  "key": "B, C1 · valid to 2031",
+  "where": "page"
+ },
+ {
+  "id": "w143",
+  "key": "Next check",
+  "where": "page"
+ },
+ {
+  "id": "w144",
+  "key": "April 2027",
+  "where": "page"
+ },
+ {
+  "id": "w145",
+  "key": "Safety briefing",
+  "where": "page"
+ },
+ {
+  "id": "w146",
+  "key": "done 2 Sep",
+  "where": "page"
+ },
+ {
+  "id": "w147",
+  "key": "In the office",
+  "where": "page"
+ },
+ {
+  "id": "w148",
+  "key": "Paperwork from a photo, numbers to Excel",
+  "where": "page"
+ },
+ {
+  "id": "w149",
+  "key": "Photograph the registration certificate, the lease contract or the insurance policy. The fields fill in, you check them and save, and the photo is deleted. Drivers, tours, vans and fuel come as tables for 7, 30 or 90 days.",
+  "where": "page"
+ },
+ {
+  "id": "w150",
+  "key": "Fuel per 100 km against vans of the same model.",
+  "where": "page"
+ },
+ {
+  "id": "w151",
+  "key": "One tap to Excel.",
+  "where": "page"
+ },
+ {
+  "id": "w152",
+  "key": "VIN",
+  "where": "page"
+ },
+ {
+  "id": "w153",
+  "key": "First registration",
+  "where": "page"
+ },
+ {
+  "id": "w154",
+  "key": "HU due",
+  "where": "page"
+ },
+ {
+  "id": "w155",
+  "key": "Driver",
+  "where": "page"
+ },
+ {
+  "id": "w156",
+  "key": "l/100",
+  "where": "page"
+ },
+ {
+  "id": "w157",
+  "key": "vs model",
+  "where": "page"
+ },
+ {
+  "id": "w158",
+  "key": "Last 30 days",
+  "where": "page"
+ },
+ {
+  "id": "w159",
+  "key": "Download for Excel",
+  "where": "page"
+ },
+ {
+  "id": "w160",
+  "key": "Everyone",
+  "where": "page"
+ },
+ {
+  "id": "w161",
+  "key": "· owner, manager, driver",
+  "where": "page"
+ },
+ {
+  "id": "w162",
+  "key": "Each role sees what it needs, in its own language",
+  "where": "page"
+ },
+ {
+  "id": "w163",
+  "key": "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.",
+  "where": "page"
+ },
+ {
+  "id": "w164",
+  "key": "People join only by invite link: one person, one use, valid for 24 hours.",
+  "where": "page"
+ },
+ {
+  "id": "w165",
+  "key": "32 languages. The app opens in the phone's language.",
+  "where": "page"
+ },
+ {
+  "id": "w166",
+  "key": "iPhone, Android and the web.",
+  "where": "page"
+ },
+ {
+  "id": "w167",
+  "key": "Owner",
+  "where": "page"
+ },
+ {
+  "id": "w168",
+  "key": "Every station and company, and what the vans cost",
+  "where": "page"
+ },
+ {
+  "id": "w169",
+  "key": "Manager",
+  "where": "page"
+ },
+ {
+  "id": "w170",
+  "key": "One station, final word on damage",
+  "where": "page"
+ },
+ {
+  "id": "w171",
+  "key": "Their van and their own records",
+  "where": "page"
+ },
+ {
+  "id": "w172",
+  "key": "Coming soon · its own plan",
+  "where": "page"
+ },
+ {
+  "id": "w173",
+  "key": "AI damage detection",
+  "where": "page"
+ },
+ {
+  "id": "w174",
+  "key": "The next version checks every walk-around for new dents, scratches and broken parts, so damage is found at the handover, not at the end of the lease.",
+  "where": "page"
+ },
+ {
+  "id": "w175",
+  "key": "Guide frames for every panel of the van type",
+  "where": "page"
+ },
+ {
+  "id": "w176",
+  "key": "The AI marks possible damage on each photo",
+  "where": "page"
+ },
+ {
+  "id": "w177",
+  "key": "Close-ups at the van rule out dirt and reflections",
+  "where": "page"
+ },
+ {
+  "id": "w178",
+  "key": "Your manager approves or rejects each spot",
+  "where": "page"
+ },
+ {
+  "id": "w179",
+  "key": "Approved damage gets a numbered dot on the van",
+  "where": "page"
+ },
+ {
+  "id": "w180",
+  "key": "Spot 2 · sliding door · dent",
+  "where": "page"
+ },
+ {
+  "id": "w181",
+  "key": "Found at Thursday's drop-off. Mehmet Y. had the van.",
+  "where": "page"
+ },
+ {
+  "id": "w182",
+  "key": "Approved by Sofia K.",
+  "where": "page"
+ },
+ {
+  "id": "w183",
+  "key": "Photos kept 90 days",
+  "where": "page"
+ },
+ {
+  "id": "w184",
+  "key": "Get Fratius",
+  "where": "page"
+ },
+ {
+  "id": "w185",
+  "key": "The apps for iPhone and Android are on their way to the App Store and Google Play.",
+  "where": "page"
+ },
+ {
+  "id": "w186",
+  "key": "Pick a plan by the size of your fleet. Try it 30 days free.",
+  "where": "page"
+ },
+ {
+  "id": "w187",
+  "key": "Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.",
+  "where": "page"
+ },
+ {
+  "id": "w188",
+  "key": "Every plan includes",
+  "where": "page"
+ },
+ {
+  "id": "w189",
+  "key": "Live fleet board",
+  "where": "page"
+ },
+ {
+  "id": "w190",
+  "key": "Handovers with photos or video",
+  "where": "page"
+ },
+ {
+  "id": "w191",
+  "key": "Permanent van and driver history",
+  "where": "page"
+ },
+ {
+  "id": "w192",
+  "key": "Tours from dashboard photos",
+  "where": "page"
+ },
+ {
+  "id": "w193",
+  "key": "Refuel, wash and parts with card check",
+  "where": "page"
+ },
+ {
+  "id": "w194",
+  "key": "Deadlines: HU, UVV, service, tyres",
+  "where": "page"
+ },
+ {
+  "id": "w195",
+  "key": "Driver records and licence checks",
+  "where": "page"
+ },
+ {
+  "id": "w196",
+  "key": "Paperwork from a photo",
+  "where": "page"
+ },
+ {
+  "id": "w197",
+  "key": "Data tables and Excel export",
+  "where": "page"
+ },
+ {
+  "id": "w198",
+  "key": "Owner, manager and driver roles",
+  "where": "page"
+ },
+ {
+  "id": "w199",
+  "key": "Sign up",
+  "where": "page"
+ },
+ {
+  "id": "w200",
+  "key": "Start your 30 days",
+  "where": "page"
+ },
+ {
+  "id": "w201",
+  "key": "Two short steps: tell us about your company, then send. Your plan follows from the number of vans. Nothing is charged now; we email you how to start.",
+  "where": "page"
+ },
+ {
+  "id": "w202",
+  "key": "Your company's name and country",
+  "where": "page"
+ },
+ {
+  "id": "w203",
+  "key": "How many stations and vans you run",
+  "where": "page"
+ },
+ {
+  "id": "w204",
+  "key": "A work email and a mobile number",
+  "where": "page"
+ },
+ {
+  "id": "w205",
+  "key": "Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.",
+  "where": "page"
+ },
+ {
+  "id": "w206",
+  "key": "Company",
+  "where": "page"
+ },
+ {
+  "id": "w207",
+  "key": "Send",
+  "where": "page"
+ },
+ {
+  "id": "w208",
+  "key": "Your company",
+  "where": "page"
+ },
+ {
+  "id": "w209",
+  "key": "Company name",
+  "where": "page"
+ },
+ {
+  "id": "w210",
+  "key": "Country",
+  "where": "page"
+ },
+ {
+  "id": "w211",
+  "key": "Stations",
+  "where": "page"
+ },
+ {
+  "id": "w212",
+  "key": "Vans",
+  "where": "page"
+ },
+ {
+  "id": "w213",
+  "key": "First name",
+  "where": "page"
+ },
+ {
+  "id": "w214",
+  "key": "Last name",
+  "where": "page"
+ },
+ {
+  "id": "w215",
+  "key": "Work email",
+  "where": "page"
+ },
+ {
+  "id": "w216",
+  "key": "Mobile number",
+  "where": "page"
+ },
+ {
+  "id": "w217",
+  "key": "Continue",
+  "where": "page"
+ },
+ {
+  "id": "w218",
+  "key": "Check and send",
+  "where": "page"
+ },
+ {
+  "id": "w219",
+  "key": "Payment",
+  "where": "page"
+ },
+ {
+  "id": "w220",
+  "key": "Card or bank details go here once the payment provider is connected.",
+  "where": "page"
+ },
+ {
+  "id": "w221",
+  "key": "Nothing is charged now. We set up your company and email you how to start your 30 days.",
+  "where": "page"
+ },
+ {
+  "id": "w222",
+  "key": "Website",
+  "where": "page"
+ },
+ {
+  "id": "w223",
+  "key": "Tell me when AI damage detection is ready",
+  "where": "page"
+ },
+ {
+  "id": "w224",
+  "key": "I have read the privacy policy.",
+  "where": "page"
+ },
+ {
+  "id": "w225",
+  "key": "Back",
+  "where": "page"
+ },
+ {
+  "id": "w226",
+  "key": "Send request",
+  "where": "page"
+ },
+ {
+  "id": "w227",
+  "key": "Done",
+  "where": "page"
+ },
+ {
+  "id": "w228",
+  "key": "Start again",
+  "where": "page"
+ },
+ {
+  "id": "w229",
+  "key": "Questions",
+  "where": "page"
+ },
+ {
+  "id": "w230",
+  "key": "Good to know",
+  "where": "page"
+ },
+ {
+  "id": "w231",
+  "key": "Does Fratius replace the DVIC?",
+  "where": "page"
+ },
+ {
+  "id": "w232",
+  "key": "No. The DVIC stays in Amazon's tools. Fratius covers your own vans between drivers: handovers with proof, damage, fuel, deadlines and paperwork.",
+  "where": "page"
+ },
+ {
+  "id": "w233",
+  "key": "What counts as a station?",
+  "where": "page"
+ },
+ {
+  "id": "w234",
+  "key": "A place your vans run from. Each station has its own managers, drivers and vans. Owners see all stations; managers and drivers see their own.",
+  "where": "page"
+ },
+ {
+  "id": "w235",
+  "key": "Do drivers need an iPhone?",
+  "where": "page"
+ },
+ {
+  "id": "w236",
+  "key": "No. Fratius runs on iPhone, Android and as a web app in any phone's browser.",
+  "where": "page"
+ },
+ {
+  "id": "w237",
+  "key": "Can anything in the history be changed?",
+  "where": "page"
+ },
+ {
+  "id": "w238",
+  "key": "No. Handovers are written by the server and never edited or deleted. Vans are retired instead of deleted, and people who leave keep their history.",
+  "where": "page"
+ },
+ {
+  "id": "w239",
+  "key": "What do you keep about drivers?",
+  "where": "page"
+ },
+ {
+  "id": "w240",
+  "key": "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.",
+  "where": "page"
+ },
+ {
+  "id": "w241",
+  "key": "How long do you keep photos and videos?",
+  "where": "page"
+ },
+ {
+  "id": "w242",
+  "key": "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.",
+  "where": "page"
+ },
+ {
+  "id": "w243",
+  "key": "What about damage found at the end of a lease?",
+  "where": "page"
+ },
+ {
+  "id": "w244",
+  "key": "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.",
+  "where": "page"
+ },
+ {
+  "id": "w245",
+  "key": "How do people join?",
+  "where": "page"
+ },
+ {
+  "id": "w246",
+  "key": "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.",
+  "where": "page"
+ },
+ {
+  "id": "w247",
+  "key": "Handovers, damage and van history for delivery partners who run their own vans.",
+  "where": "page"
+ },
+ {
+  "id": "w248",
+  "key": "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.",
+  "where": "page"
+ },
+ {
+  "id": "w249",
+  "key": "Prices per month, excluding VAT. 30 days free on every plan.",
+  "where": "script"
+ },
+ {
+  "id": "w250",
+  "key": "Automatic damage checks on every walk-around. Price to follow.",
+  "where": "script"
+ },
+ {
+  "id": "w251",
+  "key": "Fratius · Fleet management for delivery partners",
+  "where": "script"
+ },
+ {
+  "id": "w252",
+  "key": "Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.",
+  "where": "script"
+ },
+ {
+  "id": "w253",
+  "key": "Pick a plan.",
+  "where": "script"
+ },
+ {
+  "id": "w254",
+  "key": "Enter your first and last name.",
+  "where": "script"
+ },
+ {
+  "id": "w255",
+  "key": "Send the form from the website.",
+  "where": "script"
+ },
+ {
+  "id": "w256",
+  "key": "Too many requests today. Write to info@fratius.com instead.",
+  "where": "script"
+ },
+ {
+  "id": "w257",
+  "key": "Up to {n} vans",
+  "where": "script"
+ },
+ {
+  "id": "w258",
+  "key": "Unlimited vans",
+  "where": "script"
+ },
+ {
+  "id": "w259",
+  "key": "a month",
+  "where": "script"
+ },
+ {
+  "id": "w260",
+  "key": "{n} days free",
+  "where": "script"
+ },
+ {
+  "id": "w261",
+  "key": "Start with {plan}",
+  "where": "script"
+ },
+ {
+  "id": "w262",
+  "key": "Its own plan",
+  "where": "script"
+ },
+ {
+  "id": "w263",
+  "key": "Coming soon",
+  "where": "script"
+ },
+ {
+  "id": "w264",
+  "key": "Tell me when it's ready",
+  "where": "script"
+ },
+ {
+  "id": "w265",
+  "key": "{store}: coming soon",
+  "where": "script"
+ },
+ {
+  "id": "w266",
+  "key": "Download on the",
+  "where": "script"
+ },
+ {
+  "id": "w267",
+  "key": "Coming soon to the",
+  "where": "script"
+ },
+ {
+  "id": "w268",
+  "key": "Get it on",
+  "where": "script"
+ },
+ {
+  "id": "w269",
+  "key": "Coming soon on",
+  "where": "script"
+ },
+ {
+  "id": "w270",
+  "key": "Open the web app",
+  "where": "script"
+ },
+ {
+  "id": "w271",
+  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
+  "where": "script"
+ },
+ {
+  "id": "w272",
+  "key": "Privacy",
+  "where": "script"
+ },
+ {
+  "id": "w273",
+  "key": "App privacy",
+  "where": "script"
+ },
+ {
+  "id": "w274",
+  "key": "Delete account",
+  "where": "script"
+ },
+ {
+  "id": "w275",
+  "key": "Terms",
+  "where": "script"
+ },
+ {
+  "id": "w276",
+  "key": "I have read the {privacy}.",
+  "where": "script"
+ },
+ {
+  "id": "w277",
+  "key": "privacy policy",
+  "where": "script"
+ },
+ {
+  "id": "w278",
+  "key": "I agree to the {terms} and the {privacy}.",
+  "where": "script"
+ },
+ {
+  "id": "w279",
+  "key": "terms",
+  "where": "script"
+ },
+ {
+  "id": "w280",
+  "key": "Front",
+  "where": "script"
+ },
+ {
+  "id": "w281",
+  "key": "Front left",
+  "where": "script"
+ },
+ {
+  "id": "w282",
+  "key": "Left side",
+  "where": "script"
+ },
+ {
+  "id": "w283",
+  "key": "Rear left",
+  "where": "script"
+ },
+ {
+  "id": "w284",
+  "key": "Rear",
+  "where": "script"
+ },
+ {
+  "id": "w285",
+  "key": "Rear right",
+  "where": "script"
+ },
+ {
+  "id": "w286",
+  "key": "Right side",
+  "where": "script"
+ },
+ {
+  "id": "w287",
+  "key": "Front right",
+  "where": "script"
+ },
+ {
+  "id": "w288",
+  "key": "HU sticker, due {date}",
+  "where": "script"
+ },
+ {
+  "id": "w289",
+  "key": "All languages",
+  "where": "script"
+ },
+ {
+  "id": "w290",
+  "key": "Choose a language",
+  "where": "script"
+ },
+ {
+  "id": "w291",
+  "key": "Picked up by Andrei M.",
+  "where": "script"
+ },
+ {
+  "id": "w292",
+  "key": "Tour started at 84,213 km",
+  "where": "script"
+ },
+ {
+  "id": "w293",
+  "key": "Dashboard read",
+  "where": "script"
+ },
+ {
+  "id": "w294",
+  "key": "Refuel 62.4 l · €108.20",
+  "where": "script"
+ },
+ {
+  "id": "w295",
+  "key": "Card matched",
+  "where": "script"
+ },
+ {
+  "id": "w296",
+  "key": "Wrong fuel card, driver waiting",
+  "where": "script"
+ },
+ {
+  "id": "w297",
+  "key": "Refuel allowed by Sofia K.",
+  "where": "script"
+ },
+ {
+  "id": "w298",
+  "key": "Allowed",
+  "where": "script"
+ },
+ {
+  "id": "w299",
+  "key": "Check",
+  "where": "script"
+ },
+ {
+  "id": "w300",
+  "key": "Dropped off by Elif D.",
+  "where": "script"
+ },
+ {
+  "id": "w301",
+  "key": "Video 1:12",
+  "where": "script"
+ },
+ {
+  "id": "w302",
+  "key": "Damage approved: rear left door",
+  "where": "script"
+ },
+ {
+  "id": "w303",
+  "key": "#4 on record",
+  "where": "script"
+ },
+ {
+  "id": "w304",
+  "key": "Taken over from Lukas B.",
+  "where": "script"
+ },
+ {
+  "id": "w305",
+  "key": "Tour ended · 138 km · 9 h 05",
+  "where": "script"
+ },
+ {
+  "id": "w306",
+  "key": "11.4 l/100 km",
+  "where": "script"
+ },
+ {
+  "id": "w307",
+  "key": "Picked up by Tomasz W.",
+  "where": "script"
+ },
+ {
+  "id": "w308",
+  "key": "HU due in March",
+  "where": "script"
+ },
+ {
+  "id": "w309",
+  "key": "Dropped off without proof",
+  "where": "script"
+ },
+ {
+  "id": "w310",
+  "key": "Handover video added by Sofia K.",
+  "where": "script"
+ },
+ {
+  "id": "w311",
+  "key": "Proof added",
+  "where": "script"
+ },
+ {
+  "id": "w312",
+  "key": "Other",
+  "where": "script"
+ },
+ {
+  "id": "w313",
+  "key": "{plan} covers up to {max} vans and you run {n}.",
+  "where": "script"
+ },
+ {
+  "id": "w314",
+  "key": "Your plan: {plan}, up to {n} vans",
+  "where": "script"
+ },
+ {
+  "id": "w315",
+  "key": "Your plan: {plan}, unlimited vans",
+  "where": "script"
+ },
+ {
+  "id": "w316",
+  "key": "See the plans",
+  "where": "script"
+ },
+ {
+  "id": "w317",
+  "key": "Enter your company's name.",
+  "where": "script"
+ },
+ {
+  "id": "w318",
+  "key": "Enter how many stations you run, 1 or more.",
+  "where": "script"
+ },
+ {
+  "id": "w319",
+  "key": "Enter how many vans you run, 1 or more.",
+  "where": "script"
+ },
+ {
+  "id": "w320",
+  "key": "Enter your first name.",
+  "where": "script"
+ },
+ {
+  "id": "w321",
+  "key": "Enter your last name.",
+  "where": "script"
+ },
+ {
+  "id": "w322",
+  "key": "Enter an email address like name@company.de.",
+  "where": "script"
+ },
+ {
+  "id": "w323",
+  "key": "Enter a mobile number with the country code, like +49 151 2345 6789.",
+  "where": "script"
+ },
+ {
+  "id": "w324",
+  "key": "Plan",
+  "where": "script"
+ },
+ {
+  "id": "w325",
+  "key": "Contact",
+  "where": "script"
+ },
+ {
+  "id": "w326",
+  "key": "Free until",
+  "where": "script"
+ },
+ {
+  "id": "w327",
+  "key": "Thanks, {name}",
+  "where": "script"
+ },
+ {
+  "id": "w328",
+  "key": "We've got your request for {company}. We'll email {email} with how to start your {days} days.",
+  "where": "script"
+ },
+ {
+  "id": "w329",
+  "key": "That's it, {name}",
+  "where": "script"
+ },
+ {
+  "id": "w330",
+  "key": "This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.",
+  "where": "script"
+ },
+ {
+  "id": "w331",
+  "key": "You can also write to {email}.",
+  "where": "script"
+ },
+ {
+  "id": "w332",
+  "key": "Tick the box to agree to the terms and the privacy policy.",
+  "where": "script"
+ },
+ {
+  "id": "w333",
+  "key": "Tick the box to confirm you have read the privacy policy.",
+  "where": "script"
+ },
+ {
+  "id": "w334",
+  "key": "Your request didn't go through. Check your connection and try again.",
+  "where": "script"
+ }
+]

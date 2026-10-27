@@ -954,7 +954,7 @@ test('the website request form: stored for the team, spam and bad input refused,
   };
   const send = (body, ip = '203.0.113.7') => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': ip }, body: JSON.stringify(body) });
   const good = {
-    plan: 'pro', aiWaitlist: true, company: `Spree Logistik ${run}`, country: 'Germany', stations: 5, vans: 64,
+    plan: 'pro', aiWaitlist: true, lang: 'ro', company: `Spree Logistik ${run}`, country: 'Germany', stations: 5, vans: 64,
     firstName: 'Ana', lastName: 'Popescu', email: 'ana@spree.de', phone: '+49 151 2345 6789', website: '', elapsed: 25_000,
   };
   const before = (await stored()).length;
@@ -968,6 +968,7 @@ test('the website request form: stored for the team, spam and bad input refused,
   assert.equal(mine.plan.stringValue, 'pro');
   assert.equal(mine.vans.integerValue, '64');
   assert.equal(mine.aiWaitlist.booleanValue, true);
+  assert.equal(mine.lang.stringValue, 'ro', 'the website language the form was sent in');
   assert.equal(mine.mailed.booleanValue, false, 'no email without SMTP_URL');
   assert.ok(!('website' in mine) && !('elapsed' in mine), 'only the request itself is kept');
   // A filled hidden field or a form sent faster than a person types: answered "sent", nothing kept.

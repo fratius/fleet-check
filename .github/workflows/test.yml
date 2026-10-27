@@ -77,3 +77,5 @@ jobs:
       - run: npm run typecheck
       - name: Translations (no lost or invented placeholders)
         run: node scripts/i18n.mjs --strict
+      - name: Website translations (every text, no lost or invented placeholders)
+        run: node scripts/site-i18n.mjs --strict
