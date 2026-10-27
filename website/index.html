@@ -1028,7 +1028,7 @@ h1 .mark { position: relative; z-index: -1; }
       payment: false,          // true once a payment provider is connected
     },
     contactEmail: 'info@fratius.com',
-    legal: { imprint: '/impressum', privacy: '/datenschutz', terms: null }, // Impressum, Datenschutz, AGB
+    legal: { imprint: '/impressum', privacy: '/datenschutz', appPrivacy: '/app-privacy', deleteAccount: '/delete-account', terms: null }, // Impressum, Datenschutz, AGB
   };
 
   const $ = (s, r = document) => r.querySelector(s);
@@ -1081,7 +1081,7 @@ h1 .mark { position: relative; z-index: -1; }
     ? 'Until then, Fratius runs as a web app: open it in the phone\'s browser and add it to the home screen.'
     : '';
 
-  const legal = [['imprint', 'Impressum'], ['privacy', 'Privacy'], ['terms', 'Terms']].filter(([k]) => CONFIG.legal[k]);
+  const legal = [['imprint', 'Impressum'], ['privacy', 'Privacy'], ['appPrivacy', 'App privacy'], ['deleteAccount', 'Delete account'], ['terms', 'Terms']].filter(([k]) => CONFIG.legal[k]);
   $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${label}</a>`).join('')
     + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
   $('#pay').hidden = !CONFIG.signup.payment;

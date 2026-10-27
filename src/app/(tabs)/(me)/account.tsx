@@ -5,6 +5,7 @@ import { Platform, Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
 import { DeleteAccount } from '@/components/deleteaccount';
+import { LegalLinks } from '@/components/legal';
 import { LanguageCard } from '@/components/language';
 import { ViewAsCard } from '@/components/viewas';
 import { Notifications } from '@/components/pickup';
@@ -96,6 +97,7 @@ export default function Account() {
         }} />
       ) : null}
       {s.viewAs ? null : <DeleteAccount />}
+      <LegalLinks />
     </Screen>
   );
 }

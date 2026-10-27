@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { DeleteAccount } from '@/components/deleteaccount';
+import { LegalLinks } from '@/components/legal';
 import { AllCompanies } from '@/components/companies';
 import { LanguageLink } from '@/components/language';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
@@ -68,6 +69,7 @@ export default function SignIn() {
         </Card>
         <Button v="link" title={t('Sign out')} onPress={() => s.signOut()} />
         <DeleteAccount />
+        <LegalLinks />
       </Screen>
     );
   }
@@ -101,6 +103,7 @@ export default function SignIn() {
             : setErr(t('Enter your email address first.'))} /></Row>
         ) : null}
         {s.mode === 'local' ? <Notice text={t('Firebase isn\'t connected yet, so this app keeps everything on this phone.')} /> : null}
+        <LegalLinks />
       </Screen>
     </KeyboardAvoidingView>
   );

@@ -1108,7 +1108,7 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
 
   // The clean-up 31 days later: only what's kept is left. Only the app creator runs it by hand.
   await fails(S.own.call('cleanMediaNow', { orgId: S.org }), 'permission-denied');
-  const cr = await appCreator('Cleo Creator');
+  const cr = await appCreator('Kai Keeper');
   const res = await cr.call('cleanMediaNow', { orgId: S.org, now: Date.now() + 31 * DAY });
   assert.ok(res.deleted > 0 && res.kept > 0, JSON.stringify(res));
   assert.equal(await exists(walkFile(plain)), false);
