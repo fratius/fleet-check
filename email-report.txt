@@ -1,0 +1,10 @@
+GitHub secret SMTP_URL: set
+  {"protocol":"smtps:","host":"smtp.gmail.com","port":"465","user":"i…@fratius.com","passwordLength":16,"passwordHasSpaces":false,"userHasRawAt":false}
+Live function's copy (Secret Manager): set; same as the GitHub secret: true
+SMTP failed: code=EAUTH responseCode=535 535-5.7.8 Username and Password not accepted. For more information, go to 535 5.7.8 https://support.google.com/mail/?p=BadCredentials 6a1803df08f44-91c47a6d598sm99116876d6.3 - gsmtp
+Website requests stored: 0 recent
+::notice title=Email check::GitHub secret SMTP_URL: set
+::notice title=Email check::  {"protocol":"smtps:","host":"smtp.gmail.com","port":"465","user":"i…@fratius.com","passwordLength":16,"passwordHasSpaces":false,"userHasRawAt":false}
+::notice title=Email check::Live function's copy (Secret Manager): set; same as the GitHub secret: true
+::notice title=Email check::SMTP failed: code=EAUTH responseCode=535 535-5.7.8 Username and Password not accepted. For more information, go to 535 5.7.8 https://support.google.com/mail/?p=BadCredentials 6a1803df08f44-91c47a6d598sm99116876d6.3 - gsmtp
+::notice title=Email check::Website requests stored: 0 recent
