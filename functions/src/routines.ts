@@ -37,6 +37,7 @@ export interface Routine {
   stationId: string | null;
   /** A photo is needed as proof. */
   photo: boolean;
+  createdAt?: number;
 }
 export interface Last { at: number; by: string; byName: string; ok: boolean; note: string | null }
 export interface Todo { id: string; key: string | null; name: string; photo: boolean; since: number; period: string }
@@ -96,16 +97,18 @@ export function dueNow(r: Routine, van: VanForRoutines, last: number | null, now
   const a = van.assignedTo;
   if (!a) return null;
   const base = { id: r.id, key: r.key, name: r.name, photo: r.photo };
+  // Not due from before the check existed (a driver who has had the van for a week does a new check from today).
+  const got = Math.max(a.since, r.createdAt || 0);
   if (r.how === 'every') {
     if (last != null && last >= a.since) return null;
-    return { ...base, since: a.since, period: `a:${a.assignmentId}` };
+    return { ...base, since: got, period: `a:${a.assignmentId}` };
   }
   const n = every(r);
   const today = dayStart(now);
   // Done today, or within the last n days (counted in whole days).
   if (last != null && last >= addDays(today, -(n - 1))) return null;
   const from = last == null ? today : addDays(dayStart(last), n);
-  return { ...base, since: Math.max(from, a.since), period: `d:${dayOf(now)}` };
+  return { ...base, since: Math.max(from, got), period: `d:${dayOf(now)}` };
 }
 
 /** What's due on a van now. */
