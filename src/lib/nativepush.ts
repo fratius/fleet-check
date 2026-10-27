@@ -36,10 +36,14 @@ function deviceName() {
   return `${Platform.OS === 'ios' ? 'iPhone' : 'Android phone'}, Fratius app${model ? ` (${model.slice(0, 40)})` : ''}`;
 }
 
-async function token(n: N): Promise<string> {
+/** Android 13 and later only ask for permission once the app has a notification channel. */
+async function channel(n: N) {
   if (Platform.OS === 'android') {
     await n.setNotificationChannelAsync('default', { name: 'Fratius', importance: n.AndroidImportance.HIGH }).catch(() => {});
   }
+}
+async function token(n: N): Promise<string> {
+  await channel(n);
   const projectId = (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas?.projectId;
   return (await n.getExpoPushTokenAsync(projectId ? { projectId } : undefined)).data;
 }
@@ -61,6 +65,7 @@ export async function nativeState(uid?: string): Promise<'on' | 'off' | 'blocked
 export async function enableNative(uid: string): Promise<'on' | 'off' | 'blocked'> {
   const n = notifications();
   if (!n) return 'off';
+  await channel(n);
   let p = await n.getPermissionsAsync();
   if (p.status !== 'granted') p = await n.requestPermissionsAsync();
   if (p.status !== 'granted') return p.canAskAgain === false ? 'blocked' : 'off';
