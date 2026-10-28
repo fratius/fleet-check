@@ -10,8 +10,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { t } from './i18n';
 import { useLang } from './lang';
-import { netKind, onWake, retrying } from './net';
-import { clearCaches, overlay, readCache, readSession, writeCache, writeSession } from './offline';
+import { nap, netKind, retrying } from './net';
+import { clearCaches, keepCachesOf, overlay, readCache, readSession, writeCache, writeSession } from './offline';
 import { outbox, sendWrite, startOutbox } from './outbox';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
@@ -143,6 +143,13 @@ const LOCAL_MEMBER: Member = TEST_ROLE === 'manager' || TEST_ROLE === 'driver'
 
 const displayName = (u: User) => u.displayName || (u.email || '').split('@')[0];
 
+/** A short name for a list of stations (the saved copy's file name). */
+function shortHash(s: string) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const f = fb();
   const mode: 'firebase' | 'local' = f ? 'firebase' : 'local';
@@ -203,14 +210,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
     setViewAsState(null);
     const ids = Array.from(new Set([...(p.orgIds || []), ...(p.orgId ? [p.orgId] : [])]));
+    let netErr: unknown = null;
     const rows = (await Promise.all(ids.map(async (id) => {
       try {
         const [o, m] = await Promise.all([getDoc(doc(f2.db, 'orgs', id)), getDoc(doc(f2.db, 'orgs', id, 'members', u.uid))]);
         if (!o.exists() || !m.exists()) return null;
         return { org: { id, ...(o.data() as Omit<Org, 'id'>) }, member: { uid: u.uid, ...(m.data() as Omit<Member, 'uid'>) } };
-      } catch { return null; }
+      } catch (e) { if (netKind(e)) netErr = e; return null; }
     }))).filter(Boolean) as { org: Org; member: Member }[];
     if (my !== loadSeq.current) return;
+    // No company came back because the connection dropped: not "no company" (the saved copy is used instead).
+    if (!rows.length && netErr) throw netErr;
+    // What this phone kept of companies the person has left (or was removed from) goes.
+    if (!netErr) keepCachesOf(u.uid, rows.map((r) => r.org.id));
     setCompanies(rows.map((r) => ({ id: r.org.id, name: r.org.name, role: roleOf(r.member)! })));
     const target = want || p.orgId;
     let pick = rows.find((r) => r.org.id === target) || rows[0] || null;
@@ -255,8 +267,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(early);
         if (saved && netKind(e)) {
           if (!fromSaved) useSaved();
-          // Load properly once the connection may be back.
-          const off = onWake(() => { off(); if (fbUser.current?.uid === u.uid) load(u).catch(() => {}); });
+          // Load properly once the connection is back: tried every 30 s, sooner when the phone says it may be back.
+          let seq = loadSeq.current;
+          (async () => {
+            for (;;) {
+              await nap(30_000);
+              // Signed out, or loaded since (switching company, joining): nothing left to do.
+              if (fbUser.current?.uid !== u.uid || loadSeq.current !== seq) return;
+              try { await load(u); return; } catch (e2) { if (!netKind(e2)) return; seq = loadSeq.current; }
+            }
+          })();
         } else if (!fromSaved) setStatus('needsOrg');
       }
       // If this phone has notifications on, they go to whoever is signed in now.
@@ -344,8 +364,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = useCallback(async (email: string) => { await retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim())); }, []);
   const signOut = useCallback(async () => {
     if (!fb()) return;
-    // This phone stops getting this person's notifications.
-    if (fbUser.current) await forgetPush(fbUser.current.uid);
+    // This phone stops getting this person's notifications (without a connection it can't say so: not waited for).
+    if (fbUser.current) await Promise.race([forgetPush(fbUser.current.uid), nap(3000)]);
     // What this phone kept for an offline start goes too (a shared phone). Unsent changes stay for their next sign-in.
     if (fbUser.current) await clearCaches(fbUser.current.uid);
     await fbSignOut(fb()!.auth);
@@ -357,8 +377,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // A fresh sign-in, so the server knows the password was entered just now.
     await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
     await ai.deleteAccount({});
-    // Photos or videos still waiting on this phone would never go anywhere now.
+    // Photos, videos and changes still waiting on this phone would never go anywhere now; the saved copy goes too.
     await outbox.forget(u.uid).catch(() => {});
+    await clearCaches(u.uid).catch(() => {});
     await fbSignOut(f2.auth).catch(() => {});
   }, []);
 
@@ -406,7 +427,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [dataError, setDataError] = useState<string | null>(null);
   // Shown from this phone's saved copy (no connection yet): when that copy was made (lib/offline.ts).
   const [offlineAt, setOfflineAt] = useState<number | null>(null);
-  const cacheKey = store?.mode === 'firebase' && user?.uid ? `${user.uid}-${store.orgId}` : null;
+  // Per person, company, role and stations: a copy saved with other rights is never shown.
+  const cacheKey = store?.mode === 'firebase' && user?.uid && role ? `${user.uid}-${store.orgId}-${role}-${shortHash(scopeKey)}` : null;
   const liveData = useRef(false);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
@@ -421,11 +443,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const saved: Partial<Record<CacheName, { id: string }[]>> = {};
     const now: Partial<Record<CacheName, { id: string }[]>> = {};
     const sets: Partial<Record<CacheName, (rows: never[]) => void>> = {};
+    // Lists the server has answered: the saved copy never goes over them (it may arrive after them).
+    const live = new Set<CacheName>();
     let gone = false;
     const take = <T extends { id: string }>(name: CacheName, set: (rows: T[]) => void, done?: () => void) => {
       sets[name] = set as (rows: never[]) => void;
       return (rows: T[], meta?: { fromCache: boolean }) => {
         if (!meta?.fromCache) {
+          live.add(name);
           delete saved[name];
           if (name === 'vehicles') { liveData.current = true; setOfflineAt(null); }
         }
@@ -440,7 +465,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         if (gone || !c || liveData.current) return;
         for (const name of Object.keys(c.data) as CacheName[]) {
           const rows = c.data[name];
-          if (!rows || !sets[name]) continue;
+          if (!rows || !sets[name] || live.has(name)) continue;
           saved[name] = rows;
           (sets[name] as (r: { id: string }[]) => void)(overlay(rows, now[name] || []));
         }

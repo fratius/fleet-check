@@ -1404,7 +1404,8 @@ export const syncDamageLog = onCall({ timeoutSeconds: 120 }, async (req) => {
 // on the phone; the person checks them before anything is saved. The photos are deleted straight after reading,
 // so no copy of a licence or contract is kept. Costs are only read for owners.
 
-export const readDocument = onCallOnce('readDocument', opts(180), async (req) => {
+// Not onCallOnce: its answer (licence fields, contract costs) must not be kept anywhere (no copy is kept).
+export const readDocument = onCall(opts(180), async (req) => {
   const who = await guard(req);
   needStaff(who);
   const target = req.data?.target === 'driver' ? 'driver' : req.data?.target === 'van' ? 'van' : null;

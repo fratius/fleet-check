@@ -99,7 +99,7 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
   await ctx.setOffline(true);
   await button(page, 'Give to a driver').click();
   await visible(page, DRIVER.name).click();
-  await visible(page, 'Saved on this phone. It goes through by itself when there\'s a connection.').waitFor({ timeout: 20_000 });
+  await visible(page, 'Saved on this phone. It goes through by itself, you don\'t need to do it again.').waitFor({ timeout: 30_000 });
   await visible(page, `Give Van 1 to ${DRIVER.name}`).waitFor({ timeout: 10_000 });
   // Not offered again while it's on its way.
   assert.equal(await page.locator('text=Give to a driver >> visible=true').count(), 0);

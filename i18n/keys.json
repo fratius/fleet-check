@@ -19,7 +19,7 @@
   "key": "{check} not done: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1958"
+   "functions/src/index.ts:1959"
   ]
  },
  {
@@ -34,7 +34,7 @@
   "key": "{check}: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1950"
+   "functions/src/index.ts:1951"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "key": "{n} months",
   "one": "{n} month",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:235"
+   "src/app/(tabs)/(me)/account.tsx:242"
   ]
  },
  {
@@ -598,6 +598,14 @@
   ]
  },
  {
+  "id": "d838d14e",
+  "key": "{n} things made on this phone aren't sent yet. If you sign out, they wait here and go through when you sign in again on this phone.",
+  "one": "{n} thing made on this phone isn't sent yet. If you sign out, it waits here and goes through when you sign in again on this phone.",
+  "where": [
+   "src/app/(tabs)/(me)/account.tsx:100"
+  ]
+ },
+ {
   "id": "38be6e91",
   "key": "{n} to check",
   "one": "{n} to check",
@@ -693,7 +701,7 @@
   "key": "{name} allowed it. Fill up, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1694"
+   "functions/src/index.ts:1695"
   ]
  },
  {
@@ -701,7 +709,7 @@
   "key": "{name} allowed it. Wash the van, then take the photo of the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1694"
+   "functions/src/index.ts:1695"
   ]
  },
  {
@@ -789,7 +797,7 @@
   "key": "{name} has the van and hasn't done it yet.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1959"
+   "functions/src/index.ts:1960"
   ]
  },
  {
@@ -797,7 +805,7 @@
   "key": "{name} is at the car wash. {why} Allow or refuse the wash.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1630"
+   "functions/src/index.ts:1631"
   ]
  },
  {
@@ -805,7 +813,7 @@
   "key": "{name} is at the pump. {why} Allow or refuse the refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1631"
+   "functions/src/index.ts:1632"
   ]
  },
  {
@@ -862,7 +870,7 @@
   "key": "{name} refused it. Don't fill up: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1695"
+   "functions/src/index.ts:1696"
   ]
  },
  {
@@ -870,7 +878,7 @@
   "key": "{name} refused it. Don't wash the van: cancel it in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1695"
+   "functions/src/index.ts:1696"
   ]
  },
  {
@@ -929,7 +937,7 @@
   "key": "{name}: {note}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1923"
+   "functions/src/index.ts:1924"
   ]
  },
  {
@@ -1345,7 +1353,7 @@
   "id": "dc0c4f9e",
   "key": "A company setting",
   "where": [
-   "src/lib/session.tsx:535"
+   "src/lib/session.tsx:560"
   ]
  },
  {
@@ -1462,7 +1470,7 @@
   "id": "046fd29b",
   "key": "About {photo} per photo, so {check} for a 14-photo van check before close-ups.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:80"
+   "src/app/(tabs)/(me)/account.tsx:84"
   ]
  },
  {
@@ -1506,7 +1514,7 @@
   "key": "Account",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:28",
-   "src/app/(tabs)/(me)/account.tsx:31",
+   "src/app/(tabs)/(me)/account.tsx:35",
    "src/app/(tabs)/_layout.tsx:71",
    "src/app/join/[token].tsx:136",
    "src/app/sign-in.tsx:85"
@@ -1758,7 +1766,7 @@
   "id": "0aa50b71",
   "key": "AI model for checks",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:69"
+   "src/app/(tabs)/(me)/account.tsx:73"
   ]
  },
  {
@@ -1994,8 +2002,8 @@
   "id": "949fa485",
   "key": "Another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:125",
-   "src/app/(tabs)/(me)/account.tsx:126"
+   "src/app/(tabs)/(me)/account.tsx:132",
+   "src/app/(tabs)/(me)/account.tsx:133"
   ]
  },
  {
@@ -2016,8 +2024,8 @@
   "id": "a168c0e9",
   "key": "App creator",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:26",
-   "src/app/(tabs)/(me)/account.tsx:40",
+   "src/app/(tabs)/(me)/account.tsx:30",
+   "src/app/(tabs)/(me)/account.tsx:44",
    "src/components/companies.tsx:46",
    "src/lib/types.ts:439"
   ]
@@ -2216,7 +2224,7 @@
   "id": "4ab0f1ad",
   "key": "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:231"
+   "src/app/(tabs)/(me)/account.tsx:238"
   ]
  },
  {
@@ -2420,7 +2428,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:397",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:211",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:403",
-   "src/app/(tabs)/(me)/account.tsx:140",
+   "src/app/(tabs)/(me)/account.tsx:147",
    "src/app/(tabs)/(people)/people.tsx:111",
    "src/app/(tabs)/(people)/people.tsx:257",
    "src/app/(tabs)/(people)/people.tsx:87",
@@ -2594,7 +2602,7 @@
   "id": "59853957",
   "key": "Changed by {name}, {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:229"
+   "src/app/(tabs)/(me)/account.tsx:236"
   ]
  },
  {
@@ -2608,7 +2616,7 @@
   "id": "2f9607e7",
   "key": "Changed by {name}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:229"
+   "src/app/(tabs)/(me)/account.tsx:236"
   ]
  },
  {
@@ -2637,7 +2645,7 @@
   "id": "be27a37d",
   "key": "Check drivers' licences every",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:234"
+   "src/app/(tabs)/(me)/account.tsx:241"
   ]
  },
  {
@@ -2688,7 +2696,7 @@
   "key": "Check the fuel card first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1708"
+   "functions/src/index.ts:1709"
   ]
  },
  {
@@ -2843,7 +2851,7 @@
   "key": "Choose how often.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1842"
+   "functions/src/index.ts:1843"
   ]
  },
  {
@@ -2859,7 +2867,7 @@
   "key": "Choose the vans.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1858",
+   "functions/src/index.ts:1859",
    "src/components/routines.tsx:240"
   ]
  },
@@ -2875,7 +2883,7 @@
   "key": "Choose vans of that station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1854"
+   "functions/src/index.ts:1855"
   ]
  },
  {
@@ -2883,7 +2891,7 @@
   "key": "Choose your station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1846"
+   "functions/src/index.ts:1847"
   ]
  },
  {
@@ -3027,7 +3035,7 @@
   "id": "7a199499",
   "key": "Company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:36",
+   "src/app/(tabs)/(me)/account.tsx:40",
    "src/app/sign-in.tsx:44"
   ]
  },
@@ -3035,7 +3043,7 @@
   "id": "1e5f7dc4",
   "key": "Company name",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:134",
+   "src/app/(tabs)/(me)/account.tsx:141",
    "src/app/sign-in.tsx:48"
   ]
  },
@@ -3057,7 +3065,7 @@
   "id": "5f23fab4",
   "key": "Connected to Firebase project {project}. Photos and results sync across phones and the web.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:90"
+   "src/app/(tabs)/(me)/account.tsx:94"
   ]
  },
  {
@@ -3071,7 +3079,7 @@
   "id": "2e026239",
   "key": "Continue",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:130",
+   "src/app/(tabs)/(me)/account.tsx:137",
    "src/app/sign-in.tsx:57"
   ]
  },
@@ -3235,7 +3243,7 @@
   "id": "e1f3f136",
   "key": "Couldn't load the fleet data. Check your internet, then reopen the app.",
   "where": [
-   "src/lib/session.tsx:419"
+   "src/lib/session.tsx:441"
   ]
  },
  {
@@ -3305,7 +3313,7 @@
   "id": "510ecc64",
   "key": "Couldn't reach the AI service. Check the connection and try again.",
   "where": [
-   "src/lib/store.ts:245"
+   "src/lib/store.ts:248"
   ]
  },
  {
@@ -3364,7 +3372,7 @@
   "key": "Couldn't save that. Check the connection.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:70",
-   "src/app/(tabs)/(me)/account.tsx:218",
+   "src/app/(tabs)/(me)/account.tsx:225",
    "src/components/keep.tsx:52",
    "src/components/routines.tsx:116",
    "src/components/routines.tsx:248",
@@ -3513,7 +3521,7 @@
   "id": "c8170422",
   "key": "Create a company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:126",
+   "src/app/(tabs)/(me)/account.tsx:133",
    "src/app/sign-in.tsx:44"
   ]
  },
@@ -3529,7 +3537,7 @@
   "id": "77af29dd",
   "key": "Create company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:136",
+   "src/app/(tabs)/(me)/account.tsx:143",
    "src/app/sign-in.tsx:51"
   ]
  },
@@ -3704,7 +3712,7 @@
   "id": "b353847f",
   "key": "Dashboard photos",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:225"
+   "src/app/(tabs)/(me)/account.tsx:232"
   ]
  },
  {
@@ -3719,7 +3727,7 @@
   "id": "a2e230ae",
   "key": "Dashboard photos on every tour",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:224"
+   "src/app/(tabs)/(me)/account.tsx:231"
   ]
  },
  {
@@ -3825,14 +3833,14 @@
   "id": "1189c74f",
   "key": "Demo account",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:160"
+   "src/app/(tabs)/(me)/account.tsx:167"
   ]
  },
  {
   "id": "c747cec0",
   "key": "Demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:167"
+   "src/app/(tabs)/(me)/account.tsx:174"
   ]
  },
  {
@@ -4014,7 +4022,7 @@
   "id": "639a2c19",
   "key": "Driver: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:177"
+   "src/app/(tabs)/(me)/account.tsx:184"
   ]
  },
  {
@@ -4053,7 +4061,7 @@
   "id": "075aaa9e",
   "key": "Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:227"
+   "src/app/(tabs)/(me)/account.tsx:234"
   ]
  },
  {
@@ -4252,7 +4260,7 @@
   "id": "6c14de32",
   "key": "Each run records its model, time and cost, so the test log can compare them.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:70"
+   "src/app/(tabs)/(me)/account.tsx:74"
   ]
  },
  {
@@ -4298,7 +4306,7 @@
   "key": "Electric vans are charged, not refuelled.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1526",
+   "functions/src/index.ts:1527",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:61"
   ]
  },
@@ -4394,7 +4402,7 @@
   "id": "d1f552c3",
   "key": "Enter the company name.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:136"
+   "src/app/(tabs)/(me)/account.tsx:143"
   ]
  },
  {
@@ -4425,7 +4433,7 @@
   "key": "Enter the litres from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1738",
+   "functions/src/index.ts:1739",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:339",
    "src/components/dash.tsx:161"
   ]
@@ -4436,7 +4444,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:1277",
-   "functions/src/index.ts:1734",
+   "functions/src/index.ts:1735",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:338",
    "src/components/dash.tsx:157"
   ]
@@ -4453,7 +4461,7 @@
   "key": "Enter the total from the receipt.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1740",
+   "functions/src/index.ts:1741",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:340"
   ]
  },
@@ -4493,7 +4501,7 @@
   "key": "Enter your password again to delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2085"
+   "functions/src/index.ts:2086"
   ]
  },
  {
@@ -4540,7 +4548,7 @@
   "key": "Every 2 to 6 days.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1844"
+   "functions/src/index.ts:1845"
   ]
  },
  {
@@ -4847,7 +4855,7 @@
   "id": "c6b3590a",
   "key": "First station",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:135",
+   "src/app/(tabs)/(me)/account.tsx:142",
    "src/app/sign-in.tsx:49"
   ]
  },
@@ -4894,7 +4902,7 @@
   "id": "7aeaaa6f",
   "key": "Fleet manager: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:177"
+   "src/app/(tabs)/(me)/account.tsx:184"
   ]
  },
  {
@@ -4990,7 +4998,7 @@
   "id": "a3af3156",
   "key": "For example: DXX1 Berlin",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:135",
+   "src/app/(tabs)/(me)/account.tsx:142",
    "src/app/sign-in.tsx:49"
   ]
  },
@@ -5468,7 +5476,7 @@
   "key": "Give the check a name.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1840",
+   "functions/src/index.ts:1841",
    "src/components/routines.tsx:239"
   ]
  },
@@ -6004,8 +6012,8 @@
   "id": "601e9d6c",
   "key": "Invite link",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:126",
-   "src/app/(tabs)/(me)/account.tsx:129",
+   "src/app/(tabs)/(me)/account.tsx:133",
+   "src/app/(tabs)/(me)/account.tsx:136",
    "src/app/join/[token].tsx:72",
    "src/app/sign-in.tsx:56"
   ]
@@ -6064,7 +6072,7 @@
   "id": "c30cc528",
   "key": "Join or create another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:122"
+   "src/app/(tabs)/(me)/account.tsx:129"
   ]
  },
  {
@@ -6543,7 +6551,7 @@
   "id": "9be05fd2",
   "key": "Licence check interval",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:235"
+   "src/app/(tabs)/(me)/account.tsx:242"
   ]
  },
  {
@@ -6793,7 +6801,7 @@
   "id": "11863752",
   "key": "Main station",
   "where": [
-   "src/lib/session.tsx:289"
+   "src/lib/session.tsx:309"
   ]
  },
  {
@@ -7359,7 +7367,7 @@
   "id": "9637416a",
   "key": "No connection. Try again when you have a signal.",
   "where": [
-   "src/lib/store.ts:219"
+   "src/lib/store.ts:221"
   ]
  },
  {
@@ -7593,7 +7601,7 @@
   "id": "b675b026",
   "key": "No station",
   "where": [
-   "src/lib/session.tsx:524"
+   "src/lib/session.tsx:549"
   ]
  },
  {
@@ -7800,7 +7808,7 @@
   "id": "dc5862b5",
   "key": "Not at a station yet. Ask your fleet manager.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:45"
+   "src/app/(tabs)/(me)/account.tsx:49"
   ]
  },
  {
@@ -7858,7 +7866,7 @@
   "key": "Not done yet. Open the van in the app and do it now.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1951"
+   "functions/src/index.ts:1952"
   ]
  },
  {
@@ -7964,7 +7972,7 @@
   "key": "Not yours.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1788"
+   "functions/src/index.ts:1789"
   ]
  },
  {
@@ -8208,7 +8216,7 @@
   "id": "e3de5ab0",
   "key": "Off",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:225"
+   "src/app/(tabs)/(me)/account.tsx:232"
   ]
  },
  {
@@ -8239,7 +8247,7 @@
   "id": "e0049a66",
   "key": "On",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:225"
+   "src/app/(tabs)/(me)/account.tsx:232"
   ]
  },
  {
@@ -8327,7 +8335,7 @@
   "key": "One of the vans was removed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1853"
+   "functions/src/index.ts:1854"
   ]
  },
  {
@@ -8436,8 +8444,8 @@
   "key": "Only the app creator can do this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1978",
-   "functions/src/index.ts:2159"
+   "functions/src/index.ts:1979",
+   "functions/src/index.ts:2160"
   ]
  },
  {
@@ -8468,7 +8476,7 @@
   "key": "Only the fleet owner changes checks for every station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1830"
+   "functions/src/index.ts:1831"
   ]
  },
  {
@@ -8500,7 +8508,7 @@
   "key": "Only the person who started it can carry on with it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1508"
+   "functions/src/index.ts:1509"
   ]
  },
  {
@@ -8508,7 +8516,7 @@
   "key": "Only the person who started it, or the station's fleet manager, can cancel it.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1778"
+   "functions/src/index.ts:1779"
   ]
  },
  {
@@ -8523,7 +8531,7 @@
   "key": "Only the station's fleet managers and owners decide this.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1684"
+   "functions/src/index.ts:1685"
   ]
  },
  {
@@ -8618,7 +8626,7 @@
   "id": "bdd5e48d",
   "key": "Open the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:196"
+   "src/app/(tabs)/(me)/account.tsx:203"
   ]
  },
  {
@@ -8820,14 +8828,14 @@
   "id": "f9078931",
   "key": "Password: {password}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:179"
+   "src/app/(tabs)/(me)/account.tsx:186"
   ]
  },
  {
   "id": "44e3cbda",
   "key": "Paste the whole link you were sent.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:130",
+   "src/app/(tabs)/(me)/account.tsx:137",
    "src/app/sign-in.tsx:58"
   ]
  },
@@ -8918,7 +8926,7 @@
   "id": "e48322d5",
   "key": "phone app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:250"
+   "src/app/(tabs)/(me)/account.tsx:257"
   ]
  },
  {
@@ -9009,7 +9017,7 @@
   "key": "Photos and videos are deleted after {n} days. These are gone already.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2139"
+   "functions/src/index.ts:2140"
   ]
  },
  {
@@ -9083,7 +9091,7 @@
   "id": "135f742a",
   "key": "Pick a station.",
   "where": [
-   "src/lib/session.tsx:327"
+   "src/lib/session.tsx:347"
   ]
  },
  {
@@ -9290,7 +9298,7 @@
   "key": "Problem: {check}, {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1922"
+   "functions/src/index.ts:1923"
   ]
  },
  {
@@ -9555,7 +9563,7 @@
   "key": "Refuel allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1692"
+   "functions/src/index.ts:1693"
   ]
  },
  {
@@ -9563,7 +9571,7 @@
   "key": "Refuel refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1693"
+   "functions/src/index.ts:1694"
   ]
  },
  {
@@ -9571,7 +9579,7 @@
   "key": "Refuel, wash or parts?",
   "server": true,
   "where": [
-   "functions/src/index.ts:1517"
+   "functions/src/index.ts:1518"
   ]
  },
  {
@@ -9702,7 +9710,7 @@
   "id": "80453614",
   "key": "Remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:188"
+   "src/app/(tabs)/(me)/account.tsx:195"
   ]
  },
  {
@@ -10253,8 +10261,8 @@
   ]
  },
  {
-  "id": "aed548a3",
-  "key": "Saved on this phone. It goes through by itself when there's a connection.",
+  "id": "5d58f0ca",
+  "key": "Saved on this phone. It goes through by itself, you don't need to do it again.",
   "where": [
    "src/components/history.tsx:167",
    "src/components/history.tsx:211"
@@ -10354,7 +10362,7 @@
   "key": "Say what's wrong.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1880",
+   "functions/src/index.ts:1881",
    "src/components/routines.tsx:100"
   ]
  },
@@ -10377,7 +10385,7 @@
   "key": "Say why the parts were needed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1716",
+   "functions/src/index.ts:1717",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:254"
   ]
  },
@@ -10502,7 +10510,7 @@
   "key": "Send 1 to 6 photos of the document.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1414"
+   "functions/src/index.ts:1415"
   ]
  },
  {
@@ -10624,7 +10632,7 @@
   "id": "1241872d",
   "key": "Set by the fleet owner for the whole company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:70"
+   "src/app/(tabs)/(me)/account.tsx:74"
   ]
  },
  {
@@ -10645,7 +10653,7 @@
   "id": "cdd7bb28",
   "key": "Setup",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:88"
+   "src/app/(tabs)/(me)/account.tsx:92"
   ]
  },
  {
@@ -10720,10 +10728,10 @@
   "key": "Sign in again, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2077",
+   "functions/src/index.ts:2078",
    "functions/src/index.ts:458",
    "functions/src/index.ts:84",
-   "src/lib/store.ts:240"
+   "src/lib/store.ts:243"
   ]
  },
  {
@@ -10738,7 +10746,7 @@
   "id": "dc1649a1",
   "key": "Sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:96",
+   "src/app/(tabs)/(me)/account.tsx:103",
    "src/app/sign-in.tsx:70"
   ]
  },
@@ -10877,7 +10885,7 @@
   "key": "Someone else has to allow your own.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1685"
+   "functions/src/index.ts:1686"
   ]
  },
  {
@@ -10900,7 +10908,7 @@
   "id": "c19fab4a",
   "key": "Something went wrong with the AI check. Try again.",
   "where": [
-   "src/lib/store.ts:246"
+   "src/lib/store.ts:249"
   ]
  },
  {
@@ -10908,7 +10916,7 @@
   "key": "Something went wrong. Try again.",
   "where": [
    "src/components/uploads.tsx:26",
-   "src/lib/outbox.ts:316",
+   "src/lib/outbox.ts:327",
    "src/lib/outbox.ts:86",
    "src/lib/session.tsx:134"
   ]
@@ -11003,7 +11011,7 @@
   "id": "c83920dd",
   "key": "Start the demo over",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:184"
+   "src/app/(tabs)/(me)/account.tsx:191"
   ]
  },
  {
@@ -11060,7 +11068,7 @@
   "key": "Started another one",
   "server": true,
   "where": [
-   "functions/src/index.ts:1539"
+   "functions/src/index.ts:1540"
   ]
  },
  {
@@ -11109,7 +11117,7 @@
   "id": "a84e5ec6",
   "key": "Station: {stations}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:45"
+   "src/app/(tabs)/(me)/account.tsx:49"
   ]
  },
  {
@@ -11146,7 +11154,7 @@
   "key": "Still working on it. It goes through by itself.",
   "server": true,
   "where": [
-   "functions/src/once.ts:53"
+   "functions/src/once.ts:56"
   ]
  },
  {
@@ -11168,7 +11176,7 @@
   "key": "Stop: {van}, card not checked",
   "server": true,
   "where": [
-   "functions/src/index.ts:1628"
+   "functions/src/index.ts:1629"
   ]
  },
  {
@@ -11176,7 +11184,7 @@
   "key": "Stop: {van}, no fuel card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1628"
+   "functions/src/index.ts:1629"
   ]
  },
  {
@@ -11184,7 +11192,7 @@
   "key": "Stop: {van}, not the van's card",
   "server": true,
   "where": [
-   "functions/src/index.ts:1629"
+   "functions/src/index.ts:1630"
   ]
  },
  {
@@ -11319,7 +11327,7 @@
   "key": "Take 1 to 6 photos of the parts.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1713"
+   "functions/src/index.ts:1714"
   ]
  },
  {
@@ -11453,7 +11461,7 @@
   "key": "Take the photo of the receipt first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1730"
+   "functions/src/index.ts:1731"
   ]
  },
  {
@@ -11561,7 +11569,7 @@
   "id": "3afaa47c",
   "key": "Tap again to remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:188"
+   "src/app/(tabs)/(me)/account.tsx:195"
   ]
  },
  {
@@ -11575,7 +11583,7 @@
   "id": "2a31ad29",
   "key": "Tap again to sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:96"
+   "src/app/(tabs)/(me)/account.tsx:103"
   ]
  },
  {
@@ -11589,7 +11597,7 @@
   "id": "256d0bed",
   "key": "Tap again: everything in the demo is made new",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:184"
+   "src/app/(tabs)/(me)/account.tsx:191"
   ]
  },
  {
@@ -11655,7 +11663,7 @@
   "id": "9b5a5702",
   "key": "Test mode on this phone",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:32"
+   "src/app/(tabs)/(me)/account.tsx:36"
   ]
  },
  {
@@ -11669,7 +11677,7 @@
   "id": "f02a9817",
   "key": "Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:91"
+   "src/app/(tabs)/(me)/account.tsx:95"
   ]
  },
  {
@@ -11708,7 +11716,7 @@
   "key": "That's a lot of checks already. Remove one first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1859"
+   "functions/src/index.ts:1860"
   ]
  },
  {
@@ -11758,7 +11766,7 @@
   "id": "36cc054d",
   "key": "The AI functions aren't deployed yet. Check that the GitHub deploy ran.",
   "where": [
-   "src/lib/store.ts:239"
+   "src/lib/store.ts:242"
   ]
  },
  {
@@ -11787,7 +11795,7 @@
   "id": "9023b91a",
   "key": "The AI model",
   "where": [
-   "src/lib/session.tsx:375"
+   "src/lib/session.tsx:396"
   ]
  },
  {
@@ -11810,7 +11818,7 @@
   "id": "3c48497c",
   "key": "The AI service isn't set up. Add the ANTHROPIC_API_KEY secret.",
   "where": [
-   "src/lib/store.ts:243"
+   "src/lib/store.ts:246"
   ]
  },
  {
@@ -11819,7 +11827,7 @@
   "server": true,
   "where": [
    "functions/src/claude.ts:80",
-   "src/lib/store.ts:244"
+   "src/lib/store.ts:247"
   ]
  },
  {
@@ -11843,7 +11851,7 @@
   "key": "The app creator's account can't be deleted in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2078"
+   "functions/src/index.ts:2079"
   ]
  },
  {
@@ -11902,7 +11910,7 @@
   "key": "The card was already checked.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1611"
+   "functions/src/index.ts:1612"
   ]
  },
  {
@@ -11945,7 +11953,7 @@
   "key": "The dashboard photo is missing. Take it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1542"
+   "functions/src/index.ts:1543"
   ]
  },
  {
@@ -12009,7 +12017,7 @@
   "key": "The driver who has this van does its checks (or the station's fleet manager).",
   "server": true,
   "where": [
-   "functions/src/index.ts:1897"
+   "functions/src/index.ts:1898"
   ]
  },
  {
@@ -12045,7 +12053,7 @@
   "id": "ed26b746",
   "key": "The fleet owner changes these.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:238"
+   "src/app/(tabs)/(me)/account.tsx:245"
   ]
  },
  {
@@ -12067,7 +12075,7 @@
   "key": "The fuel level is a percentage from 0 to 100.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1736"
+   "functions/src/index.ts:1737"
   ]
  },
  {
@@ -12145,7 +12153,7 @@
   "id": "6d2117d8",
   "key": "The next check shows on each driver's record and in Review. Every 6 months is common practice.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:236"
+   "src/app/(tabs)/(me)/account.tsx:243"
   ]
  },
  {
@@ -12176,7 +12184,7 @@
   "key": "The photo didn't upload. Take it again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1882"
+   "functions/src/index.ts:1883"
   ]
  },
  {
@@ -12478,7 +12486,7 @@
   "key": "These photos belong to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2137"
+   "functions/src/index.ts:2138"
   ]
  },
  {
@@ -12545,7 +12553,7 @@
   "key": "This check isn't for this van.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1905"
+   "functions/src/index.ts:1906"
   ]
  },
  {
@@ -12553,7 +12561,7 @@
   "key": "This check needs a photo.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1886"
+   "functions/src/index.ts:1887"
   ]
  },
  {
@@ -12570,8 +12578,8 @@
   "key": "This check was removed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1827",
-   "functions/src/index.ts:1885"
+   "functions/src/index.ts:1828",
+   "functions/src/index.ts:1886"
   ]
  },
  {
@@ -12586,7 +12594,7 @@
   "id": "cbac1194",
   "key": "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:183"
+   "src/app/(tabs)/(me)/account.tsx:190"
   ]
  },
  {
@@ -12641,7 +12649,7 @@
   "id": "12fadf41",
   "key": "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:161"
+   "src/app/(tabs)/(me)/account.tsx:168"
   ]
  },
  {
@@ -12684,7 +12692,7 @@
   "key": "This one is closed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1729"
+   "functions/src/index.ts:1730"
   ]
  },
  {
@@ -12693,7 +12701,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:1172",
-   "functions/src/index.ts:1426",
+   "functions/src/index.ts:1427",
    "functions/src/index.ts:523",
    "functions/src/index.ts:663"
   ]
@@ -12704,7 +12712,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:1174",
-   "functions/src/index.ts:1427"
+   "functions/src/index.ts:1428"
   ]
  },
  {
@@ -12744,7 +12752,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:1028",
-   "functions/src/index.ts:1525",
+   "functions/src/index.ts:1526",
    "functions/src/index.ts:835"
   ]
  },
@@ -12768,7 +12776,7 @@
   "key": "This van was removed.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1893",
+   "functions/src/index.ts:1894",
    "functions/src/index.ts:515"
   ]
  },
@@ -12937,7 +12945,7 @@
   "id": "427660e9",
   "key": "Too many AI checks in a short time, or the Anthropic credit has run out.",
   "where": [
-   "src/lib/store.ts:242"
+   "src/lib/store.ts:245"
   ]
  },
  {
@@ -13052,7 +13060,7 @@
   "id": "c5f48842",
   "key": "Tours and driver records",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:222"
+   "src/app/(tabs)/(me)/account.tsx:229"
   ]
  },
  {
@@ -13104,7 +13112,7 @@
   "id": "63b84bd9",
   "key": "Try it as someone else",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:173"
+   "src/app/(tabs)/(me)/account.tsx:180"
   ]
  },
  {
@@ -13133,14 +13141,14 @@
   "id": "89341260",
   "key": "Two of the made-up people have real logins. Sign out and sign in with one, or use a private browser window so you stay signed in here.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:174"
+   "src/app/(tabs)/(me)/account.tsx:181"
   ]
  },
  {
   "id": "e8edc31d",
   "key": "Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, refuels, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:195"
+   "src/app/(tabs)/(me)/account.tsx:202"
   ]
  },
  {
@@ -13236,7 +13244,7 @@
   "id": "50d8b4a9",
   "key": "unknown",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:251"
+   "src/app/(tabs)/(me)/account.tsx:258"
   ]
  },
  {
@@ -13246,11 +13254,11 @@
   "where": [
    "functions/src/index.ts:1368",
    "functions/src/index.ts:1370",
-   "functions/src/index.ts:1825",
-   "functions/src/index.ts:1832",
-   "functions/src/index.ts:1873",
-   "functions/src/index.ts:1876",
-   "functions/src/index.ts:1902",
+   "functions/src/index.ts:1826",
+   "functions/src/index.ts:1833",
+   "functions/src/index.ts:1874",
+   "functions/src/index.ts:1877",
+   "functions/src/index.ts:1903",
    "functions/src/index.ts:265",
    "functions/src/index.ts:313"
   ]
@@ -13260,7 +13268,7 @@
   "key": "Unknown company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2161",
+   "functions/src/index.ts:2162",
    "functions/src/index.ts:337",
    "functions/src/index.ts:86"
   ]
@@ -13298,8 +13306,8 @@
   "key": "Unknown photos or video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2129",
-   "functions/src/index.ts:2135"
+   "functions/src/index.ts:2130",
+   "functions/src/index.ts:2136"
   ]
  },
  {
@@ -13307,8 +13315,8 @@
   "key": "Unknown refuel.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1499",
-   "functions/src/index.ts:1502"
+   "functions/src/index.ts:1500",
+   "functions/src/index.ts:1503"
   ]
  },
  {
@@ -13316,8 +13324,8 @@
   "key": "Unknown request.",
   "server": true,
   "where": [
-   "functions/src/once.ts:32",
-   "functions/src/once.ts:46"
+   "functions/src/once.ts:34",
+   "functions/src/once.ts:48"
   ]
  },
  {
@@ -13348,7 +13356,7 @@
   "id": "b8c800b4",
   "key": "Unknown station",
   "where": [
-   "src/lib/session.tsx:524"
+   "src/lib/session.tsx:549"
   ]
  },
  {
@@ -13368,8 +13376,8 @@
   "key": "Unknown step.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1805",
-   "functions/src/index.ts:1837"
+   "functions/src/index.ts:1806",
+   "functions/src/index.ts:1838"
   ]
  },
  {
@@ -13385,7 +13393,7 @@
   "key": "Unknown van or person.",
   "server": true,
   "where": [
-   "functions/src/index.ts:1412"
+   "functions/src/index.ts:1413"
   ]
  },
  {
@@ -13406,9 +13414,9 @@
    "functions/src/index.ts:1024",
    "functions/src/index.ts:1210",
    "functions/src/index.ts:1212",
-   "functions/src/index.ts:1421",
-   "functions/src/index.ts:1520",
-   "functions/src/index.ts:1523",
+   "functions/src/index.ts:1422",
+   "functions/src/index.ts:1521",
+   "functions/src/index.ts:1524",
    "functions/src/index.ts:577",
    "functions/src/index.ts:582",
    "functions/src/index.ts:705",
@@ -13550,7 +13558,7 @@
   "id": "6187e87c",
   "key": "Used for every type scan and damage check in this company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:70"
+   "src/app/(tabs)/(me)/account.tsx:74"
   ]
  },
  {
@@ -13661,14 +13669,14 @@
   "id": "7c9f7f38",
   "key": "version {sha}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:252"
+   "src/app/(tabs)/(me)/account.tsx:259"
   ]
  },
  {
   "id": "f47beb68",
   "key": "version {sha} of {when}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:252"
+   "src/app/(tabs)/(me)/account.tsx:259"
   ]
  },
  {
@@ -13934,7 +13942,7 @@
   "key": "Wash allowed: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1692"
+   "functions/src/index.ts:1693"
   ]
  },
  {
@@ -13942,7 +13950,7 @@
   "key": "Wash refused: {van}",
   "server": true,
   "where": [
-   "functions/src/index.ts:1693"
+   "functions/src/index.ts:1694"
   ]
  },
  {
@@ -13981,7 +13989,7 @@
   "id": "5a9649da",
   "key": "web app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:250"
+   "src/app/(tabs)/(me)/account.tsx:257"
   ]
  },
  {
@@ -14073,7 +14081,7 @@
   "id": "7a714c4a",
   "key": "When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:228"
+   "src/app/(tabs)/(me)/account.tsx:235"
   ]
  },
  {
@@ -14320,7 +14328,7 @@
   "id": "f86f21c8",
   "key": "You approve or reject damage found at your station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:46"
+   "src/app/(tabs)/(me)/account.tsx:50"
   ]
  },
  {
@@ -14341,7 +14349,7 @@
   "id": "8a5390b3",
   "key": "you can add more later",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:135",
+   "src/app/(tabs)/(me)/account.tsx:142",
    "src/app/sign-in.tsx:49"
   ]
  },
@@ -14474,7 +14482,7 @@
   "key": "You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2088"
+   "functions/src/index.ts:2089"
   ]
  },
  {
@@ -14495,7 +14503,7 @@
   "id": "e24cfeaa",
   "key": "You scan the vans of your station; your fleet manager reviews the damage checks.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:47"
+   "src/app/(tabs)/(me)/account.tsx:51"
   ]
  },
  {
@@ -14503,21 +14511,21 @@
   "key": "You see and manage all {n} stations.",
   "one": "You see and manage all {n} station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:44"
+   "src/app/(tabs)/(me)/account.tsx:48"
   ]
  },
  {
   "id": "380e4d48",
   "key": "You see and manage all of {station}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:44"
+   "src/app/(tabs)/(me)/account.tsx:48"
   ]
  },
  {
   "id": "0dd26b17",
   "key": "You, viewing as this role",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:41"
+   "src/app/(tabs)/(me)/account.tsx:45"
   ]
  },
  {
@@ -14546,7 +14554,7 @@
   "id": "20767b9b",
   "key": "You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:170"
+   "src/app/(tabs)/(me)/account.tsx:177"
   ]
  },
  {
@@ -14591,7 +14599,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:102",
-   "src/lib/store.ts:241"
+   "src/lib/store.ts:244"
   ]
  },
  {

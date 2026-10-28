@@ -8,7 +8,7 @@ import { flash } from './flash';
 import { t } from './i18n';
 import { newId, prepare, putBlob } from './images';
 import { dropKept, keepFile, keptBlob, keptSize, sweepKept } from './keep';
-import { nap, netKind } from './net';
+import { nap, netKind, retrying } from './net';
 import { Outbox, type Change, type Job, type Live, type OutFile, type Then } from './outboxcore';
 import { AiError, ai, callServer, newRid, setWriter } from './store';
 import type { Photo, Vehicle } from './types';
@@ -251,8 +251,9 @@ function startWrite(id: string, c: Extract<Change, { kind: 'write' }>) {
   const ref = doc(f.db, col, ...rest);
   const data = c.data ? JSON.parse(JSON.stringify(c.data)) : {};
   const p = c.op === 'delete' ? deleteDoc(ref) : c.op === 'update' ? updateDoc(ref, data) : setDoc(ref, data, c.merge ? { merge: true } : {});
+  // Kept until the outbox has used it, so a write that already reached the server is never sent again.
   writing.set(id, p);
-  p.catch(() => {}).finally(() => writing.delete(id));
+  p.catch(() => {});
   return p;
 }
 /** The outbox's step for a change. */
@@ -261,7 +262,7 @@ async function sendChange(j: Job, onStall: (stalled: boolean) => void): Promise<
   if (c.kind === 'call') return callServer(c.fn, c.data, 180000);
   // Started already in this session: wait for it (without a connection Firestore sends it when it's back).
   const slow = setTimeout(() => onStall(true), 5000);
-  try { await (writing.get(j.id) || startWrite(j.id, c)); } finally { clearTimeout(slow); onStall(false); }
+  try { await (writing.get(j.id) || startWrite(j.id, c)); } finally { clearTimeout(slow); onStall(false); writing.delete(j.id); }
   return null;
 }
 
@@ -269,9 +270,9 @@ async function sendChange(j: Job, onStall: (stalled: boolean) => void): Promise<
 export const QUEUED = Symbol('queued');
 /**
  * How long a screen waits for a change to go through before carrying on without it. A record write shows at once
- * anyway, so only a refusal is waited for; a call's answer is waited for longer.
+ * anyway, so only a refusal is waited for; a call's answer is waited for longer (a server that starts cold).
  */
-const FAST_MS = { call: 8000, write: 1500 };
+const FAST_MS = { call: 20_000, write: 1500 };
 
 /**
  * Sends a change through the outbox: kept on the phone at once, sent as soon as it can, and again by itself without
@@ -295,14 +296,24 @@ export async function send<O = unknown>(o: {
     files.push({ key, path: f.path, mime: f.mime, size: await keptSize(key) });
   }
   const change: Change = o.change.kind === 'call' ? { ...o.change, data: { ...o.change.data, rid: (o.change.data.rid as string) || newRid() } } : o.change;
+  // Another tab of the web app sends the jobs: this one sends its change itself, as before (rare: two tabs open).
+  if (!runner && !files.length) {
+    if (change.kind === 'call') return retrying(() => callServer<O>(change.fn, change.data, 180000));
+    const p = startWrite(id, change);
+    writing.delete(id);
+    await Promise.race([p, new Promise((r) => setTimeout(r, FAST_MS.write))]);
+    return QUEUED;
+  }
   const orgId = o.orgId || (change.kind === 'call' ? String(change.data.orgId || '') : change.path[0] === 'orgs' ? change.path[1] : '');
   const job: Job = {
     id, type: 'change', what: 'change', orgId, uid, vehicleId: o.vehicleId || '', vehicleName: o.vehicleName || '', assignmentId: null,
     then: null, createdAt: Date.now(), files, status: 'queued', change, title: o.title, personId: o.personId || null,
   };
-  // A write shows on the screen straight away (Firestore keeps it until it's sent).
-  if (change.kind === 'write') startWrite(id, change).catch(() => {});
+  // A write shows on the screen straight away (Firestore keeps it until it's sent); once it reached the server the
+  // job is marked as sent, so it's never written again (also after a restart).
+  const written = change.kind === 'write' ? startWrite(id, change) : null;
   await outbox.add(job);
+  written?.then(() => outbox.sent(id)).catch(() => {});
   return new Promise((resolve, reject) => {
     const t0 = Date.now();
     let off = () => {};
@@ -311,16 +322,17 @@ export async function send<O = unknown>(o: {
       const j = outbox.jobs.find((x) => x.id === id);
       if (!j) { off(); resolve(QUEUED); return; }
       if (j.status === 'failed') {
-        // Refused while the person waits: shown on the screen as before, not kept as a stopped upload.
+        // Refused while the person waits: shown on the screen as before, not kept as a stopped item.
         off();
         const err = j.error || t('Something went wrong. Try again.');
         outbox.remove(id).catch(() => {});
         reject(new AiError('refused', err));
         return;
       }
-      // No connection (this one or one before it), or slow: carry on, it goes through by itself.
-      const waiting = outbox.jobs.some((x) => x.uid === uid && outbox.live.get(x.id)?.waiting);
-      if (waiting || Date.now() - t0 > FAST_MS[change.kind]) { off(); resolve(QUEUED); }
+      // No connection, or it waits behind something that has none, or it's slow: carry on, it goes through by itself.
+      const l = outbox.live.get(id);
+      const stuck = l?.waiting || (!l?.step && Date.now() - t0 > 2000 && outbox.jobs.some((x) => x.id !== id && x.uid === uid && outbox.live.get(x.id)?.waiting));
+      if (stuck || Date.now() - t0 > FAST_MS[change.kind]) { off(); resolve(QUEUED); }
     };
     off = outbox.subscribe(check);
     const timer = setInterval(check, 500);

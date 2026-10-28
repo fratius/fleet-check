@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 
-import { idbDeletePrefix, idbGet, idbPut } from './keep';
+import { idbDeleteWhere, idbGet, idbPut } from './keep';
 
 /**
  * The app opens without a connection: what this phone last saw is kept per person and company (the company and
@@ -36,15 +36,28 @@ export async function writeCache(key: string, value: unknown) {
   } catch { /* a saved copy is only a convenience */ }
 }
 
-/** Deletes everything saved for this person (signing out). */
+/** Deletes the saved copies of this person (keys start with "<uid>-<orgId>-") whose company `drop` says. */
+async function dropCaches(uid: string, drop: (orgId: string) => boolean) {
+  const pre = `${safe(uid)}-`;
+  const orgOf = (name: string) => name.slice(pre.length).split('-')[0];
+  if (isWeb) { await idbDeleteWhere((k) => k.startsWith(`cache/${pre}`) && drop(orgOf(k.slice('cache/'.length)))); return; }
+  const d = dir();
+  if (!d.exists) return;
+  for (const f of d.list()) if (f.name.startsWith(pre) && drop(orgOf(f.name.replace(/\.json$/, '')))) f.delete();
+}
+
+/** Deletes everything saved for this person (signing out, deleting the account). */
 export async function clearCaches(uid: string) {
   try {
     await AsyncStorage.removeItem(sessionKey(uid));
-    if (isWeb) { await idbDeletePrefix(`cache/${uid}`); return; }
-    const d = dir();
-    if (!d.exists) return;
-    for (const f of d.list()) if (f.name.startsWith(safe(uid))) f.delete();
+    await dropCaches(uid, () => true);
   } catch { /* nothing more to do */ }
+}
+
+/** Deletes what was saved for companies the person no longer belongs to (seen when the server answered). */
+export async function keepCachesOf(uid: string, orgIds: string[]) {
+  const keep = new Set(orgIds.map(safe));
+  try { await dropCaches(uid, (o) => !keep.has(o)); } catch { /* best effort */ }
 }
 
 /** The company and role the person had open (small, so in AsyncStorage). */

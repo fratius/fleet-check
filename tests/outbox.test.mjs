@@ -239,3 +239,42 @@ test('a refused change stops with the server\'s reason; jobs after it still go',
   assert.match(ob.jobs.find((j) => j.id === 'c3').error, /someone else changed/);
   assert.deepEqual(ob.results.get('c4'), { ok: true, id: 'c4' });
 });
+
+test('two lanes: a change about another van goes while a video waits for the connection; one about the same van waits for it', async () => {
+  const w = world();
+  const order = [];
+  let signal = false;
+  // The walk-around's photos can't go up until there's a signal again.
+  w.ops.upload = async (j, f, again, onBytes) => {
+    if (!signal) throw offline();
+    onBytes(f.size || 1);
+    w.stored.add(f.path);
+  };
+  w.ops.server = async (j) => { order.push(j.type === 'change' ? `${j.change.fn}:${j.id}` : `${j.then.fn}:${j.id}`); return { ok: true }; };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(walkJob('w9'));
+  await ob.add(changeJob('c-same', { change: { kind: 'call', fn: 'routineDone', data: { orgId: 'o1', vehicleId: 'v1', rid: 'rid-same0001' } } }));
+  await ob.add(changeJob('c-other', { vehicleId: 'v2', vehicleName: 'Van 2', change: { kind: 'call', fn: 'assignVan', data: { orgId: 'o1', vehicleId: 'v2', rid: 'rid-othr0001' } } }));
+  // Without a signal, only the change about the other van can go (it needs no upload).
+  for (let i = 0; i < 200 && !order.length; i++) await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(order, ['assignVan:c-other']);
+  assert.ok(ob.jobs.some((j) => j.id === 'c-same'), 'the change about Van 1 waits for its photos');
+  signal = true;
+  await settle(ob, 4000);
+  assert.deepEqual(order, ['assignVan:c-other', 'pickUpVan:w9', 'routineDone:c-same']);
+  assert.equal(ob.jobs.length, 0);
+});
+
+test('a record write that already reached the server (Firestore sent it) is not sent again', async () => {
+  const w = world({ server: [offline] });
+  let sends = 0;
+  w.ops.server = async () => { sends++; const e = w.fail.server.shift(); if (e) throw e(); return null; };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c-w', { change: { kind: 'write', op: 'update', path: ['orgs', 'o1', 'vehicles', 'v1'], data: { name: 'Van One' } } }));
+  await ob.sent('c-w');
+  await settle(ob);
+  assert.ok(sends <= 1, 'at most the one try that was already under way');
+  assert.equal(ob.jobs.length, 0);
+});

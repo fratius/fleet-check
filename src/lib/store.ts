@@ -215,7 +215,9 @@ export async function callServer<O>(name: string, input: object, timeout = 18000
     const d = err.details;
     const msg = d && typeof d.t === 'string' ? t(d.t, (d.v && typeof d.v === 'object' ? d.v : {}) as Record<string, string | number>) : aiMessage(code, err.message);
     // The SDK says "internal" with HTTP status 0 when the request never got an answer (no connection).
-    const net = code === 'internal' && /\[0\]\s*$/.test(err.message || '') ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
+    // A repeat that found the first try still running (functions/src/once.ts) is asked again like without a connection.
+    const stillRunning = !!(d?.v && typeof d.v === 'object' && (d.v as { wait?: unknown }).wait);
+    const net = (code === 'internal' && /\[0\]\s*$/.test(err.message || '')) || stillRunning ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
     throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
   }
 }
@@ -228,7 +230,8 @@ export const newRid = () => `r${newId()}${Math.random().toString(36).slice(2, 6)
 function call<I, O>(name: string, timeout = 180000) {
   return (input: I): Promise<O> => {
     const data = { ...(input as object), rid: (input as { rid?: string }).rid || newRid() };
-    return retrying(() => callServer<O>(name, data, timeout));
+    // A busy or slow server is asked once more (an AI reading costs each time), then the person hears about it.
+    return retrying(() => callServer<O>(name, data, timeout), { flaky: 2 });
   };
 }
 export function aiMessage(code: string, raw?: string): string {

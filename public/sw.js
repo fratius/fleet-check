@@ -10,8 +10,11 @@ self.addEventListener('activate', (e) => e.waitUntil((async () => {
 })()));
 
 const same = (url) => url.origin === self.location.origin;
-// The app's files: built once per version (their names change), so the kept copy is fine.
-const lasting = (url) => /^\/(_expo|assets|icons|fonts)\//.test(url.pathname) || /\.(ttf|otf|woff2?|png|svg|ico)$/.test(url.pathname);
+// The app's files: built once per version (their names change), so the kept copy is fine. (Icons keep their
+// names across versions: asked online first, like everything else.)
+const lasting = (url) => /^\/(_expo|assets|fonts)\//.test(url.pathname);
+// Only the app's own page is kept: not a hotel or station Wi-Fi's sign-in page that answered instead.
+const ourPage = (res) => res.ok && !res.redirected && res.type === 'basic' && /text\/html/.test(res.headers.get('content-type') || '');
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
@@ -20,13 +23,21 @@ self.addEventListener('fetch', (e) => {
   if (!same(url) || url.pathname === '/sw.js' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/__/')) return;
   if (req.mode === 'navigate') {
     // The page: online first; without a connection the kept one (any address: the app finds the page itself).
+    // A connection that is there but hardly works (a garage): after 4 s the kept page, and the new one is kept
+    // for next time when it arrives.
+    const online = fetch(req).then(async (res) => {
+      if (ourPage(res)) { const c = await caches.open(CACHE); await c.put('/index.html', res.clone()); }
+      return res;
+    });
+    e.waitUntil(online.catch(() => {}));
     e.respondWith((async () => {
+      const kept = () => caches.match('/index.html');
+      const slow = new Promise((r) => setTimeout(r, 4000)).then(kept);
       try {
-        const res = await fetch(req);
-        if (res.ok) { const c = await caches.open(CACHE); await c.put('/index.html', res.clone()); }
-        return res;
+        const first = await Promise.race([online, slow]);
+        return first || (await online);
       } catch {
-        return (await caches.match('/index.html')) || (await caches.match('/')) || Response.error();
+        return (await kept()) || Response.error();
       }
     })());
     return;
@@ -69,7 +80,7 @@ self.addEventListener('message', (e) => {
         if (!(await c.match(url.href))) { const res = await fetch(url.href); if (res.ok) await c.put(url.href, res); }
       } catch { /* kept next time */ }
     }
-    if (!(await c.match('/index.html'))) { try { const res = await fetch('/'); if (res.ok) await c.put('/index.html', res); } catch { /* next time */ } }
+    if (!(await c.match('/index.html'))) { try { const res = await fetch('/'); if (ourPage(res)) await c.put('/index.html', res); } catch { /* next time */ } }
     // The scripts of older versions aren't needed any more.
     for (const r of await c.keys()) {
       const url = new URL(r.url);

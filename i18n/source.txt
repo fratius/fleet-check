@@ -75,6 +75,7 @@ e4bfd1a2	{n} spot, {images} images || {n} spots, {images} images
 5fca6a51	{n} station || {n} stations	[index.tsx]
 6b76844f	{n} still open. || {n} still open.	[check/[id].tsx]
 6e72351c	{n} thing due || {n} things due	[person/[uid].tsx]
+d838d14e	{n} thing made on this phone isn't sent yet. If you sign out, it waits here and goes through when you sign in again on this phone. || {n} things made on this phone aren't sent yet. If you sign out, they wait here and go through when you sign in again on this phone.
 38be6e91	{n} to check || {n} to check	[components/buy.tsx]
 a8f99025	{n} unclear || {n} unclear	[log.tsx]
 188d6dc3	{n} upload stopped. Tap to see why. || {n} uploads stopped. Tap to see why.
@@ -1387,7 +1388,7 @@ ffe4bca0	Save the reading	[components/dash.tsx]
 9871cd39	Saved {n} detail from {what}. The photo wasn't kept. || Saved {n} details from {what}. The photo wasn't kept.
 6f57c463	Saved on this phone only until Firebase is connected.
 abda9b97	Saved on this phone. It goes through after the one before it.
-aed548a3	Saved on this phone. It goes through by itself when there's a connection.
+5d58f0ca	Saved on this phone. It goes through by itself, you don't need to do it again.
 13ebc378	Saved on this phone. It uploads after the one before it.
 7bd6e99d	Saved; typed in by hand: {fields}.
 9d4af690	Saved.	[buy/[id].tsx]

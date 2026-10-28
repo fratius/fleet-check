@@ -102,8 +102,10 @@ export class Outbox {
   /** What the server answered to jobs that went through in this session. */
   results = new Map<string, unknown>();
   private subs = new Set<() => void>();
-  private running = false;
-  private again = false;
+  private lanes = { media: false, change: false };
+  private again = { media: false, change: false };
+  /** Is anything being sent right now? */
+  get running() { return this.lanes.media || this.lanes.change; }
   private uid: string | null = null;
   private stopped = new Set<string>();
   version = 0;
@@ -172,23 +174,66 @@ export class Outbox {
     this.kick();
   }
 
-  /** Works through the waiting jobs, oldest first, one at a time (a drop-off before the next pick-up). */
+  /**
+   * Works through the waiting jobs, oldest first, one at a time per lane: photos and videos in one (a drop-off
+   * before the next pick-up), changes in the other, so a change doesn't wait for someone's video to upload. A change
+   * about a van waits for that van's photos or video sent before it (a check done after the pick-up).
+   */
   kick() {
-    if (this.running) { this.again = true; return; }
-    this.running = true;
+    this.runLane('media');
+    this.runLane('change');
+  }
+  private laneOf(j: Job): 'media' | 'change' { return j.type === 'change' ? 'change' : 'media'; }
+  /**
+   * The next job of a lane, oldest first. A change about a van waits while that van's photos or video sent before it
+   * are still going up; later changes about the same van or person wait behind it (their order stays), others go.
+   */
+  private next(lane: 'media' | 'change', uid: string): Job | undefined {
+    const heldVans = new Set<string>(), heldPeople = new Set<string>();
+    for (let i = 0; i < this.jobs.length; i++) {
+      const j = this.jobs[i];
+      if (j.status !== 'queued' || j.uid !== uid || this.laneOf(j) !== lane) continue;
+      if (lane === 'change') {
+        const waits = (j.vehicleId && (heldVans.has(j.vehicleId)
+          || this.jobs.slice(0, i).some((x) => x.status === 'queued' && x.uid === uid && x.type !== 'change' && x.vehicleId === j.vehicleId)))
+          || (j.personId && heldPeople.has(j.personId));
+        if (waits) {
+          if (j.vehicleId) heldVans.add(j.vehicleId);
+          if (j.personId) heldPeople.add(j.personId);
+          continue;
+        }
+      }
+      return j;
+    }
+    return undefined;
+  }
+  private runLane(lane: 'media' | 'change') {
+    if (this.lanes[lane]) { this.again[lane] = true; return; }
+    this.lanes[lane] = true;
     (async () => {
       try {
         do {
-          this.again = false;
+          this.again[lane] = false;
           for (;;) {
             const uid = this.uid;
-            const j = uid ? this.jobs.find((x) => x.status === 'queued' && x.uid === uid) : undefined;
+            const j = uid ? this.next(lane, uid) : undefined;
             if (!j) break;
             await this.run(j);
+            // Its van's change may have been waiting for it.
+            if (lane === 'media') this.runLane('change');
           }
-        } while (this.again);
-      } finally { this.running = false; }
+        } while (this.again[lane]);
+      } finally { this.lanes[lane] = false; }
     })();
+  }
+
+  /** A change already reached the server outside the runner (a record write Firestore sent): not sent again. */
+  async sent(id: string) {
+    const j = this.jobs.find((x) => x.id === id);
+    if (!j || j.serverDone) return;
+    j.serverDone = true;
+    await this.save();
+    this.kick();
   }
 
   private liveOf(j: Job): Live {
@@ -276,6 +321,8 @@ export class Outbox {
       if ((j.then || j.change) && !j.serverDone) {
         l.step = 'server'; this.emit();
         const out = await this.attempt(j, async () => {
+          // Reached the server meanwhile by another way (a record write Firestore sent itself): done.
+          if (j.serverDone) return this.results.get(j.id) ?? null;
           if (!j.serverTried) { j.serverTried = true; await this.save(); }
           return this.ops.server(j, (stalled) => { if (stalled !== l.waiting) { l.waiting = stalled; this.emit(); } });
         });

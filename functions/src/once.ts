@@ -13,10 +13,12 @@ import { N_, fail } from './i18n';
  */
 
 const RID = /^[A-Za-z0-9_-]{8,64}$/;
-/** A first call still "running" after this long has died (longer than any function runs): the repeat does it. */
-const STALE_MS = 10 * 60_000;
-/** How long a repeat waits for the first call to finish before saying so. */
-const WAIT_MS = 100_000;
+/**
+ * From the function's time limit: a first call still "running" after the limit and a margin has died (the repeat
+ * does it), and a repeat waits for the first one well within its own limit (then says "still working", and the
+ * phone asks again a little later).
+ */
+export const timing = (timeoutSeconds = 60) => ({ staleMs: (timeoutSeconds + 30) * 1000, waitMs: Math.max(5, timeoutSeconds - 15) * 1000 });
 /** Answers are kept this long (the daily clean-up deletes older ones). */
 export const KEEP_MS = 7 * 86_400_000;
 
@@ -30,11 +32,11 @@ export function onCallOnce<T>(name: string, opts: CallableOptions, handler: (req
     const uid = req.auth?.uid;
     if (rid == null || rid === '' || !uid) return handler(req);
     if (typeof rid !== 'string' || !RID.test(rid)) throw fail('invalid-argument', 'Unknown request.');
-    return once(uid, name, rid, () => handler(req));
+    return once(uid, name, rid, () => handler(req), timing(typeof opts.timeoutSeconds === 'number' ? opts.timeoutSeconds : undefined));
   });
 }
 
-export async function once<T>(uid: string, name: string, rid: string, run: () => Promise<T>): Promise<T> {
+export async function once<T>(uid: string, name: string, rid: string, run: () => Promise<T>, { staleMs, waitMs } = timing()): Promise<T> {
   const ref = db().doc(`users/${uid}/requests/${rid}`);
   const t0 = Date.now();
   for (;;) {
@@ -45,12 +47,13 @@ export async function once<T>(uid: string, name: string, rid: string, run: () =>
       const x = d.data() as { fn: string; state: 'running' | 'done'; at: number; result?: unknown };
       if (x.fn !== name) throw fail('invalid-argument', 'Unknown request.');
       if (x.state === 'done') return { done: true as const, result: x.result };
-      if (now - x.at > STALE_MS) { tx.update(ref, { at: now }); return { go: true as const }; }
+      if (now - x.at > staleMs) { tx.update(ref, { at: now }); return { go: true as const }; }
       return { wait: true as const };
     });
     if ('done' in got) return got.result as T;
     if ('go' in got) break;
-    if (Date.now() - t0 > WAIT_MS) throw fail('unavailable', N_('Still working on it. It goes through by itself.'));
+    // `wait`: the phone keeps asking (as without a connection), it's not an error to show.
+    if (Date.now() - t0 > waitMs) throw fail('unavailable', N_('Still working on it. It goes through by itself.'), { wait: 1 });
     await sleep(1500);
   }
   let out: T;

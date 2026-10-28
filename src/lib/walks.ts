@@ -1,3 +1,6 @@
+import { doc, setDoc } from 'firebase/firestore';
+
+import { fb } from './firebase';
 import { newId, prepare, upload } from './images';
 import { LOCAL_STATION, type Store } from './store';
 import type { Photo, Vehicle, Walkaround } from './types';
@@ -33,10 +36,13 @@ export async function saveWalk(store: Store, v: Vehicle, uid: string | null, sho
   } else {
     shots.forEach((s, i) => { photos[i] = { ...photos[i], uri: s.uri }; });
   }
-  await store.walks.add({
+  const rec = {
     vehicleId: v.id, vehicleName: v.name, cls: v.cls, stationId: v.stationId || (store.mode === 'local' ? LOCAL_STATION : undefined),
     source: meta.source, createdAt: Date.now(), createdBy: uid,
     totalMs: meta.totalMs, frames: meta.frames, taken: shots.length, skipped: meta.skipped, retakes: meta.retakes, photos,
-  }, id);
+  };
+  // With Firebase straight to the server (waiting for the connection if needed): the damage check opened next needs it there.
+  if (store.mode === 'firebase') await setDoc(doc(fb()!.db, 'orgs', store.orgId, 'walkarounds', id), JSON.parse(JSON.stringify(rec)));
+  else await store.walks.add(rec, id);
   return id;
 }

@@ -130,8 +130,8 @@ export async function sweepKept(jobIds: Set<string>) {
 /* ---------- The web app's other things kept in the same IndexedDB (lib/offline.ts) ---------- */
 export const idbGet = <T>(key: string) => tx<T>('readonly', (s) => s.get(key));
 export const idbPut = (key: string, value: unknown) => tx('readwrite', (s) => s.put(value, key)).then(() => undefined);
-export const idbDeletePrefix = async (prefix: string) => {
+export const idbDeleteWhere = async (drop: (key: string) => boolean) => {
   const keys = (await tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys())) || [];
-  const gone = keys.map(String).filter((k) => k.startsWith(prefix));
+  const gone = keys.map(String).filter(drop);
   if (gone.length) await tx('readwrite', (s) => { for (const k of gone) s.delete(k); });
 };

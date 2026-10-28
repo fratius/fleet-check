@@ -15,11 +15,15 @@ import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
+import { useOutbox } from '@/lib/outbox';
 
 export default function Account() {
   const s = useSession();
   const c = useColors();
   const [armed, setArmed] = useState(false);
+  // Uploads and changes of this person still waiting on this phone (they stay through a sign-out).
+  const box = useOutbox();
+  const unsent = box.jobs.filter((j) => j.uid === s.user?.uid && !box.done.has(j.id)).length;
   const projectId = (Constants.expoConfig?.extra as { firebase?: { projectId?: string } } | undefined)?.firebase?.projectId;
   // The app creator in a company they aren't a member of.
   const outside = s.creator && s.org && !s.companies.some((x) => x.id === s.org!.id);
@@ -92,6 +96,9 @@ export default function Account() {
         <T v="small">{versionLine()}</T>
       </Card>
 
+      {s.mode === 'firebase' && unsent ? (
+        <Notice text={tp(unsent, '{n} thing made on this phone isn\'t sent yet. If you sign out, it waits here and goes through when you sign in again on this phone.', '{n} things made on this phone aren\'t sent yet. If you sign out, they wait here and go through when you sign in again on this phone.')} />
+      ) : null}
       {s.mode === 'firebase' ? (
         <Button v="danger" title={armed ? t('Tap again to sign out') : t('Sign out')} onPress={() => {
           if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
