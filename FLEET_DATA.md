@@ -193,6 +193,14 @@ with totals, and every refuel, wash and parts purchase. Download for Excel makes
 - **Who was driving?** Pick a van, a day and a time: the van history says who had it (for traffic fines and
   complaints that arrive days later).
 
+### On the phone (offline)
+
+So the app opens and works without a connection, each phone keeps a copy of what its signed-in person may read
+anyway: their company and role, and the lists the app had loaded (vans, people of their stations, history, records
+they may see), plus changes and photos not sent yet. Only that person's copy, only on that phone (the app's own
+storage; in the web app the browser's), and deleted when they sign out. Changes not sent yet stay on the phone until
+the same person signs in again. Nothing more is read than without it: the rules decide what reaches the phone.
+
 ### Kept out on purpose (GDPR, data minimisation)
 
 - licence numbers, copies of licences or IDs (the licence check keeps the result and date, not the document);

@@ -110,6 +110,9 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   only (marked `handover` on the walk-around by the server); **or one video** walking around the van, recorded by
   that driver, 8 seconds to 5 minutes long, recorded and uploaded in the last two hours, used once. The server
   checks it (`pickUpVan`, `dropOffVan`) before anything changes. A drop-off always needs one of the two.
+- **Any change made without a connection** (giving a van, retiring it, roles, records...) waits on that person's phone
+  and goes through when it can, under their name, at that time, with the same checks as always (a refusal shows with
+  its reason). Giving or taking back a van that way is refused if someone else changed who has it meanwhile.
 - **Without a connection** the photos or video wait on the driver's phone and go up by themselves (src/lib/outbox.ts);
   the handover is recorded when the server gets it, at that time, and the two-hour limits still apply: from the
   upload, and from when the photos were taken or the video recorded (a phone offline for longer has to take them

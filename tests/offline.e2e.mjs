@@ -62,6 +62,9 @@ after(async () => {
 });
 
 const visible = (page, text) => page.locator(`text=${text} >> visible=true`).first();
+// A button or tab by its exact label (texts elsewhere on the page can contain the same words).
+const button = (page, text) => page.locator(`[role=button] >> text="${text}" >> visible=true`).first();
+const tab = (page, text) => page.locator(`[role=tab] >> text="${text}" >> visible=true`).first();
 async function until(fn, ms = 60_000, what = 'the condition') {
   const t0 = Date.now();
   for (;;) {
@@ -86,15 +89,15 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
   await visible(page, 'Van 1').waitFor({ timeout: 60_000 });
   await visible(page, 'Van 1').click();
   // The van page; the people of the station load once (and are kept for later).
-  await visible(page, 'Give to a driver').click();
+  await button(page, 'Give to a driver').click();
   await visible(page, DRIVER.name).waitFor({ timeout: 30_000 });
-  await visible(page, 'Cancel').click();
+  await button(page, 'Cancel').click();
   // The app keeps its files and what it saw (a few seconds after the data arrived).
   await page.waitForTimeout(6000);
 
   // The signal is gone.
   await ctx.setOffline(true);
-  await visible(page, 'Give to a driver').click();
+  await button(page, 'Give to a driver').click();
   await visible(page, DRIVER.name).click();
   await visible(page, 'Saved on this phone. It goes through by itself when there\'s a connection.').waitFor({ timeout: 20_000 });
   await visible(page, `Give Van 1 to ${DRIVER.name}`).waitFor({ timeout: 10_000 });
@@ -102,11 +105,11 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
   assert.equal(await page.locator('text=Give to a driver >> visible=true').count(), 0);
 
   // Renamed offline: shows at once.
-  await visible(page, 'Details').click();
-  await visible(page, 'Name, plate and type').click();
+  await tab(page, 'Details').click();
+  await button(page, 'Name, plate and type').click();
   const name = page.locator('input >> visible=true').first();
   await name.fill('Van One');
-  await visible(page, 'Save changes').click();
+  await button(page, 'Save changes').click();
   await visible(page, 'Van One').waitFor({ timeout: 15_000 });
   await page.waitForTimeout(4000);
 
