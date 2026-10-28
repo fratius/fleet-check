@@ -76,13 +76,13 @@ function jpeg() {
 }
 
 /** A walk-around with every photo uploaded, as the app's scanner saves it. */
-async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0, real = false } = {}) {
+async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0, real = false, takenAgo = 0 } = {}) {
   const id = doc(collection(p.db, 'orgs', orgId, 'walkarounds')).id;
   const ps = [];
   for (let n = 1; n <= frames; n++) {
     const path = `orgs/${orgId}/walkarounds/${id}/0${n}.jpg`;
     await uploadBytes(ref(p.st, path), real ? jpeg() : new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
-    ps.push({ n, label: `Frame ${n}`, w: 900, h: 1200, takenAt: Date.now(), path });
+    ps.push({ n, label: `Frame ${n}`, w: 900, h: 1200, takenAt: Date.now() - takenAgo, path });
   }
   await setDoc(doc(p.db, 'orgs', orgId, 'walkarounds', id), {
     vehicleId: van.id, vehicleName: van.name, cls: 'van', stationId: van.stationId, source, createdAt: Date.now(), createdBy: p.uid,
@@ -204,6 +204,8 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2, { source: 'library' }) }), 'failed-precondition');
   await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d1, S.org, v2) }), 'failed-precondition');
   await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
+  // Photos kept on the phone without a connection for hours are uploaded fresh, but taken too long ago.
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2, { takenAgo: 3 * 3600_000 }) }), 'failed-precondition');
   // Nobody marks their own photos as a pick-up, or edits them afterwards.
   const forged = doc(collection(S.d2.db, 'orgs', S.org, 'walkarounds'));
   await fails(setDoc(forged, { vehicleId: v2.id, stationId: S.s1, createdBy: S.d2.uid, createdAt: Date.now(), handover: { kind: 'pickup', assignmentId: 'x' } }), 'permission-denied');
@@ -221,7 +223,10 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
   await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d1, S.org, v2) }), 'failed-precondition');
   const drop = await photos(S.d2, S.org, v2);
-  await S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop });
+  // Sent twice at once (the phone tried again while the first call was still running): both answered as done, one drop-off.
+  const both = await Promise.all([1, 2].map(() => S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop })));
+  assert.ok(both.every((x) => x.ok), JSON.stringify(both));
+  assert.equal(both.filter((x) => !x.unchanged).length, 1, JSON.stringify(both));
   assert.equal((await vanDoc(S.d2, v2.id)).assignedTo, null);
   assert.deepEqual(await S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop }), { ok: true, unchanged: true });
   // Someone else's photos are never "already done" for you.
@@ -822,7 +827,10 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.equal(bw.decision.note, 'Use the card in the glovebox.');
 
     // 3. No card at all: same as a wrong one. The owner allows it; the driver carries on and the flag stays.
-    const n = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
+    // (Started twice at once with the same photo, as a phone trying again would: one purchase.)
+    const nShot = await shot(S.d1);
+    const [n, n2] = await Promise.all([1, 2].map(() => S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: nShot })));
+    assert.equal(n2.id, n.id);
     const c3 = await S.d1.call('purchase', { orgId: S.org, action: 'card', id: n.id, missing: true });
     assert.equal(c3.result, 'missing');
     await S.own.call('purchase', { orgId: S.org, action: 'decide', id: n.id, allow: true });

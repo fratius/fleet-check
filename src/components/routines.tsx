@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
 import { takePhoto } from '@/components/dash';
@@ -87,6 +87,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
   const [photo, setPhoto] = useState<{ uri: string; w: number; h: number } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const doneId = useRef(newId());
   const late = Date.now() - x.since > 3 * 3600_000;
   const shoot = async () => {
     setErr(null);
@@ -102,8 +103,8 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
         const small = await prepare(photo.uri, photo.w, photo.h, 1600, 0.8);
         path = await upload(small.uri, `orgs/${s.org!.id}/routines/${s.user!.uid}/${newId()}.jpg`);
       }
-      // Named here, so sending it again without a connection never records it twice.
-      const id = newId();
+      // Named once here, so sending it again (by itself without a connection, or tapped again) never records it twice.
+      const id = doneId.current;
       await retrying(() => ai.routineDone({ orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path, id }));
     } catch (e) {
       setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.'));

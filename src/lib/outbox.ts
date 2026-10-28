@@ -56,7 +56,18 @@ export const outbox = new Outbox({
     if (j.type === 'video') ai.processVideo({ orgId: j.orgId, videoId: j.id }).catch(() => {});
     flash(`van:${j.vehicleId}`, doneText(j));
   },
-  async persist(jobs) { await AsyncStorage.setItem(KEY, JSON.stringify(jobs)); },
+  async persist(jobs) {
+    let list = jobs;
+    if (Platform.OS === 'web') {
+      // Other tabs of the web app share the list: keep the jobs they added (a tab only drops its own finished ones).
+      try {
+        const stored = JSON.parse((await AsyncStorage.getItem(KEY)) || '[]') as Job[];
+        const have = new Set(jobs.map((j) => j.id));
+        list = [...jobs, ...stored.filter((j) => j && j.id && !have.has(j.id) && !outbox.forgotten.has(j.id))];
+      } catch { /* this tab's list as it is */ }
+    }
+    await AsyncStorage.setItem(KEY, JSON.stringify(list));
+  },
   async dropFiles(j) { await dropKept(j.id, j.files.map((f) => f.key)); },
   errKind: netKind,
   message(e) {
@@ -82,10 +93,35 @@ function ready() {
   }
   return loading;
 }
+/*
+ * The web app can be open in several tabs. One of them runs the jobs (a browser lock, released when that tab
+ * closes); the others add jobs and show the list as it's saved.
+ */
+let uidNow: string | null = null;
+let runner = Platform.OS !== 'web';
+const readStored = async () => { try { const l = JSON.parse((await AsyncStorage.getItem(KEY)) || '[]'); return Array.isArray(l) ? (l as Job[]) : []; } catch { return []; } };
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  const locks = typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: { request: (name: string, cb: () => Promise<void>) => Promise<void> } }).locks : undefined;
+  if (locks?.request) {
+    locks.request('fratius-outbox', async () => {
+      runner = true;
+      await ready();
+      outbox.replace(await readStored());
+      outbox.start(uidNow);
+      await new Promise<void>(() => {}); // held while this tab is open
+    }).catch(() => { runner = true; outbox.start(uidNow); });
+  } else runner = true;
+  window.addEventListener('storage', (e) => {
+    if (e.key !== null && !e.key.endsWith(KEY)) return;
+    readStored().then((list) => { if (runner) { outbox.load(list); outbox.kick(); } else outbox.replace(list); });
+  });
+}
+
 /** Starts the uploads of the person signed in (null: none run). Called by the session. */
 export async function startOutbox(uid: string | null) {
+  uidNow = uid;
   await ready();
-  outbox.start(uid);
+  outbox.start(runner ? uid : null);
 }
 
 /** What a screen shows: a copy made at each change (the React Compiler keeps results while an object stays the same). */

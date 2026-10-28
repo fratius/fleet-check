@@ -61,7 +61,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
     : new Promise((resolve) => { recorded.current = resolve; setRecording(true); }));
   // This video's upload, also after the page was left and opened again.
   const job = ob.jobs.find((j) => j.type === 'video' && j.uid === s.user?.uid && j.vehicleId === v.id && j.what === kind && (j.assignmentId || null) === (assignmentId || null)) || null;
-  const finished = !!sent && ob.done.has(sent);
+  const finished = !!sent && (ob.done.has(sent) || !ob.jobs.some((j) => j.id === sent));
   useEffect(() => { if (finished) { setSent(null); onDone?.(); } }, [finished, onDone]);
   const go = async () => {
     setErr(null);

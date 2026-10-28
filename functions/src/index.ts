@@ -711,7 +711,7 @@ async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleI
 // A pick-up or drop-off needs a full walk-around of that van, taken with the camera by this person just now:
 // every photo of the van's frame set, none skipped, uploaded in the last two hours, used for one handover only.
 const HANDOVER_MAX_AGE = 2 * 3600_000;
-interface WalkDoc { vehicleId: string; createdBy: string | null; source: string; frames: number; taken: number; skipped: number; photos: { path?: string }[]; handover?: unknown }
+interface WalkDoc { vehicleId: string; createdBy: string | null; source: string; frames: number; taken: number; skipped: number; photos: { path?: string; takenAt?: number }[]; handover?: unknown }
 async function checkHandoverPhotos(who: Who, vehicleId: string, walkId: string) {
   if (!ID.test(walkId)) throw fail('invalid-argument', 'Take the photos of the van first.');
   const w = await db().doc(`orgs/${who.orgId}/walkarounds/${walkId}`).get();
@@ -726,7 +726,10 @@ async function checkHandoverPhotos(who: Who, vehicleId: string, walkId: string) 
     if (!p.path || !p.path.startsWith(prefix)) return null;
     try { const [m] = await bucket().file(p.path).getMetadata(); return m; } catch { return null; }
   }));
-  if (files.some((m) => !m || Date.now() - new Date(String(m.timeCreated)).getTime() > HANDOVER_MAX_AGE)) {
+  // Uploaded in the last two hours, and taken in the last two hours too: photos can wait on the phone without a
+  // connection (src/lib/outbox.ts), but a handover's proof shows the van as it is now. Some clock difference allowed.
+  if (files.some((m) => !m || Date.now() - new Date(String(m.timeCreated)).getTime() > HANDOVER_MAX_AGE)
+    || d.photos.some((p) => typeof p.takenAt !== 'number' || Date.now() - p.takenAt > HANDOVER_MAX_AGE + 10 * 60_000)) {
     throw fail('failed-precondition', 'Some photos didn\'t finish uploading or are more than two hours old. Take them again.');
   }
 }
@@ -743,21 +746,51 @@ async function useHandoverPhotos(tx: FirebaseFirestore.Transaction, org: Firebas
  * connection), and its outbox tried again (src/lib/outbox.ts). The same photos or video, by the same person, for the
  * same van and the same thing: answered as done (with the handover's id) instead of "already used".
  */
-async function alreadyDone(who: Who, data: { walkId?: unknown; videoId?: unknown } | undefined, kind: 'pickup' | 'dropoff' | 'walkaround', vehicleId: string, assignmentId?: string): Promise<string | null> {
+async function alreadyDone(who: Who, data: { walkId?: unknown; videoId?: unknown } | undefined, kind: 'pickup' | 'dropoff' | 'walkaround', vehicleId: string,
+  o: { assignmentId?: string; direct?: boolean } = {}): Promise<string | null> {
   const org = db().doc(`orgs/${who.orgId}`);
   const videoId = data?.videoId ? String(data.videoId) : '';
+  const walkId = videoId ? '' : String(data?.walkId || '');
+  let found: string | null = null;
   if (videoId) {
     if (!ID.test(videoId)) return null;
     const v = (await org.collection('videos').doc(videoId).get()).data() as { by?: string; kind?: string; vehicleId?: string; assignmentId?: string | null } | undefined;
-    const same = !!v && v.by === who.uid && v.kind === kind && v.vehicleId === vehicleId && (!assignmentId || v.assignmentId === assignmentId);
-    return same ? v!.assignmentId || videoId : null;
+    const same = !!v && v.by === who.uid && v.kind === kind && v.vehicleId === vehicleId && (!o.assignmentId || v.assignmentId === o.assignmentId);
+    if (!same) return null;
+    found = v!.assignmentId || null;
+    if (kind === 'walkaround') return videoId;
+  } else {
+    if (!ID.test(walkId) || kind === 'walkaround') return null;
+    const w = (await org.collection('walkarounds').doc(walkId).get()).data() as (WalkDoc & { handover?: { kind?: string; assignmentId?: string } }) | undefined;
+    const h = w?.handover;
+    const same = !!w && w.createdBy === who.uid && w.vehicleId === vehicleId && h?.kind === kind && !!h.assignmentId && (!o.assignmentId || h.assignmentId === o.assignmentId);
+    if (!same) return null;
+    found = h!.assignmentId!;
   }
-  const walkId = String(data?.walkId || '');
-  if (!ID.test(walkId) || kind === 'walkaround') return null;
-  const w = (await org.collection('walkarounds').doc(walkId).get()).data() as (WalkDoc & { handover?: { kind?: string; assignmentId?: string } }) | undefined;
-  const h = w?.handover;
-  const same = !!w && w.createdBy === who.uid && w.vehicleId === vehicleId && h?.kind === kind && !!h.assignmentId && (!assignmentId || h.assignmentId === assignmentId);
-  return same ? h!.assignmentId! : null;
+  if (!found) return null;
+  // A pick-up or drop-off done with this proof (not proof added to a handover afterwards).
+  if (o.direct) {
+    const a = (await org.collection('assignments').doc(found).get()).data() as Assignment | undefined;
+    const proof = kind === 'pickup' ? (videoId ? a?.startVideoId : a?.startWalkId) : (videoId ? a?.endVideoId : a?.endWalkId);
+    if (!a || a.driverId !== who.uid || proof !== (videoId || walkId)) return null;
+  }
+  return found;
+}
+
+/**
+ * Runs a handover step that may be a repeat. Already done: answered as done. Failing because the same step went
+ * through meanwhile (a repeat that overlapped the first call, which was still running): answered as done too.
+ */
+async function orDone<T>(again: () => Promise<T | null>, run: () => Promise<T>): Promise<T> {
+  const done = await again();
+  if (done) return done;
+  try {
+    return await run();
+  } catch (e) {
+    const d = await again().catch(() => null);
+    if (d) return d;
+    throw e;
+  }
 }
 
 /** The photos or the video given for a handover, checked before anything changes. */
@@ -787,51 +820,55 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
 export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
-  const done = await alreadyDone(who, req.data, 'pickup', vehicleId);
-  if (done) return { assignmentId: done, unchanged: true };
-  const m = await checkMedia(who, vehicleId, req.data);
-  const out = await db().runTransaction(async (tx) => {
-    const { org, vref, van } = await selfService(tx, who, vehicleId);
-    if (van.retired) throw fail('failed-precondition', 'This van is retired.');
-    if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
-    const aCol = org.collection('assignments');
-    const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
-    if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
-    const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
-    if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
-    const now = Date.now();
-    const aref = aCol.doc();
-    const kmStart = startKm(van.dash, now);
-    const a: Assignment & { createdAt: number } = {
-      vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
-      start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
-    };
-    tx.set(aref, a);
-    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now, kmStart, kmEnd: null } });
-    mark('pickup', aref.id);
-    return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
+  type Out = { assignmentId: string; unchanged?: true; tookOverFrom?: string | null };
+  const again = async (): Promise<Out | null> => { const d = await alreadyDone(who, req.data, 'pickup', vehicleId, { direct: true }); return d ? { assignmentId: d, unchanged: true } : null; };
+  return orDone<Out>(again, async () => {
+    const m = await checkMedia(who, vehicleId, req.data);
+    const out = await db().runTransaction(async (tx) => {
+      const { org, vref, van } = await selfService(tx, who, vehicleId);
+      if (van.retired) throw fail('failed-precondition', 'This van is retired.');
+      if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
+      const aCol = org.collection('assignments');
+      const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
+      if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
+      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+      if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
+      const now = Date.now();
+      const aref = aCol.doc();
+      const kmStart = startKm(van.dash, now);
+      const a: Assignment & { createdAt: number } = {
+        vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
+        start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
+        startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
+      };
+      tx.set(aref, a);
+      tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now, kmStart, kmEnd: null } });
+      mark('pickup', aref.id);
+      return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
+    });
+    // The checks due now (section 17), for the driver who just got the van.
+    if (!('unchanged' in out)) await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
+    return out as Out;
   });
-  // The checks due now (section 17), for the driver who just got the van.
-  if (!('unchanged' in out)) await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
-  return out;
 });
 
 /** The driver hands back the van they have, with drop-off photos or a video. */
 export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
-  if (await alreadyDone(who, req.data, 'dropoff', vehicleId)) return { ok: true, unchanged: true };
-  const m = await checkMedia(who, vehicleId, req.data);
-  await db().runTransaction(async (tx) => {
-    const { org, vref, van } = await selfService(tx, who, vehicleId);
-    if (van.assignedTo?.driverId !== who.uid) throw fail('failed-precondition', 'You don\'t have this van.');
-    const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
-    tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', m.media));
-    tx.update(vref, { assignedTo: null });
-    mark('dropoff', van.assignedTo.assignmentId);
+  const again = async () => ((await alreadyDone(who, req.data, 'dropoff', vehicleId, { direct: true })) ? { ok: true, unchanged: true as boolean } : null);
+  return orDone(again, async () => {
+    const m = await checkMedia(who, vehicleId, req.data);
+    await db().runTransaction(async (tx) => {
+      const { org, vref, van } = await selfService(tx, who, vehicleId);
+      if (van.assignedTo?.driverId !== who.uid) throw fail('failed-precondition', 'You don\'t have this van.');
+      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+      tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', m.media));
+      tx.update(vref, { assignedTo: null });
+      mark('dropoff', van.assignedTo.assignmentId);
+    });
+    return { ok: true, unchanged: false as boolean };
   });
-  return { ok: true };
 });
 
 /* ---------- 10. Videos ---------- */
@@ -904,18 +941,20 @@ export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, 
   if (!a) throw fail('not-found', 'Unknown handover.');
   // The station's staff, or the driver for their own handover.
   if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
-  if (await alreadyDone(who, { videoId }, kind, a.vehicleId, assignmentId)) return { ok: true, unchanged: true };
-  if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
-  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
-  const v = await checkHandoverVideo(who, videoId);
-  await db().runTransaction(async (tx) => {
-    const vref = org.collection('videos').doc(videoId);
-    const used = await tx.get(vref);
-    if (used.exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
-    await noProofYet(tx, org, assignmentId, kind);
-    tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, isLate(who, a, kind)));
+  const again = async () => ((await alreadyDone(who, { videoId }, kind, a.vehicleId, { assignmentId })) ? { ok: true, unchanged: true as boolean } : null);
+  return orDone(again, async () => {
+    if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
+    if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
+    const v = await checkHandoverVideo(who, videoId);
+    await db().runTransaction(async (tx) => {
+      const vref = org.collection('videos').doc(videoId);
+      const used = await tx.get(vref);
+      if (used.exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
+      await noProofYet(tx, org, assignmentId, kind);
+      tx.create(vref, videoDoc(who, { id: a.vehicleId, name: a.vehicleName, stationId: a.stationId || undefined }, v, kind, assignmentId, isLate(who, a, kind)));
+    });
+    return { ok: true, unchanged: false as boolean };
   });
-  return { ok: true };
 });
 
 /**
@@ -949,16 +988,18 @@ export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
   const a = (await org.collection('assignments').doc(assignmentId).get()).data() as Assignment | undefined;
   if (!a) throw fail('not-found', 'Unknown handover.');
   if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
-  if (await alreadyDone(who, { walkId }, kind, a.vehicleId, assignmentId)) return { ok: true, unchanged: true };
-  if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
-  if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
-  await checkHandoverPhotos(who, a.vehicleId, walkId);
-  await db().runTransaction(async (tx) => {
-    const wref = await useHandoverPhotos(tx, org, walkId);
-    await noProofYet(tx, org, assignmentId, kind);
-    tx.update(wref, { handover: { kind, assignmentId, late: isLate(who, a, kind) } });
+  const again = async () => ((await alreadyDone(who, { walkId }, kind, a.vehicleId, { assignmentId })) ? { ok: true, unchanged: true as boolean } : null);
+  return orDone(again, async () => {
+    if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
+    if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
+    await checkHandoverPhotos(who, a.vehicleId, walkId);
+    await db().runTransaction(async (tx) => {
+      const wref = await useHandoverPhotos(tx, org, walkId);
+      await noProofYet(tx, org, assignmentId, kind);
+      tx.update(wref, { handover: { kind, assignmentId, late: isLate(who, a, kind) } });
+    });
+    return { ok: true, unchanged: false as boolean };
   });
-  return { ok: true };
 });
 
 /**
@@ -976,15 +1017,17 @@ export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async
   const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as { name: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string } | null } | undefined;
   if (!van) throw fail('not-found', 'Unknown van.');
   needStation(who, van.stationId);
-  if (await alreadyDone(who, { videoId }, 'walkaround', vehicleId)) return { ok: true, unchanged: true };
-  if (van.retired) throw fail('failed-precondition', 'This van is retired.');
-  const v = await checkHandoverVideo(who, videoId);
-  await db().runTransaction(async (tx) => {
-    const vref = org.collection('videos').doc(videoId);
-    if ((await tx.get(vref)).exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
-    tx.create(vref, videoDoc(who, { id: vehicleId, name: van.name, stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
+  const again = async () => ((await alreadyDone(who, { videoId }, 'walkaround', vehicleId)) ? { ok: true, unchanged: true as boolean } : null);
+  return orDone(again, async () => {
+    if (van.retired) throw fail('failed-precondition', 'This van is retired.');
+    const v = await checkHandoverVideo(who, videoId);
+    await db().runTransaction(async (tx) => {
+      const vref = org.collection('videos').doc(videoId);
+      if ((await tx.get(vref)).exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
+      tx.create(vref, videoDoc(who, { id: vehicleId, name: van.name, stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
+    });
+    return { ok: true, unchanged: false as boolean };
   });
-  return { ok: true };
 });
 
 /**
@@ -1477,18 +1520,20 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   if (kind === 'fuel' && van.fuel === 'electric') throw fail('failed-precondition', 'Electric vans are charged, not refuelled.');
   const det = (await org.collection('vehicleDetails').doc(vehicleId).get()).data() as { fuelCard?: string; odometerKm?: number } | undefined;
   const expected = kind === 'parts' ? null : cardDigits(det?.fuelCard);
+  // Named after its dashboard photo, so the same photo sent again (the phone didn't get the answer, maybe while the
+  // first call was still running) finds the same purchase instead of starting a second one.
+  const ref = org.collection('purchases').doc(`${(path.split('/').pop() || '').replace(/\.jpg$/i, '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 30)}-${who.uid}`.slice(0, 64));
+  const answer = (x: BuyDoc) => ({ id: ref.id, needsCard: !!x.card.needed, lastKm: x.lastKm ?? null });
+  const before = await ref.get();
+  if (before.exists && (before.data() as BuyDoc).by === who.uid) return answer(before.data() as BuyDoc);
   // One at a time: anything this person left half done is closed (and stays in the history).
   const now = Date.now();
   const left = (await org.collection('purchases').where('by', '==', who.uid).orderBy('createdAt', 'desc').limit(10).get()).docs
-    .filter((x) => OPEN_BUY.includes(x.data().status));
-  // The same dashboard photo again: the phone didn't get the answer (no connection) and tried again.
-  const same = left.find((x) => (x.data() as BuyDoc).dash?.path === path);
-  if (same) { const sp = same.data() as BuyDoc; return { id: same.id, needsCard: !!sp.card.needed, lastKm: sp.lastKm ?? null }; }
+    .filter((x) => OPEN_BUY.includes(x.data().status) && x.id !== ref.id);
   await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: N_('Started another one') }, updatedAt: now })));
 
   // The photo must be there; the AI reads it in a second call (dash) while the driver already takes the card photo.
   try { await bucket().file(path).getMetadata(); } catch { throw fail('not-found', 'The dashboard photo is missing. Take it again.'); }
-  const ref = org.collection('purchases').doc();
   const dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: null, done: false };
   const doc: BuyDoc & Record<string, unknown> = {
     kind, status: 'open', vehicleId, vehicleName: van.name, plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
@@ -1501,8 +1546,15 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
     odometerKm: null, fuelPct: null, litres: null, total: null, currency: null, merchant: null, cancel: null,
     createdAt: now, updatedAt: now, doneAt: null,
   };
-  await ref.set(doc);
-  return { id: ref.id, needsCard: !!expected, lastKm: doc.lastKm };
+  try {
+    await ref.create(doc);
+  } catch (e) {
+    // Created by the same call meanwhile (an overlapping repeat): that one.
+    const now2 = (await ref.get()).data() as BuyDoc | undefined;
+    if (now2 && now2.by === who.uid) return answer(now2);
+    throw e;
+  }
+  return answer(doc);
 }
 
 /** The AI reads the dashboard photo (odometer, fuel gauge). If it can't, the driver types the numbers at the end. */
@@ -1526,24 +1578,44 @@ async function buyDash(who: Who, org: R, d: Record<string, unknown>) {
   return out(dash);
 }
 
+/** The answer a card photo got, for a repeat of the same photo. */
+async function cardRepeat(who: Who, p: BuyDoc): Promise<Record<string, unknown>> {
+  const why = { why: p.card.why, whyT: p.card.whyT, whyV: p.card.whyV };
+  if (p.card.result === 'match') return { result: 'match', ...why };
+  if (p.card.result && p.card.result !== 'missing') {
+    const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
+    return { result: p.card.result, ...why, people: bosses.map(({ name, phone }) => ({ name, phone })) };
+  }
+  return { result: 'retake', ...why };
+}
+
 async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
-  // The same card photo again (the phone lost the answer and tried again): the answer it got the first time.
-  if (d.missing !== true && d.path && p.card.photo === String(d.path)) {
-    const why = { why: p.card.why, whyT: p.card.whyT, whyV: p.card.whyV };
-    if (p.card.result === 'match') return { result: 'match', ...why };
-    if (p.card.result && p.card.result !== 'missing') {
-      const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
-      return { result: p.card.result, ...why, people: bosses.map(({ name, phone }) => ({ name, phone })) };
-    }
-    return { result: 'retake', ...why };
-  }
+  // The same card photo again (the phone lost the answer and tried again, maybe while the first was still being
+  // read): the answer it got the first time, never a second reading over it.
+  const photo = d.missing !== true && d.path ? String(d.path) : null;
+  const again = async () => {
+    if (!photo) return null;
+    const cur = (await ref.get()).data() as BuyDoc;
+    return cur.card.photo === photo ? cardRepeat(who, cur) : null;
+  };
+  return orDone(again, () => buyCardRun(who, org, d, ref, p));
+}
+async function buyCardRun(who: Who, org: R, d: Record<string, unknown>, ref: FirebaseFirestore.DocumentReference, p: BuyDoc): Promise<Record<string, unknown>> {
   if (p.status !== 'open' || !p.card.needed || p.card.result === 'match' || p.decision) throw fail('failed-precondition', 'The card was already checked.');
   const expected = p.card.expected!;
-  const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: Said, read: CardRead | null, tries: number, extra: object = {}) => {
+  // Writes a photo's outcome, unless that photo's outcome was written meanwhile (an overlapping repeat): then that one.
+  const settle = (photo: string | null, patch: Record<string, unknown>) => db().runTransaction(async (tx) => {
+    const cur = (await tx.get(ref)).data() as BuyDoc;
+    if (photo && cur.card.photo === photo) return cur;
+    tx.update(ref, patch);
+    return null;
+  });
+  const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: Said, read: CardRead | null, tries: number, photo: string | null = null) => {
     const now = Date.now();
     const keep = read ? { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry } : null;
-    await ref.update({ status: 'waiting', card: { ...p.card, result, read: keep, tries, why: why.text, whyT: why.t, whyV: why.v, expired: read ? expired(read.expiry, now) : null, at: now, ...extra }, updatedAt: now });
+    const was = await settle(photo, { status: 'waiting', card: { ...p.card, result, read: keep, tries, why: why.text, whyT: why.t, whyV: why.v, expired: read ? expired(read.expiry, now) : null, at: now, ...(photo ? { photo } : {}) }, updatedAt: now });
+    if (was) return cardRepeat(who, was);
     const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
     const van = `${p.vehicleName}${plateText(p)}`;
     await tell(bosses, (lang) => ({
@@ -1579,16 +1651,18 @@ async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
     await logBuyRead(org, who, ref.id, 'card', models.join(' + '), usage, { result: v.result, ms });
     const tries = p.card.tries + 1;
     if (v.result === 'unclear' && tries < 3) {
-      await ref.update({ 'card.tries': tries, 'card.why': v.why.text, 'card.whyT': v.why.t, 'card.whyV': v.why.v, 'card.photo': path, updatedAt: Date.now() });
+      const was = await settle(path, { 'card.tries': tries, 'card.why': v.why.text, 'card.whyT': v.why.t, 'card.whyV': v.why.v, 'card.photo': path, updatedAt: Date.now() });
+      if (was) return cardRepeat(who, was);
       return { result: 'retake', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
     if (v.result === 'match') {
       const now = Date.now();
-      await ref.update({ card: { ...p.card, result: 'match', read: { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry },
+      const was = await settle(path, { card: { ...p.card, result: 'match', read: { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry },
         tries, why: v.why.text, whyT: v.why.t, whyV: v.why.v, expired: expired(read.expiry, now), at: now, photo: path }, updatedAt: now });
+      if (was) return cardRepeat(who, was);
       return { result: 'match', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
-    return { ...(await stop(v.result, v.result === 'unclear' ? said('The card couldn\'t be read after {n} photos.', { n: tries }) : v.why, read, tries, { photo: path })), ...(who.creator ? { ms, usage } : {}) };
+    return { ...(await stop(v.result, v.result === 'unclear' ? said('The card couldn\'t be read after {n} photos.', { n: tries }) : v.why, read, tries, path)), ...(who.creator ? { ms, usage } : {}) };
   } finally {
     // No copy of the card is kept.
     await bucket().file(path).delete().catch(() => {});
@@ -1812,13 +1886,15 @@ export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] 
     const before = doneId ? await tx.get(ref) : null;
     if (!snap.exists) throw fail('not-found', 'This van was removed.');
     const van = snap.data() as VanForRoutines & { name: string; plate?: string };
-    if (before?.exists) {
-      if (before.data()?.by !== who.uid || before.data()?.routineId !== routineId) throw fail('invalid-argument', 'Unknown check.');
-      return { id: ref.id, todo: van.todo || [], van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: true };
-    }
     needStation(who, van.stationId);
     if (van.assignedTo?.driverId !== who.uid && !staffAt(who, van.stationId)) {
       throw fail('permission-denied', 'The driver who has this van does its checks (or the station\'s fleet manager).');
+    }
+    // Recorded already (a repeat): the same person, check and van, or it isn't theirs to name.
+    if (before?.exists) {
+      const b = before.data() as { by?: string; routineId?: string; vehicleId?: string };
+      if (b.by !== who.uid || b.routineId !== routineId || b.vehicleId !== vehicleId) throw fail('invalid-argument', 'Unknown check.');
+      return { id: ref.id, todo: van.todo || [], van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: true };
     }
     if (!applies(r, vehicleId, van)) throw fail('failed-precondition', 'This check isn\'t for this van.');
     const last: Last = { at: now, by: who.uid, byName: who.name, ok, note: note || null };

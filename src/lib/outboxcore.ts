@@ -85,6 +85,8 @@ export class Outbox {
   live = new Map<string, Live>();
   /** Jobs that went through in this session (so a screen waiting for one knows). */
   done = new Set<string>();
+  /** Jobs this outbox finished or removed (another tab's copy of the list may still have them). */
+  forgotten = new Set<string>();
   private subs = new Set<() => void>();
   private running = false;
   private again = false;
@@ -99,10 +101,17 @@ export class Outbox {
   private emit() { this.version++; this.subs.forEach((f) => f()); }
   private save() { return this.ops.persist(this.jobs.map((j) => ({ ...j, files: j.files.map((f) => ({ ...f })) }))).catch(() => {}); }
 
-  /** The saved list, read when the app starts. */
+  /** The saved list, read when the app starts (or added by another tab of the web app). */
   load(jobs: Job[]) {
     const have = new Set(this.jobs.map((j) => j.id));
-    for (const j of jobs) if (j && j.id && !have.has(j.id)) this.jobs.push(j);
+    for (const j of jobs) if (j && j.id && !have.has(j.id) && !this.forgotten.has(j.id)) this.jobs.push(j);
+    this.emit();
+  }
+
+  /** Shows the list as another tab saved it (a tab that doesn't run the jobs itself). */
+  replace(jobs: Job[]) {
+    if (this.running) return;
+    this.jobs = jobs.filter((j) => j && j.id && !this.forgotten.has(j.id));
     this.emit();
   }
 
@@ -130,6 +139,7 @@ export class Outbox {
     const j = this.jobs.find((x) => x.id === id);
     if (!j) return;
     this.stopped.add(id);
+    this.forgotten.add(id);
     this.jobs = this.jobs.filter((x) => x !== j);
     this.live.delete(id);
     this.emit();
@@ -262,6 +272,7 @@ export class Outbox {
       this.jobs = this.jobs.filter((x) => x !== j);
       this.live.delete(j.id);
       this.done.add(j.id);
+      this.forgotten.add(j.id);
       await this.save();
       this.emit();
       await this.ops.dropFiles(j).catch(() => {});

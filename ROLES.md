@@ -111,8 +111,9 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   that driver, 8 seconds to 5 minutes long, recorded and uploaded in the last two hours, used once. The server
   checks it (`pickUpVan`, `dropOffVan`) before anything changes. A drop-off always needs one of the two.
 - **Without a connection** the photos or video wait on the driver's phone and go up by themselves (src/lib/outbox.ts);
-  the handover is recorded when the server gets it, at that time, and the two-hour limits still apply (counted from
-  the upload, and for a video also from the recording). A repeat of a step that already went through (the phone lost
+  the handover is recorded when the server gets it, at that time, and the two-hour limits still apply: from the
+  upload, and from when the photos were taken or the video recorded (a phone offline for longer has to take them
+  again; the proof shows the van as it is at the handover). A repeat of a step that already went through (the phone lost
   the answer) is answered as done for the same person, van and proof; never for anyone else's.
 - **Videos:** recorded in the app on phones (720p H.264, no sound; the browser's camera in the web app), uploaded
   to `videos/{uploader}/{id}/original.*` in Storage (only into your own folder); the server writes the video record

@@ -77,7 +77,8 @@ export default function ScanScreen() {
   const ob = useOutbox();
   const job = walkId ? ob.jobs.find((j) => j.id === walkId) || null : null;
   const live = walkId ? ob.live.get(walkId) : undefined;
-  const sent = !!walkId && ob.done.has(walkId);
+  // Through (also when another tab of the web app sent it: then it's just gone from the list).
+  const sent = !!walkId && (ob.done.has(walkId) || !job);
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
