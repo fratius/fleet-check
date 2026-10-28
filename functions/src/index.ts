@@ -738,6 +738,28 @@ async function useHandoverPhotos(tx: FirebaseFirestore.Transaction, org: Firebas
   return ref;
 }
 
+/**
+ * A repeat of a handover step that already went through: the phone sent it, the answer got lost on the way (no
+ * connection), and its outbox tried again (src/lib/outbox.ts). The same photos or video, by the same person, for the
+ * same van and the same thing: answered as done (with the handover's id) instead of "already used".
+ */
+async function alreadyDone(who: Who, data: { walkId?: unknown; videoId?: unknown } | undefined, kind: 'pickup' | 'dropoff' | 'walkaround', vehicleId: string, assignmentId?: string): Promise<string | null> {
+  const org = db().doc(`orgs/${who.orgId}`);
+  const videoId = data?.videoId ? String(data.videoId) : '';
+  if (videoId) {
+    if (!ID.test(videoId)) return null;
+    const v = (await org.collection('videos').doc(videoId).get()).data() as { by?: string; kind?: string; vehicleId?: string; assignmentId?: string | null } | undefined;
+    const same = !!v && v.by === who.uid && v.kind === kind && v.vehicleId === vehicleId && (!assignmentId || v.assignmentId === assignmentId);
+    return same ? v!.assignmentId || videoId : null;
+  }
+  const walkId = String(data?.walkId || '');
+  if (!ID.test(walkId) || kind === 'walkaround') return null;
+  const w = (await org.collection('walkarounds').doc(walkId).get()).data() as (WalkDoc & { handover?: { kind?: string; assignmentId?: string } }) | undefined;
+  const h = w?.handover;
+  const same = !!w && w.createdBy === who.uid && w.vehicleId === vehicleId && h?.kind === kind && !!h.assignmentId && (!assignmentId || h.assignmentId === assignmentId);
+  return same ? h!.assignmentId! : null;
+}
+
 /** The photos or the video given for a handover, checked before anything changes. */
 async function checkMedia(who: Who, vehicleId: string, data: { walkId?: unknown; videoId?: unknown }): Promise<{ media: Media; video: VideoCheck | null }> {
   const videoId = data?.videoId ? String(data.videoId) : '';
@@ -765,6 +787,8 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
 export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
+  const done = await alreadyDone(who, req.data, 'pickup', vehicleId);
+  if (done) return { assignmentId: done, unchanged: true };
   const m = await checkMedia(who, vehicleId, req.data);
   const out = await db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
@@ -797,6 +821,7 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
 export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
+  if (await alreadyDone(who, req.data, 'dropoff', vehicleId)) return { ok: true, unchanged: true };
   const m = await checkMedia(who, vehicleId, req.data);
   await db().runTransaction(async (tx) => {
     const { org, vref, van } = await selfService(tx, who, vehicleId);
@@ -879,6 +904,7 @@ export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, 
   if (!a) throw fail('not-found', 'Unknown handover.');
   // The station's staff, or the driver for their own handover.
   if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
+  if (await alreadyDone(who, { videoId }, kind, a.vehicleId, assignmentId)) return { ok: true, unchanged: true };
   if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the video instead.');
   if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
   const v = await checkHandoverVideo(who, videoId);
@@ -923,6 +949,7 @@ export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
   const a = (await org.collection('assignments').doc(assignmentId).get()).data() as Assignment | undefined;
   if (!a) throw fail('not-found', 'Unknown handover.');
   if (a.driverId !== who.uid) { needStaff(who); needStation(who, a.stationId, N_('This handover belongs to another station.')); }
+  if (await alreadyDone(who, { walkId }, kind, a.vehicleId, assignmentId)) return { ok: true, unchanged: true };
   if (kind === 'dropoff' && a.end == null) throw fail('failed-precondition', 'The van hasn\'t been dropped off yet. Drop it off with the photos instead.');
   if ((kind === 'pickup' ? a.startWalkId || a.startVideoId : a.endWalkId || a.endVideoId)) throw fail('failed-precondition', kind === 'pickup' ? 'This pick-up already has photos or a video.' : 'This drop-off already has photos or a video.');
   await checkHandoverPhotos(who, a.vehicleId, walkId);
@@ -949,6 +976,7 @@ export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async
   const van = (await org.collection('vehicles').doc(vehicleId).get()).data() as { name: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string } | null } | undefined;
   if (!van) throw fail('not-found', 'Unknown van.');
   needStation(who, van.stationId);
+  if (await alreadyDone(who, { videoId }, 'walkaround', vehicleId)) return { ok: true, unchanged: true };
   if (van.retired) throw fail('failed-precondition', 'This van is retired.');
   const v = await checkHandoverVideo(who, videoId);
   await db().runTransaction(async (tx) => {
@@ -1387,7 +1415,8 @@ interface BuyDoc {
   vanFuel: string | null; tankL: number | null; by: string; byName: string; role: Role; vanDriverName: string | null; notTheirVan: boolean;
   dash: { path: string; at: number; ai: ReturnType<typeof dashValues> | null; confidence: number | null; readable: boolean; issue: string | null; done: boolean };
   lastKm: number | null;
-  card: { needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null; read: Omit<CardRead, 'confidence' | 'issue' | 'isCard'> | null; tries: number; why: string | null; expired: boolean | null; at: number | null };
+  card: { needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null; read: Omit<CardRead, 'confidence' | 'issue' | 'isCard'> | null; tries: number; why: string | null; expired: boolean | null; at: number | null;
+    whyT?: string; whyV?: Record<string, string | number>; /** The last card photo checked (deleted; its name answers a repeat). */ photo?: string };
   decision: { allow: boolean; by: string; byName: string; at: number; note: string } | null;
   receipt: { path: string; at: number; ai: Receipt } | null;
   parts: string[]; note: string | null; createdAt: number;
@@ -1452,6 +1481,9 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   const now = Date.now();
   const left = (await org.collection('purchases').where('by', '==', who.uid).orderBy('createdAt', 'desc').limit(10).get()).docs
     .filter((x) => OPEN_BUY.includes(x.data().status));
+  // The same dashboard photo again: the phone didn't get the answer (no connection) and tried again.
+  const same = left.find((x) => (x.data() as BuyDoc).dash?.path === path);
+  if (same) { const sp = same.data() as BuyDoc; return { id: same.id, needsCard: !!sp.card.needed, lastKm: sp.lastKm ?? null }; }
   await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: N_('Started another one') }, updatedAt: now })));
 
   // The photo must be there; the AI reads it in a second call (dash) while the driver already takes the card photo.
@@ -1496,6 +1528,16 @@ async function buyDash(who: Who, org: R, d: Record<string, unknown>) {
 
 async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
+  // The same card photo again (the phone lost the answer and tried again): the answer it got the first time.
+  if (d.missing !== true && d.path && p.card.photo === String(d.path)) {
+    const why = { why: p.card.why, whyT: p.card.whyT, whyV: p.card.whyV };
+    if (p.card.result === 'match') return { result: 'match', ...why };
+    if (p.card.result && p.card.result !== 'missing') {
+      const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
+      return { result: p.card.result, ...why, people: bosses.map(({ name, phone }) => ({ name, phone })) };
+    }
+    return { result: 'retake', ...why };
+  }
   if (p.status !== 'open' || !p.card.needed || p.card.result === 'match' || p.decision) throw fail('failed-precondition', 'The card was already checked.');
   const expected = p.card.expected!;
   const stop = async (result: 'mismatch' | 'unclear' | 'missing', why: Said, read: CardRead | null, tries: number, extra: object = {}) => {
@@ -1537,16 +1579,16 @@ async function buyCard(who: Who, org: R, d: Record<string, unknown>) {
     await logBuyRead(org, who, ref.id, 'card', models.join(' + '), usage, { result: v.result, ms });
     const tries = p.card.tries + 1;
     if (v.result === 'unclear' && tries < 3) {
-      await ref.update({ 'card.tries': tries, 'card.why': v.why.text, 'card.whyT': v.why.t, 'card.whyV': v.why.v, updatedAt: Date.now() });
+      await ref.update({ 'card.tries': tries, 'card.why': v.why.text, 'card.whyT': v.why.t, 'card.whyV': v.why.v, 'card.photo': path, updatedAt: Date.now() });
       return { result: 'retake', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
     if (v.result === 'match') {
       const now = Date.now();
       await ref.update({ card: { ...p.card, result: 'match', read: { kind: read.kind, issuer: read.issuer, last4: read.last4, plate: read.plate, expiry: read.expiry },
-        tries, why: v.why.text, whyT: v.why.t, whyV: v.why.v, expired: expired(read.expiry, now), at: now }, updatedAt: now });
+        tries, why: v.why.text, whyT: v.why.t, whyV: v.why.v, expired: expired(read.expiry, now), at: now, photo: path }, updatedAt: now });
       return { result: 'match', why: v.why.text, whyT: v.why.t, whyV: v.why.v, ...(who.creator ? { ms, usage } : {}) };
     }
-    return { ...(await stop(v.result, v.result === 'unclear' ? said('The card couldn\'t be read after {n} photos.', { n: tries }) : v.why, read, tries)), ...(who.creator ? { ms, usage } : {}) };
+    return { ...(await stop(v.result, v.result === 'unclear' ? said('The card couldn\'t be read after {n} photos.', { n: tries }) : v.why, read, tries, { photo: path })), ...(who.creator ? { ms, usage } : {}) };
   } finally {
     // No copy of the card is kept.
     await bucket().file(path).delete().catch(() => {});
@@ -1578,6 +1620,10 @@ async function buyDecide(who: Who, org: R, d: Record<string, unknown>) {
 
 async function buyReceipt(who: Who, org: R, d: Record<string, unknown>) {
   const { ref, p } = await myBuy(org, who, d.id);
+  // The same receipt photo again (the phone lost the answer and tried again): what was read the first time.
+  if (p.receipt && d.path && p.receipt.path === String(d.path)) {
+    return { receipt: p.receipt.ai, litres: p.kind === 'fuel' ? fuelLitres(p.receipt.ai, p.vanFuel) : null };
+  }
   if (p.status !== 'open') throw fail('failed-precondition', p.status === 'waiting' ? 'Wait for your fleet manager first.' : 'This one is closed.');
   if (p.card.needed && p.card.result !== 'match' && !p.decision?.allow) throw fail('failed-precondition', 'Check the fuel card first.');
   const path = checkPath(d.path, buyPath(who));
@@ -1745,6 +1791,9 @@ export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] 
   const d = (req.data || {}) as Record<string, unknown>;
   const vehicleId = String(d.vehicleId || ''), routineId = String(d.routineId || '');
   if (!ID.test(vehicleId) || !ID.test(routineId)) throw fail('invalid-argument', 'Unknown check.');
+  // The phone names the record, so a repeat (it lost the answer and tried again) isn't recorded twice.
+  const doneId = d.id == null || d.id === '' ? null : String(d.id);
+  if (doneId && !ID.test(doneId)) throw fail('invalid-argument', 'Unknown check.');
   const org = db().doc(`orgs/${who.orgId}`);
   const ok = d.ok !== false;
   const note = clean(d.note, 500);
@@ -1759,8 +1808,14 @@ export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] 
   const now = Date.now();
   const out = await db().runTransaction(async (tx) => {
     const snap = await tx.get(vref);
+    const ref = doneId ? org.collection('routineDone').doc(doneId) : org.collection('routineDone').doc();
+    const before = doneId ? await tx.get(ref) : null;
     if (!snap.exists) throw fail('not-found', 'This van was removed.');
     const van = snap.data() as VanForRoutines & { name: string; plate?: string };
+    if (before?.exists) {
+      if (before.data()?.by !== who.uid || before.data()?.routineId !== routineId) throw fail('invalid-argument', 'Unknown check.');
+      return { id: ref.id, todo: van.todo || [], van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: true };
+    }
     needStation(who, van.stationId);
     if (van.assignedTo?.driverId !== who.uid && !staffAt(who, van.stationId)) {
       throw fail('permission-denied', 'The driver who has this van does its checks (or the station\'s fleet manager).');
@@ -1769,18 +1824,17 @@ export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] 
     const last: Last = { at: now, by: who.uid, byName: who.name, ok, note: note || null };
     const routines = { ...(van.routines || {}), [routineId]: last };
     const todo = vanTodo(rules, vehicleId, { ...van, routines }, now);
-    const ref = org.collection('routineDone').doc();
     tx.set(ref, {
       routineId, key: r.key, name: r.name, vehicleId, vehicleName: van.name, plate: van.plate || '', stationId: van.stationId || null,
       by: who.uid, byName: who.name, driverId: van.assignedTo?.driverId || null, assignmentId: van.assignedTo?.assignmentId || null,
       ok, note: note || null, path, at: now, createdAt: now,
     });
     tx.update(vref, { [`routines.${routineId}`]: last, todo });
-    return { id: ref.id, todo, van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null } };
+    return { id: ref.id, todo, van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: false };
   });
   // A problem goes to the station's fleet managers (or the owners) at once.
   let notified = 0;
-  if (!ok) {
+  if (!ok && !out.again) {
     const bosses = await bossesOf(who.orgId, out.van.stationId, 'wash', who.uid);
     notified = await tell(bosses, (lang) => ({
       title: tr(lang, 'Problem: {check}, {van}', { check: routineName(lang, r), van: vanLabel(out.van) }),

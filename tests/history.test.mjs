@@ -213,6 +213,9 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   const w = (await getDoc(doc(S.d2.db, 'orgs', S.org, 'walkarounds', pick))).data();
   assert.deepEqual(w.handover, { kind: 'pickup', assignmentId: r.assignmentId });
   await fails(updateDoc(doc(S.d2.db, 'orgs', S.org, 'walkarounds', pick), { handover: null }), 'permission-denied');
+  // The phone lost the answer and sends it again (its outbox): answered as done, nothing recorded twice.
+  assert.deepEqual(await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: pick }), { assignmentId: r.assignmentId, unchanged: true });
+  assert.equal((await history(S.own, [where('driverId', '==', S.d2.uid), where('end', '==', null)])).length, 1);
   // The same photos can't be used twice; a driver with a van drops it off before taking another.
   await fails(S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: pick }), 'failed-precondition');
   await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
@@ -220,6 +223,9 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   const drop = await photos(S.d2, S.org, v2);
   await S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop });
   assert.equal((await vanDoc(S.d2, v2.id)).assignedTo, null);
+  assert.deepEqual(await S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop }), { ok: true, unchanged: true });
+  // Someone else's photos are never "already done" for you.
+  await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop }), 'failed-precondition');
   const [a] = await history(S.d2, [where('driverId', '==', S.d2.uid), orderBy('start', 'desc'), limit(1)]);
   assert.equal(a.startedBy, S.d2.uid);
   assert.equal(a.startWalkId, pick);
@@ -250,6 +256,7 @@ test('pick-up and drop-off with a video instead of photos; a manager adds a miss
   // Picked up with a video.
   const pv = await video(S.d1);
   const r = await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: pv });
+  assert.deepEqual(await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: pv }), { assignmentId: r.assignmentId, unchanged: true });
   const a = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
   assert.equal(a.startVideoId, pv);
   assert.equal(a.startWalkId, null);
@@ -265,6 +272,7 @@ test('pick-up and drop-off with a video instead of photos; a manager adds a miss
   await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, videoId: pv }), 'failed-precondition');
   const dv = await video(S.d1);
   await S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, videoId: dv });
+  assert.deepEqual(await S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, videoId: dv }), { ok: true, unchanged: true });
   const a2 = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
   assert.equal(a2.endVideoId, dv);
   assert.equal(a2.endReason, 'dropped off');
@@ -282,6 +290,7 @@ test('pick-up and drop-off with a video instead of photos; a manager adds a miss
   await fails(S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: await video(S.d1) }), 'permission-denied');
   const late = await video(S.mgr);
   await S.mgr.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: late });
+  assert.deepEqual(await S.mgr.call('addHandoverVideo', { orgId: S.org, assignmentId: ended.id, kind: 'dropoff', videoId: late }), { ok: true, unchanged: true });
   const lv = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', late))).data();
   assert.equal(lv.late, true);
   assert.equal(lv.assignmentId, ended.id);
@@ -313,7 +322,9 @@ test('walk-around videos: anyone who can scan the van films it, any time; nothin
   // Not at another station, not twice, not too short, not someone else's upload.
   await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(S.d1) }), 'permission-denied');
   await fails(S.mgr.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(S.mgr) }), 'permission-denied');
-  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: dv }), 'failed-precondition');
+  // Sent again (the phone lost the answer): done, one record. For another van it's refused.
+  assert.deepEqual(await S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: dv }), { ok: true, unchanged: true });
+  await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: S.vans.v2.id, videoId: dv }), 'failed-precondition');
   await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.d1, { seconds: 3 }) }), 'failed-precondition');
   await fails(S.d1.call('addVanVideo', { orgId: S.org, vehicleId: v1.id, videoId: await video(S.d2) }), 'failed-precondition');
   // A walk-around video isn't a drop-off: Erik still has the van.
@@ -416,6 +427,7 @@ test('a driver given a van gets a phone notification and adds the pick-up photos
   await fails(S.d1.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: await photos(S.d1, S.org, v2, { skipped: 1 }) }), 'failed-precondition');
   const pick = await photos(S.d1, S.org, v2);
   await S.d1.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: pick });
+  assert.deepEqual(await S.d1.call('addHandoverPhotos', { orgId: S.org, assignmentId: r.assignmentId, kind: 'pickup', walkId: pick }), { ok: true, unchanged: true });
   const w = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'walkarounds', pick))).data();
   assert.deepEqual(w.handover, { kind: 'pickup', assignmentId: r.assignmentId, late: false });
   // One pick-up proof per handover, and the handover record itself doesn't change.
@@ -426,6 +438,7 @@ test('a driver given a van gets a phone notification and adds the pick-up photos
   const r2 = await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v2.id, driverId: S.d1.uid });
   const pv = await video(S.d1);
   await S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: r2.assignmentId, kind: 'pickup', videoId: pv });
+  assert.deepEqual(await S.d1.call('addHandoverVideo', { orgId: S.org, assignmentId: r2.assignmentId, kind: 'pickup', videoId: pv }), { ok: true, unchanged: true });
   const vd = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'videos', pv))).data();
   assert.equal(vd.assignmentId, r2.assignmentId);
   assert.equal(vd.late, false);
@@ -733,8 +746,12 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
   const opened = () => got.map((g) => JSON.parse(fnRequire('http_ece').decrypt(g.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString()));
   try {
     // 1. The right card: dashboard, card, receipt, done. The manager hears about it with the details.
-    const st = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: await shot(S.d1) });
+    const dashShot = await shot(S.d1);
+    const st = await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: dashShot });
     assert.equal(st.needsCard, true);
+    // Sent again with the same photo (the phone lost the answer): the same one, not a second.
+    assert.equal((await S.d1.call('purchase', { orgId: S.org, action: 'start', kind: 'fuel', vehicleId: v2.id, path: dashShot })).id, st.id);
+    assert.equal((await buy(S.d1, st.id)).status, 'open');
     const dr = await S.d1.call('purchase', { orgId: S.org, action: 'dash', id: st.id });
     assert.equal(dr.values.odometerKm, 48213);
     // Not on another station's van, not someone else's photo, and parts only for owners and managers.
@@ -746,13 +763,16 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     const card = await shot(S.d1);
     const c1 = await S.d1.call('purchase', { orgId: S.org, action: 'card', id: st.id, path: card });
     assert.equal(c1.result, 'match');
+    assert.equal((await S.d1.call('purchase', { orgId: S.org, action: 'card', id: st.id, path: card })).result, 'match');
     // The card photo isn't kept, only its last 4 digits.
     await fails(getBytes(ref(S.own.st, card)));
     assert.equal((await buy(S.d1, st.id)).card.read.last4, '4471');
     // Someone else can't carry on with it.
     await fails(S.mgr.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: await shot(S.mgr) }), 'permission-denied');
-    const rc = await S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: await shot(S.d1) });
+    const receipt = await shot(S.d1);
+    const rc = await S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: receipt });
     assert.equal(rc.litres, 45.2);
+    assert.equal((await S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: st.id, path: receipt })).litres, 45.2);
     assert.equal(rc.receipt.total, 79.1);
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'finish', id: st.id, values: { odometerKm: 60300, fuelPct: 25, total: 79.1 } }), 'invalid-argument');
     const f1 = await S.d1.call('purchase', { orgId: S.org, action: 'finish', id: st.id, values: { odometerKm: 60300, fuelPct: 25, litres: 45.2, total: 79.1 } });
@@ -909,8 +929,11 @@ test('checks for drivers: set by the manager, done by the driver who has the van
   assert.deepEqual(van.todo.map((x) => x.id).sort(), [oil, cargo].sort());
   // Someone at another station can't do it; the driver does it.
   await fails(S.d3.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true }), 'permission-denied');
-  const d1 = await S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true });
+  const d1 = await S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true, id: 'oilDoneByDana1' });
   assert.deepEqual(d1.todo.map((x) => x.id), [cargo]);
+  // Sent again (the phone lost the answer): one record. Someone else can't use that name.
+  assert.equal((await S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true, id: 'oilDoneByDana1' })).id, 'oilDoneByDana1');
+  await fails(S.mgr.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: oil, ok: true, id: 'oilDoneByDana1' }), 'invalid-argument');
   // The cargo area needs a photo; a problem needs a note.
   await fails(S.d1.call('routineDone', { orgId: S.org, vehicleId: v2.id, routineId: cargo, ok: true }), 'invalid-argument');
   const path = `orgs/${S.org}/routines/${S.d1.uid}/${Date.now()}.jpg`;

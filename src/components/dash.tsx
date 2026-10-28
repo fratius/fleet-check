@@ -8,6 +8,7 @@ import { Button, Chip, F, Field, MARKER, Row, T, fmtWhen, useColors } from '@/co
 import { fmtDay } from '@/lib/fleet';
 import { flash } from '@/lib/flash';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, type DashRead } from '@/lib/store';
@@ -103,6 +104,8 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const [step, setStep] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
+  // The photo taken, and where it went: if reading it fails, it's sent again without taking it again.
+  const [shot, setShot] = useState<{ uri: string; w: number; h: number; path?: string } | null>(null);
   const [read, setRead] = useState<DashRead | null>(null);
   const [form, setForm] = useState({ odo: '', fuel: '', battery: '', range: '' });
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -111,17 +114,24 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const [jump, setJump] = useState<string | null>(null);
   const [fromReceipts, setFromReceipts] = useState(0);
   const ev = v.fuel === 'electric';
-  const shoot = async () => {
+  const shoot = async (same?: boolean) => {
     setErr(null); setJump(null);
     try {
-      const p = await takePhoto();
+      const p = same && shot ? shot : await takePhoto();
       if (!p) return;
+      if (!same) setShot({ uri: p.uri, w: p.w, h: p.h });
       setPhoto(p.uri);
       setStep(t('Uploading the photo…'));
-      const small = await prepare(p.uri, p.w, p.h, 2000, 0.85);
-      const path = await upload(small.uri, `orgs/${s.org!.id}/dash/${s.user!.uid}/${newId()}.jpg`);
+      let path = same && shot?.path;
+      if (!path) {
+        // Without a connection it waits and uploads by itself (lib/images.ts).
+        const small = await prepare(p.uri, p.w, p.h, 2000, 0.85);
+        path = await upload(small.uri, `orgs/${s.org!.id}/dash/${s.user!.uid}/${newId()}.jpg`);
+        setShot({ uri: p.uri, w: p.w, h: p.h, path });
+      }
       setStep(t('Reading the dashboard…'));
-      const r = await ai.readDashboard({ orgId: s.org!.id, vehicleId: v.id, path });
+      const at = path;
+      const r = await retrying(() => ai.readDashboard({ orgId: s.org!.id, vehicleId: v.id, path: at }));
       setRead(r);
       setForm({ odo: show(r.values.odometerKm), fuel: show(r.values.fuelPct), battery: show(r.values.batteryPct), range: show(r.values.rangeKm) });
       setWarnings(r.values.warnings);
@@ -164,7 +174,12 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   if (!read) {
     return (
       <View style={{ gap: 6 }}>
-        <Button v="primary" wide title={step || t('Take the photo')} loading={!!step} disabled={!!step} onPress={shoot} />
+        {err && shot && !step ? (
+          <>
+            <Button v="primary" wide title={t('Try again with this photo')} onPress={() => shoot(true)} />
+            <Button small v="link" title={t('Take a new photo')} onPress={() => shoot()} />
+          </>
+        ) : <Button v="primary" wide title={step || t('Take the photo')} loading={!!step} disabled={!!step} onPress={() => shoot()} />}
         <T v="small" color="#000">{ev ? t('Ignition on, the whole display in the picture: odometer, battery and any warning lights. No flash.')
           : t('Ignition on, the whole display in the picture: odometer, fuel gauge and any warning lights. No flash.')}</T>
         {err ? <T v="small" color={c.alert}>{err}</T> : null}

@@ -5,6 +5,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { F, MARKER, useColors } from '@/components/ui';
 import { t } from '@/lib/i18n';
+import { UploadsStrip } from '@/components/uploads';
 import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
 import { missingHandovers, needsPickup } from '@/lib/videos';
@@ -52,7 +53,7 @@ export default function TabsLayout() {
   const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
   return (
     // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
-    <Tabs tabBar={(props) => <><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
+    <Tabs tabBar={(props) => <><UploadsStrip /><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,

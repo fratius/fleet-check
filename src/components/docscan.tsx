@@ -12,6 +12,7 @@ import {
 import { flash } from '@/lib/flash';
 import { today } from '@/lib/fleet';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type DocRead } from '@/lib/store';
 import type { Member, Vehicle } from '@/lib/types';
@@ -116,7 +117,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
         return upload(small.uri, `orgs/${s.org!.id}/docs/${s.user!.uid}/${id}-${i + 1}.jpg`);
       }));
       setStep(t('Reading the document…'));
-      const r = await ai.readDocument({ orgId: s.org!.id, target, id: target === 'van' ? v!.id : m!.uid, paths });
+      const r = await retrying(() => ai.readDocument({ orgId: s.org!.id, target, id: target === 'van' ? v!.id : m!.uid, paths }));
       // Each detail in its section, ticked when it's new or different from what's there now.
       const out: Row[] = [];
       for (const sec of sections) {

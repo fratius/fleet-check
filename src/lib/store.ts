@@ -169,7 +169,8 @@ export type CardAnswer =
 
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
 export class AiError extends Error {
-  constructor(public code: string, message: string) { super(message); }
+  /** 'offline': the request didn't get through (no connection); 'flaky': the server was slow or busy. See lib/net.ts. */
+  constructor(public code: string, message: string, public net: 'offline' | 'flaky' | null = null) { super(message); }
 }
 function call<I, O>(name: string, timeout = 180000) {
   return async (input: I): Promise<O> => {
@@ -184,7 +185,9 @@ function call<I, O>(name: string, timeout = 180000) {
       // The server sends its message's template and values, so it shows in the person's language.
       const d = err.details;
       const msg = d && typeof d.t === 'string' ? t(d.t, (d.v && typeof d.v === 'object' ? d.v : {}) as Record<string, string | number>) : aiMessage(code, err.message);
-      throw new AiError(code, msg);
+      // The SDK says "internal" with HTTP status 0 when the request never got an answer (no connection).
+      const net = code === 'internal' && /\[0\]\s*$/.test(err.message || '') ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
+      throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
     }
   };
 }
@@ -255,5 +258,5 @@ export const ai = {
     remove: call<{ orgId: string; action: 'delete'; id: string }, { ok: boolean }>('routine', 60000),
   },
   /** A check done by the driver who has the van (or the station's fleet manager): fine, or a problem with a note. */
-  routineDone: call<{ orgId: string; vehicleId: string; routineId: string; ok: boolean; note?: string; path?: string | null }, { id: string; todo: RoutineTodo[]; notified: number }>('routineDone', 60000),
+  routineDone: call<{ orgId: string; vehicleId: string; routineId: string; ok: boolean; note?: string; path?: string | null; id?: string }, { id: string; todo: RoutineTodo[]; notified: number }>('routineDone', 60000),
 };

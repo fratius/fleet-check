@@ -8,6 +8,7 @@ import { Button, Card, Chip, Field, Notice, Photo, Pill, Row, Screen, Segmented,
 import { CLASSES, CLS, attrPills, defaultAttrs, makeSpec, type VehicleAttrs } from '@/lib/frames';
 import { t } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { TIERS, TIER_NAME, type IdentifyResult } from '@/lib/types';
@@ -73,7 +74,7 @@ export default function AddVehicle() {
       }));
       const uploadMs = Date.now() - t0;
       setBusy(t('Identifying'));
-      const r = await ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId });
+      const r = await retrying(() => ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId }));
       setRes({ ...r, uploadMs, totalMs: Date.now() - t0 });
       setPicking(false);
       if (r.scan.predicted && CLS[r.scan.predicted]) {

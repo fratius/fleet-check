@@ -11,6 +11,7 @@ import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, Zoo
 import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { day, keptUntil } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
@@ -128,7 +129,7 @@ function CheckView({ id }: { id: string }) {
         try {
           const uris = (L[j] || []).filter(Boolean) as string[];
           const paths = await Promise.all(uris.map((u, m) => upload(u, `orgs/${s.store!.orgId}/checks/${k.id}/spot${j + 1}_${m + 1}_${newId()}.jpg`)));
-          await ai.checkSpot({ orgId: s.store!.orgId, checkId: k.id, spot: j, closeups: paths, tier: s.tier });
+          await retrying(() => ai.checkSpot({ orgId: s.store!.orgId, checkId: k.id, spot: j, closeups: paths, tier: s.tier }));
         } catch (e) { failed++; setErr(e instanceof AiError ? e.message : t('Some close-ups couldn\'t be checked. Try again.')); }
         setRun((r) => (r ? { ...r, done: r.done + 1 } : r));
       }

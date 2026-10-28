@@ -6,6 +6,7 @@ import { takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
 import { Button, Card, Chip, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { N_, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -101,7 +102,9 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
         const small = await prepare(photo.uri, photo.w, photo.h, 1600, 0.8);
         path = await upload(small.uri, `orgs/${s.org!.id}/routines/${s.user!.uid}/${newId()}.jpg`);
       }
-      await ai.routineDone({ orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path });
+      // Named here, so sending it again without a connection never records it twice.
+      const id = newId();
+      await retrying(() => ai.routineDone({ orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path, id }));
     } catch (e) {
       setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.'));
       setBusy(null);

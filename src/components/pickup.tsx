@@ -4,6 +4,7 @@ import { Platform, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Button, Card, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { HandoverWaiting, useHandoverWaiting } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover } from '@/components/video';
 import { buildFrames, makeSpec } from '@/lib/frames';
 import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
@@ -27,6 +28,8 @@ export function usePickupRequest(v: Vehicle | null | undefined): Assignment | nu
  */
 export function PickupRequest({ v, a, compact }: { v: Vehicle; a: Assignment; compact?: boolean }) {
   const frames = buildFrames(makeSpec(v.cls, v)).length;
+  // Taken already and on their way from this phone (lib/outbox.ts).
+  const sending = useHandoverWaiting(v.id, 'pickup', a.id);
   return (
     <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
       {compact ? <T v="medium" color="#000">{t('{name} gave you a van', { name: a.startedByName })}</T> : null}
@@ -35,9 +38,13 @@ export function PickupRequest({ v, a, compact }: { v: Vehicle; a: Assignment; co
         {t('{name} gave it to you {when} ({time} ago). Before you drive, film it or take its photos, so damage that was already there isn\'t put on you. Your fleet manager sees if they\'re missing.',
           { name: a.startedByName, when: fmtWhen(a.start), time: dur(Date.now() - a.start) })}
       </T>
-      <VideoHandover v={v} kind="pickup" assignmentId={a.id} title={t('Record the pick-up video')} primary wide />
-      <Button wide title={t('Take the {n} pick-up photos', { n: frames })} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup', assignment: a.id } })} />
-      <T v="small" color="#000">{t(VIDEO_HOW)}</T>
+      {sending ? <HandoverWaiting vehicleId={v.id} what="pickup" assignmentId={a.id} /> : (
+        <>
+          <VideoHandover v={v} kind="pickup" assignmentId={a.id} title={t('Record the pick-up video')} primary wide />
+          <Button wide title={t('Take the {n} pick-up photos', { n: frames })} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup', assignment: a.id } })} />
+          <T v="small" color="#000">{t(VIDEO_HOW)}</T>
+        </>
+      )}
       {compact ? <Button small v="link" title={t('Open {name}', { name: v.name })} onPress={() => router.push(`/vehicle/${v.id}`)} /> : null}
     </View>
   );

@@ -75,6 +75,7 @@ e4bfd1a2	{n} spot, {images} images || {n} spots, {images} images
 6e72351c	{n} thing due || {n} things due	[person/[uid].tsx]
 38be6e91	{n} to check || {n} to check	[components/buy.tsx]
 a8f99025	{n} unclear || {n} unclear	[log.tsx]
+188d6dc3	{n} upload stopped. Tap to see why. || {n} uploads stopped. Tap to see why.
 3c32e1d0	{n} van || {n} vans	[index.tsx, people.tsx, components/routines.tsx]
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
@@ -350,7 +351,7 @@ ee732d19	Checked by {name}: {note}
 c65e5123	checked with close-ups	[log.tsx]
 ce3c5359	Checking the card…	[buy/[id].tsx]
 3e5748ab	Checking the close-ups, spot {i} of {n}
-abb464b5	Checking the video…	[components/video.tsx]
+abb464b5	Checking the video…	[components/uploads.tsx]
 226deaae	Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.
 2752e2cc	Checks drivers haven't done yet (red after 3 hours), and problems they found in the last 7 days.
 54659b58	Checks drivers sent. Oldest first.
@@ -420,7 +421,6 @@ f04ae2f9	Couldn't open the camera.
 e17b636b	Couldn't open the photos.
 510ecc64	Couldn't reach the AI service. Check the connection and try again.
 47e051c2	Couldn't reach the AI service. Try again.
-c0f4ab99	Couldn't reach the server.
 9affa153	Couldn't reach the server. Check the connection and try again.
 264356e4	Couldn't read the receipt. Check the connection and try again.
 d326553e	Couldn't remove the station.
@@ -431,8 +431,11 @@ d9b971d1	Couldn't save that. Check the connection.
 ad01de6f	Couldn't save the changes.
 6618ce72	Couldn't save the check. Check the connection.
 df50093b	Couldn't save the comment. Check the connection.
+4a6273cd	Couldn't save the photos on this phone. Try again.
+5df8d986	Couldn't save the photos.
 692bfbde	Couldn't save the review. Check the connection and try again.
 21f890bd	Couldn't save the vehicle. Try again.
+29272847	Couldn't save the video on this phone. Record it again.
 12690f8e	Couldn't save your answer.
 2873d0fd	Couldn't save.	[people.tsx]
 4a2456e2	Couldn't save. Check the connection and try again.
@@ -440,7 +443,6 @@ f7495464	Couldn't save. Check the connection.
 08ee6b58	Couldn't send it. Check the connection and try again.
 2df44d47	Couldn't take the photo. Try again.
 832bda04	Couldn't turn notifications on.
-a16d48c0	Couldn't upload the photos. Check the connection and tap Save again.
 d219bbf3	Couldn't upload the photos. Check the connection and try again.
 8b656a5d	Cover	[components/vanfacts.tsx]
 35e3dee8	Cover and renewal date.
@@ -531,10 +533,12 @@ def13277	Drop off {van}	[app/scan/[id].tsx]
 c41e6aa3	Drop off with {n} photo || Drop off with {n} photos
 0cc81797	Drop off with a video
 887ec954	Drop-off photos	[walk/[id].tsx, app/scan/[id].tsx, components/history.tsx]
+e8697b31	Drop-off photos of {van}
 443c2a54	Drop-off video	[components/history.tsx, lib/types.ts]
 476ff3f2	Drop-off video (added later)
+491a81f2	Drop-off video of {van}
 785b10de	dropped off	[lib/types.ts]
-982de4fe	Dropping off {van}	[app/scan/[id].tsx]
+982de4fe	Dropping off {van}	[components/uploads.tsx]
 145caf29	Due	[components/routines.tsx]
 006c1a05	Due dates show on the van, in the fleet list and in Review.
 a2ec364a	due since {when}	[review.tsx]
@@ -953,7 +957,12 @@ a68a5573	no card, refused	[data.tsx]
 e99a3c58	No checks for this van yet.
 f3d9e0dc	No checks yet. Add one: the suggestions make it a few taps.
 3e8a6d08	No comments yet. For example: what the driver said, the repair or the insurance claim.
+0db79dd9	No connection. {n} upload waits on this phone and goes up by itself. || No connection. {n} uploads wait on this phone and go up by themselves.
 2818b621	No connection. Check your internet and try again.
+d0b235ac	No connection. The photos are saved on this phone and upload by themselves when there's a connection.
+58d2a7b7	No connection. The video is saved on this phone and uploads by itself when there's a connection.
+9637416a	No connection. Try again when you have a signal.
+d9fa47f6	No connection. Trying again by itself…
 e6fdff10	no damage	[check/[id].tsx]
 3ae10f71	No damage	[check/[id].tsx, vehicle/[id].tsx, review.tsx]
 0227c4c3	No damage approved	[check/[id].tsx]
@@ -1051,6 +1060,7 @@ a270067a	Nothing recorded.	[components/driverrec.tsx]
 f23f9445	Nothing reviewed yet.	[review.tsx]
 cdfc7725	Nothing to decide right now. Checks appear here when a driver sends one.
 a5dbc60d	Nothing to save	[components/docscan.tsx]
+0a32fe52	Nothing waiting. Everything is uploaded.
 753a22b2	Notifications	[components/pickup.tsx]
 f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.
 b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.
@@ -1177,6 +1187,7 @@ c9bb5c97	Photo of the dashboard
 c8b2e864	Photos	[buy/[id].tsx, log.tsx, components/scanchoice.tsx]
 c9027a2b	Photos and videos are deleted after {n} days. These are gone already.
 ecdeee38	Photos and videos are kept 30 days: these until {date}.
+a303eb54	Photos and videos are saved on this phone first, then uploaded. Without a connection they wait here and go up by themselves, so you never take them again. Keep the app open, or open it again later.
 2d8fc3c9	Photos are stored with the scan in your company's storage.
 c7e2cd6c	Photos at takeover	[components/history.tsx]
 7eb70e28	Photos from the library
@@ -1194,11 +1205,13 @@ d70bf040	Pick up with {n} photo || Pick up with {n} photos
 b4c1f825	Pick up with a video
 f61ea9e0	Pick-up photos	[walk/[id].tsx, app/scan/[id].tsx, components/history.tsx]
 4a0e7746	Pick-up photos (added later)
+e9490191	Pick-up photos of {van}
 9b9d6fcd	Pick-up video	[components/history.tsx, lib/types.ts]
 74b601b1	Pick-up video (added later)
+5b832aad	Pick-up video of {van}
 4f0f0cd8	Picked it up themselves.
 413a8957	Picked up by the driver
-0ae3588d	Picking up {van}	[app/scan/[id].tsx]
+0ae3588d	Picking up {van}	[components/uploads.tsx]
 4fe6a7df	pickup	[lib/frames.ts]
 a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
@@ -1235,7 +1248,6 @@ f6ce3b6f	Receipt	[buy/[id].tsx]
 f9ca6462	Receipt, {when}	[buy/[id].tsx]
 1c54132b	Record	[person/[uid].tsx]
 6b52c06e	Record a licence check
-292dbbc7	Record a new video instead
 ba5a2ada	Record the pick-up video
 b655dd29	Record the video of the van first.
 de6ec759	Recorded by {name}, {when}.
@@ -1336,10 +1348,15 @@ ffe4bca0	Save the reading	[components/dash.tsx]
 061f6767	Saved {n} detail from {what}, and the licence check. The photo wasn't kept. || Saved {n} details from {what}, and the licence check. The photo wasn't kept.
 9871cd39	Saved {n} detail from {what}. The photo wasn't kept. || Saved {n} details from {what}. The photo wasn't kept.
 6f57c463	Saved on this phone only until Firebase is connected.
+13ebc378	Saved on this phone. It uploads after the one before it.
 7bd6e99d	Saved; typed in by hand: {fields}.
 9d4af690	Saved.	[buy/[id].tsx]
 369c534d	Saving	[app/scan/[id].tsx]
+e16cdd31	Saving {done} of {total} on this phone
+5da14777	Saving the photos on this phone…
 c493a9ee	Saving the pick-up photos
+89c6f332	Saving the video…	[components/video.tsx]
+d1944261	Saving the walk-around…	[components/uploads.tsx]
 56a2285c	Saving…	[buy/[id].tsx, components/dash.tsx, components/docscan.tsx]
 f818ed23	Say what the problem is.
 8ba65f51	Say what the problem with the licence is.
@@ -1470,6 +1487,7 @@ f88d800e	Tailgate and rear bumper
 280edab5	Tailgate, rear window, bumper and lights in frame, up to the roof edge.
 fb909170	Tailgate, rear window, bumper and lights in frame.
 9cabe520	Take 1 to 6 photos of the parts.
+b02298a2	Take a new photo
 2298471c	Take a photo	[components/docscan.tsx]
 fabc4745	Take a photo of the parts first.
 e4e076db	Take close-ups of {n} spot || Take close-ups of {n} spots
@@ -1489,6 +1507,7 @@ f801a56f	Take the photo of the receipt first.
 f5176fe0	Take the photo of the receipt when you're done.
 1e709bc4	Take the photos of the van first.
 ff79b413	Take the pick-up video or photos
+8a4a8595	Taken {when}	[components/uploads.tsx]
 a1668ef3	Taken out of the fleet {when} by {name}. Its walk-arounds, damage checks and driver history stay.
 6860c389	Taken out of the fleet {when}. Its walk-arounds, damage checks and driver history stay.
 41687fe1	taken over	[lib/types.ts]
@@ -1498,11 +1517,13 @@ c0c62214	Tap a photo to see it whole.
 6bcd9f5b	Tap again	[people.tsx]
 308ea189	Tap again to delete your account for good
 7185b77f	Tap again to remove
+336f2fcd	Tap again to remove it
 3afaa47c	Tap again to remove the demo company
 ea6b21e0	Tap again to retire
 2a31ad29	Tap again to sign out
 80da9307	Tap again to stop
 256d0bed	Tap again: everything in the demo is made new
+a34401de	Tap again: it won't be sent
 5ad6a32b	Tap again: the van becomes free
 513da8cf	Tap one that isn't lit to remove it. Your fleet manager sees the rest.
 5fdeeb4e	Tap the type it really is
@@ -1545,6 +1566,7 @@ d2bba804	The card photo isn't kept, only its last 4 digits.
 510cef1d	The card was already checked.
 10a22691	The check didn't finish
 2f443341	The check didn't finish. Try again.
+19b8ebc5	The company's storage is full. Tell your fleet manager.
 1d7e4397	The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.
 d58de059	The dashboard photo is missing. Take it again.
 2458d642	The date on the card, or the class that runs out first
@@ -1557,6 +1579,7 @@ c85fa974	the document	[components/docscan.tsx]
 b65a1bf8	The driver takes one as proof, for example of the cargo area.
 561d103c	The driver who has this van does its checks (or the station's fleet manager).
 53dcacda	The drivers of each van need the Firebase backend.
+5cbc0bc7	The drop-off photos of {van} are saved with its history.
 4dee9456	the fleet manager	[check/[id].tsx, components/damage.tsx]
 caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.
@@ -1581,8 +1604,10 @@ c3acf501	The photo didn't upload. Check the connection and try again.
 4615b331	The photo was read and deleted; it isn't kept with the record.
 43aecc03	The photo was read and deleted; it isn't kept with the van.
 0e91970e	The photos are saved as a walk-around.
+080d6247	The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.
 a73ac728	The photos didn't upload. Check the connection and try again.
 3866abda	The photos of this check were deleted on {date}. The decisions and the van's damage record stay.
+85b63340	The photos or the video aren't on this phone any more.
 f19fa04d	The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.
 077e462b	The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.
 63859889	The pick-up photos of {van} are saved with its history.
@@ -1591,7 +1616,7 @@ f19fa04d	The photos show the van's state when you brought it back, so damage tha
 f4ab4f15	The receipt couldn't be read: {issue}. Type the numbers from it.
 aebdea71	The receipt couldn't be read. Type the numbers from it.
 a511a830	The times you had this van.
-d0e8ba44	The upload didn't finish. Check the connection and try again.
+7d77c988	The upload was refused. Check that you still belong to this company, then try again.
 94a4b241	The van hasn't been dropped off yet. Drop it off with the photos instead.
 eb9c4666	The van hasn't been dropped off yet. Drop it off with the video instead.
 d94be526	The van is	[components/vanfacts.tsx]
@@ -1604,9 +1629,11 @@ c4587965	The vans of one station. Walk-arounds with photos or a video, the AI da
 1ed582a2	The video is {s} seconds long. Walk all the way around the van: at least {min} seconds.
 7c2acbc6	The video is kept with the van.
 41f93fb4	The video is longer than 5 minutes. One walk around the van is enough.
+9e127f71	The video is uploaded but wasn't used.
 22522fdc	The video of {van} is saved with the van.
 2ebd10a0	The video was added.
 7837d4d1	The VIN has 17 characters.
+b2b3ab5c	The walk-around of {van} is uploaded.
 53bc068c	The walk-around uses the camera with an outline to fit the vehicle into.
 8497ac85	The yearly safety briefing shows as a deadline.
 8e885097	Their history, walk-arounds and checks stay.
@@ -1693,8 +1720,8 @@ eaa564e7	Tours come from dashboard photos at the start and end of each tour. The
 665befe7	Tours without end photo
 7652230e	Traffic fine	[components/driverrec.tsx]
 24b3207a	Transporter ID {id}	[person/[uid].tsx]
-042c862e	Try again	[check/[id].tsx, app/scan/[id].tsx]
-37a672f6	Try again with this video
+042c862e	Try again	[check/[id].tsx, app/scan/[id].tsx, components/uploads.tsx]
+e7e2ff34	Try again with this photo
 63b84bd9	Try it as someone else
 dd0c3cd3	Turn off on this phone
 5ab087ec	Turn on notifications	[components/pickup.tsx]
@@ -1735,14 +1762,14 @@ b0a93e80	Unknown van or station.
 53e27029	Unknown walk-around.	[index.ts]
 38e41287	Until {when}	[people.tsx]
 17d2b73d	Uploaded {when}	[video/[id].tsx]
-f5ca138f	Uploaded.	[app/scan/[id].tsx]
 2ffa5c81	Uploading {done} of {total}
+9fa8f32e	Uploading {n} item… || Uploading {n} items…	[components/uploads.tsx]
 7d00b873	Uploading {pct}% of {size}
-f4a8b084	Uploading {size}…	[components/video.tsx]
 756570c4	Uploading photos	[add.tsx]
 e5409578	Uploading the photo…	[buy/[id].tsx, components/dash.tsx]
 2c185f91	Uploading the receipt…	[buy/[id].tsx]
-d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx, components/video.tsx]
+d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx]
+227cc640	Uploads	[_layout.tsx]
 70ac1886	Usable capacity, for the energy used on each tour
 48a644ab	Use another account	[app/join/[token].tsx]
 c6188994	Use at least 6 characters for the password.
@@ -1767,6 +1794,7 @@ d8ce9a24	Vehicle tax	[components/vanfacts.tsx, lib/fleet.ts]
 f47beb68	version {sha} of {when}
 bc17c1f0	Video	[_layout.tsx, video/[id].tsx, components/scanchoice.tsx]
 442e0f1d	Video at takeover	[components/history.tsx]
+072419e6	Video of {van}	[lib/outbox.ts]
 56b71e89	Videos	[vehicle/[id].tsx]
 60f2062f	View the app as
 b80de47b	Viewing as {who}	[components/viewas.tsx]
@@ -1779,8 +1807,10 @@ dee9587c	Waiting {time}	[review.tsx]
 5e2e6972	Waiting for an answer, {time}.
 ab1ff8cb	Waiting for review	[index.tsx, check/[id].tsx, person/[uid].tsx]
 71c0a1b3	Waiting for your fleet manager to allow or refuse it. Don't start yet.
+87c908bf	Waiting to upload.	[components/uploads.tsx]
 af3bb479	Walk-around	[_layout.tsx, walk/[id].tsx]
 3871fb25	Walk-around done	[app/scan/[id].tsx]
+ecfe6288	Walk-around of {van}	[lib/outbox.ts]
 71cd2007	Walk-around photos, van history and damage checks for your fleet.
 63f51634	Walk-around video	[lib/types.ts]
 d2c2811e	Walk-around, {van}	[person/[uid].tsx]

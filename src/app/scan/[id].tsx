@@ -10,7 +10,8 @@ import { F, MARKER, Svg, mmss } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
-import { AiError, ai } from '@/lib/store';
+import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
+import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 import { loc, t, tp } from '@/lib/i18n';
 
@@ -71,7 +72,12 @@ export default function ScanScreen() {
   const [busyShot, setBusyShot] = useState(false);
   const [progress, setProgress] = useState('');
   const [saveErr, setSaveErr] = useState<string | null>(null);
+  // The walk-around in the outbox (lib/outbox.ts): kept on the phone, uploading, then the pick-up or drop-off.
   const [walkId, setWalkId] = useState<string | null>(null);
+  const ob = useOutbox();
+  const job = walkId ? ob.jobs.find((j) => j.id === walkId) || null : null;
+  const live = walkId ? ob.live.get(walkId) : undefined;
+  const sent = !!walkId && ob.done.has(walkId);
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
@@ -79,6 +85,13 @@ export default function ScanScreen() {
   // The space between the header and the controls, measured, so the camera box never covers either.
   const [area, setArea] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
+  // Through: a walk-around opens (in the tab you came from); a pick-up or drop-off goes back to the van.
+  useEffect(() => {
+    if (!sent || !walkId) return;
+    router.back();
+    if (!ho) setTimeout(() => router.push(`/walk/${walkId}`), 0);
+  }, [sent, walkId, ho]);
+
 
   if (!v || !sp) {
     return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={() => router.back()} /></Shell>;
@@ -96,7 +109,7 @@ export default function ScanScreen() {
     router.back();
   };
   const goTo = (k: number, summary?: boolean) => {
-    if (walkId) return; // already uploaded for the pick-up or drop-off
+    if (walkId) return; // saved and on its way
     setPending(null); setI(k); setPhase('aim'); ft0.current = Date.now();
     if (summary !== undefined) setFromSummary(summary);
   };
@@ -133,37 +146,28 @@ export default function ScanScreen() {
     const shots = slots.filter((x): x is LocalShot => !!x && x !== 'skip');
     if (!shots.length) { router.back(); return; }
     if (ho && shots.length < frames.length) return;
-    setPhase('saving'); setSaveErr(null); setProgress(s.mode === 'firebase' ? t('Uploading {done} of {total}', { done: 0, total: shots.length }) : t('Saving'));
-    let wid = walkId;
-    try {
-      if (!wid) {
-        wid = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, {
-          source: 'camera', frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
-        }, (d, n) => setProgress(t('Uploading {done} of {total}', { done: d, total: n })));
-        setWalkId(wid);
-      }
-    } catch {
-      setPhase('summary'); setSaveErr(t('Couldn\'t upload the photos. Check the connection and tap Save again.'));
+    if (job) { outbox.retry(job.id); return; }
+    setPhase('saving'); setSaveErr(null);
+    const meta = { source: 'camera' as const, frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current };
+    if (s.mode !== 'firebase') {
+      // Test mode: the photos stay on this phone as they are.
+      setProgress(t('Saving'));
+      try {
+        const wid = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, meta);
+        router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0);
+      } catch { setPhase('summary'); setSaveErr(t('Couldn\'t save the photos.')); }
       return;
     }
-    // The camera opens over the tabs: close it, then open the walk-around in the tab you came from.
-    if (!ho) { router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0); return; }
-    setProgress(assignment ? t('Saving the pick-up photos') : ho === 'pickup' ? t('Picking up {van}', { van: v.name }) : t('Dropping off {van}', { van: v.name }));
+    // Kept on the phone first (made smaller), then they upload by themselves, with or without a connection.
+    setProgress(t('Saving the photos on this phone…'));
     try {
-      if (assignment) {
-        await ai.addHandoverPhotos({ orgId: s.org!.id, assignmentId: assignment, kind: ho, walkId: wid });
-        flash(`van:${v.id}`, t('The pick-up photos of {van} are saved with its history.', { van: v.name }));
-      } else {
-        await (ho === 'pickup' ? ai.pickUpVan : ai.dropOffVan)({ orgId: s.org!.id, vehicleId: v.id, walkId: wid });
-        flash(`van:${v.id}`, ho === 'pickup' ? t('You picked up {van}. The photos are kept with its history.', { van: v.name }) : t('You dropped off {van}. The photos are kept with its history.', { van: v.name }));
-      }
-      router.back();
-    } catch (e) {
+      setWalkId(await queueWalk({ orgId: s.org!.id, uid: s.user!.uid, v, shots, what: ho || 'walkaround', assignmentId: assignment || null, meta },
+        (d, n) => setProgress(t('Saving {done} of {total} on this phone', { done: d, total: n }))));
       setPhase('summary');
-      setSaveErr(`${e instanceof AiError ? e.message : t('Couldn\'t reach the server.')} ${t('The photos are saved as a walk-around.')}`);
+    } catch {
+      setPhase('summary'); setSaveErr(t('Couldn\'t save the photos on this phone. Try again.'));
     }
   };
-
   const header = (
     <View style={{ paddingHorizontal: 12, paddingTop: 6, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -208,7 +212,7 @@ export default function ScanScreen() {
             <View style={st.stat}><Text style={st.statV}>{taken}/{frames.length}</Text><Text style={st.statL}>{skipped ? tp(skipped, 'photos, {n} skipped', 'photos, {n} skipped') : t('photos')}</Text></View>
             <View style={st.stat}><Text style={st.statV}>{retakes}</Text><Text style={st.statL}>{t('retakes')}</Text></View>
           </View>
-          <Text style={st.note}>{walkId ? t('Uploaded.') : ho && taken < frames.length
+          <Text style={st.note}>{job ? t('The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.') : ho && taken < frames.length
             ? (ho === 'pickup' ? tp(frames.length, 'All {n} photos are needed to pick up the van. Tap a missing one to take it.', 'All {n} photos are needed to pick up the van. Tap a missing one to take it.')
               : tp(frames.length, 'All {n} photos are needed to drop off the van. Tap a missing one to take it.', 'All {n} photos are needed to drop off the van. Tap a missing one to take it.'))
             : t('Tap a photo to retake it.')}</Text>
@@ -227,14 +231,26 @@ export default function ScanScreen() {
             })}
           </View>
           {saveErr ? <Text style={[st.note, { color: '#FF8A80' }]}>{saveErr}</Text> : null}
-          {phase === 'saving' ? (
+          {job ? (
+            <>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                {job.status === 'failed' ? null : <ActivityIndicator color={MARKER} />}
+                <Text style={[st.msg, { flex: 1 }, job.status === 'failed' ? { color: '#FF8A80' } : live?.waiting ? { color: MARKER } : null]}>{stateText(job, live, isBehind(ob.jobs, job))}</Text>
+              </View>
+              {job.status === 'failed' && job.walkSaved && job.then ? <Text style={st.note}>{t('The photos are saved as a walk-around.')}</Text> : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
+                <Btn title={t('Close')} kind={job.status === 'failed' ? 'ghost' : 'outline'} onPress={() => router.back()} />
+              </View>
+            </>
+          ) : phase === 'saving' ? (
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}><ActivityIndicator color={MARKER} /><Text style={st.msg}>{progress}</Text></View>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {ho ? (
-                <Btn title={walkId ? t('Try again') : assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: v.name }) : t('Drop off {van}', { van: v.name })} kind="marker" disabled={taken < frames.length} onPress={save} />
+                <Btn title={assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: v.name }) : t('Drop off {van}', { van: v.name })} kind="marker" disabled={taken < frames.length} onPress={save} />
               ) : taken ? <Btn title={tp(taken, 'Save {n} photo', 'Save {n} photos')} kind="marker" onPress={save} /> : null}
-              <Btn title={walkId ? t('Close') : t('Discard')} kind="ghost" onPress={() => router.back()} />
+              <Btn title={t('Discard')} kind="ghost" onPress={() => router.back()} />
             </View>
           )}
           <Text style={st.note}>{ho ? (ho === 'pickup' ? t('The photos show the van\'s state when you took it, so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.')

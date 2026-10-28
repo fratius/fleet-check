@@ -75,6 +75,8 @@ jobs:
           cache: npm
       - run: npm ci && npm ci --prefix functions
       - run: npm run typecheck
+      - name: Uploads that wait on the phone (the outbox's logic, src/lib/outboxcore.ts)
+        run: node --test tests/outbox.test.mjs
       - name: Translations (no lost or invented placeholders)
         run: node scripts/i18n.mjs --strict
       - name: Website translations (every text, no lost or invented placeholders)

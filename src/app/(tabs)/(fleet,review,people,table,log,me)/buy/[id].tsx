@@ -7,6 +7,7 @@ import { kmText, takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
 import { Button, Card, Chip, F, Field, MARKER, Pill, Plate, Row, Screen, T, ZoomPhoto, fmtWhen, useColors } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
+import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
@@ -147,7 +148,8 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       if (!ph) return;
       setThumbs((x) => ({ ...x, dash: ph.uri }));
       setBusy(t('Starting…'));
-      const r = await ai.buy.start({ orgId, action: 'start', kind, vehicleId: van.id, path: ph.path });
+      // Without a connection it's sent again by itself; the server answers a repeat with the same purchase.
+      const r = await retrying(() => ai.buy.start({ orgId, action: 'start', kind, vehicleId: van.id, path: ph.path }));
       setNeedsCard(r.needsCard);
       dashAsked.current = true;
       // Read while the driver carries on.
@@ -213,7 +215,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       const ph = await shoot(orgId, uid, 1600);
       if (!ph) return;
       setBusy(t('Checking the card…'));
-      const r = await ai.buy.card({ orgId, action: 'card', id: p.id, path: ph.path });
+      const r = await retrying(() => ai.buy.card({ orgId, action: 'card', id: p.id, path: ph.path }));
       // The server's reason, in this person's language when it sent its template.
       const w = r as { whyT?: string; whyV?: Record<string, string | number> };
       if (r.result === 'retake') setCardMsg(w.whyT ? t(w.whyT, w.whyV) : t(r.why));
@@ -252,7 +254,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
         if (!ph) return;
         setThumbs((x) => ({ ...x, receipt: ph.uri }));
         setBusy(t('Reading the receipt…'));
-        await ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path, parts: parts.map((x) => x.path), note: note.trim() });
+        await retrying(() => ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path, parts: parts.map((x) => x.path), note: note.trim() }));
       }, t('Couldn\'t read the receipt. Check the connection and try again.'));
     };
     return (
@@ -281,7 +283,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       if (!ph) return;
       setThumbs((x) => ({ ...x, receipt: ph.uri }));
       setBusy(t('Reading the receipt…'));
-      await ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path });
+      await retrying(() => ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path }));
     }, t('Couldn\'t read the receipt. Check the connection and try again.'));
     const ok = p.card.result === 'match';
     return (

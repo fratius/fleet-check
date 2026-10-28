@@ -5,12 +5,12 @@ import { Platform, Pressable, View } from 'react-native';
 
 import { VideoRecorder } from '@/components/recorder';
 import { Button, Photo, T, fmtWhen, useColors } from '@/components/ui';
-import { flash } from '@/lib/flash';
+import { UploadRow } from '@/components/uploads';
 import { photoUrl } from '@/lib/images';
+import { queueVideo, useOutbox } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
-import { mb, recordVideo, uploadVideo, type Recorded } from '@/lib/videos';
+import { recordVideo, type Recorded } from '@/lib/videos';
 import { fwd, N_, t } from '@/lib/i18n';
 
 /** Plays a stored video. */
@@ -41,58 +41,45 @@ export function VideoRow({ v }: { v: Video }) {
 
 /**
  * Records a video and uses it for a pick-up or drop-off (the server checks it and records the handover), adds it
- * to a handover that's missing one, or keeps it with the van as a walk-around. Shows the upload as it goes.
+ * to a handover that's missing one, or keeps it with the van as a walk-around. The recording is saved on the phone
+ * at once and goes through the outbox (lib/outbox.ts): it uploads by itself, also without a connection for a while,
+ * after leaving the page or closing the app, so it's never recorded twice. While it's on its way this shows how far.
  */
 export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onDone }: {
   v: Vehicle; kind: Video['kind']; assignmentId?: string; title: string; primary?: boolean; wide?: boolean; onDone?: () => void;
 }) {
   const s = useSession();
   const c = useColors();
+  const ob = useOutbox();
   const [step, setStep] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [videoId, setVideoId] = useState<string | null>(null);
+  const [sent, setSent] = useState<string | null>(null);
   // On the phone the video is recorded in the app (components/recorder.tsx); on the web with the browser's camera.
   const [recording, setRecording] = useState(false);
   const recorded = useRef<((r: Recorded | null) => void) | null>(null);
   const record = (): Promise<Recorded | null> => (Platform.OS === 'web' ? recordVideo()
     : new Promise((resolve) => { recorded.current = resolve; setRecording(true); }));
-  const send = async (id: string) => {
-    setStep(t('Checking the video…'));
-    if (kind === 'walkaround') await ai.addVanVideo({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
-    else if (assignmentId) await ai.addHandoverVideo({ orgId: s.org!.id, assignmentId, kind, videoId: id });
-    else if (kind === 'pickup') await ai.pickUpVan({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
-    else await ai.dropOffVan({ orgId: s.org!.id, vehicleId: v.id, videoId: id });
-    // The playback copy is made in the background; nobody waits for it.
-    ai.processVideo({ orgId: s.org!.id, videoId: id }).catch(() => {});
-    setVideoId(null);
-    flash(`van:${v.id}`, kind === 'walkaround' ? t('The video of {van} is saved with the van.', { van: v.name })
-      : assignmentId ? (kind === 'pickup' ? t('The pick-up video of {van} is saved with its history.', { van: v.name }) : t('The video was added.'))
-        : kind === 'pickup' ? t('You picked up {van}. The video is kept with its history.', { van: v.name }) : t('You dropped off {van}. The video is kept with its history.', { van: v.name }));
-    onDone?.();
-  };
+  // This video's upload, also after the page was left and opened again.
+  const job = ob.jobs.find((j) => j.type === 'video' && j.uid === s.user?.uid && j.vehicleId === v.id && j.what === kind && (j.assignmentId || null) === (assignmentId || null)) || null;
+  const finished = !!sent && ob.done.has(sent);
+  useEffect(() => { if (finished) { setSent(null); onDone?.(); } }, [finished, onDone]);
   const go = async () => {
     setErr(null);
     try {
-      if (videoId) { await send(videoId); return; }
       const rec = await record();
       if (!rec) return;
-      setStep(rec.size ? t('Uploading {size}…', { size: mb(rec.size) }) : t('Uploading…'));
-      const id = await uploadVideo(s.org!.id, s.user!.uid, rec, (sent, total) => setStep(t('Uploading {pct}% of {size}', { pct: Math.round((sent / Math.max(1, total)) * 100), size: mb(total) })));
-      setVideoId(id);
-      await send(id);
+      setStep(t('Saving the video…'));
+      setSent(await queueVideo({ orgId: s.org!.id, uid: s.user!.uid, v, rec, what: kind, assignmentId }));
     } catch (e) {
-      const m = e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to record the video.')
-        : e instanceof AiError ? e.message : t('The upload didn\'t finish. Check the connection and try again.');
-      setErr(m);
+      setErr(e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to record the video.') : t('Couldn\'t save the video on this phone. Record it again.'));
     } finally { setStep(null); }
   };
-  // A video that was uploaded but not accepted (for example the van was taken meanwhile) can be sent again
-  // without uploading it again, or replaced with a new recording.
   return (
     <View style={{ gap: 6 }}>
       <VideoRecorder open={recording} onDone={(r) => { setRecording(false); recorded.current?.(r); recorded.current = null; }} />
-      <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || (videoId ? t('Try again with this video') : title)} loading={!!step} disabled={!!step} onPress={go} />
-      {videoId && !step ? <Button small v="link" title={t('Record a new video instead')} onPress={() => { setVideoId(null); setErr(null); }} /> : null}
+      {job ? <UploadRow j={job} /> : (
+        <Button v={primary ? 'primary' : 'secondary'} wide={wide} title={step || title} loading={!!step} disabled={!!step} onPress={go} />
+      )}
       {err ? <T v="small" color={c.alert}>{err}</T> : null}
     </View>
   );

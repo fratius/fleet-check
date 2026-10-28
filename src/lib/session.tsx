@@ -10,6 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { t } from './i18n';
 import { useLang } from './lang';
+import { outbox, startOutbox } from './outbox';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
 import { roleOf, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
@@ -314,8 +315,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // A fresh sign-in, so the server knows the password was entered just now.
     await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, password));
     await ai.deleteAccount({});
+    // Photos or videos still waiting on this phone would never go anywhere now.
+    await outbox.forget(u.uid).catch(() => {});
     await fbSignOut(f2.auth).catch(() => {});
   }, []);
+
+  // Photos and videos waiting on this phone (lib/outbox.ts) go up for the person signed in.
+  const uid = user?.uid ?? null;
+  useEffect(() => { if (mode === 'firebase') startOutbox(uid); }, [mode, uid]);
 
   orgRef.current = org;
   const role = roleOf(member);

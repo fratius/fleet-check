@@ -1,10 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { ref, uploadBytesResumable } from 'firebase/storage';
 import { Platform } from 'react-native';
 
 import { fb } from './firebase';
-import { newId } from './images';
 import type { Assignment, Station, Video, Walkaround } from './types';
 
 export interface Recorded { uri: string; mime: string; ext: string; size: number | null; file?: File }
@@ -23,19 +21,6 @@ export async function recordVideo(): Promise<Recorded | null> {
     : name.endsWith('.mp4') || name.endsWith('.m4v') ? 'video/mp4' : name.endsWith('.webm') ? 'video/webm' : 'video/quicktime';
   const ext = mime === 'video/mp4' ? 'mp4' : mime === 'video/webm' ? 'webm' : mime === 'video/quicktime' ? 'mov' : (mime.split('/')[1] || 'mov').replace(/[^a-z0-9]/g, '').slice(0, 5);
   return { uri: a.uri, mime, ext, size: a.fileSize ?? a.file?.size ?? null, file: a.file };
-}
-
-/** Uploads the recording as it is (the server makes the playback copy). Returns the video id. */
-export async function uploadVideo(orgId: string, uid: string, v: Recorded, onProgress: (sent: number, total: number) => void): Promise<string> {
-  const f = fb();
-  if (!f) throw new Error('Firebase is not configured');
-  const id = newId();
-  const blob: Blob = v.file ?? (await (await fetch(v.uri)).blob());
-  const task = uploadBytesResumable(ref(f.storage, `orgs/${orgId}/videos/${uid}/${id}/original.${v.ext}`), blob, { contentType: v.mime });
-  await new Promise<void>((resolve, reject) => {
-    task.on('state_changed', (s) => onProgress(s.bytesTransferred, s.totalBytes), reject, () => resolve());
-  });
-  return id;
 }
 
 /** One video record, live; null when it isn't there or can't be read. */

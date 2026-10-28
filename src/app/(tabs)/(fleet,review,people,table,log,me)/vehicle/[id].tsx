@@ -13,12 +13,14 @@ import { TourCard, TourLine, VanNow } from '@/components/dash';
 import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { useWhoDid } from '@/lib/names';
+import { HandoverWaiting } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { ScanChoice } from '@/components/scanchoice';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
 import { useFlash } from '@/lib/flash';
+import { pendingHandover, useOutbox } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
@@ -56,6 +58,8 @@ export default function VehicleScreen() {
   const tabTop = useRef(0);
   const [picking, setPicking] = useState(false);
   const [takeover, setTakeover] = useState(false);
+  // Pick-up or drop-off photos or videos still on their way from this phone (lib/outbox.ts).
+  const ob = useOutbox();
   const [armed, setArmed] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
@@ -75,6 +79,10 @@ export default function VehicleScreen() {
   const selfOn = !!s.stations.find((st) => st.id === v.stationId)?.selfAssign;
   const canSelf = selfOn && !s.runs(v.stationId) && s.myStations.some((st) => st.id === v.stationId);
   const mine = v.assignedTo?.driverId === s.user?.uid;
+  const dropping = !!pendingHandover(ob.jobs, s.user?.uid, v.id, 'dropoff');
+  const picking2 = !!pendingHandover(ob.jobs, s.user?.uid, v.id, 'pickup');
+  // The driver's own van is being dropped off from this phone: this one can be picked up after it (in that order).
+  const myVanDropping = !!s.myVan && !!pendingHandover(ob.jobs, s.user?.uid, s.myVan.id, 'dropoff');
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
   const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
@@ -169,11 +177,21 @@ export default function VehicleScreen() {
             mine ? (
               <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
                 <T v="medium">{t('Drop off')}</T>
-                <VideoHandover v={v} kind="dropoff" title={t('Drop off with a video')} primary />
-                <Button title={tp(frames.length, 'Drop off with {n} photo', 'Drop off with {n} photos')} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'dropoff' } })} />
-                <T v="small">{t('A video or the photos are needed to drop it off.')} {t(VIDEO_HOW)}</T>
+                {/* The drop-off photos or video on their way (lib/outbox.ts) instead of the buttons. */}
+                {dropping ? <HandoverWaiting vehicleId={v.id} what="dropoff" /> : (
+                  <>
+                    <VideoHandover v={v} kind="dropoff" title={t('Drop off with a video')} primary />
+                    <Button title={tp(frames.length, 'Drop off with {n} photo', 'Drop off with {n} photos')} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'dropoff' } })} />
+                    <T v="small">{t('A video or the photos are needed to drop it off.')} {t(VIDEO_HOW)}</T>
+                  </>
+                )}
               </View>
-            ) : s.myVan ? (
+            ) : picking2 ? (
+              <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+                <T v="medium">{t('Pick up')}</T>
+                <HandoverWaiting vehicleId={v.id} what="pickup" />
+              </View>
+            ) : s.myVan && !myVanDropping ? (
               <T v="small">{t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: s.myVan.name })}</T>
             ) : v.assignedTo && !takeover ? (
               <>
