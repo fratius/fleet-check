@@ -1,6 +1,7 @@
 0cc11732	"{column}" compares a driver's fuel with the other drivers on the same van model, over the same kilometres, from 4 tours on. Route, load and weather matter as much as driving style: it shows who to talk to, it doesn't prove anything.
 691f88de	(+{n} more) || (+{n} more)	[components/damage.tsx]
 9cf01c50	{check} not done: {van}
+37e3c183	{check} on {van}	[components/routines.tsx]
 3e3adc5b	{check}: {van}	[index.ts]
 cdc67bd4	{company}: you leave the company.
 eca8eab2	{company}: you're its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.
@@ -45,6 +46,7 @@ d59fc10e	{n} fleet manager || {n} fleet managers	[people.tsx]
 ccdffcb8	{n} frame || {n} frames	[lib/frames.ts]
 3025ccd4	{n} h	[components/history.tsx]
 feac26b7	{n} image || {n} images	[log.tsx]
+62a9f408	{n} item stopped. Tap to see why. || {n} items stopped. Tap to see why.
 37e737d9	{n} min	[components/history.tsx]
 e5b37d7c	{n} month || {n} months	[account.tsx]
 99e95cf0	{n} more due || {n} more due	[index.tsx]
@@ -165,7 +167,17 @@ a533bead	2. Tap {install} or {add}.
 1cf11ed8	4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.
 0a8dd6ad	7 days	[data.tsx]
 170621ac	90 days	[data.tsx]
+d897def3	A change	[lib/outbox.ts, lib/store.ts]
+c6118305	A change to a driver record
+1870ecd4	A change to a station
+f5f52e82	A change to a van
+2df73e7c	A change to van costs
+11b1d598	A change to van details
+3a90f169	A change to who has this van is waiting to be sent (at the top of this page).
 db242f5d	A closer look at every photo.
+f21a7ec1	A comment on damage
+dc0c4f9e	A company setting	[lib/session.tsx]
+0ea91666	A damage review	[lib/store.ts]
 7fc4ef1f	A manager has already reviewed this check.
 56599b1b	A notification on this phone, so you know before you get to the station.
 54173bc8	A photo is missing from storage. Upload it again.
@@ -174,6 +186,7 @@ db242f5d	A closer look at every photo.
 abe4c684	A photo of the whole receipt or invoice.
 e9bdb29b	A photo path is outside this company.
 72d03b36	A video or the photos are needed to drop it off.
+50c6cb22	A walk-around	[lib/store.ts]
 b111627e	A walk-around with {n} photo (about {min} min) or one video. || A walk-around with {n} photos (about {min} min) or one video.
 2c2fcbf7	About {km} a year over the allowance, roughly {eur} a year extra.
 4bfce59f	About {km} a year over the allowance.
@@ -205,6 +218,7 @@ a82690ab	Add station	[people.tsx]
 c68a2faf	Add the drop-off video
 ac6932e5	Add the incident	[components/driverrec.tsx]
 0c82d98a	Add the odometer reading to follow the mileage.
+89186158	Add the station {name}
 b59a5f15	Add to Home screen
 7bd938bc	Add to Home Screen
 12a934c1	Add vehicle	[add.tsx, index.tsx, _layout.tsx]
@@ -232,6 +246,7 @@ c08b44cf	All companies ({n})	[components/companies.tsx]
 2f5b5080	All spots	[check/[id].tsx]
 19238dd3	All stations	[index.tsx, data.tsx]
 ce8f4757	All vans	[components/routines.tsx]
+342c4b11	Allow {name}'s purchase for {van}
 1dfb1b87	Allow camera	[app/scan/[id].tsx]
 c25f8de5	Allow camera access in Settings to photograph the document.
 cbd211d6	Allow camera access in Settings to record the video.
@@ -245,6 +260,8 @@ f55038f9	Allow it	[buy/[id].tsx]
 05417857	Also close: {types}.	[add.tsx]
 c18a1a2a	Amazon livery	[components/vanfacts.tsx]
 a988d67a	An account with this email already exists. Sign in instead.
+ec850950	An answer about the vehicle type
+76f1059b	An incident	[lib/store.ts]
 163702d3	and {n} earlier || and {n} earlier	[components/driverrec.tsx]
 6963af2d	and {n} more || and {n} more	[components/vanfacts.tsx]
 949fa485	Another company	[account.tsx]
@@ -295,6 +312,7 @@ d7031f3a	Both sides	[vehicle/[id].tsx]
 5e9271cb	Briefed on the vans
 0d16ac08	Briefing record	[components/docscan.tsx]
 14653c18	Briefings	[components/docscan.tsx, components/driverrec.tsx]
+858ef816	Bring {van} back into the fleet
 b40665c4	Bring back into the fleet
 e31752d3	broken part	[check/[id].tsx]
 d6663dda	Business	[components/vanfacts.tsx]
@@ -305,6 +323,7 @@ cf068180	Call {name}	[buy/[id].tsx]
 e81cdad2	Call your fleet manager. They allow or refuse it in the app, and this screen changes by itself.
 3bddb099	Camera access	[app/scan/[id].tsx]
 77dfd213	Cancel	[buy/[id].tsx, check/[id].tsx, vehicle/[id].tsx]
+f54c1375	Cancel an invite link
 4ad41471	Cancel the parts purchase
 a471f1a9	Cancel the parts purchase; it stays on record as refused.
 fd2b5f41	Cancel the refuel	[components/buy.tsx]
@@ -323,6 +342,7 @@ ce4cfe4a	Cargo area clean and empty
 cedff071	Change check	[components/routines.tsx]
 789b14df	Change language	[components/language.tsx]
 c5dd099a	Change the review	[check/[id].tsx]
+45f404e2	Change the station {name}
 44505ab7	Change the type	[add.tsx]
 59853957	Changed by {name}, {day}.
 a02f6889	Changed by {name}, {when}.
@@ -366,6 +386,7 @@ a60c6721	Choose how often.	[index.ts]
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
+0e056a7b	Close {name}'s purchase for {van}
 85a2ce1c	Close it (not finished)
 62159302	Close-up {i} of {n}
 af1848cb	Close-up {no}: {panel}	[components/damage.tsx]
@@ -707,6 +728,7 @@ cc65d844	Get told when you're given a van
 fbefae1e	Give	[components/history.tsx]
 5332462c	Give {name} a van
 8ab336d4	Give {van} to	[components/history.tsx]
+f4275fe4	Give {van} to {name}
 2bbcbaa8	Give a different van
 6f1d6671	Give a van	[person/[uid].tsx]
 5365df41	Give the check a name.
@@ -856,10 +878,12 @@ a2e420de	Left: no sliding door
 8df12a33	Left: not seen	[lib/frames.ts]
 fd4b1d03	Left: sliding door	[lib/frames.ts]
 3bade34e	Length	[components/vanfacts.tsx]
+9efa21f7	Let drivers pick up vans themselves at {station}
 336581ca	Liability only	[lib/fleet.ts]
 ffee583b	Licence check	[lib/fleet.ts]
 915ad8f0	Licence check found a problem
 9be05fd2	Licence check interval	[account.tsx]
+b5f1cfb6	Licence check of {name}
 581b7883	Licence checks	[components/driverrec.tsx]
 cfe2fcc1	Licence classes and the date the licence runs out. No licence number or copy: that isn't needed.
 b25a0a52	Licence is fine	[components/driverrec.tsx]
@@ -886,6 +910,7 @@ a3ca212a	Looks like a {model}
 566b5f1c	Low angle, optional	[check/[id].tsx]
 ccfbeb59	Low confidence, {pct}%	[add.tsx]
 bf4e3d94	Low fuel	[prompts.ts]
+1b2f71f8	Made {when}	[components/uploads.tsx]
 57bf5f58	made free	[lib/types.ts]
 1625dc46	Main inspection (HU)	[components/vanfacts.tsx, lib/fleet.ts]
 e25bd3d3	Main inspection sticker: {date}
@@ -895,6 +920,8 @@ a2f416b9	Main inspection, safety check, service, tyres and tax.
 a94431ee	Make	[components/docscan.tsx]
 3a8de50d	Make a driver link || Make {n} driver links
 08c17cca	Make a fleet manager link || Make {n} fleet manager links
+7af3ec28	Make {name} {role}	[components/person.tsx]
+4e98e6f2	Make {van} free	[vehicle/[id].tsx]
 7e3746c7	Make the van free
 065de4a4	Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.
 7451438a	Making the file…	[data.tsx]
@@ -923,6 +950,8 @@ e367e50b	Missed damage is also how we measure what the AI misses.
 9ae36e6b	Model year	[components/vanfacts.tsx]
 5d205f26	Monthly rate or purchase price, the price per extra kilometre, the insurance premium and deductible.
 a7a8e36c	More links	[people.tsx]
+af3c18d2	Move {name} to {station}
+4756e50f	Move {van} to {station}
 4f23c76e	moved to another station
 709a2322	Name	[add.tsx, vehicle/[id].tsx, people.tsx]
 c3bf26d0	Name or plate	[data.tsx]
@@ -957,8 +986,11 @@ a68a5573	no card, refused	[data.tsx]
 e99a3c58	No checks for this van yet.
 f3d9e0dc	No checks yet. Add one: the suggestions make it a few taps.
 3e8a6d08	No comments yet. For example: what the driver said, the repair or the insurance claim.
+1d25c533	No connection. {n} item waits on this phone and goes through by itself. || No connection. {n} items wait on this phone and go through by themselves.
 0db79dd9	No connection. {n} upload waits on this phone and goes up by itself. || No connection. {n} uploads wait on this phone and go up by themselves.
 2818b621	No connection. Check your internet and try again.
+66f8676c	No connection. It's saved on this phone and goes through by itself when there's a connection.
+dbd99cdb	No connection. Showing what this phone last saw ({when}). Changes you make wait here and go through by themselves.
 d0b235ac	No connection. The photos are saved on this phone and upload by themselves when there's a connection.
 58d2a7b7	No connection. The video is saved on this phone and uploads by itself when there's a connection.
 9637416a	No connection. Try again when you have a signal.
@@ -1060,7 +1092,7 @@ a270067a	Nothing recorded.	[components/driverrec.tsx]
 f23f9445	Nothing reviewed yet.	[review.tsx]
 cdfc7725	Nothing to decide right now. Checks appear here when a driver sends one.
 a5dbc60d	Nothing to save	[components/docscan.tsx]
-0a32fe52	Nothing waiting. Everything is uploaded.
+74353241	Nothing waiting. Everything is sent.
 753a22b2	Notifications	[components/pickup.tsx]
 f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Chrome > Site settings > Notifications), then come back here.
 b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.
@@ -1187,13 +1219,13 @@ c9bb5c97	Photo of the dashboard
 c8b2e864	Photos	[buy/[id].tsx, log.tsx, components/scanchoice.tsx]
 c9027a2b	Photos and videos are deleted after {n} days. These are gone already.
 ecdeee38	Photos and videos are kept 30 days: these until {date}.
-a303eb54	Photos and videos are saved on this phone first, then uploaded. Without a connection they wait here and go up by themselves, so you never take them again. Keep the app open, or open it again later.
 2d8fc3c9	Photos are stored with the scan in your company's storage.
 c7e2cd6c	Photos at takeover	[components/history.tsx]
 7eb70e28	Photos from the library
 25967fae	Photos taken	[log.tsx]
 7940a0da	Photos upload to your company's storage, so the walk-around is kept as evidence.
 09457801	photos, {n} skipped || photos, {n} skipped	[walk/[id].tsx, app/scan/[id].tsx]
+042f60f8	Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.
 445756eb	Pick a role and a station.
 135f742a	Pick a station.	[lib/session.tsx]
 1b1c8219	Pick a van.	[data.tsx]
@@ -1266,15 +1298,19 @@ c28c0531	Refuel, wash or parts?
 4dec112b	Refuelled	[data.tsx]
 6ad6a1ee	Refuelling, washing and parts need the Firebase backend.
 3eb80c1e	Refuse	[buy/[id].tsx]
+ff9a5d71	Refuse {name}'s purchase for {van}
 735ec50d	Refused	[components/buy.tsx]
 bd06b239	Refusing…	[buy/[id].tsx]
 da9928d4	Registration certificate	[components/docscan.tsx]
 6561c36a	Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it's saved.
 1a98465c	Registration certificate part II
 e963907d	Remove	[check/[id].tsx, people.tsx, components/routines.tsx]
+24d9518f	Remove {name} from {company}
+3a6d7a70	Remove a station	[lib/people.ts]
 dcaa9667	Remove from {company}	[components/person.tsx]
 822c5468	Remove from fleet	[vehicle/[id].tsx]
 91f23418	Remove photo {n}	[add.tsx]
+d7eb1c4f	Remove the check "{name}"
 80453614	Remove the demo company
 e95b647c	removed from the company
 d3f4cb89	Rename	[people.tsx]
@@ -1286,6 +1322,7 @@ c06bbcc2	Rental ends	[lib/fleet.ts]
 16457335	Retake	[check/[id].tsx, app/scan/[id].tsx]
 9f01f832	retakes	[walk/[id].tsx, app/scan/[id].tsx]
 dabe8aa1	Retakes	[log.tsx]
+e8499dbe	Retire {van}	[vehicle/[id].tsx]
 e6762f26	Retire van	[vehicle/[id].tsx]
 37d1213e	Retired	[index.tsx, vehicle/[id].tsx]
 e30baeef	Retired ({n})	[index.tsx]
@@ -1340,6 +1377,7 @@ ed70459b	Save and end the tour
 24689bd9	Save and start the tour
 179359b3	Save changes	[vehicle/[id].tsx, components/routines.tsx]
 7a3d56ee	Save the check	[components/driverrec.tsx]
+b087ec19	Save the check "{name}"
 4c7df601	Save the correction	[components/driverrec.tsx]
 2ed8be24	Save the licence check
 0f673564	Save the pick-up photos
@@ -1348,6 +1386,8 @@ ffe4bca0	Save the reading	[components/dash.tsx]
 061f6767	Saved {n} detail from {what}, and the licence check. The photo wasn't kept. || Saved {n} details from {what}, and the licence check. The photo wasn't kept.
 9871cd39	Saved {n} detail from {what}. The photo wasn't kept. || Saved {n} details from {what}. The photo wasn't kept.
 6f57c463	Saved on this phone only until Firebase is connected.
+abda9b97	Saved on this phone. It goes through after the one before it.
+aed548a3	Saved on this phone. It goes through by itself when there's a connection.
 13ebc378	Saved on this phone. It uploads after the one before it.
 7bd6e99d	Saved; typed in by hand: {fields}.
 9d4af690	Saved.	[buy/[id].tsx]
@@ -1382,8 +1422,11 @@ c5bced94	Seen again: {dates}.	[components/damage.tsx]
 8ece5d2b	Send 1 to 3 photos.
 48739f53	Send 1 to 6 photos of the document.
 184ae2f2	Send it to the fleet manager when you're done.
+d438aeb1	Send the damage check of {van} to the fleet manager
 3c02d865	Send the problem	[components/routines.tsx]
 a8486942	Send to the fleet manager
+dbc6eb8c	Sending {n} item… || Sending {n} items…	[components/uploads.tsx]
+cf765512	Sending…	[components/uploads.tsx]
 a83064fa	Sent {when}. The fleet manager approves or rejects each spot.
 46b8c953	Sent to the fleet manager
 c149b95b	Sent. The fleet manager approves or rejects each spot.
@@ -1465,6 +1508,7 @@ bae7d5be	Status	[data.tsx]
 5e9ae37b	Step {i} of {n}: {label}
 860fddea	Still going on.	[buy/[id].tsx]
 b0e86038	Still working on it. It goes through by itself.
+3bfe6f58	Stop drivers picking up vans themselves at {station}
 ee0d9dc8	Stop recording	[components/recorder.tsx]
 f89b5339	Stop: {van}, card not checked
 85c9eea8	Stop: {van}, no fuel card
@@ -1495,6 +1539,7 @@ e4e076db	Take close-ups of {n} spot || Take close-ups of {n} spots
 f7609863	Take it again	[buy/[id].tsx, components/dash.tsx]
 563d8e34	Take it again: {why}
 ff6d8326	Take more close-ups	[check/[id].tsx]
+c2ec85be	Take off the damage mark
 2c7f5505	Take over	[components/history.tsx]
 27391f71	Take over from {name}
 7ebd5d4c	Take photo	[add.tsx, check/[id].tsx]
@@ -1550,6 +1595,7 @@ a8810b04	The AI couldn't read it.
 5c32b021	The AI isn't sure about the odometer. Compare it with the dashboard.
 8493842b	The AI key isn't set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.
 c4251eee	The AI marks possible damage, then asks for close-ups of each spot.
+9023b91a	The AI model	[lib/session.tsx]
 0a75bab7	The AI rejected the request: {why}
 5418bbc6	The AI service is busy or down. Try again in a minute.
 3c48497c	The AI service isn't set up. Add the ANTHROPIC_API_KEY secret.
@@ -1569,6 +1615,7 @@ d2bba804	The card photo isn't kept, only its last 4 digits.
 2f443341	The check didn't finish. Try again.
 19b8ebc5	The company's storage is full. Tell your fleet manager.
 1d7e4397	The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.
+13d7a301	The damage log for {van}
 d58de059	The dashboard photo is missing. Take it again.
 2458d642	The date on the card, or the class that runs out first
 4ce76643	The default. Cheapest and fastest.
@@ -1650,6 +1697,7 @@ f7d0d2b1	These photos were already used. Take new ones.
 f77d05d1	This AI model isn't available on the Anthropic account. Pick another model in Account.
 1b0bcfd0	This browser can't show notifications. Use Chrome on Android, or the app on an iPhone's home screen.
 2a89189d	This browser gave no notification address.
+43255b91	This change was refused. Check that you still belong to this company and may change it.
 5cbd3d6d	This check isn't available.
 e124a7dc	This check isn't for this van.
 b63de3f6	This check needs a photo.
@@ -1768,10 +1816,9 @@ b0a93e80	Unknown van or station.
 9fa8f32e	Uploading {n} item… || Uploading {n} items…	[components/uploads.tsx]
 7d00b873	Uploading {pct}% of {size}
 756570c4	Uploading photos	[add.tsx]
-e5409578	Uploading the photo…	[buy/[id].tsx, components/dash.tsx]
+e5409578	Uploading the photo…	[buy/[id].tsx, components/dash.tsx, components/uploads.tsx]
 2c185f91	Uploading the receipt…	[buy/[id].tsx]
 d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx]
-227cc640	Uploads	[_layout.tsx]
 70ac1886	Usable capacity, for the energy used on each tour
 48a644ab	Use another account	[app/join/[token].tsx]
 c6188994	Use at least 6 characters for the password.
@@ -1809,6 +1856,8 @@ dee9587c	Waiting {time}	[review.tsx]
 5e2e6972	Waiting for an answer, {time}.
 ab1ff8cb	Waiting for review	[index.tsx, check/[id].tsx, person/[uid].tsx]
 71c0a1b3	Waiting for your fleet manager to allow or refuse it. Don't start yet.
+a250d651	Waiting to send	[_layout.tsx]
+2a495b90	Waiting to send.	[components/uploads.tsx]
 87c908bf	Waiting to upload.	[components/uploads.tsx]
 af3bb479	Walk-around	[_layout.tsx, walk/[id].tsx]
 3871fb25	Walk-around done	[app/scan/[id].tsx]
@@ -1837,6 +1886,7 @@ f8cd530a	Washer fluid	[prompts.ts, routines.ts, components/routines.tsx]
 7661e659	What happened	[buy/[id].tsx, components/driverrec.tsx]
 d2d42d35	What is the problem?
 c66b4d48	What the close-ups showed
+46676e04	What this change was for isn't there any more.
 2e062db2	What to check	[components/routines.tsx]
 a494a5c0	What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up yourself where the station allows it.
 c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager to correct anything that's wrong.

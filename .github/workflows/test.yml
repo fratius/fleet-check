@@ -64,6 +64,36 @@ jobs:
           grep -m1 -E -A 30 "^\s*not ok" history.log | grep -vE "^\s*$|duration_ms|^\s*---|^\s*\.\.\." | head -10 | while read -r l; do echo "::warning title=First failure::$l"; done || true
           grep -E "Error|error:|failed to load|Failed to load" history.log | grep -v "not ok" | head -10 | while read -r l; do echo "::error title=Emulator::$l"; done || true
 
+  offline:
+    name: Offline in a browser
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci && npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: cd tests && npx playwright install --with-deps chromium
+      - name: The web app for the emulators
+        run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-e2e
+      - name: No signal, then the signal is back (a real browser, the emulators)
+        shell: bash
+        run: |
+          echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
+          echo "SMTP_URL=none" >> functions/.secret.local
+          APP_DIR="$PWD/dist-e2e" npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run offline" 2>&1 | tee offline.log
+      - name: Show failures
+        if: always()
+        run: |
+          grep -E "^not ok|# (pass|fail)" offline.log | while read -r l; do echo "::notice title=Offline::$l"; done || true
+          grep -m1 -E -A 40 "^\s*not ok" offline.log | grep -vE "^\s*$|duration_ms|^\s*---|^\s*\.\.\." | head -10 | while read -r l; do echo "::warning title=First failure::$l"; done || true
+          grep -E "Error|error:" offline.log | grep -v "not ok" | head -10 | while read -r l; do echo "::error title=Offline log::$l"; done || true
+
   types:
     name: Type checks
     runs-on: ubuntu-24.04

@@ -3,15 +3,27 @@ import {
 } from 'firebase/firestore';
 
 import { fb } from './firebase';
+import { t } from './i18n';
+import { readCache, writeCache } from './offline';
+import { sendWrite } from './outbox';
 import type { Assignment, Check, DamageNote, Invite, Member, Org, Walkaround } from './types';
 
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
 const db = () => fb()!.db;
 export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onError?: () => void) {
-  return onSnapshot(collection(db(), 'orgs', orgId, 'members'),
-    (snap) => cb(snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }))),
-    () => onError?.());
+  // Without a connection: the people this phone saw last (lib/offline.ts), until the server answers.
+  const uid = fb()?.auth.currentUser?.uid;
+  const key = uid ? `${uid}-${orgId}-members` : null;
+  let live = false, gone = false;
+  if (key) readCache<Member[]>(key).then((rows) => { if (!live && !gone && rows) cb(rows); });
+  const off = onSnapshot(collection(db(), 'orgs', orgId, 'members'), (snap) => {
+    const rows = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }));
+    if (!snap.metadata.fromCache) { live = true; if (key) writeCache(key, rows); }
+    else if (!live && !rows.length) return;
+    cb(rows);
+  }, () => onError?.());
+  return () => { gone = true; off(); };
 }
 
 /** One walk-around by id, for history links to photos older than the ones the app keeps loaded. */
@@ -40,7 +52,8 @@ export function watchInvites(orgId: string, cb: (rows: Invite[]) => void, onErro
     () => onError?.());
 }
 
-export const deleteInvite = (token: string) => deleteDoc(doc(db(), 'invites', token));
+// Changes go through the outbox (lib/outbox.ts): kept on the phone and sent by themselves without a connection.
+export const deleteInvite = (token: string) => sendWrite('delete', ['invites', token], null, { title: t('Cancel an invite link') });
 
 /** The web address of an invite link. It opens the join page of the web app. */
 export function inviteUrl(token: string) {
@@ -57,12 +70,13 @@ export function tokenFrom(text: string) {
 
 export async function addStation(orgId: string, name: string, code: string) {
   const ref = doc(collection(db(), 'orgs', orgId, 'stations'));
-  await setDoc(ref, { name: name.trim().slice(0, 40), code: code.trim().toUpperCase().slice(0, 12), createdAt: Date.now() });
+  await sendWrite('set', ['orgs', orgId, 'stations', ref.id], { name: name.trim().slice(0, 40), code: code.trim().toUpperCase().slice(0, 12), createdAt: Date.now() },
+    { title: t('Add the station {name}', { name: name.trim().slice(0, 40) }) });
   return ref.id;
 }
 export const renameStation = (orgId: string, id: string, name: string, code: string) =>
-  updateDoc(doc(db(), 'orgs', orgId, 'stations', id), { name: name.trim().slice(0, 40), code: code.trim().toUpperCase().slice(0, 12) });
-export const deleteStation = (orgId: string, id: string) => deleteDoc(doc(db(), 'orgs', orgId, 'stations', id));
+  sendWrite('update', ['orgs', orgId, 'stations', id], { name: name.trim().slice(0, 40), code: code.trim().toUpperCase().slice(0, 12) }, { title: t('Change the station {name}', { name: name.trim().slice(0, 40) }) });
+export const deleteStation = (orgId: string, id: string) => sendWrite('delete', ['orgs', orgId, 'stations', id], null, { title: t('Remove a station') });
 
 /** For the app creator: every company with a few numbers. */
 export interface CompanyRow { id: string; name: string; createdAt: number; vans: number; people: number; checks: number }
@@ -118,5 +132,7 @@ export function watchDamageNotes(orgId: string, vehicleId: string, stations: str
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DamageNote, 'id'>) }))), () => onError?.());
 }
 export async function addDamageNote(orgId: string, n: Omit<DamageNote, 'id' | 'createdAt'>) {
-  await setDoc(doc(collection(db(), 'orgs', orgId, 'damageNotes')), { ...n, text: n.text.trim().slice(0, 1000), createdAt: Date.now() });
+  const ref = doc(collection(db(), 'orgs', orgId, 'damageNotes'));
+  await sendWrite('set', ['orgs', orgId, 'damageNotes', ref.id], { ...n, text: n.text.trim().slice(0, 1000), createdAt: Date.now() },
+    { title: t('A comment on damage'), vehicleId: (n as { vehicleId?: string }).vehicleId || null });
 }

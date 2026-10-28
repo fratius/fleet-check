@@ -5,18 +5,38 @@ import {
 import { httpsCallable } from 'firebase/functions';
 
 import { fb } from './firebase';
-import { t } from './i18n';
+import { N_, t } from './i18n';
 import { newId } from './images';
+import { retrying } from './net';
 import type { AccountCompany, Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
-  subscribe(cb: (rows: T[]) => void, onError?: (e: unknown) => void): () => void;
+  /** `fromCache`: only what this phone has (no connection yet), not confirmed by the server. */
+  subscribe(cb: (rows: T[], meta?: { fromCache: boolean }) => void, onError?: (e: unknown) => void): () => void;
   add(data: Omit<T, 'id'>, id?: string): Promise<string>;
   update(id: string, patch: Partial<T>): Promise<void>;
   remove(id: string): Promise<void>;
 }
 
 /* ---------- Firestore ---------- */
+/**
+ * Record writes go through the outbox once it's loaded (lib/outbox.ts sets this): shown at once, kept on the phone
+ * and sent by themselves, also after the app was closed without a connection.
+ */
+type Writer = (op: 'set' | 'update' | 'delete', path: string[], data: Record<string, unknown> | null,
+  about: { title: string; vehicleId?: string | null; personId?: string | null }) => Promise<unknown>;
+let writer: Writer | null = null;
+export function setWriter(w: Writer) { writer = w; }
+const WRITE_TITLE: Record<string, string> = {
+  vehicles: N_('A change to a van'), vehicleDetails: N_('A change to van details'), vehicleCosts: N_('A change to van costs'),
+  driverRecords: N_('A change to a driver record'), incidents: N_('An incident'), checks: N_('A damage review'),
+  scans: N_('An answer about the vehicle type'), walkarounds: N_('A walk-around'), stations: N_('A change to a station'),
+};
+function aboutWrite(name: string, id: string, data: Record<string, unknown> | null) {
+  const van = ['vehicles', 'vehicleDetails', 'vehicleCosts'].includes(name) ? id : typeof data?.vehicleId === 'string' ? data.vehicleId : null;
+  const person = name === 'driverRecords' ? id : typeof data?.driverId === 'string' ? data.driverId : null;
+  return { title: t(WRITE_TITLE[name] || N_('A change')), vehicleId: van, personId: person };
+}
 /**
  * A company collection. With `stations`, only records of those stations are read: managers and
  * drivers may only query their own stations (the rules check it), owners read everything.
@@ -33,16 +53,25 @@ function fsColl<T extends { id: string }>(orgId: string, name: string, stations:
           ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
           : query(base, orderBy('createdAt', 'desc'), limit(500));
       return onSnapshot(q,
-        (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)),
+        (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T), { fromCache: snap.metadata.fromCache }),
         (e) => onError?.(e));
     },
     async add(data, id) {
       const ref = id ? doc(base, id) : doc(base);
-      await setDoc(ref, stripUndefined(data as object));
+      const d = stripUndefined(data as object) as Record<string, unknown>;
+      if (writer) await writer('set', ['orgs', orgId, name, ref.id], d, aboutWrite(name, ref.id, d));
+      else await setDoc(ref, d);
       return ref.id;
     },
-    async update(id, patch) { await updateDoc(doc(base, id), stripUndefined(patch as object)); },
-    async remove(id) { await deleteDoc(doc(base, id)); },
+    async update(id, patch) {
+      const d = stripUndefined(patch as object) as Record<string, unknown>;
+      if (writer) await writer('update', ['orgs', orgId, name, id], d, aboutWrite(name, id, d));
+      else await updateDoc(doc(base, id), d);
+    },
+    async remove(id) {
+      if (writer) await writer('delete', ['orgs', orgId, name, id], null, aboutWrite(name, id, null));
+      else await deleteDoc(doc(base, id));
+    },
   };
 }
 function stripUndefined<T extends object>(o: T): T {
@@ -172,23 +201,34 @@ export class AiError extends Error {
   /** 'offline': the request didn't get through (no connection); 'flaky': the server was slow or busy. See lib/net.ts. */
   constructor(public code: string, message: string, public net: 'offline' | 'flaky' | null = null) { super(message); }
 }
+/** Sends one call to the server, once (no retry). Errors as AiError; `net` says whether the connection was the problem. */
+export async function callServer<O>(name: string, input: object, timeout = 180000): Promise<O> {
+  const f = fb();
+  if (!f) throw new AiError('not-configured', t('AI checks need the Firebase backend. Finish the setup first.'));
+  try {
+    const res = await httpsCallable<object, O>(f.functions, name, { timeout })(input);
+    return res.data;
+  } catch (e) {
+    const err = e as { code?: string; message?: string; details?: { t?: unknown; v?: unknown } };
+    const code = (err.code || 'unknown').replace(/^functions\//, '');
+    // The server sends its message's template and values, so it shows in the person's language.
+    const d = err.details;
+    const msg = d && typeof d.t === 'string' ? t(d.t, (d.v && typeof d.v === 'object' ? d.v : {}) as Record<string, string | number>) : aiMessage(code, err.message);
+    // The SDK says "internal" with HTTP status 0 when the request never got an answer (no connection).
+    const net = code === 'internal' && /\[0\]\s*$/.test(err.message || '') ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
+    throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
+  }
+}
+/** A request id for a call (functions/src/once.ts): the server does a call with the same id only once. */
+export const newRid = () => `r${newId()}${Math.random().toString(36).slice(2, 6)}`;
+/**
+ * A server call. It carries a request id and, without a connection, is sent again by itself (the same id, so the
+ * server does it once) until it goes through: nobody has to tap twice. The strip above the tab bar says it's waiting.
+ */
 function call<I, O>(name: string, timeout = 180000) {
-  return async (input: I): Promise<O> => {
-    const f = fb();
-    if (!f) throw new AiError('not-configured', t('AI checks need the Firebase backend. Finish the setup first.'));
-    try {
-      const res = await httpsCallable<I, O>(f.functions, name, { timeout })(input);
-      return res.data;
-    } catch (e) {
-      const err = e as { code?: string; message?: string; details?: { t?: unknown; v?: unknown } };
-      const code = (err.code || 'unknown').replace(/^functions\//, '');
-      // The server sends its message's template and values, so it shows in the person's language.
-      const d = err.details;
-      const msg = d && typeof d.t === 'string' ? t(d.t, (d.v && typeof d.v === 'object' ? d.v : {}) as Record<string, string | number>) : aiMessage(code, err.message);
-      // The SDK says "internal" with HTTP status 0 when the request never got an answer (no connection).
-      const net = code === 'internal' && /\[0\]\s*$/.test(err.message || '') ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
-      throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
-    }
+  return (input: I): Promise<O> => {
+    const data = { ...(input as object), rid: (input as { rid?: string }).rid || newRid() };
+    return retrying(() => callServer<O>(name, data, timeout));
   };
 }
 export function aiMessage(code: string, raw?: string): string {

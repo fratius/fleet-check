@@ -121,7 +121,17 @@ export async function sweepKept(jobIds: Set<string>) {
       return;
     }
     const keys = await tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys());
-    const gone = (keys || []).map(String).filter((k) => !jobIds.has(k.split('/')[0]));
+    // (The saved copy of the data, lib/offline.ts, lives here too: not an upload.)
+    const gone = (keys || []).map(String).filter((k) => !k.startsWith('cache/') && !jobIds.has(k.split('/')[0]));
     if (gone.length) await tx('readwrite', (s) => { for (const k of gone) s.delete(k); });
   } catch { /* only tidying up */ }
 }
+
+/* ---------- The web app's other things kept in the same IndexedDB (lib/offline.ts) ---------- */
+export const idbGet = <T>(key: string) => tx<T>('readonly', (s) => s.get(key));
+export const idbPut = (key: string, value: unknown) => tx('readwrite', (s) => s.put(value, key)).then(() => undefined);
+export const idbDeletePrefix = async (prefix: string) => {
+  const keys = (await tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys())) || [];
+  const gone = keys.map(String).filter((k) => k.startsWith(prefix));
+  if (gone.length) await tx('readwrite', (s) => { for (const k of gone) s.delete(k); });
+};

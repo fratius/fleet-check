@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 import { Button, F, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { watchHistory, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
+import { QUEUED, sendCall } from '@/lib/outbox';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
 import { flash } from '@/lib/flash';
@@ -160,8 +161,10 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
   const give = async (m: Member) => {
     setBusy(m.uid); setErr(null);
     try {
-      const r = await ai.assignVan({ orgId: orgId!, vehicleId: v.id, driverId: m.uid });
-      flash(`van:${v.id}`, given(m.name, v.name, r, m.uid === s.user?.uid));
+      // Kept on the phone and sent by itself without a connection (lib/outbox.ts); only if the van hasn't changed meanwhile.
+      const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: orgId!, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
+        { title: t('Give {van} to {name}', { van: v.name, name: m.name }), vehicleId: v.id, vehicleName: v.name, personId: m.uid });
+      flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself when there\'s a connection.') : given(m.name, v.name, r, m.uid === s.user?.uid));
       onDone();
     }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
@@ -203,8 +206,9 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
   const give = async (v: Vehicle) => {
     setBusy(v.id); setErr(null);
     try {
-      const r = await ai.assignVan({ orgId: s.org!.id, vehicleId: v.id, driverId: m.uid });
-      flash(`person:${m.uid}`, given(m.name, v.name, r, m.uid === s.user?.uid));
+      const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
+        { title: t('Give {van} to {name}', { van: v.name, name: m.name }), vehicleId: v.id, vehicleName: v.name, personId: m.uid });
+      flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself when there\'s a connection.') : given(m.name, v.name, r, m.uid === s.user?.uid));
       onDone();
     }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }

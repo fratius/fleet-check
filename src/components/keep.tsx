@@ -6,6 +6,7 @@ import { t } from '@/lib/i18n';
 import { damageUntil, day, keptUntil, mediaGone } from '@/lib/media';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
+import { QUEUED, sendCall } from '@/lib/outbox';
 import type { KeepMark } from '@/lib/types';
 
 /** Has this record's photos or video been deleted (30 days, or 90 when kept)? False in demo companies and test mode. */
@@ -46,8 +47,8 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
   const set = async (on: boolean) => {
     setBusy(true); setErr(null);
     try {
-      const r = await ai.markDamage({ orgId: s.org!.id, kind, id, on });
-      setMine({ mark: on ? { by: s.user!.uid, byName: s.user!.name, at: Date.now() } : null, until: r.keepUntil });
+      const r = await sendCall<{ keepUntil: number | null }>('markDamage', { orgId: s.org!.id, kind, id, on }, { title: on ? t('Mark as damage') : t('Take off the damage mark') });
+      setMine({ mark: on ? { by: s.user!.uid, byName: s.user!.name, at: Date.now() } : null, until: r === QUEUED ? null : r.keepUntil });
     } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); } finally { setBusy(false); }
   };
   const damage = (keepDamage || []).length > 0;

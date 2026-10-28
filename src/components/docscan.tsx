@@ -15,6 +15,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type DocRead } from '@/lib/store';
+import { sendCall } from '@/lib/outbox';
 import type { Member, Vehicle } from '@/lib/types';
 import { N_, t, tp } from '@/lib/i18n';
 
@@ -156,7 +157,10 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
       if (v && Object.keys(patch.details).length) await saveDetails(s, v, d, patch.details);
       if (v && owner && Object.keys(patch.costs).length) await saveCosts(s, v, cost, patch.costs);
       if (m && Object.keys(patch.record).length) await saveRecord(s, m, rec, patch.record);
-      if (m && isLicence && check) await ai.recordLicenceCheck({ orgId: s.org!.id, uid: m.uid, ok: true, note: 'Original licence seen and photographed', day: today() });
+      if (m && isLicence && check) {
+        await sendCall('recordLicenceCheck', { orgId: s.org!.id, uid: m.uid, ok: true, note: 'Original licence seen and photographed', day: today() },
+          { title: t('Licence check of {name}', { name: m.name }), personId: m.uid });
+      }
       const what = read?.title || docName(read?.kind);
       flash(target === 'van' ? `van:${v!.id}` : `person:${m!.uid}`, m && isLicence && check
         ? tp(chosen.length, 'Saved {n} detail from {what}, and the licence check. The photo wasn\'t kept.', 'Saved {n} details from {what}, and the licence check. The photo wasn\'t kept.', { what })

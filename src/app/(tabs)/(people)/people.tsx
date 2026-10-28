@@ -6,6 +6,7 @@ import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segme
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchInvites, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
+import { sendCall } from '@/lib/outbox';
 import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
@@ -199,7 +200,10 @@ function SelfAssign({ station }: { station: Station }) {
   const set = async (next: boolean) => {
     if (next === on) return;
     setBusy(true); setErr(null);
-    try { await ai.setSelfAssign({ orgId: s.org!.id, stationId: station.id, on: next }); }
+    try {
+      await sendCall('setSelfAssign', { orgId: s.org!.id, stationId: station.id, on: next },
+        { title: next ? t('Let drivers pick up vans themselves at {station}', { station: station.name }) : t('Stop drivers picking up vans themselves at {station}', { station: station.name }) });
+    }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that.')); } finally { setBusy(false); }
   };
   return (

@@ -20,12 +20,17 @@ export type Then =
 /** One file waiting to go to storage. `key` finds it on the phone; `tried` = an upload was started (maybe finished). */
 export interface OutFile { key: string; path: string; mime: string; size: number | null; done?: boolean; tried?: boolean }
 
+/** A change sent to the server: a call (with its request id inside `data.rid`) or a record written directly. */
+export type Change =
+  | { kind: 'call'; fn: string; data: Record<string, unknown> }
+  | { kind: 'write'; op: 'set' | 'update' | 'delete'; path: string[]; data?: Record<string, unknown> | null; merge?: boolean };
+
 export interface Job {
-  /** The walk-around's or the video's id. */
+  /** The walk-around's or the video's id (a change: its own id). */
   id: string;
-  type: 'walk' | 'video';
-  /** What it's for: the photos or video of a pick-up or drop-off, or a walk-around. */
-  what: 'pickup' | 'dropoff' | 'walkaround';
+  type: 'walk' | 'video' | 'change';
+  /** What it's for: the photos or video of a pick-up or drop-off, a walk-around, or a change. */
+  what: 'pickup' | 'dropoff' | 'walkaround' | 'change';
   orgId: string;
   uid: string;
   vehicleId: string;
@@ -46,6 +51,13 @@ export interface Job {
   status: 'queued' | 'failed';
   /** Why it stopped (in the person's language). */
   error?: string | null;
+  /** A change: what to send, and what it is in the person's words (when it was made). */
+  change?: Change;
+  title?: string;
+  /** The person it's about (shown on their page). */
+  personId?: string | null;
+  /** The request id of the server step of a walk-around or video (functions/src/once.ts). */
+  rid?: string;
 }
 
 /** What's happening right now (not saved). */
@@ -59,8 +71,8 @@ export interface Ops {
   upload(job: Job, f: OutFile, again: boolean, onBytes: (sent: number) => void, onStall: (stalled: boolean) => void): Promise<void>;
   /** Writes the walk-around record. `again`: an earlier try may have written it. */
   saveWalk(job: Job, again: boolean, onStall: (stalled: boolean) => void): Promise<void>;
-  /** The pick-up, drop-off or handover step. The server answers a repeat of a step that went through with success. */
-  server(job: Job): Promise<void>;
+  /** The pick-up, drop-off or handover step, or a change. The server answers a repeat of a step that went through with success. */
+  server(job: Job, onStall: (stalled: boolean) => void): Promise<unknown>;
   /** After it all went through: the video's playback copy, the message on the van's page. */
   after?(job: Job): void;
   /** Saves the list (the jobs, not the files). */
@@ -87,6 +99,8 @@ export class Outbox {
   done = new Set<string>();
   /** Jobs this outbox finished or removed (another tab's copy of the list may still have them). */
   forgotten = new Set<string>();
+  /** What the server answered to jobs that went through in this session. */
+  results = new Map<string, unknown>();
   private subs = new Set<() => void>();
   private running = false;
   private again = false;
@@ -258,13 +272,14 @@ export class Outbox {
         await this.save();
       }
 
-      // 3. The pick-up, drop-off or handover.
-      if (j.then && !j.serverDone) {
+      // 3. The pick-up, drop-off or handover, or the change itself.
+      if ((j.then || j.change) && !j.serverDone) {
         l.step = 'server'; this.emit();
-        await this.attempt(j, async () => {
+        const out = await this.attempt(j, async () => {
           if (!j.serverTried) { j.serverTried = true; await this.save(); }
-          await this.ops.server(j);
+          return this.ops.server(j, (stalled) => { if (stalled !== l.waiting) { l.waiting = stalled; this.emit(); } });
         });
+        this.results.set(j.id, out);
         j.serverDone = true;
       }
 

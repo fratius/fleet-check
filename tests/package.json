@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "test": "node --test rules.test.mjs",
-    "history": "node --test --test-concurrency=1 --test-timeout=600000 history.test.mjs"
+    "history": "node --test --test-concurrency=1 --test-timeout=600000 history.test.mjs",
+    "offline": "node --test --test-timeout=600000 offline.e2e.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",
-    "firebase": "^13.0.0"
+    "firebase": "^13.0.0",
+    "playwright": "1.56.0"
   }
 }

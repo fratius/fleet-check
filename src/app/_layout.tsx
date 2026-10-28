@@ -13,6 +13,7 @@ import '@/lib/install';
 import { LanguageProvider } from '@/lib/lang';
 import { NotificationTaps } from '@/lib/nativepush';
 import { SessionProvider, useSession } from '@/lib/session';
+import { keepAppShell } from '@/lib/appshell';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -50,6 +51,8 @@ export default function RootLayout() {
   });
   const ready = loaded || !!error;
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => {}); }, [ready]);
+  // The web app opens without a connection (public/sw.js keeps its files).
+  useEffect(() => { keepAppShell(); }, []);
   if (!ready) return null;
   return (
     <SafeAreaProvider>

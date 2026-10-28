@@ -8,6 +8,7 @@ import { DriverRecordView } from '@/components/driverrec';
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
 import { Button, Card, F, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, useColors } from '@/components/ui';
+import { PendingChanges } from '@/components/uploads';
 import { useDriverData } from '@/lib/data';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { useFlash } from '@/lib/flash';
@@ -61,6 +62,8 @@ export default function PersonScreen() {
   return (
     <Screen edges={[]}>
       <Stack.Screen options={{ title: me ? t('You') : name }} />
+      {/* Changes about this person made on this phone and still on their way (no connection). */}
+      <PendingChanges personId={uid} />
       <View style={{ gap: 6 }}>
         <T v="h1">{me ? t('{name} (you)', { name }) : name}</T>
         <Row>

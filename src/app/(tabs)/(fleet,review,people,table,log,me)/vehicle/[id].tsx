@@ -13,14 +13,14 @@ import { TourCard, TourLine, VanNow } from '@/components/dash';
 import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { useWhoDid } from '@/lib/names';
-import { HandoverWaiting } from '@/components/uploads';
+import { HandoverWaiting, PendingChanges } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { ScanChoice } from '@/components/scanchoice';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
 import { useFlash } from '@/lib/flash';
-import { pendingHandover, useOutbox } from '@/lib/outbox';
+import { pendingChange, pendingHandover, sendCall, useOutbox } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
@@ -83,6 +83,8 @@ export default function VehicleScreen() {
   const picking2 = !!pendingHandover(ob.jobs, s.user?.uid, v.id, 'pickup');
   // The driver's own van is being dropped off from this phone: this one can be picked up after it (in that order).
   const myVanDropping = !!s.myVan && !!pendingHandover(ob.jobs, s.user?.uid, s.myVan.id, 'dropoff');
+  // Given to someone or made free from this phone, not sent yet: not offered again.
+  const giving = !!pendingChange(ob.jobs, s.user?.uid, (c) => c.kind === 'call' && c.fn === 'assignVan' && c.data.vehicleId === v.id);
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
   const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
@@ -127,6 +129,8 @@ export default function VehicleScreen() {
       {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : <TourCard v={v} />}
       {/* A refuel left half done, or (staff) a driver waiting at the pump for an answer. */}
       <BuyNow v={v} />
+      {/* Changes to this van made on this phone and still on their way (no connection): not to be done again. */}
+      <PendingChanges vehicleId={v.id} />
       {/* Checks for drivers due on this van now (the driver who has it, and the station's managers). */}
       <DueChecks v={v} />
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>
@@ -208,13 +212,15 @@ export default function VehicleScreen() {
               </View>
             )
           ) : s.role === 'driver' && !mine ? <T v="small">{t('Your fleet manager gives out the vans at this station.')}</T> : null}
-          {s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : (
+          {s.runs(v.stationId) && giving ? <T v="small">{t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>
+            : s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : (
             <Row>
               <Button small v={v.assignedTo ? 'secondary' : 'primary'} title={v.assignedTo ? t('Give to someone else') : t('Give to a driver')} onPress={() => setPicking(true)} />
               {v.assignedTo ? (
                 <Button small v="link" title={armed === 'end' ? t('Tap again: the van becomes free') : t('Make the van free')} loading={busy === 'end'} onPress={() => {
                   if (armed !== 'end') { arm('end'); return; }
-                  act('end', () => ai.assignVan({ orgId: s.org!.id, vehicleId: v.id, driverId: null }));
+                  act('end', () => sendCall('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: null, expect: v.assignedTo?.assignmentId ?? null },
+                    { title: t('Make {van} free', { van: v.name }), vehicleId: v.id, vehicleName: v.name }));
                 }} />
               ) : null}
             </Row>
@@ -328,11 +334,11 @@ export default function VehicleScreen() {
               try { await s.store!.vehicles.remove(v.id); router.back(); } catch { setErr(t('Couldn\'t remove the vehicle.')); }
             }} />
           ) : v.retired ? (
-            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => ai.retireVan({ orgId: s.org!.id, vehicleId: v.id, restore: true }))} />
+            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, restore: true }, { title: t('Bring {van} back into the fleet', { van: v.name }), vehicleId: v.id, vehicleName: v.name }))} />
           ) : (
             <Button v="danger" title={armed === 'retire' ? t('Tap again to retire') : t('Retire van')} loading={busy === 'retire'} onPress={() => {
               if (armed !== 'retire') { arm('retire'); return; }
-              act('retire', () => ai.retireVan({ orgId: s.org!.id, vehicleId: v.id }));
+              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id }, { title: t('Retire {van}', { van: v.name }), vehicleId: v.id, vehicleName: v.name }));
             }} />
           )}
         </Row>
@@ -369,7 +375,9 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
         ...(CLS[cls].body !== CLS[v.cls].body ? { roof: 'unknown' as const } : {}),
       });
       // Moving to another station ends the van's assignment (its driver stays at theirs): done on the server.
-      if (station && station !== v.stationId) await ai.moveVan({ orgId: s.org!.id, vehicleId: v.id, stationId: station });
+      if (station && station !== v.stationId) {
+        await sendCall('moveVan', { orgId: s.org!.id, vehicleId: v.id, stationId: station }, { title: t('Move {van} to {station}', { van: v.name, station: s.stationName(station) }), vehicleId: v.id, vehicleName: v.name });
+      }
       onDone();
     } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save the changes.')); } finally { setBusy(false); }
   };

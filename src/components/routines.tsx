@@ -5,11 +5,12 @@ import { Pressable, Switch, View } from 'react-native';
 import { takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
 import { Button, Card, Chip, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { newId, prepare, upload } from '@/lib/images';
-import { retrying } from '@/lib/net';
+import { UploadRow } from '@/components/uploads';
+import { newId, prepare } from '@/lib/images';
+import { pendingChange, sendCall, useOutbox } from '@/lib/outbox';
 import { N_, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { AiError } from '@/lib/store';
 import type { Routine, RoutineHow, RoutineTodo, Vehicle } from '@/lib/types';
 
 /**
@@ -88,6 +89,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const doneId = useRef(newId());
+  const ob = useOutbox();
   const late = Date.now() - x.since > 3 * 3600_000;
   const shoot = async () => {
     setErr(null);
@@ -98,19 +100,32 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
     if (!ok && note.trim().length < 3) { setErr(t('Say what\'s wrong.')); return; }
     setBusy(ok ? 'ok' : 'bad'); setErr(null);
     try {
+      // The photo and the answer wait on the phone and go by themselves without a connection (lib/outbox.ts). The
+      // record is named once here, so it's never recorded twice.
       let path: string | null = null;
+      const files: { uri: string; path: string; mime: string }[] = [];
       if (photo) {
         const small = await prepare(photo.uri, photo.w, photo.h, 1600, 0.8);
-        path = await upload(small.uri, `orgs/${s.org!.id}/routines/${s.user!.uid}/${newId()}.jpg`);
+        path = `orgs/${s.org!.id}/routines/${s.user!.uid}/${newId()}.jpg`;
+        files.push({ uri: small.uri, path, mime: 'image/jpeg' });
       }
-      // Named once here, so sending it again (by itself without a connection, or tapped again) never records it twice.
-      const id = doneId.current;
-      await retrying(() => ai.routineDone({ orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path, id }));
+      await sendCall('routineDone', { orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path, id: doneId.current },
+        { title: t('{check} on {van}', { check: routineName(x), van: v.name }), vehicleId: v.id, vehicleName: v.name, files });
+      setBusy(null);
     } catch (e) {
       setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.'));
       setBusy(null);
     }
   };
+  // Answered already and on its way from this phone: shown instead of the buttons.
+  const waiting = pendingChange(ob.jobs, s.user?.uid, (ch) => ch.kind === 'call' && ch.fn === 'routineDone' && ch.data.vehicleId === v.id && ch.data.routineId === x.id);
+  if (waiting) {
+    return (
+      <View style={{ gap: 8, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
+        <UploadRow j={waiting} bare />
+      </View>
+    );
+  }
   return (
     <View style={{ gap: 8, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ gap: 1 }}>
@@ -227,15 +242,15 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
     try {
       // A suggestion keeps its English key (shown in each driver's language), unless its name was changed.
       const k = key && name.trim() === t(key) ? key : null;
-      await ai.routine.save({ orgId: s.org!.id, action: 'save', ...(r ? { id: r.id } : {}), key: k, name: name.trim(), how, days: how === 'days' ? days : null,
-        vans: vans === 'pick' ? picked : vans, stationId: station, photo });
+      await sendCall('routine', { orgId: s.org!.id, action: 'save', ...(r ? { id: r.id } : {}), key: k, name: name.trim(), how, days: how === 'days' ? days : null,
+        vans: vans === 'pick' ? picked : vans, stationId: station, photo }, { title: t('Save the check "{name}"', { name: name.trim() }) });
       onDone();
     } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); } finally { setBusy(false); }
   };
   const remove = async () => {
     if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
     setBusy(true); setErr(null);
-    try { await ai.routine.remove({ orgId: s.org!.id, action: 'delete', id: r!.id }); onDone(); }
+    try { await sendCall('routine', { orgId: s.org!.id, action: 'delete', id: r!.id }, { title: t('Remove the check "{name}"', { name: routineName(r!) }) }); onDone(); }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); setBusy(false); }
   };
   return (

@@ -185,3 +185,57 @@ test('removing a waiting job stops it and deletes its files', async () => {
   assert.deepEqual(w.server, []);
   assert.ok(!ob.done.has('w7'));
 });
+
+const changeJob = (id, over = {}) => ({
+  id, type: 'change', what: 'change', orgId: 'o1', uid: 'u1', vehicleId: 'v1', vehicleName: 'Van 1', assignmentId: null, then: null,
+  createdAt: 1, status: 'queued', files: [], title: 'Give Van 1 to Ali',
+  change: { kind: 'call', fn: 'assignVan', data: { orgId: 'o1', vehicleId: 'v1', driverId: 'ali', rid: 'rid-abc12345' } }, ...over,
+});
+
+test('a change (giving a van) waits without a connection, is sent once, and its answer is kept for the screen', async () => {
+  const w = world({ server: [offline, offline] });
+  w.ops.server = async (j) => {
+    const e = w.fail.server.shift();
+    if (e) throw e();
+    w.server.push(`${j.change.fn}:${j.change.data.rid}`);
+    return { assignmentId: 'a9' };
+  };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c1'));
+  await settle(ob);
+  assert.deepEqual(w.server, ['assignVan:rid-abc12345'], 'the same request id each time');
+  assert.deepEqual(ob.results.get('c1'), { assignmentId: 'a9' });
+  assert.equal(ob.jobs.length, 0);
+  assert.deepEqual(w.uploads, [], 'a change has no files');
+  assert.deepEqual(w.saves, []);
+});
+
+test('a change with a photo (a check done with its photo): the photo goes up first, then the change', async () => {
+  const w = world();
+  const order = [];
+  const up = w.ops.upload;
+  w.ops.upload = async (...a) => { order.push('photo'); return up(...a); };
+  w.ops.server = async () => { order.push('change'); return { id: 'd1' }; };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c2', { files: [{ key: 'c2/1.jpg', path: 'orgs/o1/routines/u1/x.jpg', mime: 'image/jpeg', size: 10 }],
+    change: { kind: 'call', fn: 'routineDone', data: { orgId: 'o1', vehicleId: 'v1', routineId: 'r1', ok: true, path: 'orgs/o1/routines/u1/x.jpg', rid: 'rid-def67890' } } }));
+  await settle(ob);
+  assert.deepEqual(order, ['photo', 'change']);
+  assert.ok(w.dropped.includes('c2'));
+});
+
+test('a refused change stops with the server\'s reason; jobs after it still go', async () => {
+  const w = world();
+  let n = 0;
+  w.ops.server = async (j) => { if (n++ === 0) throw refused('While this was waiting to be sent, someone else changed who has Van 1.'); return { ok: true, id: j.id }; };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c3'));
+  await ob.add(changeJob('c4', { change: { kind: 'write', op: 'update', path: ['orgs', 'o1', 'vehicles', 'v1'], data: { name: 'Van One' } } }));
+  await settle(ob);
+  assert.equal(ob.jobs.find((j) => j.id === 'c3').status, 'failed');
+  assert.match(ob.jobs.find((j) => j.id === 'c3').error, /someone else changed/);
+  assert.deepEqual(ob.results.get('c4'), { ok: true, id: 'c4' });
+});

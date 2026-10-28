@@ -8,6 +8,7 @@ import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
 import { AiError, ai } from '@/lib/store';
+import { sendCall } from '@/lib/outbox';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 
@@ -99,7 +100,10 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
     if (!d) { setErr(t('Enter the day like 22.10.2026.')); return; }
     if (!ok && !note.trim()) { setErr(t('Say what the problem is.')); return; }
     setBusy(true); setErr(null);
-    try { await ai.recordLicenceCheck({ orgId: s.org!.id, uid: m.uid, ok, note: note.trim(), day: d }); setOpen(false); setNote(''); setOk(true); }
+    try {
+      await sendCall('recordLicenceCheck', { orgId: s.org!.id, uid: m.uid, ok, note: note.trim(), day: d }, { title: t('Licence check of {name}', { name: m.name }), personId: m.uid });
+      setOpen(false); setNote(''); setOk(true);
+    }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save the check. Check the connection.')); } finally { setBusy(false); }
   };
   if (!canCheck && !checks.length) return null;

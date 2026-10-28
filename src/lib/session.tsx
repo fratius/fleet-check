@@ -10,7 +10,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { fb } from './firebase';
 import { t } from './i18n';
 import { useLang } from './lang';
-import { outbox, startOutbox } from './outbox';
+import { netKind, onWake, retrying } from './net';
+import { clearCaches, overlay, readCache, readSession, writeCache, writeSession } from './offline';
+import { outbox, sendWrite, startOutbox } from './outbox';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
 import { roleOf, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
@@ -22,6 +24,11 @@ export interface Company { id: string; name: string; role: Role }
 
 /** The app creator viewing the open company as an owner, fleet manager or driver (of one station). */
 export interface ViewAs { org: string; role: Role; st: string | null }
+/** The company and role kept on the phone for an offline start (lib/offline.ts). */
+interface SavedSession { companies: Company[]; org: Org; member: Member; viewAs: ViewAs | null; creator: boolean }
+/** The lists kept on the phone for an offline start (lib/offline.ts). */
+type CacheName = 'stations' | 'vehicles' | 'walks' | 'checks' | 'assignments' | 'videos' | 'tours' | 'purchases' | 'routines' | 'routineDone' | 'details' | 'records' | 'costs';
+
 function parseViewAs(v: unknown): ViewAs | null {
   const x = v as { org?: unknown; role?: unknown; st?: unknown } | null | undefined;
   if (!x || typeof x.org !== 'string') return null;
@@ -81,6 +88,8 @@ interface Session {
   setOrgSettings(patch: Partial<Pick<Org, 'dashScans' | 'licenceCheckMonths'>>): Promise<void>;
   /** The van this person drives now, if any. */
   myVan: Vehicle | null;
+  /** Shown from this phone's saved copy (no connection since the app opened): when that copy was made. */
+  offlineAt: number | null;
   loaded: { vehicles: boolean; walks: boolean; checks: boolean; scans: boolean; stations: boolean };
   dataError: string | null;
   /** AI model for this company's checks. The owner sets it for everyone. */
@@ -180,11 +189,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (my !== loadSeq.current) return;
       if (o?.exists()) {
         const org: Org = { id: va.org, ...(o.data() as Omit<Org, 'id'>) };
+        const mem: Member = { uid: u.uid, role: va.role, stationIds: va.st ? [va.st] : [], email: u.email || '', name: (real?.data() as Member | undefined)?.name || displayName(u) };
         setViewAsState(va);
         setCompanies([{ id: org.id, name: org.name, role: va.role }]);
         setOrg(org);
-        setMember({ uid: u.uid, role: va.role, stationIds: va.st ? [va.st] : [], email: u.email || '', name: (real?.data() as Member | undefined)?.name || displayName(u) });
+        setMember(mem);
         setStatus('ready');
+        writeSession(u.uid, { companies: [{ id: org.id, name: org.name, role: va.role }], org, member: mem, viewAs: va, creator: isCreator.current } satisfies SavedSession);
         return;
       }
       // The company is gone (for example a removed demo): be yourself again.
@@ -213,6 +224,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setOrg(pick.org);
     setMember(pick.member);
     setStatus('ready');
+    writeSession(u.uid, { companies: rows.map((r) => ({ id: r.org.id, name: r.org.name, role: roleOf(r.member)! })), org: pick.org, member: pick.member, viewAs: null, creator: isCreator.current } satisfies SavedSession);
     if (p.orgId !== pick.org.id) setDoc(doc(f2.db, 'users', u.uid), { orgId: pick.org.id }, { merge: true }).catch(() => {});
   }, []);
 
@@ -222,20 +234,48 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       fbUser.current = u;
       if (!u) { setUser(null); setOrg(null); setMember(null); setCompanies([]); setCreator(false); setViewAsState(null); isCreator.current = false; setStatus('signedOut'); return; }
       setUser({ uid: u.uid, email: u.email || '', name: u.displayName || (u.email || '').split('@')[0] });
+      // Without a connection: the company and role this phone had open, and the data it saw (lib/offline.ts),
+      // after a moment, until the server answers; then everything loads again when the connection is back.
+      const saved = await readSession<SavedSession>(u.uid);
+      let fromSaved = false;
+      const useSaved = () => {
+        if (!saved || fbUser.current?.uid !== u.uid) return;
+        fromSaved = true;
+        isCreator.current = saved.creator; setCreator(saved.creator);
+        setViewAsState(saved.viewAs); setCompanies(saved.companies); setOrg(saved.org); setMember(saved.member); setStatus('ready');
+      };
+      const early = setTimeout(useSaved, 3000);
       // Refresh the sign-in token so a newly given app creator claim shows up straight away.
-      try { const t = await u.getIdTokenResult(true); isCreator.current = t.claims.creator === true; } catch { isCreator.current = false; }
-      setCreator(isCreator.current);
-      try { await load(u); } catch { setStatus('needsOrg'); }
+      try { const t = await u.getIdTokenResult(true); isCreator.current = t.claims.creator === true; } catch { isCreator.current = saved?.creator ?? false; }
+      if (!fromSaved) setCreator(isCreator.current);
+      try {
+        await load(u);
+        clearTimeout(early);
+      } catch (e) {
+        clearTimeout(early);
+        if (saved && netKind(e)) {
+          if (!fromSaved) useSaved();
+          // Load properly once the connection may be back.
+          const off = onWake(() => { off(); if (fbUser.current?.uid === u.uid) load(u).catch(() => {}); });
+        } else if (!fromSaved) setStatus('needsOrg');
+      }
       // If this phone has notifications on, they go to whoever is signed in now.
       refreshPush(u.uid);
     });
   }, [f, load]);
 
+  // Without a connection, signing in (or up) waits and tries again by itself: nothing is typed twice.
   const signIn = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(fb()!.auth, email.trim(), password);
+    await retrying(() => signInWithEmailAndPassword(fb()!.auth, email.trim(), password));
   }, []);
   const signUp = useCallback(async (email: string, password: string, name: string) => {
-    const cred = await createUserWithEmailAndPassword(fb()!.auth, email.trim(), password);
+    let lost = false;
+    const cred = await retrying(() => createUserWithEmailAndPassword(fb()!.auth, email.trim(), password), { onWait: (on) => { if (on) lost = true; } })
+      .catch(async (e) => {
+        // Made by a try whose answer got lost: sign in to it.
+        if (lost && (e as { code?: string })?.code === 'auth/email-already-in-use') return signInWithEmailAndPassword(fb()!.auth, email.trim(), password);
+        throw e;
+      });
     if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() });
     setUser({ uid: cred.user.uid, email: cred.user.email || '', name: name.trim() || (cred.user.email || '').split('@')[0] });
   }, []);
@@ -301,11 +341,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [load]);
 
-  const resetPassword = useCallback(async (email: string) => { await sendPasswordResetEmail(fb()!.auth, email.trim()); }, []);
+  const resetPassword = useCallback(async (email: string) => { await retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim())); }, []);
   const signOut = useCallback(async () => {
     if (!fb()) return;
     // This phone stops getting this person's notifications.
     if (fbUser.current) await forgetPush(fbUser.current.uid);
+    // What this phone kept for an offline start goes too (a shared phone). Unsent changes stay for their next sign-in.
+    if (fbUser.current) await clearCaches(fbUser.current.uid);
     await fbSignOut(fb()!.auth);
   }, []);
 
@@ -327,11 +369,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   orgRef.current = org;
   const role = roleOf(member);
   const tier: Tier = mode === 'local' ? localTier : (org?.aiTier || 'quick');
-  const setTier = useCallback(async (t: Tier) => {
-    if (mode === 'local') { setLocalTier(t); AsyncStorage.setItem('fc.tier', t).catch(() => {}); return; }
+  const setTier = useCallback(async (tier: Tier) => {
+    if (mode === 'local') { setLocalTier(tier); AsyncStorage.setItem('fc.tier', tier).catch(() => {}); return; }
     if (!org || role !== 'owner') return;
-    await updateDoc(doc(fb()!.db, 'orgs', org.id), { aiTier: t });
-    setOrg((o) => (o && o.id === org.id ? { ...o, aiTier: t } : o));
+    await sendWrite('update', ['orgs', org.id], { aiTier: tier }, { title: t('The AI model') });
+    setOrg((o) => (o && o.id === org.id ? { ...o, aiTier: tier } : o));
   }, [mode, org, role]);
   const staff = role === 'owner' || role === 'manager';
   const seesAiStats = mode === 'local' ? !viewAs : creator && !viewAs;
@@ -362,32 +404,70 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
+  // Shown from this phone's saved copy (no connection yet): when that copy was made (lib/offline.ts).
+  const [offlineAt, setOfflineAt] = useState<number | null>(null);
+  const cacheKey = store?.mode === 'firebase' && user?.uid ? `${user.uid}-${store.orgId}` : null;
+  const liveData = useRef(false);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
     setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
+    setOfflineAt(null);
+    liveData.current = false;
     if (!store) return;
     const err = () => setDataError(t('Couldn\'t load the fleet data. Check your internet, then reopen the app.'));
+    // Until the server answers, what this phone saw last is shown, with what Firestore has here laid over it.
+    const saved: Partial<Record<CacheName, { id: string }[]>> = {};
+    const now: Partial<Record<CacheName, { id: string }[]>> = {};
+    const sets: Partial<Record<CacheName, (rows: never[]) => void>> = {};
+    let gone = false;
+    const take = <T extends { id: string }>(name: CacheName, set: (rows: T[]) => void, done?: () => void) => {
+      sets[name] = set as (rows: never[]) => void;
+      return (rows: T[], meta?: { fromCache: boolean }) => {
+        if (!meta?.fromCache) {
+          delete saved[name];
+          if (name === 'vehicles') { liveData.current = true; setOfflineAt(null); }
+        }
+        now[name] = rows;
+        const s0 = saved[name] as T[] | undefined;
+        set(s0 ? overlay(s0, rows) : rows);
+        if (!meta?.fromCache || s0) done?.();
+      };
+    };
+    if (cacheKey) {
+      readCache<{ at: number; data: Partial<Record<CacheName, { id: string }[]>> }>(cacheKey).then((c) => {
+        if (gone || !c || liveData.current) return;
+        for (const name of Object.keys(c.data) as CacheName[]) {
+          const rows = c.data[name];
+          if (!rows || !sets[name]) continue;
+          saved[name] = rows;
+          (sets[name] as (r: { id: string }[]) => void)(overlay(rows, now[name] || []));
+        }
+        setLoaded({ vehicles: true, walks: true, checks: true, scans: true, stations: true });
+        // Said only when the server doesn't answer soon (not for the moment before it does).
+        setTimeout(() => { if (!gone && !liveData.current) setOfflineAt(c.at); }, 4000);
+      });
+    }
     const subs = [
-      store.stations.subscribe((r) => { setStations(r.slice().sort((a, b) => a.createdAt - b.createdAt)); setLoaded((l) => ({ ...l, stations: true })); }, err),
-      store.vehicles.subscribe((r) => { setVehicles(r); setLoaded((l) => ({ ...l, vehicles: true })); }, err),
-      store.walks.subscribe((r) => { setWalks(r); setLoaded((l) => ({ ...l, walks: true })); }, err),
-      store.checks.subscribe((r) => { setChecks(r); setLoaded((l) => ({ ...l, checks: true })); }, err),
-      store.assignments.subscribe((r) => setAssignments(r), () => {}),
-      store.videos.subscribe((r) => setVideos(r), () => {}),
-      store.tours.subscribe((r) => setTours(r), () => {}),
-      store.purchases.subscribe((r) => setPurchases(r), () => {}),
-      store.routines.subscribe((r) => setRoutines(r), () => {}),
-      store.routineDone.subscribe((r) => setRoutineDone(r), () => {}),
+      store.stations.subscribe(take('stations', (r: Station[]) => setStations(r.slice().sort((a, b) => a.createdAt - b.createdAt)), () => setLoaded((l) => ({ ...l, stations: true }))), err),
+      store.vehicles.subscribe(take('vehicles', setVehicles, () => setLoaded((l) => ({ ...l, vehicles: true }))), err),
+      store.walks.subscribe(take('walks', setWalks, () => setLoaded((l) => ({ ...l, walks: true }))), err),
+      store.checks.subscribe(take('checks', setChecks, () => setLoaded((l) => ({ ...l, checks: true }))), err),
+      store.assignments.subscribe(take('assignments', setAssignments), () => {}),
+      store.videos.subscribe(take('videos', setVideos), () => {}),
+      store.tours.subscribe(take('tours', setTours), () => {}),
+      store.purchases.subscribe(take('purchases', setPurchases), () => {}),
+      store.routines.subscribe(take('routines', setRoutines), () => {}),
+      store.routineDone.subscribe(take('routineDone', setRoutineDone), () => {}),
     ];
     // The business side of the vans and the driver records: owners and managers (the rules refuse drivers).
     if (staff) {
-      subs.push(store.details.subscribe((r) => setDetails(r), () => {}));
-      subs.push(store.records.subscribe((r) => setRecords(r), () => {}));
+      subs.push(store.details.subscribe(take('details', setDetails), () => {}));
+      subs.push(store.records.subscribe(take('records', setRecords), () => {}));
     }
     // What the vans cost: owners only.
-    if (role === 'owner') subs.push(store.costs.subscribe((r) => setCosts(r), () => {}));
+    if (role === 'owner') subs.push(store.costs.subscribe(take('costs', setCosts), () => {}));
     // Everyone reads their own driver record (licence checks and briefings are about them).
     const uid = user?.uid;
     if (store.mode === 'firebase' && uid && !staff) {
@@ -399,8 +479,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
       subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
     } else setLoaded((l) => ({ ...l, scans: true }));
-    return () => subs.forEach((u) => u());
-  }, [store, seesAiStats, staff, role, user?.uid]);
+    return () => { gone = true; subs.forEach((u) => u()); };
+  }, [store, seesAiStats, staff, role, user?.uid, cacheKey]);
+  // The saved copy follows the live data (only once the server answered, so an empty start never overwrites it).
+  useEffect(() => {
+    if (!cacheKey || !liveData.current) return;
+    const timer = setTimeout(() => {
+      const cut = <T,>(rows: T[]) => rows.slice(0, 300);
+      writeCache(cacheKey, { at: Date.now(), data: {
+        stations, vehicles, walks: cut(walks), checks: cut(checks), assignments: cut(assignments), videos: cut(videos), tours: cut(tours),
+        purchases: cut(purchases), routines, routineDone: cut(routineDone), details, records, costs,
+      } });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [cacheKey, stations, vehicles, walks, checks, assignments, videos, tours, purchases, routines, routineDone, details, records, costs]);
   // For the app creator: each check with its AI speed and cost filled in.
   const checksShown = useMemo(() => {
     if (!seesAiStats || !usage.length) return checks;
@@ -440,14 +532,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!org || role !== 'owner') return;
     const full: Record<string, unknown> = { ...patch };
     if ('dashScans' in patch) { full.dashScansBy = user?.name || ''; full.dashScansAt = Date.now(); }
-    if (mode === 'firebase') await updateDoc(doc(fb()!.db, 'orgs', org.id), full);
+    if (mode === 'firebase') await sendWrite('update', ['orgs', org.id], full, { title: t('A company setting') });
     setOrg((o) => (o && o.id === org.id ? { ...o, ...full } : o));
   }, [org, role, mode, user?.name]);
   const myRecord = useMemo(() => (staff ? records.find((r) => r.id === user?.uid) || null : ownRecord), [staff, records, ownRecord, user?.uid]);
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

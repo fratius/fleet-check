@@ -16,6 +16,7 @@ import { day, keptUntil } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
+import { sendCall } from '@/lib/outbox';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
 
 /** What the AI said about a spot: its name, its colour, and the name inside a sentence ("AI: dirt or residue"). */
@@ -203,7 +204,9 @@ function CheckView({ id }: { id: string }) {
     if (finish === 'submitted') fields.status = 'submitted';
     try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr(t('Couldn\'t save the review. Check the connection and try again.')); return; }
     // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
-    if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) ai.logReview({ orgId: s.org!.id, checkId: k.id }).catch(() => {});
+    if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) {
+      sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: k.vehicleName }), vehicleId: k.vehicleId, vehicleName: k.vehicleName }).catch(() => {});
+    }
   };
   const decide = (j: number, damage: boolean | null) => {
     const d = { ...decisions };
@@ -217,7 +220,11 @@ function CheckView({ id }: { id: string }) {
   const setKnownManual = (x: number, key: string | null) => saveReview({ manual: manual.map((m, y) => (y === x ? { ...m, known: key } : m)) });
   const submit = async () => {
     setErr(null); setSending(true);
-    try { await ai.submitCheck({ orgId: s.store!.orgId, checkId: k.id, missedNote: (note ?? k.missedNote ?? '').trim() }); setNote(null); }
+    try {
+      await sendCall('submitCheck', { orgId: s.store!.orgId, checkId: k.id, missedNote: (note ?? k.missedNote ?? '').trim() },
+        { title: t('Send the damage check of {van} to the fleet manager', { van: k.vehicleName }), vehicleId: k.vehicleId, vehicleName: k.vehicleName });
+      setNote(null);
+    }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t send it. Check the connection and try again.')); }
     finally { setSending(false); }
   };

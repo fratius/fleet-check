@@ -8,6 +8,7 @@ import { dur } from '@/components/history';
 import { Button, Card, Chip, F, Field, MARKER, Pill, Plate, Row, Screen, T, ZoomPhoto, fmtWhen, useColors } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
+import { sendCall } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { AiError, ai, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
@@ -131,7 +132,9 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
     setErr(null); setBusy(label);
     try { await fn(); } catch (e) { setErr(errText(e, fallback)); } finally { setBusy(null); }
   };
-  const cancel = () => run(t('Cancelling…'), async () => { await ai.buy.cancel({ orgId, action: 'cancel', id: p!.id }); }, t('Couldn\'t cancel. Check the connection.'));
+  const cancel = () => run(t('Cancelling…'), async () => {
+    await sendCall('purchase', { orgId, action: 'cancel', id: p!.id }, { title: cancelText(kind), vehicleId: van.id, vehicleName: van.name });
+  }, t('Couldn\'t cancel. Check the connection.'));
 
   const head = (
     <View style={{ gap: 6 }}>
@@ -390,7 +393,8 @@ function Summary({ p }: { p: Purchase }) {
     try { await fn(); } catch (e) { setErr(errText(e, t('Couldn\'t save. Check the connection.'))); } finally { setBusy(null); }
   };
   const allowing = t('Allowing…'), refusing = t('Refusing…');
-  const decide = (allow: boolean) => act(allow ? allowing : refusing, () => ai.buy.decide({ orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() }));
+  const decide = (allow: boolean) => act(allow ? allowing : refusing, () => sendCall('purchase', { orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() },
+    { title: allow ? t('Allow {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }) : t('Refuse {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }), vehicleId: p.vehicleId, vehicleName: p.vehicleName }));
   const ownAsk = p.by === s.user?.uid && s.role !== 'owner';
   // Finished: what was confirmed. Not finished: only what the AI read from the dashboard photo so far.
   const done = p.status === 'done';
@@ -481,7 +485,8 @@ function Summary({ p }: { p: Purchase }) {
       ) : null}
 
       {staffHere && isOpenBuy(p) && p.status !== 'waiting' && p.by !== s.user?.uid ? (
-        <Button small v="link" title={busy || t('Close it (not finished)')} onPress={() => act(t('Closing…'), () => ai.buy.cancel({ orgId: s.org!.id, action: 'cancel', id: p.id, reason: 'Not finished' }))} />
+        <Button small v="link" title={busy || t('Close it (not finished)')} onPress={() => act(t('Closing…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id, reason: 'Not finished' },
+          { title: t('Close {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }), vehicleId: p.vehicleId, vehicleName: p.vehicleName }))} />
       ) : null}
       <Button small v="link" title={t('Open {name}', { name: p.vehicleName })} onPress={() => router.push(`/vehicle/${p.vehicleId}`)} />
     </>

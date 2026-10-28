@@ -24,6 +24,12 @@ export function isBehind(jobs: Job[], j: Job) {
 /** One line: uploading, waiting for the connection, sending, or why it stopped. */
 export function stateText(j: Job, l: Live | undefined, behind = false) {
   if (j.status === 'failed') return j.error || t('Something went wrong. Try again.');
+  if (j.type === 'change') {
+    if (!l || !l.step) return behind ? t('Saved on this phone. It goes through after the one before it.') : t('Waiting to send.');
+    if (l.waiting) return t('No connection. It\'s saved on this phone and goes through by itself when there\'s a connection.');
+    if (l.step === 'upload') return t('Uploading the photo…');
+    return t('Sending…');
+  }
   if (!l || !l.step) return behind ? t('Saved on this phone. It uploads after the one before it.') : t('Waiting to upload.');
   if (l.waiting) {
     return j.type === 'video' ? t('No connection. The video is saved on this phone and uploads by itself when there\'s a connection.')
@@ -53,14 +59,14 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
   return (
     <View style={[{ gap: 6 }, bare ? null : { borderWidth: 2, borderColor: failed ? c.alert : c.ink, borderRadius: 4, padding: 12, backgroundColor: c.paper }]}>
       <T v="h3">{jobTitle(j)}</T>
-      <T v="small">{t('Taken {when}', { when: fmtWhen(j.createdAt) })}</T>
+      <T v="small">{j.type === 'change' ? t('Made {when}', { when: fmtWhen(j.createdAt) }) : t('Taken {when}', { when: fmtWhen(j.createdAt) })}</T>
       <T v="medium" color={failed ? c.alert : undefined}>{stateText(j, l, isBehind(ob.jobs, j))}</T>
       {failed && j.walkSaved && j.then ? <T v="small">{t('The photos are saved as a walk-around.')}</T> : null}
       {failed && j.type === 'video' && j.files.every((f) => f.done) && j.then ? <T v="small">{t('The video is uploaded but wasn\'t used.')}</T> : null}
       <Row>
         {failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
-        {/* Not while the server is doing the pick-up or drop-off: it would happen anyway. */}
-        {l?.step === 'server' && !failed ? null : (
+        {/* Not while the server is doing it (it would happen anyway), and not for a record write (it shows already). */}
+        {(l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
           <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
         )}
       </Row>
@@ -92,11 +98,22 @@ export function UploadsStrip() {
   const failed = mine.filter((j) => j.status === 'failed').length;
   const queued = mine.length - failed;
   const waiting = others > 0 || mine.some((j) => ob.live.get(j.id)?.waiting);
+  // Opened without a connection: the data is what this phone saw last.
+  if (!mine.length && s.offlineAt) {
+    return (
+      <View style={{ backgroundColor: MARKER, paddingHorizontal: 14, paddingVertical: 7, borderTopWidth: 2, borderColor: '#000' }}>
+        <Text numberOfLines={2} style={{ fontFamily: F.medium, fontSize: 14, lineHeight: 18, color: '#000' }}>{t('No connection. Showing what this phone last saw ({when}). Changes you make wait here and go through by themselves.', { when: fmtWhen(s.offlineAt) })}</Text>
+      </View>
+    );
+  }
   if (!mine.length && !waiting) return null;
-  const text = failed ? tp(failed, '{n} upload stopped. Tap to see why.', '{n} uploads stopped. Tap to see why.')
-    : waiting ? (queued ? tp(queued, 'No connection. {n} upload waits on this phone and goes up by itself.', 'No connection. {n} uploads wait on this phone and go up by themselves.')
+  // Only photos and videos: "uploads"; with changes among them: "items".
+  const media = mine.every((j) => j.type !== 'change');
+  const text = failed ? (media ? tp(failed, '{n} upload stopped. Tap to see why.', '{n} uploads stopped. Tap to see why.') : tp(failed, '{n} item stopped. Tap to see why.', '{n} items stopped. Tap to see why.'))
+    : waiting ? (queued ? (media ? tp(queued, 'No connection. {n} upload waits on this phone and goes up by itself.', 'No connection. {n} uploads wait on this phone and go up by themselves.')
+      : tp(queued, 'No connection. {n} item waits on this phone and goes through by itself.', 'No connection. {n} items wait on this phone and go through by themselves.'))
       : t('No connection. Trying again by itself…'))
-      : tp(queued, 'Uploading {n} item…', 'Uploading {n} items…');
+      : media ? tp(queued, 'Uploading {n} item…', 'Uploading {n} items…') : tp(queued, 'Sending {n} item…', 'Sending {n} items…');
   const bg = failed ? c.alert : waiting ? MARKER : c.paper;
   const fg = failed ? (c.dark ? '#000' : '#fff') : waiting ? '#000' : c.ink;
   return (
@@ -114,8 +131,22 @@ export function UploadList() {
   const mine = ob.jobs.filter((j) => j.uid === s.user?.uid);
   return (
     <View style={{ gap: 10 }}>
-      <T v="body">{t('Photos and videos are saved on this phone first, then uploaded. Without a connection they wait here and go up by themselves, so you never take them again. Keep the app open, or open it again later.')}</T>
-      {mine.length ? mine.map((j) => <UploadRow key={j.id} j={j} />) : <T v="hint">{t('Nothing waiting. Everything is uploaded.')}</T>}
+      <T v="body">{t('Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.')}</T>
+      {mine.length ? mine.map((j) => <UploadRow key={j.id} j={j} />) : <T v="hint">{t('Nothing waiting. Everything is sent.')}</T>}
     </View>
   );
+}
+
+/**
+ * Changes about this van or person still on their way from this phone (given to a driver, retired, a record edit...),
+ * so nobody does them again. Checks for drivers show their own (components/routines.tsx).
+ */
+export function PendingChanges({ vehicleId, personId }: { vehicleId?: string; personId?: string }) {
+  const s = useSession();
+  const ob = useOutbox();
+  const list = ob.jobs.filter((j) => j.uid === s.user?.uid && j.type === 'change'
+    && !(j.change?.kind === 'call' && j.change.fn === 'routineDone')
+    && ((vehicleId && j.vehicleId === vehicleId) || (personId && j.personId === personId)));
+  if (!list.length) return null;
+  return <View style={{ gap: 8 }}>{list.map((j) => <UploadRow key={j.id} j={j} />)}</View>;
 }
