@@ -33,6 +33,10 @@ export interface Vehicle {
   assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number; kmStart?: number | null; kmEnd?: number | null } | null;
   /** The latest dashboard photo (set by the server): everyone at the station sees the km, levels and warning lights. */
   dash?: VanDash | null;
+  /** Checks for drivers due on this van now, for whoever has it (set by the server). */
+  todo?: RoutineTodo[] | null;
+  /** When each check for drivers was last done on this van, by routine id (set by the server). */
+  routines?: Record<string, RoutineLast> | null;
   /** Retired vans stay with their history; they are never deleted. */
   retired?: boolean;
   // The van's own facts, which everyone at its station sees (owners and its managers fill them in).
@@ -170,6 +174,36 @@ export interface Incident {
   createdAt: number;
   updatedAt?: number;
   updatedByName?: string | null;
+}
+
+/**
+ * A check for drivers (orgs/{org}/routines/{id}), set by an owner or fleet manager through the server: what to check,
+ * how often, on which vans (functions/src/routines.ts).
+ */
+export type RoutineHow = 'every' | 'daily' | 'days' | 'weekly';
+export interface Routine {
+  id: string;
+  /** One of the suggestions (the English text, shown in each person's language), or null: `name` as typed. */
+  key: string | null;
+  name: string;
+  how: RoutineHow;
+  days: number | null;
+  vans: 'all' | 'electric' | string[];
+  /** One station, or null for every station (owners). */
+  stationId: string | null;
+  photo: boolean;
+  createdAt: number;
+  createdByName?: string;
+  updatedAt?: number;
+  updatedByName?: string;
+}
+/** Due on a van now: since when, and for which day or handover. */
+export interface RoutineTodo { id: string; key: string | null; name: string; photo: boolean; since: number; period: string }
+export interface RoutineLast { at: number; by: string; byName: string; ok: boolean; note: string | null }
+/** A check done (orgs/{org}/routineDone/{id}), written by the server and kept. */
+export interface RoutineDone {
+  id: string; routineId: string; key: string | null; name: string; vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
+  by: string; byName: string; driverId: string | null; ok: boolean; note: string | null; path: string | null; at: number; createdAt: number;
 }
 
 /**

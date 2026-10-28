@@ -12,8 +12,9 @@ import { watchMembers } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
 import { fwd, t, tp } from '@/lib/i18n';
+import { dueOn, routineName } from '@/components/routines';
 
-type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'due' | 'buys' | 'van' | 'done';
+type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'chk' | 'due' | 'buys' | 'van' | 'done';
 
 /**
  * The fleet manager's queue, by category: checks to decide, handovers and tours missing their video or photos,
@@ -54,15 +55,18 @@ export default function ReviewQueue() {
   const weekAgo = Date.now() - 7 * 86400_000;
   const buys = s.purchases.filter((p) => p.status !== 'waiting' && s.runs(p.stationId) && p.createdAt > weekAgo && (p.status !== 'open' || Date.now() - p.createdAt > 6 * 3600_000))
     .sort((a, b) => (b.flags?.length ? 1 : 0) - (a.flags?.length ? 1 : 0) || b.createdAt - a.createdAt);
+  // Checks for drivers due now (oldest first), and the problems drivers found in the last week.
+  const todo = s.vehicles.filter((v) => s.runs(v.stationId)).flatMap((v) => dueOn(v).map((x) => ({ v, x }))).sort((a, b) => a.x.since - b.x.since);
+  const problems = s.routineDone.filter((d) => !d.ok && s.runs(d.stationId) && d.at > Date.now() - 7 * 86400_000).sort((a, b) => b.at - a.at);
   const showStation = s.stations.length > 1;
   const plate = (vehicleId: string) => s.vehicles.find((v) => v.id === vehicleId)?.plate || '';
   const where = (stationId: string | null | undefined) => (showStation ? s.stationName(stationId) : '');
 
-  const color = { pump: c.alert, review: MARKER, missing: c.alert, warn: c.warn, due: c.amber, buys: c.ink, van: c.ink2, done: c.ok };
+  const color = { pump: c.alert, review: MARKER, missing: c.alert, warn: c.warn, chk: c.amber, due: c.amber, buys: c.ink, van: c.ink2, done: c.ok };
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
     ...(pump.length ? [['pump', t('At the pump'), pump.length] as [Exclude<Cat, 'all'>, string, number]] : []),
     ['review', t('To review'), waiting.length], ['missing', t('Missing proof'), missing.length + gaps.length], ['warn', t('Warning lights'), warn.length],
-    ['due', t('Due soon'), due.length + pdue.length], ['buys', t('Fuel, wash, parts'), buys.length], ['van', t('At the van'), atVan.length], ['done', t('Reviewed'), done.length],
+    ['chk', t('Checks for drivers'), todo.length + problems.length], ['due', t('Due soon'), due.length + pdue.length], ['buys', t('Fuel, wash, parts'), buys.length], ['van', t('At the van'), atVan.length], ['done', t('Reviewed'), done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
   const shownDone = allDone ? done : done.slice(0, 8);
@@ -117,6 +121,25 @@ export default function ReviewQueue() {
         <Section color={c.warn} title={t('Warning lights')} count={warn.length} note={t('Lit on a van\'s latest dashboard photo, in the last 3 days. Check the van before it goes out again.')}>
           {!warn.length ? <Empty text={t('No warning lights on the latest dashboard photos.')} /> : null}
           {warn.map((tour) => <WarnCard key={tour.id} tour={tour} plate={plate(tour.vehicleId)} where={where(tour.stationId)} />)}
+        </Section>
+      ) : null}
+
+      {show('chk') && (todo.length || problems.length || cat === 'chk') ? (
+        <Section color={c.amber} title={t('Checks for drivers')} count={todo.length + problems.length} note={t('Checks drivers haven\'t done yet (red after 3 hours), and problems they found in the last 7 days.')}>
+          <List>
+            {!todo.length && !problems.length ? <T v="hint">{t('Every check is done.')}</T> : null}
+            {problems.map((d, i) => (
+              <ListRow key={d.id} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: d.vehicleId, tab: 'details' } })}
+                title={`${d.vehicleName} – ${routineName(d)}`} line={[`${d.byName}: ${d.note || ''}`, fmtWhen(d.at), where(d.stationId)].filter(Boolean).join(', ')}
+                right={<Pill v="bad" text={t('Problem')} />} />
+            ))}
+            {todo.map(({ v, x }, i) => (
+              <ListRow key={`${v.id}-${x.id}`} first={i === 0 && !problems.length} onPress={() => router.push(`/vehicle/${v.id}`)}
+                title={`${v.name} – ${routineName(x)}`} line={[v.assignedTo?.driverName || '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
+                right={<Pill v={Date.now() - x.since > 3 * 3600_000 ? 'bad' : 'amber'} text={dur(Date.now() - x.since)} />} />
+            ))}
+          </List>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/checks')}><T v="small" style={{ textDecorationLine: 'underline' }}>{t('See and change checks')}</T></Pressable>
         </Section>
       ) : null}
 

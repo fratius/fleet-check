@@ -19,6 +19,30 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script>
+/* Language: ?lang=xx, then the visitor's earlier choice, then the browser's languages in order, else English.
+   The translation starts loading here, before the page is drawn. */
+(function () {
+  var L = 'en de fr es it pt nl pl ro bg cs sk hu hr sr sl sq el lt lv et fi sv da nb tr ru uk ar fa hi vi'.split(' ');
+  var has = function (c) { return L.indexOf(c) >= 0; };
+  var base = function (c) { c = String(c || '').toLowerCase().split(/[-_]/)[0]; return c === 'no' || c === 'nn' ? 'nb' : c === 'bs' ? 'hr' : c; };
+  var detected = 'en', pick = null;
+  var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language];
+  for (var i = 0; i < list.length; i++) { if (has(base(list[i]))) { detected = base(list[i]); break; } }
+  try { var q = base(new URLSearchParams(location.search).get('lang')); if (has(q)) pick = q; } catch (e) {}
+  if (!pick) { try { var s = localStorage.getItem('fratius.lang'); if (has(s)) pick = s; } catch (e) {} }
+  var lang = pick || detected;
+  var load = function (c) { return c === 'en' ? Promise.resolve({}) : fetch('/i18n/' + c + '.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }); };
+  window.__fratiusLang = { lang: lang, detected: detected, langs: L, load: load, dict: load(lang) };
+  if (lang !== 'en') {
+    var h = document.documentElement;
+    h.lang = lang;
+    if (lang === 'ar' || lang === 'fa') h.dir = 'rtl';
+    h.classList.add('i18n-wait');
+    setTimeout(function () { h.classList.remove('i18n-wait'); }, 2500);
+  }
+})();
+</script>
 <link rel="preload" href="/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -102,7 +126,7 @@ h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; le
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 48px; padding: 10px 20px; border: 2px solid var(--ink); border-radius: var(--r);
   background: var(--paper); color: var(--ink); font-family: var(--display); font-weight: 600; font-size: 20px; line-height: 1;
-  text-decoration: none; cursor: pointer; white-space: nowrap;
+  text-decoration: none; cursor: pointer; text-align: center; text-wrap: balance;
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .btn:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
@@ -117,7 +141,7 @@ h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; le
 
 .pill {
   display: inline-flex; align-items: center; border: 1.5px solid currentColor; border-radius: 999px;
-  padding: 2px 10px; font: 500 13px/17px var(--body); color: var(--ink); white-space: nowrap;
+  padding: 2px 10px; font: 500 13px/17px var(--body); color: var(--ink); max-width: 100%;
 }
 .pill.ok { color: var(--ok); }
 .pill.bad { color: var(--alert); }
@@ -144,18 +168,59 @@ h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; le
 .brand-text b { font: 700 27px/.9 var(--display); letter-spacing: .01em; }
 .brand-text small { font: 600 10.5px/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--ink2); white-space: nowrap; }
 .logo { width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--marker-edge); flex: none; display: block; }
-.nav { display: flex; gap: 24px; margin-left: auto; }
+.nav { display: flex; gap: 24px; margin-inline-start: auto; }
 .nav a { text-decoration: none; font: 600 18px/1 var(--display); }
 .nav a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 .top .btn .short { display: none; }
-@media (max-width: 920px) {
+.top .cta { white-space: nowrap; }
+@media (max-width: 1180px) {
   .nav { display: none; }
-  .top .btn { margin-left: auto; }
+  .lang { margin-inline-start: auto; }
+  .top-in { gap: 14px; }
 }
-@media (max-width: 420px) {
-  .top .btn .long { display: none; }
-  .top .btn .short { display: inline; }
+@media (max-width: 860px) {
+  .top .cta .long { display: none; }
+  .top .cta .short { display: inline; }
 }
+/* On phones the header holds the name and the languages; the big button to start is right under it in the hero. */
+@media (max-width: 480px) {
+  .top .cta { display: none; }
+  .brand-text small { display: none; }
+}
+
+/* Language switcher: the visitor's language, English, and a button for all languages */
+.lang { position: relative; flex: none; }
+.lang-bar { display: flex; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.lb { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; min-width: 40px; padding: 0 12px; border: 0; border-inline-start: 2px solid var(--ink); background: var(--paper); color: var(--ink); font: 600 16px/1 var(--display); cursor: pointer; white-space: nowrap; }
+.lb:first-child { border-inline-start: 0; }
+.lb:hover { background: var(--page); }
+.lb[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.lb .code { display: none; text-transform: uppercase; letter-spacing: .04em; }
+.lb.more { padding: 0 10px; }
+.lb.more[aria-expanded="true"] { background: var(--marker); color: var(--on-marker); }
+.lang-menu { position: absolute; inset-inline-end: 0; top: calc(100% + 10px); z-index: 20; width: min(560px, calc(100vw - 32px)); background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); box-shadow: 6px 6px 0 var(--ink); padding: 14px; display: grid; gap: 10px; }
+.lang-title { font: 600 13px/1.3 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); }
+.lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; max-height: min(60vh, 440px); overflow-y: auto; }
+.lang-grid button { text-align: start; min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--rule); border-radius: var(--r); background: var(--paper); color: var(--ink); font: 500 16px/1.2 var(--body); cursor: pointer; }
+.lang-grid button:hover { border-color: var(--ink); }
+.lang-grid button[aria-current="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.lang-grid small { display: block; font-size: 12px; color: var(--ink2); }
+.lang-grid button[aria-current="true"] small { color: var(--paper); opacity: .8; }
+@media (max-width: 640px) {
+  .lb .name { display: none; }
+  .lb .code { display: inline; }
+  .lb { min-width: 38px; padding: 0 9px; font-size: 15px; }
+  .lang-menu { position: fixed; inset-inline: 16px; width: auto; top: 76px; }
+  .lang-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* While a translation loads, the English page isn't shown for a blink first. */
+html.i18n-wait body { visibility: hidden; }
+
+/* Right to left (Arabic, Persian): the slider keeps its left-to-right mechanics, its content reads right to left. */
+[dir="rtl"] .tabs, [dir="rtl"] .track, [dir="rtl"] .slider-foot { direction: ltr; }
+[dir="rtl"] .tab, [dir="rtl"] .slide { direction: rtl; }
+[dir="rtl"] .board { margin-right: 0; margin-left: 14px; box-shadow: -12px 12px 0 0 var(--marker), -12px 12px 0 2px var(--marker-edge); }
 
 /* Hero */
 .hero { padding-block: clamp(40px, 6vw, 88px) clamp(72px, 9vw, 120px); }
@@ -187,9 +252,9 @@ h1 .mark { position: relative; z-index: -1; }
 }
 .pulse { display: block; width: 100%; height: 92px; border-bottom: 2px solid var(--ink); }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-bottom: 2px solid var(--ink); }
-.stats > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 4px; padding: 12px 14px; border-left: 2px solid var(--ink); min-width: 0; }
-.stats > div:first-child { border-left: 0; }
-.stats dd { margin: 0 0 0 -4px; padding: 0 4px; align-self: flex-start; border-radius: 2px; font: 700 38px/1 var(--display); font-variant-numeric: tabular-nums; }
+.stats > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: 4px; padding: 12px 14px; border-inline-start: 2px solid var(--ink); min-width: 0; }
+.stats > div:first-child { border-inline-start: 0; }
+.stats dd { margin: 0; margin-inline-start: -4px; padding: 0 4px; align-self: flex-start; border-radius: 2px; font: 700 38px/1 var(--display); font-variant-numeric: tabular-nums; }
 .stats dt { font-size: 13px; line-height: 1.25; color: var(--ink2); }
 .bump { animation: bump 1.1s ease-out; }
 @keyframes bump { 0%, 30% { background: var(--marker); color: var(--on-marker); } 100% { background: transparent; } }
@@ -203,6 +268,7 @@ h1 .mark { position: relative; z-index: -1; }
 @keyframes evin { from { background: var(--marker); color: var(--on-marker); transform: translateY(-8px); } to { background: transparent; transform: none; } }
 .board-foot { padding: 10px 16px; border-top: 2px solid var(--ink); font-size: 13px; color: var(--ink2); }
 @media (max-width: 520px) {
+  [dir="rtl"] .board { margin-left: 8px; box-shadow: -8px 8px 0 0 var(--marker), -8px 8px 0 2px var(--marker-edge); }
   .board { margin-right: 8px; box-shadow: 8px 8px 0 0 var(--marker), 8px 8px 0 2px var(--marker-edge); }
   .stats > div { padding: 10px 8px; }
   .stats dd { font-size: 30px; }
@@ -267,9 +333,9 @@ h1 .mark { position: relative; z-index: -1; }
 .frame { position: relative; aspect-ratio: 4 / 3; max-width: 100%; border: 2px dashed var(--ink2); border-radius: 3px; background: var(--paper); display: flex; align-items: flex-end; padding: 4px 5px; font-size: 11px; line-height: 1.1; color: var(--ink2); overflow: hidden; }
 .frame .tick { position: absolute; top: 4px; right: 4px; }
 .frame svg { position: absolute; left: 10%; top: 18%; width: 62%; height: auto; color: var(--rule); }
-.odo { display: flex; gap: 3px; align-items: flex-end; flex-wrap: wrap; }
+.odo { display: flex; gap: 3px; align-items: flex-end; flex-wrap: wrap; direction: ltr; }
 .odo span { display: grid; place-items: center; width: 30px; height: 40px; background: var(--screen); color: var(--on-screen); font: 700 26px/1 var(--display); border-radius: 3px; }
-.odo em { font: 600 16px/1 var(--display); font-style: normal; margin-left: 6px; color: var(--ink2); }
+.odo em { font: 600 16px/1 var(--display); font-style: normal; margin-inline-start: 6px; color: var(--ink2); }
 .gauge { display: flex; align-items: center; gap: 8px; font: 600 15px/1 var(--display); }
 .gbar { flex: 1; height: 12px; border: 2px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--paper); }
 .gbar i { display: block; height: 100%; width: 72%; background: var(--ink); }
@@ -292,7 +358,7 @@ h1 .mark { position: relative; z-index: -1; }
 .doc i { display: block; height: 3px; background: var(--rule); border-radius: 2px; }
 .doc i:nth-child(2n) { width: 70%; }
 .mini { border-collapse: collapse; font-size: 13px; width: 100%; font-variant-numeric: tabular-nums; }
-.mini th { text-align: left; font-weight: 600; color: var(--ink2); padding: 0 6px 6px 0; border-bottom: 2px solid var(--ink); white-space: nowrap; }
+.mini th { text-align: start; font-weight: 600; color: var(--ink2); padding: 0 6px 6px 0; border-bottom: 2px solid var(--ink); white-space: nowrap; }
 .mini td { padding: 5px 6px 5px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 .mini td.up { color: var(--alert); font-weight: 600; }
 .mini td.dn { color: var(--ok); font-weight: 600; }
@@ -389,9 +455,9 @@ h1 .mark { position: relative; z-index: -1; }
 .need li .tick { margin-top: 3px; }
 .form-card { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
 .preview-note { margin: 16px 16px 0; padding: 12px 14px; border: 2px dashed var(--ink2); border-radius: var(--r); font-size: 14px; color: var(--ink2); }
-.stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: 16px 0 0; padding: 0; border-block: 2px solid var(--ink); }
-.stepper li { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-left: 2px solid var(--ink); font: 600 18px/1 var(--display); color: var(--ink2); min-width: 0; }
-.stepper li:first-child { border-left: 0; }
+.stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 16px 0 0; padding: 0; border-block: 2px solid var(--ink); }
+.stepper li { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-inline-start: 2px solid var(--ink); font: 600 18px/1 var(--display); color: var(--ink2); min-width: 0; }
+.stepper li:first-child { border-inline-start: 0; }
 .stepper .n { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; font-size: 15px; }
 .stepper li.done { color: var(--ink); }
 .stepper li.done .n { background: var(--ink); color: var(--paper); border-color: var(--ink); }
@@ -410,21 +476,12 @@ h1 .mark { position: relative; z-index: -1; }
 .field input[aria-invalid="true"] { border-color: var(--alert); }
 .err { color: var(--alert); font-size: 14px; }
 .hint { color: var(--ink2); font-size: 15px; }
-.plan-opts { display: grid; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
-.plan-opts legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.plan-opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 2px solid var(--ink); border-radius: var(--r); cursor: pointer; background: var(--paper); }
-.plan-opt input { width: 22px; height: 22px; margin: 0; accent-color: var(--ink); }
-.plan-opt b { display: block; font: 700 25px/1 var(--display); }
-.plan-opt .sub { font-size: 14px; color: var(--ink2); }
-.plan-opt .pp { font: 700 26px/1 var(--display); font-variant-numeric: tabular-nums; }
-.plan-opt .pp small { font: 400 13px var(--body); color: var(--ink2); }
-.plan-opt.on { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
-.plan-opt.on .sub, .plan-opt.on .pp small { color: var(--on-marker); }
-.plan-opt.on input { accent-color: var(--on-marker); }
 .check { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; cursor: pointer; }
 .check input { width: 22px; height: 22px; margin: 1px 0 0; flex: none; accent-color: var(--ink); }
 .actions { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.fit { border: 2px solid var(--amber); border-radius: var(--r); padding: 12px 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; font-size: 15px; }
+.fit { border: 2px solid var(--ink); background: var(--page); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; font-size: 15px; }
+.fit b { font: 700 22px/1.1 var(--display); }
+.fit a { font-weight: 500; }
 .summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 20px; margin: 0; font-size: 16px; }
 .summary dt { color: var(--ink2); }
 .summary dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
@@ -486,7 +543,7 @@ h1 .mark { position: relative; z-index: -1; }
   <div class="wrap top-in">
     <a class="brand" href="#hero" aria-label="Fratius Fleet management, back to the top">
       <svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><use href="#appicon"/></svg>
-      <span class="brand-text"><b>Fratius</b><small>Fleet management</small></span>
+      <span class="brand-text"><b translate="no">Fratius</b><small>Fleet management</small></span>
     </a>
     <nav class="nav" aria-label="Sections">
       <a href="#features">Features</a>
@@ -494,7 +551,14 @@ h1 .mark { position: relative; z-index: -1; }
       <a href="#download">Download</a>
       <a href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-marker btn-sm" href="#start"><span class="long">Start 30 days free</span><span class="short">Try free</span></a>
+    <div class="lang" id="lang" translate="no">
+      <div class="lang-bar" id="lang-bar"></div>
+      <div class="lang-menu" id="lang-menu" role="dialog" aria-labelledby="lang-menu-title" hidden>
+        <p class="lang-title" id="lang-menu-title"></p>
+        <div class="lang-grid" id="lang-grid"></div>
+      </div>
+    </div>
+    <a class="btn btn-marker btn-sm cta" href="#start"><span class="long">Start 30 days free</span><span class="short">Try free</span></a>
   </div>
 </header>
 
@@ -518,7 +582,7 @@ h1 .mark { position: relative; z-index: -1; }
 
     <div class="board" id="live" role="region" aria-label="Example of the live station board">
       <div class="board-head">
-        <div><span class="label">Station</span><strong class="station">Berlin Spandau</strong></div>
+        <div><span class="label">Station</span><strong class="station" translate="no">Berlin Spandau</strong></div>
         <div class="live"><span class="dot" aria-hidden="true"></span>Live <time id="clock">17:35</time></div>
       </div>
       <canvas id="pulse" class="pulse" aria-hidden="true"></canvas>
@@ -565,13 +629,13 @@ h1 .mark { position: relative; z-index: -1; }
           </div>
           <div class="slide-vis">
             <div class="mock" aria-label="Example answers">
-              <div class="mock-head"><span class="mock-title">Berlin Spandau</span><span class="pill ok">Live</span></div>
+              <div class="mock-head"><span class="mock-title" translate="no">Berlin Spandau</span><span class="pill ok">Live</span></div>
               <ul class="qlist">
-                <li><span class="q">Who has B-FC 2041 right now?</span><span class="a"><b>Andrei M.</b> since 05:45 <span class="pill ok">Proof on record</span></span></li>
-                <li><span class="q">Which vans are free?</span><span class="a"><span class="plate">B-FC 776</span><span class="plate">B-FC 1187</span><span class="plate">P-DL 552</span></span></li>
+                <li><span class="q">Who has B-FC 2041 right now?</span><span class="a"><b translate="no">Andrei M.</b> since 05:45 <span class="pill ok">Proof on record</span></span></li>
+                <li><span class="q">Which vans are free?</span><span class="a"><span class="plate" translate="no">B-FC 776</span><span class="plate" translate="no">B-FC 1187</span><span class="plate" translate="no">P-DL 552</span></span></li>
                 <li><span class="q">Was that the van's fuel card?</span><span class="a">Card ending 4471 matched · 62.4 l · €108.20</span></li>
                 <li><span class="q">What falls due this month?</span><span class="a">HU for 1 van · UVV for 4 · 2 licence checks</span></li>
-                <li><span class="q">Which van should see the workshop?</span><span class="a"><span class="plate">B-FC 3310</span> 14% more diesel than its twins</span></li>
+                <li><span class="q">Which van should see the workshop?</span><span class="a"><span class="plate" translate="no">B-FC 3310</span> 14% more diesel than its twins</span></li>
               </ul>
             </div>
           </div>
@@ -590,7 +654,7 @@ h1 .mark { position: relative; z-index: -1; }
           </div>
           <div class="slide-vis">
             <div class="mock" aria-label="Example pick-up screen">
-              <div class="mock-head"><span class="mock-title">Pick-up</span><span class="plate">B-FC 2041</span></div>
+              <div class="mock-head"><span class="mock-title">Pick-up</span><span class="plate" translate="no">B-FC 2041</span></div>
               <div class="frames" id="frames"></div>
               <div class="mock-foot"><span class="pill ok">Full photo set</span><span class="muted">05:45 · Andrei M.</span></div>
             </div>
@@ -610,10 +674,10 @@ h1 .mark { position: relative; z-index: -1; }
           </div>
           <div class="slide-vis">
             <div class="mock" aria-label="Example dashboard reading">
-              <div class="mock-head"><span class="mock-title">Tour start</span><span class="plate">B-FC 2041</span></div>
+              <div class="mock-head"><span class="mock-title">Tour start</span><span class="plate" translate="no">B-FC 2041</span></div>
               <div class="mcard">
                 <div class="odo" aria-label="Odometer 84,213 km"><span>0</span><span>8</span><span>4</span><span>2</span><span>1</span><span>3</span><em>km</em></div>
-                <div class="gauge" aria-label="Fuel about three quarters"><span>E</span><div class="gbar"><i></i></div><span>F</span></div>
+                <div class="gauge" aria-label="Fuel about three quarters"><span translate="no">E</span><div class="gbar"><i></i></div><span translate="no">F</span></div>
                 <div class="lights"><span class="pill amber">Warning light: AdBlue</span><span class="muted">Range 410 km</span></div>
               </div>
               <div class="mock-foot"><span class="btn btn-primary btn-sm fake">Confirm reading</span><span class="muted">Read from the photo</span></div>
@@ -659,7 +723,7 @@ h1 .mark { position: relative; z-index: -1; }
           </div>
           <div class="slide-vis">
             <div class="mock" aria-label="Example review list">
-              <div class="mock-head"><span class="mock-title">Review</span><span class="muted">Berlin Spandau</span></div>
+              <div class="mock-head"><span class="mock-title">Review</span><span class="muted" translate="no">Berlin Spandau</span></div>
               <ul class="rlist">
                 <li><span>Damage to approve</span><b>2</b></li>
                 <li><span>Missing proof</span><b class="hot">1</b></li>
@@ -685,12 +749,12 @@ h1 .mark { position: relative; z-index: -1; }
           </div>
           <div class="slide-vis">
             <div class="ledger band" role="table" aria-label="Example history of van B-FC 2041">
-              <div class="ledger-head" role="row"><span class="plate">B-FC 2041</span><strong role="columnheader">Week 43</strong></div>
-              <div class="lrow" role="row"><span class="lday" role="cell">Tue 20 Oct</span><span class="lwho" role="cell"><b>Andrei M.</b><span>05:47 → 17:03</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
-              <div class="lrow" role="row"><span class="lday" role="cell">Wed 21 Oct</span><span class="lwho" role="cell"><b>Elif D.</b><span>06:02 → 17:10</span></span><span class="lproof" role="cell"><span class="pill">Video</span><span class="pill">Video</span></span></div>
-              <div class="lrow hit" role="row"><span class="lday" role="cell">Thu 22 Oct</span><span class="lwho" role="cell"><b>Mehmet Y.</b><span>05:51 → 16:38</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span>
+              <div class="ledger-head" role="row"><span class="plate" translate="no">B-FC 2041</span><strong role="columnheader">Week 43</strong></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Tue 20 Oct</span><span class="lwho" role="cell"><b translate="no">Andrei M.</b><span>05:47 → 17:03</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Wed 21 Oct</span><span class="lwho" role="cell"><b translate="no">Elif D.</b><span>06:02 → 17:10</span></span><span class="lproof" role="cell"><span class="pill">Video</span><span class="pill">Video</span></span></div>
+              <div class="lrow hit" role="row"><span class="lday" role="cell">Thu 22 Oct</span><span class="lwho" role="cell"><b translate="no">Mehmet Y.</b><span>05:51 → 16:38</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span>
                 <span class="lnote" role="cell"><span class="pill mk">New damage</span>Sliding door, found at drop-off. Photos kept 90 days.</span></div>
-              <div class="lrow" role="row"><span class="lday" role="cell">Fri 23 Oct</span><span class="lwho" role="cell"><b>Andrei M.</b><span>05:40 → 16:21</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
+              <div class="lrow" role="row"><span class="lday" role="cell">Fri 23 Oct</span><span class="lwho" role="cell"><b translate="no">Andrei M.</b><span>05:40 → 16:21</span></span><span class="lproof" role="cell"><span class="pill">Photos</span><span class="pill">Photos</span></span></div>
               <div class="ledger-foot">
                 <svg width="18" height="20" viewBox="0 0 18 20" aria-hidden="true"><rect x="2" y="8" width="14" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 8V5.5a4 4 0 0 1 8 0V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                 Records written by the server. No edits, no deletes.
@@ -713,14 +777,14 @@ h1 .mark { position: relative; z-index: -1; }
               <div class="mcard row-card">
                 <span class="hu" id="hu"></span>
                 <div class="vlist">
-                  <div><b>HU</b> March 2027</div>
-                  <div><b>UVV</b> 12 Nov</div>
+                  <div><b translate="no">HU</b> March 2027</div>
+                  <div><b translate="no">UVV</b> 12 Nov</div>
                   <div><b>Service</b> at 90,000 km</div>
                   <div><span class="pill amber">Due soon</span></div>
                 </div>
               </div>
               <div class="mcard">
-                <div class="mock-head"><span class="mock-title">Ivana P.</span><span class="pill ok">Licence check fine</span></div>
+                <div class="mock-head"><span class="mock-title" translate="no">Ivana P.</span><span class="pill ok">Licence check fine</span></div>
                 <div class="vlist">
                   <div><b>Classes</b> B, C1 · valid to 2031</div>
                   <div><b>Next check</b> April 2027</div>
@@ -746,7 +810,7 @@ h1 .mark { position: relative; z-index: -1; }
               <div class="mcard row-card">
                 <div class="doc" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
                 <div class="vlist">
-                  <div><b>Fahrzeugschein</b></div>
+                  <div><b translate="no">Fahrzeugschein</b></div>
                   <div><span class="tick" aria-hidden="true"></span>VIN</div>
                   <div><span class="tick" aria-hidden="true"></span>First registration</div>
                   <div><span class="tick" aria-hidden="true"></span>HU due</div>
@@ -756,9 +820,9 @@ h1 .mark { position: relative; z-index: -1; }
                 <table class="mini" aria-label="Example driver table">
                   <thead><tr><th>Driver</th><th>km</th><th>l/100</th><th>vs model</th></tr></thead>
                   <tbody>
-                    <tr><td>Andrei M.</td><td>2,140</td><td>10.8</td><td class="dn">−3%</td></tr>
-                    <tr><td>Elif D.</td><td>1,860</td><td>11.1</td><td>±0%</td></tr>
-                    <tr><td>Mehmet Y.</td><td>1,980</td><td>12.1</td><td class="up">+9%</td></tr>
+                    <tr><td translate="no">Andrei M.</td><td data-n="2140">2,140</td><td data-n="10.8">10.8</td><td class="dn">−3%</td></tr>
+                    <tr><td translate="no">Elif D.</td><td data-n="1860">1,860</td><td data-n="11.1">11.1</td><td>±0%</td></tr>
+                    <tr><td translate="no">Mehmet Y.</td><td data-n="1980">1,980</td><td data-n="12.1">12.1</td><td class="up">+9%</td></tr>
                   </tbody>
                 </table>
                 <div class="mock-foot"><span class="muted">Last 30 days</span><span class="btn btn-sm fake">Download for Excel</span></div>
@@ -866,8 +930,8 @@ h1 .mark { position: relative; z-index: -1; }
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Pricing</p>
-      <h2>Pick a plan by stations. Try it 30 days free.</h2>
-      <p class="sec-lede">Every plan comes with every feature. The only difference is how many stations you run.</p>
+      <h2>Pick a plan by the size of your fleet. Try it 30 days free.</h2>
+      <p class="sec-lede">Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.</p>
     </div>
     <div class="plans" id="plans"></div>
     <div class="includes">
@@ -897,7 +961,7 @@ h1 .mark { position: relative; z-index: -1; }
       <div class="sec-head" style="margin-bottom:0">
         <p class="eyebrow">Sign up</p>
         <h2>Start your 30 days</h2>
-        <p class="sec-lede">Three short steps: pick a plan, tell us about your company, send. Nothing is charged now; we email you how to start.</p>
+        <p class="sec-lede">Two short steps: tell us about your company, then send. Your plan follows from the number of vans. Nothing is charged now; we email you how to start.</p>
       </div>
       <ul class="need">
         <li><span class="tick" aria-hidden="true"></span>Your company's name and country</li>
@@ -909,28 +973,16 @@ h1 .mark { position: relative; z-index: -1; }
     <form class="form-card" id="signup" novalidate>
       <p class="preview-note" id="preview-note" hidden>Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.</p>
       <ol class="stepper" aria-label="Sign-up steps">
-        <li data-s="1"><span class="n">1</span>Plan</li>
-        <li data-s="2"><span class="n">2</span>Company</li>
-        <li data-s="3"><span class="n">3</span>Send</li>
+        <li data-s="1"><span class="n">1</span>Company</li>
+        <li data-s="2"><span class="n">2</span>Send</li>
       </ol>
 
       <div class="step-pane" data-step="1">
-        <h3 tabindex="-1">Choose your plan</h3>
-        <fieldset class="plan-opts" id="plan-opts">
-          <legend>Plan</legend>
-        </fieldset>
-        <label class="check" for="f-ai"><input type="checkbox" id="f-ai" name="aiWaitlist"> Tell me when AI damage detection is ready</label>
-        <div class="actions"><span></span><button class="btn btn-primary" type="button" data-go="2">Continue</button></div>
-      </div>
-
-      <div class="step-pane" data-step="2" hidden>
         <h3 tabindex="-1">Your company</h3>
         <div class="fields">
           <div class="field full"><label for="f-company">Company name</label><input id="f-company" name="company" autocomplete="organization"><span class="err" id="e-company" hidden></span></div>
           <div class="field"><label for="f-country">Country</label>
             <select id="f-country" name="country" autocomplete="country-name">
-              <option>Germany</option><option>Austria</option><option>Switzerland</option><option>Netherlands</option><option>Belgium</option>
-              <option>France</option><option>Italy</option><option>Spain</option><option>Poland</option><option>United Kingdom</option><option>Ireland</option><option>Other</option>
             </select>
           </div>
           <div class="field"><label for="f-stations">Stations</label><input id="f-stations" name="stations" inputmode="numeric" autocomplete="off" placeholder="1"><span class="err" id="e-stations" hidden></span></div>
@@ -940,11 +992,11 @@ h1 .mark { position: relative; z-index: -1; }
           <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" autocomplete="email"><span class="err" id="e-email" hidden></span></div>
           <div class="field full"><label for="f-phone">Mobile number</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="+49 151 2345 6789"><span class="err" id="e-phone" hidden></span></div>
         </div>
-        <div class="fit" id="fit" hidden></div>
-        <div class="actions"><button class="btn" type="button" data-go="1">Back</button><button class="btn btn-primary" type="button" data-go="3">Continue</button></div>
+        <div class="fit" id="fit" aria-live="polite" hidden></div>
+        <div class="actions"><span></span><button class="btn btn-primary" type="button" data-go="2">Continue</button></div>
       </div>
 
-      <div class="step-pane" data-step="3" hidden>
+      <div class="step-pane" data-step="2" hidden>
         <h3 tabindex="-1">Check and send</h3>
         <dl class="summary" id="summary"></dl>
         <div class="pay" id="pay" hidden>
@@ -953,13 +1005,14 @@ h1 .mark { position: relative; z-index: -1; }
         </div>
         <p class="hint" id="next-text">Nothing is charged now. We set up your company and email you how to start your 30 days.</p>
         <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
+        <label class="check" for="f-ai"><input type="checkbox" id="f-ai" name="aiWaitlist"> Tell me when AI damage detection is ready</label>
         <label class="check" for="f-terms"><input type="checkbox" id="f-terms" name="terms"> <span id="terms-text">I have read the privacy policy.</span></label>
         <span class="err" id="e-terms" hidden></span>
         <span class="err" id="e-send" hidden></span>
-        <div class="actions"><button class="btn" type="button" data-go="2">Back</button><button class="btn btn-marker" type="submit" id="submit">Send request</button></div>
+        <div class="actions"><button class="btn" type="button" data-go="1">Back</button><button class="btn btn-marker" type="submit" id="submit">Send request</button></div>
       </div>
 
-      <div class="step-pane" data-step="4" hidden>
+      <div class="step-pane" data-step="3" hidden>
         <div class="done-box">
           <h3 tabindex="-1" class="big" id="done-title">Done</h3>
           <p id="done-text"></p>
@@ -993,30 +1046,34 @@ h1 .mark { position: relative; z-index: -1; }
 <footer class="foot">
   <div class="wrap foot-grid">
     <div style="display:grid;gap:10px">
-      <a class="brand" href="#hero"><svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><use href="#appicon"/></svg><span class="brand-text"><b>Fratius</b><small>Fleet management</small></span></a>
+      <a class="brand" href="#hero"><svg class="logo" viewBox="0 0 1024 1024" aria-hidden="true"><use href="#appicon"/></svg><span class="brand-text"><b translate="no">Fratius</b><small>Fleet management</small></span></a>
       <p>Handovers, damage and van history for delivery partners who run their own vans.</p>
     </div>
     <div style="display:grid;gap:10px;justify-items:start">
       <nav class="legal" id="legal" aria-label="Legal"></nav>
       <p>Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.</p>
-      <p>© <span id="year">2026</span> Fratius</p>
+      <p translate="no">© <span id="year">2026</span> Fratius</p>
     </div>
   </div>
 </footer>
 
 <script>
-(() => {
+(async () => {
+  /* Texts in the script are English and translated where they're shown: t('...') there, N_('...') where a text
+     is only defined (lists, settings). scripts/site-i18n.mjs finds both, and every text node of the page. */
+  const N_ = (s) => s;
+
   /* ───────── Everything you'll want to change lives here ───────── */
   const CONFIG = {
     currency: 'EUR',
     trialDays: 30,
-    priceNote: 'Prices per month, excluding VAT. 30 days free on every plan.',
+    priceNote: N_('Prices per month, excluding VAT. 30 days free on every plan.'),
     plans: [
-      { id: 'basic', name: 'Basic', price: 35, stations: 3 },
-      { id: 'pro', name: 'Pro', price: 70, stations: 10 },
-      { id: 'premium', name: 'Premium', price: 140, stations: null }, // null = unlimited
+      { id: 'basic', name: 'Basic', price: 40, vans: 50 },
+      { id: 'pro', name: 'Pro', price: 90, vans: 150 },
+      { id: 'premium', name: 'Premium', price: 200, vans: null }, // null = unlimited
     ],
-    aiPlan: { name: 'AI damage detection', text: 'Automatic damage checks on every walk-around. Price to follow.' },
+    aiPlan: { name: N_('AI damage detection'), text: N_('Automatic damage checks on every walk-around. Price to follow.') },
     stores: {
       appStore: null,     // App Store link once the iPhone app is live
       googlePlay: null,   // Google Play link once the Android app is live
@@ -1031,13 +1088,68 @@ h1 .mark { position: relative; z-index: -1; }
     legal: { imprint: '/impressum', privacy: '/datenschutz', appPrivacy: '/app-privacy', deleteAccount: '/delete-account', terms: null }, // Impressum, Datenschutz, AGB
   };
 
+  /* The 32 languages of the app, by their own names. */
+  const LANGS = [['en', 'English'], ['de', 'Deutsch'], ['fr', 'Français'], ['es', 'Español'], ['it', 'Italiano'], ['pt', 'Português'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['ro', 'Română'], ['bg', 'Български'], ['cs', 'Čeština'], ['sk', 'Slovenčina'], ['hu', 'Magyar'], ['hr', 'Hrvatski'], ['sr', 'Srpski'], ['sl', 'Slovenščina'], ['sq', 'Shqip'], ['el', 'Ελληνικά'], ['lt', 'Lietuvių'], ['lv', 'Latviešu'], ['et', 'Eesti'], ['fi', 'Suomi'], ['sv', 'Svenska'], ['da', 'Dansk'], ['nb', 'Norsk'], ['tr', 'Türkçe'], ['ru', 'Русский'], ['uk', 'Українська'], ['ar', 'العربية'], ['fa', 'فارسی'], ['hi', 'हिन्दी'], ['vi', 'Tiếng Việt']];
+  const RTL = ['ar', 'fa'];
+  const LOCALE = { en: 'en-GB', nb: 'nb-NO', sr: 'sr-Latn-RS', ar: 'ar-u-nu-latn', fa: 'fa-u-nu-latn' };
+  /* Texts that only exist outside this page: the page title, the description, and the form's server answers. */
+  const PAGE_TITLE = N_('Fratius · Fleet management for delivery partners');
+  const PAGE_DESC = N_('Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.');
+  N_('Pick a plan.'); N_('Enter your first and last name.'); N_('Send the form from the website.'); N_('Too many requests today. Write to info@fratius.com instead.');
+
+  const boot = window.__fratiusLang || { lang: 'en', detected: 'en', load: () => Promise.resolve({}), dict: Promise.resolve({}) };
+  const cache = {};
+  let lang = boot.lang;
+  let dict = await boot.dict.catch(() => ({}));
+  cache[lang] = dict;
+
+  const t = (key, vars) => {
+    const s = typeof dict[key] === 'string' && dict[key] ? dict[key] : key;
+    return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
+  };
+  const loc = () => LOCALE[lang] || lang;
+
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = (n) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CONFIG.currency, maximumFractionDigits: 0 }).format(n);
+  const money = (n) => new Intl.NumberFormat(loc(), { style: 'currency', currency: CONFIG.currency, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 }).format(n);
+  const num = (n) => new Intl.NumberFormat(loc(), { maximumFractionDigits: 1 }).format(n);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const limitText = (p) => (p.stations ? `Up to ${p.stations} stations` : 'Unlimited stations');
-  const hhmm = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const limitText = (p) => (p.vans ? t('Up to {n} vans', { n: num(p.vans) }) : t('Unlimited vans'));
+  const hhmm = (d) => d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' });
+
+  /* ───────── The page's own texts: every text node and label, with its English kept to switch back ───────── */
+  const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  const nodes = [];
+  const attrs = [];
+  {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement && !n.parentElement.closest('script, style, [translate="no"]') && /\p{L}/u.test(n.nodeValue)
+        ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+    });
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const v = n.nodeValue;
+      nodes.push({ n, key: norm(v), lead: v.match(/^\s*/)[0], trail: v.match(/\s*$/)[0] });
+    }
+    for (const el of $$('[aria-label], [placeholder], [title], [alt]')) {
+      if (el.closest('[translate="no"]')) continue;
+      for (const a of ['aria-label', 'placeholder', 'title', 'alt']) {
+        const v = el.getAttribute(a);
+        if (v && /\p{L}/u.test(v)) attrs.push({ el, a, key: norm(v) });
+      }
+    }
+  }
+  const descMeta = $('meta[name="description"]');
+  function translatePage() {
+    for (const x of nodes) x.n.nodeValue = x.lead + t(x.key) + x.trail;
+    for (const x of attrs) x.el.setAttribute(x.a, t(x.key));
+    $$('[data-n]').forEach((el) => { el.textContent = num(+el.dataset.n); });
+    document.title = t(PAGE_TITLE);
+    if (descMeta) descMeta.content = t(PAGE_DESC);
+    const h = document.documentElement;
+    h.lang = lang;
+    h.dir = RTL.includes(lang) ? 'rtl' : 'ltr';
+  }
 
   /* ───────── In-page links (also pick the plan when a pricing button is used) ───────── */
   document.addEventListener('click', (e) => {
@@ -1051,53 +1163,59 @@ h1 .mark { position: relative; z-index: -1; }
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
-  /* ───────── Pricing, store buttons, legal links, languages ───────── */
-  $('#plans').innerHTML = CONFIG.plans.map((p) => `
-    <article class="plan">
-      <h3>${esc(p.name)}</h3>
-      <p class="limit">${limitText(p)}</p>
-      <p class="price"><b>${money(p.price)}</b><span>a month</span></p>
-      <p><span class="pill mk">${CONFIG.trialDays} days free</span></p>
-      <a class="btn btn-marker" href="#start" data-plan="${p.id}">Start with ${esc(p.name)}</a>
-    </article>`).join('') + `
-    <article class="plan ai">
-      <h3>${esc(CONFIG.aiPlan.name)}</h3>
-      <p class="limit">Its own plan</p>
-      <p class="price"><b>Coming soon</b></p>
-      <p class="desc">${esc(CONFIG.aiPlan.text)}</p>
-      <a class="btn" href="#start" data-waitlist="1">Tell me when it's ready</a>
-    </article>`;
-  $('#price-note').textContent = CONFIG.priceNote;
+  /* ───────── Pricing (the only place prices are shown), store buttons, legal links ───────── */
+  function renderPlans() {
+    $('#plans').innerHTML = CONFIG.plans.map((p) => `
+      <article class="plan">
+        <h3 translate="no">${esc(p.name)}</h3>
+        <p class="limit">${esc(limitText(p))}</p>
+        <p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>
+        <p><span class="pill mk">${esc(t('{n} days free', { n: CONFIG.trialDays }))}</span></p>
+        <a class="btn btn-marker" href="#start" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
+      </article>`).join('') + `
+      <article class="plan ai">
+        <h3>${esc(t(CONFIG.aiPlan.name))}</h3>
+        <p class="limit">${esc(t('Its own plan'))}</p>
+        <p class="price"><b>${esc(t('Coming soon'))}</b></p>
+        <p class="desc">${esc(t(CONFIG.aiPlan.text))}</p>
+        <a class="btn" href="#start" data-waitlist="1">${esc(t("Tell me when it's ready"))}</a>
+      </article>`;
+    $('#price-note').textContent = t(CONFIG.priceNote);
+  }
 
   const phone = '<svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="1.5" width="22" height="31" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 28h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
   const store = (url, before, name) => url
-    ? `<a class="store" href="${esc(url)}" target="_blank" rel="noopener">${phone}<span><small>${before.live}</small><b>${name}</b></span></a>`
-    : `<span class="store soon" aria-label="${name}: coming soon">${phone}<span><small>${before.soon}</small><b>${name}</b></span></span>`;
-  $('#stores').innerHTML =
-    store(CONFIG.stores.appStore, { live: 'Download on the', soon: 'Coming soon to the' }, 'App Store') +
-    store(CONFIG.stores.googlePlay, { live: 'Get it on', soon: 'Coming soon on' }, 'Google Play') +
-    (CONFIG.stores.webApp ? `<a class="btn btn-lg" href="${esc(CONFIG.stores.webApp)}" target="_blank" rel="noopener">Open the web app</a>` : '');
-  $('#webapp-note').textContent = CONFIG.stores.webApp
-    ? 'Until then, Fratius runs as a web app: open it in the phone\'s browser and add it to the home screen.'
-    : '';
-
-  const legal = [['imprint', 'Impressum'], ['privacy', 'Privacy'], ['appPrivacy', 'App privacy'], ['deleteAccount', 'Delete account'], ['terms', 'Terms']].filter(([k]) => CONFIG.legal[k]);
-  $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${label}</a>`).join('')
-    + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
+    ? `<a class="store" href="${esc(url)}" target="_blank" rel="noopener">${phone}<span><small>${esc(t(before.live))}</small><b>${name}</b></span></a>`
+    : `<span class="store soon" aria-label="${esc(t('{store}: coming soon', { store: name }))}">${phone}<span><small>${esc(t(before.soon))}</small><b>${name}</b></span></span>`;
+  function renderLinks() {
+    $('#stores').innerHTML =
+      store(CONFIG.stores.appStore, { live: N_('Download on the'), soon: N_('Coming soon to the') }, 'App Store') +
+      store(CONFIG.stores.googlePlay, { live: N_('Get it on'), soon: N_('Coming soon on') }, 'Google Play') +
+      (CONFIG.stores.webApp ? `<a class="btn btn-lg" href="${esc(CONFIG.stores.webApp)}" target="_blank" rel="noopener">${esc(t('Open the web app'))}</a>` : '');
+    $('#webapp-note').textContent = CONFIG.stores.webApp
+      ? t("Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.")
+      : '';
+    // The legal pages themselves stay in German and English: they are the binding versions.
+    const legal = [['imprint', 'Impressum'], ['privacy', N_('Privacy')], ['appPrivacy', N_('App privacy')], ['deleteAccount', N_('Delete account')], ['terms', N_('Terms')]].filter(([k]) => CONFIG.legal[k]);
+    $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${esc(k === 'imprint' ? label : t(label))}</a>`).join('')
+      + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
+    const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+    if (CONFIG.legal.privacy && !CONFIG.legal.terms) {
+      $('#terms-text').innerHTML = esc(t('I have read the {privacy}.')).replace('{privacy}', link(CONFIG.legal.privacy, t('privacy policy')));
+    } else if (CONFIG.legal.terms && CONFIG.legal.privacy) {
+      $('#terms-text').innerHTML = esc(t('I agree to the {terms} and the {privacy}.')).replace('{terms}', link(CONFIG.legal.terms, t('terms'))).replace('{privacy}', link(CONFIG.legal.privacy, t('privacy policy')));
+    }
+  }
   $('#pay').hidden = !CONFIG.signup.payment;
   $('#next-text').hidden = !!CONFIG.signup.payment;
-  if (CONFIG.legal.privacy && !CONFIG.legal.terms) {
-    $('#terms-text').innerHTML = `I have read the <a href="${esc(CONFIG.legal.privacy)}" target="_blank" rel="noopener">privacy policy</a>.`;
-  } else if (CONFIG.legal.terms && CONFIG.legal.privacy) {
-    $('#terms-text').innerHTML = `I agree to the <a href="${esc(CONFIG.legal.terms)}" target="_blank" rel="noopener">terms</a> and the <a href="${esc(CONFIG.legal.privacy)}" target="_blank" rel="noopener">privacy policy</a>.`;
-  }
   $('#year').textContent = new Date().getFullYear();
 
-  const LANGS = [['en', 'English'], ['de', 'Deutsch'], ['fr', 'Français'], ['es', 'Español'], ['it', 'Italiano'], ['pt', 'Português'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['ro', 'Română'], ['bg', 'Български'], ['cs', 'Čeština'], ['sk', 'Slovenčina'], ['hu', 'Magyar'], ['hr', 'Hrvatski'], ['sr', 'Srpski'], ['sl', 'Slovenščina'], ['sq', 'Shqip'], ['el', 'Ελληνικά'], ['lt', 'Lietuvių'], ['lv', 'Latviešu'], ['et', 'Eesti'], ['fi', 'Suomi'], ['sv', 'Svenska'], ['da', 'Dansk'], ['nb', 'Norsk'], ['tr', 'Türkçe'], ['ru', 'Русский'], ['uk', 'Українська'], ['ar', 'العربية', 1], ['fa', 'فارسی', 1], ['hi', 'हिन्दी'], ['vi', 'Tiếng Việt']];
-  $('#langs').innerHTML = LANGS.map(([c, n, rtl]) => `<li lang="${c}"${rtl ? ' dir="rtl"' : ''}>${n}</li>`).join('');
+  $('#langs').innerHTML = LANGS.map(([c, n]) => `<li lang="${c}"${RTL.includes(c) ? ' dir="rtl"' : ''}>${n}</li>`).join('');
 
-  const FRAMES = ['Front', 'Front left', 'Left side', 'Rear left', 'Rear', 'Rear right', 'Right side', 'Front right'];
-  $('#frames').innerHTML = FRAMES.map((f) => `<span class="frame"><svg aria-hidden="true" viewBox="130 300 760 420"><use href="#van"/></svg><span class="tick" aria-hidden="true"></span>${f}</span>`).join('');
+  const FRAMES = [N_('Front'), N_('Front left'), N_('Left side'), N_('Rear left'), N_('Rear'), N_('Rear right'), N_('Right side'), N_('Front right')];
+  const renderFrames = () => {
+    $('#frames').innerHTML = FRAMES.map((f) => `<span class="frame"><svg aria-hidden="true" viewBox="130 300 760 420"><use href="#van"/></svg><span class="tick" aria-hidden="true"></span>${esc(t(f))}</span>`).join('');
+  };
 
   /* The German inspection sticker, drawn the way the app draws it (colour by year, due month at the top). */
   function huSticker(year, month, size) {
@@ -1105,53 +1223,96 @@ h1 .mark { position: relative; z-index: -1; }
     const fill = COLS[(((year - 2023) % 6) + 6) % 6];
     const ink = fill === '#2F6FC6' || fill === '#8A5A33' ? '#FFFFFF' : '#000000';
     const r = size / 2;
-    let t = '';
+    let tx = '';
     for (let i = 0; i < 12; i++) {
       const k = ((month - 1 + i) % 12) + 1;
       const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
-      t += `<text x="${(r + Math.cos(a) * r * 0.74).toFixed(1)}" y="${(r + Math.sin(a) * r * 0.74 + size * 0.045).toFixed(1)}" font-size="${(size * (i ? 0.12 : 0.16)).toFixed(1)}" font-weight="${i ? 500 : 700}" fill="${ink}" text-anchor="middle">${k}</text>`;
+      tx += `<text x="${(r + Math.cos(a) * r * 0.74).toFixed(1)}" y="${(r + Math.sin(a) * r * 0.74 + size * 0.045).toFixed(1)}" font-size="${(size * (i ? 0.12 : 0.16)).toFixed(1)}" font-weight="${i ? 500 : 700}" fill="${ink}" text-anchor="middle">${k}</text>`;
     }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Inspection sticker due ${month}/${year}"><circle cx="${r}" cy="${r}" r="${r - 1}" fill="${fill}" stroke="#000" stroke-width="2"/><circle cx="${r}" cy="${r}" r="${r * 0.52}" fill="none" stroke="${ink}" stroke-width="1" opacity=".5"/>${t}<text x="${r}" y="${r + size * 0.11}" font-size="${size * 0.3}" font-weight="700" fill="${ink}" text-anchor="middle">${String(year).slice(2)}</text></svg>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${esc(t('HU sticker, due {date}', { date: `${month}/${year}` }))}"><circle cx="${r}" cy="${r}" r="${r - 1}" fill="${fill}" stroke="#000" stroke-width="2"/><circle cx="${r}" cy="${r}" r="${r * 0.52}" fill="none" stroke="${ink}" stroke-width="1" opacity=".5"/>${tx}<text x="${r}" y="${r + size * 0.11}" font-size="${size * 0.3}" font-weight="700" fill="${ink}" text-anchor="middle">${String(year).slice(2)}</text></svg>`;
   }
-  $('#hu').innerHTML = huSticker(2027, 3, 84);
+  const renderHu = () => { $('#hu').innerHTML = huSticker(2027, 3, 84); };
+
+  /* ───────── Language switcher: the visitor's language first, English next to it, then all languages ───────── */
+  const langName = (c) => (LANGS.find(([k]) => k === c) || [c, c])[1];
+  const bar = $('#lang-bar');
+  const menu = $('#lang-menu');
+  const globe = '<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2 10h16M10 2c2.4 2.2 3.4 5 3.4 8s-1 5.8-3.4 8M10 2C7.6 4.2 6.6 7 6.6 10s1 5.8 3.4 8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  function renderSwitcher() {
+    const first = lang !== 'en' ? lang : boot.detected !== 'en' ? boot.detected : null;
+    const pair = first ? [first, 'en'] : ['en'];
+    bar.innerHTML = pair.map((c) => `<button class="lb" type="button" data-lang="${c}" lang="${c}" aria-pressed="${c === lang}" aria-label="${esc(langName(c))}"><span class="name">${esc(langName(c))}</span><span class="code">${c}</span></button>`).join('')
+      + `<button class="lb more" type="button" aria-expanded="${!menu.hidden}" aria-controls="lang-menu" aria-label="${esc(t('All languages'))}" title="${esc(t('All languages'))}">${globe}</button>`;
+    $('#lang-menu-title').textContent = t('Choose a language');
+    $('#lang-grid').innerHTML = LANGS.map(([c, n]) => `<button type="button" data-lang="${c}" lang="${c}"${RTL.includes(c) ? ' dir="rtl"' : ''} aria-current="${c === lang}">${esc(n)}</button>`).join('');
+  }
+  const openMenu = (open) => {
+    menu.hidden = !open;
+    const more = $('.lb.more', bar);
+    if (more) more.setAttribute('aria-expanded', String(open));
+    if (open) ($('[aria-current="true"]', menu) || $('button', menu)).focus();
+  };
+  $('#lang').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.classList.contains('more')) { openMenu(menu.hidden); return; }
+    if (b.dataset.lang) { openMenu(false); setLang(b.dataset.lang, true); }
+  });
+  document.addEventListener('click', (e) => { if (!menu.hidden && !e.target.closest('#lang')) openMenu(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { openMenu(false); $('.lb.more', bar).focus(); } });
+
+  async function setLang(c, chosen) {
+    if (!LANGS.some(([k]) => k === c)) return;
+    if (!(c in cache)) cache[c] = await boot.load(c).catch(() => ({}));
+    lang = c;
+    dict = cache[c];
+    if (chosen) {
+      try { localStorage.setItem('fratius.lang', c); } catch (e) { /* private mode: the choice lasts for this visit */ }
+      try { const u = new URL(location.href); if (u.searchParams.has('lang')) { u.searchParams.set('lang', c); history.replaceState(null, '', u); } } catch (e) { /* ignore */ }
+    }
+    renderAll();
+  }
 
   /* ───────── Live board (example data) ───────── */
   const EVENTS = [
-    { plate: 'B-FC 2041', text: 'Picked up by Andrei M.', pill: ['Full photo set', 'ok'], d: { out: 1, free: -1 } },
-    { plate: 'B-FC 2041', text: 'Tour started at 84,213 km', pill: ['Dashboard read', ''], d: {} },
-    { plate: 'B-FC 1187', text: 'Refuel 62.4 l · €108.20', pill: ['Card matched', 'ok'], d: {} },
-    { plate: 'B-FC 3310', text: 'Wrong fuel card, driver waiting', pill: ['At the pump', 'bad'], d: { pump: 1, review: 1 } },
-    { plate: 'B-FC 3310', text: 'Refuel allowed by Sofia K.', pill: ['Allowed', 'ok'], d: { pump: -1, review: -1 } },
-    { plate: 'P-DL 552', text: 'Warning light: AdBlue', pill: ['Check', 'amber'], d: { review: 1 } },
-    { plate: 'B-FC 776', text: 'Dropped off by Elif D.', pill: ['Video 1:12', 'ok'], d: { out: -1, free: 1 } },
-    { plate: 'B-FC 4120', text: 'Damage approved: rear left door', pill: ['#4 on record', 'solid'], d: { review: -1 } },
-    { plate: 'B-FC 1187', text: 'Taken over from Lukas B.', pill: ['Full photo set', 'ok'], d: {} },
-    { plate: 'B-FC 2958', text: 'Tour ended · 138 km · 9 h 05', pill: ['11.4 l/100 km', ''], d: {} },
-    { plate: 'B-FC 776', text: 'Picked up by Tomasz W.', pill: ['Full photo set', 'ok'], d: { out: 1, free: -1 } },
-    { plate: 'P-DL 552', text: 'HU due in March', pill: ['Due soon', 'amber'], d: {} },
-    { plate: 'B-FC 3310', text: 'Dropped off without proof', pill: ['Missing proof', 'bad'], d: { out: -1, free: 1, review: 1 } },
-    { plate: 'B-FC 3310', text: 'Handover video added by Sofia K.', pill: ['Proof added', 'ok'], d: { review: -1 } },
+    { plate: 'B-FC 2041', text: N_('Picked up by Andrei M.'), pill: [N_('Full photo set'), 'ok'], d: { out: 1, free: -1 } },
+    { plate: 'B-FC 2041', text: N_('Tour started at 84,213 km'), pill: [N_('Dashboard read'), ''], d: {} },
+    { plate: 'B-FC 1187', text: N_('Refuel 62.4 l · €108.20'), pill: [N_('Card matched'), 'ok'], d: {} },
+    { plate: 'B-FC 3310', text: N_('Wrong fuel card, driver waiting'), pill: [N_('At the pump'), 'bad'], d: { pump: 1, review: 1 } },
+    { plate: 'B-FC 3310', text: N_('Refuel allowed by Sofia K.'), pill: [N_('Allowed'), 'ok'], d: { pump: -1, review: -1 } },
+    { plate: 'P-DL 552', text: N_('Warning light: AdBlue'), pill: [N_('Check'), 'amber'], d: { review: 1 } },
+    { plate: 'B-FC 776', text: N_('Dropped off by Elif D.'), pill: [N_('Video 1:12'), 'ok'], d: { out: -1, free: 1 } },
+    { plate: 'B-FC 4120', text: N_('Damage approved: rear left door'), pill: [N_('#4 on record'), 'solid'], d: { review: -1 } },
+    { plate: 'B-FC 1187', text: N_('Taken over from Lukas B.'), pill: [N_('Full photo set'), 'ok'], d: {} },
+    { plate: 'B-FC 2958', text: N_('Tour ended · 138 km · 9 h 05'), pill: [N_('11.4 l/100 km'), ''], d: {} },
+    { plate: 'B-FC 776', text: N_('Picked up by Tomasz W.'), pill: [N_('Full photo set'), 'ok'], d: { out: 1, free: -1 } },
+    { plate: 'P-DL 552', text: N_('HU due in March'), pill: [N_('Due soon'), 'amber'], d: {} },
+    { plate: 'B-FC 3310', text: N_('Dropped off without proof'), pill: [N_('Missing proof'), 'bad'], d: { out: -1, free: 1, review: 1 } },
+    { plate: 'B-FC 3310', text: N_('Handover video added by Sofia K.'), pill: [N_('Proof added'), 'ok'], d: { review: -1 } },
   ];
   const stats = { out: 21, free: 3, pump: 0, review: 2 };
   const feed = $('#feed');
+  let shown = []; // [event, time] newest first, so a language switch can redraw them
   const row = (ev, when, fresh) => {
     const li = document.createElement('li');
     li.className = 'ev' + (fresh ? ' new' : '');
-    li.innerHTML = `<time>${hhmm(when)}</time><span class="plate">${ev.plate}</span><div class="ev-body"><span class="ev-text">${ev.text}</span><span class="pill ${ev.pill[1]}">${ev.pill[0]}</span></div>`;
+    li.innerHTML = `<time>${hhmm(when)}</time><span class="plate" translate="no">${ev.plate}</span><div class="ev-body"><span class="ev-text">${esc(t(ev.text))}</span><span class="pill ${ev.pill[1]}">${esc(t(ev.pill[0]))}</span></div>`;
     return li;
   };
+  const renderFeed = () => { feed.replaceChildren(...shown.map(([ev, when]) => row(ev, when, false))); };
   const now = Date.now();
-  [2, 6, 11, 17, 24].forEach((ago, i) => feed.appendChild(row(EVENTS[EVENTS.length - 1 - i], new Date(now - ago * 60000))));
+  shown = [2, 6, 11, 17, 24].map((ago, i) => [EVENTS[EVENTS.length - 1 - i], new Date(now - ago * 60000)]);
   const clock = $('#clock');
   const tickClock = () => { clock.textContent = hhmm(new Date()); };
-  tickClock();
   setInterval(tickClock, 15000);
 
   let next = 0, visible = true, timer = null;
   function push() {
     const ev = EVENTS[next];
     next = (next + 1) % EVENTS.length;
-    feed.prepend(row(ev, new Date(), !reduce));
+    const when = new Date();
+    shown = [[ev, when], ...shown].slice(0, 5);
+    feed.prepend(row(ev, when, !reduce));
     while (feed.children.length > 5) feed.lastElementChild.remove();
     for (const [k, v] of Object.entries(ev.d)) {
       stats[k] = Math.max(0, stats[k] + v);
@@ -1213,99 +1374,87 @@ h1 .mark { position: relative; z-index: -1; }
     draw();
     requestAnimationFrame(frame);
   }
-  readColors(); resize();
-  if (reduce) {
-    // A still trace with a few beats in it.
-    for (let i = 0; i < pts.length; i++) pts[i] = 0;
-    [0.18, 0.46, 0.8].forEach((f, j) => { const at = Math.floor(pts.length * f); SHAPE.forEach((v, i) => { pts[at + i * 2] = pts[at + i * 2 + 1] = v * (j === 2 ? 1 : 0.42); }); });
-    draw();
-  }
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); if (reduce) draw(); });
-  new MutationObserver(() => { readColors(); if (reduce) draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-  new ResizeObserver(() => { resize(); if (reduce) draw(); }).observe(cv);
 
-  const board = $('#live');
-  const setVisible = (v) => {
-    const was = visible;
-    visible = v && document.visibilityState === 'visible';
-    if (visible) { start(); if (!was && !reduce) requestAnimationFrame(frame); } else stop();
-  };
-  visible = false;
-  setVisible(true);
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => setVisible(e.isIntersecting)).observe(board);
-  document.addEventListener('visibilitychange', () => setVisible(document.visibilityState === 'visible'));
-
-  /* ───────── Sign-up ───────── */
+  /* ───────── Sign-up: two steps; the plan follows from the number of vans ───────── */
   const form = $('#signup');
   const f = (n) => form.elements[n];
   let plan = CONFIG.plans[0].id;
+  let picked = null; // the plan of the "Start with …" button used, if any
   const openedAt = Date.now();
   if (!CONFIG.signup.live) $('#preview-note').hidden = false;
 
-  $('#plan-opts').insertAdjacentHTML('beforeend', CONFIG.plans.map((p, i) => `
-    <label class="plan-opt" for="f-plan-${p.id}">
-      <input type="radio" name="plan" id="f-plan-${p.id}" value="${p.id}"${i ? '' : ' checked'}>
-      <span><b>${esc(p.name)}</b><span class="sub">${limitText(p)}</span></span>
-      <span class="pp">${money(p.price)} <small>a month</small></span>
-    </label>`).join(''));
-  const markPlans = () => $$('.plan-opt').forEach((l) => l.classList.toggle('on', l.querySelector('input').checked));
+  const COUNTRIES = [['DE', 'Germany'], ['AT', 'Austria'], ['CH', 'Switzerland'], ['NL', 'Netherlands'], ['BE', 'Belgium'], ['FR', 'France'], ['IT', 'Italy'], ['ES', 'Spain'], ['PL', 'Poland'], ['GB', 'United Kingdom'], ['IE', 'Ireland']];
+  function renderCountries() {
+    const sel = f('country');
+    const was = sel.value;
+    let names = null;
+    try { names = new Intl.DisplayNames([loc(), 'en'], { type: 'region' }); } catch (e) { /* older browsers: English names */ }
+    // The value stays English, so the team reads every request the same way.
+    sel.innerHTML = COUNTRIES.map(([code, en]) => `<option value="${en}">${esc((names && names.of(code)) || en)}</option>`).join('')
+      + `<option value="Other">${esc(t('Other'))}</option>`;
+    if (was) sel.value = was;
+  }
+
+  const fitPlan = (n) => CONFIG.plans.find((p) => !p.vans || p.vans >= n);
+  const curPlan = () => CONFIG.plans.find((p) => p.id === plan);
   function setPlan(id) {
     if (!CONFIG.plans.some((p) => p.id === id)) return;
-    plan = id;
-    const r = $('#f-plan-' + id); if (r) r.checked = true;
-    markPlans();
-    checkFit();
+    picked = id;
+    updatePlan();
   }
-  form.addEventListener('change', (e) => { if (e.target.name === 'plan') setPlan(e.target.value); });
-  markPlans();
+  /* The plan shown under the fields: the one picked on the pricing cards if it covers the vans, else the smallest that does. */
+  function updatePlan() {
+    const box = $('#fit');
+    const n = parseInt(f('vans').value, 10);
+    const mine = picked && CONFIG.plans.find((p) => p.id === picked);
+    let note = '';
+    if (n >= 1) {
+      if (mine && (!mine.vans || n <= mine.vans)) plan = mine.id;
+      else {
+        if (mine) note = t('{plan} covers up to {max} vans and you run {n}.', { plan: mine.name, max: num(mine.vans), n: num(n) });
+        plan = fitPlan(n).id;
+      }
+    } else if (mine) plan = mine.id;
+    else { box.hidden = true; return; }
+    const p = curPlan();
+    box.innerHTML = (note ? `<span>${esc(note)}</span>` : '')
+      + `<b>${esc(p.vans ? t('Your plan: {plan}, up to {n} vans', { plan: p.name, n: num(p.vans) }) : t('Your plan: {plan}, unlimited vans', { plan: p.name }))}</b>`
+      + `<a href="#pricing">${esc(t('See the plans'))}</a>`;
+    box.hidden = false;
+  }
+  f('vans').addEventListener('input', updatePlan);
 
   const RULES = {
-    company: (v) => v.trim().length >= 2 || "Enter your company's name.",
-    stations: (v) => (/^\d{1,3}$/.test(v.trim()) && +v >= 1) || 'Enter how many stations you run, 1 or more.',
-    vans: (v) => (/^\d{1,4}$/.test(v.trim()) && +v >= 1) || 'Enter how many vans you run, 1 or more.',
-    first: (v) => !!v.trim() || 'Enter your first name.',
-    last: (v) => !!v.trim() || 'Enter your last name.',
-    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Enter an email address like name@company.de.',
-    phone: (v) => v.replace(/\D/g, '').length >= 7 || 'Enter a mobile number with the country code, like +49 151 2345 6789.',
+    company: (v) => v.trim().length >= 2 || N_("Enter your company's name."),
+    stations: (v) => (/^\d{1,3}$/.test(v.trim()) && +v >= 1) || N_('Enter how many stations you run, 1 or more.'),
+    vans: (v) => (/^\d{1,4}$/.test(v.trim()) && +v >= 1) || N_('Enter how many vans you run, 1 or more.'),
+    first: (v) => !!v.trim() || N_('Enter your first name.'),
+    last: (v) => !!v.trim() || N_('Enter your last name.'),
+    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || N_('Enter an email address like name@company.de.'),
+    phone: (v) => v.replace(/\D/g, '').length >= 7 || N_('Enter a mobile number with the country code, like +49 151 2345 6789.'),
   };
   function check(name) {
     const ok = RULES[name](f(name).value);
     const err = $('#e-' + name);
     f(name).setAttribute('aria-invalid', ok === true ? 'false' : 'true');
-    if (ok === true) { err.hidden = true; f(name).removeAttribute('aria-describedby'); }
-    else { err.textContent = ok; err.hidden = false; f(name).setAttribute('aria-describedby', 'e-' + name); }
+    if (ok === true) { err.hidden = true; delete err.dataset.key; f(name).removeAttribute('aria-describedby'); }
+    else { err.dataset.key = ok; err.textContent = t(ok); err.hidden = false; f(name).setAttribute('aria-describedby', 'e-' + name); }
     return ok === true;
   }
   Object.keys(RULES).forEach((n) => f(n).addEventListener('blur', () => { if (f(n).value) check(n); }));
-  f('stations').addEventListener('input', checkFit);
 
-  const curPlan = () => CONFIG.plans.find((p) => p.id === plan);
-  function fitPlan(n) { return CONFIG.plans.find((p) => !p.stations || p.stations >= n); }
-  function checkFit() {
-    const box = $('#fit');
-    const n = parseInt(f('stations').value, 10);
-    const p = curPlan();
-    if (!n || !p.stations || n <= p.stations) { box.hidden = true; return true; }
-    const better = fitPlan(n);
-    box.innerHTML = `<span>${esc(p.name)} covers up to ${p.stations} stations, and you run ${n}. ${esc(better.name)} covers ${better.stations ? 'up to ' + better.stations : 'any number of'} stations.</span><button class="btn btn-sm" type="button" data-switch="${better.id}">Switch to ${esc(better.name)}</button>`;
-    box.hidden = false;
-    return false;
-  }
-  $('#fit').addEventListener('click', (e) => { const b = e.target.closest('[data-switch]'); if (b) setPlan(b.dataset.switch); });
-
-  const trialEnd = () => { const d = new Date(); d.setDate(d.getDate() + CONFIG.trialDays); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  const trialEnd = () => { const d = new Date(); d.setDate(d.getDate() + CONFIG.trialDays); return d.toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' }); };
   function fillSummary() {
     const p = curPlan();
     const items = [
-      ['Plan', `${p.name} · ${limitText(p).toLowerCase()}`],
-      ['Company', `${f('company').value.trim()} · ${f('country').value}`],
-      ['Fleet', `${f('stations').value.trim()} station${+f('stations').value === 1 ? '' : 's'} · ${f('vans').value.trim()} vans`],
-      ['Contact', `${f('first').value.trim()} ${f('last').value.trim()} · ${f('email').value.trim()} · ${f('phone').value.trim()}`],
-      ['Free until', trialEnd()],
-      ['Then', `${money(p.price)} a month, excluding VAT`],
+      [t('Plan'), `${p.name} · ${limitText(p)}`],
+      [t('Company'), `${f('company').value.trim()} · ${f('country').selectedOptions[0]?.textContent || f('country').value}`],
+      [t('Stations'), f('stations').value.trim()],
+      [t('Vans'), f('vans').value.trim()],
+      [t('Contact'), `${f('first').value.trim()} ${f('last').value.trim()} · ${f('email').value.trim()} · ${f('phone').value.trim()}`],
+      [t('Free until'), trialEnd()],
     ];
-    if (f('aiWaitlist').checked) items.push(['AI damage detection', "We'll tell you when it's ready"]);
-    $('#summary').innerHTML = items.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+    $('#summary').innerHTML = items.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
   }
 
   let step = 1;
@@ -1318,7 +1467,7 @@ h1 .mark { position: relative; z-index: -1; }
       li.classList.toggle('done', s < n);
       li.toggleAttribute('aria-current', s === n);
     });
-    if (n === 3) fillSummary();
+    if (n === 2) fillSummary();
     if (focus) {
       const h = $(`.step-pane[data-step="${n}"] h3`, form);
       h.focus({ preventScroll: true });
@@ -1330,21 +1479,42 @@ h1 .mark { position: relative; z-index: -1; }
     const b = e.target.closest('[data-go]');
     if (!b) return;
     const to = +b.dataset.go;
-    if (to > step && step === 2) {
+    if (to > step && step === 1) {
       const bad = Object.keys(RULES).filter((n) => !check(n));
       if (bad.length) { f(bad[0]).focus(); return; }
-      if (!checkFit()) { $('#fit button').focus(); return; }
+      updatePlan();
     }
     show(to);
   });
 
+  let done = null; // the last result, so it can be redrawn in another language
+  const renderDone = () => {
+    if (!done) return;
+    const d = done;
+    if (d.sent) {
+      $('#done-title').textContent = t('Thanks, {name}', { name: d.firstName });
+      $('#done-text').innerHTML = esc(t("We've got your request for {company}. We'll email {email} with how to start your {days} days.", { days: CONFIG.trialDays }))
+        .replace('{company}', esc(d.company)).replace('{email}', `<b>${esc(d.email)}</b>`);
+    } else {
+      $('#done-title').textContent = t("That's it, {name}", { name: d.firstName });
+      $('#done-text').textContent = t("This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.", { company: d.company, days: CONFIG.trialDays });
+    }
+  };
+  let sendError = null;
+  const renderSendError = () => {
+    const el = $('#e-send');
+    if (!sendError) return;
+    el.textContent = t(sendError) + (CONFIG.contactEmail && sendError !== N_('Too many requests today. Write to info@fratius.com instead.') ? ' ' + t('You can also write to {email}.', { email: CONFIG.contactEmail }) : '');
+  };
+  const termsMsg = () => (CONFIG.legal.terms ? N_('Tick the box to agree to the terms and the privacy policy.') : N_('Tick the box to confirm you have read the privacy policy.'));
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const terms = $('#e-terms');
-    if (!f('terms').checked) { terms.textContent = CONFIG.legal.terms ? 'Tick the box to agree to the terms and the privacy policy.' : 'Tick the box to confirm you have read the privacy policy.'; terms.hidden = false; f('terms').focus(); return; }
+    if (!f('terms').checked) { terms.dataset.key = termsMsg(); terms.textContent = t(termsMsg()); terms.hidden = false; f('terms').focus(); return; }
     terms.hidden = true;
     const data = {
-      plan, aiWaitlist: f('aiWaitlist').checked,
+      plan, aiWaitlist: f('aiWaitlist').checked, lang,
       company: f('company').value.trim(), country: f('country').value,
       stations: +f('stations').value, vans: +f('vans').value,
       firstName: f('first').value.trim(), lastName: f('last').value.trim(),
@@ -1353,27 +1523,30 @@ h1 .mark { position: relative; z-index: -1; }
     };
     if (CONFIG.signup.live && CONFIG.signup.endpoint) {
       const btn = $('#submit'); const sendErr = $('#e-send');
-      btn.disabled = true; sendErr.hidden = true;
+      btn.disabled = true; sendErr.hidden = true; sendError = null;
       try {
         const res = await fetch(CONFIG.signup.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
         const out = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(out.error || '');
-        $('#done-title').textContent = `Thanks, ${data.firstName}`;
-        $('#done-text').innerHTML = `We've got your request for ${esc(data.company)}. We'll email <b>${esc(data.email)}</b> with how to start your ${CONFIG.trialDays} days.`;
-        show(4);
+        done = { sent: true, firstName: data.firstName, company: data.company, email: data.email };
+        renderDone();
+        show(3);
       } catch (err) {
-        sendErr.textContent = (err && err.message) || "Your request didn't go through. Check your connection and try again.";
-        if (CONFIG.contactEmail) sendErr.textContent += ` You can also write to ${CONFIG.contactEmail}.`;
+        sendError = (err && err.message) || N_("Your request didn't go through. Check your connection and try again.");
+        renderSendError();
         sendErr.hidden = false;
       } finally { btn.disabled = false; }
       return;
     }
-    $('#done-title').textContent = `That's it, ${data.firstName}`;
-    $('#done-text').innerHTML = `This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where ${esc(data.company)}'s ${CONFIG.trialDays} days begin.`;
-    show(4);
+    done = { sent: false, firstName: data.firstName, company: data.company };
+    renderDone();
+    show(3);
   });
-  $('#again').addEventListener('click', () => { form.reset(); setPlan(CONFIG.plans[0].id); $$('[aria-invalid]', form).forEach((i) => i.removeAttribute('aria-invalid')); $$('.err', form).forEach((x) => { x.hidden = true; }); $('#fit').hidden = true; show(1); });
-  show(1, false);
+  $('#again').addEventListener('click', () => {
+    form.reset(); renderCountries(); plan = CONFIG.plans[0].id; picked = null; done = null; sendError = null;
+    $$('[aria-invalid]', form).forEach((i) => i.removeAttribute('aria-invalid')); $$('.err', form).forEach((x) => { x.hidden = true; });
+    $('#fit').hidden = true; show(1);
+  });
 
   /* ───────── Feature slider ───────── */
   const track = $('#track');
@@ -1383,12 +1556,12 @@ h1 .mark { position: relative; z-index: -1; }
   let at = 0;
   function mark(i) {
     at = i;
-    tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+    tabs.forEach((tb, k) => { tb.setAttribute('aria-selected', String(k === i)); tb.tabIndex = k === i ? 0 : -1; });
     slides.forEach((sl, k) => { sl.setAttribute('aria-hidden', String(k !== i)); sl.inert = k !== i; });
     $('#count').textContent = `${i + 1} / ${slides.length}`;
     $('#progress').style.width = `${((i + 1) / slides.length) * 100}%`;
-    const t = tabs[i];
-    const left = t.offsetLeft - (tabStrip.clientWidth - t.offsetWidth) / 2;
+    const tb = tabs[i];
+    const left = tb.offsetLeft - (tabStrip.clientWidth - tb.offsetWidth) / 2;
     tabStrip.scrollTo({ left: Math.max(0, left), behavior: reduce ? 'auto' : 'smooth' });
   }
   function go(i) {
@@ -1396,7 +1569,7 @@ h1 .mark { position: relative; z-index: -1; }
     track.scrollTo({ left: i * track.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
     mark(i);
   }
-  tabs.forEach((t, k) => t.addEventListener('click', () => go(k)));
+  tabs.forEach((tb, k) => tb.addEventListener('click', () => go(k)));
   $('#prev').addEventListener('click', () => go(at - 1));
   $('#next').addEventListener('click', () => go(at + 1));
   tabStrip.addEventListener('keydown', (e) => {
@@ -1417,12 +1590,57 @@ h1 .mark { position: relative; z-index: -1; }
       if (i !== at) mark(Math.min(slides.length - 1, Math.max(0, i)));
     }, 90);
   }, { passive: true });
-  // Keep the current slide in place when the page or the phone's toolbar changes size.
+  // Keep the current slide in place when the page or the phone's toolbar changes size (or a language changes the text).
   const pin = () => { if (Math.abs(track.scrollLeft - at * track.clientWidth) > 2) track.scrollTo({ left: at * track.clientWidth }); };
   new ResizeObserver(pin).observe(track);
   let resizing = null;
   window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(pin, 120); });
+
+  /* ───────── Draw everything in the current language ───────── */
+  function renderAll() {
+    translatePage();
+    renderSwitcher();
+    renderPlans();
+    renderLinks();
+    renderFrames();
+    renderHu();
+    renderCountries();
+    renderFeed();
+    tickClock();
+    if (!$('#fit').hidden) updatePlan();
+    $$('.err[data-key]').forEach((el) => { el.textContent = t(el.dataset.key); });
+    renderSendError();
+    if (step === 2) fillSummary();
+    renderDone();
+    pin();
+  }
+  renderAll();
+  document.documentElement.classList.remove('i18n-wait');
+
+  show(1, false);
   mark(0);
+
+  readColors(); resize();
+  if (reduce) {
+    // A still trace with a few beats in it.
+    for (let i = 0; i < pts.length; i++) pts[i] = 0;
+    [0.18, 0.46, 0.8].forEach((fr, j) => { const at2 = Math.floor(pts.length * fr); SHAPE.forEach((v, i) => { pts[at2 + i * 2] = pts[at2 + i * 2 + 1] = v * (j === 2 ? 1 : 0.42); }); });
+    draw();
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); if (reduce) draw(); });
+  new MutationObserver(() => { readColors(); if (reduce) draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new ResizeObserver(() => { resize(); if (reduce) draw(); }).observe(cv);
+
+  const board = $('#live');
+  const setVisible = (v) => {
+    const was = visible;
+    visible = v && document.visibilityState === 'visible';
+    if (visible) { start(); if (!was && !reduce) requestAnimationFrame(frame); } else stop();
+  };
+  visible = false;
+  setVisible(true);
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => setVisible(e.isIntersecting)).observe(board);
+  document.addEventListener('visibilitychange', () => setVisible(document.visibilityState === 'visible'));
 })();
 </script>
 </body>

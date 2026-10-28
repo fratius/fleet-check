@@ -134,12 +134,12 @@ service cloud.firestore {
       // Who drives a van (assignedTo), retiring and moving between stations are done by the server too.
       match /vehicles/{id} {
         allow read: if at(orgId, resource.data.stationId);
-        // Who has it (assignedTo, with their km) and its latest dashboard (dash: km, levels, warning lights) are the
-        // server's, from handovers and dashboard photos.
+        // Who has it (assignedTo, with their km), its latest dashboard (dash: km, levels, warning lights) and its
+        // checks for drivers (todo: due now; routines: when each was last done) are the server's.
         allow create: if runs(orgId, request.resource.data.stationId)
-          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash']);
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines']);
         allow update: if runs(orgId, resource.data.stationId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash']);
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines']);
       }
 
       // The business side of a van (doc id = the van's id): contract, insurance, deadlines, odometer, notes.
@@ -220,6 +220,16 @@ service cloud.firestore {
       // Owners and the station's managers read them (they allow or refuse a wrong card there); the person who
       // bought something reads their own.
       match /purchases/{id} {
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.by == me());
+      }
+      // Checks for drivers (the oil level, the cargo area…): everyone in the company sees what's asked; owners and
+      // fleet managers set them through the server (the routine function), which checks the station.
+      match /routines/{id} {
+        allow read: if member(orgId) || creator();
+      }
+      // Each check done (fine, or a problem with a note): written by the server, never changed. The station's
+      // fleet managers and owners read them; drivers the ones they did.
+      match /routineDone/{id} {
         allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.by == me());
       }
       // What the AI read from the dashboard, the card and the receipt, with its speed and cost: the app creator only.

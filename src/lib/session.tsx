@@ -12,7 +12,7 @@ import { t } from './i18n';
 import { useLang } from './lang';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type Purchase, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -71,6 +71,9 @@ interface Session {
   tours: Tour[];
   /** Recent refuels, washes and parts (the latest 500 in scope; drivers: their own). */
   purchases: Purchase[];
+  /** Checks for drivers in this company, and the recent checks done this person may read. */
+  routines: Routine[];
+  routineDone: RoutineDone[];
   /** This person's own driver record, if there is one. */
   myRecord: DriverRecord | null;
   /** Owners change company settings: dashboard photos on tours, how often licences are checked. */
@@ -345,6 +348,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [records, setRecords] = useState<DriverRecord[]>([]);
   const [tours, setTours] = useState<Tour[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [routineDone, setRoutineDone] = useState<RoutineDone[]>([]);
   const [ownRecord, setOwnRecord] = useState<DriverRecord | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -352,7 +357,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [dataError, setDataError] = useState<string | null>(null);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
-    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setOwnRecord(null);
+    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     if (!store) return;
@@ -366,6 +371,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       store.videos.subscribe((r) => setVideos(r), () => {}),
       store.tours.subscribe((r) => setTours(r), () => {}),
       store.purchases.subscribe((r) => setPurchases(r), () => {}),
+      store.routines.subscribe((r) => setRoutines(r), () => {}),
+      store.routineDone.subscribe((r) => setRoutineDone(r), () => {}),
     ];
     // The business side of the vans and the driver records: owners and managers (the rules refuse drivers).
     if (staff) {
@@ -433,7 +440,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

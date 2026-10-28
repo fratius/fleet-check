@@ -1,5 +1,7 @@
 0cc11732	"{column}" compares a driver's fuel with the other drivers on the same van model, over the same kilometres, from 4 tours on. Route, load and weather matter as much as driving style: it shows who to talk to, it doesn't prove anything.
 691f88de	(+{n} more) || (+{n} more)	[components/damage.tsx]
+9cf01c50	{check} not done: {van}
+3e3adc5b	{check}: {van}	[index.ts]
 cdc67bd4	{company}: you leave the company.
 eca8eab2	{company}: you're its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.
 60731bb6	{company}: you're its only member, so the company is deleted with everything in it.
@@ -27,6 +29,8 @@ ff4d79e4	{label} {when}	[index.tsx]
 0bf63986	{n} already on the van || {n} already on the van
 ed74a81e	{n} approved damage || {n} approved damages	[index.tsx, person/[uid].tsx, components/history.tsx]
 ac0562dc	{n} check || {n} checks	[log.tsx, components/history.tsx]
+40d5476c	{n} check drivers do on their van. || {n} checks drivers do on their van.
+fb4e042a	{n} check to do || {n} checks to do
 638d5d04	{n} cleared as dirt, reflection or no damage. || {n} cleared as dirt, reflection or no damage.
 e1677005	{n} damage || {n} damage	[log.tsx]
 14feb694	{n} damage || {n} damages	[review.tsx]
@@ -71,7 +75,7 @@ e4bfd1a2	{n} spot, {images} images || {n} spots, {images} images
 6e72351c	{n} thing due || {n} things due	[person/[uid].tsx]
 38be6e91	{n} to check || {n} to check	[components/buy.tsx]
 a8f99025	{n} unclear || {n} unclear	[log.tsx]
-3c32e1d0	{n} van || {n} vans	[index.tsx, people.tsx]
+3c32e1d0	{n} van || {n} vans	[index.tsx, people.tsx, components/routines.tsx]
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
@@ -91,6 +95,8 @@ f73c9121	{name} had {van} then. Use that van
 4e67314d	{name} had the van.
 657276dc	{name} has {van}. Moving them to another station or making them an owner makes the van free.
 ad32ebdc	{name} has it now
+37d9a7a7	{name} has the van and does these.
+a4fd7848	{name} has the van and hasn't done it yet.
 f2324c2a	{name} is at the car wash. {why} Allow or refuse the wash.
 b5538e51	{name} is at the pump. {why} Allow or refuse the refuel.
 78132d29	{name} is no longer in {company}. Their van history, tours and record stay.
@@ -109,6 +115,7 @@ f0e5615c	{name} took the dashboard photo (the AI couldn't read it).
 bbcf655f	{name}, {role}, open	[people.tsx]
 5e671f46	{name}: {from} to {to}, given by {by}
 c7964776	{name}: {from} to {to}, picked up themselves
+09cb4593	{name}: {note}	[index.ts]
 9bee4f77	{name}: no phone number on record.
 efb475ea	{name}'s tour is still open
 06648785	{pct} right	[log.tsx]
@@ -188,8 +195,10 @@ e4e2af43	Add a station under People first.
 6b8d73f6	Add an incident	[components/driverrec.tsx]
 1986621b	Add another photo	[buy/[id].tsx]
 83d4cdcf	Add at least one photo of the vehicle first.
+e273d235	Add check	[components/routines.tsx]
 7d3764e4	Add comment	[components/damage.tsx]
 5b42884f	Add damage the AI missed
+506111ca	Add or change checks
 a82690ab	Add station	[people.tsx]
 037d55e4	Add the breakdown number and the insurer, so drivers have them at the van.
 c68a2faf	Add the drop-off video
@@ -221,6 +230,7 @@ c08b44cf	All companies ({n})	[components/companies.tsx]
 7d95d19e	All details	[components/damage.tsx]
 2f5b5080	All spots	[check/[id].tsx]
 19238dd3	All stations	[index.tsx, data.tsx]
+ce8f4757	All vans	[components/routines.tsx]
 1dfb1b87	Allow camera	[app/scan/[id].tsx]
 c25f8de5	Allow camera access in Settings to photograph the document.
 cbd211d6	Allow camera access in Settings to record the video.
@@ -306,8 +316,10 @@ cee18487	Cancelling…	[buy/[id].tsx]
 bc47a3dc	Car	[lib/frames.ts]
 17870f43	card ending {last4}	[buy/[id].tsx]
 83e9602e	Card not checked yet.
+ce4cfe4a	Cargo area clean and empty
 354e8c1f	Cargo space	[components/vanfacts.tsx]
 64fbd995	Change	[add.tsx]
+cedff071	Change check	[components/routines.tsx]
 789b14df	Change language	[components/language.tsx]
 c5dd099a	Change the review	[check/[id].tsx]
 44505ab7	Change the type	[add.tsx]
@@ -339,9 +351,18 @@ c65e5123	checked with close-ups	[log.tsx]
 ce3c5359	Checking the card…	[buy/[id].tsx]
 3e5748ab	Checking the close-ups, spot {i} of {n}
 abb464b5	Checking the video…	[components/video.tsx]
+226deaae	Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.
+2752e2cc	Checks drivers haven't done yet (red after 3 hours), and problems they found in the last 7 days.
 54659b58	Checks drivers sent. Oldest first.
+443d299a	Checks for drivers	[_layout.tsx, review.tsx, components/routines.tsx]
+503399d7	Checks for drivers need the Firebase backend.
 c6b6df0a	chip	[check/[id].tsx]
+a60c6721	Choose how often.	[index.ts]
 0df966e4	Choose photos	[add.tsx, components/docscan.tsx]
+7190b327	Choose the vans.	[index.ts, components/routines.tsx]
+6137e47e	Choose vans	[components/routines.tsx]
+30b97e34	Choose vans of that station.
+08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
 85a2ce1c	Close it (not finished)
@@ -369,6 +390,7 @@ b37456c4	Contact	[components/vanfacts.tsx]
 5a0ba3bb	Contract	[components/docscan.tsx, components/driverrec.tsx, components/vanfacts.tsx]
 e5c0324a	Contract number	[components/vanfacts.tsx]
 ac9fdef2	Contract, start date and, when they leave, the last working day.
+99137b3d	Coolant level	[routines.ts, components/routines.tsx]
 44998786	Coolant temperature	[prompts.ts]
 48e09e45	Correct	[log.tsx]
 d263c39c	Correct the incident	[components/driverrec.tsx]
@@ -481,6 +503,7 @@ dd678ab7	Don't fill up. Cancel the refuel; it stays on record as refused.
 e9b450d1	Done	[app/scan/[id].tsx, components/buy.tsx]
 ed2e582a	Done inviting	[people.tsx]
 7a3f2854	Done with close-ups	[check/[id].tsx]
+6c3f832c	Done, all fine	[components/routines.tsx]
 2aa3d69f	Download for Excel	[data.tsx]
 9e6f732f	Download the original	[video/[id].tsx]
 67f7e737	Download the video	[video/[id].tsx]
@@ -512,7 +535,10 @@ c41e6aa3	Drop off with {n} photo || Drop off with {n} photos
 476ff3f2	Drop-off video (added later)
 785b10de	dropped off	[lib/types.ts]
 982de4fe	Dropping off {van}	[app/scan/[id].tsx]
+145caf29	Due	[components/routines.tsx]
 006c1a05	Due dates show on the van, in the fleet list and in Review.
+a2ec364a	due since {when}	[review.tsx]
+aac2eda8	Due since {when} ({ago})
 a01f643e	Due soon	[review.tsx]
 3e96504e	Each kilometre over the allowance
 b1fce049	Each link works for one person, for 24 hours.
@@ -521,6 +547,7 @@ b1fce049	Each link works for one person, for 24 hours.
 5301648d	Edit	[components/driverrec.tsx, components/vanfacts.tsx]
 972fd71f	Edit vehicle	[vehicle/[id].tsx]
 5612bd0a	Electric	[vehicle/[id].tsx, lib/fleet.ts]
+5d01f2fe	Electric vans	[components/routines.tsx]
 e9b01194	Electric vans are charged, not refuelled.
 84add5b2	Email	[app/join/[token].tsx, app/sign-in.tsx]
 416f2b2b	Email or password is wrong.
@@ -550,16 +577,23 @@ bdbe3bd1	Enter your password again to delete your account.
 46affb94	Enter your password.	[app/sign-in.tsx, components/deleteaccount.tsx, lib/session.tsx]
 ad6f5883	Est. cost {cost}	[add.tsx]
 ae64c7cf	Estimated	[data.tsx]
+627cb3cb	Every {n} days	[components/routines.tsx]
 aeeafd14	Every month someone looks at the original licence. The dates are the company's proof. || Every {n} months someone looks at the original licence. The dates are the company's proof.
+01a798b4	Every 2 to 6 days.
 0b974ec6	Every check	[log.tsx]
+1d571530	Every check is done.
 80ed22fa	Every company in the app. Opens and manages any of them.
 1e95770a	Every company using the app. Open one to see it as its owner would.
 6bba21ab	Every dashboard photo updates the odometer.
+0d5f38a1	Every few days	[components/routines.tsx]
 dd15ccde	Every handover has its video or photos.
 8c74a0cb	Every photo of the walk-around is needed, taken with the camera. Take the missing ones.
 53eabbfb	Every refuel, wash and parts purchase, with the ones refused or given up. Kept for good.
 4149b9aa	Every scan	[log.tsx]
+0bc7bcf7	every station	[components/routines.tsx]
+170f9213	Every station	[components/routines.tsx]
 d9a11adb	Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, picks the AI model, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.
+9ceec74d	Every time a driver gets the van
 b02c659d	Every van has a driver.
 aa57e3ce	Everyone who had this van, newest first. This history is kept for good.
 0345ce0e	extra-long large van	[lib/frames.ts]
@@ -585,6 +619,7 @@ de8ce29c	Fines	[data.tsx]
 67f297b4	Firebase isn't connected yet, so photos stay on this phone.
 20c5eac1	Firebase isn't connected yet, so this app keeps everything on this phone.
 19cd098c	First a video or the photos, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name.
+ea9dd635	First aid kit and warning triangle
 7e568a90	First name	[app/join/[token].tsx]
 617ef619	First registration	[components/vanfacts.tsx]
 c6b3590a	First station	[account.tsx, app/sign-in.tsx]
@@ -609,6 +644,8 @@ a0d15ccf	For example: dent in the right rear door, 3 cm, below the handle
 a3af3156	For example: DXX1 Berlin
 2b961cc4	For example: Hart Logistics GmbH
 90c8b3ae	For example: left mirror glass broke on the tour
+b1b20bc2	For example: oil below the minimum, needs a litre
+c8fc1f1b	For example: oil level
 a2b84716	For example: right rear door, below the handle
 fd776819	For example: use the card in the glovebox
 9b5de981	For the fuel used on each tour
@@ -668,6 +705,7 @@ fbefae1e	Give	[components/history.tsx]
 8ab336d4	Give {van} to	[components/history.tsx]
 2bbcbaa8	Give a different van
 6f1d6671	Give a van	[person/[uid].tsx]
+5365df41	Give the check a name.
 97224fdc	Give the station a name.
 749cc6ca	Give the vehicle a name, for example its model or fleet number.
 0e8761ae	Give the vehicle a name.
@@ -706,6 +744,7 @@ de50e8e9	High-voltage system	[prompts.ts]
 2dd54a62	How far to trust these numbers
 82e1ca42	How fast, how much and how often the AI was right, from every run in {company}.
 788b9b54	How fast, how much and how often the AI was right, from every run on this phone.
+bd884897	How often	[components/routines.tsx]
 8e01f6bc	Hybrid	[vehicle/[id].tsx, lib/fleet.ts]
 11f0b57e	I don't have the van's card
 c3dae8b3	I have an invite link
@@ -774,6 +813,8 @@ ec27cd9e	Last changed {date} by {name}.
 36aca274	Last changed {date}.	[components/vanfacts.tsx]
 cbac9a58	Last changed {day} by {name}.
 c4abf2d0	Last changed {day}.	[components/driverrec.tsx]
+61eb32da	Last done {when}, {name}: {note}
+0599710f	Last done {when}, {name}: fine.
 ef6b8eaa	Last known: {km}.	[buy/[id].tsx]
 adec36a8	Last name	[app/join/[token].tsx]
 33e952bd	Last reading: {km}, {when} ({name}).
@@ -820,6 +861,8 @@ cfe2fcc1	Licence classes and the date the licence runs out. No licence number or
 b25a0a52	Licence is fine	[components/driverrec.tsx]
 8ae0e7c8	Licence valid until	[data.tsx]
 a36ef8ab	Light	[app/scan/[id].tsx]
+646a059a	Lights	[routines.ts, components/routines.tsx]
+b7b97d43	Like the oil level or the cargo area: drivers tick them off on their van and get a reminder when one is due.
 8c06f60c	Likely, {pct}%	[check/[id].tsx]
 b332e7a7	Link works until {when}
 497b33e6	Lit on a van's latest dashboard photo, in the last 3 days. Check the van before it goes out again.
@@ -881,6 +924,8 @@ a7a8e36c	More links	[people.tsx]
 c3bf26d0	Name or plate	[data.tsx]
 bdc95e60	Name, phone or email
 f594728b	Name, plate and type
+d075b0be	Needs a photo	[components/routines.tsx]
+a9430e3c	Needs a photo.	[components/routines.tsx]
 6dd1d06c	Needs repair	[components/damage.tsx]
 85777c03	never	[data.tsx]
 ba3448de	Never finished.	[buy/[id].tsx]
@@ -905,6 +950,8 @@ fd128635	no	[data.tsx]
 a58f7462	no card, allowed	[data.tsx]
 a68a5573	no card, refused	[data.tsx]
 145b57a6	No check recorded yet
+e99a3c58	No checks for this van yet.
+f3d9e0dc	No checks yet. Add one: the suggestions make it a few taps.
 3e8a6d08	No comments yet. For example: what the driver said, the repair or the insurance claim.
 2818b621	No connection. Check your internet and try again.
 e6fdff10	no damage	[check/[id].tsx]
@@ -974,6 +1021,8 @@ fff37784	not checked	[check/[id].tsx]
 53453a87	Not clear yet	[components/driverrec.tsx]
 2cbd2224	Not connected to Firebase yet: vehicles are saved on this phone only.
 254c376b	Not damage	[check/[id].tsx]
+d44ffdad	Not done yet.	[components/routines.tsx]
+69355c55	Not done yet. Open the van in the app and do it now.
 d6f956be	Not dropped off	[review.tsx]
 e819e6ac	Not dropped off after {time}.
 3e68c490	Not filled in yet
@@ -1021,6 +1070,7 @@ bfb5e333	Odometer on {day}, from the van's record
 601e502d	of {n} frame || of {n} frames	[log.tsx]
 7f0cfd38	of {n} rated || of {n} rated	[log.tsx]
 e3de5ab0	Off	[account.tsx]
+0d488f42	Oil level	[routines.ts, components/routines.tsx]
 9d536a9e	Oil pressure	[prompts.ts]
 123087dc	Older than the saved reading
 e0049a66	On	[account.tsx]
@@ -1032,7 +1082,10 @@ ea6b8ab1	On the receipt	[buy/[id].tsx]
 48f906a7	On tour	[data.tsx, components/dash.tsx]
 ad1e5a02	On tour {time}	[components/dash.tsx]
 c02d932d	On tour for {time}
+a9afbb0e	Once a day	[components/routines.tsx]
+521f6443	Once a week	[components/routines.tsx]
 c0afb056	One link per person, sent to them. A link works once and expires after 24 hours.
+2d6a96cb	One of the vans was removed.
 2dd84770	One photo from a front corner works best. Add the side or the rear to pick up door details.
 ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives which van and whether drivers pick up vans themselves. Final word on damage. Allows or refuses a refuel with the wrong fuel card. Keeps the drivers' records; sees the station's history, videos and numbers, not the costs.
 602afbd3	Only a demo company can be removed this way.
@@ -1051,6 +1104,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 994b6999	Only the app creator sees the test log.
 e9ccc77a	Only the fleet owner can do this.
 101e86fb	Only the fleet owner can invite fleet managers.
+9c69d637	Only the fleet owner changes checks for every station.
 be53c994	Only the fleet owner changes roles and stations.
 d2bf12cc	Only the fleet owner moves vans between stations.
 08ddc1a2	Only the owner can remove the demo company.
@@ -1112,12 +1166,13 @@ b37554f6	People	[_layout.tsx, people.tsx, app/(tabs)/_layout.tsx]
 e48322d5	phone app	[account.tsx]
 da3f1249	Phone at the wheel
 8c0fc408	Phone notifications work in the Fratius app from the App Store or Google Play and in the web app, not in Expo Go.
-d01d9003	Photo	[data.tsx]
+d01d9003	Photo	[data.tsx, components/routines.tsx]
 1f644f37	Photo deleted	[components/ui.tsx]
 c9bb5c97	Photo of the dashboard
 9f404960	Photo of the fuel card
 3cd5c921	Photo of the parts
 40e0c773	Photo of the receipt
+3f5d1d7a	Photo taken. Take again
 2e58e0c1	photos	[walk/[id].tsx, app/scan/[id].tsx]
 c8b2e864	Photos	[buy/[id].tsx, log.tsx, components/scanchoice.tsx]
 c9027a2b	Photos and videos are deleted after {n} days. These are gone already.
@@ -1149,11 +1204,13 @@ a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
 2db331ce	Plate	[data.tsx]
 e92d2b4c	playback copy {size}	[video/[id].tsx]
+01ffec64	Plugged in to charge
 9e79750a	Policy number	[components/vanfacts.tsx]
 52d57635	Possible, {pct}%	[check/[id].tsx]
 7548ab52	Power	[components/vanfacts.tsx]
 7ceacdca	Privacy policy	[components/legal.tsx]
-1baa06b4	Problem	[components/driverrec.tsx]
+1baa06b4	Problem	[review.tsx, components/driverrec.tsx, components/routines.tsx]
+23f05198	Problem: {check}, {van}	[index.ts]
 5f174de1	Proof	[components/damage.tsx]
 fad43131	Provider and the last digits, never the full number or PIN
 d6f409d1	Purchase contract or invoice
@@ -1202,7 +1259,7 @@ bd06b239	Refusing…	[buy/[id].tsx]
 da9928d4	Registration certificate	[components/docscan.tsx]
 6561c36a	Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it's saved.
 1a98465c	Registration certificate part II
-e963907d	Remove	[check/[id].tsx, people.tsx]
+e963907d	Remove	[check/[id].tsx, people.tsx, components/routines.tsx]
 dcaa9667	Remove from {company}	[components/person.tsx]
 822c5468	Remove from fleet	[vehicle/[id].tsx]
 91f23418	Remove photo {n}	[add.tsx]
@@ -1269,7 +1326,7 @@ efc007a3	Save	[buy/[id].tsx, people.tsx, components/vanfacts.tsx]
 49ca3d40	Save {n} photo || Save {n} photos	[app/scan/[id].tsx]
 ed70459b	Save and end the tour
 24689bd9	Save and start the tour
-179359b3	Save changes	[vehicle/[id].tsx]
+179359b3	Save changes	[vehicle/[id].tsx, components/routines.tsx]
 7a3d56ee	Save the check	[components/driverrec.tsx]
 4c7df601	Save the correction	[components/driverrec.tsx]
 2ed8be24	Save the licence check
@@ -1286,6 +1343,7 @@ c493a9ee	Saving the pick-up photos
 56a2285c	Saving…	[buy/[id].tsx, components/dash.tsx, components/docscan.tsx]
 f818ed23	Say what the problem is.
 8ba65f51	Say what the problem with the licence is.
+1e7dbe11	Say what's wrong.	[index.ts, components/routines.tsx]
 82472722	Say whether you charged during the tour.
 582495e0	Say whether you refuelled during the tour.
 fedd69a4	Say why the parts were needed.
@@ -1297,6 +1355,7 @@ ffdf8c66	scratch	[check/[id].tsx]
 f5c117f0	scuff	[check/[id].tsx]
 6b7c6eda	See {company} exactly as a fleet owner, fleet manager or driver does: the same screens and the same access, checked by the server. Only the app creator has this switch.
 31e4ead3	See all deadlines	[components/vanfacts.tsx]
+9d0b0ff4	See and change checks
 63dd3d51	See the app the way each role sees it.
 ab17ded1	see the record	[lib/fleet.ts]
 1b956f20	Seen again in {n} later check || Seen again in {n} later checks
@@ -1306,6 +1365,7 @@ c5bced94	Seen again: {dates}.	[components/damage.tsx]
 8ece5d2b	Send 1 to 3 photos.
 48739f53	Send 1 to 6 photos of the document.
 184ae2f2	Send it to the fleet manager when you're done.
+3c02d865	Send the problem	[components/routines.tsx]
 a8486942	Send to the fleet manager
 a83064fa	Sent {when}. The fleet manager approves or rejects each spot.
 46b8c953	Sent to the fleet manager
@@ -1316,7 +1376,9 @@ c149b95b	Sent. The fleet manager approves or rejects each spot.
 355d43c0	Service by date	[components/vanfacts.tsx]
 4202eb24	Service due	[prompts.ts]
 66394926	Service invoice or record
+8f36c0a6	Set by the fleet owner for every station.
 1241872d	Set by the fleet owner for the whole company.
+de769d6e	Set by your fleet manager. Tick each one off when you've checked it.
 d4ce959d	Sets the photo frames of a walk-around. Change it under Name, plate and type.
 cdd7bb28	Setup	[account.tsx]
 09ca55ca	Share	[people.tsx]
@@ -1395,6 +1457,7 @@ f1d2deed	Stopped {time} ago. Allow it if you know why (another van's card, a rep
 8689d10c	Straight on	[check/[id].tsx]
 687bb45a	Straight on, damage boxed
 12cf9117	Student job	[lib/fleet.ts]
+861edba0	Suggestions	[components/routines.tsx]
 cdde64d7	SUV or crossover	[lib/frames.ts]
 210dd62a	Swap	[components/history.tsx]
 544a4acf	swapped for another van
@@ -1420,7 +1483,8 @@ c108c747	Take photo {n}	[app/scan/[id].tsx]
 60c4e08d	Take the {n} pick-up photos
 caf49f3e	Take the damage mark off
 9da8309a	Take the dashboard photo again.
-da748b10	Take the photo	[components/dash.tsx]
+da748b10	Take the photo	[components/dash.tsx, components/routines.tsx]
+4d4c4b82	Take the photo first.
 f801a56f	Take the photo of the receipt first.
 f5176fe0	Take the photo of the receipt when you're done.
 1e709bc4	Take the photos of the van first.
@@ -1453,6 +1517,7 @@ f02a9817	Test mode: everything stays on this phone and AI checks are off. Fleet,
 ef9365df	That file isn't a video.
 cb2061ab	That phone number doesn't look right.
 2135b4fd	That's {more} km more than the last reading ({km} km). Check the number, or confirm it's right.
+1a009a4e	That's a lot of checks already. Remove one first.
 0803cc8b	That's a window of {time}: the last photos without it to the photos it was found in.
 80227a1b	That's who had the van, not proof of who caused it. Compare the photos.
 f4c23a3d	The {model} model looks at every photo at full resolution. This usually takes under a minute.
@@ -1472,6 +1537,7 @@ d9260181	The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret i
 732a2984	The app creator's account can't be deleted in the app.
 8e92141c	The app keeps the latest 500 handovers here; older ones are on the van's Drivers tab.
 3e5c42fa	The camera couldn't start.
+7f319ebe	The camera isn't allowed. Allow it in the phone's settings.
 9b46aa3c	The camera shows the outline to fit for each one.
 b19e9d1a	The card couldn't be read: {why}
 9af23b0c	The card couldn't be read.
@@ -1488,6 +1554,8 @@ c85fa974	the document	[components/docscan.tsx]
 03eb19d3	The dot is placed from the panel name, so its spot on the van is rough.
 7ba5c9b2	the driver	[check/[id].tsx]
 915b2337	The driver is still taking close-ups.
+b65a1bf8	The driver takes one as proof, for example of the cargo area.
+561d103c	The driver who has this van does its checks (or the station's fleet manager).
 53dcacda	The drivers of each van need the Firebase backend.
 4dee9456	the fleet manager	[check/[id].tsx, components/damage.tsx]
 caadb3f7	The fleet managers and drivers of your station.
@@ -1509,6 +1577,7 @@ d520c3b2	The monthly rate works out at {eur} per kilometre (without fuel and rep
 4e74e7e7	The owners get the details.
 cf2abed0	The parts	[buy/[id].tsx]
 c3acf501	The photo didn't upload. Check the connection and try again.
+14216d56	The photo didn't upload. Take it again.
 4615b331	The photo was read and deleted; it isn't kept with the record.
 43aecc03	The photo was read and deleted; it isn't kept with the van.
 0e91970e	The photos are saved as a walk-around.
@@ -1543,6 +1612,7 @@ c4587965	The vans of one station. Walk-arounds with photos or a video, the AI da
 8e885097	Their history, walk-arounds and checks stay.
 f72c7e3b	Their van becomes free; their history, walk-arounds and checks stay.
 4d4bd5f6	Then take a photo of the whole receipt: the litres, the total and the card number on it.
+89a3bc81	There's a problem	[components/routines.tsx]
 469dbdc0	These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.
 dcb6e009	These photos aren't yours or aren't of this van.
 de5fd80c	These photos belong to another station.
@@ -1553,7 +1623,10 @@ f77d05d1	This AI model isn't available on the Anthropic account. Pick another mo
 1b0bcfd0	This browser can't show notifications. Use Chrome on Android, or the app on an iPhone's home screen.
 2a89189d	This browser gave no notification address.
 5cbd3d6d	This check isn't available.
+e124a7dc	This check isn't for this van.
+b63de3f6	This check needs a photo.
 9f6e4a36	This check was deleted.
+2229c06e	This check was removed.
 a319f8d7	this company	[log.tsx, components/viewas.tsx]
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
 8d08c342	This ends {name}'s tour.
@@ -1637,7 +1710,7 @@ e8edc31d	Two stations, two fleet managers, eight drivers, twelve vans with drive
 f568841a	Tyre invoice	[components/docscan.tsx]
 f2624f07	Tyre pressure	[prompts.ts]
 0b946e28	Tyre size	[components/vanfacts.tsx]
-249a3708	Tyres	[lib/fleet.ts]
+249a3708	Tyres	[routines.ts, components/routines.tsx, lib/fleet.ts]
 8259dd1a	unclear	[check/[id].tsx]
 ff75e0dc	Unclear	[check/[id].tsx]
 50d8b4a9	unknown	[account.tsx]
@@ -1726,14 +1799,16 @@ bc4d37d0	Wash allowed: {van}	[index.ts]
 59ffa4e0	Wash the van now
 98f5aea0	Wash, then the receipt
 4f8f2c85	Wash: {van}	[purchases.ts]
-f8cd530a	Washer fluid	[prompts.ts]
+f8cd530a	Washer fluid	[prompts.ts, routines.ts, components/routines.tsx]
 5a9649da	web app	[account.tsx]
 97211a88	What	[data.tsx]
 7661e659	What happened	[buy/[id].tsx, components/driverrec.tsx]
 d2d42d35	What is the problem?
 c66b4d48	What the close-ups showed
+2e062db2	What to check	[components/routines.tsx]
 a494a5c0	What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up yourself where the station allows it.
 c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager to correct anything that's wrong.
+48dabfbb	What's wrong?	[components/routines.tsx]
 769bb19e	When	[data.tsx]
 9932ab3e	When it goes back
 7e550793	When it happened	[components/damage.tsx]
@@ -1742,6 +1817,7 @@ c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager t
 6885ea9b	When they were briefed on the vans, and the last yearly safety briefing.
 525f61b6	Where	[buy/[id].tsx, check/[id].tsx, data.tsx]
 3c3f3228	Which station?	[components/viewas.tsx]
+f7664058	Which vans	[components/routines.tsx]
 6d8d2b90	Who drivers call after a breakdown or an accident.
 57f048d9	Who had the van
 4bf77965	Who hands out the vans
@@ -1811,11 +1887,13 @@ f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. O
 3f7a84ea	Your company	[app/sign-in.tsx]
 a2bb6af7	Your decision	[check/[id].tsx]
 0a9501e3	Your drivers, tours and vans in numbers.
+9a45a27c	Your fleet manager gets it straight away.
 c6b6f706	Your fleet manager gets the details.
 4c26a8b2	Your fleet manager gives out the vans at this station.
 2093e054	Your fleet manager gives you a van.
 289fdd13	Your fleet manager refused it
 cc5527b7	Your fleet manager refused it. Cancel it.
+98820f29	Your fleet manager sets the checks.
 b3e23e5e	Your last tour on {van} had no end photo. This photo ends it and starts today's.
 d6135246	Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.
 ab42293e	Your name	[app/sign-in.tsx]
