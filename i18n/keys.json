@@ -603,7 +603,7 @@
   "key": "{n} uploads stopped. Tap to see why.",
   "one": "{n} upload stopped. Tap to see why.",
   "where": [
-   "src/components/uploads.tsx:93"
+   "src/components/uploads.tsx:96"
   ]
  },
  {
@@ -2309,7 +2309,7 @@
    "src/components/routines.tsx:125",
    "src/components/routines.tsx:285",
    "src/components/scanchoice.tsx:45",
-   "src/components/uploads.tsx:62",
+   "src/components/uploads.tsx:64",
    "src/components/vanfacts.tsx:235"
   ]
  },
@@ -7101,7 +7101,7 @@
   "key": "No connection. {n} uploads wait on this phone and go up by themselves.",
   "one": "No connection. {n} upload waits on this phone and goes up by itself.",
   "where": [
-   "src/components/uploads.tsx:94"
+   "src/components/uploads.tsx:97"
   ]
  },
  {
@@ -7136,7 +7136,7 @@
   "id": "d9fa47f6",
   "key": "No connection. Trying again by itself…",
   "where": [
-   "src/components/uploads.tsx:95"
+   "src/components/uploads.tsx:98"
   ]
  },
  {
@@ -7835,7 +7835,7 @@
   "id": "0a32fe52",
   "key": "Nothing waiting. Everything is uploaded.",
   "where": [
-   "src/components/uploads.tsx:115"
+   "src/components/uploads.tsx:118"
   ]
  },
  {
@@ -8794,7 +8794,7 @@
   "id": "a303eb54",
   "key": "Photos and videos are saved on this phone first, then uploaded. Without a connection they wait here and go up by themselves, so you never take them again. Keep the app open, or open it again later.",
   "where": [
-   "src/components/uploads.tsx:114"
+   "src/components/uploads.tsx:117"
   ]
  },
  {
@@ -9416,7 +9416,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:337",
    "src/app/(tabs)/(people)/people.tsx:121",
    "src/components/routines.tsx:286",
-   "src/components/uploads.tsx:62"
+   "src/components/uploads.tsx:64"
   ]
  },
  {
@@ -11222,7 +11222,7 @@
   "id": "336f2fcd",
   "key": "Tap again to remove it",
   "where": [
-   "src/components/uploads.tsx:62"
+   "src/components/uploads.tsx:64"
   ]
  },
  {
@@ -11264,7 +11264,7 @@
   "id": "a34401de",
   "key": "Tap again: it won't be sent",
   "where": [
-   "src/components/uploads.tsx:62"
+   "src/components/uploads.tsx:64"
   ]
  },
  {
@@ -13098,7 +13098,7 @@
   "key": "Uploading {n} items…",
   "one": "Uploading {n} item…",
   "where": [
-   "src/components/uploads.tsx:96"
+   "src/components/uploads.tsx:99"
   ]
  },
  {

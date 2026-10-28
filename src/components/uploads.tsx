@@ -59,7 +59,10 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
       {failed && j.type === 'video' && j.files.every((f) => f.done) && j.then ? <T v="small">{t('The video is uploaded but wasn\'t used.')}</T> : null}
       <Row>
         {failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
-        <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
+        {/* Not while the server is doing the pick-up or drop-off: it would happen anyway. */}
+        {l?.step === 'server' && !failed ? null : (
+          <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
+        )}
       </Row>
     </View>
   );

@@ -41,8 +41,11 @@ export async function upload(uri: string, path: string, onProgress?: (f: number)
 const STALL_MS = 8000;
 /** Then the request is tried again this often (instead of the SDK's own wait of up to a minute). */
 const KICK_MS = 15_000;
-/** And after this long without any progress, the upload starts over (the SDK can get stuck without a sign-in token). */
-const RESTART_MS = 60_000;
+/**
+ * And after this long without any progress, the upload starts over (the SDK can get stuck when the sign-in token
+ * can't be renewed offline). Longer once bytes went up, since starting over loses them.
+ */
+const RESTART_MS = 60_000, RESTART_PART_MS = 180_000;
 
 /**
  * Puts a file in storage, resuming where it stopped when the connection comes and goes. `again`: an earlier try
@@ -82,7 +85,7 @@ function putOnce(r: StorageReference, blob: Blob, contentType: string, o: { onBy
     const timer = setInterval(() => {
       const idle = Date.now() - moved;
       if (idle > STALL_MS) stall(true);
-      if (idle > RESTART_MS) { finish(); task.cancel(); reject(Object.assign(new Error('Upload stalled'), { net: 'offline' })); return; }
+      if (idle > (bytes > 0 ? RESTART_PART_MS : RESTART_MS)) { finish(); task.cancel(); reject(Object.assign(new Error('Upload stalled'), { net: 'offline' })); return; }
       if (idle > KICK_MS && Date.now() - kicked > KICK_MS) kick();
     }, 2000);
     const offWake = onWake(() => { if (Date.now() - moved > 2000) kick(); });
