@@ -1464,6 +1464,7 @@ bae7d5be	Status	[data.tsx]
 584b188e	Steering	[prompts.ts]
 5e9ae37b	Step {i} of {n}: {label}
 860fddea	Still going on.	[buy/[id].tsx]
+b0e86038	Still working on it. It goes through by itself.
 ee0d9dc8	Stop recording	[components/recorder.tsx]
 f89b5339	Stop: {van}, card not checked
 85c9eea8	Stop: {van}, no fuel card
@@ -1748,6 +1749,7 @@ afff50b1	Unknown person	[person/[uid].tsx]
 d7230991	Unknown person.	[index.ts]
 57d8bad9	Unknown photos or video.
 8f7e467c	Unknown refuel.	[index.ts]
+837d928f	Unknown request.	[once.ts]
 2e02d6c2	Unknown role.	[index.ts]
 01b107cb	Unknown scan.	[index.ts]
 b7003048	Unknown spot.	[index.ts]
@@ -1848,6 +1850,7 @@ c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager t
 525f61b6	Where	[buy/[id].tsx, check/[id].tsx, data.tsx]
 3c3f3228	Which station?	[components/viewas.tsx]
 f7664058	Which vans	[components/routines.tsx]
+6ffb26da	While this was waiting to be sent, someone else changed who has {van}. Check the van and do it again if it's still right.
 6d8d2b90	Who drivers call after a breakdown or an accident.
 57f048d9	Who had the van
 4bf77965	Who hands out the vans

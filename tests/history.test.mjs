@@ -974,6 +974,51 @@ test('checks for drivers: set by the manager, done by the driver who has the van
   assert.ok(!(await vanOf(S.d1)).todo.some((x) => x.id === oil));
 });
 
+test('a call sent twice (the phone lost the answer, or sent it again offline) is done once', async () => {
+  const R = (p, x) => p.call('routine', { orgId: S.org, ...x });
+  const rid = () => `rid${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const count = async () => (await adminDb().collection(`orgs/${S.org}/routines`).get()).size;
+  // The same request twice: one routine, the same answer.
+  const before = await count();
+  const r1 = rid();
+  const a = await R(S.mgr, { action: 'save', key: null, name: 'Mirrors clean', how: 'daily', days: null, vans: 'all', stationId: S.s1, photo: false, rid: r1 });
+  const b = await R(S.mgr, { action: 'save', key: null, name: 'Mirrors clean', how: 'daily', days: null, vans: 'all', stationId: S.s1, photo: false, rid: r1 });
+  assert.equal(b.id, a.id);
+  assert.equal(await count(), before + 1);
+  // Twice at once (sent again while the first was still running): one set of invite links, the same for both.
+  const r2 = rid();
+  const [i1, i2] = await Promise.all([1, 2].map(() => S.own.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1, rid: r2 })));
+  assert.deepEqual(i2.invites.map((x) => x.token), i1.invites.map((x) => x.token));
+  // Ids are per person: the same id from someone else is their own request.
+  const i3 = await S.mgr.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1, rid: r2 });
+  assert.notEqual(i3.invites[0].token, i1.invites[0].token);
+  // Nobody reads the kept answers from the app, not even their own.
+  await fails(getDoc(doc(S.own.db, 'users', S.own.uid, 'requests', r2)), 'permission-denied');
+  await fails(setDoc(doc(S.own.db, 'users', S.own.uid, 'requests', 'madeUpAnswer1'), { fn: 'assignVan', state: 'done', at: Date.now(), result: { ok: true } }), 'permission-denied');
+  // A refused call keeps nothing: sent again, it's checked again (and refused again).
+  const r3 = rid();
+  await fails(R(S.mgr, { action: 'save', key: null, name: 'Other station', how: 'daily', days: null, vans: 'all', stationId: S.s2, photo: false, rid: r3 }), 'permission-denied');
+  assert.equal((await adminDb().doc(`users/${S.mgr.uid}/requests/${r3}`).get()).exists, false);
+  await fails(R(S.mgr, { action: 'save', key: null, name: 'Other station', how: 'daily', days: null, vans: 'all', stationId: S.s2, photo: false, rid: r3 }), 'permission-denied');
+  // The same id for another kind of call, or a malformed id, is refused.
+  await fails(S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false, rid: r1 }), 'invalid-argument');
+  await fails(R(S.mgr, { action: 'delete', id: a.id, rid: 'x' }), 'invalid-argument');
+  // Removing it twice: done once, both answered.
+  const r4 = rid();
+  await R(S.mgr, { action: 'delete', id: a.id, rid: r4 });
+  assert.deepEqual(await R(S.mgr, { action: 'delete', id: a.id, rid: r4 }), { ok: true });
+  assert.equal(await count(), before);
+  // Giving a van, sent from a phone that was offline: refused if someone changed who has it meanwhile.
+  const { v3 } = S.vans;
+  const now = (await adminDb().doc(`orgs/${S.org}/vehicles/${v3.id}`).get()).data().assignedTo?.assignmentId ?? null;
+  await fails(S.own.call('assignVan', { orgId: S.org, vehicleId: v3.id, driverId: null, expect: now ? null : 'someoneElsesHandover', rid: rid() }), 'failed-precondition');
+  // Kept answers are deleted after a week by the daily clean-up.
+  const { cleanRequests } = fnRequire('./lib/once.js');
+  await adminDb().doc(`users/${S.mgr.uid}/requests/${r1}`).update({ until: Date.now() - 1 });
+  assert.ok((await cleanRequests(Date.now(), adminDb())) >= 1);
+  assert.equal((await adminDb().doc(`users/${S.mgr.uid}/requests/${r1}`).get()).exists, false);
+});
+
 test('costs move out of the record managers read (Deploy runs this once)', async () => {
   const { v3 } = S.vans;
   const det = adminDb().doc(`orgs/${S.org}/vehicleDetails/${v3.id}`);

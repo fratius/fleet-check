@@ -24,6 +24,7 @@ import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, playsAsIs, probe } from './video';
 import { N_, fail, langOf, tr } from './i18n';
+import { cleanRequests, onCallOnce } from './once';
 import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
@@ -136,7 +137,7 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T, i: number) => Promis
 }
 
 /* ---------- 1. identifyVehicle: which body class, so the app picks the photo frames ---------- */
-export const identifyVehicle = onCall(opts(120), async (req) => {
+export const identifyVehicle = onCallOnce('identifyVehicle', opts(120), async (req) => {
   const who = await guard(req);
   const { uid, orgId, tier } = who;
   needStaff(who);
@@ -190,7 +191,7 @@ interface Spot {
   verdict: null | Record<string, unknown>; feedback: null; markPath: string | null;
 }
 
-export const findDamage = onCall(opts(300), async (req) => {
+export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
   const t0 = Date.now();
   const who = await guard(req);
   const { uid, orgId, tier } = who;
@@ -257,7 +258,7 @@ export const findDamage = onCall(opts(300), async (req) => {
 });
 
 /* ---------- 3. checkSpot: decide one spot from the driver's close-ups ---------- */
-export const checkSpot = onCall(opts(180), async (req) => {
+export const checkSpot = onCallOnce('checkSpot', opts(180), async (req) => {
   const who = await guard(req);
   const { orgId, tier } = who;
   const checkId = String(req.data?.checkId || '');
@@ -306,7 +307,7 @@ export const checkSpot = onCall(opts(180), async (req) => {
 });
 
 /* ---------- 4. submitCheck: the driver is done with close-ups and sends the check to the manager ---------- */
-export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const submitCheck = onCallOnce('submitCheck', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   const checkId = String(req.data?.checkId || '');
   if (!ID.test(checkId)) throw fail('invalid-argument', 'Unknown check.');
@@ -328,7 +329,7 @@ export const submitCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
 });
 
 /* ---------- 5. setupStations: moves a company made before stations existed onto stations ---------- */
-export const setupStations = onCall({ timeoutSeconds: 120 }, async (req) => {
+export const setupStations = onCallOnce('setupStations', { timeoutSeconds: 120 }, async (req) => {
   const who = await guard(req);
   if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can do this.');
   const org = db().doc(`orgs/${who.orgId}`);
@@ -377,7 +378,7 @@ const INVITE_HOURS = 24;
 const inviteToken = () => randomBytes(18).toString('base64url'); // 24 characters, not guessable
 
 /** Makes 1 to 20 invite links for one role at one station. */
-export const createInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const createInvite = onCallOnce('createInvite', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   const role = req.data?.role === 'manager' ? 'manager' : req.data?.role === 'driver' ? 'driver' : null;
   const stationId = String(req.data?.stationId || '');
@@ -419,7 +420,7 @@ export const peekInvite = onCall({ timeoutSeconds: 15 }, async (req) => {
 const clean = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, n) : '');
 
 /** Uses an invite link: the signed-in person joins with the link's role and station, with their details. */
-export const acceptInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in or create an account first.');
   const token = String(req.data?.token || '');
@@ -452,7 +453,7 @@ export const acceptInvite = onCall({ timeoutSeconds: 30 }, async (req) => {
 });
 
 /* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
-export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' }, async (req) => {
+export const createDemoCompany = onCallOnce('createDemoCompany', { timeoutSeconds: 120, memory: '1GiB' }, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const email = String(req.auth?.token?.email || '');
@@ -460,7 +461,7 @@ export const createDemoCompany = onCall({ timeoutSeconds: 120, memory: '1GiB' },
   return createDemo(uid, name, email, req.data?.fresh === true);
 });
 
-export const deleteDemoCompany = onCall({ timeoutSeconds: 120 }, async (req) => {
+export const deleteDemoCompany = onCallOnce('deleteDemoCompany', { timeoutSeconds: 120 }, async (req) => {
   const who = await guard(req);
   if (who.role !== 'owner') throw fail('permission-denied', 'Only the owner can remove the demo company.');
   const org = await db().doc(`orgs/${who.orgId}`).get();
@@ -498,7 +499,7 @@ const closeWith = (who: Who, reason: EndReason, media: Media = NO_MEDIA) =>
  * Gives a van to a driver (or a manager) of its station, or ends its assignment when `driverId` is null. The driver
  * is told on their phone and asked for pick-up photos or a video (section 11).
  */
-export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
+export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
@@ -526,6 +527,11 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
       personOpen = (await tx.get(aCol.where('driverId', '==', driverId).where('end', '==', null))).docs;
     }
     if (driverId && van.assignedTo?.driverId === driverId) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
+    // Sent from a phone that was offline: only if the van still has the driver the person saw (or none), so a
+    // change someone else made meanwhile isn't overwritten.
+    if (req.data && 'expect' in req.data && (van.assignedTo?.assignmentId ?? null) !== (req.data.expect ?? null)) {
+      throw fail('failed-precondition', 'While this was waiting to be sent, someone else changed who has {van}. Check the van and do it again if it\'s still right.', { van: van.name });
+    }
     // Close the van's current assignment and the person's current one (their other van becomes free).
     if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, driverId ? 'reassigned' : 'ended'));
     for (const d of personOpen) {
@@ -563,7 +569,7 @@ export const assignVan = onCall({ timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] },
 });
 
 /** Retires a van (or brings it back). Vans are never deleted: their walk-arounds, checks and history stay. */
-export const retireVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
@@ -584,7 +590,7 @@ export const retireVan = onCall({ timeoutSeconds: 30 }, async (req) => {
 });
 
 /** Ends a van assignment when the van moves to another station (the driver stays at theirs). */
-export const moveVan = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
@@ -609,7 +615,7 @@ export const moveVan = onCall({ timeoutSeconds: 30 }, async (req) => {
 });
 
 /** Removes someone from the company. Their van becomes free; their history stays. */
-export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const removePerson = onCallOnce('removePerson', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const uid = String(req.data?.uid || '');
@@ -639,7 +645,7 @@ export const removePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
  * The owner changes someone's role or station. Done here, not in the app, so a person who leaves a station
  * also leaves its van: their open assignment ends and the van becomes free. Their history stays.
  */
-export const changePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const changePerson = onCallOnce('changePerson', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner changes roles and stations.');
   const uid = String(req.data?.uid || '');
@@ -681,7 +687,7 @@ export const changePerson = onCall({ timeoutSeconds: 30 }, async (req) => {
 // managers (their station) can let drivers record that themselves. Off by default. Every pick-up and drop-off is
 // an ordinary assignment, so it lands in the same permanent history (startedBy is the driver).
 
-export const setSelfAssign = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const setSelfAssign = onCallOnce('setSelfAssign', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const stationId = String(req.data?.stationId || '');
@@ -817,7 +823,7 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
  * The driver takes this van, with pick-up photos or a video. A van someone else still has in the app (they didn't
  * drop it off) is taken over: their assignment ends with this proof. A driver who has another van drops that off first.
  */
-export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   type Out = { assignmentId: string; unchanged?: true; tookOverFrom?: string | null };
@@ -853,7 +859,7 @@ export const pickUpVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (
 });
 
 /** The driver hands back the van they have, with drop-off photos or a video. */
-export const dropOffVan = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+export const dropOffVan = onCallOnce('dropOffVan', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   const again = async () => ((await alreadyDone(who, req.data, 'dropoff', vehicleId, { direct: true })) ? { ok: true, unchanged: true as boolean } : null);
@@ -929,7 +935,7 @@ function videoDoc(who: Who, van: { id: string; name: string; stationId?: string 
  * Adds a missing pick-up or drop-off video to a handover after the fact (for example the manager films the van
  * when the driver left without a drop-off video). The handover itself doesn't change: the video points to it.
  */
-export const addHandoverVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+export const addHandoverVideo = onCallOnce('addHandoverVideo', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const assignmentId = String(req.data?.assignmentId || '');
   const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
@@ -978,7 +984,7 @@ async function noProofYet(tx: FirebaseFirestore.Transaction, org: FirebaseFirest
  * of the handover, or the station's staff). The walk-around is marked as this handover's photos; the handover
  * itself doesn't change.
  */
-export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
+export const addHandoverPhotos = onCallOnce('addHandoverPhotos', { timeoutSeconds: 60 }, async (req) => {
   const who = await guard(req);
   const assignmentId = String(req.data?.assignmentId || '');
   const kind = req.data?.kind === 'dropoff' ? 'dropoff' : req.data?.kind === 'pickup' ? 'pickup' : null;
@@ -1008,7 +1014,7 @@ export const addHandoverPhotos = onCall({ timeoutSeconds: 60 }, async (req) => {
  * the van; if a driver has the van at that moment, the video notes their handover for context. It doesn't pick up
  * or drop off anything.
  */
-export const addVanVideo = onCall({ timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+export const addVanVideo = onCallOnce('addVanVideo', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   const videoId = String(req.data?.videoId || '');
@@ -1147,7 +1153,7 @@ async function sendApp(d: PushDoc, msg: Note): Promise<number> {
 // looked at the licence, on which day, and whether it was fine.
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export const recordLicenceCheck = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const recordLicenceCheck = onCallOnce('recordLicenceCheck', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const uid = String(req.data?.uid || '');
@@ -1235,7 +1241,7 @@ function dashValues(o: Record<string, unknown>) {
   };
 }
 
-export const readDashboard = onCall(opts(120), async (req) => {
+export const readDashboard = onCallOnce('readDashboard', opts(120), async (req) => {
   const who = await guard(req);
   await dashOn(who.orgId);
   const vehicleId = String(req.data?.vehicleId || '');
@@ -1260,7 +1266,7 @@ export const readDashboard = onCall(opts(120), async (req) => {
   };
 });
 
-export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   await dashOn(who.orgId);
   const readId = String(req.data?.readId || '');
@@ -1355,7 +1361,7 @@ export const saveReading = onCall({ timeoutSeconds: 30 }, async (req) => {
 // Written from each reviewed check (see fleetlog.ts). The app asks for it right after a review is finished; the
 // Data tab fills in any that are missing or out of date for the period it shows.
 
-export const logReview = onCall({ timeoutSeconds: 40 }, async (req) => {
+export const logReview = onCallOnce('logReview', { timeoutSeconds: 40 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const checkId = String(req.data?.checkId || '');
@@ -1398,7 +1404,7 @@ export const syncDamageLog = onCall({ timeoutSeconds: 120 }, async (req) => {
 // on the phone; the person checks them before anything is saved. The photos are deleted straight after reading,
 // so no copy of a licence or contract is kept. Costs are only read for owners.
 
-export const readDocument = onCall(opts(180), async (req) => {
+export const readDocument = onCallOnce('readDocument', opts(180), async (req) => {
   const who = await guard(req);
   needStaff(who);
   const target = req.data?.target === 'driver' ? 'driver' : req.data?.target === 'van' ? 'van' : null;
@@ -1783,7 +1789,7 @@ async function buyContacts(who: Who, org: R, d: Record<string, unknown>) {
   return { people: (await bossesOf(who.orgId, p.stationId, p.kind, p.by)).map(({ name, phone }) => ({ name, phone })) };
 }
 
-export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
+export const purchase = onCallOnce('purchase', { ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   const org = db().doc(`orgs/${who.orgId}`);
   const d = (req.data || {}) as Record<string, unknown>;
@@ -1809,7 +1815,7 @@ export const purchase = onCall({ ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBP
 const routineName = (lang: string, r: { key: string | null; name: string }) => (r.key ? tr(lang, r.key) : r.name);
 const vanLabel = (v: { name: string; plate?: string | null }) => `${v.name}${v.plate ? ` (${v.plate})` : ''}`;
 
-export const routine = onCall({ timeoutSeconds: 60 }, async (req) => {
+export const routine = onCallOnce('routine', { timeoutSeconds: 60 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const d = (req.data || {}) as Record<string, unknown>;
@@ -1860,7 +1866,7 @@ export const routine = onCall({ timeoutSeconds: 60 }, async (req) => {
   return { id: ref.id };
 });
 
-export const routineDone = onCall({ timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] }, async (req) => {
+export const routineDone = onCallOnce('routineDone', { timeoutSeconds: 60, secrets: [WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   const d = (req.data || {}) as Record<string, unknown>;
   const vehicleId = String(d.vehicleId || ''), routineId = String(d.routineId || '');
@@ -2115,7 +2121,7 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, a
 // damage (within the 30 days), which keeps them 90 days from when they were taken; damage approved in a review
 // does the same for its photos (damageLogFor). A daily job deletes what is due.
 
-export const markDamage = onCall({ timeoutSeconds: 30 }, async (req) => {
+export const markDamage = onCallOnce('markDamage', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const col = req.data?.kind === 'video' ? 'videos' : req.data?.kind === 'walk' ? 'walkarounds' : null;
@@ -2144,6 +2150,8 @@ const runClean = (now: number, onlyOrg?: string) => cleanMedia(now, (orgId, chec
 export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'Europe/Berlin', timeoutSeconds: 540, memory: '512MiB', retryCount: 1 }, async () => {
   const r = await runClean(Date.now());
   logger.info('Photos and videos cleaned up', r);
+  // Kept answers of calls that may be sent twice (once.ts), after a week.
+  logger.info('Old call answers deleted', { n: await cleanRequests().catch((e) => { logger.warn('Call answers not cleaned', e as Error); return -1; }) });
 });
 
 /** The app creator runs the clean-up for one company now. On the emulators the tests pass a day in the future. */
