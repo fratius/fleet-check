@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Кто брал фургон, с какого и по какое время и какие повреждения нашли — всё остаётся в истории навсегда. Штраф за превышение скорости 3 октября в 10:20? Укажите фургон, день и время, и история назовёт водителя.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Каждую передачу записывает сервер. Никто не может её изменить или удалить.",
  "One driver per van, one van per driver.": "Один водитель на фургон, один фургон на водителя.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Фото и видео хранятся 30 дней, отмеченные повреждения — до 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Фургоны списываются, но не удаляются. У ушедших сотрудников история сохраняется.",
  "Week 43": "Неделя 43",
  "Tue 20 Oct": "Вт, 20 окт.",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Что вы храните о водителях?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Категории и срок действия прав, проверки прав, инструктажи и происшествия. Никогда — номера или копии прав, даты рождения, домашние адреса или данные о здоровье.",
  "How long do you keep photos and videos?": "Как долго хранятся фото и видео?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 дней. Фото и видео, которые менеджер или владелец отметил как повреждение, хранятся до 90 дней. Записи о том, у кого и когда был какой фургон, хранятся навсегда.",
  "What about damage found at the end of a lease?": "А повреждения, найденные в конце лизинга?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Каждое найденное повреждение есть в карточке фургона с датой и именем того, у кого был фургон. Его фото хранятся 90 дней, так что урегулируйте вопрос с водителем или страховщиком за это время.",
  "How do people join?": "Как люди присоединяются?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Можно также написать на {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Отметьте поле, чтобы принять условия и политику конфиденциальности.",
  "Tick the box to confirm you have read the privacy policy.": "Отметьте поле, чтобы подтвердить, что прочитали политику конфиденциальности.",
- "Your request didn't go through. Check your connection and try again.": "Заявка не отправилась. Проверьте подключение и попробуйте снова."
+ "Your request didn't go through. Check your connection and try again.": "Заявка не отправилась. Проверьте подключение и попробуйте снова.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Фото и видео удаляются 15-го числа следующего месяца, но никогда, пока фургон ещё у водителя.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "До 15-го числа следующего месяца: 15-го удаляются фото и видео за предыдущий месяц. Никогда, пока фургон ещё у водителя, у которого он был: они ждут, пока фургон не вернут. Фото и видео, отмеченные как повреждение, хранятся 90 дней. Кто и когда брал какой фургон, хранится всегда."
 }

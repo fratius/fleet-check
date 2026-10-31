@@ -1185,20 +1185,27 @@ test('people delete their own account: login and profile go, the company keeps i
   await fails(cr.call('deleteAccount', {}), 'failed-precondition');
 });
 
-test('photos and videos: kept 30 days, 90 when marked or approved as damage; the records stay', async () => {
+test('photos and videos: deleted on the 15th for the month before, never while the van is held, damage after 90 days; the records stay', async () => {
   // Vans of their own (earlier tests moved van 1 to station 2).
   const van = async (name, st) => {
     const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
     await setDoc(r, { name, plate: name.replace(/\W/g, ''), cls: 'van', stationId: S[st], createdAt: Date.now(), createdBy: S.own.uid });
     return { id: r.id, name, stationId: S[st] };
   };
-  const v1 = await van('Van K1', 's1'), v2 = await van('Van K2', 's1'), v3 = await van('Van K3', 's2');
+  const v1 = await van('Van K1', 's1'), v2 = await van('Van K2', 's1'), v3 = await van('Van K3', 's2'), v4 = await van('Van K4', 's1');
   const DAY = 86_400_000;
-  // Photos taken before the rule started count from that day (functions/src/media.ts RULE_START).
-  const START = Date.UTC(2026, 9, 28);
-  const base = () => Math.max(Date.now(), START);
+  const { deleteOn, cutoff } = fnRequire('./lib/media.js');
+  const T0 = Date.now();
+  // The run that deletes this month's files: the 15th of next month (never before 15 December 2026), at 04:00.
+  const run1 = deleteOn(T0) + 4 * 3_600_000;
   const exists = async (path) => { try { await getBytes(ref(S.own.st, path)); return true; } catch { return false; } };
   const walkFile = (id) => `orgs/${S.org}/walkarounds/${id}/01.jpg`;
+  // Hal has van K4: nothing of it is deleted while he has it.
+  const inv = await S.mgr.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+  const hal = await person('Hal Holder');
+  await hal.call('acceptInvite', { token: inv.invites[0].token, details: { firstName: 'Hal', lastName: 'Holder', phone: '+49 151 9', transporterId: 'H1' } });
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v4.id, driverId: hal.uid });
+  const held = await photos(hal, S.org, v4);
   const plain = await photos(S.d1, S.org, v1);
   const marked = await photos(S.d1, S.org, v1);
   const other = await photos(S.own, S.org, v3);
@@ -1207,7 +1214,7 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   await fails(S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: other }), 'permission-denied');
   const r = await S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: marked });
   const mw = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', marked))).data();
-  assert.equal(r.keepUntil, Math.max(mw.createdAt, START) + 90 * DAY);
+  assert.equal(r.keepUntil, mw.createdAt + 90 * DAY);
   assert.equal(mw.keepMark.by, S.mgr.uid);
   // Taking the mark off, and on again.
   assert.equal((await S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: marked, on: false })).keepUntil, null);
@@ -1223,7 +1230,7 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   await uploadBytes(ref(S.d1.st, closeup), new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
   await S.mgr.call('logReview', { orgId: S.org, checkId: k.id });
   for (const id of [before, found]) assert.deepEqual((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', id))).data().keepDamage, [k.id]);
-  assert.ok((await k.get()).data().keepUntil > base() + 80 * DAY);
+  assert.ok((await k.get()).data().keepUntil > T0 + 80 * DAY);
   // Videos: the original goes once the playback copy is made; one is marked as damage. A phone camera's video
   // (larger than 720p) is converted; the app's own 720p H.264 recording is only repackaged.
   const keepV = await video(S.d1, { size: '1280x960' });
@@ -1243,23 +1250,36 @@ test('photos and videos: kept 30 days, 90 when marked or approved as damage; the
   const dash = `orgs/${S.org}/dash/${S.d1.uid}/old.jpg`;
   await uploadBytes(ref(S.d1.st, dash), new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
 
-  // The clean-up 31 days later: only what's kept is left. Only the app creator runs it by hand.
+  // Before the 15th nothing of this month goes. Only the app creator runs the clean-up by hand.
   await fails(S.own.call('cleanMediaNow', { orgId: S.org }), 'permission-denied');
   const cr = await appCreator('Kai Keeper');
-  const res = await cr.call('cleanMediaNow', { orgId: S.org, now: base() + 31 * DAY });
-  assert.ok(res.deleted > 0 && res.kept > 0, JSON.stringify(res));
+  const early = await cr.call('cleanMediaNow', { orgId: S.org, now: run1 - DAY });
+  assert.ok(early.cutoff === null || early.cutoff <= T0, JSON.stringify(early));
+  for (const id of [plain, other, held]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} waits for the 15th`);
+  assert.equal(await exists(dash), true);
+  // On the 15th of next month: this month's files go, except damage and everything of the van Hal still has.
+  const res = await cr.call('cleanMediaNow', { orgId: S.org, now: run1 });
+  assert.ok(res.cutoff > T0 && res.cutoff === cutoff(run1), JSON.stringify(res));
+  assert.ok(res.deleted > 0 && res.kept > 0 && res.held > 0, JSON.stringify(res));
   assert.equal(await exists(walkFile(plain)), false);
   assert.equal(await exists(walkFile(other)), false);
   assert.equal(await exists(dash), false);
   assert.equal(await exists(`orgs/${S.org}/videos/${S.d1.uid}/${dropV}/play.mp4`), false);
-  for (const id of [marked, before, found]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} is kept`);
+  for (const id of [marked, before, found, held]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} is kept`);
   assert.equal(await exists(closeup), true);
   assert.equal(await exists(kv.playPath), true);
-  // The records stay.
-  assert.ok((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', plain))).exists());
-  assert.ok((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dropV))).exists());
-  // 91 days later every file is gone, the marked ones too.
-  await cr.call('cleanMediaNow', { orgId: S.org, now: base() + 91 * DAY });
+  // The records stay and say when their files went; a deleted walk-around can't be marked as damage any more.
+  const pw = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', plain))).data();
+  assert.equal(pw.mediaDeletedAt, run1);
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dropV))).data().mediaDeletedAt, run1);
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', held))).data().mediaDeletedAt, undefined);
+  await fails(S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: plain }), 'failed-precondition');
+  // Hal gives the van back: from then on its files count from that day, so they go at the run after.
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v4.id, driverId: null });
+  await cr.call('cleanMediaNow', { orgId: S.org, now: run1 });
+  assert.equal(await exists(walkFile(held)), false);
+  // 90 days on, at the next 15th, the damage goes too.
+  await cr.call('cleanMediaNow', { orgId: S.org, now: deleteOn(T0 + 91 * DAY) + 4 * 3_600_000 });
   for (const p of [walkFile(marked), walkFile(found), closeup, kv.playPath]) assert.equal(await exists(p), false, p);
   assert.ok((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', k.id))).exists());
 });

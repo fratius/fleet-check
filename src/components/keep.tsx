@@ -3,26 +3,26 @@ import { View } from 'react-native';
 
 import { Button, Card, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { t } from '@/lib/i18n';
-import { damageUntil, day, keptUntil, mediaGone } from '@/lib/media';
+import { damageDeleteFrom, day, deleteFrom, mediaGone } from '@/lib/media';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { QUEUED, sendCall } from '@/lib/outbox';
 import type { KeepMark } from '@/lib/types';
 
-/** Has this record's photos or video been deleted (30 days, or 90 when kept)? False in demo companies and test mode. */
+/** Has the clean-up deleted this record's photos or video (mediaDeletedAt)? False in demo companies and test mode. */
 export function useMediaGone() {
   const s = useSession();
   const demo = s.mode !== 'firebase' || !!s.org?.demo;
-  return (createdAt: number, keepUntil?: number | null) => mediaGone(createdAt, keepUntil, demo);
+  return (deletedAt?: number | null) => mediaGone(deletedAt, demo);
 }
 
 /**
  * How long a walk-around's photos or a video are kept, and for owners and the station's fleet managers the button
  * to mark them as damage (kept 90 days from when they were taken) or to take the mark off.
  */
-export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, keepDamage }: {
+export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, keepDamage, mediaDeletedAt }: {
   kind: 'walk' | 'video'; id: string; createdAt: number; stationId?: string | null;
-  keepUntil?: number | null; keepMark?: KeepMark | null; keepDamage?: string[];
+  keepUntil?: number | null; keepMark?: KeepMark | null; keepDamage?: string[]; mediaDeletedAt?: number | null;
 }) {
   const s = useSession();
   const c = useColors();
@@ -36,11 +36,11 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
   const until = mine ? mine.until : keepUntil;
   const demo = !!s.org?.demo;
   const can = s.staff && s.runs(stationId);
-  if (gone(createdAt, until)) {
+  if (gone(mediaDeletedAt)) {
     return (
       <Card dashed>
-        <T v="hint">{kind === 'video' ? t('This video was deleted on {date}. The record of it stays.', { date: day(keptUntil(createdAt, until)) })
-          : t('These photos were deleted on {date}. The record of the walk-around stays.', { date: day(keptUntil(createdAt, until)) })}</T>
+        <T v="hint">{kind === 'video' ? t('This video was deleted on {date}. The record of it stays.', { date: day(mediaDeletedAt!) })
+          : t('These photos were deleted on {date}. The record of the walk-around stays.', { date: day(mediaDeletedAt!) })}</T>
       </Card>
     );
   }
@@ -62,9 +62,9 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
         {mark ? <T v="small">{t('Marked as damage by {name}, {when}.', { name: mark.byName, when: fmtWhen(mark.at) })}</T> : null}
         {damage ? <T v="small">{t('Damage was approved in a check of these photos.')}</T> : null}
         {demo ? <T v="small">{t('Demo company: photos and videos aren\'t deleted.')}</T>
-          : <T v="small">{mark || damage ? t('Kept until {date}, 90 days after they were taken.', { date: day(keptUntil(createdAt, until)) })
-            : t('Photos and videos are kept 30 days: these until {date}.', { date: day(keptUntil(createdAt, until)) })}</T>}
-        {can && !mark ? <T v="small">{t('If they show damage, mark them to keep them until {date}.', { date: day(damageUntil(createdAt)) })}</T> : null}
+          : <T v="small">{mark || damage ? t('Damage is kept 90 days: these until {date} at the earliest.', { date: day(deleteFrom(createdAt, until)) })
+            : t('Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.', { date: day(deleteFrom(createdAt, until)) })}</T>}
+        {can && !mark ? <T v="small">{t('If they show damage, mark them to keep them until {date}.', { date: day(damageDeleteFrom(createdAt)) })}</T> : null}
       </View>
       {can ? (mark
         ? <Button small v="link" title={t('Take the damage mark off')} loading={busy} onPress={() => set(false)} />

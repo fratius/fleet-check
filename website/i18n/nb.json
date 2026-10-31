@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Hvem som hadde varebilen, fra når til når, og hvilke skader som ble funnet, blir lagret for alltid. En fartsbot 3. oktober kl. 10.20? Oppgi varebil, dag og klokkeslett, så viser historikken sjåføren.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Hver overlevering er en post serveren skriver. Ingen kan endre eller slette den.",
  "One driver per van, one van per driver.": "Én sjåfør per varebil, én varebil per sjåfør.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Bilder og videoer lagres i 30 dager, markerte skader i opptil 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Varebiler fases ut, men slettes aldri. De som slutter, beholder historikken sin.",
  "Week 43": "Uke 43",
  "Tue 20 Oct": "tir. 20. okt.",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Hva lagrer dere om sjåførene?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Førerkortklasser og utløp, førerkortsjekker, instruksjoner og hendelser. Aldri førerkortnumre eller kopier, fødselsdatoer, hjemmeadresser eller helseopplysninger.",
  "How long do you keep photos and videos?": "Hvor lenge lagrer dere bilder og videoer?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dager. Bilder og videoer som en flåtesjef eller eier markerer som skade, lagres i opptil 90 dager. Opplysningene om hvem som hadde hvilken varebil, og når, lagres for alltid.",
  "What about damage found at the end of a lease?": "Hva med skader som blir funnet når leasingen er slutt?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Hver skade som blir funnet, står i varebilens skaderegister med dato og hvem som hadde varebilen. Bildene lagres i 90 dager, så gjør opp med sjåføren eller forsikringsselskapet innen den tid.",
  "How do people join?": "Hvordan blir man med?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Du kan også skrive til {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Kryss av i boksen for å godta vilkårene og personvernerklæringen.",
  "Tick the box to confirm you have read the privacy policy.": "Kryss av i boksen for å bekrefte at du har lest personvernerklæringen.",
- "Your request didn't go through. Check your connection and try again.": "Forespørselen din gikk ikke gjennom. Sjekk tilkoblingen og prøv igjen."
+ "Your request didn't go through. Check your connection and try again.": "Forespørselen din gikk ikke gjennom. Sjekk tilkoblingen og prøv igjen.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Bilder og videoer slettes den 15. i måneden etter, aldri så lenge sjåføren fortsatt har varebilen.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Til den 15. i måneden etter: den 15. slettes bilder og videoer fra måneden før. Aldri så lenge sjåføren som hadde varebilen, fortsatt har den: de venter til bilen er levert tilbake. Bilder og videoer merket som skade lagres i 90 dager. Hvem som hadde hvilken varebil, og når, lagres for alltid."
 }

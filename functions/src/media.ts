@@ -2,29 +2,71 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
 /**
- * How long photos and videos are kept (decided by the product owner, 2026-10): 30 days; the ones that matter for
- * damage 90 days. The records themselves (who had which van, walk-arounds, checks, refuels, the damage list) stay
- * for good; only the files go.
+ * How long photos and videos are kept (decided by the product owner, 2026-10-31). The records themselves (who had
+ * which van, walk-arounds, checks, refuels, the damage list) stay for good; only the files go.
  *
- * Kept 90 days (from when they were taken):
- * - a check where the manager approved damage: its close-ups, the walk-around it was found in and the walk-around
- *   before it (the "before" photos of the damage record), set by damageLogFor when the review is logged;
- * - walk-around photos and videos an owner or the station's manager marked as damage (markDamage).
- * Everything else (dashboard, receipt and van-type photos too) goes after 30 days. Every file goes after 90.
+ * - Once a month, on the 15th (German time), the files of the month before are deleted (and anything older that is
+ *   due): a 15-day buffer after the month has ended, so a file is kept 15 to 45 days. The first run is on
+ *   15 December 2026.
+ * - Never while the van is still with the driver who had it: every file of a van (walk-arounds, damage checks,
+ *   videos, dashboard, refuel and receipt photos, checks for drivers) taken while an assignment of that van is open,
+ *   and its pick-up proof, stays until the van is given back. After that, the assignment's end counts as the file's
+ *   date, so its files go on the 15th of the month after the van was given back.
+ * - Damage is kept 90 days from when it was taken, then goes at the next run:
+ *   a check where the manager approved damage (its close-ups, the walk-around it was found in and the one before it,
+ *   set by damageLogFor when the review is logged), and walk-around photos and videos an owner or the station's
+ *   manager marked as damage (markDamage).
  *
- * A record that keeps its files carries keepUntil (ms; the files are kept while it's in the future), and on
- * walk-arounds and videos the reasons: keepMark (who marked it) and keepDamage (the checks with approved damage).
+ * A record that keeps its files 90 days carries keepUntil (ms), and on walk-arounds and videos the reasons:
+ * keepMark (who marked it) and keepDamage (the checks with approved damage). A record whose files were deleted
+ * carries mediaDeletedAt (set by the clean-up; the app shows "deleted on" only from it).
  */
-export const KEEP_DAYS = 30;
 export const DAMAGE_DAYS = 90;
 export const DAY_MS = 86_400_000;
+export const HOUR_MS = 3_600_000;
+/** Deletions happen on this day of the month (German time). */
+export const DELETE_DAY = 15;
+/** Proof taken this long before a handover belongs to it (the server accepts proof up to two hours old). */
+export const PROOF_MS = 3 * HOUR_MS;
+
+const BERLIN = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Berlin', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23',
+});
+/** The German calendar date and time of a moment (month 1-12). */
+export function berlinParts(ms: number): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+  const p: Record<string, number> = {};
+  for (const x of BERLIN.formatToParts(ms)) if (x.type !== 'literal') p[x.type] = Number(x.value);
+  return { year: p.year, month: p.month, day: p.day, hour: p.hour, minute: p.minute, second: p.second };
+}
+/** Midnight German time at the start of year-month(0-based, may overflow)-day. */
+export function berlinMidnight(year: number, month0: number, day: number): number {
+  const guess = Date.UTC(year, month0, day);
+  const p = berlinParts(guess);
+  const wall = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  return guess - (wall - guess);
+}
+/** The first monthly deletion: 15 December 2026 (nothing goes before it; until then everyone was told 27 November). */
+export const FIRST_RUN = berlinMidnight(2026, 11, DELETE_DAY);
+
 /**
- * The day the rule started (the store release). Photos and videos taken before count from this day, so nothing that
- * existed before was deleted without 30 days' notice; the first deletions are 30 days after it.
+ * Files dated before this moment are due: from the 15th, the start of this month (the month before is over and
+ * its 15 days have passed); before the 15th, the start of the month before. Nothing before the first run.
  */
-export const RULE_START = Date.UTC(2026, 9, 28);
-/** When a file's 30 or 90 days start: when it was taken, or the day the rule started if that's later. */
-export const since = (createdAt: number) => Math.max(createdAt, RULE_START);
+export function cutoff(now: number): number {
+  if (now < FIRST_RUN) return -Infinity;
+  const p = berlinParts(now);
+  return berlinMidnight(p.year, p.month - 1 - (p.day >= DELETE_DAY ? 0 : 1), 1);
+}
+/** The run that deletes a file dated `at`: the 15th of the following month, never before the first run. */
+export function deleteOn(at: number): number {
+  const p = berlinParts(at);
+  return Math.max(FIRST_RUN, berlinMidnight(p.year, p.month, DELETE_DAY));
+}
+/** The 15th of this month at midnight (German time): has this month's deletion run come yet? */
+export function thisMonthsRun(now: number): number {
+  const p = berlinParts(now);
+  return berlinMidnight(p.year, p.month - 1, DELETE_DAY);
+}
 
 const db = () => getFirestore();
 const bucket = () => getStorage().bucket();
@@ -38,14 +80,9 @@ export function approvedDamage(k: { status?: string; spots?: unknown[]; review?:
   return (k.review.manual || []).length > 0;
 }
 
-/** Until when a record's files are kept: 90 days from when they were taken while there's a reason, else none. */
+/** Until when a record's files are kept as damage: 90 days from when they were taken while there's a reason, else none. */
 export function keepUntil(createdAt: number, reasons: boolean): number | null {
-  return reasons && Number.isFinite(createdAt) ? since(createdAt) + DAMAGE_DAYS * DAY_MS : null;
-}
-
-/** Are this record's photos or video gone (or due at tonight's clean-up), for the app and the functions alike. */
-export function mediaGone(createdAt: number, until: number | null | undefined, now = Date.now()): boolean {
-  return now > Math.max(until || 0, since(createdAt) + KEEP_DAYS * DAY_MS);
+  return reasons && Number.isFinite(createdAt) ? createdAt + DAMAGE_DAYS * DAY_MS : null;
 }
 
 /**
@@ -61,12 +98,6 @@ export function recordOf(path: string): { org: string; key: string | null } | nu
   if ((p[2] === 'walkarounds' || p[2] === 'checks') && p[3] && p.length >= 5) return { org: p[1], key: `${p[2]}/${p[3]}` };
   if (p[2] === 'videos' && p[4] && p.length >= 6) return { org: p[1], key: `videos/${p[4]}` };
   return { org: p[1], key: null };
-}
-
-/** Should a file of this age go? Always after 90 days; after 30 unless its record is kept. */
-export function shouldDelete(ageMs: number, kept: boolean): boolean {
-  if (ageMs > DAMAGE_DAYS * DAY_MS) return true;
-  return ageMs > KEEP_DAYS * DAY_MS && !kept;
 }
 
 /**
@@ -90,57 +121,125 @@ export async function keepForCheck(orgId: string, checkId: string, createdAt: nu
   })));
 }
 
-/** Records of this company whose files are kept right now. */
-async function keptKeys(orgId: string, now: number): Promise<Set<string>> {
+/** Records of this company whose files are kept as damage past the cut-off. */
+async function keptKeys(orgId: string, cut: number): Promise<Set<string>> {
   const org = db().doc(`orgs/${orgId}`);
   const kinds = ['walkarounds', 'checks', 'videos'] as const;
-  const snaps = await Promise.all(kinds.map((k) => org.collection(k).where('keepUntil', '>', now).select().get()));
+  const snaps = await Promise.all(kinds.map((k) => org.collection(k).where('keepUntil', '>=', cut).select().get()));
   const out = new Set<string>();
   snaps.forEach((s, i) => s.docs.forEach((d) => out.add(`${kinds[i]}/${d.id}`)));
   return out;
 }
 
-export interface CleanResult { companies: number; deleted: number; kept: number; checked: number; reviews: number }
+type Window = { id: string; from: number; to: number };
+const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : NaN);
 
 /**
- * The daily clean-up (and the app creator's "run it now"). First follows reviews since the last run (so damage a
- * manager approved keeps its photos even if the app never logged the review), then deletes the files that are due.
+ * What a van's open or recently ended assignments hold back: the records (walkarounds/ID, checks/ID, videos/ID) and
+ * the single photos (dashboard, refuel, receipt, parts, checks for drivers) of every van while it was with someone,
+ * from shortly before the pick-up (its proof) until the van was given back. An assignment that ended before the
+ * cut-off holds nothing any more.
+ */
+export async function heldFiles(orgId: string, cut: number): Promise<{ keys: Set<string>; paths: Set<string>; vans: number }> {
+  const org = db().doc(`orgs/${orgId}`);
+  const [open, ended] = await Promise.all([
+    org.collection('assignments').where('end', '==', null).get(),
+    Number.isFinite(cut) ? org.collection('assignments').where('end', '>=', cut).get() : Promise.resolve(null),
+  ]);
+  const byVan = new Map<string, Window[]>();
+  for (const d of [...open.docs, ...(ended?.docs || [])]) {
+    const a = d.data() as { vehicleId?: string; start?: number; end?: number | null };
+    if (!a.vehicleId || !Number.isFinite(num(a.start))) continue;
+    const w = { id: d.id, from: num(a.start) - PROOF_MS, to: a.end == null ? Infinity : num(a.end) + PROOF_MS };
+    byVan.set(a.vehicleId, [...(byVan.get(a.vehicleId) || []), w]);
+  }
+  const keys = new Set<string>();
+  const paths = new Set<string>();
+  const within = (ws: Window[], at: number, assignmentId?: unknown) =>
+    ws.some((w) => w.id === assignmentId || (at >= w.from && at <= w.to));
+  for (const [vehicleId, ws] of byVan) {
+    const q = (c: string) => org.collection(c).where('vehicleId', '==', vehicleId).get();
+    const [walks, checks, videos, dashReads, readings, buys, done] = await Promise.all(
+      ['walkarounds', 'checks', 'videos', 'dashReads', 'readings', 'purchases', 'routineDone'].map(q));
+    for (const d of walks.docs) {
+      const x = d.data();
+      if (within(ws, num(x.createdAt), x.handover?.assignmentId)) keys.add(`walkarounds/${d.id}`);
+    }
+    for (const d of checks.docs) if (within(ws, num(d.data().createdAt))) keys.add(`checks/${d.id}`);
+    for (const d of videos.docs) {
+      const x = d.data();
+      if (within(ws, num(x.createdAt), x.assignmentId)) keys.add(`videos/${d.id}`);
+    }
+    for (const d of [...dashReads.docs, ...readings.docs, ...done.docs]) {
+      const x = d.data();
+      if (typeof x.path === 'string' && within(ws, num(x.createdAt ?? x.at))) paths.add(x.path);
+    }
+    for (const d of buys.docs) {
+      const x = d.data();
+      if (!within(ws, num(x.createdAt))) continue;
+      for (const p of [x.dash?.path, x.receipt?.path, ...(Array.isArray(x.parts) ? x.parts : [])]) if (typeof p === 'string') paths.add(p);
+    }
+  }
+  return { keys, paths, vans: byVan.size };
+}
+
+export interface CleanResult { companies: number; deleted: number; kept: number; held: number; checked: number; reviews: number; cutoff: number | null }
+
+/**
+ * The monthly clean-up (run by the daily job from the 15th, and by the app creator's "run it now"). First follows
+ * reviews since the last run (so damage a manager approved keeps its photos even if the app never logged the
+ * review), then deletes the files dated before the cut-off that nothing holds back: not damage kept 90 days, and
+ * nothing of a van while it is with a driver. Records whose files went get mediaDeletedAt.
  * Demo companies are left alone: their pictures are drawings and the demo is made new when needed.
  */
 export async function cleanMedia(now: number, logReview: (orgId: string, checkId: string) => Promise<unknown>, onlyOrg?: string): Promise<CleanResult> {
+  const cut = cutoff(now);
+  const res: CleanResult = { companies: 0, deleted: 0, kept: 0, held: 0, checked: 0, reviews: 0, cutoff: Number.isFinite(cut) ? cut : null };
+  if (!Number.isFinite(cut)) return res;
   const state = db().doc('platform/media');
   const last = Number((await state.get()).data()?.lastRun || 0);
-  const reviewsSince = last ? last - 2 * DAY_MS : now - (DAMAGE_DAYS + 1) * DAY_MS;
+  const reviewsSince = last ? last - 2 * DAY_MS : now - (DAMAGE_DAYS + 50) * DAY_MS;
   const orgs = onlyOrg ? [await db().doc(`orgs/${onlyOrg}`).get()] : (await db().collection('orgs').select('demo').get()).docs;
-  const res: CleanResult = { companies: 0, deleted: 0, kept: 0, checked: 0, reviews: 0 };
   for (const o of orgs) {
     if (!o.exists || o.data()?.demo === true) continue;
     res.companies++;
     const reviewed = await o.ref.collection('checks').where('review.at', '>=', reviewsSince).select('status', 'createdAt').get();
     for (const d of reviewed.docs) {
-      if (d.data().status !== 'reviewed' || Number(d.data().createdAt) < now - (DAMAGE_DAYS + 1) * DAY_MS) continue;
+      if (d.data().status !== 'reviewed' || Number(d.data().createdAt) < cut - DAMAGE_DAYS * DAY_MS) continue;
       await logReview(o.id, d.id).catch(() => {});
       res.reviews++;
     }
-    const kept = await keptKeys(o.id, now);
+    // Read after the reviews are followed, so a review that approved damage counts.
+    const [kept, held] = await Promise.all([keptKeys(o.id, cut), heldFiles(o.id, cut)]);
+    const gone = new Set<string>();
     let pageToken: string | undefined;
     do {
       const [files, next] = await bucket().getFiles({ prefix: `orgs/${o.id}/`, autoPaginate: false, maxResults: 1000, pageToken });
       const due = files.filter((f) => {
         res.checked++;
-        const age = now - since(Date.parse(String(f.metadata.timeCreated || '')));
-        if (!Number.isFinite(age)) return false;
-        const rec = recordOf(f.name);
-        const keep = !!rec?.key && kept.has(rec.key);
-        if (shouldDelete(age, keep)) return true;
-        if (keep && age > KEEP_DAYS * DAY_MS) res.kept++;
-        return false;
+        const at = Date.parse(String(f.metadata.timeCreated || ''));
+        if (!Number.isFinite(at) || at >= cut) return false;
+        const key = recordOf(f.name)?.key || null;
+        if ((key && held.keys.has(key)) || held.paths.has(f.name)) { res.held++; return false; }
+        if (key && kept.has(key)) { res.kept++; return false; }
+        if (key) gone.add(key);
+        return true;
       });
       for (let i = 0; i < due.length; i += 50) {
         await Promise.all(due.slice(i, i + 50).map((f) => f.delete({ ignoreNotFound: true }).then(() => { res.deleted++; }).catch(() => {})));
       }
       pageToken = (next as { pageToken?: string } | null)?.pageToken;
     } while (pageToken);
+    // The records stay; they say when their files went.
+    const keys = [...gone];
+    for (let i = 0; i < keys.length; i += 400) {
+      const batch = db().batch();
+      for (const k of keys.slice(i, i + 400)) batch.update(o.ref.collection(k.split('/')[0]).doc(k.split('/')[1]), { mediaDeletedAt: now });
+      await batch.commit().catch(async () => {
+        // A record that isn't there (a file without one): set the others one by one.
+        await Promise.all(keys.slice(i, i + 400).map((k) => o.ref.collection(k.split('/')[0]).doc(k.split('/')[1]).update({ mediaDeletedAt: now }).catch(() => {})));
+      });
+    }
   }
   if (!onlyOrg) await state.set({ lastRun: now, ...res, at: FieldValue.serverTimestamp() }, { merge: true });
   return res;

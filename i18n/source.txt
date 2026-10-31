@@ -485,6 +485,7 @@ e51cea3a	Damage check, {van}, by {name}, {when}
 8b5ccc32	Damage checks	[vehicle/[id].tsx, log.tsx]
 bd0de790	Damage checks ({n})	[log.tsx]
 bbf4c024	Damage checks need the Firebase backend.
+3bd96264	Damage is kept 90 days: these until {date} at the earliest.
 16abd203	Damage it missed	[log.tsx]
 b22aa3a8	Damage it missed ({n} added by a manager) || Damage it missed ({n} added by managers)
 a9b9242e	Damage per 10,000 km
@@ -820,7 +821,6 @@ c30cc528	Join or create another company
 445f6bf2	Keep filming: at least {n} seconds.
 731594dc	Keeping the photos	[components/keep.tsx]
 cdb37ef3	Keeping the video	[components/keep.tsx]
-22049077	Kept until {date}, 90 days after they were taken.
 2531c31e	kerbed rim	[check/[id].tsx]
 e5651c68	Keys	[components/vanfacts.tsx]
 9b9e64fc	Kilometres allowed a year
@@ -1218,8 +1218,7 @@ c9bb5c97	Photo of the dashboard
 3f5d1d7a	Photo taken. Take again
 2e58e0c1	photos	[walk/[id].tsx, app/scan/[id].tsx]
 c8b2e864	Photos	[buy/[id].tsx, log.tsx, components/scanchoice.tsx]
-c9027a2b	Photos and videos are deleted after {n} days. These are gone already.
-ecdeee38	Photos and videos are kept 30 days: these until {date}.
+aebfe70e	Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.
 2d8fc3c9	Photos are stored with the scan in your company's storage.
 c7e2cd6c	Photos at takeover	[components/history.tsx]
 7eb70e28	Photos from the library
@@ -1692,6 +1691,7 @@ f72c7e3b	Their van becomes free; their history, walk-arounds and checks stay.
 469dbdc0	These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.
 dcb6e009	These photos aren't yours or aren't of this van.
 de5fd80c	These photos belong to another station.
+7bd2351c	These photos or this video were deleted already.
 f7d0d2b1	These photos were already used. Take new ones.
 6fd8484d	These photos were deleted on {date}. The record of the walk-around stays.
 738a4e4e	They left the company. Their van history stays.
@@ -1979,7 +1979,7 @@ c6b6f706	Your fleet manager gets the details.
 cc5527b7	Your fleet manager refused it. Cancel it.
 98820f29	Your fleet manager sets the checks.
 b3e23e5e	Your last tour on {van} had no end photo. This photo ends it and starts today's.
-d6135246	Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.
+d5855a7c	Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted on the 15th of the month after, or after 90 days when marked as damage.
 ab42293e	Your name	[app/sign-in.tsx]
 270d6239	Your notifications come in this language too. Names, notes and what the AI wrote stay as they were written.
 df675083	Your own van history

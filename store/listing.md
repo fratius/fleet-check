@@ -61,7 +61,7 @@ FOR OWNERS, MANAGERS AND DRIVERS
 Fleet owners see every station; fleet managers run their own; drivers see their van and their own record. Drivers and managers join through one-time invite links. The app speaks 32 languages, so every driver can use it in their own.
 
 PRIVACY
-Photos and videos are kept 30 days, the ones that show damage 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
+Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with its driver; the ones that show damage after 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
 
 Any delivery company can start right away: create your company in the app, or open the demo company with made-up vans and people to look around first. More at fratius.com.
 
@@ -108,7 +108,7 @@ FÜR INHABER, MANAGER UND FAHRER
 Inhaber sehen alle Stationen, Flottenmanager ihre eigene, Fahrer ihr Fahrzeug und ihre eigenen Daten. Fahrer und Manager kommen über einmalige Einladungslinks dazu. Die App spricht 32 Sprachen, damit jeder Fahrer sie in seiner eigenen nutzen kann.
 
 DATENSCHUTZ
-Fotos und Videos werden 30 Tage aufbewahrt, solche mit Schäden 90 Tage. Fotos von Tankkarten und Dokumenten werden direkt nach dem Auslesen gelöscht. Keine Werbung, kein Tracking.
+Fotos und Videos eines Monats werden am 15. des Folgemonats gelöscht, nie solange der Fahrer den Transporter noch hat; solche mit Schäden nach 90 Tagen. Fotos von Tankkarten und Dokumenten werden direkt nach dem Auslesen gelöscht. Keine Werbung, kein Tracking.
 
 Jedes Lieferunternehmen kann sofort loslegen: das eigene Unternehmen in der App anlegen oder zuerst das Demo-Unternehmen mit erfundenen Fahrzeugen und Personen ansehen. Mehr auf fratius.com.
 

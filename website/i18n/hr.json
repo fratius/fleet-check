@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Tko je imao kombi, od kada do kada i koja su oštećenja pronađena, ostaje zabilježeno zauvijek. Kazna za prebrzu vožnju 3. listopada u 10:20? Unesite kombi, dan i vrijeme, a povijest pokazuje vozača.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Svaku primopredaju zapisuje poslužitelj. Nitko je ne može urediti ni izbrisati.",
  "One driver per van, one van per driver.": "Jedan vozač po kombiju, jedan kombi po vozaču.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Fotografije i videozapisi čuvaju se 30 dana, označena oštećenja do 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Kombiji se povlače iz upotrebe, nikad ne brišu. Ljudi koji odu zadržavaju svoju povijest.",
  "Week 43": "43. tjedan",
  "Tue 20 Oct": "uto 20. lis",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Što čuvate o vozačima?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Kategorije i istek vozačke dozvole, provjere dozvole, obuke i incidente. Nikad brojeve ni kopije dozvola, datume rođenja, kućne adrese ni zdravstvene podatke.",
  "How long do you keep photos and videos?": "Koliko dugo čuvate fotografije i videozapise?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dana. Fotografije i videozapisi koje voditelj ili vlasnik označi kao oštećenje čuvaju se do 90 dana. Zapisi o tome tko je imao koji kombi i kada čuvaju se zauvijek.",
  "What about damage found at the end of a lease?": "Što je s oštećenjima pronađenima na kraju leasinga?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Svako pronađeno oštećenje upisano je u evidenciju kombija s datumom i osobom koja je imala kombi. Fotografije se čuvaju 90 dana, pa to riješite s vozačem ili osiguravateljem u tom roku.",
  "How do people join?": "Kako se ljudi pridružuju?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Možete pisati i na {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Označite polje kako biste prihvatili uvjete korištenja i pravila o privatnosti.",
  "Tick the box to confirm you have read the privacy policy.": "Označite polje kako biste potvrdili da ste pročitali pravila o privatnosti.",
- "Your request didn't go through. Check your connection and try again.": "Zahtjev nije prošao. Provjerite vezu i pokušajte ponovno."
+ "Your request didn't go through. Check your connection and try again.": "Zahtjev nije prošao. Provjerite vezu i pokušajte ponovno.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotografije i videozapisi brišu se 15. sljedećeg mjeseca, nikad dok vozač još ima kombi.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Do 15. sljedećeg mjeseca: 15. se brišu fotografije i videozapisi prethodnog mjeseca. Nikad dok vozač koji je imao kombi još uvijek ga ima: oni čekaju dok se kombi ne vrati. Fotografije i videozapisi označeni kao oštećenje čuvaju se 90 dana. Tko je imao koji kombi i kada, čuva se zauvijek."
 }

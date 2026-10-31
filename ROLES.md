@@ -73,15 +73,22 @@ the product owner's explicit decision first.
 - **Nothing that belongs to the history is deleted.** Vans are retired, never deleted (`retireVan`; they can be
   brought back). Walk-arounds, damage checks and companies can't be deleted from the app. Removing a person
   (`removePerson`) ends their assignment and frees the van; their history, walk-arounds and checks stay.
-- **Photos and videos are kept 30 days; the records for good** (decided by the product owner, 2026-10). The files
-  of walk-arounds, checks, videos, dashboards, receipts and van-type scans are deleted 30 days after they were
-  taken. Kept 90 days: the photos of a check where the manager approved damage, the walk-around it was found in and
-  the one before it (`damageLogFor`), and walk-around photos or videos an owner or the station's manager marked as
-  damage (`markDamage`, within the 30 days; they can take the mark off). The daily job `cleanMediaDaily`
-  (functions/src/media.ts) deletes what is due; the app shows "deleted on …" in their place. Demo companies keep
-  their drawings. Only the server writes `keepMark`, `keepDamage` and `keepUntil` (the rules refuse them).
-  Photos and videos from before the rule started (28 October 2026) count from that day, so the first deletions
-  are on 27 November 2026.
+- **Photos and videos are deleted once a month; the records stay for good** (decided by the product owner,
+  2026-10-31). On the 15th of each month (German time) the files of the month before are deleted: walk-arounds,
+  checks, videos, dashboards, receipts, checks for drivers and van-type scans. That is a 15-day buffer after the
+  month has ended, so a file is kept 15 to 45 days. The first run is on 15 December 2026.
+  - **Never while the van is still with the driver who had it.** Every file of a van taken while an assignment of
+    it is open, and its pick-up proof, stays until the van is given back; then the end of the assignment counts as
+    the file's date, so the files go on the 15th of the month after the van was given back. Only finished
+    handovers are deleted.
+  - **Damage is kept 90 days** from when it was taken, then goes at the next run: the photos of a check where the
+    manager approved damage, the walk-around it was found in and the one before it (`damageLogFor`), and
+    walk-around photos or videos an owner or the station's manager marked as damage (`markDamage`, until they're
+    deleted; they can take the mark off).
+  - The job `cleanMediaDaily` runs every night but deletes photos and videos only on the 15th (or the next night if
+    that run failed); functions/src/media.ts. Records whose files went get `mediaDeletedAt`, and the app shows
+    "deleted on …" only from it. Demo companies keep their drawings. Only the server writes `keepMark`,
+    `keepDamage`, `keepUntil` and `mediaDeletedAt` (the rules refuse them).
 - **People delete their own account** (`deleteAccount`, Account tab and the "Your company" screen; the App Store
   and Google Play require it). Decided by the product owner: the login, the profile (`users/{uid}`, the
   membership with name, phone and Transporter ID) and the phone notifications go; the company keeps its records

@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Kdo měl dodávku, od kdy do kdy a jaké poškození se našlo, zůstává v záznamech navždy. Pokuta za rychlost z 3. října v 10:20? Zadej dodávku, den a čas a historie ukáže řidiče.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Každé předání je záznam, který zapisuje server. Nikdo ho neupraví ani nesmaže.",
  "One driver per van, one van per driver.": "Jeden řidič na dodávku, jedna dodávka na řidiče.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Fotky a videa se uchovávají 30 dní, označená poškození až 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Dodávky se vyřazují, nikdy nemažou. Lidé, kteří odejdou, si historii ponechají.",
  "Week 43": "Týden 43",
  "Tue 20 Oct": "Út 20. 10.",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Co o řidičích uchováváte?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Skupiny a platnost řidičáku, kontroly řidičáku, školení a události. Nikdy čísla ani kopie řidičáků, data narození, adresy bydliště ani zdravotní údaje.",
  "How long do you keep photos and videos?": "Jak dlouho uchováváte fotky a videa?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dní. Fotky a videa, které manažer nebo majitel označí jako poškození, se uchovávají až 90 dní. Záznamy o tom, kdo měl kterou dodávku a kdy, zůstávají navždy.",
  "What about damage found at the end of a lease?": "A co poškození zjištěné na konci leasingu?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Každé zjištěné poškození je v záznamech dodávky s datem a s tím, kdo dodávku měl. Fotky se uchovávají 90 dní, takže to s řidičem nebo pojišťovnou vyřeš v této lhůtě.",
  "How do people join?": "Jak se lidé připojí?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Můžeš nám také napsat na {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Zaškrtnutím políčka vyjádříš souhlas s podmínkami a zásadami ochrany osobních údajů.",
  "Tick the box to confirm you have read the privacy policy.": "Zaškrtnutím políčka potvrdíš, že sis přečetl(a) zásady ochrany osobních údajů.",
- "Your request didn't go through. Check your connection and try again.": "Žádost se nepodařilo odeslat. Zkontroluj připojení a zkus to znovu."
+ "Your request didn't go through. Check your connection and try again.": "Žádost se nepodařilo odeslat. Zkontroluj připojení a zkus to znovu.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotky a videa se mažou 15. dne následujícího měsíce, nikdy dokud řidič dodávku ještě má.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Do 15. dne následujícího měsíce: 15. se mažou fotky a videa z předchozího měsíce. Nikdy, dokud řidič, který dodávku měl, ji ještě má: ty počkají, než dodávku vrátí. Fotky a videa označené jako poškození zůstávají 90 dní. Kdo měl kterou dodávku a kdy, zůstává natrvalo."
 }

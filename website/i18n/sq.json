@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Kush e kishte furgonin, nga kur deri kur, dhe çfarë dëmtimesh u gjetën mbetet i regjistruar përgjithmonë. Një gjobë për shpejtësi më 3 tetor në 10:20? Shkruaj furgonin, ditën dhe orën, dhe historiku tregon shoferin.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Çdo dorëzim-marrje e regjistron serveri. Askush nuk e ndryshon dhe nuk e fshin.",
  "One driver per van, one van per driver.": "Një shofer për furgon, një furgon për shofer.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Fotot dhe videot ruhen 30 ditë, dëmtimet e shënuara deri në 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Furgonët nxirren jashtë shërbimit, nuk fshihen kurrë. Kush largohet e ruan historikun e vet.",
  "Week 43": "Java 43",
  "Tue 20 Oct": "Mar 20 tet",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Çfarë ruani për shoferët?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Kategoritë dhe skadencën e patentës, kontrollet e patentës, instruktimet dhe incidentet. Kurrë numra apo kopje patentash, datëlindje, adresa shtëpie apo të dhëna shëndetësore.",
  "How long do you keep photos and videos?": "Sa kohë i ruani fotot dhe videot?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 ditë. Fotot dhe videot që një menaxher ose pronar i shënon si dëmtim ruhen deri në 90 ditë. Regjistrat se kush e kishte cilin furgon, dhe kur, ruhen përgjithmonë.",
  "What about damage found at the end of a lease?": "Po dëmtimet që gjenden në fund të qirasë?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Çdo dëmtim i gjetur është në regjistrin e furgonit me datën dhe kush e kishte furgonin. Fotot ruhen 90 ditë, ndaj zgjidhe me shoferin ose me sigurimin brenda kësaj kohe.",
  "How do people join?": "Si bashkohen njerëzit?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Mund të shkruash edhe në {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Shëno kutinë për të pranuar kushtet dhe politikën e privatësisë.",
  "Tick the box to confirm you have read the privacy policy.": "Shëno kutinë për të konfirmuar se e ke lexuar politikën e privatësisë.",
- "Your request didn't go through. Check your connection and try again.": "Kërkesa nuk kaloi. Kontrollo lidhjen dhe provo përsëri."
+ "Your request didn't go through. Check your connection and try again.": "Kërkesa nuk kaloi. Kontrollo lidhjen dhe provo përsëri.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotot dhe videot fshihen më 15 të muajit pasardhës, kurrë për sa kohë shoferi e ka ende furgonin.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Deri më 15 të muajit pasardhës: më 15 fshihen fotot dhe videot e muajit të kaluar. Kurrë për sa kohë shoferi që e kishte furgonin e ka ende: ato presin derisa furgoni të kthehet. Fotot dhe videot e shënuara si dëm ruhen 90 ditë. Kush e kishte cilin furgon, dhe kur, ruhet përgjithmonë."
 }

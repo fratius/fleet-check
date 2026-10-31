@@ -47,8 +47,8 @@ export default function WalkScreen() {
         <Stat value={`${w.taken}/${w.frames}`} label={w.skipped ? tp(w.skipped, 'photos, {n} skipped', 'photos, {n} skipped') : t('photos')} />
         <Stat value={String(w.retakes)} label={t('retakes')} />
       </Stats>
-      <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} />
-      {s.mode === 'firebase' && gone(w.createdAt, w.keepUntil) ? null : s.mode === 'firebase' ? (
+      <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt} />
+      {s.mode === 'firebase' && gone(w.mediaDeletedAt) ? null : s.mode === 'firebase' ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <Button v="primary" wide title={checks.length ? t('Check for damage again') : t('Check for damage')}
             onPress={() => router.push({ pathname: '/check/[id]', params: { id: 'new', walk: w.id } })} />

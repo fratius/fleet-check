@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Quién tuvo la furgoneta, desde cuándo hasta cuándo, y qué daños se encontraron queda registrado para siempre. ¿Una multa por exceso de velocidad del 3 de octubre a las 10:20? Introduce la furgoneta, el día y la hora, y el historial te dice el conductor.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Cada traspaso es un registro que escribe el servidor. Nadie lo edita ni lo borra.",
  "One driver per van, one van per driver.": "Un conductor por furgoneta, una furgoneta por conductor.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Las fotos y los vídeos se guardan 30 días; los daños marcados, hasta 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Las furgonetas se retiran, nunca se borran. Quien se va conserva su historial.",
  "Week 43": "Semana 43",
  "Tue 20 Oct": "mar 20 oct",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "¿Qué guardáis sobre los conductores?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Categorías y caducidad del carnet, controles del carnet, formaciones e incidentes. Nunca números ni copias del carnet, fechas de nacimiento, domicilios ni datos de salud.",
  "How long do you keep photos and videos?": "¿Cuánto tiempo guardáis fotos y vídeos?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 días. Las fotos y vídeos que un gestor o propietario marca como daño se guardan hasta 90 días. Quién tuvo qué furgoneta, y cuándo, queda registrado para siempre.",
  "What about damage found at the end of a lease?": "¿Y los daños que aparecen al final de un leasing?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Cada daño encontrado consta en el registro de la furgoneta con la fecha y quién la tenía. Sus fotos se guardan 90 días, así que resuélvelo con el conductor o la aseguradora en ese plazo.",
  "How do people join?": "¿Cómo se une la gente?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "También puedes escribir a {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Marca la casilla para aceptar las condiciones y la política de privacidad.",
  "Tick the box to confirm you have read the privacy policy.": "Marca la casilla para confirmar que has leído la política de privacidad.",
- "Your request didn't go through. Check your connection and try again.": "Tu solicitud no se ha enviado. Comprueba la conexión e inténtalo de nuevo."
+ "Your request didn't go through. Check your connection and try again.": "Tu solicitud no se ha enviado. Comprueba la conexión e inténtalo de nuevo.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Las fotos y los vídeos se borran el día 15 del mes siguiente, nunca mientras el conductor aún tenga la furgoneta.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Hasta el día 15 del mes siguiente: el 15 se borran las fotos y los vídeos del mes anterior. Nunca mientras el conductor que tenía la furgoneta todavía la tenga: esos esperan hasta que la devuelva. Las fotos y los vídeos marcados como daño se conservan 90 días. Quién tuvo cada furgoneta, y cuándo, se guarda para siempre."
 }
