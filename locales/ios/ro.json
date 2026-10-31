@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius folosește camera ca să fotografieze și să filmeze dubele la inspecții, predări-primiri și verificări de avarii.",
+    "NSPhotoLibraryUsageDescription": "Fratius îți deschide galeria ca să poți verifica fotografiile cu dube pe care le-ai făcut deja.",
+    "NSMicrophoneUsageDescription": "Fratius filmează dubele la predări-primiri și verificări de avarii. Videoclipurile se înregistrează fără sunet."
+  }
+}

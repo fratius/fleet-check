@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius používá fotoaparát k focení a natáčení dodávek při obchůzkách, předáních a kontrolách poškození.",
+    "NSPhotoLibraryUsageDescription": "Fratius otevírá tvou galerii, takže můžeš zkontrolovat fotky dodávek, které už máš nafocené.",
+    "NSMicrophoneUsageDescription": "Fratius natáčí dodávky při předáních a kontrolách poškození. Videa se nahrávají bez zvuku."
+  }
+}

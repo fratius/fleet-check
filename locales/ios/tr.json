@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius, çevre kontrolleri, teslimler ve hasar kontrolleri için kamerayla panelvanların fotoğraf ve videolarını çeker.",
+    "NSPhotoLibraryUsageDescription": "Fratius, daha önce çektiğiniz panelvan fotoğraflarını kontrol edebilmeniz için galerinizi açar.",
+    "NSMicrophoneUsageDescription": "Fratius, teslimler ve hasar kontrolleri için panelvanların videosunu çeker. Videolar ses olmadan kaydedilir."
+  }
+}

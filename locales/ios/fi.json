@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius ottaa kameralla kuvia ja videoita pakettiautoista kuvakierroksia, luovutuksia ja vauriotarkastuksia varten.",
+    "NSPhotoLibraryUsageDescription": "Fratius avaa kuvakirjastosi, jotta voit tarkistaa jo ottamiasi kuvia pakettiautoista.",
+    "NSMicrophoneUsageDescription": "Fratius kuvaa pakettiautoista videoita luovutuksia ja vauriotarkastuksia varten. Videot tallennetaan ilman ääntä."
+  }
+}

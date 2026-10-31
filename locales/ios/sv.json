@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius använder kameran för att fotografera och filma skåpbilar vid fotorundor, överlämningar och skadekontroller.",
+    "NSPhotoLibraryUsageDescription": "Fratius öppnar ditt bildbibliotek så att du kan kontrollera foton av skåpbilar som du redan har tagit.",
+    "NSMicrophoneUsageDescription": "Fratius filmar skåpbilar vid överlämningar och skadekontroller. Videorna spelas in utan ljud."
+  }
+}

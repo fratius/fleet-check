@@ -76,6 +76,30 @@ async function shot(page, dir, name, path, waitFor) {
   log('saved', dir.split('/').pop(), name, path);
 }
 
+/** Replaces names in every text of the company's records (the emulators only), so the pictures read naturally. */
+async function renameEverywhere(org, pairs) {
+  const fix = (v) => {
+    if (typeof v === 'string') return pairs.reduce((x, [a, b]) => x.split(a).join(b), v);
+    if (Array.isArray(v)) return v.map(fix);
+    if (v && typeof v === 'object' && v.constructor === Object) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fix(x)]));
+    return v;
+  };
+  const walk = async (ref) => {
+    for (const col of await ref.listCollections()) {
+      for (const d of (await col.get()).docs) {
+        const before = JSON.stringify(d.data());
+        const after = fix(d.data());
+        if (JSON.stringify(after) !== before) await d.ref.set(after);
+        await walk(d.ref);
+      }
+    }
+  };
+  const top = (await org.get()).data();
+  const fixed = fix(top);
+  if (JSON.stringify(fixed) !== JSON.stringify(top)) await org.set(fixed);
+  await walk(org);
+}
+
 async function main() {
   await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
   mkdirSync(OUT, { recursive: true });
@@ -93,9 +117,24 @@ async function main() {
   const org = db.doc(`orgs/${orgId}`);
   // A name a real company would have on the screenshots ("Demo DSP (test data)" otherwise).
   await org.update({ name: 'Spree Logistik GmbH' });
+  // The two demo logins are called "Alex Demo" and "Morgan Demo": everyday names on the screenshots.
+  const NAMES = [['Alex Demo', 'Alex Wagner'], ['Morgan Demo', 'Morgan Becker'], ['Sam Demo', 'Sam Weber']];
+  await renameEverywhere(org, NAMES);
   const odata = (await org.get()).data();
   const driver = (odata.demoLogins || []).find((l) => l.role === 'driver');
   const manager = (odata.demoLogins || []).find((l) => l.role === 'manager');
+  for (const l of [driver, manager].filter(Boolean)) {
+    await auth.updateUser(l.uid, { displayName: l.name });
+    await db.doc(`users/${l.uid}`).set({ name: l.name }, { merge: true });
+  }
+  // A driver with a long history (not a login: those have test addresses on their page).
+  const members = (await org.collection('members').where('role', '==', 'driver').get()).docs.map((d) => d.id)
+    .filter((id) => !(odata.demoLogins || []).some((l) => l.uid === id));
+  let histDriver = members[0], most = -1;
+  for (const id of members) {
+    const n = (await org.collection('assignments').where('driverId', '==', id).get()).size;
+    if (n > most) { most = n; histDriver = id; }
+  }
 
   // What to show: the van with the most damage on its record, a check waiting for the manager, the driver's history,
   // and the refuel waiting at the pump.
@@ -114,11 +153,22 @@ async function main() {
       const { ctx, page } = await signIn(browser, code, locale, OWNER);
       await visible(page, 'eSprinter 01').waitFor({ timeout: 90_000 });
       await settle(page);
-      await shot(page, dir, '01-fleet', '/', 'eSprinter 01');
+      // The vans that have a driver: names, km, warning lights.
+      await page.locator(`text=${tr(code, 'With a driver ({n})').split(' (')[0]} >> visible=true`).first().click().catch(() => log('no "with a driver" filter'));
+      await settle(page);
+      await page.screenshot({ path: join(dir, '01-fleet.png') });
+      log('saved', code, '01-fleet');
       await shot(page, dir, '02-van', `/vehicle/${vanId}`);
       await shot(page, dir, '04-review', '/review');
       await shot(page, dir, '06-data', '/data');
-      if (driver) await shot(page, dir, '05-history', `/person/${driver.uid}`, driver.name);
+      if (histDriver) {
+        await page.goto(URL0 + `/person/${histDriver}`);
+        await page.waitForTimeout(3000);
+        await page.locator(`[role=tab] >> text=${tr(code, 'Vans')} >> visible=true`).first().click().catch(() => log('no Vans tab'));
+        await settle(page);
+        await page.screenshot({ path: join(dir, '05-history.png') });
+        log('saved', code, '05-history');
+      }
       await ctx.close();
     }
     // The fleet manager decides on a check and on the driver at the pump.

@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius naudoja kamerą furgonams fotografuoti ir filmuoti per apžiūras, perdavimus ir apgadinimų patikras.",
+    "NSPhotoLibraryUsageDescription": "Fratius atidaro jūsų galeriją, kad galėtumėte patikrinti jau padarytas furgonų nuotraukas.",
+    "NSMicrophoneUsageDescription": "Fratius filmuoja furgonus per perdavimus ir apgadinimų patikras. Vaizdo įrašai įrašomi be garso."
+  }
+}

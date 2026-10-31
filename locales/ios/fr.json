@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius utilise l’appareil photo pour prendre les photos et vidéos des tours du fourgon, des passations et des contrôles des dégâts.",
+    "NSPhotoLibraryUsageDescription": "Fratius ouvre votre galerie pour que vous puissiez contrôler des photos de fourgons déjà prises.",
+    "NSMicrophoneUsageDescription": "Fratius filme les fourgons lors des passations et des contrôles des dégâts. Les vidéos sont enregistrées sans son."
+  }
+}

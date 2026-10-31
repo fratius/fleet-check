@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius përdor kamerën për të fotografuar dhe filmuar furgonët gjatë inspektimeve përreth, dorëzim-marrjeve dhe kontrolleve të dëmtimeve.",
+    "NSPhotoLibraryUsageDescription": "Fratius hap galerinë tënde, që të kontrollosh fotot e furgonëve që ke bërë tashmë.",
+    "NSMicrophoneUsageDescription": "Fratius filmon furgonët për dorëzim-marrjet dhe kontrollet e dëmtimeve. Videot regjistrohen pa zë."
+  }
+}

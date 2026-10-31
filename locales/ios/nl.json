@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius gebruikt de camera om bestelbussen te fotograferen en te filmen voor rondgangen, overdrachten en schadecontroles.",
+    "NSPhotoLibraryUsageDescription": "Fratius opent je galerij zodat je foto's van bestelbussen kunt controleren die je al hebt gemaakt.",
+    "NSMicrophoneUsageDescription": "Fratius filmt bestelbussen voor overdrachten en schadecontroles. De video's worden zonder geluid opgenomen."
+  }
+}

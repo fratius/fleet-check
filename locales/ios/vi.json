@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius dùng camera để chụp ảnh và quay video xe van cho các lượt chụp quanh xe, giao nhận xe và kiểm tra hư hỏng.",
+    "NSPhotoLibraryUsageDescription": "Fratius mở thư viện ảnh của bạn để bạn có thể kiểm tra ảnh xe van đã chụp trước đó.",
+    "NSMicrophoneUsageDescription": "Fratius quay video xe van khi giao nhận xe và kiểm tra hư hỏng. Video được ghi không có âm thanh."
+  }
+}

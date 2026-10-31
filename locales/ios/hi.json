@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius वॉक-अराउंड, हैंडओवर और नुकसान जाँच के लिए कैमरे से वैन की फ़ोटो लेता है और वीडियो बनाता है।",
+    "NSPhotoLibraryUsageDescription": "Fratius आपकी गैलरी खोलता है, ताकि आप पहले से ली गई वैन की फ़ोटो जाँच सकें।",
+    "NSMicrophoneUsageDescription": "Fratius हैंडओवर और नुकसान जाँच के लिए वैन का वीडियो बनाता है। वीडियो बिना आवाज़ के रिकॉर्ड होते हैं।"
+  }
+}
