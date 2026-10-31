@@ -21,6 +21,10 @@ on:
         type: choice
         options: [production, preview]
         default: production
+      testflight:
+        description: Send the iPhone build to App Store Connect / TestFlight when it's done (needs the app's Apple ID in eas.json)
+        type: boolean
+        default: false
 
 concurrency:
   group: store-build
@@ -104,7 +108,23 @@ jobs:
       - name: Start the builds
         run: |
           set -euo pipefail
-          eas build --platform "${{ inputs.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait --json > "$RUNNER_TEMP/builds.json"
+          SUBMIT=""
+          if [ "${{ inputs.testflight }}" = "true" ] && [ "${{ inputs.platform }}" != "android" ] && [ "${{ inputs.profile }}" = "production" ]; then
+            if [ -n "$(jq -r '.submit.production.ios.ascAppId // empty' eas.json)" ]; then
+              SUBMIT="--auto-submit"
+              echo "The iPhone build goes to TestFlight when it's done."
+            else
+              echo "::warning title=Not sent to TestFlight::eas.json has no submit.production.ios.ascAppId yet (the app's Apple ID from App Store Connect). The build is made; upload it from its page on expo.dev."
+            fi
+          fi
+          if [ -n "$SUBMIT" ] && [ "${{ inputs.platform }}" = "all" ]; then
+            # Android's first upload to Google Play is by hand, so only the iPhone build is sent.
+            eas build --platform ios --profile production --non-interactive --no-wait --json $SUBMIT > "$RUNNER_TEMP/ios.json"
+            eas build --platform android --profile production --non-interactive --no-wait --json > "$RUNNER_TEMP/android.json"
+            jq -s 'add' "$RUNNER_TEMP/ios.json" "$RUNNER_TEMP/android.json" > "$RUNNER_TEMP/builds.json"
+          else
+            eas build --platform "${{ inputs.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait --json $SUBMIT > "$RUNNER_TEMP/builds.json"
+          fi
           OWNER=$(jq -r .expo.owner app.json); SLUG=$(jq -r .expo.slug app.json)
           {
             echo "### Store builds started (${{ inputs.profile }}, version $(jq -r .expo.version app.json))"

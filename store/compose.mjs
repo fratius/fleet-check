@@ -5,7 +5,8 @@
 //   play      1080 x 2160  Google Play phone (at most 2:1)
 // JPEG, no transparency (the App Store refuses alpha).
 //   node store/compose.mjs <folder with en/ and de/ raw screenshots> <output folder>
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { createRequire } from 'node:module';
@@ -56,7 +57,10 @@ for (const lang of ['en', 'de']) {
       const raw = join(RAW, lang, `${key}.png`);
       if (!existsSync(raw)) { console.log(`missing ${lang}/${key}`); continue; }
       const [title, sub] = captions[lang][key];
-      await pg.setContent(page(W, H, title, sub, raw), { waitUntil: 'load' });
+      // From a file, so the page may load the fonts and the screenshot from disk.
+      const html = join(mkdtempSync(join(tmpdir(), 'compose-')), 'p.html');
+      writeFileSync(html, page(W, H, title, sub, raw));
+      await pg.goto(`file://${html}`, { waitUntil: 'load' });
       await pg.evaluate(() => document.fonts.ready);
       await pg.screenshot({ path: join(dir, `${String(++i).padStart(2, '0')}-${key.slice(3)}.jpg`), type: 'jpeg', quality: 90 });
       n++;
