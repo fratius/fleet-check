@@ -1,0 +1,65 @@
+# Screenshots for the store pages: the web app on the Firebase emulators with the demo company (nothing touches the
+# real project), at the iPhone 6.9" size, in English and German (tests/store-shots.mjs). The PNGs are kept as a run
+# artifact and on the branch store-shots-results; store/compose.mjs puts each under its caption.
+# Run it from the Actions tab, or by pushing to the branch diag/store-shots.
+name: Store screenshots
+
+on:
+  push:
+    branches: ['diag/store-shots']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FIREBASE_TOOLS: firebase-tools@15.33.0
+
+jobs:
+  shots:
+    name: Screenshots of the demo company
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci && npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: cd tests && npx playwright install --with-deps chromium
+      - name: The web app for the emulators
+        run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-e2e
+      - name: Screenshots
+        shell: bash
+        run: |
+          echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
+          echo "SMTP_URL=none" >> functions/.secret.local
+          APP_DIR="$PWD/dist-e2e" OUT_DIR="$RUNNER_TEMP/shots" npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "node tests/store-shots.mjs" 2>&1 | tee shots.log
+          test -n "$(ls "$RUNNER_TEMP/shots/en" 2>/dev/null)"
+      - name: Show what happened
+        if: always()
+        run: |
+          grep -E "\[shots\]" shots.log | tail -40 | while read -r l; do echo "::notice title=Shots::$l"; done || true
+          grep -E "Error|error:" shots.log | head -10 | while read -r l; do echo "::error title=Shots log::$l"; done || true
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: store-shots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore
+      - name: Keep them on the branch store-shots-results
+        if: success()
+        run: |
+          set -euo pipefail
+          cp shots.log "$RUNNER_TEMP/shots/run.log"
+          cd "$RUNNER_TEMP/shots"
+          git init -q -b store-shots-results
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Store screenshots from ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:store-shots-results
