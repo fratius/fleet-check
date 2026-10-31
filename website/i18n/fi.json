@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Kenellä pakettiauto oli, mistä mihin, ja mitä vaurioita löytyi, säilyy pysyvästi. Ylinopeussakko 3. lokakuuta klo 10.20? Syötä pakettiauto, päivä ja kellonaika, niin historia kertoo kuljettajan.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Jokainen luovutus on palvelimen kirjoittama merkintä. Kukaan ei voi muokata tai poistaa sitä.",
  "One driver per van, one van per driver.": "Yksi kuljettaja pakettiautoa kohden, yksi pakettiauto kuljettajaa kohden.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Kuvat ja videot säilytetään 30 päivää, merkityt vauriot enintään 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Pakettiautot poistetaan käytöstä, ei koskaan poisteta. Lähtevät henkilöt säilyttävät historiansa.",
  "Week 43": "Viikko 43",
  "Tue 20 Oct": "ti 20.10.",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Mitä kuljettajista tallennetaan?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Ajokorttiluokat ja voimassaolo, ajokorttitarkastukset, perehdytykset ja tapaukset. Ei koskaan ajokortin numeroita tai kopioita, syntymäaikoja, kotiosoitteita tai terveystietoja.",
  "How long do you keep photos and videos?": "Kuinka kauan kuvia ja videoita säilytetään?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 päivää. Kuvat ja videot, jotka kalustopäällikkö tai omistaja merkitsee vaurioksi, säilytetään enintään 90 päivää. Tiedot siitä, kenellä mikäkin pakettiauto oli ja milloin, säilyvät pysyvästi.",
  "What about damage found at the end of a lease?": "Entä leasingin lopussa löytyvät vauriot?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Jokainen löydetty vaurio on pakettiauton vaurioluettelossa päivämäärän ja sen henkilön kanssa, jolla pakettiauto oli. Kuvat säilytetään 90 päivää, joten sovi asia kuljettajan tai vakuutusyhtiön kanssa sinä aikana.",
  "How do people join?": "Miten mukaan liitytään?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Voit myös kirjoittaa osoitteeseen {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Rastita ruutu hyväksyäksesi käyttöehdot ja tietosuojaselosteen.",
  "Tick the box to confirm you have read the privacy policy.": "Rastita ruutu vahvistaaksesi, että olet lukenut tietosuojaselosteen.",
- "Your request didn't go through. Check your connection and try again.": "Pyyntösi ei mennyt perille. Tarkista yhteytesi ja yritä uudelleen."
+ "Your request didn't go through. Check your connection and try again.": "Pyyntösi ei mennyt perille. Tarkista yhteytesi ja yritä uudelleen.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Kuvat ja videot poistetaan seuraavan kuun 15. päivänä, ei koskaan niin kauan kuin pakettiauto on vielä kuljettajalla.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Seuraavan kuun 15. päivään asti: 15. päivänä poistetaan edellisen kuun kuvat ja videot. Ei koskaan niin kauan kuin pakettiauto on vielä sillä kuljettajalla, jolla se oli: ne odottavat, kunnes auto palautetaan. Vauriona merkityt kuvat ja videot säilytetään 90 päivää. Kenellä oli mikäkin pakettiauto ja milloin, säilyy pysyvästi."
 }

@@ -19,7 +19,7 @@ import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
-import { KEEP_DAYS, cleanMedia, keepUntil, mediaGone } from './media';
+import { FIRST_RUN, cleanMedia, keepUntil, thisMonthsRun } from './media';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, playsAsIs, probe } from './video';
@@ -2117,10 +2117,11 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, a
   return { ok: true, closed: plan.filter((c) => c.outcome === 'close').map((c) => c.name) };
 });
 
-/* ---------- 18. Photos and videos: kept 30 days, damage 90 (media.ts) ---------- */
-// The records stay for good; the files go. Owners and the station's managers mark walk-around photos or a video as
-// damage (within the 30 days), which keeps them 90 days from when they were taken; damage approved in a review
-// does the same for its photos (damageLogFor). A daily job deletes what is due.
+/* ---------- 18. Photos and videos: deleted on the 15th for the month before, never while the van is held (media.ts) ---------- */
+// The records stay for good; the files go. Once a month, on the 15th, the files of the month before are deleted,
+// except everything of a van while it's still with the driver who had it, and damage (kept 90 days): owners and
+// the station's managers mark walk-around photos or a video as damage, and damage approved in a review does the
+// same for its photos (damageLogFor).
 
 export const markDamage = onCallOnce('markDamage', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
@@ -2134,11 +2135,9 @@ export const markDamage = onCallOnce('markDamage', { timeoutSeconds: 30 }, async
   return db().runTransaction(async (tx) => {
     const d = await tx.get(ref);
     if (!d.exists) throw fail('not-found', 'Unknown photos or video.');
-    const x = d.data() as { stationId?: string | null; createdAt: number; keepDamage?: string[]; keepUntil?: number | null };
+    const x = d.data() as { stationId?: string | null; createdAt: number; keepDamage?: string[]; keepUntil?: number | null; mediaDeletedAt?: number | null };
     needStation(who, x.stationId, N_('These photos belong to another station.'));
-    if (on && mediaGone(x.createdAt, x.keepUntil, now)) {
-      throw fail('failed-precondition', 'Photos and videos are deleted after {n} days. These are gone already.', { n: KEEP_DAYS });
-    }
+    if (on && x.mediaDeletedAt) throw fail('failed-precondition', 'These photos or this video were deleted already.');
     const keepMark = on ? { by: who.uid, byName: who.name, at: now } : null;
     const until = keepUntil(x.createdAt, !!keepMark || (x.keepDamage || []).length > 0);
     tx.update(ref, { keepMark, keepUntil: until });
@@ -2148,9 +2147,13 @@ export const markDamage = onCallOnce('markDamage', { timeoutSeconds: 30 }, async
 
 const runClean = (now: number, onlyOrg?: string) => cleanMedia(now, (orgId, checkId) => damageLogFor(orgId, checkId), onlyOrg);
 
+// Runs every night; photos and videos are deleted only on the 15th (or the next night, if that run failed), and
+// the kept answers of repeated calls are cleaned every night.
 export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'Europe/Berlin', timeoutSeconds: 540, memory: '512MiB', retryCount: 1 }, async () => {
-  const r = await runClean(Date.now());
-  logger.info('Photos and videos cleaned up', r);
+  const now = Date.now();
+  const run = thisMonthsRun(now);
+  const last = Number((await db().doc('platform/media').get()).data()?.lastRun || 0);
+  if (now >= FIRST_RUN && now >= run && last < run) logger.info('Photos and videos cleaned up', await runClean(now));
   // Kept answers of calls that may be sent twice (once.ts), after a week.
   logger.info('Old call answers deleted', { n: await cleanRequests().catch((e) => { logger.warn('Call answers not cleaned', e as Error); return -1; }) });
 });

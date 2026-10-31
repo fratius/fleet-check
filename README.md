@@ -93,7 +93,7 @@ The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Sa
 
 The app is built on Expo SDK 58 because that's what Expo Go in the App Store runs (58.0.5, from late October 2026). Expo Go only opens one SDK, so upgrade the project only after the App Store version of Expo Go has moved to the new SDK, and update Expo Go on every phone when the project moves: an older Expo Go can't open the new version, and the new Expo Go can't open the old one.
 
-- **Photos and videos are kept 30 days**, the ones that show damage 90 days (approved in a check, or marked as damage by a manager on a walk-around or video); the records stay. **People delete their own account** in the Account tab.
+- **Photos and videos are deleted on the 15th of each month for the month before**, never while the van is still with the driver who had it, the ones that show damage after 90 days (approved in a check, or marked as damage by a manager on a walk-around or video); the records stay. **People delete their own account** in the Account tab.
 
 ## App Store and Google Play
 

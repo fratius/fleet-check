@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "اینکه ون دست چه کسی بود، از کی تا کی، و چه آسیبی پیدا شد، برای همیشه ثبت می‌ماند. جریمه سرعت برای 3 اکتبر ساعت 10:20؟ ون، روز و ساعت را وارد کنید تا سابقه راننده را نشان دهد.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "هر تحویل سابقه‌ای است که سرور می‌نویسد. هیچ‌کس آن را ویرایش یا حذف نمی‌کند.",
  "One driver per van, one van per driver.": "یک راننده برای هر ون، یک ون برای هر راننده.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "عکس‌ها و ویدیوها 30 روز نگه داشته می‌شوند، آسیب‌های علامت‌خورده تا 90 روز.",
  "Vans are retired, never deleted. People who leave keep their history.": "ون‌ها از رده خارج می‌شوند، هرگز حذف نمی‌شوند. کسانی که می‌روند سابقه‌شان می‌ماند.",
  "Week 43": "هفته 43",
  "Tue 20 Oct": "سه‌شنبه 20 اکتبر",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "درباره رانندگان چه چیزهایی نگه می‌دارید؟",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "پایه‌های گواهینامه و تاریخ انقضا، بررسی‌های گواهینامه، آموزش‌ها و رویدادها. هرگز شماره یا کپی گواهینامه، تاریخ تولد، نشانی منزل یا اطلاعات سلامت.",
  "How long do you keep photos and videos?": "عکس‌ها و ویدیوها را چه مدت نگه می‌دارید؟",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 روز. عکس‌ها و ویدیوهایی که مدیر یا مالک به‌عنوان آسیب علامت بزند تا 90 روز نگه داشته می‌شوند. سوابق اینکه کدام ون، کی، دست چه کسی بود برای همیشه می‌ماند.",
  "What about damage found at the end of a lease?": "آسیبی که در پایان لیزینگ پیدا شود چه؟",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "هر آسیبی که پیدا شود با تاریخ و نام کسی که ون دستش بود در پرونده ون ثبت می‌شود. عکس‌هایش 90 روز نگه داشته می‌شوند، پس در این مدت آن را با راننده یا بیمه حل کنید.",
  "How do people join?": "افراد چطور عضو می‌شوند؟",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "می‌توانید به {email} هم بنویسید.",
  "Tick the box to agree to the terms and the privacy policy.": "برای موافقت با شرایط و سیاست حریم خصوصی، تیک را بزنید.",
  "Tick the box to confirm you have read the privacy policy.": "برای تأیید اینکه سیاست حریم خصوصی را خوانده‌اید، تیک را بزنید.",
- "Your request didn't go through. Check your connection and try again.": "درخواست شما ارسال نشد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید."
+ "Your request didn't go through. Check your connection and try again.": "درخواست شما ارسال نشد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "عکس‌ها و ویدیوها در روز ۱۵ ماه بعد پاک می‌شوند، اما تا وقتی ون دست راننده است، هرگز.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "تا روز ۱۵ ماه بعد: در روز ۱۵ عکس‌ها و ویدیوهای ماه قبل پاک می‌شوند. تا وقتی ون هنوز دست راننده‌ای است که آن را داشت، هرگز: این‌ها صبر می‌کنند تا ون پس داده شود. عکس‌ها و ویدیوهایی که به‌عنوان آسیب علامت خورده‌اند ۹۰ روز نگه داشته می‌شوند. اینکه چه کسی کدام ون را و کی داشت، برای همیشه نگه داشته می‌شود."
 }

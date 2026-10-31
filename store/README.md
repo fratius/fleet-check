@@ -13,7 +13,7 @@ The phone app is the same code as the web app, built by EAS (Expo's build server
   page for Google Play: https://fratius.com/delete-account
 - **Privacy policy of the app**: https://fratius.com/app-privacy, linked in the app (Account tab, sign-in screen).
 - **Notifications in the store app** through Expo's push service (they need the keys of step 4).
-- **Photos and videos kept 30 days, damage 90**, as the privacy policy says.
+- **Photos and videos deleted on the 15th for the month before, never while the van is with its driver, damage after 90 days**, as the privacy policy says.
 - **Updates without a new store version**: every Deploy also sends the update to the store app ("production"
   channel), as long as no native package changed (`scripts/native.mjs`; Deploy warns when one did: then raise the
   version in `app.json`, run `node scripts/native.mjs --write` and make new store builds).

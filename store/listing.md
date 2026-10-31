@@ -54,7 +54,7 @@ FOR OWNERS, MANAGERS AND DRIVERS
 Fleet owners see every station; fleet managers run their own; drivers see their van and their own record. People join only through one-time invite links.
 
 PRIVACY
-Photos and videos are kept 30 days, the ones that show damage 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
+Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with its driver; the ones that show damage after 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
 
 Fratius is for companies that use it under a contract with us. To try it, open the demo company with made-up vans and people after signing up. More at fratius.com.
 
@@ -95,7 +95,7 @@ FÜR INHABER, MANAGER UND FAHRER
 Inhaber sehen alle Stationen, Flottenmanager ihre eigene, Fahrer ihr Fahrzeug und ihre eigenen Daten. Beitreten kann man nur über einmalige Einladungslinks.
 
 DATENSCHUTZ
-Fotos und Videos werden 30 Tage aufbewahrt, solche mit Schäden 90 Tage. Fotos von Tankkarten und Dokumenten werden direkt nach dem Auslesen gelöscht. Keine Werbung, kein Tracking.
+Fotos und Videos eines Monats werden am 15. des Folgemonats gelöscht, nie solange der Fahrer den Transporter noch hat; solche mit Schäden nach 90 Tagen. Fotos von Tankkarten und Dokumenten werden direkt nach dem Auslesen gelöscht. Keine Werbung, kein Tracking.
 
 Fratius ist für Unternehmen, die es im Rahmen eines Vertrags mit uns nutzen. Zum Ausprobieren nach der Registrierung das Demo-Unternehmen mit erfundenen Fahrzeugen und Personen öffnen. Mehr auf fratius.com.
 

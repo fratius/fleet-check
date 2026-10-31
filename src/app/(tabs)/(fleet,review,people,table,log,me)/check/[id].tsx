@@ -12,7 +12,7 @@ import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
-import { day, keptUntil } from '@/lib/media';
+import { day, deleteFrom } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -257,10 +257,10 @@ function CheckView({ id }: { id: string }) {
           {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
         </Row>
       </View>
-      {s.mode === 'firebase' && !s.org?.demo ? (gone(k.createdAt, k.keepUntil)
-        ? <Notice text={t('The photos of this check were deleted on {date}. The decisions and the van\'s damage record stay.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })} />
-        : <T v="small">{k.keepUntil ? t('Damage was approved: the photos are kept until {date}.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })
-          : t('Photos and videos are kept 30 days: these until {date}.', { date: day(keptUntil(k.createdAt, k.keepUntil)) })}</T>) : null}
+      {s.mode === 'firebase' && !s.org?.demo ? (gone(k.mediaDeletedAt)
+        ? <Notice text={t('The photos of this check were deleted on {date}. The decisions and the van\'s damage record stay.', { date: day(k.mediaDeletedAt!) })} />
+        : <T v="small">{k.keepUntil ? t('Damage was approved: the photos are kept until {date}.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })
+          : t('Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })}</T>) : null}
       {s.seesAiStats ? <CostPanel k={k} /> : null}
       {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
       {status === 'checking' && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}

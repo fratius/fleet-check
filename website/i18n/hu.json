@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Hogy kinél volt a furgon, mettől meddig, és milyen sérülést találtak, az örökre megmarad. Gyorshajtási bírság október 3., 10:20-ra? Add meg a furgont, a napot és az időpontot, és az előzmények megmondják, ki vezetett.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Minden átadás-átvételt a szerver rögzít. Senki sem szerkesztheti vagy törölheti.",
  "One driver per van, one van per driver.": "Egy furgonhoz egy sofőr, egy sofőrhöz egy furgon.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "A fotókat és videókat 30 napig őrizzük, a megjelölt sérüléseket akár 90 napig.",
  "Vans are retired, never deleted. People who leave keep their history.": "A furgonokat kivonjuk, sosem töröljük. A távozók előzményei megmaradnak.",
  "Week 43": "43. hét",
  "Tue 20 Oct": "Okt. 20., kedd",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Mit tároltok a sofőrökről?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Jogosítvány-kategóriákat és lejáratot, jogosítvány-ellenőrzéseket, oktatásokat és incidenseket. Soha jogosítványszámot vagy -másolatot, születési dátumot, lakcímet vagy egészségügyi adatot.",
  "How long do you keep photos and videos?": "Meddig őrzitek a fotókat és videókat?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 napig. A menedzser vagy tulajdonos által sérülésként megjelölt fotókat és videókat akár 90 napig. Azt, hogy kinél melyik furgon volt és mikor, örökre megőrizzük.",
  "What about damage found at the end of a lease?": "Mi a helyzet a lízing végén talált sérülésekkel?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Minden talált sérülés szerepel a furgon adatlapján, dátummal és azzal, hogy kinél volt a furgon. A fotóit 90 napig őrizzük, ezért ezen belül rendezd a sofőrrel vagy a biztosítóval.",
  "How do people join?": "Hogyan lehet csatlakozni?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Írhatsz nekünk a(z) {email} címre is.",
  "Tick the box to agree to the terms and the privacy policy.": "Jelöld be a négyzetet, hogy elfogadd a feltételeket és az adatvédelmi tájékoztatót.",
  "Tick the box to confirm you have read the privacy policy.": "Jelöld be a négyzetet annak megerősítésére, hogy elolvastad az adatvédelmi tájékoztatót.",
- "Your request didn't go through. Check your connection and try again.": "A kérés nem ment át. Ellenőrizd a kapcsolatot, és próbáld újra."
+ "Your request didn't go through. Check your connection and try again.": "A kérés nem ment át. Ellenőrizd a kapcsolatot, és próbáld újra.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "A fotók és videók a következő hónap 15-én törlődnek, de soha, amíg a furgon még a sofőrnél van.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "A következő hónap 15-éig: 15-én törlődnek az előző hónap fotói és videói. Soha, amíg a furgon még annál a sofőrnél van, akinél volt: ezek megvárják, amíg visszaadja. A sérülésként megjelölt fotók és videók 90 napig maradnak. Hogy kinél melyik furgon volt és mikor, az mindig megmarad."
 }

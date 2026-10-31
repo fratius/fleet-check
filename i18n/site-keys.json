@@ -591,7 +591,7 @@
  },
  {
   "id": "w119",
-  "key": "Photos and videos are kept 30 days, marked damage up to 90.",
+  "key": "Photos and videos go on the 15th of the month after, never while the van is still with its driver.",
   "where": "page"
  },
  {
@@ -1206,7 +1206,7 @@
  },
  {
   "id": "w242",
-  "key": "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.",
+  "key": "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.",
   "where": "page"
  },
  {

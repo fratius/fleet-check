@@ -99,7 +99,7 @@ function putOnce(r: StorageReference, blob: Blob, contentType: string, o: { onBy
 }
 
 const urlCache = new Map<string, Promise<string>>();
-/** Paths the storage says aren't there (deleted after 30 or 90 days, see lib/media.ts). */
+/** Paths the storage says aren't there (deleted by the monthly clean-up, see lib/media.ts). */
 const goneCache = new Set<string>();
 /** A displayable URL for a stored path, or the local uri as is. */
 export function photoUrl(p: { uri?: string; path?: string } | string | null | undefined): Promise<string | null> {

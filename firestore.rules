@@ -254,10 +254,11 @@ service cloud.firestore {
         allow read: if at(orgId, resource.data.stationId);
         allow create: if at(orgId, request.resource.data.stationId)
           && (request.resource.data.createdBy == me() || creator())
-          && !request.resource.data.keys().hasAny(['handover', 'keepMark', 'keepDamage', 'keepUntil']);
+          && !request.resource.data.keys().hasAny(['handover', 'keepMark', 'keepDamage', 'keepUntil', 'mediaDeletedAt']);
         // No edits or deletes: walk-arounds are part of the van's and the driver's history. Only the server marks
-        // one as the photos of a pick-up or drop-off (handover), and keeps the photos 90 days instead of 30 when
-        // they show damage (keepMark, keepDamage, keepUntil: markDamage and the review, functions/src/media.ts).
+        // one as the photos of a pick-up or drop-off (handover), keeps the photos 90 days when they show damage
+        // (keepMark, keepDamage, keepUntil: markDamage and the review) and says when they were deleted
+        // (mediaDeletedAt: the monthly clean-up, functions/src/media.ts).
       }
 
       match /checks/{id} {

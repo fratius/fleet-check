@@ -40,7 +40,7 @@ export function DeleteAccount() {
   return (
     <Card>
       <T v="h3">{t('Delete your account')}</T>
-      <T v="hint">{t('Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.')}</T>
+      <T v="hint">{t('Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted on the 15th of the month after, or after 90 days when marked as damage.')}</T>
       {plan ? (
         <View style={{ gap: 6 }}>
           {plan.map((x) => (

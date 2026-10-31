@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Vem som hade skåpbilen, från när till när, och vilka skador som hittades finns kvar för alltid. En fortkörningsbot den 3 oktober kl. 10:20? Ange skåpbil, dag och tid, så visar historiken föraren.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Varje överlämning är en post som servern skriver. Ingen kan ändra eller radera den.",
  "One driver per van, one van per driver.": "En förare per skåpbil, en skåpbil per förare.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Foton och videor sparas 30 dagar, markerade skador upp till 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Skåpbilar tas ur drift men raderas aldrig. Den som slutar behåller sin historik.",
  "Week 43": "Vecka 43",
  "Tue 20 Oct": "tis 20 okt",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Vad sparar ni om förarna?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Behörigheter och giltighetstid, körkortskontroller, genomgångar och händelser. Aldrig körkortsnummer eller kopior, födelsedatum, hemadresser eller hälsouppgifter.",
  "How long do you keep photos and videos?": "Hur länge sparar ni foton och videor?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dagar. Foton och videor som en chef eller ägare markerar som skada sparas upp till 90 dagar. Uppgifterna om vem som hade vilken skåpbil, och när, sparas för alltid.",
  "What about damage found at the end of a lease?": "Och skador som upptäcks när leasingen tar slut?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Varje upptäckt skada finns i skåpbilens register med datum och vem som hade skåpbilen. Fotona sparas 90 dagar, så gör upp med föraren eller försäkringsbolaget inom den tiden.",
  "How do people join?": "Hur går man med?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Du kan också skriva till {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Kryssa i rutan för att godkänna villkoren och integritetspolicyn.",
  "Tick the box to confirm you have read the privacy policy.": "Kryssa i rutan för att bekräfta att du har läst integritetspolicyn.",
- "Your request didn't go through. Check your connection and try again.": "Din förfrågan gick inte fram. Kontrollera anslutningen och försök igen."
+ "Your request didn't go through. Check your connection and try again.": "Din förfrågan gick inte fram. Kontrollera anslutningen och försök igen.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Foton och videor raderas den 15:e månaden efter, aldrig så länge föraren fortfarande har skåpbilen.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Till den 15:e månaden efter: den 15:e raderas foton och videor från månaden innan. Aldrig så länge föraren som hade skåpbilen fortfarande har den: de väntar tills bilen lämnats tillbaka. Foton och videor som markerats som skada sparas i 90 dagar. Vem som hade vilken skåpbil, och när, sparas för alltid."
 }

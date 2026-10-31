@@ -2027,7 +2027,7 @@
    "src/app/(tabs)/(me)/account.tsx:30",
    "src/app/(tabs)/(me)/account.tsx:44",
    "src/components/companies.tsx:46",
-   "src/lib/types.ts:439"
+   "src/lib/types.ts:441"
   ]
  },
  {
@@ -3642,6 +3642,13 @@
   ]
  },
  {
+  "id": "3bd96264",
+  "key": "Damage is kept 90 days: these until {date} at the earliest.",
+  "where": [
+   "src/components/keep.tsx:65"
+  ]
+ },
+ {
   "id": "16abd203",
   "key": "Damage it missed",
   "where": [
@@ -4001,7 +4008,7 @@
    "src/app/(tabs)/(table)/data.tsx:188",
    "src/app/(tabs)/(table)/data.tsx:222",
    "src/lib/fleet.ts:166",
-   "src/lib/types.ts:439"
+   "src/lib/types.ts:441"
   ]
  },
  {
@@ -4895,7 +4902,7 @@
   "where": [
    "src/app/(tabs)/(people)/people.tsx:157",
    "src/app/(tabs)/(people)/people.tsx:368",
-   "src/lib/types.ts:439"
+   "src/lib/types.ts:441"
   ]
  },
  {
@@ -4955,7 +4962,7 @@
   "key": "Fleet owner",
   "where": [
    "src/app/(tabs)/(people)/people.tsx:50",
-   "src/lib/types.ts:439"
+   "src/lib/types.ts:441"
   ]
  },
  {
@@ -6101,13 +6108,6 @@
   "key": "Keeping the video",
   "where": [
    "src/components/keep.tsx:58"
-  ]
- },
- {
-  "id": "22049077",
-  "key": "Kept until {date}, 90 days after they were taken.",
-  "where": [
-   "src/components/keep.tsx:65"
   ]
  },
  {
@@ -8445,7 +8445,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:1979",
-   "functions/src/index.ts:2160"
+   "functions/src/index.ts:2163"
   ]
  },
  {
@@ -9013,16 +9013,8 @@
   ]
  },
  {
-  "id": "c9027a2b",
-  "key": "Photos and videos are deleted after {n} days. These are gone already.",
-  "server": true,
-  "where": [
-   "functions/src/index.ts:2140"
-  ]
- },
- {
-  "id": "ecdeee38",
-  "key": "Photos and videos are kept 30 days: these until {date}.",
+  "id": "aebfe70e",
+  "key": "Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:263",
    "src/components/keep.tsx:66"
@@ -12486,7 +12478,15 @@
   "key": "These photos belong to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2138"
+   "functions/src/index.ts:2139"
+  ]
+ },
+ {
+  "id": "7bd2351c",
+  "key": "These photos or this video were deleted already.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:2140"
   ]
  },
  {
@@ -13268,7 +13268,7 @@
   "key": "Unknown company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2162",
+   "functions/src/index.ts:2165",
    "functions/src/index.ts:337",
    "functions/src/index.ts:86"
   ]
@@ -13306,8 +13306,8 @@
   "key": "Unknown photos or video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2130",
-   "functions/src/index.ts:2136"
+   "functions/src/index.ts:2131",
+   "functions/src/index.ts:2137"
   ]
  },
  {
@@ -14687,8 +14687,8 @@
   ]
  },
  {
-  "id": "d6135246",
-  "key": "Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.",
+  "id": "d5855a7c",
+  "key": "Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted on the 15th of the month after, or after 90 days when marked as damage.",
   "where": [
    "src/components/deleteaccount.tsx:43"
   ]

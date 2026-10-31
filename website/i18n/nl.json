@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Wie de bestelbus had, van wanneer tot wanneer, en welke schade is gevonden, blijft voorgoed vastgelegd. Een snelheidsboete voor 3 oktober om 10:20? Vul de bestelbus, de dag en de tijd in, en de geschiedenis noemt de chauffeur.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Elke overdracht is een record dat de server schrijft. Niemand bewerkt of verwijdert het.",
  "One driver per van, one van per driver.": "Eén chauffeur per bestelbus, één bestelbus per chauffeur.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Foto's en video's worden 30 dagen bewaard, gemarkeerde schade tot 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Bestelbussen gaan buiten gebruik, ze worden nooit verwijderd. Wie vertrekt, houdt zijn geschiedenis.",
  "Week 43": "Week 43",
  "Tue 20 Oct": "di 20 okt",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Wat bewaren jullie over chauffeurs?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Rijbewijscategorieën en vervaldatum, rijbewijscontroles, instructies en incidenten. Nooit rijbewijsnummers of kopieën, geboortedata, huisadressen of gezondheidsgegevens.",
  "How long do you keep photos and videos?": "Hoelang bewaren jullie foto's en video's?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dagen. Foto's en video's die een manager of eigenaar als schade markeert, worden tot 90 dagen bewaard. Wie welke bestelbus had, en wanneer, blijft voorgoed bewaard.",
  "What about damage found at the end of a lease?": "En schade die aan het eind van een lease wordt gevonden?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Elke gevonden schade staat in het dossier van de bestelbus, met de datum en wie de bestelbus had. De foto's worden 90 dagen bewaard, dus regel het binnen die tijd met de chauffeur of de verzekeraar.",
  "How do people join?": "Hoe komen mensen erbij?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Je kunt ook mailen naar {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Vink het vakje aan om akkoord te gaan met de voorwaarden en het privacybeleid.",
  "Tick the box to confirm you have read the privacy policy.": "Vink het vakje aan om te bevestigen dat je het privacybeleid hebt gelezen.",
- "Your request didn't go through. Check your connection and try again.": "Je aanvraag is niet verstuurd. Controleer je verbinding en probeer het opnieuw."
+ "Your request didn't go through. Check your connection and try again.": "Je aanvraag is niet verstuurd. Controleer je verbinding en probeer het opnieuw.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Foto's en video's worden op de 15e van de maand erna verwijderd, nooit zolang de chauffeur de bestelbus nog heeft.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Tot de 15e van de maand erna: op de 15e worden de foto's en video's van de maand ervoor verwijderd. Nooit zolang de chauffeur die de bestelbus had hem nog heeft: die wachten tot de bus is teruggegeven. Foto's en video's die als schade zijn gemarkeerd, blijven 90 dagen. Wie welke bestelbus had, en wanneer, blijft voorgoed bewaard."
 }

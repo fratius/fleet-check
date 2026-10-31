@@ -332,6 +332,7 @@
  "Damage checks": "Các lần kiểm tra hư hỏng",
  "Damage checks ({n})": "Các lần kiểm tra hư hỏng ({n})",
  "Damage checks need the Firebase backend.": "Kiểm tra hư hỏng cần backend Firebase.",
+ "Damage is kept 90 days: these until {date} at the earliest.": "Hư hỏng được lưu 90 ngày: những mục này ít nhất đến {date}.",
  "Damage it missed": "Hư hỏng bị bỏ sót",
  "Damage it missed ({n} added by managers)": {
   "other": "Hư hỏng bị bỏ sót ({n} do quản lý thêm)"
@@ -1033,6 +1034,7 @@
  "Photos": "Ảnh",
  "Photos and videos are deleted after {n} days. These are gone already.": "Ảnh và video bị xóa sau {n} ngày. Những mục này đã bị xóa rồi.",
  "Photos and videos are kept 30 days: these until {date}.": "Ảnh và video được lưu 30 ngày: những mục này đến {date}.",
+ "Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.": "Ảnh và video của một tháng bị xóa vào ngày 15 của tháng sau, không bao giờ khi tài xế từng giữ xe van vẫn còn giữ nó: những mục này sớm nhất vào {date}.",
  "Photos are stored with the scan in your company's storage.": "Ảnh được lưu cùng lần quét trong bộ nhớ lưu trữ của công ty bạn.",
  "Photos at takeover": "Ảnh khi tiếp nhận",
  "Photos from the library": "Ảnh từ thư viện",
@@ -1500,6 +1502,7 @@
  "These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.": "Đây có thể là hư hỏng, vết bẩn hoặc phản chiếu. Hãy chụp cận cảnh từng điểm, rồi gửi cho quản lý đội xe.",
  "These photos aren't yours or aren't of this van.": "Các ảnh này không phải của bạn hoặc không phải của xe van này.",
  "These photos belong to another station.": "Những ảnh này thuộc trạm khác.",
+ "These photos or this video were deleted already.": "Những ảnh này hoặc video này đã bị xóa rồi.",
  "These photos were already used. Take new ones.": "Các ảnh này đã được dùng. Hãy chụp ảnh mới.",
  "These photos were deleted on {date}. The record of the walk-around stays.": "Những ảnh này đã bị xóa vào {date}. Bản ghi của lượt chụp quanh xe vẫn được giữ.",
  "They left the company. Their van history stays.": "Họ đã rời công ty. Lịch sử xe van của họ vẫn được giữ.",
@@ -1767,7 +1770,7 @@
  "Your fleet manager refused it. Cancel it.": "Quản lý đội xe đã từ chối. Hãy hủy.",
  "Your fleet manager sets the checks.": "Quản lý đội xe đặt các mục kiểm tra.",
  "Your last tour on {van} had no end photo. This photo ends it and starts today's.": "Chuyến gần nhất của bạn trên {van} không có ảnh kết thúc. Ảnh này sẽ kết thúc chuyến đó và bắt đầu chuyến hôm nay.",
- "Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted after 30 days, or 90 when marked as damage.": "Thông tin đăng nhập và trang cá nhân của bạn (tên, số di động, Transporter ID) sẽ bị xóa, và điện thoại của bạn sẽ không nhận thông báo nữa. Các công ty bạn từng làm việc vẫn giữ hồ sơ có tên bạn: bạn đã dùng xe van nào và khi nào, các lượt chụp quanh xe, các lần kiểm tra hư hỏng, các lần đổ nhiên liệu và hồ sơ tài xế của bạn. Ảnh và video của các hồ sơ này bị xóa sau 30 ngày, hoặc sau 90 ngày nếu được đánh dấu là hư hỏng.",
+ "Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted on the 15th of the month after, or after 90 days when marked as damage.": "Thông tin đăng nhập và trang cá nhân của bạn (tên, số di động, Transporter ID) sẽ bị xóa, và điện thoại của bạn sẽ không nhận thông báo nữa. Các công ty bạn từng làm việc vẫn giữ hồ sơ có tên bạn: bạn đã dùng xe van nào và khi nào, các lượt chụp quanh xe, các lần kiểm tra hư hỏng, các lần đổ nhiên liệu và hồ sơ tài xế của bạn. Ảnh và video của các hồ sơ này bị xóa vào ngày 15 của tháng sau, hoặc sau 90 ngày nếu được đánh dấu là hư hỏng.",
  "Your name": "Tên của bạn",
  "Your notifications come in this language too. Names, notes and what the AI wrote stay as they were written.": "Thông báo của bạn cũng hiển thị bằng ngôn ngữ này. Tên, ghi chú và nội dung AI viết vẫn giữ nguyên như khi được viết.",
  "Your own van history": "Lịch sử xe van của bạn",

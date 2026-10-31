@@ -27,7 +27,7 @@ export default function VideoScreen() {
   const v = loaded || older || null;
   // If the playback copy wasn't made (the phone went offline right after the upload), start it again.
   const kicked = useRef(false);
-  const stuck = !!v && ((v.status === 'uploaded' && Date.now() - v.createdAt > 90_000) || v.status === 'failed') && !gone(v.createdAt, v.keepUntil);
+  const stuck = !!v && ((v.status === 'uploaded' && Date.now() - v.createdAt > 90_000) || v.status === 'failed') && !gone(v.mediaDeletedAt);
   useEffect(() => {
     if (!v || !orgId || kicked.current || !stuck || v.status === 'failed') return;
     kicked.current = true;
@@ -41,12 +41,12 @@ export default function VideoScreen() {
   return (
     <Screen edges={[]}>
       <Stack.Screen options={{ title: t('{title}, {van}', { title, van: v.vehicleName }) }} />
-      {gone(v.createdAt, v.keepUntil) ? null : (
+      {gone(v.mediaDeletedAt) ? null : (
         <View style={{ alignSelf: 'center', width: aspect < 1 ? '72%' : '100%', maxWidth: 520 }}>
           <VideoPlayer path={ready ? v.playPath! : v.path} aspect={aspect} />
         </View>
       )}
-      {!ready && !gone(v.createdAt, v.keepUntil) ? (
+      {!ready && !gone(v.mediaDeletedAt) ? (
         <Notice text={v.status === 'failed' ? t('The copy that plays on every phone couldn\'t be made. This is the original; it plays on iPhones and Macs.')
           : t('Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.')} />
       ) : null}
@@ -60,10 +60,10 @@ export default function VideoScreen() {
         <T v="small">{[t('Uploaded {when}', { when: fmtWhen(v.createdAt) }), v.device || '', v.size ? t('original {size}', { size: mb(v.size) }) : '',
           v.playSize ? t('playback copy {size}', { size: mb(v.playSize) }) : ''].filter(Boolean).join(', ')}.</T>
       </View>
-      <KeepCard kind="video" id={v.id} createdAt={v.createdAt} stationId={v.stationId} keepUntil={v.keepUntil} keepMark={v.keepMark} />
+      <KeepCard kind="video" id={v.id} createdAt={v.createdAt} stationId={v.stationId} keepUntil={v.keepUntil} keepMark={v.keepMark} mediaDeletedAt={v.mediaDeletedAt} />
       <Row>
         <Button small title={t('Open {name}', { name: v.vehicleName })} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
-        {s.staff && !gone(v.createdAt, v.keepUntil) ? <Button small v="link" title={v.originalDeleted ? t('Download the video') : t('Download the original')}
+        {s.staff && !gone(v.mediaDeletedAt) ? <Button small v="link" title={v.originalDeleted ? t('Download the video') : t('Download the original')}
           onPress={async () => { const u = await photoUrl(v.originalDeleted && v.playPath ? v.playPath : v.path); if (u) Linking.openURL(u); }} /> : null}
       </Row>
     </Screen>

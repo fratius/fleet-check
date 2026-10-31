@@ -117,7 +117,6 @@
  "Who had the van, from when to when, and what damage was found stays on record for good. A speeding ticket for 3 October at 10:20? Enter the van, the day and the time, and the history names the driver.": "Kam furgons bija, no kura līdz kuram brīdim un kādi bojājumi atrasti, paliek ierakstīts uz visiem laikiem. Sods par ātruma pārsniegšanu 3. oktobrī 10:20? Ievadiet furgonu, dienu un laiku, un vēsture nosauc autovadītāju.",
  "Every handover is a record the server writes. Nobody edits or deletes it.": "Katra paņemšana un nodošana ir servera veidots ieraksts. Neviens to nelabo un nedzēš.",
  "One driver per van, one van per driver.": "Viens autovadītājs uz furgonu, viens furgons uz autovadītāju.",
- "Photos and videos are kept 30 days, marked damage up to 90.": "Foto un video glabā 30 dienas, atzīmētus bojājumus līdz 90.",
  "Vans are retired, never deleted. People who leave keep their history.": "Furgonus noraksta, nekad nedzēš. Tie, kas aiziet, saglabā savu vēsturi.",
  "Week 43": "43. nedēļa",
  "Tue 20 Oct": "Otr., 20. okt.",
@@ -240,7 +239,6 @@
  "What do you keep about drivers?": "Ko jūs glabājat par autovadītājiem?",
  "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.": "Apliecības kategorijas un derīgumu, apliecību pārbaudes, instruktāžas un incidentus. Nekad apliecību numurus vai kopijas, dzimšanas datumus, mājas adreses vai veselības datus.",
  "How long do you keep photos and videos?": "Cik ilgi jūs glabājat foto un video?",
- "30 days. Photos and videos that a manager or owner marks as damage are kept up to 90 days. The records of who had which van, and when, are kept for good.": "30 dienas. Foto un video, ko pārvaldnieks vai īpašnieks atzīmē kā bojājumu, glabā līdz 90 dienām. Ierakstus par to, kam un kad bija kurš furgons, glabā uz visiem laikiem.",
  "What about damage found at the end of a lease?": "Kā ir ar bojājumiem, kas atrasti līzinga beigās?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Katrs atrastais bojājums ir furgona ierakstā ar datumu un to, kam furgons bija. Tā foto glabā 90 dienas, tāpēc nokārtojiet to ar autovadītāju vai apdrošinātāju šajā laikā.",
  "How do people join?": "Kā cilvēki pievienojas?",
@@ -332,5 +330,7 @@
  "You can also write to {email}.": "Varat arī rakstīt uz {email}.",
  "Tick the box to agree to the terms and the privacy policy.": "Atzīmējiet rūtiņu, lai piekristu noteikumiem un privātuma politikai.",
  "Tick the box to confirm you have read the privacy policy.": "Atzīmējiet rūtiņu, lai apstiprinātu, ka esat iepazinies ar privātuma politiku.",
- "Your request didn't go through. Check your connection and try again.": "Jūsu pieprasījums netika nosūtīts. Pārbaudiet savienojumu un mēģiniet vēlreiz."
+ "Your request didn't go through. Check your connection and try again.": "Jūsu pieprasījums netika nosūtīts. Pārbaudiet savienojumu un mēģiniet vēlreiz.",
+ "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Foto un video tiek dzēsti nākamā mēneša 15. datumā, nekad, kamēr furgons vēl ir pie vadītāja.",
+ "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Līdz nākamā mēneša 15. datumam: 15. datumā tiek dzēsti iepriekšējā mēneša foto un video. Nekad, kamēr furgons vēl ir pie vadītāja, kuram tas bija: tie gaida, līdz furgons tiek atdots. Foto un video, kas atzīmēti kā bojājums, tiek glabāti 90 dienas. Kuram bija kurš furgons un kad, tiek glabāts uz visiem laikiem."
 }
