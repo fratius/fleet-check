@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius uporablja kamero za fotografiranje in snemanje kombijev pri obhodih, predajah in preverjanjih poškodb.",
+    "NSPhotoLibraryUsageDescription": "Fratius odpre vašo galerijo, da lahko preverite že posnete fotografije kombijev.",
+    "NSMicrophoneUsageDescription": "Fratius snema videoposnetke kombijev pri predajah in preverjanjih poškodb. Posnetki so brez zvoka."
+  }
+}

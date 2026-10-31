@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "A Fratius a kamerával fotózza és videózza a furgonokat körbejárásokhoz, átadás-átvételekhez és sérülésellenőrzésekhez.",
+    "NSPhotoLibraryUsageDescription": "A Fratius megnyitja a galériádat, hogy ellenőrizhesd a furgonokról már készített fotóidat.",
+    "NSMicrophoneUsageDescription": "A Fratius videót készít a furgonokról átadás-átvételekhez és sérülésellenőrzésekhez. A videók hang nélkül készülnek."
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius usa la cámara para hacer fotos y grabar vídeos de las furgonetas en inspecciones, traspasos y controles de daños.",
+    "NSPhotoLibraryUsageDescription": "Fratius abre tu galería para que puedas comprobar fotos de furgonetas que ya has hecho.",
+    "NSMicrophoneUsageDescription": "Fratius graba vídeos de las furgonetas en traspasos y controles de daños. Se graban sin sonido."
+  }
+}

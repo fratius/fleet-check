@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius bruger kameraet til at fotografere og filme varebiler ved rundgange, overdragelser og skadetjek.",
+    "NSPhotoLibraryUsageDescription": "Fratius åbner dit fotobibliotek, så du kan tjekke billeder af varebiler, som du allerede har taget.",
+    "NSMicrophoneUsageDescription": "Fratius filmer varebiler ved overdragelser og skadetjek. Videoerne optages uden lyd."
+  }
+}

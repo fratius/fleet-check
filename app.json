@@ -19,7 +19,41 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Fratius uses the camera to photograph and film vans for walk-arounds, handovers and damage checks.",
         "NSPhotoLibraryUsageDescription": "Fratius opens your photos so you can check van pictures you already took.",
-        "NSMicrophoneUsageDescription": "Fratius films vans for handovers and damage checks. The videos are recorded without sound."
+        "NSMicrophoneUsageDescription": "Fratius films vans for handovers and damage checks. The videos are recorded without sound.",
+        "CFBundleAllowMixedLocalizations": true
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1",
+              "0A2A.1",
+              "3B52.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1",
+              "85F4.1"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -113,6 +147,39 @@
     "owner": "fratius-org",
     "updates": {
       "url": "https://u.expo.dev/a73c29a2-b492-4320-822e-fb6dabc2ab99"
+    },
+    "locales": {
+      "ar": "./locales/ios/ar.json",
+      "bg": "./locales/ios/bg.json",
+      "cs": "./locales/ios/cs.json",
+      "da": "./locales/ios/da.json",
+      "de": "./locales/ios/de.json",
+      "el": "./locales/ios/el.json",
+      "es": "./locales/ios/es.json",
+      "et": "./locales/ios/et.json",
+      "fa": "./locales/ios/fa.json",
+      "fi": "./locales/ios/fi.json",
+      "fr": "./locales/ios/fr.json",
+      "hi": "./locales/ios/hi.json",
+      "hr": "./locales/ios/hr.json",
+      "hu": "./locales/ios/hu.json",
+      "it": "./locales/ios/it.json",
+      "lt": "./locales/ios/lt.json",
+      "lv": "./locales/ios/lv.json",
+      "nb": "./locales/ios/nb.json",
+      "nl": "./locales/ios/nl.json",
+      "pl": "./locales/ios/pl.json",
+      "pt-PT": "./locales/ios/pt.json",
+      "ro": "./locales/ios/ro.json",
+      "ru": "./locales/ios/ru.json",
+      "sk": "./locales/ios/sk.json",
+      "sl": "./locales/ios/sl.json",
+      "sq": "./locales/ios/sq.json",
+      "sr-Latn": "./locales/ios/sr.json",
+      "sv": "./locales/ios/sv.json",
+      "tr": "./locales/ios/tr.json",
+      "uk": "./locales/ios/uk.json",
+      "vi": "./locales/ios/vi.json"
     }
   }
 }

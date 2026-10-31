@@ -2,12 +2,14 @@
 
 The phone app is the same code as the web app, built by EAS (Expo's build servers) as **Fratius**,
 `com.fratius.app`, version 1.0.0. The texts for the store pages, the privacy answers and the review notes are in
-[listing.md](listing.md).
+[listing.md](listing.md). **For the App Store, follow [APP-STORE.md](APP-STORE.md) step by step**; this page is
+the overview, with Google Play.
 
 ## What's ready in the code
 
 - Name, bundle ID and package `com.fratius.app`, iPhone only (no iPad layout), permission texts (camera, photos;
-  videos are recorded in the app at 720p without sound), no export-controlled encryption. `eas.json`: `production` builds for the stores,
+  videos are recorded in the app at 720p without sound) in all 32 languages (`locales/ios`), the iPhone privacy
+  manifest, no export-controlled encryption. `eas.json`: `production` builds for the stores,
   `preview` for an Android file to install directly. Build numbers are counted by EAS.
 - **Account deletion in the app** (Account tab, and on the first screen for people without a company), and the
   page for Google Play: https://fratius.com/delete-account
@@ -21,8 +23,10 @@ The phone app is the same code as the web app, built by EAS (Expo's build server
 ## Steps (yours)
 
 ### 1. Developer accounts
-- **Apple**: Apple Developer Program (done). Note the **Team ID** and whether the account is an individual or an
-  organisation (developer.apple.com > Membership).
+- **Apple**: Apple Developer Program, an **individual** account (the App Store shows Casian Dan Colto as the
+  seller). Apple accepts only legal entities (GmbH, UG...) as organisations, not sole traders, so a D-U-N-S number
+  alone doesn't change it; a company founded later can take the app over by app transfer. Note the **Team ID**
+  (developer.apple.com > Membership).
 - **Google Play**: an organisation account needs the company's **D-U-N-S number** (free from Dun & Bradstreet,
   upik.de in Germany); use exactly the name and address the D-U-N-S record has. A personal account would instead
   need a closed test with 12 testers for 14 days before the app can go public.

@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius kasutab kaamerat kaubikute pildistamiseks ja filmimiseks ringkontrollidel, üleandmistel ja kahjustuste kontrollidel.",
+    "NSPhotoLibraryUsageDescription": "Fratius avab sinu galerii, et saaksid kontrollida kaubikutest juba tehtud fotosid.",
+    "NSMicrophoneUsageDescription": "Fratius filmib kaubikuid üleandmistel ja kahjustuste kontrollidel. Videod salvestatakse ilma helita."
+  }
+}

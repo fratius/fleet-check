@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius używa aparatu do robienia zdjęć i filmów furgonetek przy obchodach, przekazaniach i kontrolach uszkodzeń.",
+    "NSPhotoLibraryUsageDescription": "Fratius otwiera twoją galerię, żeby można było sprawdzić już zrobione zdjęcia furgonetek.",
+    "NSMicrophoneUsageDescription": "Fratius filmuje furgonetki przy przekazaniach i kontrolach uszkodzeń. Filmy są nagrywane bez dźwięku."
+  }
+}

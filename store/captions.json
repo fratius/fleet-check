@@ -1,0 +1,23 @@
+{
+  "order": ["01-fleet", "02-van", "03-check", "07-driver", "05-history", "04-review", "08-pump", "06-data"],
+  "en": {
+    "01-fleet": ["Your whole fleet at a glance", "Who has which van, the kilometres and warning lights, live."],
+    "02-van": ["Every damage on the van", "When it happened and who had the van, with photos from before and after."],
+    "03-check": ["The AI finds it. You decide.", "Possible damage marked on the photos; the fleet manager has the final word."],
+    "07-driver": ["Made for the driver's phone", "Pick-up with a short video, checks, refuelling, in their own language."],
+    "05-history": ["Who had which van, and when", "The full history of every driver and every van, with the kilometres."],
+    "04-review": ["What needs you today", "Checks to review, missing handover proof, drivers at the pump."],
+    "08-pump": ["Wrong fuel card? You're asked first.", "The card is checked at the pump. You allow it or refuse it."],
+    "06-data": ["Kilometres, fuel and damage per driver", "Tables for 7, 30 or 90 days, ready for Excel."]
+  },
+  "de": {
+    "01-fleet": ["Die ganze Flotte auf einen Blick", "Wer welchen Transporter hat, Kilometer und Warnleuchten, live."],
+    "02-van": ["Jeder Schaden am Transporter", "Wann er passiert ist und wer das Fahrzeug hatte, mit Fotos davor und danach."],
+    "03-check": ["Die KI findet ihn. Du entscheidest.", "Mögliche Schäden auf den Fotos markiert, das letzte Wort hat der Flottenmanager."],
+    "07-driver": ["Gemacht fürs Handy der Fahrer", "Übernahme per kurzem Video, Kontrollen, Tanken, in ihrer eigenen Sprache."],
+    "05-history": ["Wer hatte wann welchen Transporter", "Die ganze Historie jedes Fahrers und jedes Fahrzeugs, mit Kilometern."],
+    "04-review": ["Was heute ansteht", "Schadenschecks, fehlende Übergabe-Nachweise, Fahrer an der Zapfsäule."],
+    "08-pump": ["Falsche Tankkarte? Du wirst gefragt.", "Die Karte wird an der Zapfsäule geprüft. Du erlaubst oder lehnst ab."],
+    "06-data": ["Kilometer, Verbrauch und Schäden pro Fahrer", "Tabellen für 7, 30 oder 90 Tage, fertig für Excel."]
+  }
+}

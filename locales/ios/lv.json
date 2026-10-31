@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius izmanto kameru, lai fotografētu un filmētu furgonus apskatēs, paņemšanā, nodošanā un bojājumu pārbaudēs.",
+    "NSPhotoLibraryUsageDescription": "Fratius atver jūsu galeriju, lai jūs varētu pārbaudīt jau uzņemtos furgonu foto.",
+    "NSMicrophoneUsageDescription": "Fratius filmē furgonus paņemšanai, nodošanai un bojājumu pārbaudēm. Video tiek ierakstīti bez skaņas."
+  }
+}

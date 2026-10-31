@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius nutzt die Kamera, um Transporter für Rundgänge, Übergaben und Schadensprüfungen zu fotografieren und zu filmen.",
+    "NSPhotoLibraryUsageDescription": "Fratius öffnet deine Galerie, damit du schon gemachte Fotos von Transportern prüfen kannst.",
+    "NSMicrophoneUsageDescription": "Fratius filmt Transporter für Übergaben und Schadensprüfungen. Die Videos werden ohne Ton aufgenommen."
+  }
+}

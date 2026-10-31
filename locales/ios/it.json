@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Fratius usa la fotocamera per fotografare e filmare i furgoni durante giri di controllo, passaggi di consegne e controlli danni.",
+    "NSPhotoLibraryUsageDescription": "Fratius apre la tua galleria così puoi controllare le foto dei furgoni che hai già scattato.",
+    "NSMicrophoneUsageDescription": "Fratius filma i furgoni per i passaggi di consegne e i controlli danni. I video vengono registrati senza audio."
+  }
+}

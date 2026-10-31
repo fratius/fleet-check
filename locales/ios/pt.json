@@ -1,0 +1,7 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "O Fratius usa a câmara para fotografar e filmar carrinhas em voltas de inspeção, levantamentos, devoluções e verificações de danos.",
+    "NSPhotoLibraryUsageDescription": "O Fratius abre a sua galeria para que possa verificar fotos de carrinhas que já tirou.",
+    "NSMicrophoneUsageDescription": "O Fratius filma carrinhas em levantamentos, devoluções e verificações de danos. Os vídeos são gravados sem som."
+  }
+}
