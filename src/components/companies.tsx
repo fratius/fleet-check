@@ -53,6 +53,15 @@ export function AllCompanies() {
           <View style={{ flex: 1, minWidth: 0 }}>
             <T v="medium" numberOfLines={1}>{x.name}</T>
             <T v="small">{[cnt(x.vans, '{n} van', '{n} vans'), cnt(x.people, '{n} person', '{n} people'), cnt(x.checks, '{n} damage check', '{n} damage checks'), x.createdAt ? t('since {day}', { day: fmtWhen(x.createdAt).split(',')[0] }) : ''].filter(Boolean).join(', ')}</T>
+            {/* Signed up by themselves: how long their free trial still runs. */}
+            {x.trial.trialEnd && (x.trial.standing === 'trial' || x.trial.standing === 'trial_over') ? (
+              <Row gap={6}>
+                <Pill v={x.trial.standing === 'trial' ? 'amber' : 'default'} text={t('Free trial')} />
+                <T v="small" style={{ flex: 1 }}>{x.trial.standing === 'trial'
+                  ? tp(Math.max(1, Math.ceil((x.trial.trialEnd - Date.now()) / 86400_000)), '{n} day left, until {day}.', '{n} days left, until {day}.', { day: fmtWhen(x.trial.trialEnd).split(',')[0] })
+                  : t('The free trial ended on {day}.', { day: fmtWhen(x.trial.trialEnd).split(',')[0] })}</T>
+              </Row>
+            ) : null}
           </View>
           {x.id === s.org?.id ? <Pill v="solid" text={t('Open')} /> : <T v="h3" color={c.ink2}>{fwd()}</T>}
         </Pressable>

@@ -31,6 +31,7 @@ import {
 } from './purchases';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
+import { AI_DAY, AI_DAY_MESSAGE, MAX_COMPANIES, PLAN_IDS, TERMS_VERSION, berlinDay, newTrial, standing, type AiKind } from './billing';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
 
 initializeApp();
@@ -127,6 +128,23 @@ async function save(path: string, buf: Buffer) {
   await bucket().file(path).save(buf, { contentType: 'image/jpeg', resumable: false, metadata: { cacheControl: 'private, max-age=31536000' } });
   return path;
 }
+/**
+ * The AI allowance of a trial or demo company (billing.ts): one more damage check or photo reading today, or a refusal
+ * once today's are used. Counted before the AI runs, in orgs/{org}/aiDaily/{day} (server only). The app creator and
+ * companies with no trial (set up by hand, or paying) aren't counted.
+ */
+async function useAi(who: Who, kind: AiKind) {
+  if (who.creator) return;
+  const org = db().doc(`orgs/${who.orgId}`);
+  if (!standing((await org.get()).data()).limited) return;
+  const day = berlinDay();
+  const ref = org.collection('aiDaily').doc(day);
+  await db().runTransaction(async (tx) => {
+    const used = Number((await tx.get(ref)).data()?.[kind]) || 0;
+    if (used >= AI_DAY[kind]) throw fail('resource-exhausted', AI_DAY_MESSAGE[kind], { n: AI_DAY[kind] });
+    tx.set(ref, { [kind]: FieldValue.increment(1), day, at: Date.now() }, { merge: true });
+  });
+}
 async function pool<T, R>(items: T[], n: number, fn: (t: T, i: number) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
@@ -148,6 +166,7 @@ export const identifyVehicle = onCallOnce('identifyVehicle', opts(120), async (r
   const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
   if (!raw.length || raw.length > 3) throw fail('invalid-argument', 'Send 1 to 3 photos.');
   const paths = raw.map((p: unknown) => checkPath(p, `orgs/${orgId}/scans/${scanId}/`));
+  await useAi(who, 'reads');
 
   // The body shape doesn't need full detail: about 2,000 image tokens per photo keeps it fast and cheap.
   const imgs = await Promise.all(paths.map(async (p: string) => fit(await download(p), 2000, 1568)));
@@ -203,6 +222,7 @@ export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
   needStation(who, w.stationId);
   const photos = (w.photos || []).filter((p) => p.path).slice(0, 30);
   if (!photos.length) throw fail('failed-precondition', 'This walk-around has no uploaded photos.');
+  await useAi(who, 'checks');
 
   const originals = await pool(photos, 6, (p) => download(checkPath(p.path, `orgs/${orgId}/walkarounds/${walkId}/`)));
   const sent: Sent[] = await pool(originals, 4, (b) => fit(b));
@@ -450,6 +470,51 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
   });
   await getAuth().updateUser(uid, { displayName: name }).catch(() => {});
   return out;
+});
+
+/* ---------- 6b. A new company: sign-up from the app or from the website's button ---------- */
+// The person becomes its fleet owner, with a first station and 30 days free (billing.ts). Written here so the trial
+// and the accepted terms can't be set from the app (the rules keep `billing` and `terms` server-only). The app
+// creator is told about every new company. Older apps still create companies themselves (allowed by the rules,
+// without billing): their trial counts from createdAt.
+export const createCompany = onCallOnce('createCompany', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
+  const company = clean(req.data?.company, 60);
+  if (!company) throw fail('invalid-argument', 'Enter your company name.');
+  const stationName = clean(req.data?.station, 40) || clean(req.data?.mainStation, 40) || 'Main station';
+  const source = req.data?.source === 'website' ? 'website' : 'app';
+  const plan = PLAN_IDS.find((p) => p === req.data?.plan) || null;
+  if (TERMS_VERSION && req.data?.terms !== TERMS_VERSION) throw fail('failed-precondition', 'Accept the terms and the data processing agreement to create the company.');
+  const creator = req.auth?.token?.creator === true;
+  const email = String(req.auth?.token?.email || '');
+  // Right after sign-up the token may not carry the name yet: the app sends it too.
+  const name = clean(req.data?.name, 60) || String(req.auth?.token?.name || email.split('@')[0] || 'Owner');
+  if (!creator) {
+    const mine = (await db().collection('orgs').where('createdBy', '==', uid).get()).docs.filter((d) => d.data().demo !== true);
+    if (mine.length >= MAX_COMPANIES) throw fail('resource-exhausted', 'One account can create up to {n} companies. To add another, write to info@fratius.com.', { n: MAX_COMPANIES });
+  }
+  const now = Date.now();
+  const org = db().collection('orgs').doc();
+  const billing = newTrial(now, source, plan);
+  const b = db().batch();
+  b.create(org, {
+    name: company, createdBy: uid, createdAt: now, stationsReady: true, billing,
+    ...(TERMS_VERSION ? { terms: { version: TERMS_VERSION, acceptedAt: now, by: uid, byName: name, byEmail: email } } : {}),
+  });
+  b.create(org.collection('members').doc(uid), { role: 'owner', stationIds: [], email, name, joinedAt: now });
+  b.create(org.collection('stations').doc(), { name: stationName, code: '', createdAt: now });
+  b.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(org.id), orgId: org.id, email, name }, { merge: true });
+  await b.commit();
+  const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
+  const until = new Date(billing.trialEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' });
+  await Promise.all(creators.filter((c) => c !== uid).map((c) => notify(c, {
+    title: `New company: ${company}`,
+    body: `${name}, ${email} · ${source === 'website' ? 'from the website' : 'in the app'}${plan ? ` · ${plan}` : ''} · free until ${until}`,
+    url: '/', tag: `org-${org.id}`,
+  }).catch(() => 0)));
+  logger.info('New company', { orgId: org.id, source, plan });
+  return { orgId: org.id, trialEnd: billing.trialEnd };
 });
 
 /* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
@@ -1416,6 +1481,8 @@ export const readDocument = onCall(opts(180), async (req) => {
   const paths: string[] = raw.map((p: unknown) => checkPath(p, `orgs/${who.orgId}/docs/${who.uid}/`));
   const org = db().doc(`orgs/${who.orgId}`);
   try {
+    // Inside the try: a refused reading still deletes the photos.
+    await useAi(who, 'reads');
     let about: string;
     if (target === 'van') {
       const van = (await org.collection('vehicles').doc(id).get()).data() as { name?: string; plate?: string; make?: string; model?: string; stationId?: string } | undefined;
