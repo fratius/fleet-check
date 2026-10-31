@@ -101,11 +101,18 @@ service cloud.firestore {
         || (resource.data.role == 'driver' && runs(resource.data.orgId, resource.data.stationId));
     }
 
+    // What only the server writes on a company: the free trial and plan (billing), the accepted terms, the demo marks.
+    function serverOrgKeys() { return ['billing', 'terms', 'demo', 'demoLogins']; }
     match /orgs/{orgId} {
       allow get: if member(orgId) || creator();
       allow list: if creator();
-      allow create: if signedIn() && request.resource.data.createdBy == me();
-      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+      // New companies are made by the server (createCompany). Older apps still make them here: without the server's
+      // fields, and with a creation time of now (the trial counts from it, functions/src/billing.ts).
+      allow create: if signedIn() && request.resource.data.createdBy == me()
+        && !request.resource.data.keys().hasAny(serverOrgKeys())
+        && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000;
+      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(serverOrgKeys().concat(['createdAt']));
       // Companies aren't deleted from the app (demo companies are removed by the server).
 
       match /stations/{stationId} {

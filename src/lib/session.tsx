@@ -4,15 +4,17 @@ import {
   EmailAuthProvider, createUserWithEmailAndPassword, onAuthStateChanged, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut as fbSignOut,
   updateProfile, type User,
 } from 'firebase/auth';
-import { arrayUnion, collection, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { signupDone, signupIntent } from './billing';
 import { fb } from './firebase';
 import { t } from './i18n';
 import { useLang } from './lang';
 import { nap, netKind, retrying } from './net';
 import { clearCaches, keepCachesOf, overlay, readCache, readSession, writeCache, writeSession } from './offline';
 import { outbox, sendWrite, startOutbox } from './outbox';
+import { loadWebUrl } from './people';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
 import { roleOf, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
@@ -97,7 +99,7 @@ interface Session {
   setTier(t: Tier): Promise<void>;
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string, name: string): Promise<void>;
-  createOrg(company: string, station: string): Promise<void>;
+  createOrg(company: string, station: string, acceptedTerms?: string | null): Promise<void>;
   /** Uses an invite link (one person, 24 hours) with the person's details. */
   joinWithLink(token: string, details: JoinDetails): Promise<{ orgName: string; role: string; stationName: string }>;
   /** Makes (or reopens) the person's demo company with made-up stations, people, vans and checks. `fresh` starts it over. */
@@ -281,6 +283,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
       // If this phone has notifications on, they go to whoever is signed in now.
       refreshPush(u.uid);
+      loadWebUrl();
     });
   }, [f, load]);
 
@@ -300,15 +303,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setUser({ uid: cred.user.uid, email: cred.user.email || '', name: name.trim() || (cred.user.email || '').split('@')[0] });
   }, []);
 
-  /** A new company with its first station; the person becomes its owner. */
-  const createOrg = useCallback(async (company: string, station: string) => {
-    const f2 = fb()!, u = fbUser.current!;
-    const ref = doc(collection(f2.db, 'orgs'));
-    await setDoc(ref, { name: company.trim().slice(0, 60), createdBy: u.uid, createdAt: Date.now(), stationsReady: true });
-    await setDoc(doc(f2.db, 'orgs', ref.id, 'members', u.uid), { role: 'owner', stationIds: [], email: u.email || '', name: displayName(u), joinedAt: Date.now() });
-    await setDoc(doc(collection(f2.db, 'orgs', ref.id, 'stations')), { name: station.trim().slice(0, 40) || t('Main station'), code: '', createdAt: Date.now() });
-    await setDoc(doc(f2.db, 'users', u.uid), { orgIds: arrayUnion(ref.id), orgId: ref.id, email: u.email || '', name: displayName(u) }, { merge: true });
-    await load(u, ref.id);
+  /**
+   * A new company with its first station and 30 days free; the person becomes its owner. Made by the server
+   * (createCompany), which records the trial and the accepted terms and tells the app creator.
+   */
+  const createOrg = useCallback(async (company: string, station: string, accepted: string | null = null) => {
+    const u = fb()!.auth.currentUser || fbUser.current!;
+    const r = await ai.createCompany({
+      company: company.trim(), station: station.trim(), mainStation: t('Main station'), name: displayName(u),
+      source: signupIntent.signup ? 'website' : 'app', plan: signupIntent.plan, terms: accepted,
+    });
+    signupDone();
+    await load(u, r.orgId);
   }, [load]);
 
   const joinWithLink = useCallback(async (token: string, details: JoinDetails) => {

@@ -257,6 +257,7 @@ export const ai = {
   peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
   acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
   createDemoCompany: call<{ fresh?: boolean }, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
+  createCompany: call<{ company: string; station: string; mainStation: string; name: string; source: 'website' | 'app'; plan: string | null; terms: string | null }, { orgId: string; trialEnd: number }>('createCompany', 40000),
   assignVan: call<{ orgId: string; vehicleId: string; driverId: string | null }, { assignmentId: string | null; unchanged?: boolean; notified?: number }>('assignVan', 30000),
   retireVan: call<{ orgId: string; vehicleId: string; restore?: boolean }, { ok: boolean }>('retireVan', 30000),
   moveVan: call<{ orgId: string; vehicleId: string; stationId: string }, { ok: boolean }>('moveVan', 30000),

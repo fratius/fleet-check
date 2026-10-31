@@ -229,13 +229,34 @@ describe('people and invites', () => {
 });
 
 describe('new companies', () => {
-  test('anyone signed in creates a company and becomes its owner', async () => {
+  test('anyone signed in creates a company and becomes its owner (older apps; new ones ask the server)', async () => {
     const db = as('fresh');
-    await assertSucceeds(setDoc(doc(db, 'orgs/neworg'), { name: 'DSP New', createdBy: 'fresh', createdAt: 5, stationsReady: true }));
+    await assertSucceeds(setDoc(doc(db, 'orgs/neworg'), { name: 'DSP New', createdBy: 'fresh', createdAt: Date.now(), stationsReady: true }));
     await assertSucceeds(setDoc(doc(db, 'orgs/neworg/members/fresh'), { role: 'owner', stationIds: [], name: 'F', email: 'f@x', joinedAt: 5 }));
     await assertSucceeds(setDoc(doc(db, 'orgs/neworg/stations/s1'), { name: 'DXX9', code: 'DXX9', createdAt: 5 }));
   });
   test('cannot become owner of someone else\'s company', () => assertFails(setDoc(doc(as('fresh'), `orgs/${O}/members/fresh`), { role: 'owner', stationIds: [], name: 'F', email: 'f@x' })));
+  test('the free trial and the accepted terms are the server\'s: not set when the app creates a company', async () => {
+    const db = as('fresh2');
+    await assertFails(setDoc(doc(db, 'orgs/neworg2'), { name: 'X', createdBy: 'fresh2', createdAt: Date.now(), billing: { status: 'active' } }));
+    await assertFails(setDoc(doc(db, 'orgs/neworg2'), { name: 'X', createdBy: 'fresh2', createdAt: Date.now(), terms: { version: 'x' } }));
+    await assertFails(setDoc(doc(db, 'orgs/neworg2'), { name: 'X', createdBy: 'fresh2', createdAt: Date.now(), demo: true }));
+  });
+  test('a company made by the app starts now (its trial counts from then), not in the past', async () => {
+    await assertFails(setDoc(doc(as('fresh3'), 'orgs/neworg3'), { name: 'X', createdBy: 'fresh3', createdAt: 5 }));
+    await assertFails(setDoc(doc(as('fresh3'), 'orgs/neworg3'), { name: 'X', createdBy: 'fresh3' }));
+  });
+  test('the owner can\'t change the trial, the terms or when the company was made', async () => {
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { billing: { status: 'active' } }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { terms: { version: 'x' } }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { createdAt: 2 }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { demo: true }));
+    await assertSucceeds(updateDoc(doc(as('own'), `orgs/${O}`), { name: 'DSP One' }));
+  });
+  test('nobody in the app reads or writes the AI allowance counters', async () => {
+    await assertFails(getDoc(doc(as('own'), `orgs/${O}/aiDaily/2026-11-03`)));
+    await assertFails(setDoc(doc(as('own'), `orgs/${O}/aiDaily/2026-11-03`), { checks: 0 }));
+  });
 });
 
 describe('the app creator viewing the app as someone else', () => {

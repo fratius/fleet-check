@@ -52,6 +52,20 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   be made at once. The link opens the join page, which asks for the person's details (name, mobile, Transporter
   ID for drivers), creates their account, then shows how to put the app on the home screen. Links are made and
   used by Cloud Functions (`createInvite`, `peekInvite`, `acceptInvite`); the app can only list and cancel them.
+- **New companies** are made by the server (`createCompany`): the person becomes its fleet owner, with a first
+  station and **30 days free** (`billing` on the company: `trialing`, trial start and end, where they signed up,
+  the plan picked on the website). The website's "Start 30 days free" button (when `CONFIG.app.selfServe` is on)
+  opens "Create account" in the web app and then "Create a company". Only the server writes `billing` and the
+  accepted `terms` (version and time, once the AGB and AVV are published: `TERMS_VERSION` in
+  `functions/src/billing.ts` and `src/lib/billing.ts`); owners can't change them, nor when the company was made.
+  One account creates up to 3 companies (demo companies don't count); the app creator is told about each new one.
+  Older store apps still create companies directly (the rules allow it without those fields, made now): their
+  trial counts from `createdAt`. Companies made before 1 November 2026 were set up by hand: no trial, no limits.
+- **AI allowance during the trial** (and in demo companies): 20 damage checks and 100 other photo readings (type
+  scans, documents) a day per company, German time, counted on the server (`orgs/{org}/aiDaily/{day}`, server
+  only). Dashboard photos and the refuel steps are never held back, so no driver is stuck at a tour or the pump.
+  The app creator isn't counted. Payment (Stripe, on the web only: the store apps sell nothing) comes later and
+  writes Stripe's status into `billing` (`active`, `past_due`, `unpaid`, `paused`, `canceled`; `comped` for pilots).
 - **One exception, for testing:** the app creator's own test driver account (Actions > Test driver account) is added
   as a driver to a station of a company the creator owns, without a link, so the creator can see the app exactly as a
   driver does. It never adds anyone else, and it never prints a password (set it with "Forgot your password?").

@@ -89,7 +89,17 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 2. On a computer, open the [QR code for the latest version](https://qr.expo.dev/eas-update?projectId=a73c29a2-b492-4320-822e-fb6dabc2ab99&runtimeVersion=exposdk:58.0.0&channel=main) and scan it with the iPhone camera (on Android, scan it in Expo Go). Expo Go keeps the app in its list, and you get each new version when you reopen it.
 3. Create an account. Fleet owners create their company and first station. Managers and drivers open the invite link they were sent (made under **People**): it asks for their details, creates their account and shows how to put the app on the home screen.
 
-The web app works on a phone too: open `https://fleet-check-2aa34.web.app` in Safari.
+The web app works on a phone too: open `https://app.fratius.com` (until that domain is connected: `https://fleet-check-2aa34.web.app`) in Safari.
+
+### The web app at app.fratius.com
+
+The web app is the project's default Hosting site; `app.fratius.com` is its address for customers (the old address keeps working, with its own sign-ins and saved data, because the browser keeps those per address). To connect it once:
+
+1. [Firebase console](https://console.firebase.google.com/project/fleet-check-2aa34/hosting/sites) > **Hosting** > the site **fleet-check-2aa34** (not `fratius-web`) > **Add custom domain**. Enter `app.fratius.com`, leave "Redirect" off, continue.
+2. It shows DNS records (usually a TXT record to prove the domain is yours and one or two A records). Add them where fratius.com's DNS is managed (Squarespace: **Domains** > fratius.com > **DNS** > **Custom records**; host `app` for the A records, and the TXT record's host exactly as shown).
+3. Wait until the console says **Connected** (minutes to a few hours; the certificate comes last), then run **Actions > Deploy > Run workflow**.
+
+Until the domain serves the app, Deploy points the website's Log in and Sign up links and the app's invite links at the old address by itself (`functions/scripts/set-web-url.cjs` writes `config/web`; the website step swaps the links). No code change is needed when it goes live.
 
 The app is built on Expo SDK 58 because that's what Expo Go in the App Store runs (58.0.5, from late October 2026). Expo Go only opens one SDK, so upgrade the project only after the App Store version of Expo Go has moved to the new SDK, and update Expo Go on every phone when the project moves: an older Expo Go can't open the new version, and the new Expo Go can't open the old one.
 
@@ -101,7 +111,7 @@ The store app is built by the **Store build** workflow (Actions tab) on EAS, as 
 
 ## The website (fratius.com)
 
-The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
+The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The header has **Log in** (the web app) and **Start 30 days free**. With `CONFIG.app.selfServe: false` (now, until the AGB and AVV are approved) that button opens the request form; with `true` it opens "Create account" in the web app (`/sign-in?mode=up&plan=…`), which goes on to "Create a company" with 30 days free, and the request form stays as the way to talk to us first. The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
 
 ## What the AI costs
 
