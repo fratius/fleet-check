@@ -695,7 +695,7 @@ a2f060b7	Forgot your password?	[app/sign-in.tsx]
 b48fd125	Fratius {company} {period} to {date}
 75f52718	Free	[index.tsx, vehicle/[id].tsx, components/history.tsx]
 e12e759b	Free ({n})	[index.tsx]
-22357ca6	Free trial	[account.tsx]
+22357ca6	Free trial	[account.tsx, components/companies.tsx]
 923e75de	Free vans first. Taking a van from someone else leaves them without one.
 9b3f00d9	from library	[vehicle/[id].tsx]
 64544340	From the dashboard photo

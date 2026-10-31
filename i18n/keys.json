@@ -305,7 +305,8 @@
   "key": "{n} days left, until {day}.",
   "one": "{n} day left, until {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:131"
+   "src/app/(tabs)/(me)/account.tsx:131",
+   "src/components/companies.tsx:61"
   ]
  },
  {
@@ -1354,7 +1355,7 @@
   "id": "f21a7ec1",
   "key": "A comment on damage",
   "where": [
-   "src/lib/people.ts:148"
+   "src/lib/people.ts:149"
   ]
  },
  {
@@ -1681,7 +1682,7 @@
   "id": "89186158",
   "key": "Add the station {name}",
   "where": [
-   "src/lib/people.ts:85"
+   "src/lib/people.ts:86"
   ]
  },
  {
@@ -2471,7 +2472,7 @@
   "id": "f54c1375",
   "key": "Cancel an invite link",
   "where": [
-   "src/lib/people.ts:56"
+   "src/lib/people.ts:57"
   ]
  },
  {
@@ -2606,7 +2607,7 @@
   "id": "45f404e2",
   "key": "Change the station {name}",
   "where": [
-   "src/lib/people.ts:89"
+   "src/lib/people.ts:90"
   ]
  },
  {
@@ -5208,7 +5209,8 @@
   "id": "22357ca6",
   "key": "Free trial",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:130"
+   "src/app/(tabs)/(me)/account.tsx:130",
+   "src/components/companies.tsx:59"
   ]
  },
  {
@@ -8609,7 +8611,7 @@
   "key": "Open",
   "where": [
    "src/components/companies.tsx:22",
-   "src/components/companies.tsx:57"
+   "src/components/companies.tsx:66"
   ]
  },
  {
@@ -9598,7 +9600,7 @@
   "id": "56e3badc",
   "key": "Refresh",
   "where": [
-   "src/components/companies.tsx:60"
+   "src/components/companies.tsx:69"
   ]
  },
  {
@@ -9737,7 +9739,7 @@
   "id": "3a6d7a70",
   "key": "Remove a station",
   "where": [
-   "src/lib/people.ts:90"
+   "src/lib/people.ts:91"
   ]
  },
  {
@@ -12130,7 +12132,8 @@
   "id": "506537f0",
   "key": "The free trial ended on {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:131"
+   "src/app/(tabs)/(me)/account.tsx:131",
+   "src/components/companies.tsx:62"
   ]
  },
  {
