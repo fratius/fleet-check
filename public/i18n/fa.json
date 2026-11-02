@@ -1676,6 +1676,7 @@
  "Vehicle": "خودرو",
  "Vehicle tax": "مالیات خودرو",
  "Vehicle tax notice": "برگه مالیات خودرو",
+ "Version": "نسخه",
  "Video": "ویدیو",
  "Video at takeover": "ویدیوی هنگام تحویل گرفتن",
  "Video of {van}": "ویدیوی {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} نقطه، {damage} آسیب",
   "other": "{van}: {n} نقطه، {damage} آسیب"
  },
+ "{version} ({build}), {where}": "{version} ({build})، {where}",
+ "{version}, {where}": "{version}، {where}",
  "{what}, {van}": "{what}، {van}",
  "{what}, {van}, by {who}": "{what}، {van}، توسط {who}",
  "{what}: {name}": "{what}: {name}",

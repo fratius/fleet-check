@@ -1646,6 +1646,7 @@
  "Vehicle": "Xe",
  "Vehicle tax": "Thuế xe",
  "Vehicle tax notice": "Thông báo thuế xe",
+ "Version": "Phiên bản",
  "Video": "Video",
  "Video at takeover": "Video khi tiếp nhận",
  "Video of {van}": "Video của {van}",
@@ -2189,6 +2190,8 @@
  "{van}: {n} spots, {damage} damage": {
   "other": "{van}: {n} điểm, {damage} hư hỏng"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, bởi {who}",
  "{what}: {name}": "{what}: {name}",

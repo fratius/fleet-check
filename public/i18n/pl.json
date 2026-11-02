@@ -1736,6 +1736,7 @@
  "Vehicle": "Pojazd",
  "Vehicle tax": "Podatek od pojazdu",
  "Vehicle tax notice": "Decyzja o podatku od pojazdu",
+ "Version": "Wersja",
  "Video": "Film",
  "Video at takeover": "Film przy przejęciu",
  "Video of {van}": "Film furgonetki {van}",
@@ -2483,6 +2484,8 @@
   "many": "{van}: {n} miejsc, uszkodzenia: {damage}",
   "other": "{van}: {n} miejsca, uszkodzenia: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, autor: {who}",
  "{what}: {name}": "{what}: {name}",

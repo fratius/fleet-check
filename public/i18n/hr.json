@@ -1706,6 +1706,7 @@
  "Vehicle": "Vozilo",
  "Vehicle tax": "Porez na vozilo",
  "Vehicle tax notice": "Rješenje o porezu na vozilo",
+ "Version": "Verzija",
  "Video": "Video",
  "Video at takeover": "Video pri preuzimanju",
  "Video of {van}": "Video kombija {van}",
@@ -2385,6 +2386,8 @@
   "few": "{van}: {n} mjesta, oštećenja: {damage}",
   "other": "{van}: {n} mjesta, oštećenja: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van} – {who}",
  "{what}: {name}": "{what}: {name}",

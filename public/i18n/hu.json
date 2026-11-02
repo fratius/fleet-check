@@ -1676,6 +1676,7 @@
  "Vehicle": "Jármű",
  "Vehicle tax": "Gépjárműadó",
  "Vehicle tax notice": "Gépjárműadó-értesítő",
+ "Version": "Verzió",
  "Video": "Videó",
  "Video at takeover": "Videó az átvételkor",
  "Video of {van}": "{van}: videó",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} pont, {damage} sérülés",
   "other": "{van}: {n} pont, {damage} sérülés"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, {who}",
  "{what}: {name}": "{what}: {name}",

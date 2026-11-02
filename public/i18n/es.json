@@ -1676,6 +1676,7 @@
  "Vehicle": "Vehículo",
  "Vehicle tax": "Impuesto de circulación",
  "Vehicle tax notice": "Recibo del impuesto de circulación",
+ "Version": "Versión",
  "Video": "Vídeo",
  "Video at takeover": "Vídeo al hacerse cargo",
  "Video of {van}": "Vídeo de {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} punto, {damage} con daño",
   "other": "{van}: {n} puntos, {damage} con daño"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, por {who}",
  "{what}: {name}": "{what}: {name}",

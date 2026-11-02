@@ -24,7 +24,6 @@ export default function Account() {
   // Uploads and changes of this person still waiting on this phone (they stay through a sign-out).
   const box = useOutbox();
   const unsent = box.jobs.filter((j) => j.uid === s.user?.uid && !box.done.has(j.id)).length;
-  const projectId = (Constants.expoConfig?.extra as { firebase?: { projectId?: string } } | undefined)?.firebase?.projectId;
   // The app creator in a company they aren't a member of.
   const outside = s.creator && s.org && !s.companies.some((x) => x.id === s.org!.id);
   const roleName = outside ? t('App creator') : t(ROLE_NAME[s.role || 'driver']);
@@ -89,12 +88,12 @@ export default function Account() {
         </Card>
       ) : null}
 
+      {/* The version this phone or browser runs, and whether it's the web app or the phone app (product owner,
+          2026-11-02: no server names here). */}
       <Card>
-        <T v="h3">{t('Setup')}</T>
-        {s.mode === 'firebase'
-          ? <T v="hint">{t('Connected to Firebase project {project}. Photos and results sync across phones and the web.', { project: projectId })}</T>
-          : <Notice text={t('Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.')} />}
-        <T v="small">{versionLine()}</T>
+        <T v="h3">{t('Version')}</T>
+        {s.mode === 'firebase' ? null : <Notice text={t('Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.')} />}
+        <T v="body">{versionLine()}</T>
       </Card>
 
       {s.mode === 'firebase' && unsent ? (
@@ -253,13 +252,13 @@ function FleetSettings() {
 }
 
 /** "Version d81ff4b of Oct 25, 13:27, web app": the same on the phone and the web once both run the latest. */
+/**
+ * "1.0.0 (d60bda2), web app": the app version and the build it runs (each Deploy updates the app without changing
+ * the version, so the build is what tells two phones apart), and where it runs.
+ */
 function versionLine() {
-  const b = (Constants.expoConfig?.extra as { build?: { sha?: string; at?: string } } | undefined)?.build;
-  const at = b?.at ? new Date(b.at) : null;
-  const when = at && !Number.isNaN(at.getTime())
-    ? `${at.toLocaleDateString(loc(), { day: 'numeric', month: 'short' })}, ${at.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' })}` : '';
+  const b = (Constants.expoConfig?.extra as { build?: { sha?: string } } | undefined)?.build;
   const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : t('phone app');
-  const sha = b?.sha || t('unknown');
-  const v = when ? t('version {sha} of {when}', { sha, when }) : t('version {sha}', { sha });
-  return `Fratius ${Constants.expoConfig?.version || ''}, ${v}, ${where}`;
+  const version = Constants.expoConfig?.version || '';
+  return b?.sha ? t('{version} ({build}), {where}', { version, build: b.sha, where }) : t('{version}, {where}', { version, where });
 }

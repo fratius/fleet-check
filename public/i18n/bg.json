@@ -1676,6 +1676,7 @@
  "Vehicle": "Автомобил",
  "Vehicle tax": "Данък МПС",
  "Vehicle tax notice": "Съобщение за данък МПС",
+ "Version": "Версия",
  "Video": "Видео",
  "Video at takeover": "Видео при поемане",
  "Video of {van}": "Видео на {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} място, {damage} щети",
   "other": "{van}: {n} места, {damage} щети"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, от {who}",
  "{what}: {name}": "{what}: {name}",

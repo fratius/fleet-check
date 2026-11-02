@@ -1676,6 +1676,7 @@
  "Vehicle": "Fahrzeug",
  "Vehicle tax": "Kfz-Steuer",
  "Vehicle tax notice": "Kfz-Steuerbescheid",
+ "Version": "Version",
  "Video": "Video",
  "Video at takeover": "Video bei Übernahme",
  "Video of {van}": "Video von {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} Stelle, Schäden: {damage}",
   "other": "{van}: {n} Stellen, Schäden: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, von {who}",
  "{what}: {name}": "{what}: {name}",

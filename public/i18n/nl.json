@@ -1676,6 +1676,7 @@
  "Vehicle": "Voertuig",
  "Vehicle tax": "Motorrijtuigenbelasting",
  "Vehicle tax notice": "Aanslag motorrijtuigenbelasting",
+ "Version": "Versie",
  "Video": "Video",
  "Video at takeover": "Video bij overname",
  "Video of {van}": "Video van {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} plek, {damage} schade",
   "other": "{van}: {n} plekken, {damage} schade"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, door {who}",
  "{what}: {name}": "{what}: {name}",

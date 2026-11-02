@@ -1676,6 +1676,7 @@
  "Vehicle": "Køretøj",
  "Vehicle tax": "Køretøjsafgift",
  "Vehicle tax notice": "Opkrævning af køretøjsafgift",
+ "Version": "Version",
  "Video": "Video",
  "Video at takeover": "Video ved overtagelse",
  "Video of {van}": "Video af {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} punkt, {damage} med skade",
   "other": "{van}: {n} punkter, {damage} med skade"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, af {who}",
  "{what}: {name}": "{what}: {name}",

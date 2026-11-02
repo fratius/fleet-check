@@ -1676,6 +1676,7 @@
  "Vehicle": "Fordon",
  "Vehicle tax": "Fordonsskatt",
  "Vehicle tax notice": "Besked om fordonsskatt",
+ "Version": "Version",
  "Video": "Video",
  "Video at takeover": "Video vid övertagande",
  "Video of {van}": "Video av {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} punkt, {damage} med skada",
   "other": "{van}: {n} punkter, {damage} med skada"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, av {who}",
  "{what}: {name}": "{what}: {name}",

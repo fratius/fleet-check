@@ -1736,6 +1736,7 @@
  "Vehicle": "Vozidlo",
  "Vehicle tax": "Daň z motorových vozidiel",
  "Vehicle tax notice": "Výmer dane z motorových vozidiel",
+ "Version": "Verzia",
  "Video": "Video",
  "Video at takeover": "Video pri prebratí",
  "Video of {van}": "Video dodávky {van}",
@@ -2483,6 +2484,8 @@
   "many": "{van}: {n} miesta, poškodenia: {damage}",
   "other": "{van}: {n} miest, poškodenia: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van} ({who})",
  "{what}: {name}": "{what}: {name}",

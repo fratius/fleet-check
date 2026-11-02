@@ -1676,6 +1676,7 @@
  "Vehicle": "Araç",
  "Vehicle tax": "Araç vergisi",
  "Vehicle tax notice": "Araç vergisi bildirimi",
+ "Version": "Sürüm",
  "Video": "Video",
  "Video at takeover": "Devralırken çekilen video",
  "Video of {van}": "Video: {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} nokta, {damage} hasar",
   "other": "{van}: {n} nokta, {damage} hasar"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, {who} tarafından",
  "{what}: {name}": "{what}: {name}",

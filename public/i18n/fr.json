@@ -1706,6 +1706,7 @@
  "Vehicle": "Véhicule",
  "Vehicle tax": "Taxe sur le véhicule",
  "Vehicle tax notice": "Avis de taxe sur le véhicule",
+ "Version": "Version",
  "Video": "Vidéo",
  "Video at takeover": "Vidéo à la reprise",
  "Video of {van}": "Vidéo de {van}",
@@ -2385,6 +2386,8 @@
   "many": "{van} : {n} zones, dégâts : {damage}",
   "other": "{van} : {n} zones, dégâts : {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, par {who}",
  "{what}: {name}": "{what} : {name}",

@@ -1736,6 +1736,7 @@
  "Vehicle": "Автомобиль",
  "Vehicle tax": "Транспортный налог",
  "Vehicle tax notice": "Уведомление о транспортном налоге",
+ "Version": "Версия",
  "Video": "Видео",
  "Video at takeover": "Видео при смене водителя",
  "Video of {van}": "Видео {van}",
@@ -2483,6 +2484,8 @@
   "many": "{van}: {n} мест, повреждений: {damage}",
   "other": "{van}: {n} места, повреждений: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, {who}",
  "{what}: {name}": "{what}: {name}",

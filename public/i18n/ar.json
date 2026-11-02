@@ -1796,6 +1796,7 @@
  "Vehicle": "المركبة",
  "Vehicle tax": "ضريبة المركبة",
  "Vehicle tax notice": "إشعار ضريبة المركبة",
+ "Version": "الإصدار",
  "Video": "فيديو",
  "Video at takeover": "فيديو عند التسلّم",
  "Video of {van}": "فيديو {van}",
@@ -2679,6 +2680,8 @@
   "many": "{van}: {n} نقطة، الأضرار: {damage}",
   "other": "{van}: {n} نقطة، الأضرار: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build})، {where}",
+ "{version}, {where}": "{version}، {where}",
  "{what}, {van}": "{what}، {van}",
  "{what}, {van}, by {who}": "{what}، {van}، بواسطة {who}",
  "{what}: {name}": "{what}: {name}",

@@ -1676,6 +1676,7 @@
  "Vehicle": "Sõiduk",
  "Vehicle tax": "Sõidukimaks",
  "Vehicle tax notice": "Sõidukimaksu teade",
+ "Version": "Versioon",
  "Video": "Video",
  "Video at takeover": "Video ülevõtmisel",
  "Video of {van}": "Kaubiku {van} video",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} koht, kahjustusi: {damage}",
   "other": "{van}: {n} kohta, kahjustusi: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, {who}",
  "{what}: {name}": "{what}: {name}",

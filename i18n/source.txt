@@ -145,6 +145,8 @@ d3c25c1b	{value} per image	[check/[id].tsx]
 ce06e3b1	{van}, warning light: {lights}
 80f642d9	{van}: {n} spot, {damage} damage || {van}: {n} spots, {damage} damage
 3bbbbb8f	{vans}, {people}	[people.tsx]
+83d78021	{version} ({build}), {where}	[account.tsx]
+1756a552	{version}, {where}	[account.tsx]
 f0215a48	{what}, {van}	[walk/[id].tsx]
 b8c7725f	{what}, {van}, by {who}
 b83d53d4	{what}: {name}	[components/buy.tsx]
@@ -407,7 +409,6 @@ fe58ea6a	Compact van	[lib/frames.ts]
 1e5f7dc4	Company name	[account.tsx, app/sign-in.tsx]
 70ef29d4	Compare with the dashboard and correct anything that's wrong.
 527dceda	Complaints	[data.tsx]
-5f23fab4	Connected to Firebase project {project}. Photos and results sync across phones and the web.
 b37456c4	Contact	[components/vanfacts.tsx]
 2e026239	Continue	[account.tsx, app/sign-in.tsx]
 5a0ba3bb	Contract	[components/docscan.tsx, components/driverrec.tsx, components/vanfacts.tsx]
@@ -1437,7 +1438,6 @@ c149b95b	Sent. The fleet manager approves or rejects each spot.
 8f36c0a6	Set by the fleet owner for every station.
 de769d6e	Set by your fleet manager. Tick each one off when you've checked it.
 d4ce959d	Sets the photo frames of a walk-around. Change it under Name, plate and type.
-cdd7bb28	Setup	[account.tsx]
 09ca55ca	Share	[people.tsx]
 e6dbeca8	Sharing isn't available on this phone.
 d97d1ee3	Show	[log.tsx]
@@ -1787,7 +1787,6 @@ f2624f07	Tyre pressure	[prompts.ts]
 249a3708	Tyres	[routines.ts, components/routines.tsx, lib/fleet.ts]
 8259dd1a	unclear	[check/[id].tsx]
 ff75e0dc	Unclear	[check/[id].tsx]
-50d8b4a9	unknown	[account.tsx]
 7f74e948	Unknown check.	[index.ts]
 79655081	Unknown company.	[index.ts]
 2f98d5ec	Unknown handover.	[index.ts]
@@ -1837,8 +1836,7 @@ ad579fe8	Vans you had	[person/[uid].tsx]
 9bb28c0d	Vehicle	[components/docscan.tsx, components/vanfacts.tsx]
 d8ce9a24	Vehicle tax	[components/vanfacts.tsx, lib/fleet.ts]
 5e8b574c	Vehicle tax notice	[components/docscan.tsx]
-7c9f7f38	version {sha}	[account.tsx]
-f47beb68	version {sha} of {when}
+2da600bf	Version	[account.tsx]
 bc17c1f0	Video	[_layout.tsx, video/[id].tsx, components/scanchoice.tsx]
 442e0f1d	Video at takeover	[components/history.tsx]
 072419e6	Video of {van}	[lib/outbox.ts]

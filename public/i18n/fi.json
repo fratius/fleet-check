@@ -1676,6 +1676,7 @@
  "Vehicle": "Ajoneuvo",
  "Vehicle tax": "Ajoneuvovero",
  "Vehicle tax notice": "Ajoneuvoveropäätös",
+ "Version": "Versio",
  "Video": "Video",
  "Video at takeover": "Video vastaanotossa",
  "Video of {van}": "Video, {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} kohta, vaurioita: {damage}",
   "other": "{van}: {n} kohtaa, vaurioita: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, tekijä {who}",
  "{what}: {name}": "{what}: {name}",

@@ -1676,6 +1676,7 @@
  "Vehicle": "वाहन",
  "Vehicle tax": "वाहन टैक्स",
  "Vehicle tax notice": "वाहन टैक्स नोटिस",
+ "Version": "वर्शन",
  "Video": "वीडियो",
  "Video at takeover": "वैन लेते समय का वीडियो",
  "Video of {van}": "{van} का वीडियो",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} स्पॉट, {damage} नुकसान",
   "other": "{van}: {n} स्पॉट, {damage} नुकसान"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, {who} द्वारा",
  "{what}: {name}": "{what}: {name}",

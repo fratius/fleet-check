@@ -1676,6 +1676,7 @@
  "Vehicle": "Mjeti",
  "Vehicle tax": "Taksa e mjetit",
  "Vehicle tax notice": "Njoftim për taksën e mjetit",
+ "Version": "Versioni",
  "Video": "Video",
  "Video at takeover": "Videoja kur u mor përsipër",
  "Video of {van}": "Video, {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} pikë, dëmtime: {damage}",
   "other": "{van}: {n} pika, dëmtime: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, nga {who}",
  "{what}: {name}": "{what}: {name}",

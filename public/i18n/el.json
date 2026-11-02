@@ -1676,6 +1676,7 @@
  "Vehicle": "Όχημα",
  "Vehicle tax": "Τέλη κυκλοφορίας",
  "Vehicle tax notice": "Ειδοποίηση τελών κυκλοφορίας",
+ "Version": "Έκδοση",
  "Video": "Βίντεο",
  "Video at takeover": "Βίντεο κατά την ανάληψη",
  "Video of {van}": "Βίντεο του {van}",
@@ -2287,6 +2288,8 @@
   "one": "{van}: {n} σημείο, ζημιές: {damage}",
   "other": "{van}: {n} σημεία, ζημιές: {damage}"
  },
+ "{version} ({build}), {where}": "{version} ({build}), {where}",
+ "{version}, {where}": "{version}, {where}",
  "{what}, {van}": "{what}, {van}",
  "{what}, {van}, by {who}": "{what}, {van}, από {who}",
  "{what}: {name}": "{what}: {name}",
