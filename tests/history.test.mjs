@@ -168,6 +168,8 @@ test('managers assign vans of their station; one van per driver, one driver per 
   const v1h = await history(S.own, [where('vehicleId', '==', v1.id), orderBy('start', 'desc')]);
   assert.deepEqual(v1h.map((a) => a.driverName), ['Dana Driver', 'Erik Driver', 'Dana Driver']);
   assert.deepEqual(v1h.map((a) => a.endReason), [null, 'reassigned', 'reassigned']);
+  // The history calls the van by its number plate, not its name or model (lib/vans.ts).
+  assert.deepEqual(v1h.map((a) => a.vehicleName), ['V1', 'V1', 'V1']);
 });
 
 test('history is server-only: nobody writes, edits or deletes it from the app, not even the owner', async () => {
@@ -423,8 +425,9 @@ test('a driver given a van gets a phone notification and adds the pick-up photos
   assert.equal(msg.headers['content-encoding'], 'aes128gcm');
   const body = JSON.parse(fnRequire('http_ece').decrypt(msg.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString());
   assert.equal(body.url, `/vehicle/${v2.id}`);
-  assert.equal(body.title, 'Van v2 is yours');
-  assert.match(body.body, /^Max Manager gave you Van v2 \(V2\)\. Before you drive, take the pick-up video or photos\.$/);
+  // Vans are called by their number plate (lib/vans.ts), in notifications too.
+  assert.equal(body.title, 'V2 is yours');
+  assert.match(body.body, /^Max Manager gave you V2\. Before you drive, take the pick-up video or photos\.$/);
   // The phone that turned notifications off is forgotten.
   assert.equal((await pushCol.doc('gone').get()).exists, false);
   // The handover asks for the pick-up photos or video.
@@ -802,7 +805,7 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.equal(vf.dash.fuelPct, 82);
     assert.deepEqual(vf.dash.warnings, ['Tyre pressure']);
     const m1 = opened().at(-1);
-    assert.equal(m1.title, 'Refuel: Van v2 (V2), 45.2 l, €79.10');
+    assert.equal(m1.title, 'Refuel: V2, 45.2 l, €79.10');
     assert.match(m1.body, /^Dana Driver at Test Tankstelle, 60,300 km\.$/);
     assert.equal(m1.url, `/buy/${st.id}`);
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'cancel', id: st.id }), 'failed-precondition');
@@ -815,7 +818,7 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.match(c2.why, /ending 4471.*ends 1234/);
     assert.deepEqual(c2.people, [{ name: 'Max Manager', phone: '+49 151 1' }]);
     const stop = opened().at(-1);
-    assert.match(stop.title, /^Stop: Van v2 \(V2\), not the van's card$/);
+    assert.match(stop.title, /^Stop: V2, not the van's card$/);
     assert.match(stop.body, /Allow or refuse the wash\.$/);
     assert.equal((await buy(S.mgr, w.id)).status, 'waiting');
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: w.id, path: await shot(S.d1) }), 'failed-precondition');

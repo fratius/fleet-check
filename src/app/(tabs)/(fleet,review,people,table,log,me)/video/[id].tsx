@@ -40,7 +40,7 @@ export default function VideoScreen() {
   const title = VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video');
   return (
     <Screen edges={[]}>
-      <Stack.Screen options={{ title: t('{title}, {van}', { title, van: v.vehicleName }) }} />
+      <Stack.Screen options={{ title: t('{title}, {van}', { title, van: s.vanName(v) }) }} />
       {gone(v.mediaDeletedAt) ? null : (
         <View style={{ alignSelf: 'center', width: aspect < 1 ? '72%' : '100%', maxWidth: 520 }}>
           <VideoPlayer path={ready ? v.playPath! : v.path} aspect={aspect} />
@@ -62,7 +62,7 @@ export default function VideoScreen() {
       </View>
       <KeepCard kind="video" id={v.id} createdAt={v.createdAt} stationId={v.stationId} keepUntil={v.keepUntil} keepMark={v.keepMark} mediaDeletedAt={v.mediaDeletedAt} />
       <Row>
-        <Button small title={t('Open {name}', { name: v.vehicleName })} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
+        <Button small title={t('Open {name}', { name: s.vanName(v) })} onPress={() => router.push(`/vehicle/${v.vehicleId}`)} />
         {s.staff && !gone(v.mediaDeletedAt) ? <Button small v="link" title={v.originalDeleted ? t('Download the video') : t('Download the original')}
           onPress={async () => { const u = await photoUrl(v.originalDeleted && v.playPath ? v.playPath : v.path); if (u) Linking.openURL(u); }} /> : null}
       </Row>

@@ -10,6 +10,7 @@ import { sendCall } from '@/lib/outbox';
 import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
+import { vanAlias, vanName } from '@/lib/vans';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
@@ -294,7 +295,7 @@ function BossRow({ m, label }: { m: Member; label: string }) {
         <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: 22, lineHeight: 25, color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone || label}</Text>
-          {van ? <Plate small text={van.plate || van.name} /> : null}
+          {van ? <Plate small text={vanName(van)} /> : null}
         </View>
       </View>
       <Text style={{ fontFamily: F.cond, fontSize: 26, color: fg }}>{fwd()}</Text>
@@ -320,7 +321,7 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
           </View>
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
             <T v="medium" numberOfLines={1}>{me ? t('{name} (you)', { name: m.name }) : m.name}</T>
-            {van ? <Row gap={6}><Plate small text={van.plate || van.name} />{van.plate ? <T v="small" numberOfLines={1}>{van.name}</T> : null}</Row> : <T v="small">{t('No van')}</T>}
+            {van ? <Row gap={6}><Plate small text={vanName(van)} />{vanAlias(van) ? <T v="small" numberOfLines={1}>{vanAlias(van)}</T> : null}</Row> : <T v="small">{t('No van')}</T>}
             {due ? <T v="small" color={due.state === 'overdue' ? c.alert : c.amber} numberOfLines={1}>{due.label}: {due.note}</T> : null}
           </View>
           <T v="h3" color={c.ink2}>{fwd()}</T>
@@ -350,7 +351,7 @@ function Former({ members }: { members: Member[] }) {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <T v="medium" numberOfLines={1}>{a.driverName}</T>
-            <T v="small" numberOfLines={1}>{t('Last van: {van}, until {when}', { van: a.vehicleName, when: fmtWhen(a.end) })}</T>
+            <T v="small" numberOfLines={1}>{t('Last van: {van}, until {when}', { van: s.vanName(a), when: fmtWhen(a.end) })}</T>
           </View>
           <T v="h3" color={c.ink2}>{fwd()}</T>
         </Pressable>

@@ -11,6 +11,7 @@ import { AiError, ai } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
+import { vanName } from '@/lib/vans';
 
 /**
  * A driver's record: licence and licence checks, employment, briefings, emergency contact, notes and incidents.
@@ -144,6 +145,7 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
 
 /** Accidents, traffic fines and customer complaints, newest first. Owners and managers add and correct them. */
 function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] | null; canAdd: boolean }) {
+  const s = useSession();
   const c = useColors();
   const [adding, setAdding] = useState(false);
   const [edit, setEdit] = useState<string | null>(null);
@@ -166,7 +168,7 @@ function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] 
                 : i.kind === 'accident' && i.atFault ? t('{kind}, {fault}', { kind: t(INCIDENT[i.kind]), fault: t(FAULT[i.atFault] || i.atFault) }) : t(INCIDENT[i.kind])}</T>
               {canAdd ? <T v="small" style={{ textDecorationLine: 'underline' }}>{t('Edit')}</T> : null}
             </Row>
-            <T v="small">{[fmtDay(i.day), i.time, i.vehicleName].filter(Boolean).join(', ')}</T>
+            <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(', ')}</T>
             {i.note ? <T v="body">{i.note}</T> : null}
             <T v="small">{i.updatedByName ? t('Added by {name}, changed by {by}', { name: i.byName, by: i.updatedByName }) : t('Added by {name}', { name: i.byName })}</T>
           </Pressable>
@@ -190,7 +192,7 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const stationId = prev?.stationId || m.stationIds?.[0] || '';
-  const vans = s.vehicles.filter((v) => v.stationId === stationId).sort((a, b) => a.name.localeCompare(b.name));
+  const vans = s.vehicles.filter((v) => v.stationId === stationId).sort((a, b) => vanName(a).localeCompare(vanName(b)));
   // Who had which van at that moment, from the history: suggests the van for a fine sent days later.
   const d = parseDay(day);
   const at = d ? new Date(`${d}T${/^\d{1,2}:\d{2}$/.test(time) ? time.padStart(5, '0') : '12:00'}`).getTime() : null;
@@ -204,7 +206,7 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
     const fields = {
       day: d, time: time.trim() ? time.trim().padStart(5, '0') : null, kind, fineType: kind === 'fine' ? (fineType as Incident['fineType']) : null,
       atFault: kind === 'accident' ? (atFault as Incident['atFault']) : null, note: note.trim().slice(0, 2000),
-      vehicleId: van?.id || null, vehicleName: van?.name || null,
+      vehicleId: van?.id || null, vehicleName: van ? vanName(van) : null,
     };
     try {
       if (prev) await s.store!.incidents.update(prev.id, { ...fields, updatedAt: Date.now(), updatedByName: s.user?.name || null });
@@ -225,10 +227,10 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
       <T v="medium">{t('Van')}</T>
       <Row gap={6}>
         <Chip text={t('None')} on={!vehicleId} onPress={() => setVehicleId(null)} />
-        {vans.map((v) => <Chip key={v.id} text={v.name} on={vehicleId === v.id} onPress={() => setVehicleId(v.id)} />)}
+        {vans.map((v) => <Chip key={v.id} text={vanName(v)} on={vehicleId === v.id} onPress={() => setVehicleId(v.id)} />)}
       </Row>
       {hadThen && hadThen.vehicleId !== vehicleId ? (
-        <Pressable onPress={() => setVehicleId(hadThen.vehicleId)}><T v="small" style={{ textDecorationLine: 'underline' }}>{t('{name} had {van} then. Use that van', { name: m.name, van: hadThen.vehicleName })}</T></Pressable>
+        <Pressable onPress={() => setVehicleId(hadThen.vehicleId)}><T v="small" style={{ textDecorationLine: 'underline' }}>{t('{name} had {van} then. Use that van', { name: m.name, van: s.vanName(hadThen) })}</T></Pressable>
       ) : null}
       {otherDriver && otherDriver.driverId !== m.uid ? <T v="small" color={c.alert}>{t('The history says {other} had this van then, not {name}.', { other: otherDriver.driverName, name: m.name })}</T> : null}
       <Field label={t('What happened')} value={note} onChangeText={setNote} multiline maxLength={2000} />

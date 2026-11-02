@@ -86,8 +86,8 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
   await page.locator('input[type=email] >> visible=true').fill(OWNER.email);
   await page.locator('input[type=password] >> visible=true').fill(OWNER.password);
   await page.locator('[role=button] >> text=Sign in >> visible=true').last().click();
-  await visible(page, 'Van 1').waitFor({ timeout: 60_000 });
-  await visible(page, 'Van 1').click();
+  await visible(page, 'B-OF 1').waitFor({ timeout: 60_000 });
+  await visible(page, 'B-OF 1').click();
   // The van page; the people of the station load once (and are kept for later).
   await button(page, 'Give to a driver').click();
   await visible(page, DRIVER.name).waitFor({ timeout: 30_000 });
@@ -100,14 +100,16 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
   await button(page, 'Give to a driver').click();
   await visible(page, DRIVER.name).click();
   await visible(page, 'Saved on this phone. It goes through by itself, you don\'t need to do it again.').waitFor({ timeout: 30_000 });
-  await visible(page, `Give Van 1 to ${DRIVER.name}`).waitFor({ timeout: 10_000 });
+  // Vans are called by their number plate (src/lib/vans.ts).
+  await visible(page, `Give B-OF 1 to ${DRIVER.name}`).waitFor({ timeout: 10_000 });
   // Not offered again while it's on its way.
   assert.equal(await page.locator('text=Give to a driver >> visible=true').count(), 0);
 
   // Renamed offline: shows at once.
   await tab(page, 'Details').click();
-  await button(page, 'Name, plate and type').click();
-  const name = page.locator('input >> visible=true').first();
+  await button(page, 'Plate, name and type').click();
+  // The plate comes first; the van's own name or fleet number second.
+  const name = page.locator('input >> visible=true').nth(1);
   await name.fill('Van One');
   await button(page, 'Save changes').click();
   await visible(page, 'Van One').waitFor({ timeout: 15_000 });

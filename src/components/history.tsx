@@ -12,6 +12,7 @@ import { flash } from '@/lib/flash';
 import { fwd, t, tp } from '@/lib/i18n';
 import { AiError, ai } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
+import { vanName, vanAlias } from '@/lib/vans';
 
 /** "3 days", "5 h", "40 min". */
 export function dur(ms: number) {
@@ -76,7 +77,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
   const checks = s.checks.filter((k) => k.vehicleId === a.vehicleId && inside(k.createdAt));
   const damage = checks.reduce((n, k) => n + approvedDamage(k).length, 0);
   const canOpen = show === 'driver' ? s.staff || a.driverId === s.user?.uid : s.vehicles.some((v) => v.id === a.vehicleId);
-  const title = show === 'driver' ? a.driverName : [a.vehicleName, a.plate].filter(Boolean).join(', ');
+  const title = show === 'driver' ? a.driverName : s.vanName(a);
   // The proof at each end (photos or video, also videos added later), and whether the drop-off is missing.
   const m = handoverMedia(a, s.videos, s.walks);
   const missing = noDropoff(a, s.videos, s.walks, s.stations);
@@ -163,15 +164,15 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
     try {
       // Kept on the phone and sent by itself without a connection (lib/outbox.ts); only if the van hasn't changed meanwhile.
       const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: orgId!, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
-        { title: t('Give {van} to {name}', { van: v.name, name: m.name }), vehicleId: v.id, vehicleName: v.name, personId: m.uid });
-      flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, v.name, r, m.uid === s.user?.uid));
+        { title: t('Give {van} to {name}', { van: vanName(v), name: m.name }), vehicleId: v.id, vehicleName: vanName(v), personId: m.uid });
+      flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
       onDone();
     }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
   };
   return (
     <View style={{ gap: 8 }}>
-      <T v="medium">{t('Give {van} to', { van: v.name })}</T>
+      <T v="medium">{t('Give {van} to', { van: vanName(v) })}</T>
       <T v="small">{t('People of {station}. Someone who already has a van hands it back: it becomes free.', { station: s.stationName(v.stationId) })}</T>
       {!members ? <T v="hint">{t('Loading…')}</T> : !people.length ? <T v="hint">{t('Nobody at this station yet. Invite drivers under People.')}</T> : null}
       {people.map((m) => {
@@ -202,13 +203,13 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const vans = s.vehicles
     .filter((v) => !v.retired && (m.stationIds || []).includes(v.stationId || '') && s.runs(v.stationId))
-    .sort((a, b) => Number(!!a.assignedTo) - Number(!!b.assignedTo) || a.name.localeCompare(b.name));
+    .sort((a, b) => Number(!!a.assignedTo) - Number(!!b.assignedTo) || vanName(a).localeCompare(vanName(b)));
   const give = async (v: Vehicle) => {
     setBusy(v.id); setErr(null);
     try {
       const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
-        { title: t('Give {van} to {name}', { van: v.name, name: m.name }), vehicleId: v.id, vehicleName: v.name, personId: m.uid });
-      flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, v.name, r, m.uid === s.user?.uid));
+        { title: t('Give {van} to {name}', { van: vanName(v), name: m.name }), vehicleId: v.id, vehicleName: vanName(v), personId: m.uid });
+      flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
       onDone();
     }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
@@ -224,7 +225,7 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
           <Pressable key={v.id} disabled={!!busy || current} onPress={() => give(v)} accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== v.id ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <T v="medium" numberOfLines={1}>{v.name}{v.plate ? `, ${v.plate}` : ''}</T>
+              <T v="medium" numberOfLines={1}>{vanName(v)}{vanAlias(v) ? `, ${vanAlias(v)}` : ''}</T>
               <T v="small" numberOfLines={1}>{current ? t('{name} has it now', { name: m.name }) : v.assignedTo ? t('{name} has it now', { name: v.assignedTo.driverName }) : t('Free')}</T>
             </View>
             {busy === v.id ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={v.assignedTo ? 'amber' : 'good'} text={v.assignedTo ? t('Take over') : t('Free')} /> : null}

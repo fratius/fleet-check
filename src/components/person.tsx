@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n';
 import { sendCall } from '@/lib/outbox';
 import { AiError } from '@/lib/store';
 import { ROLE_NAME, roleOf, type Member } from '@/lib/types';
+import { vanName } from '@/lib/vans';
 
 /** Owners change anyone's role and station but their own; managers remove drivers of their station. */
 export function manageRights(s: ReturnType<typeof useSession>, m: Member) {
@@ -48,7 +49,7 @@ export function ManagePerson({ m, onDone }: { m: Member; onDone?: () => void }) 
               <Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={(m.stationIds || []).includes(st.id)} onPress={() => (busy || (m.stationIds || []).includes(st.id) ? null : act(() => sendCall('changePerson', { orgId: s.org!.id, uid: m.uid, stationId: st.id }, { title: t('Move {name} to {station}', { name: m.name, station: st.name }), personId: m.uid })))} />)}</Row>
             </>
           ) : null}
-          {van ? <T v="small">{t('{name} has {van}. Moving them to another station or making them an owner makes the van free.', { name: m.name, van: van.name })}</T> : null}
+          {van ? <T v="small">{t('{name} has {van}. Moving them to another station or making them an owner makes the van free.', { name: m.name, van: vanName(van) })}</T> : null}
         </>
       ) : null}
       {canRemove ? (

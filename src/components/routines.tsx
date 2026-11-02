@@ -12,6 +12,7 @@ import { N_, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { AiError } from '@/lib/store';
 import type { Routine, RoutineHow, RoutineTodo, Vehicle } from '@/lib/types';
+import { vanName } from '@/lib/vans';
 
 /**
  * Checks for drivers: an owner or fleet manager says what drivers check on their van (the oil level, the cargo
@@ -110,7 +111,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
         files.push({ uri: small.uri, path, mime: 'image/jpeg' });
       }
       await sendCall('routineDone', { orgId: s.org!.id, vehicleId: v.id, routineId: x.id, ok, note: ok ? '' : note.trim(), path, id: doneId.current },
-        { title: t('{check} on {van}', { check: routineName(x), van: v.name }), vehicleId: v.id, vehicleName: v.name, files });
+        { title: t('{check} on {van}', { check: routineName(x), van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v), files });
       setBusy(null);
     } catch (e) {
       setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.'));
@@ -285,7 +286,7 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
         <Chip text={t('Choose vans')} on={vans === 'pick'} onPress={() => setVans('pick')} />
       </Row>
       {vans === 'pick' ? (
-        <Row gap={6}>{pool.map((v) => <Chip key={v.id} text={v.plate ? `${v.name} (${v.plate})` : v.name} on={picked.includes(v.id)}
+        <Row gap={6}>{pool.map((v) => <Chip key={v.id} text={vanName(v)} on={picked.includes(v.id)}
           onPress={() => setPicked((p) => (p.includes(v.id) ? p.filter((x) => x !== v.id) : [...p, v.id]))} />)}</Row>
       ) : null}
       <Row style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>

@@ -5,6 +5,7 @@
  */
 
 import { fill, N_, tr, type Vars } from './i18n';
+import { vanName } from './vans';
 
 export type BuyKind = 'fuel' | 'wash' | 'parts';
 export const BUY_KINDS: BuyKind[] = ['fuel', 'wash', 'parts'];
@@ -275,7 +276,7 @@ const eur = (n: number | null, cur: string | null) => (n == null ? '' : `${cur &
 
 /** The notification to the fleet manager when it's done, in their language: everything that matters in two lines. */
 export function doneMessage(lang: string, p: { kind: BuyKind; vehicleName: string; plate: string | null; byName: string; odometerKm: number | null; litres: number | null; total: number | null; currency: string | null; merchant: string | null; note: string | null; flags: Flag[] }) {
-  const van = `${p.vehicleName}${p.plate ? ` (${p.plate})` : ''}`;
+  const van = vanName({ plate: p.plate, name: p.vehicleName });
   const head = p.kind === 'fuel' ? tr(lang, 'Refuel: {van}', { van }) : p.kind === 'wash' ? tr(lang, 'Wash: {van}', { van }) : tr(lang, 'Parts: {van}', { van });
   const num = (n: number) => n.toLocaleString(lang === 'en' ? 'en-GB' : lang);
   const amount = [p.litres != null ? `${num(p.litres)} l` : '', eur(p.total, p.currency)].filter(Boolean).join(', ');

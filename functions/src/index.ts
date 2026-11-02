@@ -20,6 +20,7 @@ import { fit, markBox, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
 import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
 import { FIRST_RUN, cleanMedia, keepUntil, thisMonthsRun } from './media';
+import { vanName } from './vans';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
 import { makePlayback, playsAsIs, probe } from './video';
@@ -541,7 +542,7 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
     // Sent from a phone that was offline: only if the van still has the driver the person saw (or none), so a
     // change someone else made meanwhile isn't overwritten.
     if (req.data && 'expect' in req.data && (van.assignedTo?.assignmentId ?? null) !== (req.data.expect ?? null)) {
-      throw fail('failed-precondition', 'While this was waiting to be sent, someone else changed who has {van}. Check the van and do it again if it\'s still right.', { van: van.name });
+      throw fail('failed-precondition', 'While this was waiting to be sent, someone else changed who has {van}. Check the van and do it again if it\'s still right.', { van: vanName(van) });
     }
     // Close the van's current assignment and the person's current one (their other van becomes free).
     if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, driverId ? 'reassigned' : 'ended'));
@@ -556,20 +557,20 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
     const aref = aCol.doc();
     const kmStart = startKm(van.dash, now);
     const a: Assignment & { createdAt: number } = {
-      vehicleId, vehicleName: van.name, plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
+      vehicleId, vehicleName: vanName(van), plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
       startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid, kmStart, kmEnd: null,
     };
     tx.set(aref, a);
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now, kmStart, kmEnd: null } });
-    return { assignmentId: aref.id as string | null, vanName: van.name, plate: van.plate || '' };
+    return { assignmentId: aref.id as string | null, vanName: vanName(van), plate: van.plate || '' };
   });
   // The checks due now go with the van to its new driver (section 17).
   if (!('unchanged' in r)) await refreshTodo(org, touched).catch((e) => logger.warn('Checks not worked out', e as Error));
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
   let notified = 0;
   if (driverId && r.assignmentId && !('unchanged' in r) && driverId !== who.uid && 'vanName' in r) {
-    const van = `${r.vanName}${r.plate ? ` (${r.plate})` : ''}`;
+    const van = r.vanName;
     notified = await notify(driverId, (lang) => ({
       title: tr(lang, '{van} is yours', { van: r.vanName }),
       body: tr(lang, '{name} gave you {van}. Before you drive, take the pick-up video or photos.', { name: who.name, van }),
@@ -848,13 +849,13 @@ export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: 
       const aCol = org.collection('assignments');
       const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
       if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
-      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: vanName(van), stationId: van.stationId });
       if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
       const now = Date.now();
       const aref = aCol.doc();
       const kmStart = startKm(van.dash, now);
       const a: Assignment & { createdAt: number } = {
-        vehicleId, vehicleName: van.name, plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
+        vehicleId, vehicleName: vanName(van), plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
         start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
         startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
       };
@@ -879,7 +880,7 @@ export const dropOffVan = onCallOnce('dropOffVan', { timeoutSeconds: 120, memory
     await db().runTransaction(async (tx) => {
       const { org, vref, van } = await selfService(tx, who, vehicleId);
       if (van.assignedTo?.driverId !== who.uid) throw fail('failed-precondition', 'You don\'t have this van.');
-      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: van.name, stationId: van.stationId });
+      const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: vanName(van), stationId: van.stationId });
       tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'dropped off', m.media));
       tx.update(vref, { assignedTo: null });
       mark('dropoff', van.assignedTo.assignmentId);
@@ -935,7 +936,7 @@ async function checkHandoverVideo(who: Who, videoId: string): Promise<VideoCheck
 type VideoKind = 'pickup' | 'dropoff' | 'walkaround';
 function videoDoc(who: Who, van: { id: string; name: string; stationId?: string }, v: VideoCheck, kind: VideoKind, assignmentId: string | null, late: boolean) {
   return {
-    vehicleId: van.id, vehicleName: van.name, stationId: van.stationId || null, kind, assignmentId, late,
+    vehicleId: van.id, vehicleName: vanName(van), stationId: van.stationId || null, kind, assignmentId, late,
     by: who.uid, byName: who.name, createdAt: Date.now(), recordedAt: v.recordedAt, durationMs: v.durationMs,
     path: v.path, size: v.size, contentType: v.contentType, device: v.device, width: v.width, height: v.height, hdr: v.hdr,
     status: 'uploaded', playPath: null, posterPath: null, error: null,
@@ -1041,7 +1042,7 @@ export const addVanVideo = onCallOnce('addVanVideo', { timeoutSeconds: 120, memo
     await db().runTransaction(async (tx) => {
       const vref = org.collection('videos').doc(videoId);
       if ((await tx.get(vref)).exists) throw fail('failed-precondition', 'This video was already used. Record a new one.');
-      tx.create(vref, videoDoc(who, { id: vehicleId, name: van.name, stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
+      tx.create(vref, videoDoc(who, { id: vehicleId, name: vanName(van), stationId: van.stationId }, v, 'walkaround', van.assignedTo?.assignmentId || null, false));
     });
     return { ok: true, unchanged: false as boolean };
   });
@@ -1338,7 +1339,7 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     if (plan.startFor) {
       const tref = org.collection('tours').doc();
       const t: TourDoc = {
-        driverId: plan.startFor.id, driverName: plan.startFor.name, vehicleId: rd.vehicleId, vehicleName: van.name, plate: van.plate || '',
+        driverId: plan.startFor.id, driverName: plan.startFor.name, vehicleId: rd.vehicleId, vehicleName: vanName(van), plate: van.plate || '',
         stationId: van.stationId || null, model: modelOf(van), cls: van.cls || null, fuel: van.fuel || null,
         assignmentId: van.assignedTo?.driverId === plan.startFor.id ? van.assignedTo.assignmentId : null,
         start: point, end: null, endedHow: null, refuel: null, km: null, hours: null, used: null, unit: null, per100: null,
@@ -1352,7 +1353,7 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     if (JSON.stringify(warnList(ai.warnings).sort()) !== JSON.stringify(warnings.slice().sort())) corrected.push('warnings');
     const role = started ? 'start' : ended ? 'end' : 'none';
     tx.set(reading, {
-      vehicleId: rd.vehicleId, vehicleName: van.name, stationId: van.stationId || null, by: who.uid, byName: who.name,
+      vehicleId: rd.vehicleId, vehicleName: vanName(van), stationId: van.stationId || null, by: who.uid, byName: who.name,
       driverId: started?.driverId || ended?.driverId || van.assignedTo?.driverId || null, at: now, createdAt: now, path: rd.path,
       ...values, ai, corrected, refuel: ended ? refuel : null, tourId: started?.id || ended?.id || null, endedTourId: ended?.id || null, role,
     });
@@ -1484,7 +1485,6 @@ interface BuyDoc {
 }
 const OPEN_BUY: BuyStatus[] = ['open', 'waiting', 'refused'];
 const buyPath = (w: Who) => `orgs/${w.orgId}/buys/${w.uid}/`;
-const plateText = (p: { plate: string | null }) => (p.plate ? ` (${p.plate})` : '');
 
 /** Who hears about it: the station's fleet managers, or the owners where the station has none (parts: the owners). */
 async function bossesOf(orgId: string, stationId: string | null, kind: BuyKind, except: string) {
@@ -1554,7 +1554,7 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   try { await bucket().file(path).getMetadata(); } catch { throw fail('not-found', 'The dashboard photo is missing. Take it again.'); }
   const dash: BuyDoc['dash'] = { path, at: now, ai: null, confidence: null, readable: false, issue: null, done: false };
   const doc: BuyDoc & Record<string, unknown> = {
-    kind, status: 'open', vehicleId, vehicleName: van.name, plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
+    kind, status: 'open', vehicleId, vehicleName: vanName(van), plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
     vanFuel: van.fuel || null, tankL: van.tankL ?? null, by: who.uid, byName: who.name, role: who.role,
     vanDriverId: van.assignedTo?.driverId || null, vanDriverName: van.assignedTo?.driverName || null,
     notTheirVan: who.role === 'driver' && !!van.assignedTo && van.assignedTo.driverId !== who.uid,
@@ -1635,7 +1635,7 @@ async function buyCardRun(who: Who, org: R, d: Record<string, unknown>, ref: Fir
     const was = await settle(photo, { status: 'waiting', card: { ...p.card, result, read: keep, tries, why: why.text, whyT: why.t, whyV: why.v, expired: read ? expired(read.expiry, now) : null, at: now, ...(photo ? { photo } : {}) }, updatedAt: now });
     if (was) return cardRepeat(who, was);
     const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
-    const van = `${p.vehicleName}${plateText(p)}`;
+    const van = vanName({ plate: p.plate, name: p.vehicleName });
     await tell(bosses, (lang) => ({
       title: result === 'missing' ? tr(lang, 'Stop: {van}, no fuel card', { van }) : result === 'unclear' ? tr(lang, 'Stop: {van}, card not checked', { van })
         : tr(lang, 'Stop: {van}, not the van\'s card', { van }),
@@ -1699,7 +1699,7 @@ async function buyDecide(who: Who, org: R, d: Record<string, unknown>) {
     tx.update(ref, { status: allow ? 'open' : 'refused', decision: { allow, by: who.uid, byName: who.name, at: Date.now(), note }, updatedAt: Date.now() });
     return cur;
   });
-  const wash = p.kind === 'wash', van = p.vehicleName, name = who.name, quote = note ? ` "${note}"` : '';
+  const wash = p.kind === 'wash', van = vanName({ plate: p.plate, name: p.vehicleName }), name = who.name, quote = note ? ` "${note}"` : '';
   const notified = await tell([{ uid: p.by }], (lang) => ({
     title: allow ? (wash ? tr(lang, 'Wash allowed: {van}', { van }) : tr(lang, 'Refuel allowed: {van}', { van }))
       : wash ? tr(lang, 'Wash refused: {van}', { van }) : tr(lang, 'Refuel refused: {van}', { van }),
@@ -1825,7 +1825,7 @@ export const purchase = onCallOnce('purchase', { ...opts(120), secrets: [ANTHROP
 // fleet managers told when it's still not done (routineSweep, every half hour).
 
 const routineName = (lang: string, r: { key: string | null; name: string }) => (r.key ? tr(lang, r.key) : r.name);
-const vanLabel = (v: { name: string; plate?: string | null }) => `${v.name}${v.plate ? ` (${v.plate})` : ''}`;
+const vanLabel = (v: { name: string; plate?: string | null }) => vanName(v);
 
 export const routine = onCallOnce('routine', { timeoutSeconds: 60 }, async (req) => {
   const who = await guard(req);
@@ -1912,19 +1912,19 @@ export const routineDone = onCallOnce('routineDone', { timeoutSeconds: 60, secre
     if (before?.exists) {
       const b = before.data() as { by?: string; routineId?: string; vehicleId?: string };
       if (b.by !== who.uid || b.routineId !== routineId || b.vehicleId !== vehicleId) throw fail('invalid-argument', 'Unknown check.');
-      return { id: ref.id, todo: van.todo || [], van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: true };
+      return { id: ref.id, todo: van.todo || [], van: { name: vanName(van), plate: van.plate || null, stationId: van.stationId || null }, again: true };
     }
     if (!applies(r, vehicleId, van)) throw fail('failed-precondition', 'This check isn\'t for this van.');
     const last: Last = { at: now, by: who.uid, byName: who.name, ok, note: note || null };
     const routines = { ...(van.routines || {}), [routineId]: last };
     const todo = vanTodo(rules, vehicleId, { ...van, routines }, now);
     tx.set(ref, {
-      routineId, key: r.key, name: r.name, vehicleId, vehicleName: van.name, plate: van.plate || '', stationId: van.stationId || null,
+      routineId, key: r.key, name: r.name, vehicleId, vehicleName: vanName(van), plate: van.plate || '', stationId: van.stationId || null,
       by: who.uid, byName: who.name, driverId: van.assignedTo?.driverId || null, assignmentId: van.assignedTo?.assignmentId || null,
       ok, note: note || null, path, at: now, createdAt: now,
     });
     tx.update(vref, { [`routines.${routineId}`]: last, todo });
-    return { id: ref.id, todo, van: { name: van.name, plate: van.plate || null, stationId: van.stationId || null }, again: false };
+    return { id: ref.id, todo, van: { name: vanName(van), plate: van.plate || null, stationId: van.stationId || null }, again: false };
   });
   // A problem goes to the station's fleet managers (or the owners) at once.
   let notified = 0;

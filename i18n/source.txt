@@ -127,6 +127,7 @@ efb475ea	{name}'s tour is still open
 b1ebb975	{person} has {van} now. Their phone doesn't have notifications on, so they'll see it, and the request for the pick-up video or photos, when they open the app.
 c429ab68	{person} has {van} now. Their phone got a notification asking for the pick-up video or photos.
 50ea8aec	{person} has {van}.	[components/history.tsx]
+e79490c2	{plate} is already in your fleet.
 67f24cd1	{reason} by {name}	[components/history.tsx]
 a7aaf1b9	{start} to {end}	[components/dash.tsx]
 4ca0bb94	{stations}: drivers, tours and vans in numbers.
@@ -594,6 +595,7 @@ a1ea6571	Enter the day like 22.10.2026 and the time like 14:30.
 0ecbe790	Enter the day like 22.10.2026.
 769d894f	Enter the day of the check: today or a day in the last 12 months.
 4db2ec5e	Enter the litres from the receipt.
+e73e1f01	Enter the number plate: it's how this van is shown everywhere.
 2fd5abc8	Enter the odometer reading in km.
 2ee9b4f6	Enter the time like 14:30, or leave it empty.
 0131ab7b	Enter the total from the receipt.
@@ -736,8 +738,6 @@ f4275fe4	Give {van} to {name}
 6f1d6671	Give a van	[person/[uid].tsx]
 5365df41	Give the check a name.
 97224fdc	Give the station a name.
-749cc6ca	Give the vehicle a name, for example its model or fleet number.
-0e8761ae	Give the vehicle a name.
 efcce3bd	Give them one below or from a van's page.
 6a8ee4e0	Give to a driver
 7da11b7c	Give to someone else
@@ -954,10 +954,9 @@ a7a8e36c	More links	[people.tsx]
 af3c18d2	Move {name} to {station}
 4756e50f	Move {van} to {station}
 4f23c76e	moved to another station
-709a2322	Name	[add.tsx, vehicle/[id].tsx, people.tsx]
+709a2322	Name	[people.tsx]
 c3bf26d0	Name or plate	[data.tsx]
 bdc95e60	Name, phone or email
-f594728b	Name, plate and type
 d075b0be	Needs a photo	[components/routines.tsx]
 a9430e3c	Needs a photo.	[components/routines.tsx]
 6dd1d06c	Needs repair	[components/damage.tsx]
@@ -1021,6 +1020,7 @@ bd4d9336	No fleet manager at {station} yet.
 3c29d55a	No fuel card on the van's record, nothing to check.
 791b6a4b	No history for this van around then.
 e2d281e8	No km yet	[index.tsx]
+ed222d6a	No number plate yet. Add it under Details: the plate is how this van is shown everywhere.
 b7caebb3	No photo	[app/scan/[id].tsx, components/damage.tsx]
 b1e0aaf7	No pick-up video	[review.tsx]
 a7f6c6c2	No pick-up video or photos yet.
@@ -1176,6 +1176,8 @@ d0941e68	other	[check/[id].tsx]
 6e6a6f20	Other	[components/driverrec.tsx, lib/fleet.ts]
 89202c7f	Other document	[components/docscan.tsx]
 bce7ca67	out for {time}	[review.tsx]
+f839c1e1	Own name	[data.tsx]
+0cd93fe4	Own name or fleet number
 b62ff5cc	Owned	[lib/fleet.ts]
 886c9199	Owned, leased, rented or financed: who with, how long, the mileage allowance.
 4eaec4bc	Owners	[people.tsx]
@@ -1246,7 +1248,7 @@ e9490191	Pick-up photos of {van}
 4fe6a7df	pickup	[lib/frames.ts]
 a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
-2db331ce	Plate	[data.tsx]
+bb08fcf7	Plate, name and type
 e92d2b4c	playback copy {size}	[video/[id].tsx]
 01ffec64	Plugged in to charge
 9e79750a	Policy number	[components/vanfacts.tsx]

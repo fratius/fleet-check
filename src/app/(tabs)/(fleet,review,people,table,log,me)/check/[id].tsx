@@ -55,7 +55,7 @@ function NewCheck({ walkId }: { walkId: string }) {
   return (
     <Screen edges={[]}>
       <View style={{ gap: 4 }}>
-        <T v="hint">{w ? t('Damage check, {van}', { van: w.vehicleName }) : t('Damage check')}</T>
+        <T v="hint">{w ? t('Damage check, {van}', { van: s.vanName(w) }) : t('Damage check')}</T>
         <T v="h1">{err ? t('The check didn\'t finish') : w ? tp(w.photos.length, 'Looking for damage in {n} photo', 'Looking for damage in {n} photos') : t('Looking for damage')}</T>
       </View>
       {err ? (
@@ -143,7 +143,7 @@ function CheckView({ id }: { id: string }) {
   if (phase === 'running' && run) {
     return (
       <Screen edges={[]}>
-        <View style={{ gap: 4 }}><T v="hint">{t('Damage check, {van}', { van: k.vehicleName })}</T><T v="h1">{t('Checking the close-ups, spot {i} of {n}', { i: Math.min(run.done + 1, run.total), n: run.total })}</T></View>
+        <View style={{ gap: 4 }}><T v="hint">{t('Damage check, {van}', { van: s.vanName(k) })}</T><T v="h1">{t('Checking the close-ups, spot {i} of {n}', { i: Math.min(run.done + 1, run.total), n: run.total })}</T></View>
         <Card><T v="big">{((Date.now() - run.t0) / 1000).toFixed(1)} s</T><ActivityIndicator color={c.ink} style={{ alignSelf: 'flex-start' }} /></Card>
       </Screen>
     );
@@ -205,7 +205,7 @@ function CheckView({ id }: { id: string }) {
     try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr(t('Couldn\'t save the review. Check the connection and try again.')); return; }
     // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
     if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) {
-      sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: k.vehicleName }), vehicleId: k.vehicleId, vehicleName: k.vehicleName }).catch(() => {});
+      sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) }).catch(() => {});
     }
   };
   const decide = (j: number, damage: boolean | null) => {
@@ -222,7 +222,7 @@ function CheckView({ id }: { id: string }) {
     setErr(null); setSending(true);
     try {
       await sendCall('submitCheck', { orgId: s.store!.orgId, checkId: k.id, missedNote: (note ?? k.missedNote ?? '').trim() },
-        { title: t('Send the damage check of {van} to the fleet manager', { van: k.vehicleName }), vehicleId: k.vehicleId, vehicleName: k.vehicleName });
+        { title: t('Send the damage check of {van} to the fleet manager', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) });
       setNote(null);
     }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t send it. Check the connection and try again.')); }
@@ -246,10 +246,10 @@ function CheckView({ id }: { id: string }) {
 
   return (
     <Screen edges={[]}>
-      <Stack.Screen options={{ title: t('Check, {van}', { van: k.vehicleName }) }} />
+      <Stack.Screen options={{ title: t('Check, {van}', { van: s.vanName(k) }) }} />
       <View style={{ gap: 6 }}>
-        <T v="hint">{k.createdByName ? t('Damage check, {van}, by {name}, {when}', { van: k.vehicleName, name: k.createdByName, when: fmtWhen(k.createdAt) })
-          : t('Damage check, {van}, {when}', { van: k.vehicleName, when: fmtWhen(k.createdAt) })}</T>
+        <T v="hint">{k.createdByName ? t('Damage check, {van}, by {name}, {when}', { van: s.vanName(k), name: k.createdByName, when: fmtWhen(k.createdAt) })
+          : t('Damage check, {van}, {when}', { van: s.vanName(k), when: fmtWhen(k.createdAt) })}</T>
         <T v="h1">{title}</T>
         <T>{sub}</T>
         <Row>

@@ -4,6 +4,7 @@ import { fb } from './firebase';
 import { newId, prepare, upload } from './images';
 import { LOCAL_STATION, type Store } from './store';
 import type { Photo, Vehicle, Walkaround } from './types';
+import { vanName } from '@/lib/vans';
 
 export interface LocalShot { n: number; label: string; uri: string; w: number; h: number; takenAt: number; retakes?: number }
 
@@ -37,7 +38,7 @@ export async function saveWalk(store: Store, v: Vehicle, uid: string | null, sho
     shots.forEach((s, i) => { photos[i] = { ...photos[i], uri: s.uri }; });
   }
   const rec = {
-    vehicleId: v.id, vehicleName: v.name, cls: v.cls, stationId: v.stationId || (store.mode === 'local' ? LOCAL_STATION : undefined),
+    vehicleId: v.id, vehicleName: vanName(v), cls: v.cls, stationId: v.stationId || (store.mode === 'local' ? LOCAL_STATION : undefined),
     source: meta.source, createdAt: Date.now(), createdBy: uid,
     totalMs: meta.totalMs, frames: meta.frames, taken: shots.length, skipped: meta.skipped, retakes: meta.retakes, photos,
   };

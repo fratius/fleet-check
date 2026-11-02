@@ -65,6 +65,7 @@ export const buyTitle = (kind: BuyKind, name: string) => t('{what}: {name}', { w
 
 /** A line about one, for lists: what, how much, who or which van, when. */
 export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'; first?: boolean }) {
+  const s = useSession();
   const c = useColors();
   const st = buyState(p);
   const amount = [p.kind === 'fuel' ? litresText(p.litres) : '', p.total != null ? money(p.total, p.currency) : ''].filter(Boolean).join(', ');
@@ -72,7 +73,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
       style={({ pressed }) => ({ gap: 3, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, opacity: pressed ? 0.7 : 1 })}>
       <Row>
-        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{buyTitle(p.kind, show === 'driver' ? p.byName : p.vehicleName)}</T>
+        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{buyTitle(p.kind, show === 'driver' ? p.byName : s.vanName(p))}</T>
         {amount ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{amount}</Text> : null}
       </Row>
       <Row gap={6}>
@@ -127,6 +128,7 @@ function unfinished(kind: BuyKind, van?: string) {
 
 /** The person's own one that isn't finished: where they left off. */
 export function MineCard({ p, withVan }: { p: Purchase; withVan?: boolean }) {
+  const s = useSession();
   const c = useColors();
   const waiting = p.status === 'waiting', refused = p.status === 'refused';
   const line = waiting ? t('Waiting for your fleet manager to allow or refuse it. Don\'t start yet.')
@@ -136,7 +138,7 @@ export function MineCard({ p, withVan }: { p: Purchase; withVan?: boolean }) {
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
       style={{ backgroundColor: waiting || refused ? c.paper : MARKER, borderWidth: waiting || refused ? 3 : 2, borderColor: waiting || refused ? c.alert : '#000', borderRadius: 4, padding: 14, gap: 4 }}>
       <Text style={{ fontFamily: F.condBold, fontSize: 22, lineHeight: 25, color: waiting || refused ? c.alert : '#000' }}>
-        {unfinished(p.kind, withVan ? p.vehicleName : undefined)} ›
+        {unfinished(p.kind, withVan ? s.vanName(p) : undefined)} ›
       </Text>
       <T v="body" color={waiting || refused ? undefined : '#000'}>{line}</T>
       <T v="small" color={waiting || refused ? undefined : '#000'}>{t('Started {time} ago.', { time: dur(Date.now() - p.createdAt) })}</T>
@@ -149,6 +151,7 @@ export const waitingTitle = (p: Purchase) => (p.kind === 'wash' ? t('{name} is w
 
 /** For the station's staff: a driver stopped at the pump, waiting for an answer. */
 export function WaitingCard({ p, where }: { p: Purchase; where?: string }) {
+  const s = useSession();
   const c = useColors();
   const time = dur(Date.now() - (p.card.at || p.createdAt));
   return (
@@ -157,7 +160,7 @@ export function WaitingCard({ p, where }: { p: Purchase; where?: string }) {
       <Text style={{ fontFamily: F.condBold, fontSize: 22, lineHeight: 25, color: c.alert }}>
         {waitingTitle(p)} ›
       </Text>
-      <T v="medium">{buyTitle(p.kind, `${p.vehicleName}${p.plate ? ` (${p.plate})` : ''}`)}</T>
+      <T v="medium">{buyTitle(p.kind, s.vanName(p))}</T>
       <T v="small">{[cardLine(p), where ? t('{time} ago, {where}.', { time, where }) : t('{time} ago.', { time }), t('Allow or refuse it.')].filter(Boolean).join(' ')}</T>
     </Pressable>
   );
