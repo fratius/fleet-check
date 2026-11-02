@@ -1329,7 +1329,7 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
     assert.ok(m, 'the notification reached the push service');
     assert.equal(m.body.to, token);
     assert.equal(m.body.data.url, `/vehicle/${vr.id}`);
-    assert.match(m.body.body, /Van N/);
+    assert.match(m.body.body, /NOTE1/); // vans are called by their plate
     assert.equal((await col.doc('gone').get()).exists, false);
     assert.equal((await col.doc('here').get()).exists, true);
   } finally {
