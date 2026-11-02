@@ -75,7 +75,7 @@ export default function ReviewQueue() {
     <Screen>
       <View style={{ gap: 4 }}>
         <T v="h1">{t('Review')}</T>
-        <T v="hint">{t('You decide each spot the AI found. Your decision is final and goes on the van\'s record.')}</T>
+        <T v="hint">{t('What needs your attention, most urgent first.')}</T>
       </View>
 
       {/* Every category at a glance; tap one to see only it. */}

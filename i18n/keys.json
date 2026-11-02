@@ -13981,6 +13981,13 @@
   ]
  },
  {
+  "id": "4e517ae4",
+  "key": "What needs your attention, most urgent first.",
+  "where": [
+   "src/app/(tabs)/(review)/review.tsx:78"
+  ]
+ },
+ {
   "id": "c66b4d48",
   "key": "What the close-ups showed",
   "where": [
@@ -14348,13 +14355,6 @@
   "server": true,
   "where": [
    "functions/src/index.ts:634"
-  ]
- },
- {
-  "id": "e96e1762",
-  "key": "You decide each spot the AI found. Your decision is final and goes on the van's record.",
-  "where": [
-   "src/app/(tabs)/(review)/review.tsx:78"
   ]
  },
  {

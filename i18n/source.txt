@@ -1881,6 +1881,7 @@ f8cd530a	Washer fluid	[prompts.ts, routines.ts, components/routines.tsx]
 97211a88	What	[data.tsx]
 7661e659	What happened	[buy/[id].tsx, components/driverrec.tsx]
 d2d42d35	What is the problem?
+4e517ae4	What needs your attention, most urgent first.
 c66b4d48	What the close-ups showed
 46676e04	What this change was for isn't there any more.
 2e062db2	What to check	[components/routines.tsx]
@@ -1932,7 +1933,6 @@ e394bd20	You become the fleet owner. You add stations, fleet managers and driver
 63483336	You can only invite drivers to your own station.
 245a641b	You can't change your own role or station.
 d72be038	You can't remove yourself here.
-e96e1762	You decide each spot the AI found. Your decision is final and goes on the van's record.
 0838a19a	You don't have access to that.
 fe5d32bc	You don't have this van.
 dd507774	You don't have this van. The driver who has it, or the station's fleet manager, takes its dashboard photo.
