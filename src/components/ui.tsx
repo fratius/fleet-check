@@ -22,14 +22,15 @@ export function useColors(): Colors & { dark: boolean } {
 
 /**
  * Fonts. Tessera is the app's font (product owner, 2026-11-02; OFL, assets/fonts/tessera): one family for text and
- * headings, its figures tabular, so numbers line up. It has Latin letters only, and not all of them: Romanian ș ț,
- * Lithuanian į ų, Latvian ģ ķ ļ ņ, Slovak ĺ and Vietnamese are missing, so those languages keep Barlow (and Barlow
- * Condensed for headings), which has them, instead of letters from another font inside a word. Cyrillic, Greek,
+ * headings, its figures tabular, so numbers line up. It has Latin letters only, and not all of them. Romanian ș ț
+ * were added to our copy (scripts/tessera-romanian.py; many of the app's drivers are Romanian). Lithuanian į ų,
+ * Latvian ģ ķ ļ ņ, Slovak ĺ and Vietnamese are still missing, so those languages keep Barlow (and Barlow Condensed
+ * for headings), which has them, instead of letters from another font inside a word. Cyrillic, Greek,
  * Arabic and Devanagari come from the phone's own fonts with either; on the web a plain sans-serif is named after
  * them so the browser doesn't use a serif. The language is read when a screen draws (lib/lang.tsx draws the app
  * again on a change), so styles made at the top of a file must be made per language (see scan/[id].tsx).
  */
-export const BARLOW_LANGS = new Set(['ro', 'lt', 'lv', 'sk', 'vi']);
+export const BARLOW_LANGS = new Set(['lt', 'lv', 'sk', 'vi']);
 const barlow = () => BARLOW_LANGS.has(lang());
 const web = (name: string, narrow = false) =>
   Platform.OS === 'web' ? `${name}, ${narrow ? '"Arial Narrow", "Roboto Condensed", ' : ''}system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif` : name;

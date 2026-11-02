@@ -78,9 +78,10 @@
   --body: "Tessera", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --r: 4px;
 }
-/* Romanian (ș ț), Lithuanian (į ų), Latvian (ģ ķ ļ ņ), Slovak (ĺ) and Vietnamese need letters Tessera doesn't have:
-   they keep Barlow, so no word mixes two fonts (the app does the same, components/ui.tsx BARLOW_LANGS). */
-:root:lang(ro), :root:lang(lt), :root:lang(lv), :root:lang(sk), :root:lang(vi) {
+/* Lithuanian (į ų), Latvian (ģ ķ ļ ņ), Slovak (ĺ) and Vietnamese need letters Tessera doesn't have: they keep Barlow,
+   so no word mixes two fonts (the app does the same, components/ui.tsx BARLOW_LANGS). Romanian ș ț were added to our
+   copy of Tessera (scripts/tessera-romanian.py). */
+:root:lang(lt), :root:lang(lv), :root:lang(sk), :root:lang(vi) {
   --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
 }
