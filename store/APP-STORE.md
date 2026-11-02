@@ -127,7 +127,7 @@ at the keyboard. After this, everything runs from GitHub.
    (and anyone with an App Store Connect login).
 2. Install **TestFlight** from the App Store on the iPhone, open the invitation email, **Install**.
 3. Check before you submit:
-   - Sign in, **Open a demo company** (or your real company).
+   - Sign in to your real company, or **Account > Demo company > Open the demo company**.
    - Notifications: on the iPhone sign in as the demo **driver** (Account > Demo company shows the login), Account
      > **Notifications** > turn on. In the web app, signed in as yourself, give that driver another van: the
      notification arrives, and tapping it opens the van.
@@ -138,12 +138,14 @@ at the keyboard. After this, everything runs from GitHub.
 
 ## Step 5. A login for Apple's reviewers
 
-Apple needs to sign in. In the web app (https://fleet-check-2aa34.web.app) or the TestFlight app:
-**Create account** with `review@fratius.com` (no mailbox needed; an alias of info@fratius.com is nicer) and a
-password you only use for this, then **Open a demo company**. Keep the email and password for step 7.
+Apple needs to sign in. Only the app creator can open a demo company (customers can't, since 2026-11-02), so
+reviewers use its demo logins. Signed in as yourself in the web app (https://fleet-check-2aa34.web.app):
+**Account > Demo company > Open the demo company** (or open it if you have it). The card shows a **fleet manager**
+and a **driver** login with their passwords. Copy both for step 7: the fleet manager as the review login, the
+driver in the notes (listing.md).
 
-If a reviewer deletes this account (they sometimes try), sign up again with the same address and open a demo
-company again.
+Don't tap **Start the demo over** while the app is in review: it makes new logins and the ones Apple has stop
+working. If a reviewer deletes a demo login (they sometimes try), start the demo over and send Apple the new login.
 
 ## Step 6. Screenshots
 

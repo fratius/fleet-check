@@ -54,10 +54,13 @@ async function fails(p, code) {
 
 /** A new account with the app creator claim, as the Deploy workflow sets it. */
 async function appCreator(name) {
-  const p = await person(name);
+  return setCreator(await person(name), true);
+}
+/** Gives or takes the app creator claim (as Deploy does from APP_CREATOR_EMAILS). */
+async function setCreator(p, on) {
   const r = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/projects/${cfg.projectId}/accounts:update`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-    body: JSON.stringify({ localId: p.uid, customAttributes: JSON.stringify({ creator: true }) }),
+    body: JSON.stringify({ localId: p.uid, customAttributes: JSON.stringify(on ? { creator: true } : {}) }),
   });
   assert.equal(r.status, 200, await r.text());
   await p.auth.currentUser.getIdToken(true);
@@ -460,8 +463,10 @@ test('AI speed and cost: only the app creator sees them, in the functions\' answ
   const cr = await appCreator('Cleo Creator');
   // A driver runs a damage check (the emulator answers for the AI, with made-up usage).
   const walk = await photos(S.d1, S.org, v1, { real: true });
-  const f = await S.d1.call('findDamage', { orgId: S.org, walkId: walk, tier: 'default' });
+  // The phone asks for another model: the company's (set only by the app creator, Fast by default) is used.
+  const f = await S.d1.call('findDamage', { orgId: S.org, walkId: walk, tier: 'complex' });
   assert.equal(f.spots.length, 1);
+  assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', f.checkId))).data().tier, 'quick');
   assert.equal(f.usage, undefined, 'the driver gets no speed or cost back');
   const kref = doc(S.d1.db, 'orgs', S.org, 'checks', f.checkId);
   const k = (await getDoc(kref)).data();
@@ -1035,8 +1040,11 @@ test('costs move out of the record managers read (Deploy runs this once)', async
   assert.match(move(), /No van costs to move/);
 });
 
-test('the demo company: a driver login with a van, history, and pick-up at the first station', async () => {
-  const me = await person('Demo Tester');
+test('the demo company: only the app creator opens one; a driver login with a van, history, and pick-up at the first station', async () => {
+  // Customers don't get a demo company (product owner, 2026-11-02), owners included.
+  await fails((await person('Nora New')).call('createDemoCompany', {}), 'permission-denied');
+  await fails(S.own.call('createDemoCompany', {}), 'permission-denied');
+  const me = await appCreator('Demo Tester');
   const { orgId } = await me.call('createDemoCompany', {});
   const org = (await getDoc(doc(me.db, 'orgs', orgId))).data();
   const login = org.demoLogins.find((l) => l.role === 'driver');
@@ -1172,8 +1180,10 @@ test('people delete their own account: login and profile go, the company keeps i
   assert.equal((await adminDb().doc(`orgs/${org.id}`).get()).exists, false);
 
   // A demo company goes with the account of whoever made it, demo logins included.
-  const dee = await person('Dee Demo');
+  // (Made while she was the app creator: only the app creator opens a demo; app creators can't delete their account.)
+  const dee = await appCreator('Dee Demo');
   const { orgId: demoId } = await dee.call('createDemoCompany', {});
+  await setCreator(dee, false);
   const login = (await getDoc(doc(dee.db, 'orgs', demoId))).data().demoLogins[0];
   assert.deepEqual((await dee.call('deleteAccount', { check: true })).companies.map((c) => [c.outcome, c.demo]), [['close', true]]);
   await dee.call('deleteAccount', {});

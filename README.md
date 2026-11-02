@@ -20,7 +20,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 | People | everything | stations, managers, drivers, invite links | drivers of their station, driver links | none |
 | History | everything | every van and driver | their station | their own vans |
 | Damage | everything | approve or reject, any station | approve or reject at their station | AI check and close-ups, sends to the manager |
-| AI model | everything | sets the model | sees which one | none |
+| AI model | sets the model | none | none | none |
 | AI speed, cost, test log | only the app creator | none | none | none |
 
 - **App creator:** whoever signs up with an email listed in the GitHub variable `APP_CREATOR_EMAILS` (Settings > Secrets and variables > Actions > Variables, comma separated; `casian.colto@gmail.com` when the variable isn't set). Change it, run Deploy, then sign out and in.
@@ -46,7 +46,7 @@ Vehicle walk-arounds and AI damage checks for delivery fleets. One app for iPhon
 
 ## Try it with demo data
 
-**Account > Demo company > Open the demo company** (owners and managers; also on the first screen for new accounts) makes a separate company "Demo DSP (test data)": two stations, fleet managers, drivers, twelve vans with a month of driver history, walk-arounds and damage checks waiting for review, at the van and reviewed. At the first station drivers pick up their vans themselves; at the second the manager hands them out. The photos are drawings and no AI is used. Switch back to your real company under Account; remove the demo company there when you're done.
+**Account > Demo company > Open the demo company** (the app creator only: customers start with their real company and don't get a demo) makes a separate company "Demo DSP (test data)": two stations, fleet managers, drivers, twelve vans with a month of driver history, walk-arounds and damage checks waiting for review, at the van and reviewed. At the first station drivers pick up their vans themselves; at the second the manager hands them out. The photos are drawings and no AI is used. Switch back to your real company under Account; remove the demo company there when you're done.
 
 Two of the made-up people can sign in: a driver and a fleet manager. Their email and password are on the Demo card under Account. Use them in a private browser window to see the app as they do. **Start the demo over** makes everything new, including those logins.
 

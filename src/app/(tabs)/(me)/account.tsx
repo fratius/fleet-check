@@ -60,7 +60,7 @@ export default function Account() {
         <>
           <MyCompanies />
           {s.mode === 'firebase' ? <AddCompany /> : null}
-          {s.mode === 'firebase' && (s.staff || s.creator) ? <Demo /> : null}
+          {s.mode === 'firebase' && (s.creator || s.org?.demo) ? <Demo /> : null}
           {s.creator ? <AllCompanies /> : null}
         </>
       )}
@@ -68,20 +68,21 @@ export default function Account() {
       {s.staff ? <FleetSettings /> : null}
       {s.staff && s.mode === 'firebase' ? <RoutinesCard /> : null}
 
-      {s.staff ? (
+      {/* Only the app creator picks the AI model (product owner, 2026-11-02); in test mode the phone's own. */}
+      {s.seesAiStats ? (
         <Card>
           <T v="h3">{t('AI model for checks')}</T>
-          <T v="hint">{s.role === 'owner' ? t('Used for every type scan and damage check in this company.') : t('Set by the fleet owner for the whole company.')}{s.seesAiStats ? ' ' + t('Each run records its model, time and cost, so the test log can compare them.') : ''}</T>
+          <T v="hint">{t('Used for every type scan and damage check in this company.')}{' ' + t('Each run records its model, time and cost, so the test log can compare them.')}</T>
           {(Object.keys(TIER_MODEL) as Tier[]).map((tier) => (
-            <Pressable key={tier} accessibilityRole="radio" accessibilityState={{ checked: s.tier === tier }} disabled={s.role !== 'owner'} onPress={() => s.setTier(tier)}
-              style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 2, borderColor: s.tier === tier ? c.ink : c.rule, borderRadius: 4, padding: 12, backgroundColor: s.tier === tier ? c.page : 'transparent', opacity: s.role !== 'owner' && s.tier !== tier ? 0.6 : 1 }}>
+            <Pressable key={tier} accessibilityRole="radio" accessibilityState={{ checked: s.tier === tier }} onPress={() => s.setTier(tier)}
+              style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 2, borderColor: s.tier === tier ? c.ink : c.rule, borderRadius: 4, padding: 12, backgroundColor: s.tier === tier ? c.page : 'transparent' }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: c.ink, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
                 {s.tier === tier ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.ink }} /> : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Row><T v="h3">{t(TIER_NAME[tier])}</T><T v="hint">{TIER_MODEL[tier].name}</T></Row>
-                <T v="hint">{t(s.seesAiStats ? TIER_MODEL[tier].note : TIER_MODEL[tier].plain)}</T>
-                {s.seesAiStats ? <T v="small">{t('About {photo} per photo, so {check} for a 14-photo van check before close-ups.', { photo: usd(perPhotoCost(tier)), check: usd(perPhotoCost(tier) * 14) })}</T> : null}
+                <T v="hint">{t(TIER_MODEL[tier].note)}</T>
+                <T v="small">{t('About {photo} per photo, so {check} for a 14-photo van check before close-ups.', { photo: usd(perPhotoCost(tier)), check: usd(perPhotoCost(tier) * 14) })}</T>
               </View>
             </Pressable>
           ))}
@@ -149,7 +150,10 @@ function AddCompany() {
   );
 }
 
-/** A demo company with made-up data to try the app with. */
+/**
+ * A demo company with made-up data, for the app creator only (customers don't get one). Someone still in a demo
+ * made before that can remove it here.
+ */
 function Demo() {
   const s = useSession();
   const c = useColors();
@@ -187,11 +191,11 @@ function Demo() {
                 </View>
               ))}
             </View>
-          ) : <T v="hint">{t('This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.')}</T>}
-          <Button title={again ? t('Tap again: everything in the demo is made new') : t('Start the demo over')} loading={busy} onPress={() => {
+          ) : (s.creator ? <T v="hint">{t('This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.')}</T> : null)}
+          {s.creator ? <Button title={again ? t('Tap again: everything in the demo is made new') : t('Start the demo over')} loading={busy} onPress={() => {
             if (!again) { setAgain(true); setTimeout(() => setAgain(false), 3000); return; }
             setAgain(false); go(() => s.openDemo(true));
-          }} />
+          }} /> : null}
           <Button v="danger" title={armed ? t('Tap again to remove the demo company') : t('Remove the demo company')} loading={busy} onPress={() => {
             if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
             go(() => s.removeDemo());

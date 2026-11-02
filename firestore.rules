@@ -104,8 +104,11 @@ service cloud.firestore {
     match /orgs/{orgId} {
       allow get: if member(orgId) || creator();
       allow list: if creator();
-      allow create: if signedIn() && request.resource.data.createdBy == me();
-      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy;
+      // Only the app creator picks the company's AI model (aiTier; product owner, 2026-11-02).
+      allow create: if signedIn() && request.resource.data.createdBy == me()
+        && (creator() || !request.resource.data.keys().hasAny(['aiTier']));
+      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy
+        && (creator() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['aiTier']));
       // Companies aren't deleted from the app (demo companies are removed by the server).
 
       match /stations/{stationId} {

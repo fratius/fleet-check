@@ -619,7 +619,7 @@ dd15ccde	Every handover has its video or photos.
 4149b9aa	Every scan	[log.tsx]
 0bc7bcf7	every station	[components/routines.tsx]
 170f9213	Every station	[components/routines.tsx]
-d9a11adb	Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, picks the AI model, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.
+7f7df14d	Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.
 9ceec74d	Every time a driver gets the van
 b02c659d	Every van has a driver.
 aa57e3ce	Everyone who had this van, newest first. This history is kept for good.
@@ -817,7 +817,6 @@ c6a0023b	Is it right that there's no vehicle?
 348b927c	It's your own: someone else has to allow it.
 365786f8	Join {company}	[app/join/[token].tsx]
 c30cc528	Join or create another company
-1b16a62f	Just looking?	[app/sign-in.tsx]
 445f6bf2	Keep filming: at least {n} seconds.
 731594dc	Keeping the photos	[components/keep.tsx]
 cdb37ef3	Keeping the video	[components/keep.tsx]
@@ -1144,6 +1143,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 8707964e	Only owners see what the van costs.
 081f7d3a	Only photos get the AI damage check.
 44a30114	Only the app creator can do this.
+e252761d	Only the app creator can open a demo company.
 994b6999	Only the app creator sees the test log.
 e9ccc77a	Only the fleet owner can do this.
 101e86fb	Only the fleet owner can invite fleet managers.
@@ -1158,8 +1158,6 @@ d2bf12cc	Only the fleet owner moves vans between stations.
 64fe846a	Only you	[components/viewas.tsx]
 cf9b7706	Open	[components/companies.tsx]
 7bac7999	Open {name}	[buy/[id].tsx, video/[id].tsx, components/pickup.tsx]
-10c92761	Open a demo company
-cd287761	Open a demo company with made-up stations, managers, drivers, vans and damage checks. It's yours alone and you can remove it any time.
 a868af6a	Open a person to put them at a station. Until then they see nothing.
 716df23e	Open Fratius	[app/join/[token].tsx]
 52e60e67	Open load bed	[lib/frames.ts]
@@ -1437,7 +1435,6 @@ c149b95b	Sent. The fleet manager approves or rejects each spot.
 4202eb24	Service due	[prompts.ts]
 66394926	Service invoice or record
 8f36c0a6	Set by the fleet owner for every station.
-1241872d	Set by the fleet owner for the whole company.
 de769d6e	Set by your fleet manager. Tick each one off when you've checked it.
 d4ce959d	Sets the photo frames of a walk-around. Change it under Name, plate and type.
 cdd7bb28	Setup	[account.tsx]

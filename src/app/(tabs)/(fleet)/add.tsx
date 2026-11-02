@@ -146,7 +146,7 @@ export default function AddVehicle() {
               <Button title={t('Take photo')} disabled={shots.length >= 3 || !!busy} onPress={() => addShots('camera')} />
               <Button title={t('Choose photos')} disabled={shots.length >= 3 || !!busy} onPress={() => addShots('library')} />
             </Row>
-            <Row><T v="hint">{t('AI model')}</T><Segmented label={t('AI model')} value={s.tier} onChange={s.setTier} options={TIERS.map(([k, l]) => [k, t(l)] as [typeof k, string])} /></Row>
+            {s.seesAiStats ? <Row><T v="hint">{t('AI model')}</T><Segmented label={t('AI model')} value={s.tier} onChange={s.setTier} options={TIERS.map(([k, l]) => [k, t(l)] as [typeof k, string])} /></Row> : null}
             <Button v="primary" wide title={busy ? busy + '…' : t('Identify the type')} loading={!!busy} disabled={!!busy} onPress={identify} />
             <T v="small">{t('Photos are stored with the scan in your company\'s storage.')}</T>
           </>

@@ -8,6 +8,12 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
 1. **App creator** (the person who runs Fleet Check). Sees every company and can open and manage any of them.
    Given by the sign-in claim `creator`, set on each deploy for the emails in the GitHub variable
    `APP_CREATOR_EMAILS` (default `casian.colto@gmail.com`).
+   **Demo company:** only the app creator opens one (`createDemoCompany` refuses everyone else; the Account tab
+   shows it only to them). Decided by the product owner, 2026-11-02: customers start with their real company.
+   A demo made earlier stays until its maker removes it or deletes their account.
+   **AI model:** only the app creator picks the company's model (`aiTier`; Account tab). The rules refuse it from
+   anyone else and the functions use the company's model, never the one a phone asks for (product owner,
+   2026-11-02).
    **View as:** in the Account tab the app creator (and nobody else) can view the open company as a fleet owner,
    a fleet manager or a driver of one station (`users/{uid}.viewAs = {org, role, st}`). The rules, Storage rules
    and Cloud Functions then treat them exactly as that role in that company and nowhere else; their app creator
@@ -22,7 +28,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    their answers for everyone else. Older checks had them inside; the Deploy workflow moves them out.
 2. **Fleet owner** (member role `owner`; `admin` is its old name). Owns one or more companies (DSPs).
    Sees all stations of their company. Adds and removes stations, fleet managers, drivers and vans; moves people
-   and vans between stations; picks the AI model; can review damage at any station. Turns dashboard photos on or
+   and vans between stations; can review damage at any station. Turns dashboard photos on or
    off and sets how often licences are checked. **The only role that sees what vans cost** (lease, purchase price,
    insurance); running costs on receipts (fuel, washes, parts) are seen by the station's managers too, since they
    allow or refuse them.

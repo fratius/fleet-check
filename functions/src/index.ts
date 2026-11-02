@@ -78,14 +78,22 @@ async function viewAsOf(uid: string): Promise<ViewAs | null> {
   return { org: v.org, role, st: role !== 'owner' && typeof v.st === 'string' ? v.st : null };
 }
 
-/** Signed in, a member of the company (or the app creator), a known model tier. */
-async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>): Promise<Who> {
+/**
+ * The company's AI model, as the app creator set it (orgs/{org}.aiTier; Fast by default since 2026-10-25). Only the
+ * app creator picks it (product owner, 2026-11-02), so the model a phone asks for is never used.
+ */
+async function tierOf(orgId: string): Promise<Tier> {
+  const t = await db().doc(`orgs/${orgId}`).get().then((d) => d.data()?.aiTier, () => null);
+  return TIERS.includes(t as Tier) ? (t as Tier) : 'quick';
+}
+
+/** Signed in, a member of the company (or the app creator); the company's model tier. */
+async function guard(req: CallableRequest<{ orgId?: unknown }>): Promise<Who> {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const orgId = String(req.data?.orgId || '');
   if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
-  // Fast (Haiku) is the default model since 2026-10-25 (product owner); owners can still pick another.
-  const tier = (TIERS.includes(req.data?.tier as Tier) ? req.data.tier : 'quick') as Tier;
+  const tierP = tierOf(orgId); // read next to the membership, not after it
   const creator = req.auth?.token?.creator === true;
   const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
   if (creator) {
@@ -93,17 +101,17 @@ async function guard(req: CallableRequest<{ orgId?: unknown; tier?: unknown }>):
     if (va) {
       if (va.org !== orgId) throw fail('permission-denied', 'You\'re viewing another company as someone else. Switch back to yourself in the Account tab first.');
       const real = (await db().doc(`orgs/${orgId}/members/${uid}`).get()).data() as { name?: string } | undefined;
-      return { uid, name: real?.name || tokenName || 'App creator', orgId, tier, role: va.role, stationIds: va.st ? [va.st] : [], creator: false };
+      return { uid, name: real?.name || tokenName || 'App creator', orgId, tier: await tierP, role: va.role, stationIds: va.st ? [va.st] : [], creator: false };
     }
   }
   const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
   if (!m.exists) {
-    if (creator) return { uid, name: tokenName || 'App creator', orgId, tier, role: 'owner', stationIds: [], creator };
+    if (creator) return { uid, name: tokenName || 'App creator', orgId, tier: await tierP, role: 'owner', stationIds: [], creator };
     throw fail('permission-denied', 'Your account isn\'t a member of this company.');
   }
   const d = m.data() as { role?: string; stationIds?: string[]; name?: string };
   const role: Role = creator || d.role === 'owner' || d.role === 'admin' ? 'owner' : d.role === 'manager' ? 'manager' : 'driver';
-  return { uid, name: d.name || tokenName, orgId, tier, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
+  return { uid, name: d.name || tokenName, orgId, tier: await tierP, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
 }
 /** Can this person work at this station? Owners and the app creator can work everywhere. */
 function needStation(w: Who, stationId: string | undefined | null, message: string = N_('This van belongs to another station.')) {
@@ -453,9 +461,12 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
 });
 
 /* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
+// Only the app creator opens one (product owner, 2026-11-02: customers start with their real company; demos were
+// unproductive). Demos made before stay until their maker removes them or deletes the account.
 export const createDemoCompany = onCallOnce('createDemoCompany', { timeoutSeconds: 120, memory: '1GiB' }, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can open a demo company.');
   const email = String(req.auth?.token?.email || '');
   const name = String(req.auth?.token?.name || email.split('@')[0] || 'You');
   return createDemo(uid, name, email, req.data?.fresh === true);

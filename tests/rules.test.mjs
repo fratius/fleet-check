@@ -445,6 +445,11 @@ describe('company settings: dashboard photos and licence checks', () => {
   test('the owner turns dashboard photos on', () => assertSucceeds(updateDoc(doc(as('own'), `orgs/${O}`), { dashScans: true, dashScansBy: 'Owner', dashScansAt: 1, licenceCheckMonths: 3 })));
   test('a manager can\'t', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}`), { dashScans: true })));
   test('a driver can\'t', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}`), { dashScans: false })));
+  test('only the app creator picks the AI model: not the owner', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { aiTier: 'complex' })));
+  test('nor a manager', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}`), { aiTier: 'default' })));
+  test('nor in a new company', () => assertFails(setDoc(doc(as('new2'), 'orgs/fresh1'), { name: 'Fresh', createdBy: 'new2', createdAt: 1, aiTier: 'complex' })));
+  test('a new company without one is fine', () => assertSucceeds(setDoc(doc(as('new2'), 'orgs/fresh2'), { name: 'Fresh', createdBy: 'new2', createdAt: 1 })));
+  test('the app creator picks it', () => assertSucceeds(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { aiTier: 'quick' })));
 });
 
 describe('refuels, washes and parts: every attempt kept, written by the server', () => {
