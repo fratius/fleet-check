@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
-import { Card, F, MARKER, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { Card, F, MARKER, Pill, Row, Screen, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
@@ -88,8 +88,8 @@ export default function ReviewQueue() {
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 10, paddingRight: 12, borderRadius: 4, borderWidth: 2,
                 borderColor: c.ink, backgroundColor: on ? c.ink : c.paper, opacity: n || on ? 1 : 0.55 }}>
               <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: color[k], borderWidth: k === 'review' ? 1.5 : 0, borderColor: '#000' }} />
-              <Text style={{ fontFamily: F.cond, fontSize: 18, color: on ? c.paper : c.ink }}>{label}</Text>
-              <Text style={{ fontFamily: F.condBold, fontSize: 18, color: on ? c.paper : c.ink, fontVariant: ['tabular-nums'] }}>{n}</Text>
+              <Text style={{ fontFamily: F.cond, fontSize: hs(18), color: on ? c.paper : c.ink }}>{label}</Text>
+              <Text style={{ fontFamily: F.condBold, fontSize: hs(18), color: on ? c.paper : c.ink, fontVariant: ['tabular-nums'] }}>{n}</Text>
             </Pressable>
           );
         })}
@@ -219,7 +219,7 @@ function Section({ color, title, count, note, children }: { color: string; title
           <View style={{ width: 6, alignSelf: 'stretch', borderRadius: 2, backgroundColor: color, borderWidth: color === MARKER ? 1.5 : 0, borderColor: '#000' }} />
           <T v="h2" style={{ flexShrink: 1 }}>{title}</T>
           <View style={{ minWidth: 30, height: 26, paddingHorizontal: 8, borderRadius: 13, backgroundColor: count ? c.ink : 'transparent', borderWidth: 2, borderColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: F.condBold, fontSize: 16, color: count ? c.paper : c.ink, fontVariant: ['tabular-nums'] }}>{count}</Text>
+            <Text style={{ fontFamily: F.condBold, fontSize: hs(16), color: count ? c.paper : c.ink, fontVariant: ['tabular-nums'] }}>{count}</Text>
           </View>
         </View>
         <T v="small" style={{ paddingLeft: 16 }}>{note}</T>
@@ -249,7 +249,7 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
   const long = Date.now() - sent > 2 * 3600_000;
   return (
     <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={k.createdByName ? t('Review {name}, {van}', { name: k.createdByName, van: van }) : t('Review {van}', { van: van })}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${van}` : van}</Text>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${van}` : van}</Text>
       <Row>
         {alias ? <T v="hint">{alias}</T> : null}
         <Text style={{ fontFamily: F.semi, fontSize: 14, color: long ? c.amber : c.ink }}>{t('Waiting {time}', { time: dur(Date.now() - sent) })}</Text>
@@ -276,7 +276,7 @@ function MissingCard({ m, van, alias, where }: { m: Missing; van: string; alias:
         : a.endedByName ? t('Had it until {when}, ended by {name}', { when: fmtWhen(a.end), name: a.endedByName }) : t('Had it until {when}', { when: fmtWhen(a.end) });
   return (
     <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${van}`}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
         {a.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
       {since ? <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.alert, marginTop: -4 }}>{since}</Text> : null}
@@ -297,7 +297,7 @@ function GapCard({ g, van, alias, where }: { g: TourGap; van: string; alias: str
     : g.kind === 'no-start' ? t('Had the van since {when}', { when: fmtWhen(g.at) }) : t('Started {when}, no end photo yet', { when: fmtWhen(g.at) });
   return (
     <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}, ${problem}: ${van}`}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
         {g.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
       <Row>
@@ -315,7 +315,7 @@ function WarnCard({ tour, van, alias, where }: { tour: Tour; van: string; alias:
   const at = tour.end?.at || tour.startAt;
   return (
     <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: van, lights: tour.warnings.map((w) => t(w)).join(', ') })}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
         {van}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(', ')}`}</Text>
       </Text>
       <Row>

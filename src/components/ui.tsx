@@ -9,7 +9,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 
 import { GONE, photoLookup, photoUrl } from '@/lib/images';
-import { loc, t } from '@/lib/i18n';
+import { lang, loc, t } from '@/lib/i18n';
 
 export const MARKER = '#E2FF1C';
 const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00', warn: '#D9480F' };
@@ -20,23 +20,58 @@ export function useColors(): Colors & { dark: boolean } {
   return { ...(dark ? DARK : LIGHT), dark };
 }
 
-// Barlow has Latin letters only. Phones fill in other scripts (Cyrillic, Greek, Arabic, Devanagari) from their own
-// fonts; on the web the browser would use a serif, so a plain sans-serif is named after it.
+/**
+ * Fonts. Tessera is the app's font (product owner, 2026-11-02; OFL, assets/fonts/tessera): one family for text and
+ * headings, its figures tabular, so numbers line up. It has Latin letters only, and not all of them: Romanian ș ț,
+ * Lithuanian į ų, Latvian ģ ķ ļ ņ, Slovak ĺ and Vietnamese are missing, so those languages keep Barlow (and Barlow
+ * Condensed for headings), which has them, instead of letters from another font inside a word. Cyrillic, Greek,
+ * Arabic and Devanagari come from the phone's own fonts with either; on the web a plain sans-serif is named after
+ * them so the browser doesn't use a serif. The language is read when a screen draws (lib/lang.tsx draws the app
+ * again on a change), so styles made at the top of a file must be made per language (see scan/[id].tsx).
+ */
+export const BARLOW_LANGS = new Set(['ro', 'lt', 'lv', 'sk', 'vi']);
+const barlow = () => BARLOW_LANGS.has(lang());
 const web = (name: string, narrow = false) =>
   Platform.OS === 'web' ? `${name}, ${narrow ? '"Arial Narrow", "Roboto Condensed", ' : ''}system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif` : name;
 export const F = {
-  body: web('Barlow_400Regular'), medium: web('Barlow_500Medium'), semi: web('Barlow_600SemiBold'),
-  cond: web('BarlowCondensed_600SemiBold', true), condMed: web('BarlowCondensed_500Medium', true), condBold: web('BarlowCondensed_700Bold', true),
+  get body() { return web(barlow() ? 'Barlow_400Regular' : 'Tessera_400Regular'); },
+  get medium() { return web(barlow() ? 'Barlow_500Medium' : 'Tessera_500Medium'); },
+  get semi() { return web(barlow() ? 'Barlow_600SemiBold' : 'Tessera_600SemiBold'); },
+  // Headings, buttons, plates and big numbers. Barlow Condensed is narrow; Tessera has one width, so its headings
+  // are drawn about a tenth smaller (hs).
+  get cond() { return barlow() ? web('BarlowCondensed_600SemiBold', true) : web('Tessera_600SemiBold'); },
+  get condMed() { return barlow() ? web('BarlowCondensed_500Medium', true) : web('Tessera_500Medium'); },
+  get condBold() { return barlow() ? web('BarlowCondensed_700Bold', true) : web('Tessera_700Bold'); },
 };
+/** A heading size (with F.cond, condMed, condBold): as is in Barlow Condensed, a tenth smaller in Tessera. */
+export const hs = (n: number) => (barlow() ? n : Math.round(n * 0.9));
+
+let measurer: HTMLCanvasElement | null = null;
+/**
+ * The size at which a label fits `width` on the web: the whole text (one line), or its longest word (labels that may
+ * wrap). Tessera is wide, so long words in some languages (German "Transporter", Danish "Gennemgang") would be cut
+ * in narrow tabs. Phones shrink text themselves (adjustsFontSizeToFit), so there this returns the size unchanged.
+ */
+export function fitSize(text: string, family: string, size: number, width: number, { words = false, min = 10 } = {}): number {
+  if (Platform.OS !== 'web' || width <= 0 || typeof document === 'undefined') return size;
+  measurer = measurer || document.createElement('canvas');
+  const ctx = measurer.getContext('2d');
+  if (!ctx) return size;
+  ctx.font = `100px ${family}`;
+  const parts = words ? text.split(/\s+/) : [text];
+  const widest = Math.max(0, ...parts.map((w) => ctx.measureText(w).width / 100));
+  // A little room to spare: the browser's line breaking rounds differently from the canvas.
+  return widest > 0 ? Math.max(min, Math.min(size, Math.floor((width * 0.92 / widest) * 2) / 2)) : size;
+}
 
 type TV = 'h1' | 'h2' | 'h3' | 'body' | 'medium' | 'hint' | 'small' | 'big';
 export function T({ v = 'body', style, color, children, ...rest }: { v?: TV; color?: string; style?: StyleProp<TextStyle>; children?: React.ReactNode; numberOfLines?: number; selectable?: boolean }) {
   const c = useColors();
   const base: Record<TV, TextStyle> = {
-    h1: { fontFamily: F.cond, fontSize: 36, lineHeight: 38, color: c.ink, letterSpacing: -0.3 },
-    h2: { fontFamily: F.cond, fontSize: 26, lineHeight: 29, color: c.ink },
-    h3: { fontFamily: F.cond, fontSize: 21, lineHeight: 24, color: c.ink },
-    big: { fontFamily: F.condBold, fontSize: 34, lineHeight: 36, color: c.ink, fontVariant: ['tabular-nums'] },
+    h1: { fontFamily: F.cond, fontSize: hs(36), lineHeight: hs(38), color: c.ink, letterSpacing: -0.3 },
+    h2: { fontFamily: F.cond, fontSize: hs(26), lineHeight: hs(29), color: c.ink },
+    h3: { fontFamily: F.cond, fontSize: hs(21), lineHeight: hs(24), color: c.ink },
+    big: { fontFamily: F.condBold, fontSize: hs(34), lineHeight: hs(36), color: c.ink, fontVariant: ['tabular-nums'] },
     body: { fontFamily: F.body, fontSize: 16, lineHeight: 23, color: c.ink },
     medium: { fontFamily: F.medium, fontSize: 16, lineHeight: 23, color: c.ink },
     hint: { fontFamily: F.body, fontSize: 14, lineHeight: 20, color: c.ink2 },
@@ -83,7 +118,7 @@ export function Button({ title, onPress, v = 'secondary', small, wide, disabled,
         flexDirection: 'row', gap: 8, opacity: disabled ? 0.45 : pressed ? 0.75 : 1, alignSelf: wide ? 'stretch' : 'flex-start',
       }, style]}>
       {loading ? <ActivityIndicator color={fg} /> : null}
-      <Text style={{ fontFamily: F.cond, fontSize: small ? 17 : wide ? 23 : 20, color: fg, textDecorationLine: v === 'link' ? 'underline' : 'none' }}>{title}</Text>
+      <Text style={{ fontFamily: F.cond, fontSize: hs(small ? 17 : wide ? 23 : 20), color: fg, textDecorationLine: v === 'link' ? 'underline' : 'none' }}>{title}</Text>
     </Pressable>
   );
 }
@@ -122,11 +157,11 @@ export function Field({ label, hint, error, ...props }: { label: string; hint?: 
 export function Segmented<K extends string>({ options, value, onChange, label }: { options: [K, string][]; value: K; onChange: (k: K) => void; label?: string }) {
   const c = useColors();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', alignSelf: 'flex-start' }}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', alignSelf: 'flex-start', maxWidth: '100%' }}>
       {options.map(([k, t], i) => (
         <Pressable key={k} accessibilityRole="radio" accessibilityState={{ checked: k === value }} onPress={() => onChange(k)}
-          style={{ paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', backgroundColor: k === value ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
-          <Text style={{ fontFamily: F.cond, fontSize: 17, color: k === value ? c.paper : c.ink }}>{t}</Text>
+          style={{ paddingHorizontal: 12, minHeight: 40, flexShrink: 1, justifyContent: 'center', backgroundColor: k === value ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
+          <Text style={{ fontFamily: F.cond, fontSize: hs(17), textAlign: 'center', color: k === value ? c.paper : c.ink }}>{t}</Text>
         </Pressable>
       ))}
     </View>
@@ -152,7 +187,7 @@ export function Plate({ text, small, big }: { text: string; small?: boolean; big
   return (
     <View accessibilityRole={big ? 'header' : undefined} style={{ flexDirection: 'row', borderWidth: z.border, borderColor: '#000', borderRadius: z.radius, backgroundColor: '#fff', overflow: 'hidden', alignSelf: 'flex-start' }}>
       <View style={{ width: z.band, backgroundColor: '#1F4FB4' }} />
-      <Text style={{ fontFamily: F.cond, fontSize: z.font, letterSpacing: z.spacing, color: '#000', paddingHorizontal: z.padH, paddingVertical: z.padV }}>{text}</Text>
+      <Text style={{ fontFamily: F.cond, fontSize: hs(z.font), letterSpacing: z.spacing, color: '#000', paddingHorizontal: z.padH, paddingVertical: z.padV }}>{text}</Text>
     </View>
   );
 }
@@ -193,7 +228,7 @@ export function ZoomPhoto({ src, style, caption, contentFit, thumb }: {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 }}>
             <Text style={{ flex: 1, color: '#fff', fontFamily: F.body, fontSize: 15 }} numberOfLines={2}>{caption || ''}</Text>
             <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={{ borderWidth: 2, borderColor: '#fff', borderRadius: 4, paddingHorizontal: 18, minHeight: 48, justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontFamily: F.cond, fontSize: 20 }}>{t('Close')}</Text>
+              <Text style={{ color: '#fff', fontFamily: F.cond, fontSize: hs(20) }}>{t('Close')}</Text>
             </Pressable>
           </View>
         </SafeAreaView>
@@ -232,23 +267,28 @@ export function fmtWhen(ms?: number | null) {
 }
 export const cap = (s: string | null | undefined) => { const t = String(s || ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 
+function TabCell({ label, n, on, first, onPress }: { label: string; n: number | null; on: boolean; first: boolean; onPress: () => void }) {
+  const c = useColors();
+  const [w, setW] = useState(0);
+  // Long names (in some languages) wrap, and the count goes under the name; a single long word is drawn smaller.
+  const size = fitSize(label, F.cond, hs(18), w - 8, { words: true, min: 10 });
+  return (
+    <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={onPress} onLayout={(e) => setW(e.nativeEvent.layout.width)}
+      style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
+        backgroundColor: on ? c.ink : c.paper, borderLeftWidth: first ? 0 : 2, borderColor: c.ink }}>
+      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}
+        style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.12), textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink }}>{label}</Text>
+      {n ? <Text style={{ fontFamily: F.condBold, fontSize: hs(17), color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
+    </Pressable>
+  );
+}
+
 /** A page in parts (a van's Damage, Details, Drivers): one full-width switch. */
 export function Tabs<K extends string>({ value, onChange, items }: { value: K; onChange: (k: K) => void; items: [K, string, number | null][] }) {
   const c = useColors();
   return (
     <View accessibilityRole="tablist" style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
-      {items.map(([k, label, n], i) => {
-        const on = k === value;
-        return (
-          <Pressable key={k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => onChange(k)}
-            style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
-              backgroundColor: on ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
-            {/* Long names (in some languages) wrap, and the count goes under the name. */}
-            <Text style={{ fontFamily: F.cond, fontSize: 18, lineHeight: 20, textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink }}>{label}</Text>
-            {n ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
-          </Pressable>
-        );
-      })}
+      {items.map(([k, label, n], i) => <TabCell key={k} label={label} n={n} on={k === value} first={!i} onPress={() => onChange(k)} />)}
     </View>
   );
 }

@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { Card, Chip, F, MARKER, Pill, Row, T, useColors } from '@/components/ui';
+import { Card, Chip, F, MARKER, Pill, Row, T, useColors, hs } from '@/components/ui';
 import { N_, t, tj } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, type Role } from '@/lib/types';
@@ -104,7 +104,7 @@ export function ViewingStrip() {
       </Pressable>
       <Pressable accessibilityRole="button" disabled={busy} onPress={async () => { setBusy(true); try { await s.setViewAs(null); } finally { setBusy(false); } }}
         style={({ pressed }) => ({ borderWidth: 2, borderColor: '#000', borderRadius: 4, paddingHorizontal: 10, minHeight: 34, justifyContent: 'center', opacity: busy ? 0.5 : pressed ? 0.7 : 1 })}>
-        <Text style={{ fontFamily: F.cond, fontSize: 16, color: '#000' }}>{busy ? t('Switching…') : s.mode === 'local' ? t('Back') : t('Back to me')}</Text>
+        <Text style={{ fontFamily: F.cond, fontSize: hs(16), color: '#000' }}>{busy ? t('Switching…') : s.mode === 'local' ? t('Back') : t('Back to me')}</Text>
       </Pressable>
     </View>
   );

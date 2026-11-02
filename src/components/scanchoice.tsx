@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Button, F, T, useColors } from '@/components/ui';
+import { Button, F, T, useColors, hs } from '@/components/ui';
 import { VIDEO_HOW, VideoHandover } from '@/components/video';
 import { CLS, buildFrames, makeSpec } from '@/lib/frames';
 import { useSession } from '@/lib/session';
@@ -42,7 +42,7 @@ export function ScanChoice({ v, minutes, onMarker = true, small, caption }: { v:
       </View>
       {/* Black on the yellow card in dark mode too (a plain link would turn light). */}
       <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={{ alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: 4 }}>
-        <Text style={{ fontFamily: F.cond, fontSize: 17, color: ink || c.ink, textDecorationLine: 'underline' }}>{t('Cancel')}</Text>
+        <Text style={{ fontFamily: F.cond, fontSize: hs(17), color: ink || c.ink, textDecorationLine: 'underline' }}>{t('Cancel')}</Text>
       </Pressable>
     </View>
   );

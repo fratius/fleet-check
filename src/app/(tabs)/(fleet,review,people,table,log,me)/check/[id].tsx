@@ -7,7 +7,7 @@ import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import { KnownChooser, useVanRecords } from '@/components/damage';
 import { useMediaGone } from '@/components/keep';
 import { BackBar } from '@/components/nav';
-import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV, hs } from '@/components/ui';
 import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
@@ -273,7 +273,7 @@ function CheckView({ id }: { id: string }) {
           <Card key={j}>
             <Row>
               <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: MARKER, borderWidth: 2, borderColor: '#000', alignItems: 'center', justifyContent: 'center' }}>
-                <T v="h3" color="#000" style={{ fontFamily: F.condBold, fontSize: 17, lineHeight: 20 }}>{j + 1}</T>
+                <T v="h3" color="#000" style={{ fontFamily: F.condBold, fontSize: hs(17), lineHeight: hs(20) }}>{j + 1}</T>
               </View>
               <T v="h3" style={{ flex: 1 }}>{cap(p.panel)}</T>
             </Row>

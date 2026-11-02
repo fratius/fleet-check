@@ -1,9 +1,10 @@
 import { BottomTabBar, Tabs } from 'expo-router/js-tabs';
-import type { ColorValue } from 'react-native';
+import { useState } from 'react';
+import { Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { F, MARKER, useColors } from '@/components/ui';
+import { F, MARKER, fitSize, useColors, hs } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { UploadsStrip } from '@/components/uploads';
 import { ViewingStrip } from '@/components/viewas';
@@ -59,8 +60,8 @@ export default function TabsLayout() {
       tabBarInactiveTintColor: c.ink2,
       // Room for the icon and the label above the iPhone home bar (the default 49 points cuts the labels off).
       tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 62 + insets.bottom },
-      tabBarLabelStyle: { fontFamily: F.cond, fontSize: 14 },
-      tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: 13 },
+      tabBarLabel: ({ color, children }) => <TabLabel color={color} text={children} />,
+      tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: hs(13) },
       sceneStyle: { backgroundColor: c.page },
     }}>
       <Tabs.Screen name="(fleet)" options={{ title: staff ? t('Fleet') : t('Vans'), tabBarBadge: toFilm || undefined, tabBarIcon: ({ color }) => <Icon name="fleet" color={color} /> }} />
@@ -70,5 +71,20 @@ export default function TabsLayout() {
       <Tabs.Screen name="(log)" options={{ title: t('Test log'), href: s.seesAiStats ? undefined : null, tabBarIcon: ({ color }) => <Icon name="log" color={color} /> }} />
       <Tabs.Screen name="(me)" options={{ title: t('Account'), tabBarIcon: ({ color }) => <Icon name="account" color={color} /> }} />
     </Tabs>
+  );
+}
+
+/**
+ * A tab's name. Tessera is wider than Barlow Condensed, so a long name (German "Bewertung", Danish "Gennemgang")
+ * is drawn smaller to fit its tab: phones shrink it themselves, the web measures it (fitSize).
+ */
+function TabLabel({ color, text }: { color: ColorValue; text: string }) {
+  const [w, setW] = useState(0);
+  const size = fitSize(text, F.cond, hs(14), w - 4, { min: 9 });
+  return (
+    <View style={{ alignSelf: 'stretch', alignItems: 'center' }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}
+        style={{ fontFamily: F.cond, fontSize: size, color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
+    </View>
   );
 }

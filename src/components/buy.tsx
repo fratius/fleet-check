@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
-import { Button, F, MARKER, Pill, Row, T, fmtWhen, useColors, type PillV } from '@/components/ui';
+import { Button, F, MARKER, Pill, Row, T, fmtWhen, useColors, type PillV, hs } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import type { BuyKind, Purchase, Vehicle } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
@@ -74,7 +74,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
       style={({ pressed }) => ({ gap: 3, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, opacity: pressed ? 0.7 : 1 })}>
       <Row>
         <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{buyTitle(p.kind, show === 'driver' ? p.byName : s.vanName(p))}</T>
-        {amount ? <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{amount}</Text> : null}
+        {amount ? <Text style={{ fontFamily: F.condBold, fontSize: hs(17), color: c.ink, fontVariant: ['tabular-nums'] }}>{amount}</Text> : null}
       </Row>
       <Row gap={6}>
         <T v="small" style={{ flexShrink: 1 }}>{[fmtWhen(p.createdAt), p.odometerKm != null ? `${p.odometerKm.toLocaleString(loc())} km` : '', p.merchant || ''].filter(Boolean).join(', ')}</T>
@@ -137,7 +137,7 @@ export function MineCard({ p, withVan }: { p: Purchase; withVan?: boolean }) {
   return (
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
       style={{ backgroundColor: waiting || refused ? c.paper : MARKER, borderWidth: waiting || refused ? 3 : 2, borderColor: waiting || refused ? c.alert : '#000', borderRadius: 4, padding: 14, gap: 4 }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 22, lineHeight: 25, color: waiting || refused ? c.alert : '#000' }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(22), lineHeight: hs(25), color: waiting || refused ? c.alert : '#000' }}>
         {unfinished(p.kind, withVan ? s.vanName(p) : undefined)} ›
       </Text>
       <T v="body" color={waiting || refused ? undefined : '#000'}>{line}</T>
@@ -157,7 +157,7 @@ export function WaitingCard({ p, where }: { p: Purchase; where?: string }) {
   return (
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
       style={{ backgroundColor: c.paper, borderWidth: 3, borderColor: c.alert, borderRadius: 4, padding: 14, gap: 4 }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 22, lineHeight: 25, color: c.alert }}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(22), lineHeight: hs(25), color: c.alert }}>
         {waitingTitle(p)} ›
       </Text>
       <T v="medium">{buyTitle(p.kind, s.vanName(p))}</T>

@@ -6,14 +6,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { F, MARKER, Svg, mmss } from '@/components/ui';
+import { F, MARKER, Svg, mmss, hs } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
 import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
-import { loc, t, tp } from '@/lib/i18n';
+import { loc, t, tp, lang } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
 
 type Slot = LocalShot | 'skip' | null;
@@ -25,7 +25,7 @@ function Btn({ title, onPress, kind = 'outline', disabled }: { title: string; on
     <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
       style={({ pressed }) => ({ minHeight: 46, minWidth: 46, paddingHorizontal: 14, borderRadius: 4, borderWidth: kind === 'ghost' ? 0 : 2,
         borderColor: kind === 'outline' ? 'rgba(255,255,255,0.7)' : bg, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : pressed ? 0.7 : 1 })}>
-      <Text style={{ fontFamily: F.cond, fontSize: 19, color: fg, textDecorationLine: kind === 'ghost' ? 'underline' : 'none' }}>{title}</Text>
+      <Text style={{ fontFamily: F.cond, fontSize: hs(19), color: fg, textDecorationLine: kind === 'ghost' ? 'underline' : 'none' }}>{title}</Text>
     </Pressable>
   );
 }
@@ -36,6 +36,7 @@ function Btn({ title, onPress, kind = 'outline', disabled }: { title: string; on
  * the phone's own values from app start are the minimum.
  */
 function Shell({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const st = styles();
   const insets = useSafeAreaInsets();
   const start = initialWindowMetrics?.insets;
   return (
@@ -50,6 +51,7 @@ function Shell({ children, style }: { children: React.ReactNode; style?: StylePr
 }
 
 export default function ScanScreen() {
+  const st = styles();
   const { id, handover, assignment } = useLocalSearchParams<{ id: string; handover?: string; assignment?: string }>();
   // Picking up or dropping off a van (drivers, where the station allows it) needs every photo of the walk-around.
   // With `assignment`: the pick-up photos of a van a manager gave the driver (the handover already happened).
@@ -302,18 +304,27 @@ export default function ScanScreen() {
   );
 }
 
-const st = StyleSheet.create({
+// Made per language: the fonts and heading sizes depend on it (components/ui.tsx).
+const makeSheet = () => StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
   step: { fontFamily: F.body, fontSize: 13, color: '#B9BEC7' },
-  name: { fontFamily: F.cond, fontSize: 22, color: '#fff' },
+  name: { fontFamily: F.cond, fontSize: hs(22), color: '#fff' },
   msg: { fontFamily: F.body, fontSize: 16, color: '#E6E8EC' },
   hint: { fontFamily: F.body, fontSize: 15, lineHeight: 21, color: '#E6E8EC', textAlign: 'center' },
   note: { fontFamily: F.body, fontSize: 13, color: '#B9BEC7' },
   stats: { flexDirection: 'row', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)', borderRadius: 4 },
   stat: { flex: 1, padding: 10 },
-  statV: { fontFamily: F.condBold, fontSize: 30, color: '#fff' },
+  statV: { fontFamily: F.condBold, fontSize: hs(30), color: '#fff' },
   statL: { fontFamily: F.body, fontSize: 12, color: '#B9BEC7' },
   badge: { position: 'absolute', left: 4, top: 4, backgroundColor: MARKER, borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  badgeT: { fontFamily: F.condBold, fontSize: 14, color: '#000' },
-  thumbL: { fontFamily: F.cond, fontSize: 15, color: '#fff', marginTop: 4 },
+  badgeT: { fontFamily: F.condBold, fontSize: hs(14), color: '#000' },
+  thumbL: { fontFamily: F.cond, fontSize: hs(15), color: '#fff', marginTop: 4 },
 });
+
+const sheets = new Map<string, ReturnType<typeof makeSheet>>();
+function styles() {
+  const k = lang();
+  let s = sheets.get(k);
+  if (!s) { s = makeSheet(); sheets.set(k, s); }
+  return s;
+}

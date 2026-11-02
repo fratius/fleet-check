@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-import { F, useColors } from '@/components/ui';
+import { F, useColors, hs } from '@/components/ui';
 import { N_, t } from '@/lib/i18n';
 
 /**
@@ -36,7 +36,7 @@ export default function TabStack({ segment }: { segment: string }) {
       headerStyle: { backgroundColor: c.page },
       headerShadowVisible: false,
       headerTintColor: c.ink,
-      headerTitleStyle: { fontFamily: F.cond, fontSize: 21, color: c.ink },
+      headerTitleStyle: { fontFamily: F.cond, fontSize: hs(21), color: c.ink },
       headerBackTitleStyle: { fontFamily: F.medium, fontSize: 16 },
       contentStyle: { backgroundColor: c.page },
     }}>

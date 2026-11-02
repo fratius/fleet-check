@@ -43,10 +43,14 @@
   }
 })();
 </script>
-<link rel="preload" href="/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/tessera.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 /* Barlow and Barlow Condensed (SIL Open Font License), served from this site: no requests to Google Fonts. */
+/* Tessera (fontzz, SIL Open Font License, fonts/OFL-Tessera.txt): one variable file, weights 100 to 900, figures
+   tabular. "Tessera Display" is the same file drawn a tenth smaller for headings: Tessera has one width, the headings
+   were made for Barlow Condensed. Barlow stays for the languages Tessera can't write (see :lang below). */
+@font-face { font-family: 'Tessera'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/tessera.woff2) format('woff2'); }
+@font-face { font-family: 'Tessera Display'; font-style: normal; font-weight: 100 900; font-display: swap; src: url(/fonts/tessera.woff2) format('woff2'); size-adjust: 90%; }
 @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/barlow-latin-ext-400-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 400; font-display: swap; src: url(/fonts/barlow-latin-400-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 @font-face { font-family: 'Barlow'; font-style: normal; font-weight: 500; font-display: swap; src: url(/fonts/barlow-latin-ext-500-normal.woff2) format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
@@ -70,9 +74,15 @@
   --plate-bg: #FFFFFF; --plate-ink: #000000; --plate-eu: #1F4FB4;
   --screen: #16181C; --on-screen: #FFFFFF;
   --store-bg: #000000; --store-ink: #FFFFFF;
+  --display: "Tessera Display", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --body: "Tessera", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --r: 4px;
+}
+/* Romanian (ș ț), Lithuanian (į ų), Latvian (ģ ķ ļ ņ), Slovak (ĺ) and Vietnamese need letters Tessera doesn't have:
+   they keep Barlow, so no word mixes two fonts (the app does the same, components/ui.tsx BARLOW_LANGS). */
+:root:lang(ro), :root:lang(lt), :root:lang(lv), :root:lang(sk), :root:lang(vi) {
   --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
   --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
-  --r: 4px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -425,7 +435,8 @@ h1 .mark { position: relative; z-index: -1; }
 /* Pricing */
 .plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .plan { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); padding: 24px; display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 14px; }
-.plan h3 { font-size: 34px; font-weight: 700; }
+.plan h3 { font-size: 34px; font-weight: 700; hyphens: auto; overflow-wrap: anywhere; }
+.plan { min-width: 0; }
 .limit { font: 600 21px/1.1 var(--display); }
 .price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .price b { font: 700 66px/.9 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }

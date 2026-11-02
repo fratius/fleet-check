@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { LICENCE, TRAINING, WORK, saveRecord } from '@/components/driverrec';
-import { Button, F, MARKER, Row, T, cap, useColors } from '@/components/ui';
+import { Button, F, MARKER, Row, T, cap, useColors, hs } from '@/components/ui';
 import {
   CONTRACT, COSTS, DUE, HELP, INSURANCE, MILEAGE, OTHER, SIZE, VEHICLE, fromInput, get, saveCosts, saveDetails, show, toInput,
   type FieldSpec, type Vals,
@@ -179,7 +179,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
   if (!read) {
     return (
       <View style={{ backgroundColor: MARKER, borderRadius: 4, borderWidth: 2, borderColor: '#000', padding: 14, gap: 10 }}>
-        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>{t('Fill in from a document')}</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: hs(24), lineHeight: hs(27), color: '#000' }}>{t('Fill in from a document')}</Text>
         <T v="small" color="#000">{intro}</T>
         {pages.length ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
@@ -197,7 +197,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
             <Row>
               {pages.length < 6 ? <Button small title={t('Add a page')} onPress={() => add(true)} /> : null}
               <Pressable accessibilityRole="button" onPress={reset} style={{ minHeight: 40, justifyContent: 'center', paddingHorizontal: 6 }}>
-                <Text style={{ fontFamily: F.cond, fontSize: 17, color: '#000', textDecorationLine: 'underline' }}>{t('Start over')}</Text>
+                <Text style={{ fontFamily: F.cond, fontSize: hs(17), color: '#000', textDecorationLine: 'underline' }}>{t('Start over')}</Text>
               </Pressable>
             </Row>
           </>
@@ -218,7 +218,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
     <View style={{ backgroundColor: c.paper, borderRadius: 4, borderWidth: 2, borderColor: c.ink, overflow: 'hidden' }}>
       <View style={{ backgroundColor: MARKER, padding: 14, gap: 4, borderBottomWidth: 2, borderColor: '#000' }}>
         <T v="small" color="#000">{t('This looks like')}</T>
-        <Text style={{ fontFamily: F.condBold, fontSize: 24, lineHeight: 27, color: '#000' }}>{docName(read.kind)}{read.title && read.title.toLowerCase() !== read.kind ? ` (${read.title})` : ''}</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: hs(24), lineHeight: hs(27), color: '#000' }}>{docName(read.kind)}{read.title && read.title.toLowerCase() !== read.kind ? ` (${read.title})` : ''}</Text>
         <T v="small" color="#000">
           {!read.readable ? t('Hard to read: check every value, or take the photo again.') : rows.length
             ? tp(rows.length, 'Found {n} detail. Ticked: new or different from what\'s saved. Correct anything that\'s wrong.', 'Found {n} details. Ticked: new or different from what\'s saved. Correct anything that\'s wrong.')

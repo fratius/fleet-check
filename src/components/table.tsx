@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { F, MARKER, useColors } from '@/components/ui';
+import { F, MARKER, useColors, hs } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
 
 /**
@@ -63,7 +63,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
       <Pressable key={col.key} accessibilityRole="button" accessibilityLabel={t('Sort by {column}', { column: col.label })} onPress={() => onSort({ key: col.key, dir: on ? (sort!.dir === 1 ? -1 : 1) : col.align === 'left' ? 1 : -1 })}
         style={{ width: col.width, height: HEAD, paddingHorizontal: 8, justifyContent: 'flex-end', paddingBottom: 6, alignItems: col.align === 'left' ? 'flex-start' : 'flex-end',
           backgroundColor: on ? MARKER : c.ink, borderLeftWidth: i && !frozen ? 1 : 0, borderColor: c.dark ? '#2A2E35' : '#2A2E35' }}>
-        <Text numberOfLines={2} style={{ fontFamily: F.cond, fontSize: 15, lineHeight: 17, color: on ? '#000' : c.paper, textAlign: col.align === 'left' ? 'left' : 'right' }}>
+        <Text numberOfLines={2} style={{ fontFamily: F.cond, fontSize: hs(15), lineHeight: hs(17), color: on ? '#000' : c.paper, textAlign: col.align === 'left' ? 'left' : 'right' }}>
           {col.label}{on ? (sort!.dir === 1 ? ' ▲' : ' ▼') : ''}
         </Text>
       </Pressable>
@@ -81,7 +81,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
   };
   const totalCell = (col: Col<R>, i: number, frozen: boolean) => (
     <View key={col.key} style={{ width: col.width, height: ROW, paddingHorizontal: 8, justifyContent: 'center', alignItems: col.align === 'left' ? 'flex-start' : 'flex-end', borderLeftWidth: i && !frozen ? 1 : 0, borderColor: c.rule }}>
-      <Text numberOfLines={1} style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{frozen ? totalLabel : col.total ? col.total(rows) : ''}</Text>
+      <Text numberOfLines={1} style={{ fontFamily: F.condBold, fontSize: hs(17), color: c.ink, fontVariant: ['tabular-nums'] }}>{frozen ? totalLabel : col.total ? col.total(rows) : ''}</Text>
     </View>
   );
   const line = (k: number) => ({ borderTopWidth: 1, borderColor: c.rule, backgroundColor: k % 2 ? (c.dark ? '#20242A' : '#F5F6F8') : c.paper });
