@@ -12,6 +12,7 @@ import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { TIERS, TIER_NAME, type IdentifyResult } from '@/lib/types';
+import { plateKey, vanName } from '@/lib/vans';
 
 type Shot = { uri: string; w: number; h: number };
 
@@ -25,10 +26,10 @@ export default function AddVehicle() {
   const [cls, setCls] = useState<string | null>(null);
   const [attrs, setAttrs] = useState<VehicleAttrs>(defaultAttrs());
   const [picking, setPicking] = useState(false);
+  // A van is known by its plate (lib/vans.ts); its own name or fleet number is optional, never the model.
   const [name, setName] = useState('');
-  const [nameTouched, setNameTouched] = useState(false);
   const [plate, setPlate] = useState('');
-  const [nameErr, setNameErr] = useState<string | null>(null);
+  const [plateErr, setPlateErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const aiOn = s.mode === 'firebase';
   // Stations this person can add vans to: every station for owners, their own for managers.
@@ -36,15 +37,7 @@ export default function AddVehicle() {
   const [stationPick, setStationPick] = useState<string | null>(null);
   const stationId = stationPick && canAddTo.some((st) => st.id === stationPick) ? stationPick : canAddTo[0]?.id || null;
 
-  const suggest = (base: string) => {
-    let n = base, k = 2;
-    while (s.vehicles.some((v) => v.name.toLowerCase() === n.toLowerCase())) n = `${base} ${k++}`;
-    return n;
-  };
-  const choose = (id: string, a: VehicleAttrs, base?: string) => {
-    setCls(id); setAttrs(a);
-    if (!nameTouched) setName(suggest(base || t(CLS[id].name)));
-  };
+  const choose = (id: string, a: VehicleAttrs) => { setCls(id); setAttrs(a); };
 
   const addShots = async (from: 'camera' | 'library') => {
     setErr(null);
@@ -78,8 +71,7 @@ export default function AddVehicle() {
       setRes({ ...r, uploadMs, totalMs: Date.now() - t0 });
       setPicking(false);
       if (r.scan.predicted && CLS[r.scan.predicted]) {
-        choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear },
-          [r.scan.vMake, r.scan.vModel].filter(Boolean).join(' ') || undefined);
+        choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear });
       }
     } catch (e) {
       setErr(e instanceof AiError ? e.message : t('Couldn\'t upload the photos. Check the connection and try again.'));
@@ -101,7 +93,10 @@ export default function AddVehicle() {
 
   const save = async () => {
     if (!cls) return;
-    if (!name.trim()) { setNameErr(t('Give the vehicle a name, for example its model or fleet number.')); return; }
+    const pk = plateKey(plate);
+    if (!pk) { setPlateErr(t('Enter the number plate: it\'s how this van is shown everywhere.')); return; }
+    const same = s.vehicles.find((v) => plateKey(v.plate) === pk);
+    if (same) { setPlateErr(t('{plate} is already in your fleet.', { plate: vanName(same) })); return; }
     if (!stationId) { setErr(t('Add a station under People first.')); return; }
     setSaving(true);
     try {
@@ -112,7 +107,7 @@ export default function AddVehicle() {
         make: fromScan?.vMake ?? null, model: fromScan?.vModel ?? null, scanId: fromScan?.id ?? null, stationId,
         createdAt: Date.now(), createdBy: s.user?.uid ?? null,
       });
-      setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setNameTouched(false); setAttrs(defaultAttrs());
+      setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setAttrs(defaultAttrs());
       // Replace the form, so Back from the new van goes to the fleet, not to the empty form.
       router.replace(`/vehicle/${id}`);
     } catch { setErr(t('Couldn\'t save the vehicle. Try again.')); }
@@ -146,7 +141,7 @@ export default function AddVehicle() {
               <Button title={t('Take photo')} disabled={shots.length >= 3 || !!busy} onPress={() => addShots('camera')} />
               <Button title={t('Choose photos')} disabled={shots.length >= 3 || !!busy} onPress={() => addShots('library')} />
             </Row>
-            <Row><T v="hint">{t('AI model')}</T><Segmented label={t('AI model')} value={s.tier} onChange={s.setTier} options={TIERS.map(([k, l]) => [k, t(l)] as [typeof k, string])} /></Row>
+            {s.seesAiStats ? <Row><T v="hint">{t('AI model')}</T><Segmented label={t('AI model')} value={s.tier} onChange={s.setTier} options={TIERS.map(([k, l]) => [k, t(l)] as [typeof k, string])} /></Row> : null}
             <Button v="primary" wide title={busy ? busy + '…' : t('Identify the type')} loading={!!busy} disabled={!!busy} onPress={identify} />
             <T v="small">{t('Photos are stored with the scan in your company\'s storage.')}</T>
           </>
@@ -187,8 +182,8 @@ export default function AddVehicle() {
           <Card>
             <T v="h2">{t('Save to the fleet')}</T>
             <Row>{attrPills(sp, attrs, undefined).map((p) => <Pill key={p} text={t(p)} />)}</Row>
-            <Field label={t('Name')} value={name} error={nameErr} onChangeText={(x) => { setName(x); setNameTouched(true); setNameErr(null); }} maxLength={60} />
-            <Field label={t('Number plate')} hint={t('optional')} value={plate} onChangeText={(x) => setPlate(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={14} />
+            <Field label={t('Number plate')} value={plate} error={plateErr} onChangeText={(x) => { setPlate(x.toUpperCase()); setPlateErr(null); }} autoCapitalize="characters" autoCorrect={false} maxLength={14} placeholder="B-DX 1234" />
+            <Field label={t('Own name or fleet number')} hint={t('optional')} value={name} onChangeText={setName} maxLength={60} />
             {canAddTo.length > 1 ? (
               <><T v="medium">{t('Station')}</T><Row>{canAddTo.map((st) => <Chip key={st.id} text={st.name} on={st.id === stationId} onPress={() => setStationPick(st.id)} />)}</Row></>
             ) : canAddTo.length === 1 ? <T v="hint">{t('Station: {station}', { station: canAddTo[0].name })}</T> : <T v="hint" color={c.alert}>{t('You aren\'t managing a station yet.')}</T>}

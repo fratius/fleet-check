@@ -9,6 +9,7 @@ import { jobTitle, outbox, pendingHandover, useOutbox, type Job } from '@/lib/ou
 import type { Live } from '@/lib/outboxcore';
 import { useSession } from '@/lib/session';
 import { mb } from '@/lib/videos';
+import { vanName } from '@/lib/vans';
 
 /**
  * What the outbox (lib/outbox.ts) is doing, for the person who took the photos or video: a strip above the tab bar,
@@ -42,8 +43,8 @@ export function stateText(j: Job, l: Live | undefined, behind = false) {
   if (l.step === 'save') return t('Saving the walk-around…');
   const fn = j.then?.fn;
   if (j.type === 'video') return t('Checking the video…');
-  if (fn === 'pickUpVan') return t('Picking up {van}', { van: j.vehicleName });
-  if (fn === 'dropOffVan') return t('Dropping off {van}', { van: j.vehicleName });
+  if (fn === 'pickUpVan') return t('Picking up {van}', { van: vanName({ plate: (j as { plate?: string }).plate, name: j.vehicleName }) });
+  if (fn === 'dropOffVan') return t('Dropping off {van}', { van: vanName({ plate: (j as { plate?: string }).plate, name: j.vehicleName }) });
   return t('Saving the pick-up photos');
 }
 

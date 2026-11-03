@@ -16,6 +16,7 @@ import { deadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
+import { vanAlias, vanName } from '@/lib/vans';
 
 export default function Fleet() {
   const s = useSession();
@@ -77,7 +78,7 @@ export default function Fleet() {
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
           style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
           <T v="medium" color={touring ? undefined : '#000'}>{t('Your van')}</T>
-          <T v="h2" color={touring ? undefined : '#000'}>{s.myVan.name}{s.myVan.plate ? `, ${s.myVan.plate}` : ''} {fwd()}</T>
+          <T v="h2" color={touring ? undefined : '#000'}>{vanName(s.myVan)}{vanAlias(s.myVan) ? `, ${vanAlias(s.myVan)}` : ''} {fwd()}</T>
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <ScanChoice v={s.myVan} small onMarker={!touring} />
@@ -127,12 +128,12 @@ export default function Fleet() {
         // Inspections, service, tax, insurance and contract end: owners and managers only.
         const due = s.runs(v.stationId) && !v.retired ? deadlines(v, s.details.find((d) => d.id === v.id)).filter((x) => x.state !== 'ok') : [];
         return (
-          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${v.name}, ${t(CLS[v.cls].name)}`} onPress={() => router.push(`/vehicle/${v.id}`)}
+          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${vanName(v)}, ${t(CLS[v.cls].name)}`} onPress={() => router.push(`/vehicle/${v.id}`)}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, opacity: pressed ? 0.8 : 1 })}>
             <Svg xml={silhouetteSVG(sp, 104, false, c.ink2)} width={104} height={49} />
             <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
-              <T v="h3" numberOfLines={2}>{v.name}</T>
-              {v.plate ? <Plate text={v.plate} /> : null}
+              {v.plate ? <Plate text={v.plate} /> : <T v="h3" numberOfLines={2}>{vanName(v)}</T>}
+              {vanAlias(v) || v.make || v.model ? <T v="small" numberOfLines={1}>{[vanAlias(v), [v.make, v.model].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</T> : null}
               {/* The km on its latest dashboard photo (refuels count too). */}
               <T v="medium" style={{ fontSize: 15 }}>{[v.dash ? kmText(v.dash.km) : t('No km yet'), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
               {tracking && !v.retired ? (

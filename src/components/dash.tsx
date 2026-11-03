@@ -14,6 +14,7 @@ import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
+import { vanName, vanAlias } from '@/lib/vans';
 
 /**
  * Tours from dashboard photos (where the owner turned them on): the driver photographs the dashboard when the tour
@@ -82,7 +83,7 @@ export function TourCard({ v, compact }: { v: Vehicle; compact?: boolean }) {
   const starting = it.kind === 'start';
   const title = starting ? t('Start your tour') : t('End your tour');
   const line = starting
-    ? it.stale ? t('Your last tour on {van} had no end photo. This photo ends it and starts today\'s.', { van: v.name }) : t('Before you drive off: a photo of the dashboard with the ignition on, so the kilometres and the fuel are on record.')
+    ? it.stale ? t('Your last tour on {van} had no end photo. This photo ends it and starts today\'s.', { van: vanName(v) }) : t('Before you drive off: a photo of the dashboard with the ignition on, so the kilometres and the fuel are on record.')
     : t('Started {when} at {km}. When you\'re back: a photo of the dashboard with the ignition on.', { when: fmtWhen(it.mine!.startAt), km: kmText(it.mine!.start.km) });
   return (
     <View style={{ backgroundColor: MARKER, borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
@@ -90,7 +91,7 @@ export function TourCard({ v, compact }: { v: Vehicle; compact?: boolean }) {
         <Text style={{ fontFamily: F.condBold, fontSize: compact ? 22 : 26, lineHeight: compact ? 25 : 29, color: '#000', flexShrink: 1 }}>{title}</Text>
         {!starting ? <View style={{ borderWidth: 1.5, borderColor: '#000', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }}><Text style={{ fontFamily: F.medium, fontSize: 13, color: '#000' }}>{t('On tour {time}', { time: dur(Date.now() - it.mine!.startAt) })}</Text></View> : null}
       </Row>
-      {compact ? <T v="medium" color="#000">{v.name}{v.plate ? `, ${v.plate}` : ''}</T> : null}
+      {compact ? <T v="medium" color="#000">{vanName(v)}{vanAlias(v) ? `, ${vanAlias(v)}` : ''}</T> : null}
       <T v="body" color="#000">{line}</T>
       {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button v="primary" wide title={starting ? t('Photo of the dashboard') : t('End-of-tour photo')} onPress={() => setOpen(true)} />}
     </View>
@@ -315,13 +316,14 @@ export function VanNow({ v }: { v: Vehicle }) {
 }
 
 export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'van' }) {
+  const s = useSession();
   const c = useColors();
   const open = isOpen(tour);
   const when = tour.end ? t('{start} to {end}', { start: fmtWhen(tour.startAt), end: new Date(tour.end.at).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : fmtWhen(tour.startAt);
   return (
     <View style={{ gap: 2 }}>
       <Row>
-        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? tour.driverName : tour.vehicleName}</T>
+        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? tour.driverName : s.vanName(tour)}</T>
         <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? t('On tour') : kmText(tour.km)}</Text>
       </Row>
       <T v="small">{[when,

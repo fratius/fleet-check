@@ -10,6 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { signupDone, signupIntent } from './billing';
 import { fb } from './firebase';
 import { t } from './i18n';
+import { vanName } from './vans';
 import { useLang } from './lang';
 import { nap, netKind, retrying } from './net';
 import { clearCaches, keepCachesOf, overlay, readCache, readSession, writeCache, writeSession } from './offline';
@@ -38,7 +39,7 @@ function parseViewAs(v: unknown): ViewAs | null {
   return { org: x.org, role, st: role !== 'owner' && typeof x.st === 'string' ? x.st : null };
 }
 
-interface Session {
+export interface Session {
   status: Status;
   mode: 'firebase' | 'local';
   user: { uid: string; email: string; name: string } | null;
@@ -63,6 +64,11 @@ interface Session {
   myStations: Station[];
   stations: Station[];
   stationName(id: string | null | undefined): string;
+  /**
+   * What to call a van (its number plate, lib/vans.ts): for a van, or for a record about one (by its vehicleId,
+   * so older records with the van's old name show its plate too; else what the record saved).
+   */
+  vanName(x: { id?: string; vehicleId?: string | null; plate?: string | null; name?: string | null; vehicleName?: string | null } | null | undefined): string;
   /** Can this person manage vans, drivers and damage at this station? */
   runs(stationId: string | null | undefined): boolean;
   store: Store | null;
@@ -568,8 +574,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [org, role, mode, user?.name]);
   const myRecord = useMemo(() => (staff ? records.find((r) => r.id === user?.uid) || null : ownRecord), [staff, records, ownRecord, user?.uid]);
   const myVan = useMemo(() => vehicles.find((v) => !v.retired && v.assignedTo?.driverId === user?.uid) || null, [vehicles, user?.uid]);
+  const vanById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
+  const vanNameOf = useCallback<Session['vanName']>((x) => {
+    if (!x) return '';
+    const v = x.vehicleId ? vanById.get(x.vehicleId) : undefined;
+    if (v) return vanName(v);
+    return x.vehicleId !== undefined ? vanName({ plate: x.plate, name: x.vehicleName ?? x.name }) : vanName(x);
+  }, [vanById]);
   const value: Session = {
-    status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, runs,
+    status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
     store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };

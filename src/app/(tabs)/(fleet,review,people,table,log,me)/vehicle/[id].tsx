@@ -26,6 +26,7 @@ import { AiError, ai } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 import { fwd, loc, t, tp } from '@/lib/i18n';
+import { plateKey, vanAlias, vanName } from '@/lib/vans';
 
 export default function VehicleScreen() {
   const { id, tab: openTab } = useLocalSearchParams<{ id: string; tab?: string }>();
@@ -124,7 +125,7 @@ export default function VehicleScreen() {
 
   return (
     <Screen scrollRef={scroller} edges={[]}>
-      <Stack.Screen options={{ title: v.name }} />
+      <Stack.Screen options={{ title: vanName(v) }} />
       {/* A van a manager just gave this driver: the pick-up video or photos come first (the notification opens here). */}
       {pickup && !v.retired ? <PickupRequest v={v} a={pickup} /> : <TourCard v={v} />}
       {/* A refuel left half done, or (staff) a driver waiting at the pump for an answer. */}
@@ -138,8 +139,9 @@ export default function VehicleScreen() {
           bubble={selD ? <DamageBubble d={selD} history={history.rows} notes={notes} vehicleId={v.id} onClose={() => setSel(null)} onMore={() => showInList(selD.key)} /> : null} />
       </View>
       <View style={{ gap: 6 }}>
-        <T v="h1">{v.name}</T>
-        <Row><Plate text={v.plate} /><T v="hint">{t(CLS[v.cls].name)}{makeModel && makeModel.toLowerCase() !== v.name.toLowerCase() ? ', ' + makeModel : ''}{s.stations.length > 1 ? ', ' + s.stationName(v.stationId) : ''}</T></Row>
+        {v.plate ? <Plate big text={v.plate} /> : <T v="h1">{vanName(v)}</T>}
+        {v.plate || !s.runs(v.stationId) ? null : <T v="hint" color={c.alert}>{t('No number plate yet. Add it under Details: the plate is how this van is shown everywhere.')}</T>}
+        <T v="hint">{[vanAlias(v), makeModel || t(CLS[v.cls].name), s.stations.length > 1 ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
         {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: t('Diesel'), electric: t('Electric'), petrol: t('Petrol'), hybrid: t('Hybrid'), cng: t('Gas') }[v.fuel] : '',
           v.heightM ? t('{m} m high', { m: v.heightM.toLocaleString(loc(), { maximumFractionDigits: 2 }) }) : ''].filter(Boolean).join(', ')}</T> : null}
       </View>
@@ -196,7 +198,7 @@ export default function VehicleScreen() {
                 <HandoverWaiting vehicleId={v.id} what="pickup" />
               </View>
             ) : s.myVan && !myVanDropping ? (
-              <T v="small">{t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: s.myVan.name })}</T>
+              <T v="small">{t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(s.myVan) })}</T>
             ) : v.assignedTo && !takeover ? (
               <>
                 <Button title={t('Take over from {name}', { name: v.assignedTo.driverName })} onPress={() => setTakeover(true)} />
@@ -220,7 +222,7 @@ export default function VehicleScreen() {
                 <Button small v="link" title={armed === 'end' ? t('Tap again: the van becomes free') : t('Make the van free')} loading={busy === 'end'} onPress={() => {
                   if (armed !== 'end') { arm('end'); return; }
                   act('end', () => sendCall('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: null, expect: v.assignedTo?.assignmentId ?? null },
-                    { title: t('Make {van} free', { van: v.name }), vehicleId: v.id, vehicleName: v.name }));
+                    { title: t('Make {van} free', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
                 }} />
               ) : null}
             </Row>
@@ -327,18 +329,18 @@ export default function VehicleScreen() {
 
       {tab !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
-          {!v.retired ? <Button title={t('Name, plate and type')} onPress={() => setEditing(true)} /> : null}
+          {!v.retired ? <Button title={t('Plate, name and type')} onPress={() => setEditing(true)} /> : null}
           {s.mode === 'local' ? (
             <Button v="danger" title={armed === 'remove' ? t('Tap again to remove') : t('Remove from fleet')} onPress={async () => {
               if (armed !== 'remove') { arm('remove'); return; }
               try { await s.store!.vehicles.remove(v.id); router.back(); } catch { setErr(t('Couldn\'t remove the vehicle.')); }
             }} />
           ) : v.retired ? (
-            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, restore: true }, { title: t('Bring {van} back into the fleet', { van: v.name }), vehicleId: v.id, vehicleName: v.name }))} />
+            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, restore: true }, { title: t('Bring {van} back into the fleet', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }))} />
           ) : (
             <Button v="danger" title={armed === 'retire' ? t('Tap again to retire') : t('Retire van')} loading={busy === 'retire'} onPress={() => {
               if (armed !== 'retire') { arm('retire'); return; }
-              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id }, { title: t('Retire {van}', { van: v.name }), vehicleId: v.id, vehicleName: v.name }));
+              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id }, { title: t('Retire {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
             }} />
           )}
         </Row>
@@ -364,7 +366,10 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [station, setStation] = useState(v.stationId || s.stations[0]?.id || '');
   const save = async () => {
-    if (!name.trim()) { setErr(t('Give the vehicle a name.')); return; }
+    const pk = plateKey(plate);
+    if (!pk) { setErr(t('Enter the number plate: it\'s how this van is shown everywhere.')); return; }
+    const same = s.vehicles.find((x) => x.id !== v.id && plateKey(x.plate) === pk);
+    if (same) { setErr(t('{plate} is already in your fleet.', { plate: vanName(same) })); return; }
     const sd = ({ right: ['no', 'yes'], left: ['yes', 'no'], both: ['yes', 'yes'], none: ['no', 'no'], unknown: ['unknown', 'unknown'] } as const)[slide as 'right'];
     const vans = !!SLIDE_BODIES[CLS[cls].body];
     setBusy(true);
@@ -376,7 +381,7 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       });
       // Moving to another station ends the van's assignment (its driver stays at theirs): done on the server.
       if (station && station !== v.stationId) {
-        await sendCall('moveVan', { orgId: s.org!.id, vehicleId: v.id, stationId: station }, { title: t('Move {van} to {station}', { van: v.name, station: s.stationName(station) }), vehicleId: v.id, vehicleName: v.name });
+        await sendCall('moveVan', { orgId: s.org!.id, vehicleId: v.id, stationId: station }, { title: t('Move {van} to {station}', { van: vanName(v), station: s.stationName(station) }), vehicleId: v.id, vehicleName: vanName(v) });
       }
       onDone();
     } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save the changes.')); } finally { setBusy(false); }
@@ -384,8 +389,8 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   return (
     <Card>
       <T v="h2">{t('Edit vehicle')}</T>
-      <Field label={t('Name')} value={name} onChangeText={setName} maxLength={60} />
-      <Field label={t('Number plate')} hint={t('optional')} value={plate} onChangeText={(x) => setPlate(x.toUpperCase())} autoCapitalize="characters" maxLength={14} />
+      <Field label={t('Number plate')} value={plate} onChangeText={(x) => setPlate(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} maxLength={14} />
+      <Field label={t('Own name or fleet number')} hint={t('optional')} value={name} onChangeText={setName} maxLength={60} />
       <T v="medium">{t('Type')}</T>
       <Row>{CLASSES.map((k) => <Chip key={k.id} text={t(k.name)} on={k.id === cls} onPress={() => { setCls(k.id); if (CLS[k.id].body !== CLS[cls].body) { setRear(k.rear); setSlide('unknown'); } }} />)}</Row>
       <T v="hint">{t('Changing the type changes the photo frames.')}</T>

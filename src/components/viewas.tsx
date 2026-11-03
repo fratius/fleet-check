@@ -10,7 +10,7 @@ import { ROLE_NAME, type Role } from '@/lib/types';
 /** What each role sees and can do (the full rules are in ROLES.md). */
 const ACCESS: Record<Role | 'creator', string> = {
   creator: N_('Every company in the app. Opens and manages any of them.'),
-  owner: N_('Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, picks the AI model, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.'),
+  owner: N_('Every station of this company. Adds and removes stations, managers, drivers and vans, moves them between stations, reviews damage anywhere and sees all history, driver records and numbers. The only one who sees what vans cost.'),
   manager: N_('One station: its vans and drivers, invite links for drivers, who drives which van and whether drivers pick up vans themselves. Final word on damage. Allows or refuses a refuel with the wrong fuel card. Keeps the drivers\' records; sees the station\'s history, videos and numbers, not the costs.'),
   driver: N_('The vans of one station. Walk-arounds with photos or a video, the AI damage check and close-ups, sends checks to the manager. Picks up and drops off vans where the station allows it, refuels and washes vans, and takes the dashboard photo at the start and end of each tour where the owner turned that on. Sees only their own history, record and tours.'),
 };

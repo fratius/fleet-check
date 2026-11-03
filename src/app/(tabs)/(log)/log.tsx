@@ -42,6 +42,7 @@ export default function Log() {
 }
 
 function Checks({ rows }: { rows: Check[] }) {
+  const s = useSession();
   const c = useColors();
   if (!rows.length) return <Card dashed><T v="hint">{t('No damage checks yet. Open a walk-around and tap Check for damage, or check photos from a vehicle page.')}</T></Card>;
   const spots = rows.flatMap((k) => k.spots);
@@ -100,7 +101,7 @@ function Checks({ rows }: { rows: Check[] }) {
             <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 8, gap: 2 }}>
               {k.missedNote ? <T>{k.missedNote}</T> : null}
               {(k.review?.manual || []).map((m, x) => <T key={x}>{m.panel}: {t(m.type)}{m.note ? `, ${m.note}` : ''}</T>)}
-              <T v="small">{k.vehicleName}, {fmtWhen(k.createdAt)}, {shortModel(k.model)}</T>
+              <T v="small">{s.vanName(k)}, {fmtWhen(k.createdAt)}, {shortModel(k.model)}</T>
             </Pressable>
           ))}
         </Card>
@@ -110,7 +111,7 @@ function Checks({ rows }: { rows: Check[] }) {
         const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-            <T v="h3">{tp(k.spots.length, '{van}: {n} spot, {damage} damage', '{van}: {n} spots, {damage} damage', { van: k.vehicleName, damage: dmg })}</T>
+            <T v="h3">{tp(k.spots.length, '{van}: {n} spot, {damage} damage', '{van}: {n} spots, {damage} damage', { van: s.vanName(k), damage: dmg })}</T>
             <T v="hint">{[fmtWhen(k.createdAt), tp(k.photos, '{n} photo', '{n} photos'), t(TIER_NAME[k.tier]), k.pass1 ? secs(k.pass1.ms) : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0))].filter(Boolean).join(', ')}</T>
           </Pressable>
         );
@@ -182,7 +183,7 @@ function Walks() {
       </Card>
       {rows.slice(0, 50).map((w) => (
         <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-          <T v="h3">{w.vehicleName}</T>
+          <T v="h3">{s.vanName(w)}</T>
           <T v="hint">{[fmtWhen(w.createdAt), tp(w.frames, '{taken} of {n} photo', '{taken} of {n} photos', { taken: w.taken }), w.totalMs ? mmss(w.totalMs) : '', tp(w.retakes, '{n} retake', '{n} retakes')].filter(Boolean).join(', ')}</T>
         </Pressable>
       ))}

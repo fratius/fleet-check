@@ -14,6 +14,7 @@ import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 import { loc, t, tp } from '@/lib/i18n';
+import { vanName } from '@/lib/vans';
 
 type Slot = LocalShot | 'skip' | null;
 
@@ -174,7 +175,7 @@ export default function ScanScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Btn title={armed ? t('Tap again to stop') : phase === 'summary' ? t('Done') : t('Close')} kind={armed ? 'armed' : 'outline'} onPress={close} />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? v.name : t('{van}, frame {n} of {total}', { van: v.name, n: f.n, total: frames.length })}</Text>
+          <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? vanName(v) : t('{van}, frame {n} of {total}', { van: vanName(v), n: f.n, total: frames.length })}</Text>
           <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? (ho === 'pickup' ? t('Pick-up photos') : ho === 'dropoff' ? t('Drop-off photos') : t('Walk-around done')) : t(f.label)}</Text>
         </View>
         {phase === 'aim' && ready ? <Btn title={t('Light')} kind={torch ? 'marker' : 'outline'} onPress={() => setTorch(!torch)} /> : null}
@@ -249,7 +250,7 @@ export default function ScanScreen() {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {ho ? (
-                <Btn title={assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: v.name }) : t('Drop off {van}', { van: v.name })} kind="marker" disabled={taken < frames.length} onPress={save} />
+                <Btn title={assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: vanName(v) }) : t('Drop off {van}', { van: vanName(v) })} kind="marker" disabled={taken < frames.length} onPress={save} />
               ) : taken ? <Btn title={tp(taken, 'Save {n} photo', 'Save {n} photos')} kind="marker" onPress={save} /> : null}
               <Btn title={t('Discard')} kind="ghost" onPress={() => router.back()} />
             </View>

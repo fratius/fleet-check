@@ -26,7 +26,6 @@ export default function Account() {
   // Uploads and changes of this person still waiting on this phone (they stay through a sign-out).
   const box = useOutbox();
   const unsent = box.jobs.filter((j) => j.uid === s.user?.uid && !box.done.has(j.id)).length;
-  const projectId = (Constants.expoConfig?.extra as { firebase?: { projectId?: string } } | undefined)?.firebase?.projectId;
   // The app creator in a company they aren't a member of.
   const outside = s.creator && s.org && !s.companies.some((x) => x.id === s.org!.id);
   const roleName = outside ? t('App creator') : t(ROLE_NAME[s.role || 'driver']);
@@ -63,7 +62,7 @@ export default function Account() {
         <>
           <MyCompanies />
           {s.mode === 'firebase' ? <AddCompany /> : null}
-          {s.mode === 'firebase' && (s.staff || s.creator) ? <Demo /> : null}
+          {s.mode === 'firebase' && (s.creator || s.org?.demo) ? <Demo /> : null}
           {s.creator ? <AllCompanies /> : null}
         </>
       )}
@@ -71,32 +70,33 @@ export default function Account() {
       {s.staff ? <FleetSettings /> : null}
       {s.staff && s.mode === 'firebase' ? <RoutinesCard /> : null}
 
-      {s.staff ? (
+      {/* Only the app creator picks the AI model (product owner, 2026-11-02); in test mode the phone's own. */}
+      {s.seesAiStats ? (
         <Card>
           <T v="h3">{t('AI model for checks')}</T>
-          <T v="hint">{s.role === 'owner' ? t('Used for every type scan and damage check in this company.') : t('Set by the fleet owner for the whole company.')}{s.seesAiStats ? ' ' + t('Each run records its model, time and cost, so the test log can compare them.') : ''}</T>
+          <T v="hint">{t('Used for every type scan and damage check in this company.')}{' ' + t('Each run records its model, time and cost, so the test log can compare them.')}</T>
           {(Object.keys(TIER_MODEL) as Tier[]).map((tier) => (
-            <Pressable key={tier} accessibilityRole="radio" accessibilityState={{ checked: s.tier === tier }} disabled={s.role !== 'owner'} onPress={() => s.setTier(tier)}
-              style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 2, borderColor: s.tier === tier ? c.ink : c.rule, borderRadius: 4, padding: 12, backgroundColor: s.tier === tier ? c.page : 'transparent', opacity: s.role !== 'owner' && s.tier !== tier ? 0.6 : 1 }}>
+            <Pressable key={tier} accessibilityRole="radio" accessibilityState={{ checked: s.tier === tier }} onPress={() => s.setTier(tier)}
+              style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderWidth: 2, borderColor: s.tier === tier ? c.ink : c.rule, borderRadius: 4, padding: 12, backgroundColor: s.tier === tier ? c.page : 'transparent' }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: c.ink, alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
                 {s.tier === tier ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.ink }} /> : null}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Row><T v="h3">{t(TIER_NAME[tier])}</T><T v="hint">{TIER_MODEL[tier].name}</T></Row>
-                <T v="hint">{t(s.seesAiStats ? TIER_MODEL[tier].note : TIER_MODEL[tier].plain)}</T>
-                {s.seesAiStats ? <T v="small">{t('About {photo} per photo, so {check} for a 14-photo van check before close-ups.', { photo: usd(perPhotoCost(tier)), check: usd(perPhotoCost(tier) * 14) })}</T> : null}
+                <T v="hint">{t(TIER_MODEL[tier].note)}</T>
+                <T v="small">{t('About {photo} per photo, so {check} for a 14-photo van check before close-ups.', { photo: usd(perPhotoCost(tier)), check: usd(perPhotoCost(tier) * 14) })}</T>
               </View>
             </Pressable>
           ))}
         </Card>
       ) : null}
 
+      {/* The version this phone or browser runs, and whether it's the web app or the phone app (product owner,
+          2026-11-02: no server names here). */}
       <Card>
-        <T v="h3">{t('Setup')}</T>
-        {s.mode === 'firebase'
-          ? <T v="hint">{t('Connected to Firebase project {project}. Photos and results sync across phones and the web.', { project: projectId })}</T>
-          : <Notice text={t('Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.')} />}
-        <T v="small">{versionLine()}</T>
+        <T v="h3">{t('Version')}</T>
+        {s.mode === 'firebase' ? null : <Notice text={t('Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.')} />}
+        <T v="body">{versionLine()}</T>
       </Card>
 
       {s.mode === 'firebase' && unsent ? (
@@ -179,7 +179,10 @@ function AddCompany() {
   );
 }
 
-/** A demo company with made-up data to try the app with. */
+/**
+ * A demo company with made-up data, for the app creator only (customers don't get one). Someone still in a demo
+ * made before that can remove it here.
+ */
 function Demo() {
   const s = useSession();
   const c = useColors();
@@ -217,11 +220,11 @@ function Demo() {
                 </View>
               ))}
             </View>
-          ) : <T v="hint">{t('This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.')}</T>}
-          <Button title={again ? t('Tap again: everything in the demo is made new') : t('Start the demo over')} loading={busy} onPress={() => {
+          ) : (s.creator ? <T v="hint">{t('This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.')}</T> : null)}
+          {s.creator ? <Button title={again ? t('Tap again: everything in the demo is made new') : t('Start the demo over')} loading={busy} onPress={() => {
             if (!again) { setAgain(true); setTimeout(() => setAgain(false), 3000); return; }
             setAgain(false); go(() => s.openDemo(true));
-          }} />
+          }} /> : null}
           <Button v="danger" title={armed ? t('Tap again to remove the demo company') : t('Remove the demo company')} loading={busy} onPress={() => {
             if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
             go(() => s.removeDemo());
@@ -279,13 +282,13 @@ function FleetSettings() {
 }
 
 /** "Version d81ff4b of Oct 25, 13:27, web app": the same on the phone and the web once both run the latest. */
+/**
+ * "1.0.0 (d60bda2), web app": the app version and the build it runs (each Deploy updates the app without changing
+ * the version, so the build is what tells two phones apart), and where it runs.
+ */
 function versionLine() {
-  const b = (Constants.expoConfig?.extra as { build?: { sha?: string; at?: string } } | undefined)?.build;
-  const at = b?.at ? new Date(b.at) : null;
-  const when = at && !Number.isNaN(at.getTime())
-    ? `${at.toLocaleDateString(loc(), { day: 'numeric', month: 'short' })}, ${at.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' })}` : '';
+  const b = (Constants.expoConfig?.extra as { build?: { sha?: string } } | undefined)?.build;
   const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : t('phone app');
-  const sha = b?.sha || t('unknown');
-  const v = when ? t('version {sha} of {when}', { sha, when }) : t('version {sha}', { sha });
-  return `Fratius ${Constants.expoConfig?.version || ''}, ${v}, ${where}`;
+  const version = Constants.expoConfig?.version || '';
+  return b?.sha ? t('{version} ({build}), {where}', { version, build: b.sha, where }) : t('{version}, {where}', { version, where });
 }

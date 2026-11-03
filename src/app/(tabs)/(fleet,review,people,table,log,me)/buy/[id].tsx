@@ -13,6 +13,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
 import { N_, loc, t } from '@/lib/i18n';
+import { vanName } from '@/lib/vans';
 
 /**
  * Refuel, wash or buy parts for a van, step by step, and afterwards the record of it. At the pump only the card check
@@ -133,12 +134,12 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
     try { await fn(); } catch (e) { setErr(errText(e, fallback)); } finally { setBusy(null); }
   };
   const cancel = () => run(t('Cancelling…'), async () => {
-    await sendCall('purchase', { orgId, action: 'cancel', id: p!.id }, { title: cancelText(kind), vehicleId: van.id, vehicleName: van.name });
+    await sendCall('purchase', { orgId, action: 'cancel', id: p!.id }, { title: cancelText(kind), vehicleId: van.id, vehicleName: vanName(van) });
   }, t('Couldn\'t cancel. Check the connection.'));
 
   const head = (
     <View style={{ gap: 6 }}>
-      <T v="h1">{buyTitle(kind, van.name)}</T>
+      <T v="h1">{buyTitle(kind, vanName(van))}</T>
       <Row><Plate text={van.plate} /><T v="hint">{s.stations.length > 1 ? s.stationName(van.stationId) : ''}</T></Row>
     </View>
   );
@@ -346,7 +347,7 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
   return (
     <>
       <View style={{ gap: 6 }}>
-        <T v="h1">{buyTitle(p.kind, van.name)}</T>
+        <T v="h1">{buyTitle(p.kind, vanName(van))}</T>
         <Row><Plate text={van.plate} /></Row>
       </View>
       <Steps kind={p.kind} at="check" card={p.kind === 'parts' ? false : needsCard} />
@@ -394,7 +395,7 @@ function Summary({ p }: { p: Purchase }) {
   };
   const allowing = t('Allowing…'), refusing = t('Refusing…');
   const decide = (allow: boolean) => act(allow ? allowing : refusing, () => sendCall('purchase', { orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() },
-    { title: allow ? t('Allow {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }) : t('Refuse {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }), vehicleId: p.vehicleId, vehicleName: p.vehicleName }));
+    { title: allow ? t('Allow {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }) : t('Refuse {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }));
   const ownAsk = p.by === s.user?.uid && s.role !== 'owner';
   // Finished: what was confirmed. Not finished: only what the AI read from the dashboard photo so far.
   const done = p.status === 'done';
@@ -409,7 +410,7 @@ function Summary({ p }: { p: Purchase }) {
   return (
     <>
       <View style={{ gap: 6 }}>
-        <T v="h1">{buyTitle(p.kind, p.vehicleName)}</T>
+        <T v="h1">{buyTitle(p.kind, s.vanName(p))}</T>
         <Row><Plate text={p.plate || ''} /><Pill v={st.v} text={st.text} /></Row>
         <T v="hint">{p.byName}, {fmtWhen(p.createdAt)}{p.notTheirVan && p.vanDriverName ? `. ${t('{name} had the van.', { name: p.vanDriverName })}` : ''}</T>
       </View>
@@ -486,9 +487,9 @@ function Summary({ p }: { p: Purchase }) {
 
       {staffHere && isOpenBuy(p) && p.status !== 'waiting' && p.by !== s.user?.uid ? (
         <Button small v="link" title={busy || t('Close it (not finished)')} onPress={() => act(t('Closing…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id, reason: 'Not finished' },
-          { title: t('Close {name}\'s purchase for {van}', { name: p.byName, van: p.vehicleName }), vehicleId: p.vehicleId, vehicleName: p.vehicleName }))} />
+          { title: t('Close {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }))} />
       ) : null}
-      <Button small v="link" title={t('Open {name}', { name: p.vehicleName })} onPress={() => router.push(`/vehicle/${p.vehicleId}`)} />
+      <Button small v="link" title={t('Open {name}', { name: s.vanName(p) })} onPress={() => router.push(`/vehicle/${p.vehicleId}`)} />
     </>
   );
 }

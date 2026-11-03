@@ -143,12 +143,16 @@ export function Chip({ text, on, onPress }: { text: string; on?: boolean; onPres
   );
 }
 
-export function Plate({ text, small }: { text: string; small?: boolean }) {
+/** A number plate. The plate is a van's name (lib/vans.ts), so `big` is the title of the van's page. */
+export function Plate({ text, small, big }: { text: string; small?: boolean; big?: boolean }) {
   if (!text) return null;
+  const z = big ? { border: 3, radius: 6, band: 16, font: 34, spacing: 2, padH: 12, padV: 3 }
+    : small ? { border: 1.5, radius: 3, band: 7, font: 14, spacing: 0.8, padH: 6, padV: 0 }
+      : { border: 2, radius: 4, band: 10, font: 17, spacing: 1.2, padH: 8, padV: 2 };
   return (
-    <View style={{ flexDirection: 'row', borderWidth: small ? 1.5 : 2, borderColor: '#000', borderRadius: small ? 3 : 4, backgroundColor: '#fff', overflow: 'hidden', alignSelf: 'flex-start' }}>
-      <View style={{ width: small ? 7 : 10, backgroundColor: '#1F4FB4' }} />
-      <Text style={{ fontFamily: F.cond, fontSize: small ? 14 : 17, letterSpacing: small ? 0.8 : 1.2, color: '#000', paddingHorizontal: small ? 6 : 8, paddingVertical: small ? 0 : 2 }}>{text}</Text>
+    <View accessibilityRole={big ? 'header' : undefined} style={{ flexDirection: 'row', borderWidth: z.border, borderColor: '#000', borderRadius: z.radius, backgroundColor: '#fff', overflow: 'hidden', alignSelf: 'flex-start' }}>
+      <View style={{ width: z.band, backgroundColor: '#1F4FB4' }} />
+      <Text style={{ fontFamily: F.cond, fontSize: z.font, letterSpacing: z.spacing, color: '#000', paddingHorizontal: z.padH, paddingVertical: z.padV }}>{text}</Text>
     </View>
   );
 }

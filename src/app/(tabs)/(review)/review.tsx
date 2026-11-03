@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
-import { Card, F, MARKER, Pill, Plate, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
+import { Card, F, MARKER, Pill, Row, Screen, T, fmtWhen, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
@@ -13,6 +13,7 @@ import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
 import { fwd, t, tp } from '@/lib/i18n';
 import { dueOn, routineName } from '@/components/routines';
+import { vanAlias, vanName } from '@/lib/vans';
 
 type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'chk' | 'due' | 'buys' | 'van' | 'done';
 
@@ -59,7 +60,7 @@ export default function ReviewQueue() {
   const todo = s.vehicles.filter((v) => s.runs(v.stationId)).flatMap((v) => dueOn(v).map((x) => ({ v, x }))).sort((a, b) => a.x.since - b.x.since);
   const problems = s.routineDone.filter((d) => !d.ok && s.runs(d.stationId) && d.at > Date.now() - 7 * 86400_000).sort((a, b) => b.at - a.at);
   const showStation = s.stations.length > 1;
-  const plate = (vehicleId: string) => s.vehicles.find((v) => v.id === vehicleId)?.plate || '';
+  const alias = (vehicleId: string) => vanAlias(s.vehicles.find((v) => v.id === vehicleId));
   const where = (stationId: string | null | undefined) => (showStation ? s.stationName(stationId) : '');
 
   const color = { pump: c.alert, review: MARKER, missing: c.alert, warn: c.warn, chk: c.amber, due: c.amber, buys: c.ink, van: c.ink2, done: c.ok };
@@ -75,7 +76,7 @@ export default function ReviewQueue() {
     <Screen>
       <View style={{ gap: 4 }}>
         <T v="h1">{t('Review')}</T>
-        <T v="hint">{t('You decide each spot the AI found. Your decision is final and goes on the van\'s record.')}</T>
+        <T v="hint">{t('What needs your attention, most urgent first.')}</T>
       </View>
 
       {/* Every category at a glance; tap one to see only it. */}
@@ -103,7 +104,7 @@ export default function ReviewQueue() {
       {show('review') ? (
         <Section color={MARKER} title={t('To review')} count={waiting.length} note={t('Checks drivers sent. Oldest first.')}>
           {!waiting.length ? <Empty text={t('Nothing to decide right now. Checks appear here when a driver sends one.')} /> : null}
-          {waiting.map((k) => <ToReview key={k.id} k={k} plate={plate(k.vehicleId)} where={where(k.stationId)} />)}
+          {waiting.map((k) => <ToReview key={k.id} k={k} van={s.vanName(k)} alias={alias(k.vehicleId)} where={where(k.stationId)} />)}
         </Section>
       ) : null}
 
@@ -112,15 +113,15 @@ export default function ReviewQueue() {
           ? t('Handovers without their video or photos, and tours without the dashboard photo. Open the van to add them or see its history.')
           : t('Handovers without their video or photos. Open the van to add them or see its history.')}>
           {!missing.length && !gaps.length ? <Empty text={t('Every handover has its video or photos.')} /> : null}
-          {missing.map((m) => <MissingCard key={`${m.a.id}-${m.what}`} m={m} plate={plate(m.a.vehicleId)} where={where(m.a.stationId)} />)}
-          {gaps.map((g) => <GapCard key={`${g.vehicleId}-${g.driverId}-${g.at}-${g.kind}`} g={g} plate={plate(g.vehicleId)} where={where(g.stationId)} />)}
+          {missing.map((m) => <MissingCard key={`${m.a.id}-${m.what}`} m={m} van={s.vanName(m.a)} alias={alias(m.a.vehicleId)} where={where(m.a.stationId)} />)}
+          {gaps.map((g) => <GapCard key={`${g.vehicleId}-${g.driverId}-${g.at}-${g.kind}`} g={g} van={s.vanName(g)} alias={alias(g.vehicleId)} where={where(g.stationId)} />)}
         </Section>
       ) : null}
 
       {show('warn') && (warn.length || cat === 'warn') ? (
         <Section color={c.warn} title={t('Warning lights')} count={warn.length} note={t('Lit on a van\'s latest dashboard photo, in the last 3 days. Check the van before it goes out again.')}>
           {!warn.length ? <Empty text={t('No warning lights on the latest dashboard photos.')} /> : null}
-          {warn.map((tour) => <WarnCard key={tour.id} tour={tour} plate={plate(tour.vehicleId)} where={where(tour.stationId)} />)}
+          {warn.map((tour) => <WarnCard key={tour.id} tour={tour} van={s.vanName(tour)} alias={alias(tour.vehicleId)} where={where(tour.stationId)} />)}
         </Section>
       ) : null}
 
@@ -130,12 +131,12 @@ export default function ReviewQueue() {
             {!todo.length && !problems.length ? <T v="hint">{t('Every check is done.')}</T> : null}
             {problems.map((d, i) => (
               <ListRow key={d.id} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: d.vehicleId, tab: 'details' } })}
-                title={`${d.vehicleName} – ${routineName(d)}`} line={[`${d.byName}: ${d.note || ''}`, fmtWhen(d.at), where(d.stationId)].filter(Boolean).join(', ')}
+                title={`${s.vanName(d)} – ${routineName(d)}`} line={[`${d.byName}: ${d.note || ''}`, fmtWhen(d.at), where(d.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="bad" text={t('Problem')} />} />
             ))}
             {todo.map(({ v, x }, i) => (
               <ListRow key={`${v.id}-${x.id}`} first={i === 0 && !problems.length} onPress={() => router.push(`/vehicle/${v.id}`)}
-                title={`${v.name} – ${routineName(x)}`} line={[v.assignedTo?.driverName || '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
+                title={`${vanName(v)} – ${routineName(x)}`} line={[v.assignedTo?.driverName || '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={Date.now() - x.since > 3 * 3600_000 ? 'bad' : 'amber'} text={dur(Date.now() - x.since)} />} />
             ))}
           </List>
@@ -154,7 +155,7 @@ export default function ReviewQueue() {
             ))}
             {due.map(({ v, x }, i) => (
               <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'details' } })}
-                title={`${v.name} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
+                title={`${vanName(v)} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
           </List>
@@ -176,7 +177,7 @@ export default function ReviewQueue() {
             {!atVan.length ? <T v="hint">{t('No driver is at a van right now.')}</T> : null}
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                title={k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }), where(k.stationId)].filter(Boolean).join(', ')}
+                title={k.createdByName ? `${k.createdByName} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }), where(k.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="muted" text={tp(k.spots.length, '{done} of {n} spot', '{done} of {n} spots', { done: k.spots.filter((p) => p.verdict).length })} />} />
             ))}
           </List>
@@ -191,7 +192,7 @@ export default function ReviewQueue() {
               const n = approvedDamage(k).length;
               return (
                 <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                  title={k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName}
+                  title={k.createdByName ? `${k.createdByName} – ${s.vanName(k)}` : s.vanName(k)}
                   line={[k.review?.byName ? t('reviewed by {name}', { name: k.review.byName }) : '', k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(', ')}
                   right={<Pill v={n ? 'bad' : 'good'} text={n ? tp(n, '{n} damage', '{n} damages') : t('No damage')} />} />
               );
@@ -241,16 +242,16 @@ function ActionCard({ band, alert, onPress, label, children }: { band: string; a
   );
 }
 
-function ToReview({ k, plate, where }: { k: Check; plate: string; where: string }) {
+function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: string; where: string }) {
   const c = useColors();
   const sent = k.submittedAt || k.createdAt;
   const aiDamage = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
   const long = Date.now() - sent > 2 * 3600_000;
   return (
-    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={k.createdByName ? t('Review {name}, {van}', { name: k.createdByName, van: k.vehicleName }) : t('Review {van}', { van: k.vehicleName })}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${k.vehicleName}` : k.vehicleName}</Text>
+    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={k.createdByName ? t('Review {name}, {van}', { name: k.createdByName, van: van }) : t('Review {van}', { van: van })}>
+      <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${van}` : van}</Text>
       <Row>
-        {plate ? <Plate text={plate} /> : null}
+        {alias ? <T v="hint">{alias}</T> : null}
         <Text style={{ fontFamily: F.semi, fontSize: 14, color: long ? c.amber : c.ink }}>{t('Waiting {time}', { time: dur(Date.now() - sent) })}</Text>
         {where ? <T v="hint">{where}</T> : null}
       </Row>
@@ -263,7 +264,7 @@ function ToReview({ k, plate, where }: { k: Check; plate: string; where: string 
   );
 }
 
-function MissingCard({ m, plate, where }: { m: Missing; plate: string; where: string }) {
+function MissingCard({ m, van, alias, where }: { m: Missing; van: string; alias: string; where: string }) {
   const c = useColors();
   const { a, what } = m;
   const problem = what === 'no-pickup' ? t('No pick-up video') : what === 'still-out' ? t('Not dropped off') : t('No drop-off video');
@@ -274,14 +275,14 @@ function MissingCard({ m, plate, where }: { m: Missing; plate: string; where: st
       : a.endReason === 'taken over' ? (a.endedByName ? t('Had it until {when}, then {name} took it over', { when: fmtWhen(a.end), name: a.endedByName }) : t('Had it until {when}, then another driver took it over', { when: fmtWhen(a.end) }))
         : a.endedByName ? t('Had it until {when}, ended by {name}', { when: fmtWhen(a.end), name: a.endedByName }) : t('Had it until {when}', { when: fmtWhen(a.end) });
   return (
-    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${a.vehicleName}`}>
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${van}`}>
       <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
         {a.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
       {since ? <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.alert, marginTop: -4 }}>{since}</Text> : null}
       <Row>
-        <T v="h3">{a.vehicleName}</T>
-        {plate ? <Plate text={plate} /> : null}
+        <T v="h3">{van}</T>
+        {alias ? <T v="hint">{alias}</T> : null}
       </Row>
       <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
     </ActionCard>
@@ -289,19 +290,19 @@ function MissingCard({ m, plate, where }: { m: Missing; plate: string; where: st
 }
 
 /** A tour missing its dashboard photo: the driver first, then the van. */
-function GapCard({ g, plate, where }: { g: TourGap; plate: string; where: string }) {
+function GapCard({ g, van, alias, where }: { g: TourGap; van: string; alias: string; where: string }) {
   const c = useColors();
   const problem = g.kind === 'no-end' ? t('No end-of-tour photo') : g.kind === 'no-start' ? t('No start-of-tour photo') : t('On tour for {time}', { time: dur(Date.now() - g.at) });
   const detail = g.kind === 'no-end' ? t('Tour started {when}; the kilometres are an estimate, no fuel figure', { when: fmtWhen(g.at) })
     : g.kind === 'no-start' ? t('Had the van since {when}', { when: fmtWhen(g.at) }) : t('Started {when}, no end photo yet', { when: fmtWhen(g.at) });
   return (
-    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}, ${problem}: ${g.vehicleName}`}>
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}, ${problem}: ${van}`}>
       <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
         {g.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
       <Row>
-        <T v="h3">{g.vehicleName}</T>
-        {plate ? <Plate text={plate} /> : null}
+        <T v="h3">{van}</T>
+        {alias ? <T v="hint">{alias}</T> : null}
       </Row>
       <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
     </ActionCard>
@@ -309,16 +310,16 @@ function GapCard({ g, plate, where }: { g: TourGap; plate: string; where: string
 }
 
 /** A warning light on a van's dashboard: the van first, then who saw it and when. */
-function WarnCard({ tour, plate, where }: { tour: Tour; plate: string; where: string }) {
+function WarnCard({ tour, van, alias, where }: { tour: Tour; van: string; alias: string; where: string }) {
   const c = useColors();
   const at = tour.end?.at || tour.startAt;
   return (
-    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: tour.vehicleName, lights: tour.warnings.map((w) => t(w)).join(', ') })}>
+    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: van, lights: tour.warnings.map((w) => t(w)).join(', ') })}>
       <Text style={{ fontFamily: F.condBold, fontSize: 21, lineHeight: 25, color: c.ink }}>
-        {tour.vehicleName}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(', ')}`}</Text>
+        {van}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(', ')}`}</Text>
       </Text>
       <Row>
-        {plate ? <Plate text={plate} /> : null}
+        {alias ? <T v="hint">{alias}</T> : null}
         <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.warn }}>{t('{time} ago', { time: dur(Date.now() - at) })}</Text>
       </Row>
       <T v="hint">{[tour.end ? t('On {name}\'s end photo, {when}', { name: tour.driverName, when: fmtWhen(at) }) : t('On {name}\'s start photo, {when}', { name: tour.driverName, when: fmtWhen(at) }), where].filter(Boolean).join(', ')}</T>

@@ -54,10 +54,13 @@ async function fails(p, code) {
 
 /** A new account with the app creator claim, as the Deploy workflow sets it. */
 async function appCreator(name) {
-  const p = await person(name);
+  return setCreator(await person(name), true);
+}
+/** Gives or takes the app creator claim (as Deploy does from APP_CREATOR_EMAILS). */
+async function setCreator(p, on) {
   const r = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/projects/${cfg.projectId}/accounts:update`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
-    body: JSON.stringify({ localId: p.uid, customAttributes: JSON.stringify({ creator: true }) }),
+    body: JSON.stringify({ localId: p.uid, customAttributes: JSON.stringify(on ? { creator: true } : {}) }),
   });
   assert.equal(r.status, 200, await r.text());
   await p.auth.currentUser.getIdToken(true);
@@ -165,6 +168,8 @@ test('managers assign vans of their station; one van per driver, one driver per 
   const v1h = await history(S.own, [where('vehicleId', '==', v1.id), orderBy('start', 'desc')]);
   assert.deepEqual(v1h.map((a) => a.driverName), ['Dana Driver', 'Erik Driver', 'Dana Driver']);
   assert.deepEqual(v1h.map((a) => a.endReason), [null, 'reassigned', 'reassigned']);
+  // The history calls the van by its number plate, not its name or model (lib/vans.ts).
+  assert.deepEqual(v1h.map((a) => a.vehicleName), ['V1', 'V1', 'V1']);
 });
 
 test('history is server-only: nobody writes, edits or deletes it from the app, not even the owner', async () => {
@@ -420,8 +425,9 @@ test('a driver given a van gets a phone notification and adds the pick-up photos
   assert.equal(msg.headers['content-encoding'], 'aes128gcm');
   const body = JSON.parse(fnRequire('http_ece').decrypt(msg.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString());
   assert.equal(body.url, `/vehicle/${v2.id}`);
-  assert.equal(body.title, 'Van v2 is yours');
-  assert.match(body.body, /^Max Manager gave you Van v2 \(V2\)\. Before you drive, take the pick-up video or photos\.$/);
+  // Vans are called by their number plate (lib/vans.ts), in notifications too.
+  assert.equal(body.title, 'V2 is yours');
+  assert.match(body.body, /^Max Manager gave you V2\. Before you drive, take the pick-up video or photos\.$/);
   // The phone that turned notifications off is forgotten.
   assert.equal((await pushCol.doc('gone').get()).exists, false);
   // The handover asks for the pick-up photos or video.
@@ -460,8 +466,10 @@ test('AI speed and cost: only the app creator sees them, in the functions\' answ
   const cr = await appCreator('Cleo Creator');
   // A driver runs a damage check (the emulator answers for the AI, with made-up usage).
   const walk = await photos(S.d1, S.org, v1, { real: true });
-  const f = await S.d1.call('findDamage', { orgId: S.org, walkId: walk, tier: 'default' });
+  // The phone asks for another model: the company's (set only by the app creator, Fast by default) is used.
+  const f = await S.d1.call('findDamage', { orgId: S.org, walkId: walk, tier: 'complex' });
   assert.equal(f.spots.length, 1);
+  assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', f.checkId))).data().tier, 'quick');
   assert.equal(f.usage, undefined, 'the driver gets no speed or cost back');
   const kref = doc(S.d1.db, 'orgs', S.org, 'checks', f.checkId);
   const k = (await getDoc(kref)).data();
@@ -797,7 +805,7 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.equal(vf.dash.fuelPct, 82);
     assert.deepEqual(vf.dash.warnings, ['Tyre pressure']);
     const m1 = opened().at(-1);
-    assert.equal(m1.title, 'Refuel: Van v2 (V2), 45.2 l, €79.10');
+    assert.equal(m1.title, 'Refuel: V2, 45.2 l, €79.10');
     assert.match(m1.body, /^Dana Driver at Test Tankstelle, 60,300 km\.$/);
     assert.equal(m1.url, `/buy/${st.id}`);
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'cancel', id: st.id }), 'failed-precondition');
@@ -810,7 +818,7 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     assert.match(c2.why, /ending 4471.*ends 1234/);
     assert.deepEqual(c2.people, [{ name: 'Max Manager', phone: '+49 151 1' }]);
     const stop = opened().at(-1);
-    assert.match(stop.title, /^Stop: Van v2 \(V2\), not the van's card$/);
+    assert.match(stop.title, /^Stop: V2, not the van's card$/);
     assert.match(stop.body, /Allow or refuse the wash\.$/);
     assert.equal((await buy(S.mgr, w.id)).status, 'waiting');
     await fails(S.d1.call('purchase', { orgId: S.org, action: 'receipt', id: w.id, path: await shot(S.d1) }), 'failed-precondition');
@@ -1035,8 +1043,11 @@ test('costs move out of the record managers read (Deploy runs this once)', async
   assert.match(move(), /No van costs to move/);
 });
 
-test('the demo company: a driver login with a van, history, and pick-up at the first station', async () => {
-  const me = await person('Demo Tester');
+test('the demo company: only the app creator opens one; a driver login with a van, history, and pick-up at the first station', async () => {
+  // Customers don't get a demo company (product owner, 2026-11-02), owners included.
+  await fails((await person('Xavi Customer')).call('createDemoCompany', {}), 'permission-denied');
+  await fails(S.own.call('createDemoCompany', {}), 'permission-denied');
+  const me = await appCreator('Demo Tester');
   const { orgId } = await me.call('createDemoCompany', {});
   const org = (await getDoc(doc(me.db, 'orgs', orgId))).data();
   const login = org.demoLogins.find((l) => l.role === 'driver');
@@ -1172,8 +1183,10 @@ test('people delete their own account: login and profile go, the company keeps i
   assert.equal((await adminDb().doc(`orgs/${org.id}`).get()).exists, false);
 
   // A demo company goes with the account of whoever made it, demo logins included.
-  const dee = await person('Dee Demo');
+  // (Made while she was the app creator: only the app creator opens a demo; app creators can't delete their account.)
+  const dee = await appCreator('Dee Demo');
   const { orgId: demoId } = await dee.call('createDemoCompany', {});
+  await setCreator(dee, false);
   const login = (await getDoc(doc(dee.db, 'orgs', demoId))).data().demoLogins[0];
   assert.deepEqual((await dee.call('deleteAccount', { check: true })).companies.map((c) => [c.outcome, c.demo]), [['close', true]]);
   await dee.call('deleteAccount', {});
@@ -1316,7 +1329,7 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
     assert.ok(m, 'the notification reached the push service');
     assert.equal(m.body.to, token);
     assert.equal(m.body.data.url, `/vehicle/${vr.id}`);
-    assert.match(m.body.body, /Van N/);
+    assert.match(m.body.body, /NOTE1/); // vans are called by their plate
     assert.equal((await col.doc('gone').get()).exists, false);
     assert.equal((await col.doc('here').get()).exists, true);
   } finally {

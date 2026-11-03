@@ -17,6 +17,7 @@ import { useSession } from '@/lib/session';
 import { driverRows } from '@/lib/stats';
 import { ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
+import { vanName } from '@/lib/vans';
 
 /**
  * One person, in three parts under their details and the van they have now: their record (licence and checks,
@@ -83,12 +84,12 @@ export default function PersonScreen() {
           <T v="hint">{t('Van now')}</T>
           {van ? (
             <Pressable onPress={() => router.push(`/vehicle/${van.id}`)} style={{ gap: 4 }}>
-              <T v="h2">{van.name} ›</T>
+              <T v="h2">{vanName(van)} ›</T>
               {van.plate ? <Plate text={van.plate} /> : null}
               <T v="hint">{sinceText(van.assignedTo!.since)}</T>
             </Pressable>
           ) : openRow ? (
-            <><T v="h2">{openRow.vehicleName}</T><T v="hint">{sinceText(openRow.start)}</T></>
+            <><T v="h2">{s.vanName(openRow)}</T><T v="hint">{sinceText(openRow.start)}</T></>
           ) : <><T v="h2">{t('No van')}</T><T v="hint">{me ? t('Your fleet manager gives you a van.') : t('Give them one below or from a van\'s page.')}</T></>}
           {canGive ? (picking ? <VanPicker m={member!} onDone={() => setPicking(false)} />
             : <Button small v={van ? 'secondary' : 'primary'} title={van ? t('Give a different van') : t('Give a van')} onPress={() => setPicking(true)} />) : null}
@@ -214,7 +215,7 @@ function Checks({ uid, me }: { uid: string; me: boolean }) {
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <Row>
-              <T v="h3" style={{ flex: 1 }}>{t('Check, {van}', { van: k.vehicleName })}</T>
+              <T v="h3" style={{ flex: 1 }}>{t('Check, {van}', { van: s.vanName(k) })}</T>
               <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? tp(dmg, '{n} approved damage', '{n} approved damages') : k.status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
             </Row>
             <T v="hint">{fmtWhen(k.createdAt)}</T>
@@ -223,7 +224,7 @@ function Checks({ uid, me }: { uid: string; me: boolean }) {
       })}
       {walks.slice(0, 8).map((w) => (
         <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-          <T v="h3">{t('Walk-around, {van}', { van: w.vehicleName })}</T>
+          <T v="h3">{t('Walk-around, {van}', { van: s.vanName(w) })}</T>
           <T v="hint">{tp(w.frames, '{when}, {taken} of {n} photo', '{when}, {taken} of {n} photos', { when: fmtWhen(w.createdAt), taken: w.taken })}</T>
         </Pressable>
       ))}

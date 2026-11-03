@@ -106,12 +106,22 @@ async function main() {
   const browser = await chromium.launch();
   const u = await auth.createUser({ email: OWNER.email, password: OWNER.password, displayName: OWNER.name });
 
-  // The owner opens the demo company the way a new account does.
+  // The owner gets the demo company. Only the app creator can open one, so the owner is the app creator for that
+  // one call (the claim is taken off before any screenshot, so no creator-only screen shows).
   {
-    const { ctx, page } = await signIn(browser, 'en', 'en-GB', OWNER);
-    await page.locator('[role=button] >> text="Open a demo company" >> visible=true').first().click();
+    await auth.setCustomUserClaims(u.uid, { creator: true });
+    const authHost = process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
+    const fnHost = process.env.FUNCTIONS_EMULATOR_HOST || '127.0.0.1:5001';
+    const si = await fetch(`http://${authHost}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: OWNER.email, password: OWNER.password, returnSecureToken: true }),
+    }).then((r) => r.json());
+    if (!si.idToken) throw new Error(`sign-in for the demo failed: ${JSON.stringify(si)}`);
+    const r = await fetch(`http://${fnHost}/demo-fleet-check/us-central1/createDemoCompany`, {
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${si.idToken}` }, body: JSON.stringify({ data: {} }),
+    });
+    if (!r.ok) throw new Error(`createDemoCompany: ${r.status} ${await r.text()}`);
     await until(async () => (await db.doc(`users/${u.uid}`).get()).data()?.orgId, 120_000, 'the demo company');
-    await ctx.close();
+    await auth.setCustomUserClaims(u.uid, null);
   }
   const orgId = (await db.doc(`users/${u.uid}`).get()).data().orgId;
   const org = db.doc(`orgs/${orgId}`);

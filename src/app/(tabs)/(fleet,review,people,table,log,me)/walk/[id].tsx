@@ -38,7 +38,7 @@ export default function WalkScreen() {
         <T v="hint">{(() => {
           const what = w.handover ? (w.handover.kind === 'pickup' ? t('Pick-up photos') : t('Drop-off photos')) : w.source === 'library' ? t('Photos from the library') : t('Walk-around');
           const who = whoDid(w.createdBy);
-          return who ? t('{what}, {van}, by {who}', { what, van: w.vehicleName, who }) : t('{what}, {van}', { what, van: w.vehicleName });
+          return who ? t('{what}, {van}, by {who}', { what, van: s.vanName(w), who }) : t('{what}, {van}', { what, van: s.vanName(w) });
         })()}</T>
         <T v="h1">{fmtWhen(w.createdAt)}</T>
       </View>

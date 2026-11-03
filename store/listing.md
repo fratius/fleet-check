@@ -63,7 +63,7 @@ Fleet owners see every station; fleet managers run their own; drivers see their 
 PRIVACY
 Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with its driver; the ones that show damage after 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
 
-Any delivery company can start right away: create your company in the app, or open the demo company with made-up vans and people to look around first. More at fratius.com.
+Any delivery company can start right away: create your company in the app and invite your managers and drivers. More at fratius.com.
 
 Fratius is an independent product, not affiliated with Amazon.
 ```
@@ -138,17 +138,17 @@ To make them again after the app changes: run **Store screenshots** in the Actio
 
 ## Review notes (Apple "App Review Information", Google "App access")
 
-Make a review login first (APP-STORE.md, step 5): sign up in the app or the web app with an address such as
-`review@fratius.com` and a password of your choice, and tap **Open a demo company**. Put the email and password in
-both stores.
+Reviewers use the demo logins (APP-STORE.md, step 5): only the app creator can open a demo company, so open yours
+(Account > Demo company) and copy its fleet manager and driver logins into both stores. Don't start the demo over
+after submitting: that makes new logins.
 
 ```
 Fratius is a fleet app for delivery companies of any size: fleet owners, fleet managers and their drivers. It isn't made for one particular company. Any delivery company can create an account, create its company in the app and start using it; drivers and managers then join their company through one-time invite links from it. There are no in-app purchases and the app shows no prices or purchase links. Companies that keep using it after the trial pay us under a business contract for their organisation (guideline 3.1.3(c)); nothing is sold to individual consumers.
 
-Sign in with the login below. It is the fleet owner of a demo company with made-up stations, people, vans, handovers and damage checks; its photos are drawings.
-- To see the app as a fleet manager or driver: Account tab > Demo company shows two more logins and their passwords.
-- You can also create a new account on the sign-in screen and tap "Open a demo company", or "Create a company" to start an empty one.
-- Account deletion: Account tab > Delete account (at the bottom). Deleting this login also deletes its demo company; a new one is made by signing up again and opening a demo company.
+Sign in with the login below. It is a fleet manager in a demo company with made-up stations, people, vans, handovers and damage checks; its photos are drawings.
+- To see the app as a driver, sign in with the second login: [driver email] / [driver password].
+- You can also create a new account on the sign-in screen and tap "Create a company" to start an empty one.
+- Account deletion: Account tab > Delete account (at the bottom). Please use a new account for this, not the demo logins.
 
 Camera: walk-around photos and videos of the vans (videos are recorded without sound), photos of the dashboard, fuel card and receipts. Notifications: Account tab > Notifications (for example when a manager gives a driver a van). The app works without a connection: changes wait on the phone and are sent when it's back.
 AI: photos for damage checks, dashboards, fuel cards, receipts and documents are analysed by Anthropic's Claude API; a person confirms every result.
@@ -158,8 +158,8 @@ If App Review asks the usual questions for business apps (guideline 3.2), answer
 
 ```
 1. Is your app restricted to users who are part of a single company? No. Any delivery company can sign up and create its company in the app; we have no list of allowed companies.
-2. Is your app designed for use by a limited or specific group of companies? It is made for delivery companies (fleets of vans and their drivers), an industry, not for named companies. The demo company and "Create a company" are open to everyone.
-3. What features in the app, if any, are intended for use by the general public? Anyone can create an account, open the demo company or create a company. The features are for people who work with a fleet of vans: handovers, damage checks, van history, refuels.
+2. Is your app designed for use by a limited or specific group of companies? It is made for delivery companies (fleets of vans and their drivers), an industry, not for named companies. "Create a company" is open to everyone.
+3. What features in the app, if any, are intended for use by the general public? Anyone can create an account and create a company. The features are for people who work with a fleet of vans: handovers, damage checks, van history, refuels.
 4. How do users obtain an account? By signing up in the app with an email address and a password. People who work for a company that already uses Fratius join it through an invite link from their fleet manager.
 5. Is there any paid content in the app? No. Companies that keep using it pay us under a business contract for their organisation, outside the app; nothing is sold in the app or to individual consumers.
 ```

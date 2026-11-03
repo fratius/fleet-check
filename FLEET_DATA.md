@@ -15,6 +15,15 @@ Rules that apply to every record here (see ROLES.md):
 
 ## Vans (built)
 
+**A van is called by its number plate** (product owner, 2026-11-02): a DSP runs tens of the same model (Sprinter,
+Vito, Transporter), so the plate is what tells them apart. It is the van's name everywhere: the fleet list, the van
+page (the plate is its heading), Review, history, the Data tab and Excel, notifications. The plate is required when
+a van is added or edited and must not be in the fleet twice; the model is a detail of the van, never its name. An
+own name or fleet number is optional and shows small after the plate. Vans saved before without a plate keep their
+name until a plate is added (their page asks for it). Records about a van show its current plate (looked up by
+`vehicleId`); new records the server writes keep the plate in `vehicleName`. `src/lib/vans.ts` and
+`functions/src/vans.ts` hold the rule.
+
 The van page has three parts under the van's status and actions: **Damage**, **Details**, **Drivers**.
 Details holds the record, in sections that are each edited on their own.
 
@@ -185,7 +194,7 @@ with totals, and every refuel, wash and parts purchase. Download for Excel makes
   end photo, handovers without video, accidents (at fault), fines, complaints, licence valid until, next check.
 - Tours: driver, start, van, end, hours, km, odometer, fuel or energy used, per 100 km, refuelled, end photo,
   warning lights.
-- Vans: plate, model, fuel, odometer, km in the period, tours, drivers, per 100 km, against the same model (a van
+- Vans: plate (the van column), own name, model, fuel, odometer, km in the period, tours, drivers, per 100 km, against the same model (a van
   using more may need the workshop), new damage, warning lights, the next deadline; for owners the monthly rate
   and what it comes to per kilometre.
 - Fuel, wash: when, what, van, by, status, litres, total, € per litre, odometer, the fuel card check, what to

@@ -7,12 +7,13 @@ import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, 
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
-import { useSession } from '@/lib/session';
+import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
 import type { Member, Purchase, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
 import { N_, loc, t } from '@/lib/i18n';
+import { vanAlias, vanName } from '@/lib/vans';
 
 /**
  * The fleet in numbers, like a spreadsheet: drivers, tours and vans for a period, sortable by any column, with a
@@ -79,13 +80,13 @@ export default function DataScreen() {
 
   const match = (x: string) => !q.trim() || x.toLowerCase().includes(q.trim().toLowerCase());
   const dCols = driverCols(c, multi && !station, s.stationName);
-  const tCols = tourCols(c, multi && !station, s.stationName);
+  const tCols = tourCols(c, multi && !station, s.stationName, s.vanName);
   const vCols = vanCols(c, multi && !station, s.stationName, owner);
   const dRows = sortRows(drivers.filter((r) => match(r.name)), dCols, sorts.drivers);
-  const tRows = sortRows(tours.filter((x) => match(`${x.driverName} ${x.vehicleName} ${x.plate}`)), tCols, sorts.tours);
+  const tRows = sortRows(tours.filter((x) => match(`${x.driverName} ${s.vanName(x)} ${x.vehicleName} ${x.plate}`)), tCols, sorts.tours);
   const vRows = sortRows(vans.filter((v) => match(`${v.name} ${v.plate} ${v.model}`)), vCols, sorts.vans);
-  const bCols = buyCols(c, multi && !station, s.stationName);
-  const bRows = sortRows(buys.filter((p) => match(`${p.byName} ${p.vehicleName} ${p.plate || ''} ${p.merchant || ''}`)), bCols, sorts.buys);
+  const bCols = buyCols(c, multi && !station, s.stationName, s.vanName);
+  const bRows = sortRows(buys.filter((p) => match(`${p.byName} ${s.vanName(p)} ${p.vehicleName} ${p.plate || ''} ${p.merchant || ''}`)), bCols, sorts.buys);
   const setSort = (k: View3) => (x: Sort) => setSorts((p) => ({ ...p, [k]: x }));
 
   const download = async () => {
@@ -216,12 +217,13 @@ function driverCols(c: C, station: boolean, stationName: (id: string | null) => 
   return cols;
 }
 
-function tourCols(c: C, station: boolean, stationName: (id: string | null) => string): Col<Tour>[] {
+function tourCols(c: C, station: boolean, stationName: (id: string | null) => string, vn: Session['vanName']): Col<Tour>[] {
+  const s = { vanName: vn };
   const ended = (r: Tour) => (isOpen(r) ? t('On tour') : r.endedHow === 'photo' ? t('Photo') : r.endedHow === 'next' ? t('Estimated') : t('None'));
   const cols: Col<Tour>[] = [
     { key: 'driver', label: t('Driver'), width: 140, align: 'left', get: (r) => r.driverName },
     { key: 'date', label: t('Start'), width: 116, align: 'left', get: (r) => r.startAt, text: (r) => fmtWhen(r.startAt) },
-    { key: 'van', label: t('Van'), width: 120, align: 'left', get: (r) => r.vehicleName },
+    { key: 'van', label: t('Van'), width: 120, align: 'left', get: (r) => s.vanName(r) },
     { key: 'end', label: t('End'), width: 64, get: (r) => r.end?.at ?? null, text: (r) => time(r.end?.at) },
     { key: 'hours', label: t('Hours'), width: 64, get: (r) => r.hours, text: (r) => one(r.hours) },
     { key: 'km', label: 'km', width: 70, get: (r) => r.km, text: (r) => int(r.km), total: (ts) => int(sum(ts, (r) => r.km)) },
@@ -242,8 +244,9 @@ function tourCols(c: C, station: boolean, stationName: (id: string | null) => st
 
 function vanCols(c: C, station: boolean, stationName: (id: string | null) => string, owner: boolean): Col<VanRow>[] {
   const cols: Col<VanRow>[] = [
-    { key: 'name', label: t('Van'), width: 140, align: 'left', get: (v) => v.name, text: (v) => (v.retired ? t('{name} (retired)', { name: v.name }) : v.name) },
-    { key: 'plate', label: t('Plate'), width: 92, align: 'left', get: (v) => v.plate },
+    { key: 'name', label: t('Van'), width: 140, align: 'left', get: (v) => vanName(v), text: (v) => (v.retired ? t('{name} (retired)', { name: vanName(v) }) : vanName(v)) },
+    // The van column is the plate (lib/vans.ts); a name or fleet number it also has goes here.
+    { key: 'alias', label: t('Own name'), width: 110, align: 'left', get: (v) => vanAlias(v) },
     { key: 'model', label: t('Model'), width: 140, align: 'left', get: (v) => v.model },
     { key: 'fuel', label: t('Fuel'), width: 72, align: 'left', get: (v) => (v.fuel ? t(FUEL[v.fuel]) : '') },
     { key: 'odo', label: t('Odometer'), width: 90, get: (v) => v.odometer, text: (v) => int(v.odometer) },
@@ -258,7 +261,7 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
     { key: 'due', label: t('Next deadline'), width: 190, align: 'left', get: (v) => v.nextDue?.days ?? null, text: (v) => (v.nextDue ? `${t(v.nextDue.label)}, ${t(v.nextDue.note)}` : ''),
       tone: (v) => (v.nextDue?.state === 'overdue' ? c.alert : v.nextDue?.state === 'soon' ? c.amber : undefined) },
   ];
-  const order = ['name', 'km', 'per100', 'vs', 'damage', 'warnings', 'due', 'tours', 'drivers', 'noEnd', 'odo', 'plate', 'model', 'fuel'];
+  const order = ['name', 'km', 'per100', 'vs', 'damage', 'warnings', 'due', 'tours', 'drivers', 'noEnd', 'odo', 'alias', 'model', 'fuel'];
   cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   if (station) cols.splice(1, 0, { key: 'station', label: t('Station'), width: 110, align: 'left', get: (v) => stationName(v.stationId) });
   if (owner) {
@@ -269,7 +272,8 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
 }
 
 /** Every refuel, wash and parts purchase, with the refused and unfinished ones (totals count only finished ones). */
-function buyCols(c: C, station: boolean, stationName: (id: string | null) => string): Col<Purchase>[] {
+function buyCols(c: C, station: boolean, stationName: (id: string | null) => string, vn: Session['vanName']): Col<Purchase>[] {
+  const s = { vanName: vn };
   const done = (ps: Purchase[]) => ps.filter((p) => p.status === 'done');
   const card = (p: Purchase) => {
     if (p.kind === 'parts') return '';
@@ -286,7 +290,7 @@ function buyCols(c: C, station: boolean, stationName: (id: string | null) => str
   const cols: Col<Purchase>[] = [
     { key: 'date', label: t('When'), width: 140, align: 'left', get: (p) => p.createdAt, text: (p) => fmtWhen(p.createdAt) },
     { key: 'kind', label: t('What'), width: 70, align: 'left', get: (p) => t(BUY_NAME[p.kind]) },
-    { key: 'van', label: t('Van'), width: 120, align: 'left', get: (p) => p.vehicleName },
+    { key: 'van', label: t('Van'), width: 120, align: 'left', get: (p) => s.vanName(p) },
     { key: 'by', label: t('By'), width: 130, align: 'left', get: (p) => p.byName },
     { key: 'status', label: t('Status'), width: 120, align: 'left', get: (p) => t(buyState(p).text), tone: (p) => (p.status === 'done' && !p.flags?.length ? undefined : p.status === 'done' ? c.amber : p.status === 'cancelled' ? c.ink2 : c.alert) },
     { key: 'litres', label: t('Litres'), width: 70, get: (p) => p.litres, text: (p) => one(p.litres), total: (ps) => one(sum(done(ps), (p) => p.litres)) },
@@ -330,7 +334,7 @@ function WhoHad() {
   const [day, setDay] = useState(new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
   const [at, setAt] = useState('12:00');
   const [q, setQ] = useState('');
-  const vans = s.vehicles.filter((v) => s.runs(v.stationId)).sort((a, b) => a.name.localeCompare(b.name));
+  const vans = s.vehicles.filter((v) => s.runs(v.stationId)).sort((a, b) => vanName(a).localeCompare(vanName(b)));
   const list = q.trim() ? vans.filter((v) => `${v.name} ${v.plate}`.toLowerCase().includes(q.trim().toLowerCase())) : vans;
   const d = parseDay(day);
   const when = d && /^\d{1,2}:\d{2}$/.test(at.trim()) ? new Date(`${d}T${at.trim().padStart(5, '0')}`).getTime() : null;
@@ -350,11 +354,11 @@ function WhoHad() {
         r.at ? (
           <Pressable onPress={() => router.push(`/person/${r.at!.driverId}`)} style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <Text style={{ fontFamily: F.condBold, fontSize: 24, color: c.ink }}>{r.at.driverName} ›</Text>
-            <T v="small">{r.at.end ? t('Had {van} from {from} to {to}.', { van: v.name, from: fmtWhen(r.at.start), to: fmtWhen(r.at.end) }) : t('Had {van} from {from} until now.', { van: v.name, from: fmtWhen(r.at.start) })} {r.at.startedBy === r.at.driverId ? t('Picked it up themselves.') : t('Given by {name}.', { name: r.at.startedByName })}</T>
+            <T v="small">{r.at.end ? t('Had {van} from {from} to {to}.', { van: vanName(v), from: fmtWhen(r.at.start), to: fmtWhen(r.at.end) }) : t('Had {van} from {from} until now.', { van: vanName(v), from: fmtWhen(r.at.start) })} {r.at.startedBy === r.at.driverId ? t('Picked it up themselves.') : t('Given by {name}.', { name: r.at.startedByName })}</T>
           </Pressable>
         ) : (
           <View style={{ borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, padding: 12, gap: 2 }}>
-            <T v="medium">{t('Nobody had {van} then.', { van: v.name })}</T>
+            <T v="medium">{t('Nobody had {van} then.', { van: vanName(v) })}</T>
             <T v="small">{[r.before ? t('Before: {name}, until {when}.', { name: r.before.driverName, when: fmtWhen(r.before.end) }) : '', r.after ? t('After: {name}, from {when}.', { name: r.after.driverName, when: fmtWhen(r.after.start) }) : ''].filter(Boolean).join(' ') || t('No history for this van around then.')}</T>
             <T v="small">{t('The app keeps the latest 500 handovers here; older ones are on the van\'s Drivers tab.')}</T>
           </View>

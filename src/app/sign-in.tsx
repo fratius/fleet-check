@@ -29,7 +29,6 @@ export default function SignIn() {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [demoBusy, setDemoBusy] = useState(false);
 
   const run = async (fn: () => Promise<void>) => {
     setErr(null); setInfo(null); setBusy(true);
@@ -73,11 +72,6 @@ export default function SignIn() {
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         </Card>
         {s.creator ? <AllCompanies /> : null}
-        <Card dashed>
-          <T v="h3">{t('Just looking?')}</T>
-          <T v="hint">{t('Open a demo company with made-up stations, managers, drivers, vans and damage checks. It\'s yours alone and you can remove it any time.')}</T>
-          <Button title={t('Open a demo company')} loading={demoBusy} onPress={async () => { setDemoBusy(true); setErr(null); try { await s.openDemo(); } catch (e) { setErr(authMessage(e)); } finally { setDemoBusy(false); } }} />
-        </Card>
         <Button v="link" title={t('Sign out')} onPress={() => s.signOut()} />
         <DeleteAccount />
         <LegalLinks />
