@@ -3,7 +3,7 @@ import { useScrollToTop } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
-  useColorScheme, type PressableProps, type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
+  useColorScheme, useWindowDimensions, type PressableProps, type ScrollViewInstance, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
@@ -286,9 +286,13 @@ export function fmtWhen(ms?: number | null) {
 }
 export const cap = (s: string | null | undefined) => { const t = String(s || ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 
-function TabCell({ label, n, on, first, onPress }: { label: string; n: number | null; on: boolean; first: boolean; onPress: () => void }) {
+function TabCell({ label, n, on, first, count, onPress }: { label: string; n: number | null; on: boolean; first: boolean; count: number; onPress: () => void }) {
   const c = useColors();
-  const [w, setW] = useState(0);
+  const [measured, setW] = useState(0);
+  // The cell's width as laid out, but never more than its share of the window: a page that lays the switch out
+  // while it is still loading may report no width or a stale one, and isn't laid out again.
+  const { width: win } = useWindowDimensions();
+  const w = Math.min(measured > 0 ? measured : Infinity, (Math.min(win, 1400) - 36) / Math.max(1, count));
   useFontsReady();
   // Long names (in some languages) wrap, and the count goes under the name; a single long word is drawn smaller.
   // On the web, when the name and the count don't fit side by side, the name gets the whole line, so the count
@@ -312,7 +316,7 @@ export function Tabs<K extends string>({ value, onChange, items }: { value: K; o
   const c = useColors();
   return (
     <View accessibilityRole="tablist" style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', marginTop: 4 }}>
-      {items.map(([k, label, n], i) => <TabCell key={k} label={label} n={n} on={k === value} first={!i} onPress={() => onChange(k)} />)}
+      {items.map(([k, label, n], i) => <TabCell key={k} label={label} n={n} on={k === value} first={!i} count={items.length} onPress={() => onChange(k)} />)}
     </View>
   );
 }
