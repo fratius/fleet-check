@@ -659,6 +659,10 @@ export interface Org {
   licenceCheckMonths?: number;
   /** Sign-in accounts of the demo company (made up, for trying the roles). */
   demoLogins?: { role: 'driver' | 'manager'; name: string; email: string; password: string; uid: string }[];
+  /** Free trial and plan, written only by the server (lib/billing.ts). Companies set up by hand have none. */
+  billing?: { status: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'paused' | 'canceled' | 'comped'; trialStart?: number; trialEnd?: number; source?: 'website' | 'app'; plan?: string | null };
+  /** The terms the fleet owner accepted when creating the company (server only). */
+  terms?: { version: string; acceptedAt: number; byName?: string };
 }
 
 export interface Member {

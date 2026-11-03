@@ -2,6 +2,7 @@ import {
   collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 
+import { standing } from './billing';
 import { fb } from './firebase';
 import { t } from './i18n';
 import { readCache, writeCache } from './offline';
@@ -55,10 +56,21 @@ export function watchInvites(orgId: string, cb: (rows: Invite[]) => void, onErro
 // Changes go through the outbox (lib/outbox.ts): kept on the phone and sent by themselves without a connection.
 export const deleteInvite = (token: string) => sendWrite('delete', ['invites', token], null, { title: t('Cancel an invite link') });
 
+/**
+ * Where the web app is: https://app.fratius.com once that domain is connected, the project's own address until then.
+ * The Deploy workflow checks and writes it to config/web (functions/scripts/set-web-url.cjs); read once per sign-in.
+ */
+let webOrigin: string | null = null;
+export async function loadWebUrl() {
+  try {
+    const u = (await getDoc(doc(db(), 'config', 'web'))).data()?.url;
+    if (typeof u === 'string' && /^https:\/\/[a-z0-9.-]+$/.test(u)) webOrigin = u;
+  } catch { /* offline: the address below */ }
+}
 /** The web address of an invite link. It opens the join page of the web app. */
 export function inviteUrl(token: string) {
-  const origin = typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? window.location.origin : `https://${fb()?.app.options.projectId}.web.app`;
-  return `${origin}/join/${token}`;
+  const here = typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? window.location.origin : null;
+  return `${webOrigin || here || `https://${fb()?.app.options.projectId}.web.app`}/join/${token}`;
 }
 /** The token from a pasted invite link (or the bare token). */
 export function tokenFrom(text: string) {
@@ -79,7 +91,7 @@ export const renameStation = (orgId: string, id: string, name: string, code: str
 export const deleteStation = (orgId: string, id: string) => sendWrite('delete', ['orgs', orgId, 'stations', id], null, { title: t('Remove a station') });
 
 /** For the app creator: every company with a few numbers. */
-export interface CompanyRow { id: string; name: string; createdAt: number; vans: number; people: number; checks: number }
+export interface CompanyRow { id: string; name: string; createdAt: number; vans: number; people: number; checks: number; trial: ReturnType<typeof standing> }
 export async function allCompanies(): Promise<CompanyRow[]> {
   const snap = await getDocs(query(collection(db(), 'orgs'), orderBy('createdAt', 'desc')));
   const count = async (orgId: string, c: string) => {
@@ -88,7 +100,7 @@ export async function allCompanies(): Promise<CompanyRow[]> {
   return Promise.all(snap.docs.map(async (d) => {
     const o = d.data() as Org;
     const [vans, people, checks] = await Promise.all([count(d.id, 'vehicles'), count(d.id, 'members'), count(d.id, 'checks')]);
-    return { id: d.id, name: o.name, createdAt: o.createdAt || 0, vans, people, checks };
+    return { id: d.id, name: o.name, createdAt: o.createdAt || 0, vans, people, checks, trial: standing(o) };
   }));
 }
 

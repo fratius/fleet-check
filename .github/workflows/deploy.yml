@@ -191,6 +191,10 @@ jobs:
           # Change the list under Settings > Secrets and variables > Actions > Variables (comma separated), then run Deploy.
           APP_CREATOR_EMAILS: ${{ vars.APP_CREATOR_EMAILS || 'casian.colto@gmail.com' }}
         run: node functions/scripts/set-creators.cjs
+      - name: Find where the web app is (app.fratius.com once that domain is connected)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/set-web-url.cjs
 
   web:
     name: Web app
@@ -231,13 +235,21 @@ jobs:
             exit 1
           fi
           echo "### Web app" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://app.fratius.com (once the domain is connected), https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
       - name: Deploy the website (fratius.com)
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
           SITE: ${{ vars.WEBSITE_SITE || 'fratius-web' }}
         run: |
           fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          # The website's Log in and Sign up buttons open the web app at app.fratius.com. Until that domain serves the
+          # app (Firebase console > Hosting > the default site > Add custom domain), they open the project's address.
+          if curl -sfL --max-time 15 https://app.fratius.com/ | grep -q '/_expo/static/js/web/'; then
+            echo "The web app is at https://app.fratius.com."
+          else
+            sed -i -e "s#https://app.fratius.com#https://$PROJECT.web.app#g" -e "s#>app.fratius.com<#>$PROJECT.web.app<#g" website/*.html
+            echo "::notice title=Web app::app.fratius.com doesn't serve the app yet, so the website links to https://$PROJECT.web.app. Connect the domain (README, \"The web app at app.fratius.com\"), then run Deploy again."
+          fi
           fb target:apply hosting website "$SITE"
           fb deploy --only hosting:website || { echo "::error title=Website::Deploy failed."; exit 1; }
           echo "### Website" >> "$GITHUB_STEP_SUMMARY"
