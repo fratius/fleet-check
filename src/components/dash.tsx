@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { Platform, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
-import { Button, Chip, F, Field, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Chip, F, Field, MARKER, Row, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { fmtDay } from '@/lib/fleet';
 import { flash } from '@/lib/flash';
 import { newId, prepare, upload } from '@/lib/images';
@@ -88,7 +88,7 @@ export function TourCard({ v, compact }: { v: Vehicle; compact?: boolean }) {
   return (
     <View style={{ backgroundColor: MARKER, borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
       <Row>
-        <Text style={{ fontFamily: F.condBold, fontSize: compact ? 22 : 26, lineHeight: compact ? 25 : 29, color: '#000', flexShrink: 1 }}>{title}</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: hs(compact ? 22 : 26), lineHeight: compact ? 25 : 29, color: '#000', flexShrink: 1 }}>{title}</Text>
         {!starting ? <View style={{ borderWidth: 1.5, borderColor: '#000', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }}><Text style={{ fontFamily: F.medium, fontSize: 13, color: '#000' }}>{t('On tour {time}', { time: dur(Date.now() - it.mine!.startAt) })}</Text></View> : null}
       </Row>
       {compact ? <T v="medium" color="#000">{vanName(v)}{vanAlias(v) ? `, ${vanAlias(v)}` : ''}</T> : null}
@@ -281,7 +281,7 @@ export function VanNow({ v }: { v: Vehicle }) {
   const det = s.runs(v.stationId) ? s.details.find((x) => x.id === v.id) : undefined;
   const stat = (value: string, label: string) => (
     <View key={label} style={{ minWidth: 76 }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 30, lineHeight: 33, color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(30), lineHeight: hs(33), color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
       <T v="small">{label}</T>
     </View>
   );
@@ -324,7 +324,7 @@ export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'va
     <View style={{ gap: 2 }}>
       <Row>
         <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{who === 'driver' ? tour.driverName : s.vanName(tour)}</T>
-        <Text style={{ fontFamily: F.condBold, fontSize: 17, color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? t('On tour') : kmText(tour.km)}</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: hs(17), color: c.ink, fontVariant: ['tabular-nums'] }}>{open ? t('On tour') : kmText(tour.km)}</Text>
       </Row>
       <T v="small">{[when,
         tour.per100 != null ? per100Text(tour.per100, tour.unit) : '', tour.endedHow === 'next' ? t('no end photo (estimated)') : tour.endedHow === 'none' ? t('no end photo') : '',

@@ -45,7 +45,13 @@ function Routes() {
 
 export default function RootLayout() {
   const c = useColors();
+  // Tessera is the app's font (OFL, assets/fonts/tessera); Barlow stays for the languages Tessera can't write
+  // (BARLOW_LANGS in components/ui.tsx).
   const [loaded, error] = useFonts({
+    Tessera_400Regular: require('../../assets/fonts/tessera/Tessera-Regular.ttf'),
+    Tessera_500Medium: require('../../assets/fonts/tessera/Tessera-Medium.ttf'),
+    Tessera_600SemiBold: require('../../assets/fonts/tessera/Tessera-SemiBold.ttf'),
+    Tessera_700Bold: require('../../assets/fonts/tessera/Tessera-Bold.ttf'),
     Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold,
     BarlowCondensed_500Medium, BarlowCondensed_600SemiBold, BarlowCondensed_700Bold,
   });

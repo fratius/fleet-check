@@ -7,7 +7,7 @@ import { BuyRow } from '@/components/buy';
 import { DriverRecordView } from '@/components/driverrec';
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
-import { Button, Card, F, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, F, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
 import { PendingChanges } from '@/components/uploads';
 import { useDriverData } from '@/lib/data';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
@@ -193,7 +193,7 @@ function Num({ value, label, tone }: { value: string; label: string; tone?: stri
   const c = useColors();
   return (
     <View style={{ width: '33.33%', minWidth: 110, padding: 12, gap: 2, borderColor: c.rule }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 28, lineHeight: 31, color: tone || c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(28), lineHeight: hs(31), color: tone || c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
       <T v="small">{label}</T>
     </View>
   );

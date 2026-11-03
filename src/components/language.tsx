@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, Card, F, T, useColors } from '@/components/ui';
+import { Button, Card, F, T, useColors, hs } from '@/components/ui';
 import { LANGS, t } from '@/lib/i18n';
 import { useLang } from '@/lib/lang';
 
@@ -21,7 +21,7 @@ function LanguageSheet({ open, onClose }: { open: boolean; onClose: () => void }
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1,
         borderColor: c.rule, backgroundColor: on ? c.ink : pressed ? c.page : c.paper })}>
       <View style={{ flex: 1, gap: 1 }}>
-        <Text style={{ fontFamily: F.cond, fontSize: 21, color: on ? c.paper : c.ink }}>{title}</Text>
+        <Text style={{ fontFamily: F.cond, fontSize: hs(21), color: on ? c.paper : c.ink }}>{title}</Text>
         <Text style={{ fontFamily: F.body, fontSize: 13, color: on ? c.paper : c.ink2 }}>{sub}</Text>
       </View>
       {busy === (code || 'device') ? <Text style={{ fontFamily: F.medium, color: on ? c.paper : c.ink2 }}>…</Text> : null}

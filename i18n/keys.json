@@ -1115,7 +1115,7 @@
   "id": "3958e474",
   "key": "{van}, frame {n} of {total}",
   "where": [
-   "src/app/scan/[id].tsx:178"
+   "src/app/scan/[id].tsx:180"
   ]
  },
  {
@@ -1494,7 +1494,7 @@
   "id": "193742ba",
   "key": "About {m} m away.",
   "where": [
-   "src/app/scan/[id].tsx:283"
+   "src/app/scan/[id].tsx:285"
   ]
  },
  {
@@ -1556,7 +1556,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:28",
    "src/app/(tabs)/(me)/account.tsx:36",
-   "src/app/(tabs)/_layout.tsx:71",
+   "src/app/(tabs)/_layout.tsx:72",
    "src/app/join/[token].tsx:136",
    "src/app/sign-in.tsx:91"
   ]
@@ -1854,7 +1854,7 @@
   "key": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:219"
+   "src/app/scan/[id].tsx:221"
   ]
  },
  {
@@ -1862,7 +1862,7 @@
   "key": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:218"
+   "src/app/scan/[id].tsx:220"
   ]
  },
  {
@@ -1920,7 +1920,7 @@
   "id": "1dfb1b87",
   "key": "Allow camera",
   "where": [
-   "src/app/scan/[id].tsx:200"
+   "src/app/scan/[id].tsx:202"
   ]
  },
  {
@@ -1934,7 +1934,7 @@
   "id": "cbd211d6",
   "key": "Allow camera access in Settings to record the video.",
   "where": [
-   "src/components/recorder.tsx:63",
+   "src/components/recorder.tsx:64",
    "src/components/video.tsx:74"
   ]
  },
@@ -2170,7 +2170,7 @@
   "key": "Back",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:182",
-   "src/app/scan/[id].tsx:293",
+   "src/app/scan/[id].tsx:295",
    "src/components/viewas.tsx:107"
   ]
  },
@@ -2458,7 +2458,7 @@
   "id": "3bddb099",
   "key": "Camera access",
   "where": [
-   "src/app/scan/[id].tsx:198"
+   "src/app/scan/[id].tsx:200"
   ]
  },
  {
@@ -2473,7 +2473,7 @@
    "src/app/(tabs)/(people)/people.tsx:112",
    "src/app/(tabs)/(people)/people.tsx:258",
    "src/app/(tabs)/(people)/people.tsx:88",
-   "src/app/scan/[id].tsx:293",
+   "src/app/scan/[id].tsx:295",
    "src/components/dash.tsx:187",
    "src/components/deleteaccount.tsx:62",
    "src/components/docscan.tsx:256",
@@ -2481,8 +2481,8 @@
    "src/components/driverrec.tsx:238",
    "src/components/history.tsx:193",
    "src/components/history.tsx:236",
-   "src/components/recorder.tsx:64",
-   "src/components/recorder.tsx:83",
+   "src/components/recorder.tsx:65",
+   "src/components/recorder.tsx:84",
    "src/components/routines.tsx:142",
    "src/components/routines.tsx:302",
    "src/components/scanchoice.tsx:45",
@@ -2947,13 +2947,13 @@
   "key": "Close",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:134",
-   "src/app/scan/[id].tsx:176",
-   "src/app/scan/[id].tsx:201",
-   "src/app/scan/[id].tsx:245",
-   "src/app/scan/[id].tsx:99",
+   "src/app/scan/[id].tsx:101",
+   "src/app/scan/[id].tsx:178",
+   "src/app/scan/[id].tsx:203",
+   "src/app/scan/[id].tsx:247",
    "src/components/damage.tsx:113",
    "src/components/language.tsx:35",
-   "src/components/ui.tsx:196"
+   "src/components/ui.tsx:232"
   ]
  },
  {
@@ -3438,14 +3438,14 @@
   "id": "4a6273cd",
   "key": "Couldn't save the photos on this phone. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:170"
+   "src/app/scan/[id].tsx:172"
   ]
  },
  {
   "id": "5df8d986",
   "key": "Couldn't save the photos.",
   "where": [
-   "src/app/scan/[id].tsx:160"
+   "src/app/scan/[id].tsx:162"
   ]
  },
  {
@@ -3512,7 +3512,7 @@
   "id": "2df44d47",
   "key": "Couldn't take the photo. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:133"
+   "src/app/scan/[id].tsx:135"
   ]
  },
  {
@@ -3792,7 +3792,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:26",
    "src/app/(tabs)/(table)/data.tsx:119",
    "src/app/(tabs)/(table)/data.tsx:79",
-   "src/app/(tabs)/_layout.tsx:69"
+   "src/app/(tabs)/_layout.tsx:70"
   ]
  },
  {
@@ -3959,14 +3959,14 @@
   "id": "36fff63c",
   "key": "Discard",
   "where": [
-   "src/app/scan/[id].tsx:255"
+   "src/app/scan/[id].tsx:257"
   ]
  },
  {
   "id": "f6d8d9f6",
   "key": "Does the vehicle line up with the outline?",
   "where": [
-   "src/app/scan/[id].tsx:283"
+   "src/app/scan/[id].tsx:285"
   ]
  },
  {
@@ -3987,7 +3987,7 @@
   "id": "e9b450d1",
   "key": "Done",
   "where": [
-   "src/app/scan/[id].tsx:176",
+   "src/app/scan/[id].tsx:178",
    "src/components/buy.tsx:44"
   ]
  },
@@ -4182,7 +4182,7 @@
   "id": "def13277",
   "key": "Drop off {van}",
   "where": [
-   "src/app/scan/[id].tsx:253"
+   "src/app/scan/[id].tsx:255"
   ]
  },
  {
@@ -4214,7 +4214,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
-   "src/app/scan/[id].tsx:179",
+   "src/app/scan/[id].tsx:181",
    "src/components/history.tsx:107"
   ]
  },
@@ -4791,7 +4791,7 @@
   "id": "9eef175e",
   "key": "Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.",
   "where": [
-   "src/components/recorder.tsx:76",
+   "src/components/recorder.tsx:77",
    "src/components/video.tsx:89"
   ]
  },
@@ -4883,7 +4883,7 @@
   "id": "67f297b4",
   "key": "Firebase isn't connected yet, so photos stay on this phone.",
   "where": [
-   "src/app/scan/[id].tsx:260"
+   "src/app/scan/[id].tsx:262"
   ]
  },
  {
@@ -4942,7 +4942,7 @@
   "id": "d7819728",
   "key": "Fit the vehicle to the outline.",
   "where": [
-   "src/app/scan/[id].tsx:283"
+   "src/app/scan/[id].tsx:285"
   ]
  },
  {
@@ -4958,7 +4958,7 @@
   "where": [
    "src/app/(tabs)/(fleet)/index.tsx:57",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:23",
-   "src/app/(tabs)/_layout.tsx:66"
+   "src/app/(tabs)/_layout.tsx:67"
   ]
  },
  {
@@ -5192,7 +5192,7 @@
   "id": "8b485903",
   "key": "Frame {n}, {label}",
   "where": [
-   "src/app/scan/[id].tsx:186"
+   "src/app/scan/[id].tsx:188"
   ]
  },
  {
@@ -6152,7 +6152,7 @@
   "id": "445f6bf2",
   "key": "Keep filming: at least {n} seconds.",
   "where": [
-   "src/components/recorder.tsx:81"
+   "src/components/recorder.tsx:82"
   ]
  },
  {
@@ -6653,7 +6653,7 @@
   "id": "a36ef8ab",
   "key": "Light",
   "where": [
-   "src/app/scan/[id].tsx:181"
+   "src/app/scan/[id].tsx:183"
   ]
  },
  {
@@ -7615,7 +7615,7 @@
   "id": "b7caebb3",
   "key": "No photo",
   "where": [
-   "src/app/scan/[id].tsx:227",
+   "src/app/scan/[id].tsx:229",
    "src/components/damage.tsx:58"
   ]
  },
@@ -8657,21 +8657,21 @@
   "id": "502ca37f",
   "key": "Open photo",
   "where": [
-   "src/components/ui.tsx:187"
+   "src/components/ui.tsx:223"
   ]
  },
  {
   "id": "7ae2a9b7",
   "key": "Open photo: {caption}",
   "where": [
-   "src/components/ui.tsx:187"
+   "src/components/ui.tsx:223"
   ]
  },
  {
   "id": "85d84762",
   "key": "Open Settings to allow the camera",
   "where": [
-   "src/app/scan/[id].tsx:200"
+   "src/app/scan/[id].tsx:202"
   ]
  },
  {
@@ -8927,7 +8927,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:25",
    "src/app/(tabs)/(people)/people.tsx:32",
    "src/app/(tabs)/(people)/people.tsx:40",
-   "src/app/(tabs)/_layout.tsx:68"
+   "src/app/(tabs)/_layout.tsx:69"
   ]
  },
  {
@@ -9029,7 +9029,7 @@
   "id": "1f644f37",
   "key": "Photo deleted",
   "where": [
-   "src/components/ui.tsx:172"
+   "src/components/ui.tsx:208"
   ]
  },
  {
@@ -9074,7 +9074,7 @@
   "key": "photos",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
-   "src/app/scan/[id].tsx:214"
+   "src/app/scan/[id].tsx:216"
   ]
  },
  {
@@ -9126,7 +9126,7 @@
   "id": "7940a0da",
   "key": "Photos upload to your company's storage, so the walk-around is kept as evidence.",
   "where": [
-   "src/app/scan/[id].tsx:260"
+   "src/app/scan/[id].tsx:262"
   ]
  },
  {
@@ -9135,7 +9135,7 @@
   "one": "photos, {n} skipped",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
-   "src/app/scan/[id].tsx:214"
+   "src/app/scan/[id].tsx:216"
   ]
  },
  {
@@ -9186,7 +9186,7 @@
   "id": "9055f977",
   "key": "Pick up {van}",
   "where": [
-   "src/app/scan/[id].tsx:253"
+   "src/app/scan/[id].tsx:255"
   ]
  },
  {
@@ -9217,7 +9217,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
-   "src/app/scan/[id].tsx:179",
+   "src/app/scan/[id].tsx:181",
    "src/components/history.tsx:105"
   ]
  },
@@ -9840,7 +9840,7 @@
   "key": "Retake",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:174",
-   "src/app/scan/[id].tsx:287"
+   "src/app/scan/[id].tsx:289"
   ]
  },
  {
@@ -9848,7 +9848,7 @@
   "key": "retakes",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:48",
-   "src/app/scan/[id].tsx:215"
+   "src/app/scan/[id].tsx:217"
   ]
  },
  {
@@ -9901,7 +9901,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:24",
    "src/app/(tabs)/(review)/review.tsx:37",
    "src/app/(tabs)/(review)/review.tsx:78",
-   "src/app/(tabs)/_layout.tsx:67"
+   "src/app/(tabs)/_layout.tsx:68"
   ]
  },
  {
@@ -10228,7 +10228,7 @@
   "key": "Save {n} photos",
   "one": "Save {n} photo",
   "where": [
-   "src/app/scan/[id].tsx:254"
+   "src/app/scan/[id].tsx:256"
   ]
  },
  {
@@ -10285,7 +10285,7 @@
   "id": "0f673564",
   "key": "Save the pick-up photos",
   "where": [
-   "src/app/scan/[id].tsx:253"
+   "src/app/scan/[id].tsx:255"
   ]
  },
  {
@@ -10366,21 +10366,21 @@
   "id": "369c534d",
   "key": "Saving",
   "where": [
-   "src/app/scan/[id].tsx:156"
+   "src/app/scan/[id].tsx:158"
   ]
  },
  {
   "id": "e16cdd31",
   "key": "Saving {done} of {total} on this phone",
   "where": [
-   "src/app/scan/[id].tsx:167"
+   "src/app/scan/[id].tsx:169"
   ]
  },
  {
   "id": "5da14777",
   "key": "Saving the photos on this phone…",
   "where": [
-   "src/app/scan/[id].tsx:164"
+   "src/app/scan/[id].tsx:166"
   ]
  },
  {
@@ -10871,7 +10871,7 @@
   "id": "3da47453",
   "key": "Skip",
   "where": [
-   "src/app/scan/[id].tsx:297"
+   "src/app/scan/[id].tsx:299"
   ]
  },
  {
@@ -10893,7 +10893,7 @@
   "key": "Skipped",
   "where": [
    "src/app/(tabs)/(log)/log.tsx:180",
-   "src/app/scan/[id].tsx:227"
+   "src/app/scan/[id].tsx:229"
   ]
  },
  {
@@ -11057,7 +11057,7 @@
   "id": "e92d02d3",
   "key": "Start recording",
   "where": [
-   "src/components/recorder.tsx:84"
+   "src/components/recorder.tsx:85"
   ]
  },
  {
@@ -11228,7 +11228,7 @@
   "id": "ee0d9dc8",
   "key": "Stop recording",
   "where": [
-   "src/components/recorder.tsx:84"
+   "src/components/recorder.tsx:85"
   ]
  },
  {
@@ -11475,7 +11475,7 @@
   "id": "c108c747",
   "key": "Take photo {n}",
   "where": [
-   "src/app/scan/[id].tsx:295"
+   "src/app/scan/[id].tsx:297"
   ]
  },
  {
@@ -11585,7 +11585,7 @@
   "id": "a364f3b8",
   "key": "Tap a photo to retake it.",
   "where": [
-   "src/app/scan/[id].tsx:220"
+   "src/app/scan/[id].tsx:222"
   ]
  },
  {
@@ -11650,7 +11650,7 @@
   "id": "80da9307",
   "key": "Tap again to stop",
   "where": [
-   "src/app/scan/[id].tsx:176"
+   "src/app/scan/[id].tsx:178"
   ]
  },
  {
@@ -11716,7 +11716,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:27",
    "src/app/(tabs)/(log)/log.tsx:29",
    "src/app/(tabs)/(log)/log.tsx:33",
-   "src/app/(tabs)/_layout.tsx:70"
+   "src/app/(tabs)/_layout.tsx:71"
   ]
  },
  {
@@ -11932,9 +11932,9 @@
   "id": "3e5c42fa",
   "key": "The camera couldn't start.",
   "where": [
-   "src/app/scan/[id].tsx:274",
-   "src/components/recorder.tsx:54",
-   "src/components/recorder.tsx:72"
+   "src/app/scan/[id].tsx:276",
+   "src/components/recorder.tsx:55",
+   "src/components/recorder.tsx:73"
   ]
  },
  {
@@ -12280,7 +12280,7 @@
   "id": "0e91970e",
   "key": "The photos are saved as a walk-around.",
   "where": [
-   "src/app/scan/[id].tsx:242",
+   "src/app/scan/[id].tsx:244",
    "src/components/uploads.tsx:65"
   ]
  },
@@ -12288,7 +12288,7 @@
   "id": "080d6247",
   "key": "The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.",
   "where": [
-   "src/app/scan/[id].tsx:217"
+   "src/app/scan/[id].tsx:219"
   ]
  },
  {
@@ -12316,14 +12316,14 @@
   "id": "f19fa04d",
   "key": "The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:259"
+   "src/app/scan/[id].tsx:261"
   ]
  },
  {
   "id": "077e462b",
   "key": "The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:258"
+   "src/app/scan/[id].tsx:260"
   ]
  },
  {
@@ -12503,7 +12503,7 @@
   "id": "53bc068c",
   "key": "The walk-around uses the camera with an outline to fit the vehicle into.",
   "where": [
-   "src/app/scan/[id].tsx:199"
+   "src/app/scan/[id].tsx:201"
   ]
  },
  {
@@ -12884,7 +12884,7 @@
   "key": "This vehicle isn't in the fleet any more.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:75",
-   "src/app/scan/[id].tsx:99"
+   "src/app/scan/[id].tsx:101"
   ]
  },
  {
@@ -13089,7 +13089,7 @@
   "key": "total time",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:46",
-   "src/app/scan/[id].tsx:213"
+   "src/app/scan/[id].tsx:215"
   ]
  },
  {
@@ -13196,7 +13196,7 @@
   "key": "Try again",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:62",
-   "src/app/scan/[id].tsx:244",
+   "src/app/scan/[id].tsx:246",
    "src/components/uploads.tsx:68"
   ]
  },
@@ -13629,7 +13629,7 @@
   "id": "a75e1e28",
   "key": "Use photo",
   "where": [
-   "src/app/scan/[id].tsx:288"
+   "src/app/scan/[id].tsx:290"
   ]
  },
  {
@@ -13709,7 +13709,7 @@
    "src/app/(tabs)/(table)/data.tsx:109",
    "src/app/(tabs)/(table)/data.tsx:149",
    "src/app/(tabs)/(table)/data.tsx:198",
-   "src/app/(tabs)/_layout.tsx:66"
+   "src/app/(tabs)/_layout.tsx:67"
   ]
  },
  {
@@ -13911,7 +13911,7 @@
   "id": "3871fb25",
   "key": "Walk-around done",
   "where": [
-   "src/app/scan/[id].tsx:179"
+   "src/app/scan/[id].tsx:181"
   ]
  },
  {

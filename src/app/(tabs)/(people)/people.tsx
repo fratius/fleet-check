@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 
-import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchInvites, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -147,8 +147,8 @@ function StationPeople({ station, members, invites }: { station: Station; member
     <View style={{ gap: 12, marginTop: 8 }}>
       <View style={{ borderBottomWidth: 4, borderColor: c.ink, paddingBottom: 6, gap: 2 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <Text style={{ fontFamily: F.condBold, fontSize: 30, lineHeight: 33, color: c.ink, flexShrink: 1 }}>{station.name}</Text>
-          {station.code ? <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 3, paddingHorizontal: 6 }}><Text style={{ fontFamily: F.cond, fontSize: 15, letterSpacing: 1, color: c.ink }}>{station.code}</Text></View> : null}
+          <Text style={{ fontFamily: F.condBold, fontSize: hs(30), lineHeight: hs(33), color: c.ink, flexShrink: 1 }}>{station.name}</Text>
+          {station.code ? <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 3, paddingHorizontal: 6 }}><Text style={{ fontFamily: F.cond, fontSize: hs(15), letterSpacing: 1, color: c.ink }}>{station.code}</Text></View> : null}
         </View>
         <T v="small">{[tp(managers.length, '{n} fleet manager', '{n} fleet managers'), tp(drivers.length, '{n} driver', '{n} drivers'), tp(vans, '{n} van', '{n} vans')].join(', ')}</T>
       </View>
@@ -289,16 +289,16 @@ function BossRow({ m, label }: { m: Member; label: string }) {
     <Pressable accessibilityRole="button" accessibilityLabel={t('{name}, {role}, open', { name: m.name, role: label })} onPress={() => router.push(`/person/${m.uid}`)}
       style={({ pressed }) => ({ backgroundColor: c.ink, borderRadius: 4, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: pressed ? 0.85 : 1 })}>
       <View style={{ width: 46, height: 46, borderRadius: 4, backgroundColor: MARKER, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontFamily: F.condBold, fontSize: 21, color: '#000' }}>{initials(m.name)}</Text>
+        <Text style={{ fontFamily: F.condBold, fontSize: hs(21), color: '#000' }}>{initials(m.name)}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-        <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: 22, lineHeight: 25, color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
+        <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: hs(22), lineHeight: hs(25), color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone || label}</Text>
           {van ? <Plate small text={vanName(van)} /> : null}
         </View>
       </View>
-      <Text style={{ fontFamily: F.cond, fontSize: 26, color: fg }}>{fwd()}</Text>
+      <Text style={{ fontFamily: F.cond, fontSize: hs(26), color: fg }}>{fwd()}</Text>
     </Pressable>
   );
 }
@@ -317,7 +317,7 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
         <Pressable accessibilityRole="button" accessibilityLabel={t('{name}, {role}, open', { name: m.name, role: t('Driver') })} onPress={() => router.push(`/person/${m.uid}`)}
           style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: c.ink2, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontFamily: F.cond, fontSize: 15, color: c.ink2 }}>{initials(m.name)}</Text>
+            <Text style={{ fontFamily: F.cond, fontSize: hs(15), color: c.ink2 }}>{initials(m.name)}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
             <T v="medium" numberOfLines={1}>{me ? t('{name} (you)', { name: m.name }) : m.name}</T>

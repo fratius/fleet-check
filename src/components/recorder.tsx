@@ -4,7 +4,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, MARKER, T } from '@/components/ui';
-import { t } from '@/lib/i18n';
+import { t, lang } from '@/lib/i18n';
 import type { Recorded } from '@/lib/videos';
 
 /** The server's limits for a van video (functions: VIDEO_MIN_MS, VIDEO_MAX_MS). */
@@ -25,6 +25,7 @@ export function VideoRecorder({ open, onDone }: { open: boolean; onDone: (r: Rec
 }
 
 function Recorder({ onDone }: { onDone: (r: Recorded | null) => void }) {
+  const st = styles();
   const [perm, request] = useCameraPermissions();
   const cam = useRef<CameraView>(null);
   const [ready, setReady] = useState(false);
@@ -93,7 +94,8 @@ function Recorder({ onDone }: { onDone: (r: Recorded | null) => void }) {
   );
 }
 
-const st = StyleSheet.create({
+// Made per language: the fonts and heading sizes depend on it (components/ui.tsx).
+const makeSheet = () => StyleSheet.create({
   page: { flex: 1, backgroundColor: '#000' },
   bar: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, backgroundColor: 'rgba(0,0,0,0.55)' },
   time: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -102,3 +104,11 @@ const st = StyleSheet.create({
   recIn: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#FF3B30' },
   stopIn: { width: 28, height: 28, borderRadius: 4, backgroundColor: '#FF3B30' },
 });
+
+const sheets = new Map<string, ReturnType<typeof makeSheet>>();
+function styles() {
+  const k = lang();
+  let s = sheets.get(k);
+  if (!s) { s = makeSheet(); sheets.set(k, s); }
+  return s;
+}

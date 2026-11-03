@@ -5,7 +5,7 @@ import { ActivityIndicator, Linking, Text, View } from 'react-native';
 import { BUY_NAME, buyState, buyTitle, cancelText, cardLine, flagText, isOpenBuy, litresText, money, STALE_BUY, waitingTitle } from '@/components/buy';
 import { kmText, takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
-import { Button, Card, Chip, F, Field, MARKER, Pill, Plate, Row, Screen, T, ZoomPhoto, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Pill, Plate, Row, Screen, T, ZoomPhoto, fmtWhen, useColors, hs } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
@@ -96,7 +96,7 @@ function Steps({ kind, at, card }: { kind: BuyKind; at: StepKey; card: boolean |
 function Now({ title, line, children }: { title: string; line?: string; children?: React.ReactNode }) {
   return (
     <View style={{ backgroundColor: MARKER, borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 26, lineHeight: 29, color: '#000' }}>{title}</Text>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(26), lineHeight: hs(29), color: '#000' }}>{title}</Text>
       {line ? <T v="body" color="#000">{line}</T> : null}
       {children}
     </View>
@@ -181,7 +181,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       <>
         {head}
         <View style={{ borderWidth: 3, borderColor: c.alert, borderRadius: 4, padding: 14, gap: 8, backgroundColor: c.paper }}>
-          <Text style={{ fontFamily: F.condBold, fontSize: 30, lineHeight: 32, color: c.alert }}>
+          <Text style={{ fontFamily: F.condBold, fontSize: hs(30), lineHeight: hs(32), color: c.alert }}>
             {refused ? (p.decision?.byName ? t('{name} refused it', { name: p.decision.byName }) : t('Your fleet manager refused it'))
               : kind === 'wash' ? t('Stop. Don\'t start the wash.') : t('Stop. Don\'t start the pump.')}
           </Text>
@@ -417,7 +417,7 @@ function Summary({ p }: { p: Purchase }) {
 
       {p.status === 'waiting' && staffHere ? (
         <View style={{ borderWidth: 3, borderColor: c.alert, borderRadius: 4, padding: 14, gap: 8, backgroundColor: c.paper }}>
-          <Text style={{ fontFamily: F.condBold, fontSize: 26, lineHeight: 29, color: c.alert }}>{waitingTitle(p)}</Text>
+          <Text style={{ fontFamily: F.condBold, fontSize: hs(26), lineHeight: hs(29), color: c.alert }}>{waitingTitle(p)}</Text>
           <T v="medium">{cardLine(p)}</T>
           <T v="small">{t('Stopped {time} ago. Allow it if you know why (another van\'s card, a replacement card); refuse it if not. The driver\'s screen changes at once.', { time: dur(Date.now() - (p.card.at || p.createdAt)) })}</T>
           {ownAsk ? <T v="body">{t('It\'s your own: someone else has to allow it.')}</T> : (

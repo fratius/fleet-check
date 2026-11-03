@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
-import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
@@ -174,7 +174,7 @@ function Big({ value, label }: { value: string; label: string }) {
   const c = useColors();
   return (
     <View style={{ width: '33.33%', minWidth: 104, paddingHorizontal: 12, paddingVertical: 10, gap: 1 }}>
-      <Text style={{ fontFamily: F.condBold, fontSize: 28, lineHeight: 31, color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(28), lineHeight: hs(31), color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
       <T v="small">{label}</T>
     </View>
   );
@@ -353,7 +353,7 @@ function WhoHad() {
       {r && v ? (
         r.at ? (
           <Pressable onPress={() => router.push(`/person/${r.at!.driverId}`)} style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-            <Text style={{ fontFamily: F.condBold, fontSize: 24, color: c.ink }}>{r.at.driverName} ›</Text>
+            <Text style={{ fontFamily: F.condBold, fontSize: hs(24), color: c.ink }}>{r.at.driverName} ›</Text>
             <T v="small">{r.at.end ? t('Had {van} from {from} to {to}.', { van: vanName(v), from: fmtWhen(r.at.start), to: fmtWhen(r.at.end) }) : t('Had {van} from {from} until now.', { van: vanName(v), from: fmtWhen(r.at.start) })} {r.at.startedBy === r.at.driverId ? t('Picked it up themselves.') : t('Given by {name}.', { name: r.at.startedByName })}</T>
           </Pressable>
         ) : (

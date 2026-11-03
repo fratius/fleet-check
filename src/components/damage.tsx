@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { dur } from '@/components/history';
-import { Button, F, MARKER, Pill, Row, T, ZoomPhoto, cap, fmtWhen, useColors } from '@/components/ui';
+import { Button, F, MARKER, Pill, Row, T, ZoomPhoto, cap, fmtWhen, useColors, hs } from '@/components/ui';
 import { cropRegion, likelySame, whoHadIt, type Damage } from '@/lib/damage';
 import { fwd, loc, t, tp } from '@/lib/i18n';
 import { photoUrl } from '@/lib/images';
@@ -104,7 +104,7 @@ export function DamageBubble({ d, history, notes, vehicleId, onClose, onMore }: 
       shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
         <View style={{ minWidth: 26, height: 26, borderRadius: 13, backgroundColor: c.alert, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-          <Text style={{ fontFamily: F.cond, fontSize: 15, color: '#fff' }}>{d.no}</Text>
+          <Text style={{ fontFamily: F.cond, fontSize: hs(15), color: '#fff' }}>{d.no}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <T v="h3" numberOfLines={1}>{title(d)}</T>
@@ -151,7 +151,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
       style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: on ? c.alert : c.ink, borderRadius: 4, padding: 12, gap: 10 }}>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
         <View style={{ minWidth: 30, height: 30, borderRadius: 15, backgroundColor: c.alert, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-          <Text style={{ fontFamily: F.cond, fontSize: 17, color: '#fff' }}>{d.no}</Text>
+          <Text style={{ fontFamily: F.cond, fontSize: hs(17), color: '#fff' }}>{d.no}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
           <T v="h3">{title(d)}</T>

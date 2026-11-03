@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, Pressable, Text, View, type ViewStyle } from 'react-native';
 import Svg, { G, Polygon, Polyline } from 'react-native-svg';
 
-import { F, MARKER, T, useColors } from '@/components/ui';
+import { F, MARKER, T, useColors, hs } from '@/components/ui';
 import type { Spec } from '@/lib/frames';
 import { t } from '@/lib/i18n';
 import { HOME_VIEW, VIEWS, camera, vanMesh, yawFacing, type Face3, type Line3, type Pos, type V3 } from '@/lib/van3d';
@@ -115,7 +115,7 @@ export function Van3D({ sp, dots, selected, onSelect, bubble, focus, height = 34
         <Pressable key={d.key} accessibilityRole="button" accessibilityLabel={t('Damage {no}', { no: d.label })} hitSlop={8} onPress={() => onSelect(on ? null : d.key)}
           style={{ position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center',
             backgroundColor: on ? MARKER : c.alert, borderWidth: 2, borderColor: on ? '#000' : '#FFFFFF', borderStyle: d.pos.approx ? 'dashed' : 'solid', zIndex: on ? 3 : 2 }}>
-          <Text style={{ fontFamily: F.cond, fontSize: on ? 16 : 14, color: on ? '#000' : '#FFFFFF', lineHeight: on ? 18 : 16 }}>{d.label}</Text>
+          <Text style={{ fontFamily: F.cond, fontSize: hs(on ? 16 : 14), color: on ? '#000' : '#FFFFFF', lineHeight: on ? 18 : 16 }}>{d.label}</Text>
         </Pressable>,
       );
     }
