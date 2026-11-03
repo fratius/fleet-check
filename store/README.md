@@ -20,6 +20,11 @@ the overview, with Google Play.
   channel), as long as no native package changed (`scripts/native.mjs`; Deploy warns when one did: then raise the
   version in `app.json`, run `node scripts/native.mjs --write` and make new store builds).
 
+- **The store apps sell nothing.** Sign-up with 30 days free and, later, payment (Stripe) happen on fratius.com and
+  in the web app only. The iPhone and Android apps show no prices, plans, payment buttons or links to them
+  (Apple 3.1.3(c) enterprise services; Google Play "consumption-only"): trial and plan texts are web-only
+  (`Platform.OS === 'web'`). Keep it that way, or the review will ask for in-app purchases.
+
 ## Steps (yours)
 
 ### 1. Developer accounts

@@ -172,7 +172,7 @@ h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; le
 .nav a { text-decoration: none; font: 600 18px/1 var(--display); }
 .nav a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 .top .btn .short { display: none; }
-.top .cta { white-space: nowrap; }
+.top .cta, .top .login { white-space: nowrap; }
 @media (max-width: 1180px) {
   .nav { display: none; }
   .lang { margin-inline-start: auto; }
@@ -181,11 +181,20 @@ h2 { font-size: clamp(40px, 5.2vw, 66px); font-weight: 700; line-height: .98; le
 @media (max-width: 860px) {
   .top .cta .long { display: none; }
   .top .cta .short { display: inline; }
+  .top .login { display: none; } /* the hero has the log-in link right under the header */
 }
+@media (max-width: 700px) {
+  .brand-text small { display: none; }
+}
+/* Set by fitHeader() in the script when a language's words don't fit in one line. */
+.top-in.t-nav .nav { display: none; }
+.top-in.t-nav .lang { margin-inline-start: auto; }
+.top-in.t-short .cta .long { display: none; }
+.top-in.t-short .cta .short { display: inline; }
+.top-in.t-login .login, .top-in.t-cta .cta, .top-in.t-small .brand-text small { display: none; }
 /* On phones the header holds the name and the languages; the big button to start is right under it in the hero. */
 @media (max-width: 480px) {
   .top .cta { display: none; }
-  .brand-text small { display: none; }
 }
 
 /* Language switcher: the visitor's language, English, and a button for all languages */
@@ -230,6 +239,8 @@ h1 { font-size: clamp(56px, 7.6vw, 110px); font-weight: 700; line-height: .93; l
 h1 .mark { position: relative; z-index: -1; }
 .lede { font-size: clamp(18px, 1.55vw, 21px); max-width: 52ch; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.login-line { margin: 0; font-size: 16px; color: var(--ink2); }
+.login-line a { color: var(--ink); font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; padding: 0; margin: 0; color: var(--ink2); font-size: 15px; }
 .meta li { display: inline-flex; align-items: center; gap: 8px; }
 @media (max-width: 1000px) { .hero-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -453,6 +464,8 @@ h1 .mark { position: relative; z-index: -1; }
 .need { list-style: none; padding: 0; margin: 24px 0 0; }
 .need li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 16px; }
 .need li .tick { margin-top: 3px; }
+.selfserve { margin-top: 24px; padding: 18px; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper); display: grid; gap: 14px; justify-items: start; }
+.selfserve p { margin: 0; font-size: 16px; }
 .form-card { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
 .preview-note { margin: 16px 16px 0; padding: 12px 14px; border: 2px dashed var(--ink2); border-radius: var(--r); font-size: 14px; color: var(--ink2); }
 .stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 16px 0 0; padding: 0; border-block: 2px solid var(--ink); }
@@ -558,7 +571,8 @@ h1 .mark { position: relative; z-index: -1; }
         <div class="lang-grid" id="lang-grid"></div>
       </div>
     </div>
-    <a class="btn btn-marker btn-sm cta" href="#start"><span class="long">Start 30 days free</span><span class="short">Try free</span></a>
+    <a class="btn btn-sm login" href="https://app.fratius.com/" data-login>Log in</a>
+    <a class="btn btn-marker btn-sm cta" href="#start" data-signup><span class="long">Start 30 days free</span><span class="short">Try free</span></a>
   </div>
 </header>
 
@@ -570,9 +584,10 @@ h1 .mark { position: relative; z-index: -1; }
       <h1>Every van. Every driver. <span class="mark">Right now.</span></h1>
       <p class="lede">Feel the pulse of your fleet in real time. Who has which van, every handover with photos, fuel at the pump, warning lights and deadlines, all on one screen. Backed by a history nobody can rewrite.</p>
       <div class="cta-row">
-        <a class="btn btn-marker btn-lg" href="#start">Start 30 days free</a>
+        <a class="btn btn-marker btn-lg" href="#start" data-signup>Start 30 days free</a>
         <a class="btn btn-lg" href="#features">See the features</a>
       </div>
+      <p class="login-line">Already using Fratius? <a href="https://app.fratius.com/" data-login>Log in</a></p>
       <ul class="meta">
         <li><span class="tick" aria-hidden="true"></span>30 days free on every plan</li>
         <li><span class="tick" aria-hidden="true"></span>iPhone, Android and web</li>
@@ -968,6 +983,10 @@ h1 .mark { position: relative; z-index: -1; }
         <li><span class="tick" aria-hidden="true"></span>How many stations and vans you run</li>
         <li><span class="tick" aria-hidden="true"></span>A work email and a mobile number</li>
       </ul>
+      <div class="selfserve" id="selfserve" hidden>
+        <p><strong>Rather start right away?</strong> Create your account and your company in the web app. Your 30 days start at once.</p>
+        <a class="btn btn-marker btn-lg" href="https://app.fratius.com/sign-in?mode=up" data-signup>Create your account</a>
+      </div>
     </div>
 
     <form class="form-card" id="signup" novalidate>
@@ -1077,8 +1096,11 @@ h1 .mark { position: relative; z-index: -1; }
     stores: {
       appStore: null,     // App Store link once the iPhone app is live
       googlePlay: null,   // Google Play link once the Android app is live
-      webApp: 'https://fleet-check-2aa34.web.app',
+      webApp: 'https://app.fratius.com',
     },
+    /* The web app. Deploy points these links at the project's own address until app.fratius.com serves the app.
+       selfServe: the "Start 30 days free" buttons open "Create account" in the web app (else the request form). */
+    app: { url: 'https://app.fratius.com', selfServe: false },
     signup: {
       live: true,              // false shows a preview that sends nothing
       endpoint: '/api/signup', // the websiteSignup function, through Firebase Hosting
@@ -1163,6 +1185,16 @@ h1 .mark { position: relative; z-index: -1; }
     el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   });
 
+  /* ───────── Log in and sign up: the web app ───────── */
+  const signupUrl = (planId) => `${CONFIG.app.url}/sign-in?mode=up${planId ? '&plan=' + encodeURIComponent(planId) : ''}`;
+  document.querySelectorAll('[data-login]').forEach((a) => { a.href = CONFIG.app.url + '/'; });
+  if (CONFIG.app.selfServe) {
+    document.querySelectorAll('[data-signup]').forEach((a) => { a.href = signupUrl(null); });
+    $('#selfserve').hidden = false;
+  } else {
+    document.querySelectorAll('[data-signup]').forEach((a) => { if (!a.closest('#selfserve')) a.href = '#start'; });
+  }
+
   /* ───────── Pricing (the only place prices are shown), store buttons, legal links ───────── */
   function renderPlans() {
     $('#plans').innerHTML = CONFIG.plans.map((p) => `
@@ -1171,7 +1203,7 @@ h1 .mark { position: relative; z-index: -1; }
         <p class="limit">${esc(limitText(p))}</p>
         <p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>
         <p><span class="pill mk">${esc(t('{n} days free', { n: CONFIG.trialDays }))}</span></p>
-        <a class="btn btn-marker" href="#start" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
+        <a class="btn btn-marker" href="${esc(CONFIG.app.selfServe ? signupUrl(p.id) : '#start')}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
       </article>`).join('') + `
       <article class="plan ai">
         <h3>${esc(t(CONFIG.aiPlan.name))}</h3>
@@ -1613,7 +1645,23 @@ h1 .mark { position: relative; z-index: -1; }
     if (step === 2) fillSummary();
     renderDone();
     pin();
+    fitHeader();
   }
+
+  /* The header in one line in every language: what doesn't fit goes, one step at a time (the sections, the long
+     button text, the log-in button, the tagline, the button). Each is also reachable right below the header. */
+  const FIT_STEPS = ['t-nav', 't-short', 't-login', 't-small', 't-cta'];
+  function fitHeader() {
+    const bar = $('.top-in');
+    bar.classList.remove(...FIT_STEPS);
+    for (const c of FIT_STEPS) {
+      if (bar.scrollWidth <= bar.clientWidth) break;
+      bar.classList.add(c);
+    }
+  }
+  let fitting = 0;
+  window.addEventListener('resize', () => { cancelAnimationFrame(fitting); fitting = requestAnimationFrame(fitHeader); });
+  if (document.fonts) document.fonts.ready.then(fitHeader).catch(() => {});
   renderAll();
   document.documentElement.classList.remove('i18n-wait');
 
