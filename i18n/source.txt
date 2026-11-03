@@ -12,12 +12,14 @@ eca8eab2	{company}: you're its fleet owner. Make another person fleet owner firs
 bd23c615	{day}, fine	[components/driverrec.tsx]
 ae4223c9	{day}, problem	[components/driverrec.tsx]
 3b2cab20	{done} of {n} spot || {done} of {n} spots
+d699c733	{driver} has this van, not {name}.
 4d088bbf	{field}: enter a date like {example}.
 3e0fe956	{field}: enter a number.
 b7384514	{from} to {to} km so far: {km} km
 36399bd6	{from} to {to} km: {km} km driven
 dc190662	{from} to {to}, {time}
 04ccdb8d	{from} to now, {time}
+885297c8	{issue}	[purchases.ts]
 12e9e5a9	{kind}, {fault}	[components/driverrec.tsx]
 6a2d4489	{kind}: {what}	[components/driverrec.tsx]
 88d529c3	{km} a year under the allowance.
@@ -26,6 +28,8 @@ dc190662	{from} to {to}, {time}
 ff4d79e4	{label} {when}	[index.tsx]
 23226033	{label} overdue	[index.tsx]
 777c5696	{label}, {when}	[components/damage.tsx]
+89738422	{litres} l is more than the {tank} l tank holds.
+0a70bff1	{litres} l, but the tank had room for about {room} l ({tank} l tank, {pct}% on the dashboard photo).
 02cc62b2	{m} m high	[vehicle/[id].tsx]
 0bf63986	{n} already on the van || {n} already on the van
 ed74a81e	{n} approved damage || {n} approved damages	[index.tsx, person/[uid].tsx, components/history.tsx]
@@ -92,6 +96,7 @@ c67738c1	{name} (retired)	[data.tsx]
 4e8caf71	{name} allowed it. Wash the van, then take the photo of the receipt.
 8810f412	{name} at {place}	[purchases.ts]
 f4d0f776	{name} didn't take an end photo: this ends their tour and starts yours.
+7531a6fe	{name} doesn't have this van.
 67a60ff2	{name} gave it to you {when} ({time} ago). Before you drive, film it or take its photos, so damage that was already there isn't put on you. Your fleet manager sees if they're missing.
 83fb2aac	{name} gave you {van}. Before you drive, take the pick-up video or photos.
 2ac875ad	{name} gave you a van
@@ -100,6 +105,7 @@ f73c9121	{name} had {van} then. Use that van
 4e67314d	{name} had the van.
 657276dc	{name} has {van}. Moving them to another station or making them an owner makes the van free.
 ad32ebdc	{name} has it now
+b416e68e	{name} has no fuel card for the van.
 37d9a7a7	{name} has the van and does these.
 a4fd7848	{name} has the van and hasn't done it yet.
 f2324c2a	{name} is at the car wash. {why} Allow or refuse the wash.
@@ -113,6 +119,8 @@ d8414582	{name} refused it	[buy/[id].tsx]
 af5afc83	{name} refused it. Cancel it.
 1424f7b4	{name} refused it. Don't fill up: cancel it in the app.
 3dd5e211	{name} refused it. Don't wash the van: cancel it in the app.
+14bfdd1a	{name} saved {litres} l; the receipt says {read} l.
+0aabcc4e	{name} saved a total of {total}; the receipt says {read}.
 c19ac681	{name} stays at {station}, so the van becomes free.
 f0e5615c	{name} took the dashboard photo (the AI couldn't read it).
 3640c13f	{name} took the dashboard photo.
@@ -172,6 +180,7 @@ a533bead	2. Tap {install} or {add}.
 1cf11ed8	4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.
 0a8dd6ad	7 days	[data.tsx]
 170621ac	90 days	[data.tsx]
+6f411597	A bank card, not the van's fuel card.
 d897def3	A change	[lib/outbox.ts, lib/store.ts]
 c6118305	A change to a driver record
 1870ecd4	A change to a station
@@ -264,6 +273,7 @@ f55038f9	Allow it	[buy/[id].tsx]
 9a746b65	Allowing…	[buy/[id].tsx]
 992a3106	Already on the van: {damage}, found {when}. It stays one damage, seen again.
 05417857	Also close: {types}.	[add.tsx]
+6a1f0c2a	Also on the receipt: {items}.
 c18a1a2a	Amazon livery	[components/vanfacts.tsx]
 a988d67a	An account with this email already exists. Sign in instead.
 ec850950	An answer about the vehicle type
@@ -341,6 +351,9 @@ cee18487	Cancelling…	[buy/[id].tsx]
 9e32521d	car	[lib/frames.ts]
 bc47a3dc	Car	[lib/frames.ts]
 17870f43	card ending {last4}	[buy/[id].tsx]
+61b0c056	Card ending {last4} ({issuer}); this van's card ends {expected}.
+62ecc76e	Card ending {last4}; this van's card ends {expected}.
+ec411840	Card ending {last4}.	[demo.ts, purchases.ts]
 83e9602e	Card not checked yet.
 ce4cfe4a	Cargo area clean and empty
 354e8c1f	Cargo space	[components/vanfacts.tsx]
@@ -525,6 +538,7 @@ dc3decbb	Details	[vehicle/[id].tsx]
 9e14d015	Did you charge the van during the tour?
 47ddf376	Did you refuel during the tour?
 efb60b15	Diesel	[vehicle/[id].tsx, lib/fleet.ts]
+f89d29f3	Diesel on the receipt; the van runs on petrol.
 e603af86	dirt or residue	[check/[id].tsx]
 c6a00d4e	Dirt or residue	[check/[id].tsx]
 36fff63c	Discard	[app/scan/[id].tsx]
@@ -987,6 +1001,7 @@ a1aa928f	Next spot	[check/[id].tsx]
 fd128635	no	[data.tsx]
 816c52fd	No	[components/dash.tsx, components/vanfacts.tsx]
 904d31c6	no card	[data.tsx]
+78b226e3	No card in the photo.
 a58f7462	no card, allowed	[data.tsx]
 a68a5573	no card, refused	[data.tsx]
 145b57a6	No check recorded yet
@@ -1023,8 +1038,10 @@ e0663bad	no end photo	[components/dash.tsx]
 26e07556	no end photo (estimated)
 78d37163	No end-of-tour photo	[review.tsx]
 bd4d9336	No fleet manager at {station} yet.
+5aad87e0	No fuel card at the pump; {name} allowed it.
 6c5ff2b0	No fuel card at the pump.
 3c29d55a	No fuel card on the van's record, nothing to check.
+67af012e	No fuel for this van on the receipt.
 791b6a4b	No history for this van around then.
 e2d281e8	No km yet	[index.tsx]
 ed222d6a	No number plate yet. Add it under Details: the plate is how this van is shown everywhere.
@@ -1084,6 +1101,7 @@ f5e0e809	Not found. It may belong to another station.
 2570fc5d	not read, refused	[data.tsx]
 20c47c91	Not sure	[vehicle/[id].tsx]
 0b06a2e5	Not sure: check it
+46dcf253	Not the van's card; {name} allowed it.
 345c5e36	Not the van's card.
 702a16e7	Not visible in these photos: {list}.
 067cff7d	Not yours.	[index.ts]
@@ -1214,6 +1232,7 @@ b37554f6	People	[_layout.tsx, people.tsx, app/(tabs)/_layout.tsx]
 170a28a9	Period	[data.tsx]
 8c41ae88	Person	[_layout.tsx]
 1bf5eb7e	Petrol	[vehicle/[id].tsx, lib/fleet.ts]
+7c74204a	Petrol on the receipt; the van runs on diesel.
 77064d52	Phone	[components/driverrec.tsx]
 e48322d5	phone app	[account.tsx]
 da3f1249	Phone at the wheel
@@ -1616,8 +1635,12 @@ d9260181	The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret i
 3e5c42fa	The camera couldn't start.
 7f319ebe	The camera isn't allowed. Allow it in the phone's settings.
 9b46aa3c	The camera shows the outline to fit for each one.
+51b64706	The card couldn't be checked; {name} allowed it.
+de965efd	The card couldn't be checked.
+c0476b20	The card couldn't be read after {n} photos.
 b19e9d1a	The card couldn't be read: {why}
 9af23b0c	The card couldn't be read.
+95dc3f0d	The card number couldn't be read.
 d2bba804	The card photo isn't kept, only its last 4 digits.
 510cef1d	The card was already checked.
 10a22691	The check didn't finish
@@ -1642,6 +1665,8 @@ caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.
 506537f0	The free trial ended on {day}.
 0419c065	The fuel card	[buy/[id].tsx]
+cba2237f	The fuel card has expired.
+b7cb29de	The fuel card is for {cardPlate}; this van is {plate}.
 fd068473	The fuel card is next.
 c6c6fdaf	The fuel level is a percentage from 0 to 100.
 5002d9bb	The history says {other} had this van then, not {name}.
@@ -1655,6 +1680,7 @@ d520c3b2	The monthly rate works out at {eur} per kilometre (without fuel and rep
 3ed0ed91	The most thorough look at every photo.
 6e42e653	The name on the document doesn't look like {name}. Check it's theirs before saving.
 6d2117d8	The next check shows on each driver's record and in Review. Every 6 months is common practice.
+a258fcb9	The odometer ({km} km) is lower than the van's last reading ({last} km).
 4e74e7e7	The owners get the details.
 cf2abed0	The parts	[buy/[id].tsx]
 c3acf501	The photo didn't upload. Check the connection and try again.
@@ -1673,6 +1699,8 @@ f19fa04d	The photos show the van's state when you brought it back, so damage tha
 9b7b265f	The receipt	[buy/[id].tsx]
 f4ab4f15	The receipt couldn't be read: {issue}. Type the numbers from it.
 aebdea71	The receipt couldn't be read. Type the numbers from it.
+0da98e11	The receipt is dated {date}.
+9e522813	The receipt shows a card ending {last4}; this van's card ends {expected}.
 a511a830	The times you had this van.
 7d77c988	The upload was refused. Check that you still belong to this company, then try again.
 94a4b241	The van hasn't been dropped off yet. Drop it off with the photos instead.
