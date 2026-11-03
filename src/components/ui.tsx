@@ -47,7 +47,7 @@ export const F = {
 /** A heading size (with F.cond, condMed, condBold): as is in Barlow Condensed, a tenth smaller in Tessera. */
 export const hs = (n: number) => (barlow() ? n : Math.round(n * 0.9));
 
-let measurer: HTMLCanvasElement | null = null;
+let measurer: HTMLSpanElement | null = null;
 /** Draws again once the web fonts have loaded, so labels sized by fitSize() are measured in the real font. */
 export function useFontsReady() {
   const [, set] = useState(0);
@@ -67,20 +67,39 @@ export function useFontsReady() {
 export function fitSize(text: string, family: string, size: number, width: number, { words = false, min = 10 } = {}): number {
   if (Platform.OS !== 'web' || width <= 0 || typeof document === 'undefined') return size;
   const parts = words ? text.split(/\s+/) : [text];
-  // The canvas measures with the font only once the browser has loaded it; before that it would measure the
-  // fallback (narrower on some systems) and the screen isn't drawn again when the font arrives. So until then,
-  // a safe estimate: Tessera's letters are at most about 0.62 of the size wide on average.
+  // Until the browser has loaded the font, it would measure the fallback (narrower on some systems) and the
+  // screen isn't drawn again when the font arrives. So until then, a safe estimate: Tessera's letters are at most
+  // about 0.62 of the size wide on average.
   const first = family.split(',')[0].trim();
   const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
   const ready = !fonts || fonts.check(`100px ${first}`);
-  if (!ready) fonts!.load(`100px ${first}`).catch(() => {});
-  measurer = measurer || document.createElement('canvas');
-  const ctx = measurer.getContext('2d');
-  if (!ctx) return size;
-  ctx.font = `100px ${family}`;
-  const widest = Math.max(0, ...parts.map((w) => (ready ? ctx.measureText(w).width / 100 : w.length * 0.62)));
-  // A little room to spare: the browser's line breaking rounds differently from the canvas.
-  return widest > 0 ? Math.max(min, Math.min(size, Math.floor((width * 0.92 / widest) * 2) / 2)) : size;
+  if (!ready) {
+    fonts!.load(`100px ${first}`).catch(() => {});
+    const est = Math.max(...parts.map((w) => w.length * 0.62));
+    return est > 0 ? Math.max(min, Math.min(size, Math.floor((width * 0.92 / est) * 2) / 2)) : size;
+  }
+  // Measured with a hidden piece of text laid out by the browser itself, at the size it will be drawn: a canvas,
+  // or measuring large and scaling down, came out narrower than some browsers draw small text, and a long word
+  // then broke in the middle.
+  if (!measurer) {
+    measurer = document.createElement('span');
+    measurer.setAttribute('aria-hidden', 'true');
+    Object.assign(measurer.style, { position: 'absolute', left: '-9999px', top: '0', visibility: 'hidden', whiteSpace: 'pre', lineHeight: '1', padding: '0', border: '0' });
+    document.body.appendChild(measurer);
+  }
+  const m = measurer;
+  m.style.fontFamily = family;
+  const widest = (px: number) => {
+    m.style.fontSize = `${px}px`;
+    return Math.max(0, ...parts.map((w) => { m.textContent = w; return m.getBoundingClientRect().width; }));
+  };
+  const room = width * 0.95; // a little to spare for rounding in line breaking
+  let s = size;
+  const atSize = widest(s);
+  if (atSize <= room) return size;
+  s = Math.max(min, Math.floor((size * room / atSize) * 2) / 2);
+  while (s > min && widest(s) > room) s -= 0.5;
+  return s;
 }
 
 type TV = 'h1' | 'h2' | 'h3' | 'body' | 'medium' | 'hint' | 'small' | 'big';
@@ -299,7 +318,7 @@ function TabCell({ label, n, on, first, count, onPress }: { label: string; n: nu
   // doesn't take room from it and break a word.
   const base = hs(18);
   const sideBySide = !n || fitSize(`${label} ${n}`, F.cond, base, w - 14) === base;
-  const size = fitSize(label, F.cond, base, w - 8, { words: true, min: 10 });
+  const size = fitSize(label, F.cond, base, w - 12, { words: true, min: 10 });
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={onPress} onLayout={(e) => setW(e.nativeEvent.layout.width)}
       style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
