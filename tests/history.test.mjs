@@ -1045,7 +1045,7 @@ test('costs move out of the record managers read (Deploy runs this once)', async
 
 test('the demo company: only the app creator opens one; a driver login with a van, history, and pick-up at the first station', async () => {
   // Customers don't get a demo company (product owner, 2026-11-02), owners included.
-  await fails((await person('Quinn Customer')).call('createDemoCompany', {}), 'permission-denied');
+  await fails((await person('Xavi Customer')).call('createDemoCompany', {}), 'permission-denied');
   await fails(S.own.call('createDemoCompany', {}), 'permission-denied');
   const me = await appCreator('Demo Tester');
   const { orgId } = await me.call('createDemoCompany', {});
