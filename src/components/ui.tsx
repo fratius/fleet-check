@@ -272,13 +272,17 @@ function TabCell({ label, n, on, first, onPress }: { label: string; n: number | 
   const c = useColors();
   const [w, setW] = useState(0);
   // Long names (in some languages) wrap, and the count goes under the name; a single long word is drawn smaller.
-  const size = fitSize(label, F.cond, hs(18), w - 8, { words: true, min: 10 });
+  // On the web, when the name and the count don't fit side by side, the name gets the whole line, so the count
+  // doesn't take room from it and break a word.
+  const base = hs(18);
+  const sideBySide = !n || fitSize(`${label} ${n}`, F.cond, base, w - 14) === base;
+  const size = fitSize(label, F.cond, base, w - 8, { words: true, min: 10 });
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={onPress} onLayout={(e) => setW(e.nativeEvent.layout.width)}
       style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
         backgroundColor: on ? c.ink : c.paper, borderLeftWidth: first ? 0 : 2, borderColor: c.ink }}>
       <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}
-        style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.12), textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink }}>{label}</Text>
+        style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.12), textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink, ...(sideBySide ? null : { flexBasis: '100%' }) }}>{label}</Text>
       {n ? <Text style={{ fontFamily: F.condBold, fontSize: hs(17), color: on ? c.paper : c.ink2, fontVariant: ['tabular-nums'] }}>{n}</Text> : null}
     </Pressable>
   );
