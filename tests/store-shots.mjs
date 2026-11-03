@@ -72,6 +72,14 @@ async function shot(page, dir, name, path, waitFor) {
   await page.goto(URL0 + path);
   if (waitFor) await visible(page, waitFor).waitFor({ timeout: 60_000 }).catch(() => log(`"${waitFor}" not seen on ${path}`));
   await settle(page);
+  if (path === '/data') {
+    const info = await page.evaluate(() => {
+      const f = document.fonts;
+      const tabs = [...document.querySelectorAll('[role=tab]')].slice(0, 4).map((t) => { const l = [...t.querySelectorAll('div')].find((d) => d.childElementCount === 0); const cs = l && getComputedStyle(l); return `${t.innerText.replace(/\n/g, '/')} cell=${Math.round(t.getBoundingClientRect().width)} fs=${cs && cs.fontSize} ff=${cs && cs.fontFamily.split(',')[0]} basis=${cs && cs.flexBasis}`; });
+      return { win: innerWidth, check: f ? f.check('100px Tessera_600SemiBold') : 'none', status: f ? f.status : 'none', faces: f ? [...f].map((x) => x.family + ':' + x.status).join(',') : '', lang: document.documentElement.lang, tabs };
+    });
+    log('DIAG', JSON.stringify(info));
+  }
   await page.screenshot({ path: join(dir, `${name}.png`) });
   log('saved', dir.split('/').pop(), name, path);
 }
