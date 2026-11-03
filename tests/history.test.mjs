@@ -1323,3 +1323,64 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
     srv.close();
   }
 });
+
+test('sign-up: a new company gets 30 days free from the server; the owner can\'t change it; the trial\'s AI has a daily allowance', async () => {
+  const o = await person('Nora Neu');
+  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: null };
+  const r = await o.call('createCompany', { ...input, rid: `rcc${run}a` });
+  // Sent twice (the answer got lost): one company.
+  assert.equal((await o.call('createCompany', { ...input, rid: `rcc${run}a` })).orgId, r.orgId);
+  const org = (await getDoc(doc(o.db, 'orgs', r.orgId))).data();
+  assert.equal(org.name, 'Neu Logistik GmbH');
+  assert.equal(org.createdBy, o.uid);
+  assert.equal(org.billing.status, 'trialing');
+  assert.equal(org.billing.source, 'website');
+  assert.equal(org.billing.plan, 'pro');
+  assert.equal(org.billing.trialEnd - org.billing.trialStart, 30 * 86400_000);
+  assert.equal(r.trialEnd, org.billing.trialEnd);
+  const m = (await getDoc(doc(o.db, 'orgs', r.orgId, 'members', o.uid))).data();
+  assert.equal(m.role, 'owner');
+  assert.equal(m.name, 'Nora Neu');
+  const st = (await getDocs(collection(o.db, 'orgs', r.orgId, 'stations'))).docs.map((d) => d.data().name);
+  assert.deepEqual(st, ['DNX1']);
+  const u = (await getDoc(doc(o.db, 'users', o.uid))).data();
+  assert.equal(u.orgId, r.orgId);
+  assert.ok(u.orgIds.includes(r.orgId));
+  // The trial is the server's.
+  await fails(updateDoc(doc(o.db, 'orgs', r.orgId), { billing: { ...org.billing, trialEnd: org.billing.trialEnd + 365 * 86400_000 } }), 'permission-denied');
+  await fails(updateDoc(doc(o.db, 'orgs', r.orgId), { 'billing.status': 'active' }), 'permission-denied');
+  await updateDoc(doc(o.db, 'orgs', r.orgId), { name: 'Neu Logistik' });
+  // Bad input, and a plan that doesn't exist.
+  await fails(o.call('createCompany', { ...input, company: '   ', rid: `rcc${run}b` }), 'invalid-argument');
+  const r2 = await o.call('createCompany', { ...input, station: '', plan: 'gold', source: 'app', rid: `rcc${run}c` });
+  const org2 = (await getDoc(doc(o.db, 'orgs', r2.orgId))).data();
+  assert.equal(org2.billing.plan, null);
+  assert.equal(org2.billing.source, 'app');
+  assert.deepEqual((await getDocs(collection(o.db, 'orgs', r2.orgId, 'stations'))).docs.map((d) => d.data().name), ['Hauptstation']);
+  // Three companies per person; more on request.
+  await o.call('createCompany', { ...input, rid: `rcc${run}d` });
+  const e = await fails(o.call('createCompany', { ...input, rid: `rcc${run}e` }), 'resource-exhausted');
+  assert.match(e.message, /up to 3 companies/);
+
+  // The AI allowance: counted per day (German time), refused once today's are used, with the template for the app.
+  const van = doc(collection(o.db, 'orgs', r.orgId, 'vehicles'));
+  const stationId = (await getDocs(collection(o.db, 'orgs', r.orgId, 'stations'))).docs[0].id;
+  await setDoc(van, { name: 'Van N1', plate: 'N1', cls: 'van', stationId, createdAt: Date.now(), createdBy: o.uid });
+  const v = { id: van.id, name: 'Van N1', stationId };
+  await o.call('findDamage', { orgId: r.orgId, walkId: await photos(o, r.orgId, v, { real: true }), tier: 'default' });
+  const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+  const counter = adminDb().doc(`orgs/${r.orgId}/aiDaily/${day}`);
+  assert.equal((await counter.get()).data().checks, 1);
+  await counter.set({ checks: 20 }, { merge: true });
+  const walk = await photos(o, r.orgId, v, { real: true });
+  const no = await fails(o.call('findDamage', { orgId: r.orgId, walkId: walk, tier: 'default' }), 'resource-exhausted');
+  assert.equal(no.details.t, 'This company has used today\'s {n} AI damage checks of the free trial. More from midnight, or write to info@fratius.com for more.');
+  assert.equal(no.details.v.n, 20);
+  assert.equal((await counter.get()).data().checks, 20, 'a refused check isn\'t counted');
+  // The app creator isn't held back, and companies set up by hand (before sign-up existed) have no allowance.
+  const cr = await appCreator('Carl Creator');
+  assert.ok((await cr.call('findDamage', { orgId: r.orgId, walkId: walk, tier: 'default' })).checkId);
+  await adminDb().doc(`orgs/${S.org}`).update({ createdAt: Date.UTC(2026, 9, 1) });
+  await adminDb().doc(`orgs/${S.org}/aiDaily/${day}`).set({ checks: 99 });
+  assert.ok((await S.own.call('findDamage', { orgId: S.org, walkId: await photos(S.own, S.org, S.vans.v1, { real: true }), tier: 'default' })).checkId);
+});

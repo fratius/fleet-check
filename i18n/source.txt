@@ -38,6 +38,7 @@ e1677005	{n} damage || {n} damage	[log.tsx]
 f759455e	{n} damage approved || {n} damages approved	[check/[id].tsx]
 41a4eee8	{n} damage will go on the van's record. || {n} damages will go on the van's record.
 c752c6de	{n} day || {n} days	[components/history.tsx]
+df7783ac	{n} day left, until {day}. || {n} days left, until {day}.
 6bfc9f92	{n} day overdue || {n} days overdue	[lib/fleet.ts]
 dba2406a	{n} dirt || {n} dirt	[log.tsx]
 343db4d4	{n} driver || {n} drivers	[people.tsx]
@@ -195,6 +196,7 @@ b111627e	A walk-around with {n} photo (about {min} min) or one video. || A walk-
 193742ba	About {m} m away.
 046fd29b	About {photo} per photo, so {check} for a 14-photo van check before close-ups.
 b299a842	ABS	[prompts.ts]
+5d7a894d	Accept the terms and the data processing agreement to create the company.
 ce926764	Accident	[components/driverrec.tsx]
 e8c98820	Accident claims	[components/vanfacts.tsx]
 4e36bc4e	Accidents (at fault)	[data.tsx]
@@ -472,6 +474,7 @@ e8521910	crack	[check/[id].tsx]
 c8170422	Create a company	[account.tsx, app/sign-in.tsx]
 aaf37447	Create account	[app/sign-in.tsx]
 77af29dd	Create company	[account.tsx, app/sign-in.tsx]
+67939310	Create your account, then your company: {n} days free.
 ac9a04e4	Customer complaint	[components/driverrec.tsx]
 54198309	damage	[check/[id].tsx, lib/damage.ts]
 7bf6d1d3	Damage	[check/[id].tsx, vehicle/[id].tsx, components/keep.tsx]
@@ -500,6 +503,7 @@ b353847f	Dashboard photos	[account.tsx]
 a2e230ae	Dashboard photos on every tour
 d685eb68	Dashboard, {when}	[buy/[id].tsx]
 e5e429bc	Data	[_layout.tsx, data.tsx, app/(tabs)/_layout.tsx]
+b7da0b1e	Data processing agreement (AVV)
 987b9ced	Day	[data.tsx, components/driverrec.tsx]
 8767f694	Day of the check
 a4df0e55	Days with a van
@@ -567,6 +571,7 @@ e8697b31	Drop-off photos of {van}
 a2ec364a	due since {when}	[review.tsx]
 aac2eda8	Due since {when} ({ago})
 a01f643e	Due soon	[review.tsx]
+e216ffda	During the trial the AI does up to {checks} damage checks and {reads} other photo readings a day for the company.
 3e96504e	Each kilometre over the allowance
 b1fce049	Each link works for one person, for 24 hours.
 6c14de32	Each run records its model, time and cost, so the test log can compare them.
@@ -675,6 +680,7 @@ b1b20bc2	For example: oil below the minimum, needs a litre
 c8fc1f1b	For example: oil level
 a2b84716	For example: right rear door, below the handle
 fd776819	For example: use the card in the glovebox
+7584b929	For my company, I accept the terms (AGB) and the data processing agreement (AVV).
 9b5de981	For the fuel used on each tour
 a2f060b7	Forgot your password?	[app/sign-in.tsx]
 2244036e	Former people	[people.tsx]
@@ -689,6 +695,7 @@ a2f060b7	Forgot your password?	[app/sign-in.tsx]
 b48fd125	Fratius {company} {period} to {date}
 75f52718	Free	[index.tsx, vehicle/[id].tsx, components/history.tsx]
 e12e759b	Free ({n})	[index.tsx]
+22357ca6	Free trial	[account.tsx, components/companies.tsx]
 923e75de	Free vans first. Taking a van from someone else leaves them without one.
 9b3f00d9	from library	[vehicle/[id].tsx]
 64544340	From the dashboard photo
@@ -1127,6 +1134,7 @@ ad1e5a02	On tour {time}	[components/dash.tsx]
 c02d932d	On tour for {time}
 a9afbb0e	Once a day	[components/routines.tsx]
 521f6443	Once a week	[components/routines.tsx]
+3a991e18	One account can create up to {n} companies. To add another, write to info@fratius.com.
 c0afb056	One link per person, sent to them. A link works once and expires after 24 hours.
 2d6a96cb	One of the vans was removed.
 2dd84770	One photo from a front corner works best. Add the side or the rear to pick up door details.
@@ -1247,6 +1255,7 @@ e9490191	Pick-up photos of {van}
 4fe6a7df	pickup	[lib/frames.ts]
 a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
+73931766	Plans and payment are coming soon. Nothing is charged until you choose a plan.
 2db331ce	Plate	[data.tsx]
 e92d2b4c	playback copy {size}	[video/[id].tsx]
 01ffec64	Plugged in to charge
@@ -1575,6 +1584,7 @@ a34401de	Tap again: it won't be sent
 5fdeeb4e	Tap the type it really is
 3765b22e	Tap the type it really is, below.
 b4607c1b	Telling your fleet manager…
+290dcc40	Terms (AGB)	[components/terms.tsx]
 c6f75e76	Test log	[_layout.tsx, log.tsx, app/(tabs)/_layout.tsx]
 43782b37	Test mode	[components/viewas.tsx]
 9b5a5702	Test mode on this phone
@@ -1631,6 +1641,7 @@ b65a1bf8	The driver takes one as proof, for example of the cargo area.
 4dee9456	the fleet manager	[check/[id].tsx, components/damage.tsx]
 caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.
+506537f0	The free trial ended on {day}.
 0419c065	The fuel card	[buy/[id].tsx]
 fd068473	The fuel card is next.
 c6c6fdaf	The fuel level is a percentage from 0 to 100.
@@ -1705,6 +1716,8 @@ b63de3f6	This check needs a photo.
 9f6e4a36	This check was deleted.
 2229c06e	This check was removed.
 a319f8d7	this company	[log.tsx, components/viewas.tsx]
+8f11deba	This company has used today's {n} AI damage checks of the free trial. More from midnight, or write to info@fratius.com for more.
+5e6afe06	This company has used today's {n} AI photo readings of the free trial. More from midnight, or write to info@fratius.com for more.
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
 8d08c342	This ends {name}'s tour.
 6b95e16a	This handover belongs to another station.
@@ -1969,6 +1982,7 @@ f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. O
 01384ed0	Your account isn't a member of this company.
 411d3ee3	Your companies	[components/companies.tsx]
 3f7a84ea	Your company	[app/sign-in.tsx]
+73141892	Your company starts with {n} days free.
 a2bb6af7	Your decision	[check/[id].tsx]
 0a9501e3	Your drivers, tours and vans in numbers.
 9a45a27c	Your fleet manager gets it straight away.

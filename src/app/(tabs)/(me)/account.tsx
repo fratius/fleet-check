@@ -15,6 +15,8 @@ import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
+import { TERMS_VERSION, standing } from '@/lib/billing';
+import { AcceptTerms } from '@/components/terms';
 import { useOutbox } from '@/lib/outbox';
 
 export default function Account() {
@@ -52,6 +54,7 @@ export default function Account() {
         </T>
       </Card>
 
+      <TrialCard />
       <LanguageCard />
       <Notifications />
       <ViewAsCard />
@@ -111,6 +114,27 @@ export default function Account() {
   );
 }
 
+/**
+ * The company's free trial, for its owner, in the web app (plans and payment live on the web; the store apps don't
+ * sell anything). The AI allowance per day is the server's (functions/src/billing.ts, AI_DAY).
+ */
+function TrialCard() {
+  const s = useSession();
+  if (Platform.OS !== 'web' || s.mode !== 'firebase' || s.role !== 'owner' || s.viewAs) return null;
+  const st = standing(s.org);
+  if ((st.standing !== 'trial' && st.standing !== 'trial_over') || !st.trialEnd) return null;
+  const day = new Date(st.trialEnd).toLocaleDateString(loc(), { day: 'numeric', month: 'long', year: 'numeric' });
+  const left = Math.max(1, Math.ceil((st.trialEnd - Date.now()) / 86400_000));
+  return (
+    <Card>
+      <T v="h3">{t('Free trial')}</T>
+      <T>{st.standing === 'trial' ? tp(left, '{n} day left, until {day}.', '{n} days left, until {day}.', { day }) : t('The free trial ended on {day}.', { day })}</T>
+      <T v="hint">{t('During the trial the AI does up to {checks} damage checks and {reads} other photo readings a day for the company.', { checks: 20, reads: 100 })}</T>
+      <T v="hint">{t('Plans and payment are coming soon. Nothing is charged until you choose a plan.')}</T>
+    </Card>
+  );
+}
+
 /** Join another company with a code, or start another one (fleet owners with several companies). */
 function AddCompany() {
   const s = useSession();
@@ -120,11 +144,12 @@ function AddCompany() {
   const [code, setCode] = useState('');
   const [company, setCompany] = useState('');
   const [station, setStation] = useState('');
+  const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const run = async (fn: () => Promise<unknown>) => {
     setErr(null); setBusy(true);
-    try { await fn(); setOpen(false); setCode(''); setCompany(''); setStation(''); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
+    try { await fn(); setOpen(false); setCode(''); setCompany(''); setStation(''); setAccepted(false); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
   };
   if (!open) return <Button title={t('Join or create another company')} onPress={() => setOpen(true)} />;
   return (
@@ -140,7 +165,12 @@ function AddCompany() {
         <>
           <Field label={t('Company name')} value={company} onChangeText={setCompany} autoCapitalize="words" />
           <Field label={t('First station')} hint={t('you can add more later')} value={station} onChangeText={setStation} autoCapitalize="characters" placeholder={t('For example: DXX1 Berlin')} />
-          <Button v="primary" title={t('Create company')} loading={busy} onPress={() => (company.trim() ? run(() => s.createOrg(company, station)) : setErr(t('Enter the company name.')))} />
+          {TERMS_VERSION ? <AcceptTerms on={accepted} onChange={setAccepted} /> : null}
+          <Button v="primary" title={t('Create company')} loading={busy} onPress={() => {
+            if (!company.trim()) return setErr(t('Enter the company name.'));
+            if (TERMS_VERSION && !accepted) return setErr(t('Accept the terms and the data processing agreement to create the company.'));
+            run(() => s.createOrg(company, station, accepted ? TERMS_VERSION : null));
+          }} />
         </>
       )}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}

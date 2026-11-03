@@ -6,7 +6,9 @@ import { DeleteAccount } from '@/components/deleteaccount';
 import { LegalLinks } from '@/components/legal';
 import { AllCompanies } from '@/components/companies';
 import { LanguageLink } from '@/components/language';
+import { AcceptTerms } from '@/components/terms';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
+import { TERMS_VERSION, TRIAL_DAYS, signupIntent } from '@/lib/billing';
 import { tokenFrom } from '@/lib/people';
 import { t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
@@ -14,14 +16,16 @@ import { authMessage, useSession } from '@/lib/session';
 export default function SignIn() {
   const s = useSession();
   const c = useColors();
-  const [mode, setMode] = useState<'in' | 'up'>('in');
+  // From the website's "Sign up" button: straight to a new account, then to a new company.
+  const [mode, setMode] = useState<'in' | 'up'>(signupIntent.signup ? 'up' : 'in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [code, setCode] = useState('');
   const [station, setStation] = useState('');
-  const [orgMode, setOrgMode] = useState<'create' | 'join'>('join');
+  const [orgMode, setOrgMode] = useState<'create' | 'join'>(signupIntent.signup ? 'create' : 'join');
+  const [accepted, setAccepted] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,8 +52,15 @@ export default function SignIn() {
               <Field label={t('Company name')} value={company} onChangeText={setCompany} autoCapitalize="words" placeholder={t('For example: Hart Logistics GmbH')} />
               <Field label={t('First station')} hint={t('you can add more later')} value={station} onChangeText={setStation} autoCapitalize="characters" placeholder={t('For example: DXX1 Berlin')} />
               <T v="hint">{t('You become the fleet owner. You add stations, fleet managers and drivers under People.')}</T>
+              {/* Plans and payment live on the web only (the store apps don't sell anything, store/README.md). */}
+              {Platform.OS === 'web' ? <T v="hint">{t('Your company starts with {n} days free.', { n: TRIAL_DAYS })}</T> : null}
+              {TERMS_VERSION ? <AcceptTerms on={accepted} onChange={setAccepted} /> : null}
               <Button v="primary" wide title={t('Create company')} loading={busy}
-                onPress={() => company.trim() ? run(() => s.createOrg(company, station)) : setErr(t('Enter your company name.'))} />
+                onPress={() => {
+                  if (!company.trim()) return setErr(t('Enter your company name.'));
+                  if (TERMS_VERSION && !accepted) return setErr(t('Accept the terms and the data processing agreement to create the company.'));
+                  run(() => s.createOrg(company, station, accepted ? TERMS_VERSION : null));
+                }} />
             </>
           ) : (
             <>
@@ -80,6 +91,7 @@ export default function SignIn() {
         <View style={{ gap: 6, paddingTop: 24 }}>
           <T v="h1">Fratius</T>
           <T>{t('Walk-around photos, van history and damage checks for your fleet.')}</T>
+          {mode === 'up' && signupIntent.signup ? <T v="hint">{t('Create your account, then your company: {n} days free.', { n: TRIAL_DAYS })}</T> : null}
         </View>
         <LanguageLink />
         <Segmented label={t('Account')} value={mode} onChange={(k) => { setMode(k); setErr(null); setInfo(null); }} options={[['in', t('Sign in')], ['up', t('Create account')]]} />
@@ -108,3 +120,4 @@ export default function SignIn() {
     </KeyboardAvoidingView>
   );
 }
+
