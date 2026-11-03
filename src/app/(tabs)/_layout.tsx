@@ -4,7 +4,7 @@ import { Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { F, MARKER, fitSize, useColors, hs } from '@/components/ui';
+import { F, MARKER, fitSize, useColors, useFontsReady, hs } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { UploadsStrip } from '@/components/uploads';
 import { ViewingStrip } from '@/components/viewas';
@@ -80,6 +80,7 @@ export default function TabsLayout() {
  */
 function TabLabel({ color, text }: { color: ColorValue; text: string }) {
   const [w, setW] = useState(0);
+  useFontsReady();
   const size = fitSize(text, F.cond, hs(14), w - 4, { min: 9 });
   return (
     <View style={{ alignSelf: 'stretch', alignItems: 'center' }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>

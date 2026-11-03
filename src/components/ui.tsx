@@ -48,6 +48,17 @@ export const F = {
 export const hs = (n: number) => (barlow() ? n : Math.round(n * 0.9));
 
 let measurer: HTMLCanvasElement | null = null;
+/** Draws again once the web fonts have loaded, so labels sized by fitSize() are measured in the real font. */
+export function useFontsReady() {
+  const [, set] = useState(0);
+  useEffect(() => {
+    const fonts = Platform.OS === 'web' && typeof document !== 'undefined' ? (document as Document & { fonts?: FontFaceSet }).fonts : undefined;
+    let live = true;
+    fonts?.ready.then(() => { if (live) set((n) => n + 1); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+}
+
 /**
  * The size at which a label fits `width` on the web: the whole text (one line), or its longest word (labels that may
  * wrap). Tessera is wide, so long words in some languages (German "Transporter", Danish "Gennemgang") would be cut
@@ -55,12 +66,19 @@ let measurer: HTMLCanvasElement | null = null;
  */
 export function fitSize(text: string, family: string, size: number, width: number, { words = false, min = 10 } = {}): number {
   if (Platform.OS !== 'web' || width <= 0 || typeof document === 'undefined') return size;
+  const parts = words ? text.split(/\s+/) : [text];
+  // The canvas measures with the font only once the browser has loaded it; before that it would measure the
+  // fallback (narrower on some systems) and the screen isn't drawn again when the font arrives. So until then,
+  // a safe estimate: Tessera's letters are at most about 0.62 of the size wide on average.
+  const first = family.split(',')[0].trim();
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  const ready = !fonts || fonts.check(`100px ${first}`);
+  if (!ready) fonts!.load(`100px ${first}`).catch(() => {});
   measurer = measurer || document.createElement('canvas');
   const ctx = measurer.getContext('2d');
   if (!ctx) return size;
   ctx.font = `100px ${family}`;
-  const parts = words ? text.split(/\s+/) : [text];
-  const widest = Math.max(0, ...parts.map((w) => ctx.measureText(w).width / 100));
+  const widest = Math.max(0, ...parts.map((w) => (ready ? ctx.measureText(w).width / 100 : w.length * 0.62)));
   // A little room to spare: the browser's line breaking rounds differently from the canvas.
   return widest > 0 ? Math.max(min, Math.min(size, Math.floor((width * 0.92 / widest) * 2) / 2)) : size;
 }
@@ -271,6 +289,7 @@ export const cap = (s: string | null | undefined) => { const t = String(s || '')
 function TabCell({ label, n, on, first, onPress }: { label: string; n: number | null; on: boolean; first: boolean; onPress: () => void }) {
   const c = useColors();
   const [w, setW] = useState(0);
+  useFontsReady();
   // Long names (in some languages) wrap, and the count goes under the name; a single long word is drawn smaller.
   // On the web, when the name and the count don't fit side by side, the name gets the whole line, so the count
   // doesn't take room from it and break a word.
