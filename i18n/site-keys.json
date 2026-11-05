@@ -951,746 +951,751 @@
  },
  {
   "id": "w191",
-  "key": "Live fleet board",
+  "key": "Unlimited drivers",
   "where": "page"
  },
  {
   "id": "w192",
-  "key": "Handovers with photos or video",
+  "key": "Live fleet board",
   "where": "page"
  },
  {
   "id": "w193",
-  "key": "Permanent van and driver history",
+  "key": "Handovers with photos or video",
   "where": "page"
  },
  {
   "id": "w194",
-  "key": "Tours from dashboard photos",
+  "key": "Permanent van and driver history",
   "where": "page"
  },
  {
   "id": "w195",
-  "key": "Refuel, wash and parts with card check",
+  "key": "Tours from dashboard photos",
   "where": "page"
  },
  {
   "id": "w196",
-  "key": "Deadlines: HU, UVV, service, tyres",
+  "key": "Refuel, wash and parts with card check",
   "where": "page"
  },
  {
   "id": "w197",
-  "key": "Driver records and licence checks",
+  "key": "Deadlines: HU, UVV, service, tyres",
   "where": "page"
  },
  {
   "id": "w198",
-  "key": "Paperwork from a photo",
+  "key": "Driver records and licence checks",
   "where": "page"
  },
  {
   "id": "w199",
-  "key": "Data tables and Excel export",
+  "key": "Paperwork from a photo",
   "where": "page"
  },
  {
   "id": "w200",
-  "key": "Owner, manager and driver roles",
+  "key": "Data tables and Excel export",
   "where": "page"
  },
  {
   "id": "w201",
-  "key": "Sign up",
+  "key": "Owner, manager and driver roles",
   "where": "page"
  },
  {
   "id": "w202",
-  "key": "Start your 30 days",
+  "key": "Sign up",
   "where": "page"
  },
  {
   "id": "w203",
-  "key": "Two short steps: tell us about your company, then send. Your plan follows from the number of vans. Nothing is charged now; we email you how to start.",
+  "key": "Start your 30 days",
   "where": "page"
  },
  {
   "id": "w204",
-  "key": "Your company's name and country",
+  "key": "Two short steps: tell us about your company, then send. Your plan follows from the number of vans. Nothing is charged now; we email you how to start.",
   "where": "page"
  },
  {
   "id": "w205",
-  "key": "How many stations and vans you run",
+  "key": "Your company's name and country",
   "where": "page"
  },
  {
   "id": "w206",
-  "key": "A work email and a mobile number",
+  "key": "How many stations and vans you run",
   "where": "page"
  },
  {
   "id": "w207",
-  "key": "Rather start right away?",
+  "key": "A work email and a mobile number",
   "where": "page"
  },
  {
   "id": "w208",
-  "key": "Create your account and your company in the web app. Your 30 days start at once.",
+  "key": "Rather start right away?",
   "where": "page"
  },
  {
   "id": "w209",
-  "key": "Create your account",
+  "key": "Create your account and your company in the web app. Your 30 days start at once.",
   "where": "page"
  },
  {
   "id": "w210",
-  "key": "Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.",
+  "key": "Create your account",
   "where": "page"
  },
  {
   "id": "w211",
-  "key": "Company",
+  "key": "Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.",
   "where": "page"
  },
  {
   "id": "w212",
-  "key": "Send",
+  "key": "Company",
   "where": "page"
  },
  {
   "id": "w213",
-  "key": "Your company",
+  "key": "Send",
   "where": "page"
  },
  {
   "id": "w214",
-  "key": "Company name",
+  "key": "Your company",
   "where": "page"
  },
  {
   "id": "w215",
-  "key": "Country",
+  "key": "Company name",
   "where": "page"
  },
  {
   "id": "w216",
-  "key": "Stations",
+  "key": "Country",
   "where": "page"
  },
  {
   "id": "w217",
-  "key": "Vans",
+  "key": "Stations",
   "where": "page"
  },
  {
   "id": "w218",
-  "key": "First name",
+  "key": "Vans",
   "where": "page"
  },
  {
   "id": "w219",
-  "key": "Last name",
+  "key": "First name",
   "where": "page"
  },
  {
   "id": "w220",
-  "key": "Work email",
+  "key": "Last name",
   "where": "page"
  },
  {
   "id": "w221",
-  "key": "Mobile number",
+  "key": "Work email",
   "where": "page"
  },
  {
   "id": "w222",
-  "key": "Continue",
+  "key": "Mobile number",
   "where": "page"
  },
  {
   "id": "w223",
-  "key": "Check and send",
+  "key": "Continue",
   "where": "page"
  },
  {
   "id": "w224",
-  "key": "Payment",
+  "key": "Check and send",
   "where": "page"
  },
  {
   "id": "w225",
-  "key": "Card or bank details go here once the payment provider is connected.",
+  "key": "Payment",
   "where": "page"
  },
  {
   "id": "w226",
-  "key": "Nothing is charged now. We set up your company and email you how to start your 30 days.",
+  "key": "Card or bank details go here once the payment provider is connected.",
   "where": "page"
  },
  {
   "id": "w227",
-  "key": "Website",
+  "key": "Nothing is charged now. We set up your company and email you how to start your 30 days.",
   "where": "page"
  },
  {
   "id": "w228",
-  "key": "Tell me when AI damage detection is ready",
+  "key": "Website",
   "where": "page"
  },
  {
   "id": "w229",
-  "key": "I have read the privacy policy.",
+  "key": "Tell me when AI damage detection is ready",
   "where": "page"
  },
  {
   "id": "w230",
-  "key": "Back",
+  "key": "I have read the privacy policy.",
   "where": "page"
  },
  {
   "id": "w231",
-  "key": "Send request",
+  "key": "Back",
   "where": "page"
  },
  {
   "id": "w232",
-  "key": "Done",
+  "key": "Send request",
   "where": "page"
  },
  {
   "id": "w233",
-  "key": "Start again",
+  "key": "Done",
   "where": "page"
  },
  {
   "id": "w234",
-  "key": "Questions",
+  "key": "Start again",
   "where": "page"
  },
  {
   "id": "w235",
-  "key": "Good to know",
+  "key": "Questions",
   "where": "page"
  },
  {
   "id": "w236",
-  "key": "Does Fratius replace the DVIC?",
+  "key": "Good to know",
   "where": "page"
  },
  {
   "id": "w237",
-  "key": "No. The DVIC stays in Amazon's tools. Fratius covers your own vans between drivers: handovers with proof, damage, fuel, deadlines and paperwork.",
+  "key": "Does Fratius replace the DVIC?",
   "where": "page"
  },
  {
   "id": "w238",
-  "key": "What counts as a station?",
+  "key": "No. The DVIC stays in Amazon's tools. Fratius covers your own vans between drivers: handovers with proof, damage, fuel, deadlines and paperwork.",
   "where": "page"
  },
  {
   "id": "w239",
-  "key": "A place your vans run from. Each station has its own managers, drivers and vans. Owners see all stations; managers and drivers see their own.",
+  "key": "What counts as a station?",
   "where": "page"
  },
  {
   "id": "w240",
-  "key": "Do drivers need an iPhone?",
+  "key": "A place your vans run from. Each station has its own managers, drivers and vans. Owners see all stations; managers and drivers see their own.",
   "where": "page"
  },
  {
   "id": "w241",
-  "key": "No. Fratius runs on iPhone, Android and as a web app in any phone's browser.",
+  "key": "Do drivers need an iPhone?",
   "where": "page"
  },
  {
   "id": "w242",
-  "key": "Can anything in the history be changed?",
+  "key": "No. Fratius runs on iPhone, Android and as a web app in any phone's browser.",
   "where": "page"
  },
  {
   "id": "w243",
-  "key": "No. Handovers are written by the server and never edited or deleted. Vans are retired instead of deleted, and people who leave keep their history.",
+  "key": "Can anything in the history be changed?",
   "where": "page"
  },
  {
   "id": "w244",
-  "key": "What do you keep about drivers?",
+  "key": "No. Handovers are written by the server and never edited or deleted. Vans are retired instead of deleted, and people who leave keep their history.",
   "where": "page"
  },
  {
   "id": "w245",
-  "key": "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.",
+  "key": "What do you keep about drivers?",
   "where": "page"
  },
  {
   "id": "w246",
-  "key": "How long do you keep photos and videos?",
+  "key": "Licence classes and expiry, licence checks, briefings and incidents. Never licence numbers or copies, birth dates, home addresses or health data.",
   "where": "page"
  },
  {
   "id": "w247",
-  "key": "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.",
+  "key": "How long do you keep photos and videos?",
   "where": "page"
  },
  {
   "id": "w248",
-  "key": "What about damage found at the end of a lease?",
+  "key": "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.",
   "where": "page"
  },
  {
   "id": "w249",
-  "key": "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.",
+  "key": "What about damage found at the end of a lease?",
   "where": "page"
  },
  {
   "id": "w250",
-  "key": "How do people join?",
+  "key": "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.",
   "where": "page"
  },
  {
   "id": "w251",
-  "key": "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.",
+  "key": "How do people join?",
   "where": "page"
  },
  {
   "id": "w252",
-  "key": "Handovers, damage and van history for delivery partners who run their own vans.",
+  "key": "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.",
   "where": "page"
  },
  {
   "id": "w253",
-  "key": "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.",
+  "key": "Handovers, damage and van history for delivery partners who run their own vans.",
   "where": "page"
  },
  {
   "id": "w254",
+  "key": "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.",
+  "where": "page"
+ },
+ {
+  "id": "w255",
   "key": "Prices per month, excluding VAT. 30 days free on every plan.",
   "where": "script"
  },
  {
-  "id": "w255",
+  "id": "w256",
   "key": "Automatic damage checks on every walk-around. Price to follow.",
   "where": "script"
  },
  {
-  "id": "w256",
+  "id": "w257",
   "key": "Fratius · Fleet management for delivery partners",
   "where": "script"
  },
  {
-  "id": "w257",
+  "id": "w258",
   "key": "Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.",
   "where": "script"
  },
  {
-  "id": "w258",
+  "id": "w259",
   "key": "Pick a plan.",
   "where": "script"
  },
  {
-  "id": "w259",
+  "id": "w260",
   "key": "Enter your first and last name.",
   "where": "script"
  },
  {
-  "id": "w260",
+  "id": "w261",
   "key": "Send the form from the website.",
   "where": "script"
  },
  {
-  "id": "w261",
+  "id": "w262",
   "key": "Too many requests today. Write to info@fratius.com instead.",
   "where": "script"
  },
  {
-  "id": "w262",
+  "id": "w263",
   "key": "Up to {n} vans",
   "where": "script"
  },
  {
-  "id": "w263",
+  "id": "w264",
   "key": "Unlimited vans",
   "where": "script"
  },
  {
-  "id": "w264",
+  "id": "w265",
   "key": "a month",
   "where": "script"
  },
  {
-  "id": "w265",
+  "id": "w266",
   "key": "{n} days free",
   "where": "script"
  },
  {
-  "id": "w266",
+  "id": "w267",
   "key": "Start with {plan}",
   "where": "script"
  },
  {
-  "id": "w267",
+  "id": "w268",
   "key": "Its own plan",
   "where": "script"
  },
  {
-  "id": "w268",
+  "id": "w269",
   "key": "Coming soon",
   "where": "script"
  },
  {
-  "id": "w269",
+  "id": "w270",
   "key": "Tell me when it's ready",
   "where": "script"
  },
  {
-  "id": "w270",
+  "id": "w271",
   "key": "{store}: coming soon",
   "where": "script"
  },
  {
-  "id": "w271",
+  "id": "w272",
   "key": "Download on the",
   "where": "script"
  },
  {
-  "id": "w272",
+  "id": "w273",
   "key": "Coming soon to the",
   "where": "script"
  },
  {
-  "id": "w273",
+  "id": "w274",
   "key": "Get it on",
   "where": "script"
  },
  {
-  "id": "w274",
+  "id": "w275",
   "key": "Coming soon on",
   "where": "script"
  },
  {
-  "id": "w275",
+  "id": "w276",
   "key": "Open the web app",
   "where": "script"
  },
  {
-  "id": "w276",
+  "id": "w277",
   "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
   "where": "script"
  },
  {
-  "id": "w277",
+  "id": "w278",
   "key": "Privacy",
   "where": "script"
  },
  {
-  "id": "w278",
+  "id": "w279",
   "key": "App privacy",
   "where": "script"
  },
  {
-  "id": "w279",
+  "id": "w280",
   "key": "Delete account",
   "where": "script"
  },
  {
-  "id": "w280",
+  "id": "w281",
   "key": "Terms",
   "where": "script"
  },
  {
-  "id": "w281",
+  "id": "w282",
   "key": "I have read the {privacy}.",
   "where": "script"
  },
  {
-  "id": "w282",
+  "id": "w283",
   "key": "privacy policy",
   "where": "script"
  },
  {
-  "id": "w283",
+  "id": "w284",
   "key": "I agree to the {terms} and the {privacy}.",
   "where": "script"
  },
  {
-  "id": "w284",
+  "id": "w285",
   "key": "terms",
   "where": "script"
  },
  {
-  "id": "w285",
+  "id": "w286",
   "key": "Front",
   "where": "script"
  },
  {
-  "id": "w286",
+  "id": "w287",
   "key": "Front left",
   "where": "script"
  },
  {
-  "id": "w287",
+  "id": "w288",
   "key": "Left side",
   "where": "script"
  },
  {
-  "id": "w288",
+  "id": "w289",
   "key": "Rear left",
   "where": "script"
  },
  {
-  "id": "w289",
+  "id": "w290",
   "key": "Rear",
   "where": "script"
  },
  {
-  "id": "w290",
+  "id": "w291",
   "key": "Rear right",
   "where": "script"
  },
  {
-  "id": "w291",
+  "id": "w292",
   "key": "Right side",
   "where": "script"
  },
  {
-  "id": "w292",
+  "id": "w293",
   "key": "Front right",
   "where": "script"
  },
  {
-  "id": "w293",
+  "id": "w294",
   "key": "HU sticker, due {date}",
   "where": "script"
  },
  {
-  "id": "w294",
+  "id": "w295",
   "key": "All languages",
   "where": "script"
  },
  {
-  "id": "w295",
+  "id": "w296",
   "key": "Choose a language",
   "where": "script"
  },
  {
-  "id": "w296",
+  "id": "w297",
   "key": "Picked up by Andrei M.",
   "where": "script"
  },
  {
-  "id": "w297",
+  "id": "w298",
   "key": "Tour started at 84,213 km",
   "where": "script"
  },
  {
-  "id": "w298",
+  "id": "w299",
   "key": "Dashboard read",
   "where": "script"
  },
  {
-  "id": "w299",
+  "id": "w300",
   "key": "Refuel 62.4 l · €108.20",
   "where": "script"
  },
  {
-  "id": "w300",
+  "id": "w301",
   "key": "Card matched",
   "where": "script"
  },
  {
-  "id": "w301",
+  "id": "w302",
   "key": "Wrong fuel card, driver waiting",
   "where": "script"
  },
  {
-  "id": "w302",
+  "id": "w303",
   "key": "Refuel allowed by Sofia K.",
   "where": "script"
  },
  {
-  "id": "w303",
+  "id": "w304",
   "key": "Allowed",
   "where": "script"
  },
  {
-  "id": "w304",
+  "id": "w305",
   "key": "Check",
   "where": "script"
  },
  {
-  "id": "w305",
+  "id": "w306",
   "key": "Dropped off by Elif D.",
   "where": "script"
  },
  {
-  "id": "w306",
+  "id": "w307",
   "key": "Video 1:12",
   "where": "script"
  },
  {
-  "id": "w307",
+  "id": "w308",
   "key": "Damage approved: rear left door",
   "where": "script"
  },
  {
-  "id": "w308",
+  "id": "w309",
   "key": "#4 on record",
   "where": "script"
  },
  {
-  "id": "w309",
+  "id": "w310",
   "key": "Taken over from Lukas B.",
   "where": "script"
  },
  {
-  "id": "w310",
+  "id": "w311",
   "key": "Tour ended · 138 km · 9 h 05",
   "where": "script"
  },
  {
-  "id": "w311",
+  "id": "w312",
   "key": "11.4 l/100 km",
   "where": "script"
  },
  {
-  "id": "w312",
+  "id": "w313",
   "key": "Picked up by Tomasz W.",
   "where": "script"
  },
  {
-  "id": "w313",
+  "id": "w314",
   "key": "HU due in March",
   "where": "script"
  },
  {
-  "id": "w314",
+  "id": "w315",
   "key": "Dropped off without proof",
   "where": "script"
  },
  {
-  "id": "w315",
+  "id": "w316",
   "key": "Handover video added by Sofia K.",
   "where": "script"
  },
  {
-  "id": "w316",
+  "id": "w317",
   "key": "Proof added",
   "where": "script"
  },
  {
-  "id": "w317",
+  "id": "w318",
   "key": "Other",
   "where": "script"
  },
  {
-  "id": "w318",
+  "id": "w319",
   "key": "{plan} covers up to {max} vans and you run {n}.",
   "where": "script"
  },
  {
-  "id": "w319",
+  "id": "w320",
   "key": "Your plan: {plan}, up to {n} vans",
   "where": "script"
  },
  {
-  "id": "w320",
+  "id": "w321",
   "key": "Your plan: {plan}, unlimited vans",
   "where": "script"
  },
  {
-  "id": "w321",
+  "id": "w322",
   "key": "See the plans",
   "where": "script"
  },
  {
-  "id": "w322",
+  "id": "w323",
   "key": "Enter your company's name.",
   "where": "script"
  },
  {
-  "id": "w323",
+  "id": "w324",
   "key": "Enter how many stations you run, 1 or more.",
   "where": "script"
  },
  {
-  "id": "w324",
+  "id": "w325",
   "key": "Enter how many vans you run, 1 or more.",
   "where": "script"
  },
  {
-  "id": "w325",
+  "id": "w326",
   "key": "Enter your first name.",
   "where": "script"
  },
  {
-  "id": "w326",
+  "id": "w327",
   "key": "Enter your last name.",
   "where": "script"
  },
  {
-  "id": "w327",
+  "id": "w328",
   "key": "Enter an email address like name@company.de.",
   "where": "script"
  },
  {
-  "id": "w328",
+  "id": "w329",
   "key": "Enter a mobile number with the country code, like +49 151 2345 6789.",
   "where": "script"
  },
  {
-  "id": "w329",
+  "id": "w330",
   "key": "Plan",
   "where": "script"
  },
  {
-  "id": "w330",
+  "id": "w331",
   "key": "Contact",
   "where": "script"
  },
  {
-  "id": "w331",
+  "id": "w332",
   "key": "Free until",
   "where": "script"
  },
  {
-  "id": "w332",
+  "id": "w333",
   "key": "Thanks, {name}",
   "where": "script"
  },
  {
-  "id": "w333",
+  "id": "w334",
   "key": "We've got your request for {company}. We'll email {email} with how to start your {days} days.",
   "where": "script"
  },
  {
-  "id": "w334",
+  "id": "w335",
   "key": "That's it, {name}",
   "where": "script"
  },
  {
-  "id": "w335",
+  "id": "w336",
   "key": "This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.",
   "where": "script"
  },
  {
-  "id": "w336",
+  "id": "w337",
   "key": "You can also write to {email}.",
   "where": "script"
  },
  {
-  "id": "w337",
+  "id": "w338",
   "key": "Tick the box to agree to the terms and the privacy policy.",
   "where": "script"
  },
  {
-  "id": "w338",
+  "id": "w339",
   "key": "Tick the box to confirm you have read the privacy policy.",
   "where": "script"
  },
  {
-  "id": "w339",
+  "id": "w340",
   "key": "Your request didn't go through. Check your connection and try again.",
   "where": "script"
  }
