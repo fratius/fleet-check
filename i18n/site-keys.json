@@ -826,7 +826,7 @@
  },
  {
   "id": "w166",
-  "key": "People join only by invite link: one person, one use, valid for 24 hours.",
+  "key": "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.",
   "where": "page"
  },
  {
@@ -1251,7 +1251,7 @@
  },
  {
   "id": "w251",
-  "key": "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.",
+  "key": "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.",
   "where": "page"
  },
  {

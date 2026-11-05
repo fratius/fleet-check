@@ -33,7 +33,8 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    insurance); running costs on receipts (fuel, washes, parts) are seen by the station's managers too, since they
    allow or refuse them.
 3. **Fleet manager** (role `manager`). Same powers as the owner, limited to their station (operating area) and
-   its drivers: adds, edits and removes vans there, invites and removes drivers there. Cannot add stations or
+   its drivers: adds, edits and removes vans there, approves (or rejects) drivers who signed up for it with the
+   company's driver link, and removes drivers there. Cannot add stations or
    managers. **Has the final word on damage**: approves or rejects every spot the AI found, adds damage it
    missed, finishes the review. Approved damage goes on the van's damage record. **Allows or refuses a refuel or
    wash when the fuel card isn't the van's** (never their own), and buys parts for their station's vans.
@@ -53,11 +54,27 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   creator read everything.
 - Damage checks are written by the server. From the app, only owners and managers of the station can write the
   `review` and `status` of a check.
-- **Joining is by invite link only.** Owners make links for managers and drivers; managers make links for drivers
-  of their station. One link is for one person, works once, and expires 24 hours after it was made. Several can
-  be made at once. The link opens the join page, which asks for the person's details (name, mobile, Transporter
-  ID for drivers), creates their account, then shows how to put the app on the home screen. Links are made and
-  used by Cloud Functions (`createInvite`, `peekInvite`, `acceptInvite`); the app can only list and cancel them.
+- **Joining is by link only** (product owner, 2026-11-05: drivers sign up with one company link and are approved).
+  - **Drivers: the company's driver link.** Each company has one link for all its drivers. They open it, pick their
+    station from the company's stations, give their details (name, mobile, optional Transporter ID) and create
+    their account. That makes a **request**, not a member: until an owner or a fleet manager of the station they
+    picked approves it, they aren't in the company and see nothing of it (no vans, people or history). Owners
+    decide for every station, managers for their own; drivers never. A rejected person can ask again after 24
+    hours; a request nobody decides expires after 14 days; the person can take it back. When a request ends
+    without joining (rejected, taken back, expired) only the name stays on it; a request still waiting is deleted
+    with the person's account. The approver is told when someone in the company already has the same Transporter
+    ID. Owners and managers see and share the link; **only owners make a new link**, and the old one stops working
+    at once (for a link that leaked or was shared with someone who left). Made and used by Cloud Functions
+    (`driverLink`, `peekInvite`, `requestToJoin`, `decideJoinRequest`, `withdrawJoinRequest`); the requests are
+    `orgs/{org}/joinRequests/{uid}` and the current link `orgs/{org}/links/drivers`, both server-written; the
+    tokens are in `companyLinks` (server only). Owners and the station's managers get a notification for each new
+    request; the driver for the decision.
+  - **Fleet managers: one-time invite links.** Owners make them. One link is for one person, works once, and
+    expires 24 hours after it was made. Several can be made at once. The link opens the join page, which asks for
+    the person's details (name, mobile), creates their account, then shows how to put the app on the home screen.
+    Made and used by Cloud Functions (`createInvite`, `peekInvite`, `acceptInvite`); the app can only list and
+    cancel them. (The server still accepts one-time links for drivers, which the app no longer offers: the tests
+    use them, and approving a sign-up gives the same access.)
 - **New companies** are made by the server (`createCompany`): the person becomes its fleet owner, with a first
   station and **30 days free** (`billing` on the company: `trialing`, trial start and end, where they signed up,
   the plan picked on the website). The website's "Start 30 days free" button (when `CONFIG.app.selfServe` is on)

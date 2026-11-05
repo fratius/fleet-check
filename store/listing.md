@@ -58,7 +58,7 @@ WORKS WITHOUT SIGNAL
 In a garage or a car park with no reception, handovers, photos and videos wait on the phone and go through by themselves once there's a connection. Nobody has to do anything twice.
 
 FOR OWNERS, MANAGERS AND DRIVERS
-Fleet owners see every station; fleet managers run their own; drivers see their van and their own record. Drivers and managers join through one-time invite links. The app speaks 32 languages, so every driver can use it in their own.
+Fleet owners see every station; fleet managers run their own; drivers see their van and their own record. Drivers sign up with their company's link and start once a manager approves them; fleet managers join through one-time invite links. The app speaks 32 languages, so every driver can use it in their own.
 
 PRIVACY
 Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with its driver; the ones that show damage after 90 days. Card photos and document photos are deleted right after reading. No ads, no tracking.
@@ -143,7 +143,7 @@ Reviewers use the demo logins (APP-STORE.md, step 5): only the app creator can o
 after submitting: that makes new logins.
 
 ```
-Fratius is a fleet app for delivery companies of any size: fleet owners, fleet managers and their drivers. It isn't made for one particular company. Any delivery company can create an account, create its company in the app and start using it; drivers and managers then join their company through one-time invite links from it. There are no in-app purchases and the app shows no prices or purchase links. Companies that keep using it after the trial pay us under a business contract for their organisation (guideline 3.1.3(c)); nothing is sold to individual consumers.
+Fratius is a fleet app for delivery companies of any size: fleet owners, fleet managers and their drivers. It isn't made for one particular company. Any delivery company can create an account, create its company in the app and start using it; drivers then sign up with their company's driver link and are approved by a fleet manager, and fleet managers join through one-time invite links. There are no in-app purchases and the app shows no prices or purchase links. Companies that keep using it after the trial pay us under a business contract for their organisation (guideline 3.1.3(c)); nothing is sold to individual consumers.
 
 Sign in with the login below. It is a fleet manager in a demo company with made-up stations, people, vans, handovers and damage checks; its photos are drawings.
 - To see the app as a driver, sign in with the second login: [driver email] / [driver password].
@@ -160,7 +160,7 @@ If App Review asks the usual questions for business apps (guideline 3.2), answer
 1. Is your app restricted to users who are part of a single company? No. Any delivery company can sign up and create its company in the app; we have no list of allowed companies.
 2. Is your app designed for use by a limited or specific group of companies? It is made for delivery companies (fleets of vans and their drivers), an industry, not for named companies. "Create a company" is open to everyone.
 3. What features in the app, if any, are intended for use by the general public? Anyone can create an account and create a company. The features are for people who work with a fleet of vans: handovers, damage checks, van history, refuels.
-4. How do users obtain an account? By signing up in the app with an email address and a password. People who work for a company that already uses Fratius join it through an invite link from their fleet manager.
+4. How do users obtain an account? By signing up in the app with an email address and a password. People who work for a company that already uses Fratius join it through a link from that company: drivers with the company's driver link (a fleet manager approves them), fleet managers with a one-time invite link.
 5. Is there any paid content in the app? No. Companies that keep using it pay us under a business contract for their organisation, outside the app; nothing is sold in the app or to individual consumers.
 ```
 

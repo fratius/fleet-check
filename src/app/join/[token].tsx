@@ -13,6 +13,8 @@ import { ROLE_NAME, type InvitePeek } from '@/lib/types';
 /**
  * Where an invite link lands: who invited you and to what, your details, an account, then how to put the
  * app on your home screen. Each link works for one person within 24 hours.
+ * The company's driver link lands here too (CompanyJoin): the driver picks their station and asks to join; a fleet
+ * manager of that station or an owner approves them.
  */
 export default function Join() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -75,6 +77,7 @@ export default function Join() {
   );
 
   if (!peek) return <Screen>{header}<ActivityIndicator color={c.ink} style={{ alignSelf: 'flex-start' }} /></Screen>;
+  if (peek.kind === 'company') return <CompanyJoin token={String(token || '')} peek={peek} onPeek={setPeek} />;
 
   if (done) {
     return (
@@ -142,6 +145,148 @@ export default function Join() {
 
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
         <Button v="primary" wide title={t('Join {company}', { company: peek.orgName })} loading={busy} onPress={join} />
+        <T v="small">{t('You can install the app on your phone in the next step.')}</T>
+      </Screen>
+    </KeyboardAvoidingView>
+  );
+}
+
+/**
+ * The company's driver link: pick your station, your details and an account, then wait. Until a fleet manager or the
+ * owner approves, the person isn't in the company and sees nothing of it.
+ */
+function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek; onPeek: (p: InvitePeek) => void }) {
+  const s = useSession();
+  const c = useColors();
+  const stations = peek.stations || [];
+  const [station, setStation] = useState<string | null>(stations.length === 1 ? stations[0].id : null);
+  const [first, setFirst] = useState('');
+  const [last, setLast] = useState('');
+  const [phone, setPhone] = useState('');
+  const [tid, setTid] = useState('');
+  const [mode, setMode] = useState<'up' | 'in'>('up');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const signedIn = s.status === 'ready' || s.status === 'needsOrg';
+  useEffect(() => {
+    if (!signedIn || !s.user) return;
+    const parts = (s.user.name || '').split(' ');
+    if (!first && parts[0] && !s.user.name.includes('@')) setFirst(parts[0]);
+    if (!last && parts.length > 1) setLast(parts.slice(1).join(' '));
+  }, [signedIn, s.user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Signed in after the page opened: ask again whether this account already asked or is in the company.
+  useEffect(() => {
+    if (!signedIn) return;
+    let live = true;
+    ai.peekInvite({ token }).then((p) => { if (live && p.status !== peek.status) onPeek(p); }).catch(() => {});
+    return () => { live = false; };
+  }, [signedIn, s.user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const send = async () => {
+    setErr(null);
+    if (!station) { setErr(t('Pick your station.')); return; }
+    if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
+    if (!phone.trim()) { setErr(t('Enter your mobile number, so your manager knows it\'s you.')); return; }
+    if (!signedIn) {
+      if (!email.trim()) { setErr(t('Enter your email address.')); return; }
+      if (password.length < 6) { setErr(t('Use at least 6 characters for the password.')); return; }
+    }
+    setBusy(true);
+    try {
+      if (!signedIn) {
+        if (mode === 'up') await s.signUp(email, password, `${first.trim()} ${last.trim()}`);
+        else await s.signIn(email, password);
+      }
+      const r = await ai.requestToJoin({ token, stationId: station, details: { firstName: first, lastName: last, phone, transporterId: tid } });
+      onPeek({ ...peek, status: 'pending', stationName: r.stationName, requestedAt: Date.now() });
+    } catch (e) {
+      setErr(e instanceof AiError ? e.message : authMessage(e));
+    } finally { setBusy(false); }
+  };
+
+  const header = (
+    <View style={{ gap: 6, paddingTop: 16 }}>
+      <T v="hint">Fratius</T>
+      <T v="h1">{peek.status === 'pending' ? t('Request sent') : t('Join {company}', { company: peek.orgName || '' })}</T>
+      <LanguageLink />
+    </View>
+  );
+
+  if (peek.status === 'replaced' || peek.status === 'member') {
+    return (
+      <Screen>
+        {header}
+        <Notice tone={peek.status === 'member' ? undefined : 'bad'} text={peek.status === 'member'
+          ? t('You\'re already in {company}.', { company: peek.orgName || '' })
+          : t('This link was replaced by a new one. Ask your fleet manager for the new link.')} />
+        <Button title={signedIn ? t('Open Fratius') : t('Sign in')} onPress={() => router.replace(signedIn ? '/' : '/sign-in')} />
+      </Screen>
+    );
+  }
+
+  if (peek.status === 'pending') {
+    return (
+      <Screen>
+        {header}
+        <Card>
+          <T>{tj('You asked to join {company} as a driver at {station}.', { company: <T key="c" v="medium">{peek.orgName}</T>, station: <T key="s" v="medium">{peek.stationName}</T> })}</T>
+          <T v="hint">{t('A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you\'re in.')}</T>
+        </Card>
+        <Install />
+        <Button v="primary" wide title={t('Open Fratius')} onPress={() => router.replace('/')} />
+      </Screen>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Screen>
+        {header}
+        <Card>
+          <T>{tj('Sign up as a driver at {company}.', { company: <T key="c" v="medium">{peek.orgName}</T> })}</T>
+          <T v="hint">{t('Pick your station. A fleet manager of that station or the owner then approves you.')}</T>
+        </Card>
+
+        <Card>
+          <T v="h3">{t('1. Your station')}</T>
+          {stations.length ? (
+            <View style={{ gap: 8 }}>
+              {stations.map((st) => (
+                <Button key={st.id} wide v={station === st.id ? 'primary' : 'secondary'} title={st.code && st.code !== st.name ? `${st.name} (${st.code})` : st.name}
+                  onPress={() => { setStation(st.id); setErr(null); }} accessibilityState={{ selected: station === st.id }} />
+              ))}
+            </View>
+          ) : <T v="hint">{t('This company has no stations yet. Ask your fleet manager.')}</T>}
+        </Card>
+
+        <Card>
+          <T v="h3">{t('2. Your details')}</T>
+          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
+          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
+          <Field label={t('Mobile number')} hint={t('so your manager knows it\'s you')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
+          <Field label="Amazon Transporter ID" hint={t('optional')} value={tid} onChangeText={(x) => setTid(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} />
+        </Card>
+
+        <Card>
+          <T v="h3">{t('3. Your account')}</T>
+          {signedIn ? (
+            <>
+              <T>{t('Signed in as {email}. You\'ll join with this account.', { email: s.user?.email })}</T>
+              <Row><Button small v="link" title={t('Use another account')} onPress={() => s.signOut()} /></Row>
+            </>
+          ) : (
+            <>
+              <Segmented label={t('Account')} value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['up', t('New account')], ['in', t('I have one')]]} />
+              <Field label={t('Email')} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" />
+              <Field label={t('Password')} hint={mode === 'up' ? t('at least 6 characters') : undefined} value={password} onChangeText={setPassword} secureTextEntry textContentType={mode === 'up' ? 'newPassword' : 'password'} />
+            </>
+          )}
+        </Card>
+
+        {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+        <Button v="primary" wide title={t('Send request')} loading={busy} onPress={send} disabled={!stations.length} />
         <T v="small">{t('You can install the app on your phone in the next step.')}</T>
       </Screen>
     </KeyboardAvoidingView>

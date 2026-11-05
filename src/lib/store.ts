@@ -8,7 +8,7 @@ import { fb } from './firebase';
 import { N_, t } from './i18n';
 import { newId } from './images';
 import { retrying } from './net';
-import type { AccountCompany, Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { AccountCompany, Assignment, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   /** `fromCache`: only what this phone has (no connection yet), not confirmed by the server. */
@@ -256,6 +256,10 @@ export const ai = {
   createInvite: call<{ orgId: string; role: 'manager' | 'driver'; stationId: string; count: number }, { invites: Invite[] }>('createInvite', 40000),
   peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
   acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
+  driverLink: call<{ orgId: string; reset?: boolean }, DriverLink>('driverLink', 30000),
+  requestToJoin: call<{ token: string; stationId: string; details: JoinDetails }, { orgId: string; orgName: string; stationName: string; again: boolean }>('requestToJoin', 40000),
+  decideJoinRequest: call<{ orgId: string; uid: string; approve: boolean }, { ok: boolean; approved: boolean }>('decideJoinRequest', 30000),
+  withdrawJoinRequest: call<{ orgId: string }, { ok: boolean }>('withdrawJoinRequest', 30000),
   createDemoCompany: call<{ fresh?: boolean }, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
   createCompany: call<{ company: string; station: string; mainStation: string; name: string; source: 'website' | 'app'; plan: string | null; terms: string | null }, { orgId: string; trialEnd: number }>('createCompany', 40000),
   assignVan: call<{ orgId: string; vehicleId: string; driverId: string | null }, { assignmentId: string | null; unchanged?: boolean; notified?: number }>('assignVan', 30000),

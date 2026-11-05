@@ -7,7 +7,7 @@ import { fb } from './firebase';
 import { t } from './i18n';
 import { readCache, writeCache } from './offline';
 import { sendWrite } from './outbox';
-import type { Assignment, Check, DamageNote, Invite, Member, Org, Walkaround } from './types';
+import type { Assignment, Check, DamageNote, DriverLink, Invite, JoinRequest, Member, Org, Walkaround } from './types';
 
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
@@ -51,6 +51,39 @@ export function watchInvites(orgId: string, cb: (rows: Invite[]) => void, onErro
   return onSnapshot(query(collection(db(), 'invites'), where('orgId', '==', orgId), orderBy('createdAt', 'desc')),
     (snap) => cb(snap.docs.map((d) => d.data() as Invite)),
     () => onError?.());
+}
+
+/** The company's driver link (owners and managers read it; the server makes it). null while there's none yet. */
+export function watchDriverLink(orgId: string, cb: (l: DriverLink | null) => void, onError?: () => void) {
+  return onSnapshot(doc(db(), 'orgs', orgId, 'links', 'drivers'), (d) => cb(d.exists() ? (d.data() as DriverLink) : null), () => onError?.());
+}
+
+/**
+ * Drivers waiting for approval: owners see every station's (stationIds null), managers their stations'. Newest first;
+ * requests older than 14 days are left out (the server can't approve them any more).
+ */
+export function watchJoinRequests(orgId: string, stationIds: string[] | null, cb: (rows: JoinRequest[]) => void, onError?: () => void) {
+  if (stationIds && !stationIds.length) { cb([]); return () => {}; }
+  const q = stationIds
+    ? query(collection(db(), 'orgs', orgId, 'joinRequests'), where('status', '==', 'pending'), where('stationId', 'in', stationIds.slice(0, 30)))
+    : query(collection(db(), 'orgs', orgId, 'joinRequests'), where('status', '==', 'pending'));
+  return onSnapshot(q, (snap) => {
+    const now = Date.now();
+    cb(snap.docs.map((d) => d.data() as JoinRequest).filter((r) => r.expiresAt > now).sort((a, b) => b.createdAt - a.createdAt));
+  }, () => onError?.());
+}
+
+/** The signed-in person's own sign-up request in a company, while they wait. */
+export function watchMyJoinRequest(orgId: string, uid: string, cb: (r: JoinRequest | null) => void) {
+  return onSnapshot(doc(db(), 'orgs', orgId, 'joinRequests', uid), (d) => cb(d.exists() ? (d.data() as JoinRequest) : null), () => cb(null));
+}
+
+/** What the signed-in person waits for: the company they asked to join (users/{uid}.pendingJoin), and which companies they're in. */
+export function watchMyProfile(uid: string, cb: (p: { pendingJoin: { orgId: string; orgName: string; stationName: string; at: number } | null; orgIds: string[] }) => void) {
+  return onSnapshot(doc(db(), 'users', uid), (d) => {
+    const x = d.data() || {};
+    cb({ pendingJoin: x.pendingJoin && typeof x.pendingJoin.orgId === 'string' ? x.pendingJoin : null, orgIds: Array.isArray(x.orgIds) ? x.orgIds : [] });
+  }, () => {});
 }
 
 // Changes go through the outbox (lib/outbox.ts): kept on the phone and sent by themselves without a connection.

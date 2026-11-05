@@ -1397,3 +1397,91 @@ test('sign-up: a new company gets 30 days free from the server; the owner can\'t
   await adminDb().doc(`orgs/${S.org}/aiDaily/${day}`).set({ checks: 99 });
   assert.ok((await S.own.call('findDamage', { orgId: S.org, walkId: await photos(S.own, S.org, S.vans.v1, { real: true }), tier: 'default' })).checkId);
 });
+
+test('drivers sign up with the company\'s link, pick a station, and wait for an owner or that station\'s manager', async () => {
+  const details = (first, last, extra = {}) => ({ firstName: first, lastName: last, phone: '+49 151 3', ...extra });
+  // Owners and managers get the company's one link (made the first time); drivers don't. Only owners make a new one.
+  await fails(S.d1.call('driverLink', { orgId: S.org }), 'permission-denied');
+  const link = await S.mgr.call('driverLink', { orgId: S.org });
+  assert.equal((await S.own.call('driverLink', { orgId: S.org })).token, link.token);
+  assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'links', 'drivers'))).data().token, link.token);
+  await fails(S.mgr.call('driverLink', { orgId: S.org, reset: true }), 'permission-denied');
+
+  // Anyone with the link sees the company and its stations.
+  const gina = await person('Gina Newdriver');
+  const peek = await gina.call('peekInvite', { token: link.token });
+  assert.equal(peek.kind, 'company');
+  assert.equal(peek.status, 'ok');
+  assert.deepEqual(peek.stations.map((x) => x.id).sort(), [S.s1, S.s2].sort());
+
+  // Gina picks station 1. Until someone approves, she isn't a member and sees nothing of the company.
+  await fails(gina.call('requestToJoin', { token: link.token, stationId: 'nope', details: details('Gina', 'Newdriver') }), 'not-found');
+  await fails(gina.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Gina' } }), 'invalid-argument');
+  const r = await gina.call('requestToJoin', { token: link.token, stationId: S.s1, details: details('Gina', 'Newdriver', { transporterId: 'A1' }) });
+  assert.equal(r.stationName, 'DXX1');
+  assert.equal((await gina.call('peekInvite', { token: link.token })).status, 'pending');
+  await fails(getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1]))), 'permission-denied');
+  await fails(gina.call('assignVan', { orgId: S.org, vehicleId: S.vans.v1.id, driverId: gina.uid }), 'permission-denied');
+  const mine = (await getDoc(doc(gina.db, 'orgs', S.org, 'joinRequests', gina.uid))).data();
+  assert.equal(mine.status, 'pending');
+  assert.ok(mine.sameTransporterId, 'a driver in the company already has Transporter ID A1: the approver is told');
+  assert.equal((await getDoc(doc(gina.db, 'users', gina.uid))).data().pendingJoin.orgId, S.org);
+
+  // Hugo picks station 2: the manager of station 1 can't see or decide it; drivers and Gina herself can't decide anything.
+  const hugo = await person('Hugo Otherstation');
+  await hugo.call('requestToJoin', { token: link.token, stationId: S.s2, details: details('Hugo', 'Otherstation') });
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'joinRequests', hugo.uid)), 'permission-denied');
+  await fails(S.mgr.call('decideJoinRequest', { orgId: S.org, uid: hugo.uid, approve: true }), 'permission-denied');
+  await fails(S.d1.call('decideJoinRequest', { orgId: S.org, uid: gina.uid, approve: true }), 'permission-denied');
+  await fails(gina.call('decideJoinRequest', { orgId: S.org, uid: gina.uid, approve: true }), 'permission-denied');
+
+  // The station's manager approves Gina: a driver at station 1, the company on her profile.
+  await S.mgr.call('decideJoinRequest', { orgId: S.org, uid: gina.uid, approve: true });
+  const m = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'members', gina.uid))).data();
+  assert.equal(m.role, 'driver');
+  assert.deepEqual(m.stationIds, [S.s1]);
+  assert.equal(m.approvedBy, S.mgr.uid);
+  assert.equal(m.phone, '+49 151 3');
+  const prof = (await getDoc(doc(gina.db, 'users', gina.uid))).data();
+  assert.ok(prof.orgIds.includes(S.org));
+  assert.equal(prof.pendingJoin, undefined);
+  await fails(S.mgr.call('decideJoinRequest', { orgId: S.org, uid: gina.uid, approve: false }), 'failed-precondition');
+  assert.equal((await gina.call('peekInvite', { token: link.token })).status, 'member');
+  assert.equal((await getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1])))).size > 0, true);
+
+  // The owner rejects Hugo: only his name stays on the request, and he can't ask again the same day.
+  await S.own.call('decideJoinRequest', { orgId: S.org, uid: hugo.uid, approve: false });
+  const hr = (await getDoc(doc(hugo.db, 'orgs', S.org, 'joinRequests', hugo.uid))).data();
+  assert.equal(hr.status, 'rejected');
+  assert.equal(hr.phone, '');
+  assert.equal(hr.email, '');
+  assert.equal((await getDoc(doc(hugo.db, 'orgs', S.org, 'members', hugo.uid))).exists(), false);
+  await fails(hugo.call('requestToJoin', { token: link.token, stationId: S.s2, details: details('Hugo', 'Otherstation') }), 'failed-precondition');
+
+  // Ines asked by mistake and takes it back; then nobody can approve it.
+  const ines = await person('Ines Wrongcompany');
+  await ines.call('requestToJoin', { token: link.token, stationId: S.s2, details: details('Ines', 'Wrongcompany') });
+  await ines.call('withdrawJoinRequest', { orgId: S.org });
+  assert.equal((await getDoc(doc(ines.db, 'orgs', S.org, 'joinRequests', ines.uid))).data().status, 'withdrawn');
+  await fails(S.own.call('decideJoinRequest', { orgId: S.org, uid: ines.uid, approve: true }), 'failed-precondition');
+
+  // Older than 14 days: it can't be approved any more.
+  const jonas = await person('Jonas Late');
+  await jonas.call('requestToJoin', { token: link.token, stationId: S.s1, details: details('Jonas', 'Late') });
+  await adminDb().doc(`orgs/${S.org}/joinRequests/${jonas.uid}`).update({ expiresAt: Date.now() - 1000 });
+  await fails(S.mgr.call('decideJoinRequest', { orgId: S.org, uid: jonas.uid, approve: true }), 'deadline-exceeded');
+
+  // The owner makes a new link: the old one stops working.
+  const fresh = await S.own.call('driverLink', { orgId: S.org, reset: true });
+  assert.notEqual(fresh.token, link.token);
+  const kira = await person('Kira Oldlink');
+  assert.equal((await kira.call('peekInvite', { token: link.token })).status, 'replaced');
+  await fails(kira.call('requestToJoin', { token: link.token, stationId: S.s1, details: details('Kira', 'Oldlink') }), 'failed-precondition');
+  assert.equal((await kira.call('peekInvite', { token: fresh.token })).status, 'ok');
+
+  // A request still waiting goes with the person's account when they delete it.
+  const lena = await person('Lena Leaving');
+  await lena.call('requestToJoin', { token: fresh.token, stationId: S.s1, details: details('Lena', 'Leaving') });
+  await lena.call('deleteAccount', {});
+  assert.equal((await adminDb().doc(`orgs/${S.org}/joinRequests/${lena.uid}`).get()).exists, false);
+});

@@ -3,18 +3,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 
 import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
-import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchInvites, watchMembers } from '@/lib/people';
+import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
-import { ROLE_NAME, roleOf, type Assignment, type Invite, type Member, type Station } from '@/lib/types';
+import { ROLE_NAME, roleOf, type Assignment, type DriverLink, type Invite, type JoinRequest, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
 import { vanAlias, vanName } from '@/lib/vans';
 
 /**
- * Owners: stations, fleet managers and drivers of the whole company, and invite links for both roles.
- * Managers: the drivers of their station and driver invite links.
+ * Owners: stations, fleet managers and drivers of the whole company, one-time invite links for fleet managers.
+ * Managers: the drivers of their station.
+ * Both: the company's driver link (drivers sign up with it and pick their station) and the drivers waiting for
+ * approval (owners every station's, managers their stations').
  */
 export default function People() {
   const s = useSession();
@@ -41,6 +43,8 @@ export default function People() {
         <T v="hint">{owner ? t('Fleet managers and drivers of {company}, by station.', { company: s.org?.name || '' }) : t('The fleet managers and drivers of your station.')}</T>
       </View>
       {err ? <Notice tone="bad" text={err} /> : null}
+      <JoinRequests />
+      <DriverLinkCard />
       {stations.map((st) => (
         <StationPeople key={st.id} station={st} members={(members || []).filter((m) => (m.stationIds || []).includes(st.id) && roleOf(m) !== 'owner')}
           invites={invites.filter((i) => i.stationId === st.id)} />
@@ -163,12 +167,101 @@ function StationPeople({ station, members, invites }: { station: Station; member
       <View style={{ gap: 6 }}>
         <T v="h3">{drivers.length ? t('Drivers ({n})', { n: drivers.length }) : t('Drivers')}</T>
         <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 10, gap: 10 }}>
-          {drivers.length ? drivers.map((m, i) => <DriverRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">{t('No drivers yet. Invite them with a link.')}</T>}
+          {drivers.length ? drivers.map((m, i) => <DriverRow key={m.uid} m={m} first={i === 0} />) : <T v="hint">{t('No drivers yet. Send them the driver link above.')}</T>}
         </View>
-        <InviteToggle station={station} role="driver" invites={invites.filter((i) => i.role === 'driver')} />
       </View>
 
       {s.runs(station.id) ? <SelfAssign station={station} /> : null}
+    </View>
+  );
+}
+
+/**
+ * The company's driver link: one link for all drivers. They open it, pick their station and create their account;
+ * then a fleet manager of that station or an owner approves them. Only owners make a new link (the old one stops).
+ */
+function DriverLinkCard() {
+  const s = useSession();
+  const c = useColors();
+  const orgId = s.org?.id;
+  const [link, setLink] = useState<DriverLink | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => (orgId && s.mode === 'firebase' ? watchDriverLink(orgId, setLink, () => setLink(null)) : undefined), [orgId, s.mode]);
+  const make = async (reset: boolean) => {
+    setBusy(true); setErr(null);
+    try { await ai.driverLink({ orgId: orgId!, ...(reset ? { reset: true } : {}) }); setArmed(false); }
+    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t make the link.')); } finally { setBusy(false); }
+  };
+  if (link === undefined) return null;
+  const url = link ? inviteUrl(link.token) : '';
+  const share = () => Share.share({
+    message: t('Sign up as a driver at {company} in Fratius: open this link on your phone, pick your station and create your account. A fleet manager then approves you. {link}', { company: s.org!.name, link: url }),
+  }).catch(() => {});
+  return (
+    <Card>
+      <T v="h3">{t('Driver sign-up link')}</T>
+      <T v="small">{t('One link for all your drivers. They pick their station when they sign up, and you approve them here.')}</T>
+      {link ? (
+        <>
+          <T v="small" selectable numberOfLines={2}>{url}</T>
+          <Row>
+            <Button small v="primary" title={t('Share')} onPress={share} />
+            {s.role === 'owner' ? (
+              <Button small v="link" title={armed ? t('Tap again: the old link stops working') : t('Make a new link')} loading={busy}
+                onPress={() => { if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 4000); return; } make(true); }} />
+            ) : null}
+          </Row>
+          <T v="small">{t('Made by {name}, {when}.', { name: link.createdByName, when: fmtWhen(link.createdAt) })}</T>
+        </>
+      ) : <Button small v="primary" title={t('Make the driver link')} loading={busy} onPress={() => make(false)} />}
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+    </Card>
+  );
+}
+
+/** Drivers who signed up with the link and wait: approve or reject each. Managers see their stations', owners all. */
+function JoinRequests() {
+  const s = useSession();
+  const orgId = s.org?.id;
+  const owner = s.role === 'owner';
+  const mine = owner ? null : s.myStations.map((st) => st.id);
+  const key = mine ? mine.join(',') : '*';
+  const [rows, setRows] = useState<JoinRequest[]>([]);
+  useEffect(() => (orgId && s.mode === 'firebase' ? watchJoinRequests(orgId, mine, setRows, () => setRows([])) : undefined), [orgId, s.mode, key]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!rows.length) return null;
+  return (
+    <Card>
+      <T v="h3">{t('Waiting for approval ({n})', { n: rows.length })}</T>
+      <T v="small">{t('Drivers who signed up with the driver link. They see nothing until you approve them.')}</T>
+      {rows.map((r, i) => <JoinRow key={r.uid} r={r} first={i === 0} showStation={owner && s.stations.length > 1} />)}
+    </Card>
+  );
+}
+
+function JoinRow({ r, first, showStation }: { r: JoinRequest; first: boolean; showStation: boolean }) {
+  const s = useSession();
+  const c = useColors();
+  const [busy, setBusy] = useState<'yes' | 'no' | null>(null);
+  const [armed, setArmed] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const decide = async (approve: boolean) => {
+    setBusy(approve ? 'yes' : 'no'); setErr(null);
+    try { await ai.decideJoinRequest({ orgId: s.org!.id, uid: r.uid, approve }); }
+    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that.')); setBusy(null); }
+  };
+  return (
+    <View style={{ gap: 6, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
+      <T v="medium">{r.name}</T>
+      <T v="small">{[r.phone, r.transporterId ? `Transporter ID ${r.transporterId}` : null, showStation ? r.stationName : null, t('asked {when}', { when: fmtWhen(r.createdAt) })].filter(Boolean).join(' · ')}</T>
+      {r.sameTransporterId ? <T v="small" color={c.amber}>{t('{name} in your company already has this Transporter ID.', { name: r.sameTransporterId })}</T> : null}
+      <Row>
+        <Button small v="primary" title={t('Approve')} loading={busy === 'yes'} disabled={!!busy} onPress={() => decide(true)} />
+        <Button small v="danger" title={armed ? t('Tap again') : t('Reject')} loading={busy === 'no'} disabled={!!busy}
+          onPress={() => { if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; } decide(false); }} />
+      </Row>
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
   );
 }

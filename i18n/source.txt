@@ -3,6 +3,7 @@
 9cf01c50	{check} not done: {van}
 37e3c183	{check} on {van}	[components/routines.tsx]
 3e3adc5b	{check}: {van}	[index.ts]
+4c0f8606	{company} has too many requests waiting. Ask your fleet manager.
 cdc67bd4	{company}: you leave the company.
 eca8eab2	{company}: you're its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.
 60731bb6	{company}: you're its only member, so the company is deleted with everything in it.
@@ -90,6 +91,7 @@ c67738c1	{name} (retired)	[data.tsx]
 399c7daa	{name} allowed it.	[buy/[id].tsx]
 44f828df	{name} allowed it. Fill up, then take the photo of the receipt.
 4e8caf71	{name} allowed it. Wash the van, then take the photo of the receipt.
+57a37471	{name} approved you as a driver at {station}. Open Fratius to start.
 8810f412	{name} at {place}	[purchases.ts]
 f4d0f776	{name} didn't take an end photo: this ends their tour and starts yours.
 67a60ff2	{name} gave it to you {when} ({time} ago). Before you drive, film it or take its photos, so damage that was already there isn't put on you. Your fleet manager sees if they're missing.
@@ -102,6 +104,7 @@ f73c9121	{name} had {van} then. Use that van
 ad32ebdc	{name} has it now
 37d9a7a7	{name} has the van and does these.
 a4fd7848	{name} has the van and hasn't done it yet.
+7f4ce490	{name} in your company already has this Transporter ID.
 f2324c2a	{name} is at the car wash. {why} Allow or refuse the wash.
 b5538e51	{name} is at the pump. {why} Allow or refuse the refuel.
 78132d29	{name} is no longer in {company}. Their van history, tours and record stay.
@@ -116,6 +119,7 @@ af5afc83	{name} refused it. Cancel it.
 c19ac681	{name} stays at {station}, so the van becomes free.
 f0e5615c	{name} took the dashboard photo (the AI couldn't read it).
 3640c13f	{name} took the dashboard photo.
+d94866b4	{name} wants to join {station} as a driver. Approve or reject it under People.
 1bbfe6af	{name} works at another station. Move the van or the person first.
 bbcf655f	{name}, {role}, open	[people.tsx]
 5e671f46	{name}: {from} to {to}, given by {by}
@@ -160,14 +164,17 @@ f93f7c1b	€ per litre	[data.tsx]
 24b8c7f1	1. In Chrome, tap the menu (three dots, top right).
 d7c7f89a	1. Tap the Share button at the bottom of Safari (the square with an arrow).
 8825c6ad	1. Your details	[app/join/[token].tsx]
+3e95d583	1. Your station	[app/join/[token].tsx]
 95ce3ea1	17 characters, on the registration document
 95beea45	2. Tap {add}, then {ok}.
 a533bead	2. Tap {install} or {add}.
 57b51b86	2. Wipe it with your hand or a cloth.
 2176fc6a	2. Your account	[app/join/[token].tsx]
+ca60e502	2. Your details	[app/join/[token].tsx]
 914411d9	3. Open Fratius from your home screen and sign in with the same email and password.
 80c2d898	3. Open Fratius from your home screen and sign in.
 704983e9	3. Take one photo straight on, about 30 to 50 cm away.
+1ce84446	3. Your account	[app/join/[token].tsx]
 7d4278a8	30 days	[data.tsx]
 1cf11ed8	4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.
 0a8dd6ad	7 days	[data.tsx]
@@ -183,6 +190,7 @@ db242f5d	A closer look at every photo.
 f21a7ec1	A comment on damage
 dc0c4f9e	A company setting	[lib/session.tsx]
 0ea91666	A damage review	[lib/store.ts]
+ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
 7fc4ef1f	A manager has already reviewed this check.
 56599b1b	A notification on this phone, so you know before you get to the station.
 54173bc8	A photo is missing from storage. Upload it again.
@@ -274,12 +282,14 @@ ec850950	An answer about the vehicle type
 e33cf6f8	Anything else to remember about working with them.
 b10294be	Anything the AI missed? Where it is and what it is.
 a168c0e9	App creator	[account.tsx, components/companies.tsx, lib/types.ts]
+7b2c7f14	Approve	[people.tsx]
 23daca93	Approved by {name}, {when}.
 a0ad3418	Approved by {name}.	[components/damage.tsx]
 b998824b	Approved damage	[check/[id].tsx]
 90bf0163	as on the phone
 e69d9cf2	Ask {name} for a new one.
 bc8d8211	Ask your fleet manager for a new one.
+be993c39	asked {when}	[people.tsx]
 22d63fb4	at least 6 characters
 c5545171	At the pump	[review.tsx]
 fd338057	At the van	[review.tsx]
@@ -330,6 +340,7 @@ e81cdad2	Call your fleet manager. They allow or refuse it in the app, and this s
 3bddb099	Camera access	[app/scan/[id].tsx]
 77dfd213	Cancel	[buy/[id].tsx, check/[id].tsx, vehicle/[id].tsx]
 f54c1375	Cancel an invite link
+6e689208	Cancel my request	[app/sign-in.tsx]
 4ad41471	Cancel the parts purchase
 a471f1a9	Cancel the parts purchase; it stays on record as refused.
 fd2b5f41	Cancel the refuel	[components/buy.tsx]
@@ -441,6 +452,7 @@ e1f3f136	Couldn't load the fleet data. Check your internet, then reopen the app.
 56b4b2c2	Couldn't load the people of this company.
 30c6615b	Couldn't load the people of this station.
 2116327f	Couldn't make the file.
+45b154da	Couldn't make the link.
 e6161e7f	Couldn't make the links.
 8f65c334	Couldn't open the camera or photos.
 f04ae2f9	Couldn't open the camera.
@@ -452,7 +464,7 @@ e17b636b	Couldn't open the photos.
 d326553e	Couldn't remove the station.
 eeb58fb9	Couldn't remove the vehicle.
 67362afb	Couldn't save that change.
-dd59e15b	Couldn't save that.	[people.tsx]
+dd59e15b	Couldn't save that.	[people.tsx, app/sign-in.tsx]
 d9b971d1	Couldn't save that. Check the connection.
 ad01de6f	Couldn't save the changes.
 6618ce72	Couldn't save the check. Check the connection.
@@ -543,6 +555,7 @@ fbfcd4fd	Drag to turn.	[components/van3d.tsx]
 b5c7d8b5	Driver	[vehicle/[id].tsx, people.tsx, data.tsx]
 22bd4395	Driver at fault	[components/driverrec.tsx]
 0b88689d	driver deleted their account
+9002c10a	Driver sign-up link	[people.tsx]
 639a2c19	Driver: {name}	[account.tsx]
 a40ad45b	Drivers	[vehicle/[id].tsx, people.tsx, data.tsx]
 cf547f5f	Drivers ({n})	[people.tsx]
@@ -552,6 +565,8 @@ ea640e03	Drivers and fleet managers: open the invite link you got from your mana
 27af107e	Drivers pick up and drop off the van they were told to take, with a video or photos. You can still give vans out.
 2d7cf262	Drivers stopped because the fuel card isn't the van's, or they have none. They're waiting for you: allow or refuse.
 aff2277c	Drivers themselves	[people.tsx]
+a0963d6e	Drivers who signed up with the driver link. They see nothing until you approve them.
+4c25c848	Drivers: the driver link of your company. Fleet managers: the invite link from the owner, which works once, for 24 hours.
 658ef730	Driving licence	[components/docscan.tsx, components/driverrec.tsx]
 afe409e3	Driving licence (both sides), employment contract or briefing record. Licence numbers, dates of birth and addresses aren't read or kept. You check everything before it's saved.
 3ba0bc59	Driving licence runs out
@@ -575,7 +590,6 @@ aac2eda8	Due since {when} ({ago})
 a01f643e	Due soon	[review.tsx]
 e216ffda	During the trial the AI does up to {checks} damage checks and {reads} other photo readings a day for the company.
 3e96504e	Each kilometre over the allowance
-b1fce049	Each link works for one person, for 24 hours.
 6c14de32	Each run records its model, time and cost, so the test log can compare them.
 99bc58ec	Each starts with a photo of the dashboard; a wash then checks the fuel card and takes the receipt.
 5301648d	Edit	[components/driverrec.tsx, components/vanfacts.tsx]
@@ -608,6 +622,7 @@ e73e1f01	Enter the number plate: it's how this van is shown everywhere.
 8a28b80b	Enter your email address first.
 14864a38	Enter your email address.
 b2915597	Enter your first and last name.
+931a602b	Enter your mobile number, so your manager knows it's you.
 bdbe3bd1	Enter your password again to delete your account.
 46affb94	Enter your password.	[app/sign-in.tsx, components/deleteaccount.tsx, lib/session.tsx]
 ad6f5883	Est. cost {cost}	[add.tsx]
@@ -919,6 +934,7 @@ a3ca212a	Looks like a {model}
 ccfbeb59	Low confidence, {pct}%	[add.tsx]
 bf4e3d94	Low fuel	[prompts.ts]
 1b2f71f8	Made {when}	[components/uploads.tsx]
+518c6aa8	Made by {name}, {when}.
 57bf5f58	made free	[lib/types.ts]
 1625dc46	Main inspection (HU)	[components/vanfacts.tsx, lib/fleet.ts]
 e25bd3d3	Main inspection sticker: {date}
@@ -930,6 +946,8 @@ a94431ee	Make	[components/docscan.tsx]
 08c17cca	Make a fleet manager link || Make {n} fleet manager links
 7af3ec28	Make {name} {role}	[components/person.tsx]
 4e98e6f2	Make {van} free	[vehicle/[id].tsx]
+fd44711f	Make a new link
+fa08ab45	Make the driver link
 7e3746c7	Make the van free
 065de4a4	Making a copy that plays on every phone (about a minute). Until then this is the original, which may not play in every browser.
 7451438a	Making the file…	[data.tsx]
@@ -976,6 +994,7 @@ ea7142a4	new damage	[data.tsx]
 0e44472d	New damage counts for every driver who had the van between the walk-around before and the one it was found in. "{column}" is damage while nobody else had the van. That is who had it, not proof of who caused it: the photos are the proof.
 b5c14c5a	new damage while they had the van
 2526f6f1	New damage: it goes on the van's record with this check as the first sighting.
+32a280ef	New driver: {name}	[index.ts]
 1d3f8130	New incident	[components/driverrec.tsx]
 179f46ef	Newest first, with the ones refused or given up.
 d2e54170	Newest first. Kept for good.
@@ -1012,7 +1031,7 @@ c461915c	No damage on record. Damage goes on the record when a fleet manager app
 2d3759fb	No dashboard photo yet. The km, the fuel level and any warning lights show here after the first one: at the start or end of a tour, or at a refuel.
 9b00735f	No driver is at a van right now.
 c096d71b	No drivers in this period.
-39a8a708	No drivers yet. Invite them with a link.
+695a217c	No drivers yet. Send them the driver link above.
 f51cacd6	No drop-off video	[review.tsx]
 d1eea337	No drop-off video or photos: {driver} didn't drop it off, {next} took it over.
 a5c80c01	No drop-off video or photos: {driver} didn't drop it off, the next driver took it over.
@@ -1053,6 +1072,7 @@ e8b2a86b	No walk-around yet. Start one above.
 9fefab05	No warning lights on the latest dashboard photos.
 a19f8183	No warning lights.	[components/dash.tsx]
 d265ea75	No, wrong	[add.tsx]
+93a491f5	Nobody approved your request to join {company} in 14 days. Open the link from your fleet manager again.
 77be0177	Nobody at this station yet. Invite drivers under People.
 3e4e8c1f	Nobody had {van} then.
 aa87cace	Nobody had the van in that time.
@@ -1135,6 +1155,7 @@ c02d932d	On tour for {time}
 a9afbb0e	Once a day	[components/routines.tsx]
 521f6443	Once a week	[components/routines.tsx]
 3a991e18	One account can create up to {n} companies. To add another, write to info@fratius.com.
+f7955906	One link for all your drivers. They pick their station when they sign up, and you approve them here.
 c0afb056	One link per person, sent to them. A link works once and expires after 24 hours.
 2d6a96cb	One of the vans was removed.
 2dd84770	One photo from a front corner works best. Add the side or the rear to pick up door details.
@@ -1156,6 +1177,7 @@ e252761d	Only the app creator can open a demo company.
 994b6999	Only the app creator sees the test log.
 e9ccc77a	Only the fleet owner can do this.
 101e86fb	Only the fleet owner can invite fleet managers.
+016e2fff	Only the fleet owner can make a new driver link.
 9c69d637	Only the fleet owner changes checks for every station.
 be53c994	Only the fleet owner changes roles and stations.
 d2bf12cc	Only the fleet owner moves vans between stations.
@@ -1244,6 +1266,8 @@ f236d05d	Pick up	[vehicle/[id].tsx]
 41b66719	Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.
 d70bf040	Pick up with {n} photo || Pick up with {n} photos
 b4c1f825	Pick up with a video
+0e025ad3	Pick your station.	[index.ts, app/join/[token].tsx]
+8acea9f6	Pick your station. A fleet manager of that station or the owner then approves you.
 f61ea9e0	Pick-up photos	[walk/[id].tsx, app/scan/[id].tsx, components/history.tsx]
 4a0e7746	Pick-up photos (added later)
 e9490191	Pick-up photos of {van}
@@ -1314,6 +1338,7 @@ bd06b239	Refusing…	[buy/[id].tsx]
 da9928d4	Registration certificate	[components/docscan.tsx]
 6561c36a	Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it's saved.
 1a98465c	Registration certificate part II
+2b03b592	Reject	[people.tsx]
 e963907d	Remove	[check/[id].tsx, people.tsx, components/routines.tsx]
 24d9518f	Remove {name} from {company}
 3a6d7a70	Remove a station	[lib/people.ts]
@@ -1329,6 +1354,8 @@ d3f4cb89	Rename	[people.tsx]
 c06bbcc2	Rental ends	[lib/fleet.ts]
 12361a1b	Rented	[lib/fleet.ts]
 30ad98ef	Replacement van	[lib/fleet.ts]
+fc73fea4	Request not approved	[index.ts]
+168996e3	Request sent	[app/join/[token].tsx]
 16457335	Retake	[check/[id].tsx, app/scan/[id].tsx]
 9f01f832	retakes	[walk/[id].tsx, app/scan/[id].tsx]
 dabe8aa1	Retakes	[log.tsx]
@@ -1432,6 +1459,7 @@ c5bced94	Seen again: {dates}.	[components/damage.tsx]
 8ece5d2b	Send 1 to 3 photos.
 48739f53	Send 1 to 6 photos of the document.
 184ae2f2	Send it to the fleet manager when you're done.
+a89d6417	Send request	[app/join/[token].tsx]
 d438aeb1	Send the damage check of {van} to the fleet manager
 3c02d865	Send the problem	[components/routines.tsx]
 a8486942	Send to the fleet manager
@@ -1461,6 +1489,8 @@ ada2e9e9	Sign in	[app/join/[token].tsx, app/sign-in.tsx]
 12fa900e	Sign in again, then try again.
 5ff76486	Sign in or create an account first.
 dc1649a1	Sign out	[account.tsx, app/sign-in.tsx]
+3e246491	Sign up as a driver at {company} in Fratius: open this link on your phone, pick your station and create your account. A fleet manager then approves you. {link}
+3f9aac88	Sign up as a driver at {company}.
 eee52995	Signed in as {email}
 a9411e1d	Signed in as {email}. You'll join with this account.
 710365b5	Sill to roof edge in frame. Keep the whole wheel arch in view.
@@ -1475,6 +1505,7 @@ ceff5b0c	Skip this spot	[check/[id].tsx]
 5a000ad7	Skipped	[log.tsx, app/scan/[id].tsx]
 99dec03d	Sliding doors	[vehicle/[id].tsx]
 1ec2f90a	so your manager can reach you
+93bd9c83	so your manager knows it's you
 bab1a6ba	Some close-ups couldn't be checked. Try again.
 95170d89	Some photos didn't finish uploading or are more than two hours old. Take them again.
 ca29f290	someone	[people.tsx]
@@ -1578,6 +1609,7 @@ ea6b21e0	Tap again to retire
 80da9307	Tap again to stop
 256d0bed	Tap again: everything in the demo is made new
 a34401de	Tap again: it won't be sent
+6bcba381	Tap again: the old link stops working
 5ad6a32b	Tap again: the van becomes free
 513da8cf	Tap one that isn't lit to remove it. Your fleet manager sees the rest.
 5fdeeb4e	Tap the type it really is
@@ -1592,6 +1624,7 @@ f02a9817	Test mode: everything stays on this phone and AI checks are off. Fleet,
 43372c78	That email address doesn't look right.
 ef9365df	That file isn't a video.
 cb2061ab	That phone number doesn't look right.
+1e8d9466	That station doesn't exist any more. Pick another one.
 2135b4fd	That's {more} km more than the last reading ({km} km). Check the number, or confirm it's right.
 1a009a4e	That's a lot of checks already. Remove one first.
 0803cc8b	That's a window of {time}: the last photos without it to the photos it was found in.
@@ -1715,6 +1748,7 @@ b63de3f6	This check needs a photo.
 9f6e4a36	This check was deleted.
 2229c06e	This check was removed.
 a319f8d7	this company	[log.tsx, components/viewas.tsx]
+f1cdae10	This company has no stations yet. Ask your fleet manager.
 8f11deba	This company has used today's {n} AI damage checks of the free trial. More from midnight, or write to info@fratius.com for more.
 5e6afe06	This company has used today's {n} AI photo readings of the free trial. More from midnight, or write to info@fratius.com for more.
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
@@ -1727,8 +1761,11 @@ ae75b618	This invite link isn't complete. Ask for a new one.
 12fadf41	This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.
 9afd8934	This is information about how employees work. Drivers see their own numbers on their page. Tell them what is recorded and why; with a works council, agree it with them.
 52916641	This link doesn't exist or was cancelled.
+c9af11f9	This link doesn't exist. Ask your fleet manager for the link again.
 9b47e988	This link has expired. Links work for 24 hours.
+3ee7c56d	This link isn't complete. Ask your fleet manager for the link again.
 c67002d5	This link was already used. Each link works for one person.
+76386172	This link was replaced by a new one. Ask your fleet manager for the new link.
 38fd41f8	This looks like	[components/docscan.tsx]
 d0626d34	This one is closed.
 cca3e72f	This person isn't in the company any more.
@@ -1736,6 +1773,9 @@ a42b9371	This person works at another station.
 da28f1e8	This phone gets a notification when someone gives you a van.
 8c027c14	This photo is already saved.
 6cfcdbb0	This photo is more than two hours old. Take a new one.
+a341520d	This request is older than {n} days. Ask the driver to sign up with the link again.
+bb14822c	This request was already decided.
+1277ca07	This station was removed. Reject the request and ask the driver to pick another station.
 4271e4f1	This van belongs to another station.
 7484d14f	This van is retired.
 cb03ba7e	This van is retired. Bring it back first.
@@ -1809,7 +1849,7 @@ afff50b1	Unknown person	[person/[uid].tsx]
 d7230991	Unknown person.	[index.ts]
 57d8bad9	Unknown photos or video.
 8f7e467c	Unknown refuel.	[index.ts]
-837d928f	Unknown request.	[once.ts]
+837d928f	Unknown request.	[index.ts, once.ts]
 2e02d6c2	Unknown role.	[index.ts]
 01b107cb	Unknown scan.	[index.ts]
 b7003048	Unknown spot.	[index.ts]
@@ -1865,6 +1905,8 @@ a03f49bf	vs others, same van
 dee9587c	Waiting {time}	[review.tsx]
 67456795	Waiting for a manager
 5e2e6972	Waiting for an answer, {time}.
+0a1ea528	Waiting for approval	[app/sign-in.tsx]
+9fff188c	Waiting for approval ({n})
 ab1ff8cb	Waiting for review	[index.tsx, check/[id].tsx, person/[uid].tsx]
 71c0a1b3	Waiting for your fleet manager to allow or refuse it. Don't start yet.
 a250d651	Waiting to send	[_layout.tsx]
@@ -1942,9 +1984,11 @@ c0182615	Yes, litres from the receipt
 905cb326	You	[person/[uid].tsx, vehicle/[id].tsx, components/damage.tsx]
 f86f21c8	You approve or reject damage found at your station.
 c8b37064	You aren't managing a station yet.
+79202cb1	You asked to join {company} as a driver at {station}.
 e394bd20	You become the fleet owner. You add stations, fleet managers and drivers under People.
 8a5390b3	you can add more later
 6137cc65	You can install the app on your phone in the next step.
+361cb63e	You can only decide about drivers of your own station.
 63483336	You can only invite drivers to your own station.
 245a641b	You can't change your own role or station.
 d72be038	You can't remove yourself here.
@@ -1968,8 +2012,9 @@ e24cfeaa	You scan the vans of your station; your fleet manager reviews the damag
 380e4d48	You see and manage all of {station}.
 0dd26b17	You, viewing as this role
 0964a47f	You'll see the vans of your station. Scan a van before and after your route; your fleet manager reviews any damage.
+f5bbed2a	You're already in {company}.
 0f4cf1b4	You're already in {company}. Ask the fleet owner to change your role or station.
-61b3a758	You're in {company}	[app/join/[token].tsx]
+61b3a758	You're in {company}	[index.ts, app/join/[token].tsx]
 20767b9b	You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.
 f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
 39f1a8b0	You're invited to join {company} in Fratius as a fleet manager at {station}. Open this link on your phone to create your account (it works once, until {until}): {link}
@@ -1999,6 +2044,8 @@ df675083	Your own van history
 3cd06e57	Your record, tours and vans
 72dd2b1f	Your refuel isn't finished
 0056b907	Your refuel of {van} isn't finished
+daea54ef	Your request to join {company} wasn't approved. Talk to your fleet manager.
+60d689b0	Your request to join {company} wasn't approved. You can ask again tomorrow, or talk to your fleet manager.
 66055d09	Your tours with this van, from the dashboard photos.
 7d286166	Your van	[index.tsx]
 f3dad137	Your wash isn't finished
