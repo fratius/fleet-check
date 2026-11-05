@@ -964,6 +964,7 @@ h1 .mark { position: relative; z-index: -1; }
     <div class="includes">
       <h3>Every plan includes</h3>
       <ul>
+        <li><span class="tick" aria-hidden="true"></span>Unlimited drivers</li>
         <li><span class="tick" aria-hidden="true"></span>Live fleet board</li>
         <li><span class="tick" aria-hidden="true"></span>Handovers with photos or video</li>
         <li><span class="tick" aria-hidden="true"></span>Permanent van and driver history</li>
@@ -1212,7 +1213,7 @@ h1 .mark { position: relative; z-index: -1; }
     $('#plans').innerHTML = CONFIG.plans.map((p) => `
       <article class="plan">
         <h3 translate="no">${esc(p.name)}</h3>
-        <p class="limit">${esc(limitText(p))}</p>
+        <p class="limit">${esc(limitText(p))}<br><span class="muted">${esc(t('Unlimited drivers'))}</span></p>
         <p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>
         <p><span class="pill mk">${esc(t('{n} days free', { n: CONFIG.trialDays }))}</span></p>
         <a class="btn btn-marker" href="${esc(CONFIG.app.selfServe ? signupUrl(p.id) : '#start')}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
