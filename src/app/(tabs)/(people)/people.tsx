@@ -254,7 +254,7 @@ function JoinRow({ r, first, showStation }: { r: JoinRequest; first: boolean; sh
   return (
     <View style={{ gap: 6, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <T v="medium">{r.name}</T>
-      <T v="small">{[r.phone, r.transporterId ? `Transporter ID ${r.transporterId}` : null, showStation ? r.stationName : null, t('asked {when}', { when: fmtWhen(r.createdAt) })].filter(Boolean).join(' · ')}</T>
+      <T v="small" selectable>{[r.email, r.phone, r.transporterId ? `Transporter ID ${r.transporterId}` : null, showStation ? r.stationName : null, t('asked {when}', { when: fmtWhen(r.createdAt) })].filter(Boolean).join(' · ')}</T>
       {r.sameTransporterId ? <T v="small" color={c.amber}>{t('{name} in your company already has this Transporter ID.', { name: r.sameTransporterId })}</T> : null}
       <Row>
         <Button small v="primary" title={t('Approve')} loading={busy === 'yes'} disabled={!!busy} onPress={() => decide(true)} />

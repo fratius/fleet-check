@@ -56,7 +56,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   `review` and `status` of a check.
 - **Joining is by link only** (product owner, 2026-11-05: drivers sign up with one company link and are approved).
   - **Drivers: the company's driver link.** Each company has one link for all its drivers. They open it, pick their
-    station from the company's stations, give their details (name, mobile, optional Transporter ID) and create
+    station from the company's stations, give their name (mobile number and Transporter ID optional; the approver sees their email) and create
     their account. That makes a **request**, not a member: until an owner or a fleet manager of the station they
     picked approves it, they aren't in the company and see nothing of it (no vans, people or history). Owners
     decide for every station, managers for their own; drivers never. A rejected person can ask again after 24

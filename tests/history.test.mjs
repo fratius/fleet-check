@@ -1460,7 +1460,8 @@ test('drivers sign up with the company\'s link, pick a station, and wait for an 
 
   // Ines asked by mistake and takes it back; then nobody can approve it.
   const ines = await person('Ines Wrongcompany');
-  await ines.call('requestToJoin', { token: link.token, stationId: S.s2, details: details('Ines', 'Wrongcompany') });
+  // Without a mobile number: it's optional (drivers often have company phones and don't know the number).
+  await ines.call('requestToJoin', { token: link.token, stationId: S.s2, details: { firstName: 'Ines', lastName: 'Wrongcompany' } });
   await ines.call('withdrawJoinRequest', { orgId: S.org });
   assert.equal((await getDoc(doc(ines.db, 'orgs', S.org, 'joinRequests', ines.uid))).data().status, 'withdrawn');
   await fails(S.own.call('decideJoinRequest', { orgId: S.org, uid: ines.uid, approve: true }), 'failed-precondition');

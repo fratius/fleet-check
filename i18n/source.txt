@@ -622,7 +622,6 @@ e73e1f01	Enter the number plate: it's how this van is shown everywhere.
 8a28b80b	Enter your email address first.
 14864a38	Enter your email address.
 b2915597	Enter your first and last name.
-931a602b	Enter your mobile number, so your manager knows it's you.
 bdbe3bd1	Enter your password again to delete your account.
 46affb94	Enter your password.	[app/sign-in.tsx, components/deleteaccount.tsx, lib/session.tsx]
 ad6f5883	Est. cost {cost}	[add.tsx]
@@ -1505,7 +1504,6 @@ ceff5b0c	Skip this spot	[check/[id].tsx]
 5a000ad7	Skipped	[log.tsx, app/scan/[id].tsx]
 99dec03d	Sliding doors	[vehicle/[id].tsx]
 1ec2f90a	so your manager can reach you
-93bd9c83	so your manager knows it's you
 bab1a6ba	Some close-ups couldn't be checked. Try again.
 95170d89	Some photos didn't finish uploading or are more than two hours old. Take them again.
 ca29f290	someone	[people.tsx]

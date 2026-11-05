@@ -188,7 +188,6 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
     setErr(null);
     if (!station) { setErr(t('Pick your station.')); return; }
     if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
-    if (!phone.trim()) { setErr(t('Enter your mobile number, so your manager knows it\'s you.')); return; }
     if (!signedIn) {
       if (!email.trim()) { setErr(t('Enter your email address.')); return; }
       if (password.length < 6) { setErr(t('Use at least 6 characters for the password.')); return; }
@@ -265,7 +264,7 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
           <T v="h3">{t('2. Your details')}</T>
           <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
           <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
-          <Field label={t('Mobile number')} hint={t('so your manager knows it\'s you')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
+          <Field label={t('Mobile number')} hint={t('optional')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
           <Field label="Amazon Transporter ID" hint={t('optional')} value={tid} onChangeText={(x) => setTid(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} />
         </Card>
 

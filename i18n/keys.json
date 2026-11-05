@@ -1246,14 +1246,14 @@
   "id": "24b8c7f1",
   "key": "1. In Chrome, tap the menu (three dots, top right).",
   "where": [
-   "src/app/join/[token].tsx:315"
+   "src/app/join/[token].tsx:314"
   ]
  },
  {
   "id": "d7c7f89a",
   "key": "1. Tap the Share button at the bottom of Safari (the square with an arrow).",
   "where": [
-   "src/app/join/[token].tsx:307"
+   "src/app/join/[token].tsx:306"
   ]
  },
  {
@@ -1267,7 +1267,7 @@
   "id": "3e95d583",
   "key": "1. Your station",
   "where": [
-   "src/app/join/[token].tsx:253"
+   "src/app/join/[token].tsx:252"
   ]
  },
  {
@@ -1281,14 +1281,14 @@
   "id": "95beea45",
   "key": "2. Tap {add}, then {ok}.",
   "where": [
-   "src/app/join/[token].tsx:308"
+   "src/app/join/[token].tsx:307"
   ]
  },
  {
   "id": "a533bead",
   "key": "2. Tap {install} or {add}.",
   "where": [
-   "src/app/join/[token].tsx:315"
+   "src/app/join/[token].tsx:314"
   ]
  },
  {
@@ -1309,21 +1309,21 @@
   "id": "ca60e502",
   "key": "2. Your details",
   "where": [
-   "src/app/join/[token].tsx:265"
+   "src/app/join/[token].tsx:264"
   ]
  },
  {
   "id": "914411d9",
   "key": "3. Open Fratius from your home screen and sign in with the same email and password.",
   "where": [
-   "src/app/join/[token].tsx:309"
+   "src/app/join/[token].tsx:308"
   ]
  },
  {
   "id": "80c2d898",
   "key": "3. Open Fratius from your home screen and sign in.",
   "where": [
-   "src/app/join/[token].tsx:315"
+   "src/app/join/[token].tsx:314"
   ]
  },
  {
@@ -1337,7 +1337,7 @@
   "id": "1ce84446",
   "key": "3. Your account",
   "where": [
-   "src/app/join/[token].tsx:273"
+   "src/app/join/[token].tsx:272"
   ]
  },
  {
@@ -1450,7 +1450,7 @@
   "id": "ef2dd2c6",
   "key": "A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.",
   "where": [
-   "src/app/join/[token].tsx:235",
+   "src/app/join/[token].tsx:234",
    "src/app/sign-in.tsx:158"
   ]
  },
@@ -1618,7 +1618,7 @@
    "src/app/(tabs)/(me)/account.tsx:36",
    "src/app/(tabs)/_layout.tsx:72",
    "src/app/join/[token].tsx:139",
-   "src/app/join/[token].tsx:281",
+   "src/app/join/[token].tsx:280",
    "src/app/sign-in.tsx:94"
   ]
  },
@@ -1635,7 +1635,7 @@
   "key": "Add",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:392",
-   "src/app/join/[token].tsx:308",
+   "src/app/join/[token].tsx:307",
    "src/components/vanfacts.tsx:129"
   ]
  },
@@ -1772,14 +1772,14 @@
   "id": "b59a5f15",
   "key": "Add to Home screen",
   "where": [
-   "src/app/join/[token].tsx:315"
+   "src/app/join/[token].tsx:314"
   ]
  },
  {
   "id": "7bd938bc",
   "key": "Add to Home Screen",
   "where": [
-   "src/app/join/[token].tsx:308"
+   "src/app/join/[token].tsx:307"
   ]
  },
  {
@@ -2193,7 +2193,7 @@
   "key": "at least 6 characters",
   "where": [
    "src/app/join/[token].tsx:141",
-   "src/app/join/[token].tsx:283"
+   "src/app/join/[token].tsx:282"
   ]
  },
  {
@@ -4483,7 +4483,7 @@
   "key": "Email",
   "where": [
    "src/app/join/[token].tsx:140",
-   "src/app/join/[token].tsx:282",
+   "src/app/join/[token].tsx:281",
    "src/app/sign-in.tsx:97"
   ]
  },
@@ -4662,7 +4662,7 @@
   "id": "14864a38",
   "key": "Enter your email address.",
   "where": [
-   "src/app/join/[token].tsx:193",
+   "src/app/join/[token].tsx:192",
    "src/app/join/[token].tsx:54",
    "src/app/sign-in.tsx:102"
   ]
@@ -4676,13 +4676,6 @@
    "functions/src/index.ts:582",
    "src/app/join/[token].tsx:190",
    "src/app/join/[token].tsx:52"
-  ]
- },
- {
-  "id": "931a602b",
-  "key": "Enter your mobile number, so your manager knows it's you.",
-  "where": [
-   "src/app/join/[token].tsx:191"
   ]
  },
  {
@@ -5031,7 +5024,7 @@
   "key": "First name",
   "where": [
    "src/app/join/[token].tsx:124",
-   "src/app/join/[token].tsx:266"
+   "src/app/join/[token].tsx:265"
   ]
  },
  {
@@ -5973,7 +5966,7 @@
   "key": "I have one",
   "where": [
    "src/app/join/[token].tsx:139",
-   "src/app/join/[token].tsx:281"
+   "src/app/join/[token].tsx:280"
   ]
  },
  {
@@ -6131,15 +6124,15 @@
   "id": "e5f79aa1",
   "key": "Install app",
   "where": [
-   "src/app/join/[token].tsx:315"
+   "src/app/join/[token].tsx:314"
   ]
  },
  {
   "id": "4fc19f8c",
   "key": "Install the app",
   "where": [
-   "src/app/join/[token].tsx:304",
-   "src/app/join/[token].tsx:314"
+   "src/app/join/[token].tsx:303",
+   "src/app/join/[token].tsx:313"
   ]
  },
  {
@@ -6257,7 +6250,7 @@
   "key": "Join {company}",
   "where": [
    "src/app/join/[token].tsx:147",
-   "src/app/join/[token].tsx:212",
+   "src/app/join/[token].tsx:211",
    "src/app/join/[token].tsx:74"
   ]
  },
@@ -6450,7 +6443,7 @@
   "key": "Last name",
   "where": [
    "src/app/join/[token].tsx:125",
-   "src/app/join/[token].tsx:267"
+   "src/app/join/[token].tsx:266"
   ]
  },
  {
@@ -7221,7 +7214,7 @@
   "key": "Mobile number",
   "where": [
    "src/app/join/[token].tsx:126",
-   "src/app/join/[token].tsx:268"
+   "src/app/join/[token].tsx:267"
   ]
  },
  {
@@ -7345,7 +7338,7 @@
   "key": "New account",
   "where": [
    "src/app/join/[token].tsx:139",
-   "src/app/join/[token].tsx:281"
+   "src/app/join/[token].tsx:280"
   ]
  },
  {
@@ -8817,8 +8810,8 @@
   "key": "Open Fratius",
   "where": [
    "src/app/join/[token].tsx:105",
-   "src/app/join/[token].tsx:224",
-   "src/app/join/[token].tsx:238",
+   "src/app/join/[token].tsx:223",
+   "src/app/join/[token].tsx:237",
    "src/app/join/[token].tsx:91"
   ]
  },
@@ -8868,7 +8861,7 @@
   "id": "bfcea4db",
   "key": "Open this page on your phone to install the app there, or keep using it in this browser.",
   "where": [
-   "src/app/join/[token].tsx:317"
+   "src/app/join/[token].tsx:316"
   ]
  },
  {
@@ -8882,7 +8875,8 @@
    "src/app/(tabs)/(people)/people.tsx:113",
    "src/app/(tabs)/(people)/people.tsx:90",
    "src/app/join/[token].tsx:127",
-   "src/app/join/[token].tsx:269",
+   "src/app/join/[token].tsx:267",
+   "src/app/join/[token].tsx:268",
    "src/components/dash.tsx:213",
    "src/components/driverrec.tsx:135",
    "src/components/driverrec.tsx:223"
@@ -9071,7 +9065,7 @@
   "key": "Password",
   "where": [
    "src/app/join/[token].tsx:141",
-   "src/app/join/[token].tsx:283",
+   "src/app/join/[token].tsx:282",
    "src/app/sign-in.tsx:98",
    "src/components/deleteaccount.tsx:57"
   ]
@@ -9402,7 +9396,7 @@
   "id": "8acea9f6",
   "key": "Pick your station. A fleet manager of that station or the owner then approves you.",
   "where": [
-   "src/app/join/[token].tsx:249"
+   "src/app/join/[token].tsx:248"
   ]
  },
  {
@@ -9600,7 +9594,7 @@
   "id": "7913c9a9",
   "key": "Put Fratius on your home screen like any other app.",
   "where": [
-   "src/app/join/[token].tsx:314"
+   "src/app/join/[token].tsx:313"
   ]
  },
  {
@@ -10048,7 +10042,7 @@
   "id": "168996e3",
   "key": "Request sent",
   "where": [
-   "src/app/join/[token].tsx:212"
+   "src/app/join/[token].tsx:211"
   ]
  },
  {
@@ -10813,7 +10807,7 @@
   "id": "a89d6417",
   "key": "Send request",
   "where": [
-   "src/app/join/[token].tsx:289"
+   "src/app/join/[token].tsx:288"
   ]
  },
  {
@@ -11002,7 +10996,7 @@
   "key": "Sign in",
   "where": [
    "src/app/join/[token].tsx:105",
-   "src/app/join/[token].tsx:224",
+   "src/app/join/[token].tsx:223",
    "src/app/sign-in.tsx:100",
    "src/app/sign-in.tsx:94"
   ]
@@ -11048,7 +11042,7 @@
   "id": "3f9aac88",
   "key": "Sign up as a driver at {company}.",
   "where": [
-   "src/app/join/[token].tsx:248"
+   "src/app/join/[token].tsx:247"
   ]
  },
  {
@@ -11063,7 +11057,7 @@
   "key": "Signed in as {email}. You'll join with this account.",
   "where": [
    "src/app/join/[token].tsx:134",
-   "src/app/join/[token].tsx:276"
+   "src/app/join/[token].tsx:275"
   ]
  },
  {
@@ -11150,13 +11144,6 @@
   "key": "so your manager can reach you",
   "where": [
    "src/app/join/[token].tsx:126"
-  ]
- },
- {
-  "id": "93bd9c83",
-  "key": "so your manager knows it's you",
-  "where": [
-   "src/app/join/[token].tsx:268"
   ]
  },
  {
@@ -12943,7 +12930,7 @@
   "id": "f1cdae10",
   "key": "This company has no stations yet. Ask your fleet manager.",
   "where": [
-   "src/app/join/[token].tsx:261"
+   "src/app/join/[token].tsx:260"
   ]
  },
  {
@@ -13075,7 +13062,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:589",
-   "src/app/join/[token].tsx:223"
+   "src/app/join/[token].tsx:222"
   ]
  },
  {
@@ -13941,14 +13928,14 @@
   "key": "Use another account",
   "where": [
    "src/app/join/[token].tsx:135",
-   "src/app/join/[token].tsx:277"
+   "src/app/join/[token].tsx:276"
   ]
  },
  {
   "id": "c6188994",
   "key": "Use at least 6 characters for the password.",
   "where": [
-   "src/app/join/[token].tsx:194",
+   "src/app/join/[token].tsx:193",
    "src/app/join/[token].tsx:55",
    "src/lib/session.tsx:134"
   ]
@@ -13964,7 +13951,7 @@
   "id": "ece6901e",
   "key": "Use Safari: other browsers on iPhone can't add apps to the home screen.",
   "where": [
-   "src/app/join/[token].tsx:310"
+   "src/app/join/[token].tsx:309"
   ]
  },
  {
@@ -14776,7 +14763,7 @@
   "id": "79202cb1",
   "key": "You asked to join {company} as a driver at {station}.",
   "where": [
-   "src/app/join/[token].tsx:234",
+   "src/app/join/[token].tsx:233",
    "src/app/sign-in.tsx:157"
   ]
  },
@@ -14800,7 +14787,7 @@
   "key": "You can install the app on your phone in the next step.",
   "where": [
    "src/app/join/[token].tsx:148",
-   "src/app/join/[token].tsx:290"
+   "src/app/join/[token].tsx:289"
   ]
  },
  {
@@ -14983,7 +14970,7 @@
   "id": "f5bbed2a",
   "key": "You're already in {company}.",
   "where": [
-   "src/app/join/[token].tsx:222"
+   "src/app/join/[token].tsx:221"
   ]
  },
  {
