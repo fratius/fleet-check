@@ -110,7 +110,7 @@ Inhaber sehen alle Stationen, Flottenmanager ihre eigene, Fahrer ihr Fahrzeug un
 DATENSCHUTZ
 Fotos und Videos eines Monats werden am 15. des Folgemonats gelöscht, nie solange der Fahrer den Transporter noch hat; solche mit Schäden nach 90 Tagen. Fotos von Tankkarten und Dokumenten werden direkt nach dem Auslesen gelöscht. Keine Werbung, kein Tracking.
 
-Jedes Lieferunternehmen kann sofort loslegen: das eigene Unternehmen in der App anlegen oder zuerst das Demo-Unternehmen mit erfundenen Fahrzeugen und Personen ansehen. Mehr auf fratius.com.
+Jedes Lieferunternehmen kann sofort loslegen: das eigene Unternehmen in der App anlegen und die Manager und Fahrer einladen. Mehr auf fratius.com.
 
 Fratius ist ein unabhängiges Produkt und nicht mit Amazon verbunden.
 ```

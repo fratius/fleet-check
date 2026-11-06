@@ -18,6 +18,6 @@
     "05-history": ["Wer hatte wann welchen Transporter", "Die ganze Historie jedes Fahrers und jedes Fahrzeugs, mit Kilometern."],
     "04-review": ["Was heute ansteht", "Schadenschecks, fehlende Übergabe-Nachweise, Fahrer an der Zapfsäule."],
     "08-pump": ["Falsche Tankkarte? Du wirst gefragt.", "Die Karte wird an der Zapfsäule geprüft. Du erlaubst oder lehnst ab."],
-    "06-data": ["Kilometer, Verbrauch und Schäden pro Fahrer", "Tabellen für 7, 30 oder 90 Tage, fertig für Excel."]
+    "06-data": ["Kilometer, Verbrauch, Schäden pro Fahrer", "Tabellen für 7, 30 oder 90 Tage, fertig für Excel."]
   }
 }

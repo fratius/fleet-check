@@ -79,6 +79,8 @@ function scan(file, server) {
     else if (server && name === 'N_') add(need(0), file, line, { server: true });
     else if (server && name === 'fail') add(need(1), file, line, { server: true });
     else if (server && name === 'tr') add(need(1), file, line, { server: true });
+    else if (server && name === 'said') add(need(0), file, line, { server: true });
+    else if (server && name === 'flag') add(need(1), file, line, { server: true });
     else if (server && name === 'trp') add(need(3), file, line, { server: true, one: lit(a[2]) || undefined });
   });
 }
