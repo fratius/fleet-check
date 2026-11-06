@@ -662,6 +662,7 @@ c6b3590a	First station	[account.tsx, app/sign-in.tsx]
 d7819728	Fit the vehicle to the outline.
 2a561bf1	Flat, in good light, the whole page in the picture. More pages? Add them before reading.
 e1991511	Fleet	[index.tsx, _layout.tsx, app/(tabs)/_layout.tsx]
+bbff4ebb	Fleet management for delivery partners
 67f58c06	Fleet manager	[people.tsx, lib/types.ts]
 7aeaaa6f	Fleet manager: {name}	[account.tsx]
 a3829a05	Fleet managers	[people.tsx]
@@ -773,6 +774,7 @@ a4d5d13e	Has had it since {when}
 18103d89	Has this van now
 3f608b49	Height	[components/vanfacts.tsx]
 aa279bfd	Height, weight, payload and cargo space.
+2a73e11c	Hi {name},	[website.ts]
 e841ab06	High confidence, {pct}%	[add.tsx]
 de50e8e9	High-voltage system	[prompts.ts]
 9e25a34e	Hours	[data.tsx]
@@ -954,6 +956,7 @@ e367e50b	Missed damage is also how we measure what the AI misses.
 14601d13	Missing proof	[review.tsx]
 9770d438	MM/YYYY	[components/vanfacts.tsx]
 8e5c12de	Mobile number	[app/join/[token].tsx]
+4a0a8d28	Mobile: {phone}	[website.ts]
 68c2cc7f	Model	[data.tsx, components/docscan.tsx]
 9ae36e6b	Model year	[components/vanfacts.tsx]
 5d205f26	Monthly rate or purchase price, the price per extra kilometre, the insurance premium and deductible.
@@ -1256,6 +1259,8 @@ e9490191	Pick-up photos of {van}
 4fe6a7df	pickup	[lib/frames.ts]
 a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
+96e416d7	Plan: {plan}, unlimited vans
+64394014	Plan: {plan}, up to {n} vans
 73931766	Plans and payment are coming soon. Nothing is charged until you choose a plan.
 bb08fcf7	Plate, name and type
 e92d2b4c	playback copy {size}	[video/[id].tsx]
@@ -1271,6 +1276,7 @@ fad43131	Provider and the last digits, never the full number or PIN
 d6f409d1	Purchase contract or invoice
 b21bc692	Purchase price	[components/vanfacts.tsx]
 7913c9a9	Put Fratius on your home screen like any other app.
+56d032d6	Questions? Just reply to this email.
 5177429b	Raised roof	[lib/frames.ts]
 a16c5bbe	Range	[components/dash.tsx, components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
@@ -1511,6 +1517,7 @@ e5f58095	Starting…	[buy/[id].tsx]
 e31d31e2	Station name	[people.tsx]
 48c27acb	Station: {station}	[add.tsx]
 a84e5ec6	Station: {stations}.	[account.tsx]
+bdae1223	Stations: {n}	[website.ts]
 bae7d5be	Status	[data.tsx]
 584b188e	Steering	[prompts.ts]
 5e9ae37b	Step {i} of {n}: {label}
@@ -1589,6 +1596,7 @@ c6f75e76	Test log	[_layout.tsx, log.tsx, app/(tabs)/_layout.tsx]
 9b5a5702	Test mode on this phone
 ea9239c7	Test mode, saved on this phone
 f02a9817	Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.
+0d0881f3	Thanks for your request for {company}. Welcome to Fratius!
 43372c78	That email address doesn't look right.
 ef9365df	That file isn't a video.
 cb2061ab	That phone number doesn't look right.
@@ -1848,6 +1856,7 @@ c1ee6d8c	van retired	[lib/types.ts]
 92b9b034	Vans go to drivers or fleet managers.
 210e13b4	Vans they had	[person/[uid].tsx]
 ad579fe8	Vans you had	[person/[uid].tsx]
+11b5e932	Vans: {n}	[website.ts]
 9bb28c0d	Vehicle	[components/docscan.tsx, components/vanfacts.tsx]
 d8ce9a24	Vehicle tax	[components/vanfacts.tsx, lib/fleet.ts]
 5e8b574c	Vehicle tax notice	[components/docscan.tsx]
@@ -1892,15 +1901,19 @@ bc4d37d0	Wash allowed: {van}	[index.ts]
 98f5aea0	Wash, then the receipt
 4f8f2c85	Wash: {van}	[purchases.ts]
 f8cd530a	Washer fluid	[prompts.ts, routines.ts, components/routines.tsx]
+6ec140a4	We set up your company in Fratius.
 5a9649da	web app	[account.tsx]
+a6b01068	Welcome to Fratius, {name}
 97211a88	What	[data.tsx]
 7661e659	What happened	[buy/[id].tsx, components/driverrec.tsx]
+51ecc5b2	What happens next	[website.ts]
 d2d42d35	What is the problem?
 4e517ae4	What needs your attention, most urgent first.
 c66b4d48	What the close-ups showed
 46676e04	What this change was for isn't there any more.
 2e062db2	What to check	[components/routines.tsx]
 a494a5c0	What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up yourself where the station allows it.
+762d995f	What you sent us
 c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager to correct anything that's wrong.
 48dabfbb	What's wrong?	[components/routines.tsx]
 769bb19e	When	[data.tsx]
@@ -1953,6 +1966,8 @@ fe5d32bc	You don't have this van.
 dd507774	You don't have this van. The driver who has it, or the station's fleet manager, takes its dashboard photo.
 d4243220	You dropped off {van}. The photos are kept with its history.
 37242b32	You dropped off {van}. The video is kept with its history.
+d82adf61	You get a second email with a link to sign in as the fleet owner.
+eb984dc5	You get this email because a request with this address was sent on fratius.com. If that wasn't you, ignore it.
 bf44ad73	You had the van in that time.
 e48b929a	You have {van}.	[components/history.tsx]
 a7950f31	You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.
@@ -1976,6 +1991,7 @@ f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. O
 4f5672b4	You're signed in as {role} but not at a station yet. Ask your fleet manager to add you to one.
 6bf6957d	You're viewing {company} as the app creator.
 8fef7edb	You're viewing another company as someone else. Switch back to yourself in the Account tab first.
+1fd13b10	Your 30 free days start on that day. Nothing is charged now.
 01384ed0	Your account isn't a member of this company.
 411d3ee3	Your companies	[components/companies.tsx]
 3f7a84ea	Your company	[app/sign-in.tsx]

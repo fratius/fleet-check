@@ -4573,7 +4573,7 @@
   "key": "Enter your password again to delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2164"
+   "functions/src/index.ts:2171"
   ]
  },
  {
@@ -4959,6 +4959,14 @@
    "src/app/(tabs)/(fleet)/index.tsx:57",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:23",
    "src/app/(tabs)/_layout.tsx:67"
+  ]
+ },
+ {
+  "id": "bbff4ebb",
+  "key": "Fleet management for delivery partners",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:116"
   ]
  },
  {
@@ -5769,6 +5777,14 @@
   "key": "Height, weight, payload and cargo space.",
   "where": [
    "src/components/vanfacts.tsx:280"
+  ]
+ },
+ {
+  "id": "2a73e11c",
+  "key": "Hi {name},",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:99"
   ]
  },
  {
@@ -7079,6 +7095,14 @@
   "key": "Mobile number",
   "where": [
    "src/app/join/[token].tsx:123"
+  ]
+ },
+ {
+  "id": "4a0a8d28",
+  "key": "Mobile: {phone}",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:106"
   ]
  },
  {
@@ -8510,7 +8534,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:2057",
-   "functions/src/index.ts:2241"
+   "functions/src/index.ts:2248"
   ]
  },
  {
@@ -9300,6 +9324,22 @@
   ]
  },
  {
+  "id": "96e416d7",
+  "key": "Plan: {plan}, unlimited vans",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:103"
+  ]
+ },
+ {
+  "id": "64394014",
+  "key": "Plan: {plan}, up to {n} vans",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:103"
+  ]
+ },
+ {
   "id": "73931766",
   "key": "Plans and payment are coming soon. Nothing is charged until you choose a plan.",
   "where": [
@@ -9407,6 +9447,14 @@
   "key": "Put Fratius on your home screen like any other app.",
   "where": [
    "src/app/join/[token].tsx:169"
+  ]
+ },
+ {
+  "id": "56d032d6",
+  "key": "Questions? Just reply to this email.",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:114"
   ]
  },
  {
@@ -10787,7 +10835,7 @@
   "key": "Sign in again, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2156",
+   "functions/src/index.ts:2163",
    "functions/src/index.ts:491",
    "functions/src/index.ts:534",
    "functions/src/index.ts:95",
@@ -11178,6 +11226,14 @@
   "key": "Station: {stations}.",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:50"
+  ]
+ },
+ {
+  "id": "bdae1223",
+  "key": "Stations: {n}",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:104"
   ]
  },
  {
@@ -11748,6 +11804,14 @@
   ]
  },
  {
+  "id": "0d0881f3",
+  "key": "Thanks for your request for {company}. Welcome to Fratius!",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:100"
+  ]
+ },
+ {
   "id": "43372c78",
   "key": "That email address doesn't look right.",
   "where": [
@@ -11918,7 +11982,7 @@
   "key": "The app creator's account can't be deleted in the app.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2157"
+   "functions/src/index.ts:2164"
   ]
  },
  {
@@ -12561,7 +12625,7 @@
   "key": "These photos belong to another station.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2217"
+   "functions/src/index.ts:2224"
   ]
  },
  {
@@ -12569,7 +12633,7 @@
   "key": "These photos or this video were deleted already.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2218"
+   "functions/src/index.ts:2225"
   ]
  },
  {
@@ -13360,7 +13424,7 @@
   "key": "Unknown company.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2243",
+   "functions/src/index.ts:2250",
    "functions/src/index.ts:366",
    "functions/src/index.ts:97"
   ]
@@ -13398,8 +13462,8 @@
   "key": "Unknown photos or video.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2209",
-   "functions/src/index.ts:2215"
+   "functions/src/index.ts:2216",
+   "functions/src/index.ts:2222"
   ]
  },
  {
@@ -13732,6 +13796,14 @@
   "key": "Vans you had",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:125"
+  ]
+ },
+ {
+  "id": "11b5e932",
+  "key": "Vans: {n}",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:105"
   ]
  },
  {
@@ -14071,10 +14143,26 @@
   ]
  },
  {
+  "id": "6ec140a4",
+  "key": "We set up your company in Fratius.",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:110"
+  ]
+ },
+ {
   "id": "5a9649da",
   "key": "web app",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:291"
+  ]
+ },
+ {
+  "id": "a6b01068",
+  "key": "Welcome to Fratius, {name}",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:98"
   ]
  },
  {
@@ -14090,6 +14178,14 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:455",
    "src/components/driverrec.tsx:236"
+  ]
+ },
+ {
+  "id": "51ecc5b2",
+  "key": "What happens next",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:108"
   ]
  },
  {
@@ -14132,6 +14228,14 @@
   "key": "What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up yourself where the station allows it.",
   "where": [
    "src/components/viewas.tsx:87"
+  ]
+ },
+ {
+  "id": "762d995f",
+  "key": "What you sent us",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:101"
   ]
  },
  {
@@ -14514,6 +14618,22 @@
   ]
  },
  {
+  "id": "d82adf61",
+  "key": "You get a second email with a link to sign in as the fleet owner.",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:111"
+  ]
+ },
+ {
+  "id": "eb984dc5",
+  "key": "You get this email because a request with this address was sent on fratius.com. If that wasn't you, ignore it.",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:115"
+  ]
+ },
+ {
   "id": "bf44ad73",
   "key": "You had the van in that time.",
   "where": [
@@ -14567,7 +14687,7 @@
   "key": "You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.",
   "server": true,
   "where": [
-   "functions/src/index.ts:2167"
+   "functions/src/index.ts:2174"
   ]
  },
  {
@@ -14676,6 +14796,14 @@
   "server": true,
   "where": [
    "functions/src/index.ts:104"
+  ]
+ },
+ {
+  "id": "1fd13b10",
+  "key": "Your 30 free days start on that day. Nothing is charged now.",
+  "server": true,
+  "where": [
+   "functions/src/website.ts:112"
   ]
  },
  {
