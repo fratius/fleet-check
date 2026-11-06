@@ -5,7 +5,7 @@ import { ActivityIndicator, Linking, Text, View } from 'react-native';
 import { BUY_NAME, buyState, buyTitle, cancelText, cardLine, flagText, isOpenBuy, litresText, money, STALE_BUY, waitingTitle } from '@/components/buy';
 import { kmText, takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
-import { Button, Card, Chip, F, Field, MARKER, Pill, Plate, Row, Screen, T, ZoomPhoto, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Pill, Row, Screen, T, ZoomPhoto, fmtWhen, useColors, hs } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
@@ -13,7 +13,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
 import { N_, loc, t } from '@/lib/i18n';
-import { vanName } from '@/lib/vans';
+import { vanAlias, vanName } from '@/lib/vans';
 
 /**
  * Refuel, wash or buy parts for a van, step by step, and afterwards the record of it. At the pump only the card check
@@ -140,7 +140,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
   const head = (
     <View style={{ gap: 6 }}>
       <T v="h1">{buyTitle(kind, vanName(van))}</T>
-      <Row><Plate text={van.plate} /><T v="hint">{s.stations.length > 1 ? s.stationName(van.stationId) : ''}</T></Row>
+      {vanAlias(van) || s.stations.length > 1 ? <T v="hint">{[vanAlias(van), s.stations.length > 1 ? s.stationName(van.stationId) : ''].filter(Boolean).join(', ')}</T> : null}
     </View>
   );
   const errLine = err ? <T v="small" color={c.alert}>{err}</T> : null;
@@ -348,7 +348,7 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
     <>
       <View style={{ gap: 6 }}>
         <T v="h1">{buyTitle(p.kind, vanName(van))}</T>
-        <Row><Plate text={van.plate} /></Row>
+        {vanAlias(van) ? <T v="hint">{vanAlias(van)}</T> : null}
       </View>
       <Steps kind={p.kind} at="check" card={p.kind === 'parts' ? false : needsCard} />
       <Card>
@@ -411,7 +411,7 @@ function Summary({ p }: { p: Purchase }) {
     <>
       <View style={{ gap: 6 }}>
         <T v="h1">{buyTitle(p.kind, s.vanName(p))}</T>
-        <Row><Plate text={p.plate || ''} /><Pill v={st.v} text={st.text} /></Row>
+        <Row><Pill v={st.v} text={st.text} /></Row>
         <T v="hint">{p.byName}, {fmtWhen(p.createdAt)}{p.notTheirVan && p.vanDriverName ? `. ${t('{name} had the van.', { name: p.vanDriverName })}` : ''}</T>
       </View>
 

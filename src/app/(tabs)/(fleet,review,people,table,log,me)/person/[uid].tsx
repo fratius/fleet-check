@@ -7,7 +7,7 @@ import { BuyRow } from '@/components/buy';
 import { DriverRecordView } from '@/components/driverrec';
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
-import { Button, Card, F, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, F, Notice, Pill, Row, Screen, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
 import { PendingChanges } from '@/components/uploads';
 import { useDriverData } from '@/lib/data';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
@@ -17,7 +17,7 @@ import { useSession } from '@/lib/session';
 import { driverRows } from '@/lib/stats';
 import { ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
-import { vanName } from '@/lib/vans';
+import { vanAlias, vanName } from '@/lib/vans';
 
 /**
  * One person, in three parts under their details and the van they have now: their record (licence and checks,
@@ -85,7 +85,8 @@ export default function PersonScreen() {
           {van ? (
             <Pressable onPress={() => router.push(`/vehicle/${van.id}`)} style={{ gap: 4 }}>
               <T v="h2">{vanName(van)} ›</T>
-              {van.plate ? <Plate text={van.plate} /> : null}
+              {/* The plate is the van's name (lib/vans.ts): its own name and model under it, not the plate again. */}
+              {vanAlias(van) || van.make || van.model ? <T v="small">{[vanAlias(van), [van.make, van.model].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</T> : null}
               <T v="hint">{sinceText(van.assignedTo!.since)}</T>
             </Pressable>
           ) : openRow ? (
