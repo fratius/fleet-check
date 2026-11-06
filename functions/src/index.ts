@@ -440,7 +440,7 @@ export const peekInvite = onCall({ timeoutSeconds: 15 }, async (req) => {
   const token = String(req.data?.token || '');
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return { status: 'missing' };
   const snap = await db().doc(`invites/${token}`).get();
-  if (!snap.exists) return { status: 'missing' };
+  if (!snap.exists) return peekCompanyLink(token, req.auth?.uid || null);
   const i = snap.data() as { orgName: string; role: string; stationName: string; createdByName?: string; expiresAt: number; usedBy: string | null };
   const status = i.usedBy ? (i.usedBy === req.auth?.uid ? 'mine' : 'used') : Date.now() > i.expiresAt ? 'expired' : 'ok';
   return { status, orgName: i.orgName, role: i.role, stationName: i.stationName, invitedBy: i.createdByName || '', expiresAt: i.expiresAt };
@@ -479,6 +479,214 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
   });
   await getAuth().updateUser(uid, { displayName: name }).catch(() => {});
   return out;
+});
+
+/* ---------- 6a. The company's driver link: one link for all drivers, then a fleet manager or owner approves ---------- */
+// Product owner, 2026-11-05: each company has one link its drivers sign up with; they pick their station and an
+// owner or a fleet manager of that station approves them. Until then they're not members and see nothing. Only
+// owners make a new link (the old one stops working). One-time 24-hour links stay for fleet managers.
+//   companyLinks/{token}             server only: which company the link is for, and whether it still works
+//   orgs/{org}/links/drivers         the current link, for owners and managers to share
+//   orgs/{org}/joinRequests/{uid}    one request per person: owners and the station's managers, and the person
+//   users/{uid}.pendingJoin          what the person waits for (shown on their "Your company" screen)
+const REQUEST_DAYS = 14;
+const REQUEST_AGAIN_HOURS = 24;
+const MAX_PENDING = 200;
+/** A request that ends without the person joining keeps only their name: contact details go. */
+const NO_CONTACT = { phone: '', email: '', transporterId: '' };
+const linkToken = () => randomBytes(24).toString('base64url'); // 32 characters, not guessable
+type JoinStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
+interface JoinRequest {
+  uid: string; email: string; name: string; firstName: string; lastName: string; phone: string; transporterId: string;
+  stationId: string; stationName: string; link: string; createdAt: number; expiresAt: number; status: JoinStatus;
+  sameTransporterId: string | null; decidedBy: string | null; decidedByName: string | null; decidedAt: number | null;
+}
+
+/** The company's current driver link (made the first time it's asked for). reset: owners only, a new link. */
+export const driverLink = onCallOnce('driverLink', { timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const reset = req.data?.reset === true;
+  if (reset && who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can make a new driver link.');
+  const cur = db().doc(`orgs/${who.orgId}/links/drivers`);
+  return db().runTransaction(async (tx) => {
+    const c = await tx.get(cur);
+    const had = c.exists ? (c.data() as { token: string; createdAt: number; createdByName: string }) : null;
+    if (had && !reset) return had;
+    const now = Date.now();
+    if (had) tx.set(db().doc(`companyLinks/${had.token}`), { active: false, replacedAt: now, replacedBy: who.uid }, { merge: true });
+    const token = linkToken();
+    const link = { token, createdAt: now, createdBy: who.uid, createdByName: who.name };
+    tx.create(db().doc(`companyLinks/${token}`), { orgId: who.orgId, active: true, ...link });
+    tx.set(cur, link);
+    return link;
+  });
+});
+
+/** What a company's driver link is for: the company and its stations, and where this person stands with it. */
+async function peekCompanyLink(token: string, uid: string | null) {
+  const l = await db().doc(`companyLinks/${token}`).get();
+  if (!l.exists) return { status: 'missing' };
+  const link = l.data() as { orgId: string; active: boolean };
+  const org = await db().doc(`orgs/${link.orgId}`).get();
+  if (!org.exists) return { status: 'missing' };
+  const orgName = String(org.data()?.name || '');
+  if (!link.active) return { status: 'replaced', kind: 'company', orgName };
+  const stations = (await db().collection(`orgs/${link.orgId}/stations`).orderBy('createdAt').get()).docs
+    .map((d) => ({ id: d.id, name: String(d.data().name || ''), code: String(d.data().code || '') }));
+  if (uid) {
+    const [m, r] = await Promise.all([db().doc(`orgs/${link.orgId}/members/${uid}`).get(), db().doc(`orgs/${link.orgId}/joinRequests/${uid}`).get()]);
+    if (m.exists) return { status: 'member', kind: 'company', orgId: link.orgId, orgName, stations };
+    const jr = r.exists ? (r.data() as JoinRequest) : null;
+    if (jr?.status === 'pending' && jr.expiresAt > Date.now()) {
+      return { status: 'pending', kind: 'company', orgId: link.orgId, orgName, stations, stationName: jr.stationName, requestedAt: jr.createdAt };
+    }
+  }
+  return { status: 'ok', kind: 'company', orgId: link.orgId, orgName, stations };
+}
+
+/** Requests nobody decided in REQUEST_DAYS: marked expired, contact details removed, the person's waiting note cleared. */
+export async function expireJoinRequests(now = Date.now()) {
+  const old = await db().collectionGroup('joinRequests').where('status', '==', 'pending').where('expiresAt', '<', now).limit(300).get();
+  for (const d of old.docs) {
+    const uid = (d.data() as JoinRequest).uid;
+    const orgId = d.ref.parent.parent!.id;
+    await db().runTransaction(async (tx) => {
+      const u = await tx.get(db().doc(`users/${uid}`));
+      tx.update(d.ref, { status: 'expired', decidedAt: now, ...NO_CONTACT });
+      if (u.exists && u.data()?.pendingJoin?.orgId === orgId) tx.update(u.ref, { pendingJoin: FieldValue.delete() });
+    }).catch((e) => logger.warn('Join request not expired', e as Error));
+  }
+  return old.size;
+}
+
+/** Bosses of a station: its fleet managers and the company's owners (not the person themselves). */
+async function staffOf(orgId: string, stationId: string, not: string) {
+  const all = (await db().collection(`orgs/${orgId}/members`).get()).docs;
+  return all.filter((d) => d.id !== not && (['owner', 'admin'].includes(d.data().role) || (d.data().role === 'manager' && (d.data().stationIds || []).includes(stationId))))
+    .map((d) => ({ uid: d.id }));
+}
+
+/** A driver signs up with the company's link: picks a station and waits for an owner or that station's manager. */
+export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw fail('unauthenticated', 'Sign in or create an account first.');
+  const token = String(req.data?.token || '');
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) throw fail('invalid-argument', 'This link isn\'t complete. Ask your fleet manager for the link again.');
+  const stationId = String(req.data?.stationId || '');
+  if (!ID.test(stationId)) throw fail('invalid-argument', 'Pick your station.');
+  const email = String(req.auth?.token?.email || '');
+  const d = (req.data?.details || {}) as Record<string, unknown>;
+  const firstName = clean(d.firstName, 40), lastName = clean(d.lastName, 40);
+  const phone = clean(d.phone, 30), transporterId = clean(d.transporterId, 20).toUpperCase();
+  if (!firstName || !lastName) throw fail('invalid-argument', 'Enter your first and last name.');
+  if (phone && !/^[+0-9 ()/-]{6,30}$/.test(phone)) throw fail('invalid-argument', 'That phone number doesn\'t look right.');
+  const name = `${firstName} ${lastName}`;
+
+  const l = await db().doc(`companyLinks/${token}`).get();
+  if (!l.exists) throw fail('not-found', 'This link doesn\'t exist. Ask your fleet manager for the link again.');
+  const link = l.data() as { orgId: string; active: boolean };
+  if (!link.active) throw fail('failed-precondition', 'This link was replaced by a new one. Ask your fleet manager for the new link.');
+  const orgId = link.orgId;
+  const [org, station] = await Promise.all([db().doc(`orgs/${orgId}`).get(), db().doc(`orgs/${orgId}/stations/${stationId}`).get()]);
+  if (!org.exists) throw fail('not-found', 'This link doesn\'t exist. Ask your fleet manager for the link again.');
+  if (!station.exists) throw fail('not-found', 'That station doesn\'t exist any more. Pick another one.');
+  const orgName = String(org.data()?.name || ''), stationName = String(station.data()?.name || '');
+  // Someone with the same Amazon Transporter ID is already in the company: the approver should know.
+  let same: string | null = null;
+  if (transporterId) {
+    const q = await db().collection(`orgs/${orgId}/members`).where('transporterId', '==', transporterId).limit(1).get();
+    same = q.empty ? null : String(q.docs[0].data().name || '');
+  }
+  const pending = await db().collection(`orgs/${orgId}/joinRequests`).where('status', '==', 'pending').count().get();
+
+  const rref = db().doc(`orgs/${orgId}/joinRequests/${uid}`);
+  const now = Date.now();
+  const out = await db().runTransaction(async (tx) => {
+    const [m, r] = await Promise.all([tx.get(db().doc(`orgs/${orgId}/members/${uid}`)), tx.get(rref)]);
+    if (m.exists) throw fail('already-exists', 'You\'re already in {company}. Ask the fleet owner to change your role or station.', { company: orgName });
+    const was = r.exists ? (r.data() as JoinRequest) : null;
+    const open = was?.status === 'pending' && was.expiresAt > now;
+    if (was?.status === 'rejected' && now - (was.decidedAt || 0) < REQUEST_AGAIN_HOURS * 3600_000) {
+      throw fail('failed-precondition', 'Your request to join {company} wasn\'t approved. You can ask again tomorrow, or talk to your fleet manager.', { company: orgName });
+    }
+    if (!open && pending.data().count >= MAX_PENDING) throw fail('resource-exhausted', '{company} has too many requests waiting. Ask your fleet manager.', { company: orgName });
+    const jr: JoinRequest = {
+      uid, email, name, firstName, lastName, phone, transporterId, stationId, stationName, link: token,
+      createdAt: open ? was!.createdAt : now, expiresAt: now + REQUEST_DAYS * 86400_000, status: 'pending',
+      sameTransporterId: same, decidedBy: null, decidedByName: null, decidedAt: null,
+    };
+    tx.set(rref, jr);
+    tx.set(db().doc(`users/${uid}`), { pendingJoin: { orgId, orgName, stationName, at: now }, email, name, firstName, lastName, phone }, { merge: true });
+    return { orgId, orgName, stationName, again: open, movedStation: open && was!.stationId !== stationId };
+  });
+  await getAuth().updateUser(uid, { displayName: name }).catch(() => {});
+  // New requests (and a changed station) reach the people who decide; asking again for the same station doesn't.
+  if (!out.again || out.movedStation) {
+    await tell(await staffOf(orgId, stationId, uid), (lang) => ({
+      title: tr(lang, 'New driver: {name}', { name }),
+      body: tr(lang, '{name} wants to join {station} as a driver. Approve or reject it under People.', { name, station: stationName }),
+      url: '/people', tag: `join-${uid}`,
+    })).catch(() => 0);
+  }
+  logger.info('Join request', { orgId, stationId, again: out.again });
+  return out;
+});
+
+/** An owner, or a fleet manager of the station, approves or rejects a driver who signed up with the link. */
+export const decideJoinRequest = onCallOnce('decideJoinRequest', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const uid = String(req.data?.uid || '');
+  if (!ID.test(uid)) throw fail('invalid-argument', 'Unknown request.');
+  const approve = req.data?.approve === true;
+  const rref = db().doc(`orgs/${who.orgId}/joinRequests/${uid}`);
+  const org = await db().doc(`orgs/${who.orgId}`).get();
+  const orgName = String(org.data()?.name || '');
+  const out = await db().runTransaction(async (tx) => {
+    const r = await tx.get(rref);
+    if (!r.exists) throw fail('not-found', 'Unknown request.');
+    const jr = r.data() as JoinRequest;
+    needStation(who, jr.stationId, N_('You can only decide about drivers of your own station.'));
+    if (jr.status !== 'pending') throw fail('failed-precondition', 'This request was already decided.');
+    if (jr.expiresAt < Date.now()) throw fail('deadline-exceeded', 'This request is older than {n} days. Ask the driver to sign up with the link again.', { n: REQUEST_DAYS });
+    const mref = db().doc(`orgs/${who.orgId}/members/${uid}`);
+    const [m, st] = await Promise.all([tx.get(mref), tx.get(db().doc(`orgs/${who.orgId}/stations/${jr.stationId}`))]);
+    const now = Date.now();
+    if (approve) {
+      if (!st.exists) throw fail('failed-precondition', 'This station was removed. Reject the request and ask the driver to pick another station.');
+      if (!m.exists) {
+        tx.create(mref, {
+          role: 'driver', stationIds: [jr.stationId], email: jr.email, name: jr.name, firstName: jr.firstName, lastName: jr.lastName,
+          phone: jr.phone, transporterId: jr.transporterId, joinedAt: now, approvedBy: who.uid, approvedByName: who.name,
+        });
+      }
+      tx.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(who.orgId), orgId: who.orgId, pendingJoin: FieldValue.delete() }, { merge: true });
+    } else {
+      tx.set(db().doc(`users/${uid}`), { pendingJoin: FieldValue.delete() }, { merge: true });
+    }
+    tx.update(rref, { status: approve ? 'approved' : 'rejected', decidedBy: who.uid, decidedByName: who.name, decidedAt: now, ...(approve ? {} : NO_CONTACT) });
+    return { stationName: jr.stationName, name: jr.name };
+  });
+  await notify(uid, (lang) => (approve
+    ? { title: tr(lang, 'You\'re in {company}', { company: orgName }), body: tr(lang, '{name} approved you as a driver at {station}. Open Fratius to start.', { name: who.name, station: out.stationName }), url: '/', tag: `joined-${who.orgId}` }
+    : { title: tr(lang, 'Request not approved', {}), body: tr(lang, 'Your request to join {company} wasn\'t approved. Talk to your fleet manager.', { company: orgName }), url: '/', tag: `joined-${who.orgId}` })).catch(() => 0);
+  return { ok: true, approved: approve };
+});
+
+/** The person takes back their own request (signed up with the wrong company, or by mistake). */
+export const withdrawJoinRequest = onCallOnce('withdrawJoinRequest', { timeoutSeconds: 30 }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
+  const orgId = String(req.data?.orgId || '');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
+  const rref = db().doc(`orgs/${orgId}/joinRequests/${uid}`);
+  await db().runTransaction(async (tx) => {
+    const r = await tx.get(rref);
+    if (r.exists && (r.data() as JoinRequest).status === 'pending') tx.update(rref, { status: 'withdrawn', decidedAt: Date.now(), decidedBy: uid, ...NO_CONTACT });
+    tx.set(db().doc(`users/${uid}`), { pendingJoin: FieldValue.delete() }, { merge: true });
+  });
+  return { ok: true };
 });
 
 /* ---------- 6b. A new company: sign-up from the app or from the website's button ---------- */
@@ -2196,6 +2404,13 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, a
       if (logins.some((l) => l.uid === uid)) await org.update({ demoLogins: logins.filter((l) => l.uid !== uid) }).catch(() => {});
     }
   }
+  // A driver sign-up still waiting for approval goes with the account (it isn't part of any history).
+  const waiting = (await db().doc(`users/${uid}`).get()).data()?.pendingJoin?.orgId;
+  if (typeof waiting === 'string' && ID.test(waiting)) {
+    const jr = db().doc(`orgs/${waiting}/joinRequests/${uid}`);
+    const j = await jr.get();
+    if (j.exists && j.data()?.status === 'pending') await jr.delete();
+  }
   await db().recursiveDelete(db().doc(`users/${uid}`));
   await getAuth().deleteUser(uid).catch((e) => { if ((e as { code?: string })?.code !== 'auth/user-not-found') throw e; });
   logger.info('Account deleted', { companies: plan.map((c) => `${c.id}:${c.outcome}`) });
@@ -2239,6 +2454,8 @@ export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'E
   const run = thisMonthsRun(now);
   const last = Number((await db().doc('platform/media').get()).data()?.lastRun || 0);
   if (now >= FIRST_RUN && now >= run && last < run) logger.info('Photos and videos cleaned up', await runClean(now));
+  // Driver sign-ups nobody decided in 14 days.
+  logger.info('Old join requests expired', { n: await expireJoinRequests(now).catch((e) => { logger.warn('Join requests not expired', e as Error); return -1; }) });
   // Kept answers of calls that may be sent twice (once.ts), after a week.
   logger.info('Old call answers deleted', { n: await cleanRequests().catch((e) => { logger.warn('Call answers not cleaned', e as Error); return -1; }) });
 });

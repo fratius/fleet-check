@@ -78,6 +78,13 @@ beforeEach(async () => {
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
     await put(`invites/DRVLINK2xxxxxxxxxxxxxxxx`, { token: 'DRVLINK2xxxxxxxxxxxxxxxx', ...inv('driver', S2) });
     await put(`invites/MGRLINK1xxxxxxxxxxxxxxxx`, { token: 'MGRLINK1xxxxxxxxxxxxxxxx', ...inv('manager', S2) });
+    // The company's driver link, and two drivers waiting for approval (one per station).
+    await put('companyLinks/COMPANYLINKxxxxxxxxxxxxxxxxxxxxx', { orgId: O, active: true, token: 'COMPANYLINKxxxxxxxxxxxxxxxxxxxxx', createdAt: 1, createdBy: 'own', createdByName: 'Owner' });
+    await put(`orgs/${O}/links/drivers`, { token: 'COMPANYLINKxxxxxxxxxxxxxxxxxxxxx', createdAt: 1, createdBy: 'own', createdByName: 'Owner' });
+    const jr = (uid, stationId) => ({ uid, name: uid, firstName: uid, lastName: 'X', phone: '+49 1', email: `${uid}@x`, transporterId: '', stationId, stationName: 'x', link: 'COMPANYLINKxxxxxxxxxxxxxxxxxxxxx', createdAt: 1, expiresAt: Date.now() + 1e9, status: 'pending' });
+    await put(`orgs/${O}/joinRequests/wait1`, jr('wait1', S1));
+    await put(`orgs/${O}/joinRequests/wait2`, jr('wait2', S2));
+    await put('users/wait1', { pendingJoin: { orgId: O, orgName: 'DSP One', stationName: 'x', at: 1 } });
   });
 });
 
@@ -226,6 +233,33 @@ describe('people and invites', () => {
   test('manager cannot switch driver self pick-up from the app', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/stations/${S1}`), { selfAssign: true })));
   test('driver cannot switch driver self pick-up', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/stations/${S1}`), { selfAssign: true })));
   test('driver reads station names', () => assertSucceeds(getDocs(collection(as('drv1'), `orgs/${O}/stations`))));
+});
+
+describe('the company driver link and drivers waiting for approval', () => {
+  const reqs = (db, ids) => query(collection(db, `orgs/${O}/joinRequests`), where('status', '==', 'pending'), where('stationId', 'in', ids));
+  test('nobody reads the server\'s list of company links', () => assertFails(getDoc(doc(as('own'), 'companyLinks/COMPANYLINKxxxxxxxxxxxxxxxxxxxxx'))));
+  test('nobody makes a company link from the app', () => assertFails(setDoc(doc(as('own'), 'companyLinks/NEWxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'), { orgId: O, active: true })));
+  test('owner reads the company\'s driver link', () => assertSucceeds(getDoc(doc(as('own'), `orgs/${O}/links/drivers`))));
+  test('manager reads the company\'s driver link', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/links/drivers`))));
+  test('driver cannot read the driver link', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/links/drivers`))));
+  test('outsider cannot read the driver link', () => assertFails(getDoc(doc(as('wait1'), `orgs/${O}/links/drivers`))));
+  test('nobody changes the driver link from the app', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/links/drivers`), { token: 'MINE' })));
+  test('owner lists every request', () => assertSucceeds(getDocs(query(collection(as('own'), `orgs/${O}/joinRequests`), where('status', '==', 'pending')))));
+  test('manager lists the requests of their station', () => assertSucceeds(getDocs(reqs(as('mgr1'), [S1]))));
+  test('manager cannot list requests of another station', () => assertFails(getDocs(reqs(as('mgr1'), [S2]))));
+  test('manager cannot read a request for another station', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/joinRequests/wait2`))));
+  test('driver cannot read requests', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/joinRequests/wait1`))));
+  test('the person reads their own request', () => assertSucceeds(getDoc(doc(as('wait1'), `orgs/${O}/joinRequests/wait1`))));
+  test('the person cannot read someone else\'s request', () => assertFails(getDoc(doc(as('wait1'), `orgs/${O}/joinRequests/wait2`))));
+  test('the person cannot approve themselves', () => assertFails(updateDoc(doc(as('wait1'), `orgs/${O}/joinRequests/wait1`), { status: 'approved' })));
+  test('a manager cannot approve from the app (only through the server)', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/joinRequests/wait1`), { status: 'approved' })));
+  test('nobody writes a request from the app', () => assertFails(setDoc(doc(as('new1'), `orgs/${O}/joinRequests/new1`), { uid: 'new1', stationId: S1, status: 'pending' })));
+  test('someone waiting sees nothing of the company', () => assertFails(getDocs(vehiclesAt(as('wait1'), [S1]))));
+  test('someone waiting cannot read the company', () => assertFails(getDoc(doc(as('wait1'), `orgs/${O}`))));
+  test('the person cannot add themselves while waiting', () => assertFails(setDoc(doc(as('wait1'), `orgs/${O}/members/wait1`), { role: 'driver', stationIds: [S1], name: 'W', email: 'w@x' })));
+  test('the person cannot change their waiting note', () => assertFails(updateDoc(doc(as('wait1'), 'users/wait1'), { pendingJoin: { orgId: O2 } })));
+  test('the person cannot write a waiting note on a new profile', () => assertFails(setDoc(doc(as('new2'), 'users/new2'), { pendingJoin: { orgId: O } })));
+  test('the person still keeps the rest of their profile', () => assertSucceeds(updateDoc(doc(as('wait1'), 'users/wait1'), { lang: 'ro' })));
 });
 
 describe('new companies', () => {

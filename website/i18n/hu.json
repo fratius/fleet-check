@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· tulajdonos, menedzser, sofőr",
  "Each role sees what it needs, in its own language": "Minden szerepkör azt látja, amire szüksége van, a saját nyelvén",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "A tulajdonosok minden állomást látnak, és azt is, mennyibe kerülnek a furgonok. A menedzserek a saját állomásukat vezetik, és ők döntenek a sérülésekről. A sofőrök a saját furgonjukat és adataikat látják, másokét soha.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Csatlakozni csak meghívó linkkel lehet: egy személy, egy használat, 24 óráig érvényes.",
  "32 languages. The app opens in the phone's language.": "32 nyelv. Az app a telefon nyelvén nyílik meg.",
  "iPhone, Android and the web.": "iPhone, Android és web.",
  "Owner": "Tulajdonos",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Mi a helyzet a lízing végén talált sérülésekkel?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Minden talált sérülés szerepel a furgon adatlapján, dátummal és azzal, hogy kinél volt a furgon. A fotóit 90 napig őrizzük, ezért ezen belül rendezd a sofőrrel vagy a biztosítóval.",
  "How do people join?": "Hogyan lehet csatlakozni?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Meghívó linkkel: egy személy, egy használat, 24 óráig érvényes. A tulajdonosok menedzsereket és sofőröket hívnak meg, a menedzserek sofőröket a saját állomásukra.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Átadás-átvétel, sérülések és furgonelőzmények saját furgonokkal dolgozó kézbesítő partnereknek.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "A Fratius független termék. Nem áll kapcsolatban az Amazonnal, és az Amazon nem támogatja vagy szponzorálja.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Havi árak, áfa nélkül. Minden csomag 30 napig ingyenes.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "A kérés nem ment át. Ellenőrizd a kapcsolatot, és próbáld újra.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "A fotók és videók a következő hónap 15-én törlődnek, de soha, amíg a furgon még a sofőrnél van.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "A következő hónap 15-éig: 15-én törlődnek az előző hónap fotói és videói. Soha, amíg a furgon még annál a sofőrnél van, akinél volt: ezek megvárják, amíg visszaadja. A sérülésként megjelölt fotók és videók 90 napig maradnak. Hogy kinél melyik furgon volt és mikor, az mindig megmarad.",
- "Unlimited drivers": "Korlátlan számú sofőr"
+ "Unlimited drivers": "Korlátlan számú sofőr",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "A sofőrök a céged linkjével regisztrálnak, és amint jóváhagyod őket, kezdhetnek. A menedzserek egyszer használható meghívó linkkel csatlakoznak.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "A sofőrök megnyitják a céged sofőrlinkjét, kiválasztják az állomásukat, és regisztrálnak. Semmit sem látnak, amíg a tulajdonos vagy az állomásuk menedzsere jóvá nem hagyja őket. A menedzserek a tulajdonostól kapott, egyszer használható meghívó linkkel csatlakoznak, amely 24 óráig érvényes.",
+ "Get the app for iPhone and Android.": "Töltsd le az appot iPhone-ra és Androidra.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Az iPhone-app elérhető az App Store-ban. Az Android-app hamarosan elérhető lesz a Google Playen.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Az Android-app elérhető a Google Playen. Az iPhone-app hamarosan elérhető lesz az App Store-ban.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Androidon a Fratius webappként fut, amíg meg nem jelenik az app a Google Playen: nyisd meg a böngészőben, és add hozzá a kezdőképernyőhöz.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone-on a Fratius webappként fut, amíg meg nem jelenik az app az App Store-ban: nyisd meg a Safariban, és add hozzá a kezdőképernyőhöz."
 }

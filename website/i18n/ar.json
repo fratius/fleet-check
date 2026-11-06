@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· المالك والمدير والسائق",
  "Each role sees what it needs, in its own language": "كل دور يرى ما يحتاجه، بلغته",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "يرى المالكون كل المحطات وتكلفة الفانات. ويدير المديرون محطتهم ولهم الكلمة الأخيرة في الأضرار. ويرى السائقون فانهم وسجلاتهم الخاصة، ولا يرون سجلات غيرهم أبدًا.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "لا ينضم أحد إلا برابط دعوة: لشخص واحد، لاستخدام واحد، وصالح 24 ساعة.",
  "32 languages. The app opens in the phone's language.": "32 لغة. يفتح التطبيق بلغة الهاتف.",
  "iPhone, Android and the web.": "iPhone وAndroid والويب.",
  "Owner": "المالك",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "ماذا عن الأضرار المكتشفة في نهاية عقد التأجير؟",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "كل ضرر يُكتشف يُسجَّل في سجل الفان مع التاريخ ومن كان معه الفان. تُحفظ صوره 90 يومًا، فسوِّ الأمر مع السائق أو شركة التأمين خلال هذه المدة.",
  "How do people join?": "كيف ينضم الأشخاص؟",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "برابط دعوة: لشخص واحد، لاستخدام واحد، وصالح 24 ساعة. يدعو المالكون المديرين والسائقين؛ ويدعو المديرون السائقين إلى محطتهم.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "التسليمات والأضرار وسجل الفانات لشركاء التوصيل الذين يشغّلون فاناتهم الخاصة.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius منتج مستقل، وليس تابعًا لـ Amazon ولا معتمدًا أو مدعومًا منها.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "الأسعار شهرية، غير شاملة ضريبة القيمة المضافة. 30 يومًا مجانًا في كل باقة.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "لم يصل طلبك. تحقق من اتصالك وحاول مرة أخرى.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "تُحذف الصور والفيديوهات في اليوم 15 من الشهر التالي، ولا تُحذف أبدًا ما دام الفان مع السائق.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "حتى اليوم 15 من الشهر التالي: في اليوم 15 تُحذف صور وفيديوهات الشهر السابق. ولا تُحذف أبدًا ما دام الفان مع السائق الذي كان معه: تنتظر حتى يُعاد الفان. تُحفظ الصور والفيديوهات المعلّمة كضرر 90 يومًا. ومن كان معه أي فان، ومتى، يُحفظ دائمًا.",
- "Unlimited drivers": "عدد غير محدود من السائقين"
+ "Unlimited drivers": "عدد غير محدود من السائقين",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "يسجّل السائقون عبر رابط شركتك ويبدؤون بعد موافقتك عليهم. وينضم المديرون برابط دعوة لاستخدام واحد.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "يفتح السائقون رابط السائقين الخاص بشركتك، ويختارون محطتهم ويسجّلون. ولا يرون شيئًا حتى يوافق عليهم المالك أو مدير محطتهم. وينضم المديرون برابط دعوة من المالك، لاستخدام واحد وصالح 24 ساعة.",
+ "Get the app for iPhone and Android.": "احصل على التطبيق لأجهزة iPhone وAndroid.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "تطبيق iPhone متوفر في App Store. وتطبيق Android في طريقه إلى Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "تطبيق Android متوفر على Google Play. وتطبيق iPhone في طريقه إلى App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "على Android، يعمل Fratius كتطبيق ويب إلى أن يتوفر التطبيق على Google Play: افتحه في المتصفح وأضفه إلى الشاشة الرئيسية.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "على iPhone، يعمل Fratius كتطبيق ويب إلى أن يتوفر التطبيق في App Store: افتحه في Safari وأضفه إلى الشاشة الرئيسية."
 }

@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· filo sahibi, yönetici, sürücü",
  "Each role sees what it needs, in its own language": "Her rol ihtiyacı olanı kendi dilinde görür",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Filo sahipleri tüm istasyonları ve panelvanların maliyetini görür. Yöneticiler kendi istasyonlarını yönetir ve hasarda son sözü söyler. Sürücüler kendi panelvanlarını ve kendi kayıtlarını görür, asla başkasınınkini değil.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Katılım yalnızca davet bağlantısıyla: bir kişi, tek kullanım, 24 saat geçerli.",
  "32 languages. The app opens in the phone's language.": "32 dil. Uygulama telefonun dilinde açılır.",
  "iPhone, Android and the web.": "iPhone, Android ve web.",
  "Owner": "Filo sahibi",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Kira sonunda bulunan hasar ne olacak?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Bulunan her hasar, tarihi ve o sırada panelvanın kimde olduğu ile birlikte panelvanın kaydındadır. Fotoğrafları 90 gün saklanır; bu sürede sürücüyle veya sigortacıyla çözün.",
  "How do people join?": "Kişiler nasıl katılır?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Davet bağlantısıyla: bir kişi, tek kullanım, 24 saat geçerli. Filo sahipleri yöneticileri ve sürücüleri davet eder; yöneticiler kendi istasyonlarına sürücü davet eder.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Kendi panelvanlarını işleten teslimat ortakları için teslimler, hasar ve panelvan geçmişi.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius bağımsız bir üründür. Amazon ile bağlantılı değildir, Amazon tarafından onaylanmamış veya desteklenmemiştir.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Fiyatlar aylık, KDV hariç. Her planda 30 gün ücretsiz.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Talebiniz iletilemedi. Bağlantınızı kontrol edip tekrar deneyin.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotoğraflar ve videolar sonraki ayın 15'inde silinir; panelvan hâlâ sürücüdeyse asla silinmez.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Sonraki ayın 15'ine kadar: her ayın 15'inde önceki ayın fotoğrafları ve videoları silinir. Panelvan hâlâ onu alan sürücüdeyse asla: bunlar araç teslim edilene kadar bekler. Hasar olarak işaretlenen fotoğraflar ve videolar 90 gün saklanır. Kimin hangi panelvanı ne zaman aldığı kalıcı olarak saklanır.",
- "Unlimited drivers": "Sınırsız sürücü"
+ "Unlimited drivers": "Sınırsız sürücü",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Sürücüler şirketinizin bağlantısıyla kaydolur ve siz onayladığınızda başlar. Yöneticiler tek kullanımlık bir davet bağlantısıyla katılır.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Sürücüler şirketinizin sürücü bağlantısını açar, istasyonlarını seçer ve kaydolur. Filo sahibi veya istasyonlarının yöneticisi onları onaylayana kadar hiçbir şey görmezler. Yöneticiler, filo sahibinden gelen tek kullanımlık ve 24 saat geçerli bir davet bağlantısıyla katılır.",
+ "Get the app for iPhone and Android.": "iPhone ve Android için uygulamayı edinin.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone uygulaması App Store'da. Android uygulaması Google Play'e geliyor.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android uygulaması Google Play'de. iPhone uygulaması App Store'a geliyor.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android'de Fratius, uygulama Google Play'de yayınlanana kadar web uygulaması olarak çalışır: tarayıcıda açın ve ana ekrana ekleyin.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone'da Fratius, uygulama App Store'da yayınlanana kadar web uygulaması olarak çalışır: Safari'de açın ve ana ekrana ekleyin."
 }

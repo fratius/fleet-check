@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· vlasnik, voditelj, vozač",
  "Each role sees what it needs, in its own language": "Svaka uloga vidi ono što joj treba, na svom jeziku",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Vlasnici vide sve stanice i koliko kombiji koštaju. Voditelji vode svoju stanicu i imaju posljednju riječ o oštećenjima. Vozači vide svoj kombi i svoju evidenciju, nikad tuđu.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Pridružiti se može samo putem pozivnice: jedna osoba, jedna upotreba, vrijedi 24 sata.",
  "32 languages. The app opens in the phone's language.": "32 jezika. Aplikacija se otvara na jeziku mobitela.",
  "iPhone, Android and the web.": "iPhone, Android i web.",
  "Owner": "Vlasnik",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Što je s oštećenjima pronađenima na kraju leasinga?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Svako pronađeno oštećenje upisano je u evidenciju kombija s datumom i osobom koja je imala kombi. Fotografije se čuvaju 90 dana, pa to riješite s vozačem ili osiguravateljem u tom roku.",
  "How do people join?": "Kako se ljudi pridružuju?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Putem pozivnice: jedna osoba, jedna upotreba, vrijedi 24 sata. Vlasnici pozivaju voditelje i vozače; voditelji pozivaju vozače u svoju stanicu.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Primopredaje, oštećenja i povijest kombija za dostavne partnere s vlastitim kombijima.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius je neovisan proizvod. Nije povezan s Amazonom niti ga Amazon podržava ili sponzorira.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Cijene su mjesečne, bez PDV-a. 30 dana besplatno uz svaki paket.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Zahtjev nije prošao. Provjerite vezu i pokušajte ponovno.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotografije i videozapisi brišu se 15. sljedećeg mjeseca, nikad dok vozač još ima kombi.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Do 15. sljedećeg mjeseca: 15. se brišu fotografije i videozapisi prethodnog mjeseca. Nikad dok vozač koji je imao kombi još uvijek ga ima: oni čekaju dok se kombi ne vrati. Fotografije i videozapisi označeni kao oštećenje čuvaju se 90 dana. Tko je imao koji kombi i kada, čuva se zauvijek.",
- "Unlimited drivers": "Neograničen broj vozača"
+ "Unlimited drivers": "Neograničen broj vozača",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Vozači se registriraju putem poveznice vaše tvrtke i počinju čim ih odobrite. Voditelji se pridružuju putem jednokratne pozivnice.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Vozači otvore poveznicu za vozače vaše tvrtke, odaberu svoju stanicu i registriraju se. Ne vide ništa dok ih ne odobri vlasnik ili voditelj njihove stanice. Voditelji se pridružuju putem jednokratne pozivnice od vlasnika, koja vrijedi 24 sata.",
+ "Get the app for iPhone and Android.": "Preuzmite aplikaciju za iPhone i Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacija za iPhone je na App Storeu. Aplikacija za Android uskoro stiže na Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacija za Android je na Google Playu. Aplikacija za iPhone uskoro stiže na App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidu Fratius radi kao web-aplikacija dok aplikacija ne stigne na Google Play: otvorite ga u pregledniku i dodajte na početni zaslon.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhoneu Fratius radi kao web-aplikacija dok aplikacija ne stigne na App Store: otvorite ga u Safariju i dodajte na početni zaslon."
 }

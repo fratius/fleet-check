@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· ägare, chef, förare",
  "Each role sees what it needs, in its own language": "Varje roll ser det den behöver, på sitt eget språk",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Ägare ser alla stationer och vad skåpbilarna kostar. Chefer driver sin station och har sista ordet om skador. Förare ser sin skåpbil och sina egna uppgifter, aldrig någon annans.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Man går bara med via inbjudningslänk: en person, en gång, giltig i 24 timmar.",
  "32 languages. The app opens in the phone's language.": "32 språk. Appen öppnas på telefonens språk.",
  "iPhone, Android and the web.": "iPhone, Android och webben.",
  "Owner": "Ägare",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Och skador som upptäcks när leasingen tar slut?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Varje upptäckt skada finns i skåpbilens register med datum och vem som hade skåpbilen. Fotona sparas 90 dagar, så gör upp med föraren eller försäkringsbolaget inom den tiden.",
  "How do people join?": "Hur går man med?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Via inbjudningslänk: en person, en gång, giltig i 24 timmar. Ägare bjuder in chefer och förare; chefer bjuder in förare till sin egen station.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Överlämningar, skador och skåpbilshistorik för leveranspartner med egna skåpbilar.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius är en fristående produkt. Den är inte ansluten till, godkänd av eller sponsrad av Amazon.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Priser per månad, exklusive moms. 30 dagar gratis på alla planer.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Din förfrågan gick inte fram. Kontrollera anslutningen och försök igen.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Foton och videor raderas den 15:e månaden efter, aldrig så länge föraren fortfarande har skåpbilen.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Till den 15:e månaden efter: den 15:e raderas foton och videor från månaden innan. Aldrig så länge föraren som hade skåpbilen fortfarande har den: de väntar tills bilen lämnats tillbaka. Foton och videor som markerats som skada sparas i 90 dagar. Vem som hade vilken skåpbil, och när, sparas för alltid.",
- "Unlimited drivers": "Obegränsat antal förare"
+ "Unlimited drivers": "Obegränsat antal förare",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Förare registrerar sig med ditt företags länk och börjar när du har godkänt dem. Chefer går med via en inbjudningslänk som bara fungerar en gång.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Förare öppnar ditt företags förarlänk, väljer sin station och registrerar sig. De ser ingenting förrän ägaren eller chefen på deras station godkänner dem. Chefer går med via en inbjudningslänk från ägaren, som fungerar en gång och gäller i 24 timmar.",
+ "Get the app for iPhone and Android.": "Skaffa appen för iPhone och Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone-appen finns i App Store. Android-appen är på väg till Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android-appen finns på Google Play. iPhone-appen är på väg till App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "På Android fungerar Fratius som webbapp tills appen finns på Google Play: öppna den i webbläsaren och lägg till den på hemskärmen.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "På iPhone fungerar Fratius som webbapp tills appen finns i App Store: öppna den i Safari och lägg till den på hemskärmen."
 }

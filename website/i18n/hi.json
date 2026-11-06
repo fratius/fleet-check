@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· मालिक, मैनेजर, ड्राइवर",
  "Each role sees what it needs, in its own language": "हर रोल को वही दिखता है जो उसे चाहिए, उसकी अपनी भाषा में",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "मालिक हर स्टेशन देखते हैं और यह भी कि वैन पर कितना ख़र्च हो रहा है। मैनेजर अपना स्टेशन चलाते हैं और नुकसान पर आख़िरी फ़ैसला उन्हीं का होता है। ड्राइवर अपनी वैन और अपने रिकॉर्ड देखते हैं, किसी और के कभी नहीं।",
- "People join only by invite link: one person, one use, valid for 24 hours.": "लोग सिर्फ़ इनवाइट लिंक से जुड़ते हैं: एक व्यक्ति, एक बार, 24 घंटे के लिए मान्य।",
  "32 languages. The app opens in the phone's language.": "32 भाषाएँ। ऐप फ़ोन की भाषा में खुलता है।",
  "iPhone, Android and the web.": "iPhone, Android और वेब।",
  "Owner": "मालिक",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "लीज़ ख़त्म होने पर मिले नुकसान का क्या?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "मिला हर नुकसान तारीख़ और उस समय वैन किसके पास थी, इसके साथ वैन के रिकॉर्ड में दर्ज होता है। उसकी फ़ोटो 90 दिन रखी जाती हैं, इसलिए इसी समय में ड्राइवर या बीमा कंपनी के साथ मामला निपटा लें।",
  "How do people join?": "लोग कैसे जुड़ते हैं?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "इनवाइट लिंक से: एक व्यक्ति, एक बार, 24 घंटे के लिए मान्य। मालिक मैनेजर और ड्राइवरों को इनवाइट करते हैं; मैनेजर अपने स्टेशन पर ड्राइवरों को इनवाइट करते हैं।",
  "Handovers, damage and van history for delivery partners who run their own vans.": "अपनी वैन ख़ुद चलाने वाले डिलीवरी पार्टनर्स के लिए हैंडओवर, नुकसान और वैन हिस्ट्री।",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius एक स्वतंत्र प्रोडक्ट है। यह Amazon से जुड़ा, उसके द्वारा समर्थित या प्रायोजित नहीं है।",
  "Prices per month, excluding VAT. 30 days free on every plan.": "कीमतें प्रति माह, VAT के बिना। हर प्लान पर 30 दिन मुफ़्त।",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "आपका अनुरोध नहीं पहुँचा। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "फ़ोटो और वीडियो अगले महीने की 15 तारीख़ को मिटाए जाते हैं, लेकिन जब तक वैन ड्राइवर के पास है, कभी नहीं।",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "अगले महीने की 15 तारीख़ तक: 15 तारीख़ को पिछले महीने के फ़ोटो और वीडियो मिटाए जाते हैं। जब तक वैन उसी ड्राइवर के पास है जिसके पास वह थी, कभी नहीं: वे वैन लौटाए जाने तक रुकते हैं। नुकसान के रूप में चिह्नित फ़ोटो और वीडियो 90 दिन रखे जाते हैं। किसके पास कौन-सी वैन कब थी, यह हमेशा रखा जाता है।",
- "Unlimited drivers": "असीमित ड्राइवर"
+ "Unlimited drivers": "असीमित ड्राइवर",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "ड्राइवर आपकी कंपनी के लिंक से साइन अप करते हैं और आपकी मंज़ूरी के बाद काम शुरू करते हैं। मैनेजर एक बार चलने वाले इनवाइट लिंक से जुड़ते हैं।",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "ड्राइवर आपकी कंपनी का ड्राइवर लिंक खोलते हैं, अपना स्टेशन चुनते हैं और साइन अप करते हैं। जब तक मालिक या उनके स्टेशन का मैनेजर उन्हें मंज़ूरी नहीं देता, उन्हें कुछ नहीं दिखता। मैनेजर मालिक से मिले इनवाइट लिंक से जुड़ते हैं, जो एक ही बार चलता है और 24 घंटे के लिए मान्य होता है।",
+ "Get the app for iPhone and Android.": "iPhone और Android के लिए ऐप पाएँ।",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone ऐप App Store पर उपलब्ध है। Android ऐप जल्द ही Google Play पर आने वाला है।",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android ऐप Google Play पर उपलब्ध है। iPhone ऐप जल्द ही App Store पर आने वाला है।",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android पर, जब तक Google Play पर ऐप नहीं आ जाता, Fratius वेब ऐप के रूप में चलता है: इसे ब्राउज़र में खोलें और होम स्क्रीन पर जोड़ें।",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone पर, जब तक App Store पर ऐप नहीं आ जाता, Fratius वेब ऐप के रूप में चलता है: इसे Safari में खोलें और होम स्क्रीन पर जोड़ें।"
 }

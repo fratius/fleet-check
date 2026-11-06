@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· pronar, menaxher, shofer",
  "Each role sees what it needs, in its own language": "Çdo rol sheh atë që i duhet, në gjuhën e vet",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Pronarët shohin çdo stacion dhe sa kushtojnë furgonët. Menaxherët drejtojnë stacionin e tyre dhe kanë fjalën e fundit për dëmtimet. Shoferët shohin furgonin e tyre dhe regjistrat e vet, kurrë të të tjerëve.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Njerëzit bashkohen vetëm me lidhje ftese: një person, një përdorim, e vlefshme 24 orë.",
  "32 languages. The app opens in the phone's language.": "32 gjuhë. Aplikacioni hapet në gjuhën e telefonit.",
  "iPhone, Android and the web.": "iPhone, Android dhe web.",
  "Owner": "Pronari",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Po dëmtimet që gjenden në fund të qirasë?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Çdo dëmtim i gjetur është në regjistrin e furgonit me datën dhe kush e kishte furgonin. Fotot ruhen 90 ditë, ndaj zgjidhe me shoferin ose me sigurimin brenda kësaj kohe.",
  "How do people join?": "Si bashkohen njerëzit?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Me lidhje ftese: një person, një përdorim, e vlefshme 24 orë. Pronarët ftojnë menaxherët dhe shoferët; menaxherët ftojnë shoferët në stacionin e tyre.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Dorëzim-marrje, dëmtime dhe historiku i furgonëve për partnerët e dërgesave me furgonët e tyre.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius është produkt i pavarur. Nuk është i lidhur me Amazon, as i miratuar apo i sponsorizuar prej tij.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Çmimet janë mujore, pa TVSH. 30 ditë falas në çdo paketë.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Kërkesa nuk kaloi. Kontrollo lidhjen dhe provo përsëri.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotot dhe videot fshihen më 15 të muajit pasardhës, kurrë për sa kohë shoferi e ka ende furgonin.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Deri më 15 të muajit pasardhës: më 15 fshihen fotot dhe videot e muajit të kaluar. Kurrë për sa kohë shoferi që e kishte furgonin e ka ende: ato presin derisa furgoni të kthehet. Fotot dhe videot e shënuara si dëm ruhen 90 ditë. Kush e kishte cilin furgon, dhe kur, ruhet përgjithmonë.",
- "Unlimited drivers": "Shoferë pa kufi"
+ "Unlimited drivers": "Shoferë pa kufi",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Shoferët regjistrohen me lidhjen e kompanisë sate dhe nisin sapo t'i miratosh. Menaxherët bashkohen me një lidhje ftese për një përdorim.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Shoferët hapin lidhjen për shoferë të kompanisë sate, zgjedhin stacionin e tyre dhe regjistrohen. Nuk shohin asgjë derisa t'i miratojë pronari ose menaxheri i stacionit të tyre. Menaxherët bashkohen me një lidhje ftese nga pronari, për një përdorim dhe e vlefshme 24 orë.",
+ "Get the app for iPhone and Android.": "Shkarko aplikacionin për iPhone dhe Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacioni për iPhone është në App Store. Aplikacioni për Android po vjen së shpejti në Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacioni për Android është në Google Play. Aplikacioni për iPhone po vjen së shpejti në App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Në Android, Fratius punon si aplikacion web derisa të dalë aplikacioni në Google Play: hape në shfletues dhe shtoje në ekranin kryesor.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Në iPhone, Fratius punon si aplikacion web derisa të dalë aplikacioni në App Store: hape në Safari dhe shtoje në ekranin kryesor."
 }

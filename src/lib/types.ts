@@ -710,12 +710,41 @@ export interface Invite {
   usedAt: number | null;
 }
 export interface InvitePeek {
-  status: 'ok' | 'used' | 'expired' | 'missing' | 'mine';
+  /** replaced: a company link that was replaced by a new one; pending: you already asked; member: you're in. */
+  status: 'ok' | 'used' | 'expired' | 'missing' | 'mine' | 'replaced' | 'pending' | 'member';
+  /** company: the company's driver link (pick a station, then a manager approves); otherwise a one-time invite. */
+  kind?: 'company';
+  orgId?: string;
   orgName?: string;
   role?: 'manager' | 'driver';
   stationName?: string;
   invitedBy?: string;
   expiresAt?: number;
+  stations?: { id: string; name: string; code: string }[];
+  requestedAt?: number;
+}
+
+/** The company's driver link (orgs/{org}/links/drivers), made by the server. */
+export interface DriverLink { token: string; createdAt: number; createdBy: string; createdByName: string }
+
+/** A driver who signed up with the company's link (orgs/{org}/joinRequests/{uid}), written by the server. */
+export interface JoinRequest {
+  uid: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  transporterId: string;
+  stationId: string;
+  stationName: string;
+  createdAt: number;
+  expiresAt: number;
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
+  /** Someone in the company already has this Amazon Transporter ID: their name. */
+  sameTransporterId: string | null;
+  decidedByName: string | null;
+  decidedAt: number | null;
 }
 export interface JoinDetails { firstName: string; lastName: string; phone: string; transporterId: string }
 

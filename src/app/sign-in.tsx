@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import { DeleteAccount } from '@/components/deleteaccount';
@@ -9,9 +9,11 @@ import { LanguageLink } from '@/components/language';
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
 import { TERMS_VERSION, TRIAL_DAYS, signupIntent } from '@/lib/billing';
-import { tokenFrom } from '@/lib/people';
+import { tokenFrom, watchMyJoinRequest, watchMyProfile } from '@/lib/people';
 import { t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
+import { AiError, ai } from '@/lib/store';
+import type { JoinRequest } from '@/lib/types';
 
 export default function SignIn() {
   const s = useSession();
@@ -44,6 +46,7 @@ export default function SignIn() {
           <T>{t('Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.')}</T>
         </View>
         <LanguageLink />
+        <Waiting />
         <Segmented label={t('Company')} value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', t('I have an invite link')], ['create', t('Create a company')]]} />
         <Card>
           {orgMode === 'create' ? (
@@ -66,7 +69,7 @@ export default function SignIn() {
               <Field label={t('Invite link')} value={code} onChangeText={setCode} autoCapitalize="none" autoCorrect={false} placeholder="https://…/join/…" />
               <Button v="primary" wide title={t('Continue')} loading={busy}
                 onPress={() => { const tk = tokenFrom(code); if (tk) router.push({ pathname: '/join/[token]', params: { token: tk } }); else setErr(t('Paste the whole link you were sent.')); }} />
-              <T v="small">{t('Each link works for one person, for 24 hours.')}</T>
+              <T v="small">{t('Drivers: the driver link of your company. Fleet managers: the invite link from the owner, which works once, for 24 hours.')}</T>
             </>
           )}
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
@@ -115,3 +118,52 @@ export default function SignIn() {
   );
 }
 
+
+/**
+ * A driver who signed up with a company's link and waits for a fleet manager or the owner. Once approved, the company
+ * opens by itself; if the request wasn't approved (or expired), they hear so and can ask again.
+ */
+function Waiting() {
+  const s = useSession();
+  const c = useColors();
+  const uid = s.user?.uid;
+  const [wait, setWait] = useState<{ orgId: string; orgName: string; stationName: string; at: number } | null>(null);
+  const [orgName, setOrgName] = useState('');
+  const [req, setReq] = useState<JoinRequest | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const waitedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!uid || s.mode !== 'firebase') return;
+    return watchMyProfile(uid, (p) => {
+      if (p.pendingJoin) { setWait(p.pendingJoin); setOrgName(p.pendingJoin.orgName); waitedFor.current = p.pendingJoin.orgId; }
+      // Approved while this screen is open: the server swapped the waiting note for the company. Open it.
+      const was = waitedFor.current;
+      if (was && !p.pendingJoin && p.orgIds.includes(was)) { waitedFor.current = null; s.switchOrg(was); }
+    });
+  }, [uid, s.mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  const orgId = wait?.orgId;
+  useEffect(() => (orgId && uid ? watchMyJoinRequest(orgId, uid, setReq) : undefined), [orgId, uid]);
+  if (!wait && !req) return null;
+  if (req && req.status !== 'pending') {
+    if (req.status === 'approved' || req.status === 'withdrawn') return null;
+    return <Notice tone="bad" text={req.status === 'rejected'
+      ? t('Your request to join {company} wasn\'t approved. Talk to your fleet manager.', { company: orgName })
+      : t('Nobody approved your request to join {company} in 14 days. Open the link from your fleet manager again.', { company: orgName })} />;
+  }
+  return (
+    <Card>
+      <T v="h3">{t('Waiting for approval')}</T>
+      <T>{t('You asked to join {company} as a driver at {station}.', { company: wait?.orgName || orgName, station: req?.stationName || wait?.stationName || '' })}</T>
+      <T v="hint">{t('A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you\'re in.')}</T>
+      <Row>
+        <Button small v="link" title={t('Cancel my request')} loading={busy} onPress={async () => {
+          setBusy(true); setErr(null);
+          try { await ai.withdrawJoinRequest({ orgId: wait!.orgId }); setWait(null); setReq(null); }
+          catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that.')); } finally { setBusy(false); }
+        }} />
+      </Row>
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+    </Card>
+  );
+}

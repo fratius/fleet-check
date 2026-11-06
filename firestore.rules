@@ -54,9 +54,13 @@ service cloud.firestore {
       return (!('lang' in d) || d.lang == null || (d.lang is string && d.lang.matches('[a-z]{2,3}')))
         && (!('appLang' in d) || d.appLang == null || (d.appLang is string && d.appLang.matches('[a-z]{2,3}')));
     }
+    // pendingJoin (the driver sign-up a person waits for) is written by the server only.
     match /users/{uid} {
       allow read: if (signedIn() && uid == me()) || creator();
-      allow create, update: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data);
+      allow create: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data)
+        && !('pendingJoin' in request.resource.data);
+      allow update: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['pendingJoin']);
       allow delete: if signedIn() && uid == me();
     }
 
@@ -93,12 +97,19 @@ service cloud.firestore {
     }
 
     // Invite links: made and used only by the server (createInvite, acceptInvite), one person each,
-    // valid for 24 hours. Owners and managers see the links of their company and can cancel them.
+    // valid for 24 hours. The app makes them for fleet managers; drivers sign up with the company's link
+    // (joinRequests below). Owners and managers see the links of their company and can cancel them.
     match /invites/{token} {
       allow get: if signedIn();
       allow list: if staff(resource.data.orgId);
       allow delete: if owner(resource.data.orgId)
         || (resource.data.role == 'driver' && runs(resource.data.orgId, resource.data.stationId));
+    }
+
+    // The company's driver link (driverLink, requestToJoin): which company a link is for and whether it still works.
+    // Server only; nobody reads or writes it from the app (the join page asks peekInvite).
+    match /companyLinks/{token} {
+      allow read, write: if false;
     }
 
     // What only the server writes on a company: the free trial and plan (billing), the accepted terms, the demo marks.
@@ -127,13 +138,27 @@ service cloud.firestore {
         allow delete: if owner(orgId);
       }
 
+      // The company's current driver link, for owners and fleet managers to share. Made by the server (driverLink);
+      // only owners make a new one.
+      match /links/{id} {
+        allow read: if staff(orgId);
+      }
+
+      // Drivers who signed up with the company's link and wait for approval (one record per person, written by the
+      // server: requestToJoin, decideJoinRequest). Owners and the fleet managers of the station they picked read
+      // them and decide; the person reads their own. They aren't members until approved, so they see nothing else.
+      match /joinRequests/{uid} {
+        allow read: if (signedIn() && uid == me()) || runs(orgId, resource.data.stationId);
+      }
+
       match /members/{uid} {
         allow get: if (signedIn() && uid == me()) || staff(orgId);
         allow list: if staff(orgId);
         // The person who created the company becomes its first owner.
         allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
-        // People join through invite links (the server adds them). Roles, stations and removals go through the
+        // People join through invite links or, for drivers, the company's link once approved (the server adds them).
+        // Roles, stations and removals go through the
         // server too (changePerson, removePerson): it ends the person's van assignment so the history stays right.
         // Everyone keeps their own contact details up to date.
         allow update: if signedIn() && uid == me()

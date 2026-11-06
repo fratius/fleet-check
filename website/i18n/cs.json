@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· majitel, manažer, řidič",
  "Each role sees what it needs, in its own language": "Každá role vidí, co potřebuje, ve svém jazyce",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Majitelé vidí každou stanici a kolik dodávky stojí. Manažeři řídí svou stanici a mají poslední slovo u poškození. Řidiči vidí svou dodávku a své záznamy, nikdy cizí.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Lidé se připojují jen přes zvací odkaz: jedna osoba, jedno použití, platnost 24 hodin.",
  "32 languages. The app opens in the phone's language.": "32 jazyků. Aplikace se otevře v jazyce telefonu.",
  "iPhone, Android and the web.": "iPhone, Android a web.",
  "Owner": "Majitel",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "A co poškození zjištěné na konci leasingu?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Každé zjištěné poškození je v záznamech dodávky s datem a s tím, kdo dodávku měl. Fotky se uchovávají 90 dní, takže to s řidičem nebo pojišťovnou vyřeš v této lhůtě.",
  "How do people join?": "Jak se lidé připojí?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Přes zvací odkaz: jedna osoba, jedno použití, platnost 24 hodin. Majitelé zvou manažery a řidiče; manažeři zvou řidiče do své stanice.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Předání, poškození a historie dodávek pro doručovací partnery s vlastními dodávkami.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius je nezávislý produkt. Není spojen s Amazonem a Amazon ho nepodporuje ani nesponzoruje.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Ceny za měsíc bez DPH. 30 dní zdarma u každého tarifu.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Žádost se nepodařilo odeslat. Zkontroluj připojení a zkus to znovu.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotky a videa se mažou 15. dne následujícího měsíce, nikdy dokud řidič dodávku ještě má.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Do 15. dne následujícího měsíce: 15. se mažou fotky a videa z předchozího měsíce. Nikdy, dokud řidič, který dodávku měl, ji ještě má: ty počkají, než dodávku vrátí. Fotky a videa označené jako poškození zůstávají 90 dní. Kdo měl kterou dodávku a kdy, zůstává natrvalo.",
- "Unlimited drivers": "Neomezeně řidičů"
+ "Unlimited drivers": "Neomezeně řidičů",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Řidiči se zaregistrují přes odkaz tvé firmy a začnou, jakmile je schválíš. Manažeři se připojí přes jednorázový zvací odkaz.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Řidiči otevřou odkaz pro řidiče tvé firmy, vyberou si svou stanici a zaregistrují se. Nic neuvidí, dokud je neschválí majitel nebo manažer jejich stanice. Manažeři se připojí přes jednorázový zvací odkaz od majitele, platný 24 hodin.",
+ "Get the app for iPhone and Android.": "Stáhni si aplikaci pro iPhone a Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikace pro iPhone je v App Storu. Aplikace pro Android brzy dorazí na Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikace pro Android je na Google Play. Aplikace pro iPhone brzy dorazí do App Storu.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidu běží Fratius jako webová aplikace, dokud aplikace nevyjde na Google Play: otevři ji v prohlížeči a přidej na plochu.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonu běží Fratius jako webová aplikace, dokud aplikace nevyjde v App Storu: otevři ji v Safari a přidej na plochu."
 }

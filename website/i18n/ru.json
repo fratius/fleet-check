@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· владелец, менеджер, водитель",
  "Each role sees what it needs, in its own language": "Каждая роль видит то, что ей нужно, на своём языке",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Владельцы видят все станции и расходы на фургоны. Менеджеры управляют своей станцией и решают по повреждениям. Водители видят свой фургон и свои записи, но никогда чужие.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Присоединиться можно только по ссылке-приглашению: один человек, одно использование, 24 часа.",
  "32 languages. The app opens in the phone's language.": "32 языка. Приложение открывается на языке телефона.",
  "iPhone, Android and the web.": "iPhone, Android и веб.",
  "Owner": "Владелец",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "А повреждения, найденные в конце лизинга?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Каждое найденное повреждение есть в карточке фургона с датой и именем того, у кого был фургон. Его фото хранятся 90 дней, так что урегулируйте вопрос с водителем или страховщиком за это время.",
  "How do people join?": "Как люди присоединяются?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "По ссылке-приглашению: один человек, одно использование, 24 часа. Владельцы приглашают менеджеров и водителей, менеджеры — водителей на свою станцию.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Передачи, повреждения и история фургонов для партнёров по доставке со своими фургонами.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius — независимый продукт. Он не связан с Amazon, не одобрен и не спонсируется Amazon.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Цены в месяц, без НДС. 30 дней бесплатно на любом тарифе.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Заявка не отправилась. Проверьте подключение и попробуйте снова.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Фото и видео удаляются 15-го числа следующего месяца, но никогда, пока фургон ещё у водителя.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "До 15-го числа следующего месяца: 15-го удаляются фото и видео за предыдущий месяц. Никогда, пока фургон ещё у водителя, у которого он был: они ждут, пока фургон не вернут. Фото и видео, отмеченные как повреждение, хранятся 90 дней. Кто и когда брал какой фургон, хранится всегда.",
- "Unlimited drivers": "Без ограничения водителей"
+ "Unlimited drivers": "Без ограничения водителей",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Водители регистрируются по ссылке вашей компании и начинают работу, как только вы их одобрите. Менеджеры присоединяются по одноразовой ссылке-приглашению.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Водители открывают ссылку для водителей вашей компании, выбирают свою станцию и регистрируются. Они ничего не видят, пока их не одобрит владелец или менеджер их станции. Менеджеры присоединяются по одноразовой ссылке-приглашению от владельца, которая действует 24 часа.",
+ "Get the app for iPhone and Android.": "Скачайте приложение для iPhone и Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Приложение для iPhone уже в App Store. Приложение для Android скоро появится в Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Приложение для Android уже в Google Play. Приложение для iPhone скоро появится в App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "На Android Fratius работает как веб-приложение, пока приложение не появится в Google Play: откройте его в браузере и добавьте на главный экран.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius работает как веб-приложение, пока приложение не появится в App Store: откройте его в Safari и добавьте на главный экран."
 }

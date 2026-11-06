@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· propietario, gestor, conductor",
  "Each role sees what it needs, in its own language": "Cada rol ve lo que necesita, en su idioma",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Los propietarios ven todas las estaciones y lo que cuestan las furgonetas. Los gestores llevan su estación y tienen la última palabra sobre los daños. Los conductores ven su furgoneta y sus propios registros, nunca los de nadie más.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Solo se entra con un enlace de invitación: una persona, un solo uso, válido 24 horas.",
  "32 languages. The app opens in the phone's language.": "32 idiomas. La app se abre en el idioma del móvil.",
  "iPhone, Android and the web.": "iPhone, Android y la web.",
  "Owner": "Propietario",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "¿Y los daños que aparecen al final de un leasing?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Cada daño encontrado consta en el registro de la furgoneta con la fecha y quién la tenía. Sus fotos se guardan 90 días, así que resuélvelo con el conductor o la aseguradora en ese plazo.",
  "How do people join?": "¿Cómo se une la gente?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Con un enlace de invitación: una persona, un solo uso, válido 24 horas. Los propietarios invitan a gestores y conductores; los gestores invitan a conductores a su propia estación.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Traspasos, daños e historial de furgonetas para socios de reparto con furgonetas propias.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius es un producto independiente. No está afiliado a Amazon ni cuenta con su respaldo o patrocinio.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Precios mensuales, IVA no incluido. 30 días gratis en todos los planes.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Tu solicitud no se ha enviado. Comprueba la conexión e inténtalo de nuevo.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Las fotos y los vídeos se borran el día 15 del mes siguiente, nunca mientras el conductor aún tenga la furgoneta.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Hasta el día 15 del mes siguiente: el 15 se borran las fotos y los vídeos del mes anterior. Nunca mientras el conductor que tenía la furgoneta todavía la tenga: esos esperan hasta que la devuelva. Las fotos y los vídeos marcados como daño se conservan 90 días. Quién tuvo cada furgoneta, y cuándo, se guarda para siempre.",
- "Unlimited drivers": "Conductores ilimitados"
+ "Unlimited drivers": "Conductores ilimitados",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Los conductores se registran con el enlace de tu empresa y empiezan en cuanto los apruebas. Los gestores entran con un enlace de invitación de un solo uso.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Los conductores abren el enlace para conductores de tu empresa, eligen su estación y se registran. No ven nada hasta que el propietario o el gestor de su estación los aprueba. Los gestores entran con un enlace de invitación del propietario, de un solo uso y válido 24 horas.",
+ "Get the app for iPhone and Android.": "Consigue la app para iPhone y Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "La app para iPhone está en el App Store. La app para Android está de camino a Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "La app para Android está en Google Play. La app para iPhone está de camino al App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "En Android, Fratius funciona como app web hasta que salga la app en Google Play: ábrela en el navegador y añádela a la pantalla de inicio.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "En iPhone, Fratius funciona como app web hasta que salga la app en el App Store: ábrela en Safari y añádela a la pantalla de inicio."
 }

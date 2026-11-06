@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· ιδιοκτήτης, υπεύθυνος, οδηγός",
  "Each role sees what it needs, in its own language": "Κάθε ρόλος βλέπει ό,τι χρειάζεται, στη γλώσσα του",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Οι ιδιοκτήτες βλέπουν κάθε σταθμό και πόσο κοστίζουν τα βαν. Οι υπεύθυνοι διαχειρίζονται τον σταθμό τους και έχουν τον τελευταίο λόγο για τις ζημιές. Οι οδηγοί βλέπουν το βαν τους και τα δικά τους αρχεία, ποτέ κάποιου άλλου.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Η είσοδος γίνεται μόνο με σύνδεσμο πρόσκλησης: ένα άτομο, μία χρήση, ισχύει 24 ώρες.",
  "32 languages. The app opens in the phone's language.": "32 γλώσσες. Η εφαρμογή ανοίγει στη γλώσσα του κινητού.",
  "iPhone, Android and the web.": "iPhone, Android και web.",
  "Owner": "Ιδιοκτήτης",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Τι γίνεται με ζημιές που βρίσκονται στο τέλος της μίσθωσης;",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Κάθε ζημιά που βρίσκεται μπαίνει στο αρχείο του βαν με την ημερομηνία και το ποιος είχε το βαν. Οι φωτογραφίες της φυλάσσονται 90 ημέρες, οπότε τακτοποιήστε την με τον οδηγό ή την ασφαλιστική μέσα σε αυτό το διάστημα.",
  "How do people join?": "Πώς μπαίνουν τα άτομα;",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Με σύνδεσμο πρόσκλησης: ένα άτομο, μία χρήση, ισχύει 24 ώρες. Οι ιδιοκτήτες προσκαλούν υπευθύνους και οδηγούς· οι υπεύθυνοι προσκαλούν οδηγούς στον δικό τους σταθμό.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Παραδόσεις-παραλαβές, ζημιές και ιστορικό βαν για συνεργάτες παράδοσης με δικά τους βαν.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Το Fratius είναι ανεξάρτητο προϊόν. Δεν συνδέεται με την Amazon, ούτε εγκρίνεται ή χρηματοδοτείται από αυτήν.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Τιμές ανά μήνα, χωρίς ΦΠΑ. 30 ημέρες δωρεάν σε κάθε πακέτο.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Το αίτημά σας δεν στάλθηκε. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Οι φωτογραφίες και τα βίντεο διαγράφονται στις 15 του επόμενου μήνα, ποτέ όσο ο οδηγός έχει ακόμα το βαν.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Έως τις 15 του επόμενου μήνα: στις 15 διαγράφονται οι φωτογραφίες και τα βίντεο του προηγούμενου μήνα. Ποτέ όσο ο οδηγός που είχε το βαν το έχει ακόμα: αυτά περιμένουν μέχρι να επιστραφεί το βαν. Οι φωτογραφίες και τα βίντεο που σημειώθηκαν ως ζημιά διατηρούνται 90 ημέρες. Ποιος είχε ποιο βαν, και πότε, διατηρείται για πάντα.",
- "Unlimited drivers": "Απεριόριστοι οδηγοί"
+ "Unlimited drivers": "Απεριόριστοι οδηγοί",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Οι οδηγοί εγγράφονται με τον σύνδεσμο της εταιρείας σας και ξεκινούν μόλις τους εγκρίνετε. Οι υπεύθυνοι μπαίνουν με σύνδεσμο πρόσκλησης μίας χρήσης.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Οι οδηγοί ανοίγουν τον σύνδεσμο οδηγών της εταιρείας σας, επιλέγουν τον σταθμό τους και εγγράφονται. Δεν βλέπουν τίποτα μέχρι να τους εγκρίνει ο ιδιοκτήτης ή ο υπεύθυνος του σταθμού τους. Οι υπεύθυνοι μπαίνουν με σύνδεσμο πρόσκλησης μίας χρήσης από τον ιδιοκτήτη, που ισχύει 24 ώρες.",
+ "Get the app for iPhone and Android.": "Κατεβάστε την εφαρμογή για iPhone και Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Η εφαρμογή για iPhone είναι στο App Store. Η εφαρμογή για Android έρχεται σύντομα στο Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Η εφαρμογή για Android είναι στο Google Play. Η εφαρμογή για iPhone έρχεται σύντομα στο App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Στο Android, το Fratius λειτουργεί ως εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο Google Play: ανοίξτε το στον browser και προσθέστε το στην αρχική οθόνη.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Στο iPhone, το Fratius λειτουργεί ως εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο App Store: ανοίξτε το στο Safari και προσθέστε το στην αρχική οθόνη."
 }

@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· مالک، مدیر، راننده",
  "Each role sees what it needs, in its own language": "هر نقش همان چیزی را می‌بیند که لازم دارد، به زبان خودش",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "مالکان همه ایستگاه‌ها و هزینه ون‌ها را می‌بینند. مدیران ایستگاه خود را اداره می‌کنند و حرف آخر درباره آسیب‌ها با آن‌هاست. رانندگان ون خود و پرونده خودشان را می‌بینند، هرگز پرونده دیگران را.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "افراد فقط با لینک دعوت عضو می‌شوند: برای یک نفر، یک‌بار مصرف، معتبر به مدت 24 ساعت.",
  "32 languages. The app opens in the phone's language.": "32 زبان. اپ به زبان گوشی باز می‌شود.",
  "iPhone, Android and the web.": "iPhone، Android و وب.",
  "Owner": "مالک",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "آسیبی که در پایان لیزینگ پیدا شود چه؟",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "هر آسیبی که پیدا شود با تاریخ و نام کسی که ون دستش بود در پرونده ون ثبت می‌شود. عکس‌هایش 90 روز نگه داشته می‌شوند، پس در این مدت آن را با راننده یا بیمه حل کنید.",
  "How do people join?": "افراد چطور عضو می‌شوند؟",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "با لینک دعوت: برای یک نفر، یک‌بار مصرف، معتبر به مدت 24 ساعت. مالکان مدیران و رانندگان را دعوت می‌کنند؛ مدیران رانندگان را به ایستگاه خودشان دعوت می‌کنند.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "تحویل‌ها، آسیب‌ها و سابقه ون برای شرکای تحویل که ون‌های خودشان را دارند.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius محصولی مستقل است و هیچ وابستگی، تأیید یا حمایتی از سوی Amazon ندارد.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "قیمت‌ها ماهانه و بدون مالیات بر ارزش افزوده. 30 روز رایگان در هر پلن.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "درخواست شما ارسال نشد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "عکس‌ها و ویدیوها در روز ۱۵ ماه بعد پاک می‌شوند، اما تا وقتی ون دست راننده است، هرگز.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "تا روز ۱۵ ماه بعد: در روز ۱۵ عکس‌ها و ویدیوهای ماه قبل پاک می‌شوند. تا وقتی ون هنوز دست راننده‌ای است که آن را داشت، هرگز: این‌ها صبر می‌کنند تا ون پس داده شود. عکس‌ها و ویدیوهایی که به‌عنوان آسیب علامت خورده‌اند ۹۰ روز نگه داشته می‌شوند. اینکه چه کسی کدام ون را و کی داشت، برای همیشه نگه داشته می‌شود.",
- "Unlimited drivers": "راننده نامحدود"
+ "Unlimited drivers": "راننده نامحدود",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "رانندگان با لینک شرکت شما ثبت‌نام می‌کنند و پس از تأیید شما شروع به کار می‌کنند. مدیران با لینک دعوت یک‌بار مصرف عضو می‌شوند.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "رانندگان لینک رانندگان شرکت شما را باز می‌کنند، ایستگاه خود را انتخاب می‌کنند و ثبت‌نام می‌کنند. تا وقتی مالک یا مدیر ایستگاهشان آن‌ها را تأیید نکند، چیزی نمی‌بینند. مدیران با لینک دعوت یک‌بار مصرف از طرف مالک عضو می‌شوند که 24 ساعت معتبر است.",
+ "Get the app for iPhone and Android.": "اپ را برای iPhone و Android دریافت کنید.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "اپ iPhone در App Store است. اپ Android در راه Google Play است.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "اپ Android در Google Play است. اپ iPhone در راه App Store است.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "روی Android، تا وقتی اپ در Google Play منتشر نشده، Fratius به‌صورت وب‌اپ کار می‌کند: آن را در مرورگر باز کنید و به صفحه اصلی اضافه کنید.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "روی iPhone، تا وقتی اپ در App Store منتشر نشده، Fratius به‌صورت وب‌اپ کار می‌کند: آن را در Safari باز کنید و به صفحه اصلی اضافه کنید."
 }

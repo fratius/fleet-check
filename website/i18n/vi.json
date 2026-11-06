@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· chủ, quản lý, tài xế",
  "Each role sees what it needs, in its own language": "Mỗi vai trò thấy đúng những gì cần, bằng ngôn ngữ của mình",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Chủ đội xe thấy mọi trạm và chi phí xe van. Quản lý điều hành trạm của mình và có quyết định cuối cùng về hư hỏng. Tài xế thấy xe van và hồ sơ của chính mình, không bao giờ thấy của người khác.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Chỉ tham gia được bằng liên kết mời: một người, một lần dùng, hiệu lực 24 giờ.",
  "32 languages. The app opens in the phone's language.": "32 ngôn ngữ. Ứng dụng mở theo ngôn ngữ của điện thoại.",
  "iPhone, Android and the web.": "iPhone, Android và web.",
  "Owner": "Chủ đội xe",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Còn hư hỏng phát hiện khi hết hợp đồng thuê?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Mọi hư hỏng được phát hiện đều nằm trong hồ sơ xe van, kèm ngày và người giữ xe. Ảnh được lưu 90 ngày, vì vậy hãy giải quyết với tài xế hoặc bên bảo hiểm trong thời gian đó.",
  "How do people join?": "Mọi người tham gia bằng cách nào?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Bằng liên kết mời: một người, một lần dùng, hiệu lực 24 giờ. Chủ đội xe mời quản lý và tài xế; quản lý mời tài xế vào trạm của mình.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Giao nhận xe, hư hỏng và lịch sử xe van cho đối tác giao hàng tự vận hành xe van.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius là sản phẩm độc lập. Fratius không liên kết với, không được Amazon xác nhận hay tài trợ.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Giá mỗi tháng, chưa gồm VAT. 30 ngày miễn phí với mọi gói.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Yêu cầu của bạn chưa được gửi. Hãy kiểm tra kết nối và thử lại.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Ảnh và video bị xóa vào ngày 15 của tháng sau, không bao giờ khi tài xế vẫn còn giữ xe van.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Đến ngày 15 của tháng sau: vào ngày 15, ảnh và video của tháng trước bị xóa. Không bao giờ khi tài xế từng giữ xe van vẫn còn giữ nó: những mục đó chờ đến khi xe được trả lại. Ảnh và video được đánh dấu là hư hỏng được lưu 90 ngày. Ai đã giữ xe van nào, và khi nào, được lưu vĩnh viễn.",
- "Unlimited drivers": "Không giới hạn tài xế"
+ "Unlimited drivers": "Không giới hạn tài xế",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Tài xế đăng ký bằng liên kết của công ty bạn và bắt đầu làm việc khi được bạn duyệt. Quản lý tham gia bằng liên kết mời dùng một lần.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Tài xế mở liên kết tài xế của công ty bạn, chọn trạm của mình và đăng ký. Họ không thấy gì cho đến khi được chủ đội xe hoặc quản lý trạm của họ duyệt. Quản lý tham gia bằng liên kết mời dùng một lần từ chủ đội xe, có hiệu lực 24 giờ.",
+ "Get the app for iPhone and Android.": "Tải ứng dụng cho iPhone và Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Ứng dụng cho iPhone đã có trên App Store. Ứng dụng cho Android sắp có trên Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Ứng dụng cho Android đã có trên Google Play. Ứng dụng cho iPhone sắp có trên App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Trên Android, Fratius chạy dưới dạng ứng dụng web cho đến khi ứng dụng có mặt trên Google Play: mở trong trình duyệt và thêm vào màn hình chính.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Trên iPhone, Fratius chạy dưới dạng ứng dụng web cho đến khi ứng dụng có mặt trên App Store: mở trong Safari và thêm vào màn hình chính."
 }

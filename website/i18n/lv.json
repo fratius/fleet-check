@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· īpašnieks, pārvaldnieks, autovadītājs",
  "Each role sees what it needs, in its own language": "Katra loma redz to, kas tai vajadzīgs, savā valodā",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Īpašnieki redz katru staciju un to, cik maksā furgoni. Pārvaldnieki vada savu staciju, un viņiem ir pēdējais vārds par bojājumiem. Autovadītāji redz savu furgonu un savus ierakstus, nekad citu.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Pievienoties var tikai ar uzaicinājuma saiti: viena persona, viena lietošana, derīga 24 stundas.",
  "32 languages. The app opens in the phone's language.": "32 valodas. Lietotne atveras tālruņa valodā.",
  "iPhone, Android and the web.": "iPhone, Android un tīmeklī.",
  "Owner": "Īpašnieks",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Kā ir ar bojājumiem, kas atrasti līzinga beigās?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Katrs atrastais bojājums ir furgona ierakstā ar datumu un to, kam furgons bija. Tā foto glabā 90 dienas, tāpēc nokārtojiet to ar autovadītāju vai apdrošinātāju šajā laikā.",
  "How do people join?": "Kā cilvēki pievienojas?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Ar uzaicinājuma saiti: viena persona, viena lietošana, derīga 24 stundas. Īpašnieki uzaicina pārvaldniekus un autovadītājus; pārvaldnieki uzaicina autovadītājus savā stacijā.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Paņemšana un nodošana, bojājumi un furgonu vēsture piegādes partneriem ar saviem furgoniem.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius ir neatkarīgs produkts. Tas nav saistīts ar Amazon, un Amazon to neapstiprina un nesponsorē.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Cenas mēnesī bez PVN. 30 dienas bez maksas katrā plānā.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Jūsu pieprasījums netika nosūtīts. Pārbaudiet savienojumu un mēģiniet vēlreiz.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Foto un video tiek dzēsti nākamā mēneša 15. datumā, nekad, kamēr furgons vēl ir pie vadītāja.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Līdz nākamā mēneša 15. datumam: 15. datumā tiek dzēsti iepriekšējā mēneša foto un video. Nekad, kamēr furgons vēl ir pie vadītāja, kuram tas bija: tie gaida, līdz furgons tiek atdots. Foto un video, kas atzīmēti kā bojājums, tiek glabāti 90 dienas. Kuram bija kurš furgons un kad, tiek glabāts uz visiem laikiem.",
- "Unlimited drivers": "Neierobežots autovadītāju skaits"
+ "Unlimited drivers": "Neierobežots autovadītāju skaits",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Autovadītāji reģistrējas ar jūsu uzņēmuma saiti un sāk darbu, kad jūs viņus apstiprināt. Pārvaldnieki pievienojas ar vienreizēju uzaicinājuma saiti.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Autovadītāji atver jūsu uzņēmuma autovadītāju saiti, izvēlas savu staciju un reģistrējas. Viņi neko neredz, kamēr viņus neapstiprina īpašnieks vai viņu stacijas pārvaldnieks. Pārvaldnieki pievienojas ar vienreizēju īpašnieka uzaicinājuma saiti, kas derīga 24 stundas.",
+ "Get the app for iPhone and Android.": "Lejupielādējiet lietotni iPhone un Android ierīcēm.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone lietotne ir pieejama App Store. Android lietotne jau ir ceļā uz Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android lietotne ir pieejama Google Play. iPhone lietotne jau ir ceļā uz App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android tālruņos Fratius darbojas kā tīmekļa lietotne, līdz lietotne būs pieejama Google Play: atveriet to pārlūkā un pievienojiet sākuma ekrānam.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone tālruņos Fratius darbojas kā tīmekļa lietotne, līdz lietotne būs pieejama App Store: atveriet to pārlūkā Safari un pievienojiet sākuma ekrānam."
 }

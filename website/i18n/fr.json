@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· propriétaire, gestionnaire, chauffeur",
  "Each role sees what it needs, in its own language": "Chaque rôle voit ce dont il a besoin, dans sa langue",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Les propriétaires voient toutes les stations et ce que coûtent les fourgons. Les gestionnaires pilotent leur station et ont le dernier mot sur les dégâts. Les chauffeurs voient leur fourgon et leurs propres données, jamais celles des autres.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "On rejoint l’équipe uniquement par lien d’invitation : une personne, un seul usage, valable 24 heures.",
  "32 languages. The app opens in the phone's language.": "32 langues. L’app s’ouvre dans la langue du téléphone.",
  "iPhone, Android and the web.": "iPhone, Android et le web.",
  "Owner": "Propriétaire",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Et les dégâts constatés en fin de leasing ?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Chaque dégât constaté figure au dossier du fourgon, avec la date et qui avait le fourgon. Ses photos sont conservées 90 jours : réglez la question avec le chauffeur ou l’assureur dans ce délai.",
  "How do people join?": "Comment rejoint-on l’équipe ?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Par lien d’invitation : une personne, un seul usage, valable 24 heures. Les propriétaires invitent gestionnaires et chauffeurs ; les gestionnaires invitent des chauffeurs dans leur propre station.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Passations, dégâts et historique des fourgons pour les partenaires de livraison qui gèrent leurs propres fourgons.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius est un produit indépendant. Il n’est ni affilié à Amazon, ni approuvé ou sponsorisé par Amazon.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Prix mensuels hors TVA. 30 jours gratuits sur chaque formule.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Votre demande n’est pas passée. Vérifiez votre connexion et réessayez.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Les photos et vidéos sont supprimées le 15 du mois suivant, jamais tant que le chauffeur a encore le fourgon.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Jusqu’au 15 du mois suivant : le 15, les photos et vidéos du mois précédent sont supprimées. Jamais tant que le chauffeur qui avait le fourgon l’a encore : elles attendent que le fourgon soit rendu. Les photos et vidéos marquées comme dommage sont conservées 90 jours. Qui avait quel fourgon, et quand, est conservé pour toujours.",
- "Unlimited drivers": "Chauffeurs illimités"
+ "Unlimited drivers": "Chauffeurs illimités",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Les chauffeurs s’inscrivent avec le lien de votre entreprise et commencent dès que vous les validez. Les gestionnaires rejoignent l’équipe par un lien d’invitation à usage unique.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Les chauffeurs ouvrent le lien chauffeurs de votre entreprise, choisissent leur station et s’inscrivent. Ils ne voient rien tant que le propriétaire ou le gestionnaire de leur station ne les a pas validés. Les gestionnaires rejoignent l’équipe par un lien d’invitation du propriétaire, à usage unique et valable 24 heures.",
+ "Get the app for iPhone and Android.": "Téléchargez l’app pour iPhone et Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "L’app iPhone est disponible sur l’App Store. L’app Android arrive bientôt sur Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "L’app Android est disponible sur Google Play. L’app iPhone arrive bientôt sur l’App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Sur Android, Fratius fonctionne comme app web en attendant la sortie de l’app sur Google Play : ouvrez-la dans le navigateur et ajoutez-la à l’écran d’accueil.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Sur iPhone, Fratius fonctionne comme app web en attendant la sortie de l’app sur l’App Store : ouvrez-la dans Safari et ajoutez-la à l’écran d’accueil."
 }

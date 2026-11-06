@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· omanik, haldur, autojuht",
  "Each role sees what it needs, in its own language": "Iga roll näeb seda, mida vajab, oma keeles",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Omanikud näevad kõiki jaamu ja seda, mida kaubikud maksavad. Haldurid juhivad oma jaama ja neil on kahjustuste osas viimane sõna. Autojuhid näevad oma kaubikut ja oma andmeid, mitte kunagi kellegi teise omi.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Liituda saab ainult kutselingiga: üks inimene, üks kasutus, kehtib 24 tundi.",
  "32 languages. The app opens in the phone's language.": "32 keelt. Rakendus avaneb telefoni keeles.",
  "iPhone, Android and the web.": "iPhone, Android ja veeb.",
  "Owner": "Omanik",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "Mis saab liisingu lõpus leitud kahjustustest?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Iga leitud kahjustus on kaubiku andmetes koos kuupäeva ja selle inimesega, kellel kaubik oli. Selle fotosid hoitakse 90 päeva, nii et lahenda asi autojuhi või kindlustajaga selle aja jooksul.",
  "How do people join?": "Kuidas inimesed liituvad?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Kutselingiga: üks inimene, üks kasutus, kehtib 24 tundi. Omanikud kutsuvad haldureid ja autojuhte; haldurid kutsuvad autojuhte oma jaama.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Üleandmised, kahjustused ja kaubikute ajalugu kullerpartneritele, kellel on oma kaubikud.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "Fratius on sõltumatu toode. See ei ole seotud Amazoniga ega Amazoni poolt heaks kiidetud ega sponsitud.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Hinnad kuus, ilma käibemaksuta. 30 päeva tasuta igas paketis.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "Sinu päring ei läinud läbi. Kontrolli ühendust ja proovi uuesti.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "Fotod ja videod kustutatakse järgmise kuu 15. kuupäeval, kuid mitte kunagi, kuni kaubik on veel juhi käes.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Järgmise kuu 15. kuupäevani: 15. kuupäeval kustutatakse eelmise kuu fotod ja videod. Mitte kunagi, kuni kaubik on veel juhi käes, kellel see oli: need ootavad, kuni kaubik tagastatakse. Kahjustuseks märgitud fotod ja videod jäävad alles 90 päevaks. Kellel milline kaubik ja millal oli, säilib alatiseks.",
- "Unlimited drivers": "Piiramatult autojuhte"
+ "Unlimited drivers": "Piiramatult autojuhte",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Autojuhid registreeruvad sinu ettevõtte lingiga ja alustavad, kui oled nad kinnitanud. Haldurid liituvad ühekordse kutselingiga.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Autojuhid avavad sinu ettevõtte autojuhtide lingi, valivad oma jaama ja registreeruvad. Nad ei näe midagi enne, kui omanik või nende jaama haldur on nad kinnitanud. Haldurid liituvad omaniku saadetud ühekordse kutselingiga, mis kehtib 24 tundi.",
+ "Get the app for iPhone and Android.": "Hangi rakendus iPhone’ile ja Androidile.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone’i rakendus on App Store’is. Androidi rakendus on teel Google Play’sse.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Androidi rakendus on Google Play’s. iPhone’i rakendus on teel App Store’i.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Androidis töötab Fratius veebirakendusena, kuni rakendus Google Play’sse jõuab: ava see brauseris ja lisa avaekraanile.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone’is töötab Fratius veebirakendusena, kuni rakendus App Store’i jõuab: ava see Safaris ja lisa avaekraanile."
 }

@@ -210,6 +210,14 @@ they may see), plus changes and photos not sent yet. Only that person's copy, on
 storage; in the web app the browser's), and deleted when they sign out. Changes not sent yet stay on the phone until
 the same person signs in again. Nothing more is read than without it: the rules decide what reaches the phone.
 
+### Sign-up requests (the company's driver link)
+
+A driver who signs up with the company's link leaves a request (`orgs/{org}/joinRequests/{uid}`): name, mobile,
+email, optional Transporter ID, the station picked, when, and who decided. Owners and the managers of that station
+read it; the person reads their own. Approved: the details move to their membership as with an invite link.
+Rejected, taken back or expired after 14 days: phone, email and Transporter ID are removed, the name and dates stay.
+A request still waiting is deleted with the person's account.
+
 ### Kept out on purpose (GDPR, data minimisation)
 
 - licence numbers, copies of licences or IDs (the licence check keeps the result and date, not the document);

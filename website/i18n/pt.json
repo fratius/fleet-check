@@ -163,7 +163,6 @@
  "· owner, manager, driver": "· proprietário, gestor, motorista",
  "Each role sees what it needs, in its own language": "Cada função vê o que precisa, no seu idioma",
  "Owners see every station and what the vans cost. Managers run their station and have the final word on damage. Drivers see their van and their own records, never anyone else's.": "Os proprietários veem todas as estações e quanto custam as carrinhas. Os gestores gerem a sua estação e têm a última palavra sobre danos. Os motoristas veem a sua carrinha e os seus registos, nunca os de outros.",
- "People join only by invite link: one person, one use, valid for 24 hours.": "Só se entra por link de convite: uma pessoa, uma utilização, válido 24 horas.",
  "32 languages. The app opens in the phone's language.": "32 idiomas. A app abre no idioma do telemóvel.",
  "iPhone, Android and the web.": "iPhone, Android e web.",
  "Owner": "Proprietário",
@@ -247,7 +246,6 @@
  "What about damage found at the end of a lease?": "E os danos detetados no fim de um leasing?",
  "Every damage found is on the van's record with the date and who had the van. Its photos are kept 90 days, so settle it with the driver or the insurer in that time.": "Cada dano detetado fica no registo da carrinha com a data e quem a tinha. As fotos ficam guardadas 90 dias, por isso resolva-o com o motorista ou a seguradora nesse prazo.",
  "How do people join?": "Como se entra?",
- "By invite link: one person, one use, valid for 24 hours. Owners invite managers and drivers; managers invite drivers to their own station.": "Por link de convite: uma pessoa, uma utilização, válido 24 horas. Os proprietários convidam gestores e motoristas; os gestores convidam motoristas para a sua estação.",
  "Handovers, damage and van history for delivery partners who run their own vans.": "Levantamentos e devoluções, danos e histórico das carrinhas para parceiros de entregas com carrinhas próprias.",
  "Fratius is an independent product. It is not affiliated with, endorsed by or sponsored by Amazon.": "O Fratius é um produto independente. Não é afiliado, apoiado nem patrocinado pela Amazon.",
  "Prices per month, excluding VAT. 30 days free on every plan.": "Preços por mês, sem IVA. 30 dias grátis em todos os planos.",
@@ -338,5 +336,12 @@
  "Your request didn't go through. Check your connection and try again.": "O seu pedido não foi enviado. Verifique a ligação e tente novamente.",
  "Photos and videos go on the 15th of the month after, never while the van is still with its driver.": "As fotos e os vídeos são apagados no dia 15 do mês seguinte, nunca enquanto o motorista ainda tiver a carrinha.",
  "Until the 15th of the month after: on the 15th, the photos and videos of the month before are deleted. Never while the van is still with the driver who had it: those wait until the van is given back. Photos and videos marked as damage are kept 90 days. The records of who had which van, and when, are kept for good.": "Até ao dia 15 do mês seguinte: no dia 15 são apagados as fotos e os vídeos do mês anterior. Nunca enquanto o motorista que tinha a carrinha ainda a tiver: esses esperam até a carrinha ser devolvida. As fotos e os vídeos marcados como dano ficam 90 dias. Quem teve que carrinha, e quando, fica guardado para sempre.",
- "Unlimited drivers": "Motoristas ilimitados"
+ "Unlimited drivers": "Motoristas ilimitados",
+ "Drivers sign up with your company's link and start once you approve them. Fleet managers join by a one-time invite link.": "Os motoristas registam-se com o link da sua empresa e começam assim que os aprovar. Os gestores entram com um link de convite de utilização única.",
+ "Drivers open your company's driver link, pick their station and sign up. They see nothing until the owner or their station's fleet manager approves them. Fleet managers join by a one-time invite link from the owner, valid for 24 hours.": "Os motoristas abrem o link de motoristas da sua empresa, escolhem a estação e registam-se. Não veem nada até o proprietário ou o gestor dessa estação os aprovar. Os gestores entram com um link de convite do proprietário, de utilização única e válido 24 horas.",
+ "Get the app for iPhone and Android.": "Obtenha a app para iPhone e Android.",
+ "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "A app para iPhone está na App Store. A app para Android está a caminho do Google Play.",
+ "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "A app para Android está no Google Play. A app para iPhone está a caminho da App Store.",
+ "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "No Android, o Fratius funciona como app web até a app estar disponível no Google Play: abra-a no navegador e adicione-a ao ecrã principal.",
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "No iPhone, o Fratius funciona como app web até a app estar disponível na App Store: abra-a no Safari e adicione-a ao ecrã principal."
 }
