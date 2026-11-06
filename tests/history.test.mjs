@@ -1110,6 +1110,7 @@ test('the website request form: stored for the team, spam and bad input refused,
   assert.equal(mine.aiWaitlist.booleanValue, true);
   assert.equal(mine.lang.stringValue, 'ro', 'the website language the form was sent in');
   assert.equal(mine.mailed.booleanValue, false, 'no email without SMTP_URL');
+  assert.equal(mine.welcomed.booleanValue, false, 'no welcome email without SMTP_URL');
   assert.ok(!('website' in mine) && !('elapsed' in mine), 'only the request itself is kept');
   // A filled hidden field or a form sent faster than a person types: answered "sent", nothing kept.
   assert.equal((await send({ ...good, website: 'https://spam.example' })).status, 200);

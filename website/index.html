@@ -1101,7 +1101,7 @@ h1 .mark { position: relative; z-index: -1; }
     trialDays: 30,
     priceNote: N_('Prices per month, excluding VAT. 30 days free on every plan.'),
     plans: [
-      { id: 'basic', name: 'Basic', price: 40, vans: 50 },
+      { id: 'basic', name: 'Basic', price: 40, vans: 50 }, // vans: also PLAN_VANS in functions/src/website.ts
       { id: 'pro', name: 'Pro', price: 90, vans: 150 },
       { id: 'premium', name: 'Premium', price: 200, vans: null }, // null = unlimited
     ],

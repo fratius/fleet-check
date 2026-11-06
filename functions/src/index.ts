@@ -30,7 +30,7 @@ import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
-import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail } from './website';
+import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
 import { AI_DAY, AI_DAY_MESSAGE, MAX_COMPANIES, PLAN_IDS, TERMS_VERSION, berlinDay, newTrial, standing, type AiKind } from './billing';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
@@ -2270,7 +2270,8 @@ export const routineSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_K
 /* ---------- Website: the request form on fratius.com ---------- */
 // Reached through Firebase Hosting (/api/signup on the website), so it's the same origin as the page. Stores the
 // request where only the server and the Firebase console read it (siteRequests; the rules let no app user in),
-// emails it to info@fratius.com when SMTP_URL is set, and tells the app creator with a notification.
+// emails it to info@fratius.com and a welcome to the person (in the website's language) when SMTP_URL is set, and
+// tells the app creator with a notification.
 // Spam: a hidden field, a minimum time on the page, and a daily limit per connection (a one-way code of the IP
 // address that changes every day; the address itself isn't kept) and for everyone together.
 export const websiteSignup = onRequest({ timeoutSeconds: 30, memory: '256MiB', maxInstances: 3, concurrency: 20, secrets: [SMTP_URL, WEBPUSH_KEYS] }, async (req, res) => {
@@ -2298,20 +2299,26 @@ export const websiteSignup = onRequest({ timeoutSeconds: 30, memory: '256MiB', m
   if (!allowed) { res.status(429).json({ error: `Too many requests today. Write to ${SIGNUP_TO} instead.` }); return; }
 
   const ref = db().collection('siteRequests').doc();
-  await ref.set({ ...r.req, status: 'new', source: 'website', createdAt: now, mailed: false });
+  await ref.set({ ...r.req, status: 'new', source: 'website', createdAt: now, mailed: false, welcomed: false });
 
-  let mailed = false;
+  // Two emails: the request to the team (reply goes to the person), and a welcome to the person (reply goes to us).
+  let mailed = false, welcomed = false;
   const smtp = (SMTP_URL.value() || '').trim();
   if (smtp && smtp !== 'none') {
-    try {
-      const mail = signupMail(r.req, ref.id);
-      const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
-      await nodemailer.createTransport(smtp).sendMail({ from: `Fratius website <${from}>`, to: SIGNUP_TO, replyTo: r.req.email, subject: mail.subject, text: mail.text });
-      mailed = true;
-      await ref.update({ mailed: true });
-    } catch (e) {
-      logger.error('Website request not emailed', { id: ref.id, message: String((e as Error)?.message || e) });
-    }
+    const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
+    const transport = nodemailer.createTransport(smtp);
+    const mail = signupMail(r.req, ref.id);
+    const welcome = welcomeMail(r.req);
+    const [toUs, toThem] = await Promise.allSettled([
+      transport.sendMail({ from: `Fratius website <${from}>`, to: SIGNUP_TO, replyTo: r.req.email, subject: mail.subject, text: mail.text }),
+      transport.sendMail({ from: `Fratius <${from}>`, to: r.req.email, replyTo: SIGNUP_TO, subject: welcome.subject, text: welcome.text, html: welcome.html }),
+    ]);
+    const why = (x: PromiseSettledResult<unknown>) => (x.status === 'rejected' ? String((x.reason as Error)?.message || x.reason) : '');
+    mailed = toUs.status === 'fulfilled';
+    welcomed = toThem.status === 'fulfilled';
+    if (!mailed) logger.error('Website request not emailed', { id: ref.id, message: why(toUs) });
+    if (!welcomed) logger.error('Welcome email not sent', { id: ref.id, message: why(toThem) });
+    await ref.update({ mailed, welcomed });
   }
   const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
   await Promise.all(creators.map((uid) => notify(uid, {
@@ -2319,7 +2326,7 @@ export const websiteSignup = onRequest({ timeoutSeconds: 30, memory: '256MiB', m
     body: `${PLANS[r.req.plan]} · ${r.req.vans} vans · ${r.req.firstName} ${r.req.lastName}, ${r.req.email}`,
     url: '/', tag: `site-${ref.id}`,
   }).catch(() => 0)));
-  logger.info('Website request', { id: ref.id, plan: r.req.plan, vans: r.req.vans, mailed });
+  logger.info('Website request', { id: ref.id, plan: r.req.plan, vans: r.req.vans, mailed, welcomed });
   res.json({ ok: true });
 });
 
