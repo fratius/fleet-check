@@ -1381,321 +1381,346 @@
  },
  {
   "id": "w277",
-  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
+  "key": "Get the app for iPhone and Android.",
   "where": "script"
  },
  {
   "id": "w278",
-  "key": "Privacy",
+  "key": "The iPhone app is in the App Store. The Android app is on its way to Google Play.",
   "where": "script"
  },
  {
   "id": "w279",
-  "key": "App privacy",
+  "key": "The Android app is on Google Play. The iPhone app is on its way to the App Store.",
   "where": "script"
  },
  {
   "id": "w280",
-  "key": "Delete account",
+  "key": "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w281",
-  "key": "Terms",
+  "key": "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w282",
-  "key": "I have read the {privacy}.",
+  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w283",
-  "key": "privacy policy",
+  "key": "Privacy",
   "where": "script"
  },
  {
   "id": "w284",
-  "key": "I agree to the {terms} and the {privacy}.",
+  "key": "App privacy",
   "where": "script"
  },
  {
   "id": "w285",
-  "key": "terms",
+  "key": "Delete account",
   "where": "script"
  },
  {
   "id": "w286",
-  "key": "Front",
+  "key": "Terms",
   "where": "script"
  },
  {
   "id": "w287",
-  "key": "Front left",
+  "key": "I have read the {privacy}.",
   "where": "script"
  },
  {
   "id": "w288",
-  "key": "Left side",
+  "key": "privacy policy",
   "where": "script"
  },
  {
   "id": "w289",
-  "key": "Rear left",
+  "key": "I agree to the {terms} and the {privacy}.",
   "where": "script"
  },
  {
   "id": "w290",
-  "key": "Rear",
+  "key": "terms",
   "where": "script"
  },
  {
   "id": "w291",
-  "key": "Rear right",
+  "key": "Front",
   "where": "script"
  },
  {
   "id": "w292",
-  "key": "Right side",
+  "key": "Front left",
   "where": "script"
  },
  {
   "id": "w293",
-  "key": "Front right",
+  "key": "Left side",
   "where": "script"
  },
  {
   "id": "w294",
-  "key": "HU sticker, due {date}",
+  "key": "Rear left",
   "where": "script"
  },
  {
   "id": "w295",
-  "key": "All languages",
+  "key": "Rear",
   "where": "script"
  },
  {
   "id": "w296",
-  "key": "Choose a language",
+  "key": "Rear right",
   "where": "script"
  },
  {
   "id": "w297",
-  "key": "Picked up by Andrei M.",
+  "key": "Right side",
   "where": "script"
  },
  {
   "id": "w298",
-  "key": "Tour started at 84,213 km",
+  "key": "Front right",
   "where": "script"
  },
  {
   "id": "w299",
-  "key": "Dashboard read",
+  "key": "HU sticker, due {date}",
   "where": "script"
  },
  {
   "id": "w300",
-  "key": "Refuel 62.4 l · €108.20",
+  "key": "All languages",
   "where": "script"
  },
  {
   "id": "w301",
-  "key": "Card matched",
+  "key": "Choose a language",
   "where": "script"
  },
  {
   "id": "w302",
-  "key": "Wrong fuel card, driver waiting",
+  "key": "Picked up by Andrei M.",
   "where": "script"
  },
  {
   "id": "w303",
-  "key": "Refuel allowed by Sofia K.",
+  "key": "Tour started at 84,213 km",
   "where": "script"
  },
  {
   "id": "w304",
-  "key": "Allowed",
+  "key": "Dashboard read",
   "where": "script"
  },
  {
   "id": "w305",
-  "key": "Check",
+  "key": "Refuel 62.4 l · €108.20",
   "where": "script"
  },
  {
   "id": "w306",
-  "key": "Dropped off by Elif D.",
+  "key": "Card matched",
   "where": "script"
  },
  {
   "id": "w307",
-  "key": "Video 1:12",
+  "key": "Wrong fuel card, driver waiting",
   "where": "script"
  },
  {
   "id": "w308",
-  "key": "Damage approved: rear left door",
+  "key": "Refuel allowed by Sofia K.",
   "where": "script"
  },
  {
   "id": "w309",
-  "key": "#4 on record",
+  "key": "Allowed",
   "where": "script"
  },
  {
   "id": "w310",
-  "key": "Taken over from Lukas B.",
+  "key": "Check",
   "where": "script"
  },
  {
   "id": "w311",
-  "key": "Tour ended · 138 km · 9 h 05",
+  "key": "Dropped off by Elif D.",
   "where": "script"
  },
  {
   "id": "w312",
-  "key": "11.4 l/100 km",
+  "key": "Video 1:12",
   "where": "script"
  },
  {
   "id": "w313",
-  "key": "Picked up by Tomasz W.",
+  "key": "Damage approved: rear left door",
   "where": "script"
  },
  {
   "id": "w314",
-  "key": "HU due in March",
+  "key": "#4 on record",
   "where": "script"
  },
  {
   "id": "w315",
-  "key": "Dropped off without proof",
+  "key": "Taken over from Lukas B.",
   "where": "script"
  },
  {
   "id": "w316",
-  "key": "Handover video added by Sofia K.",
+  "key": "Tour ended · 138 km · 9 h 05",
   "where": "script"
  },
  {
   "id": "w317",
-  "key": "Proof added",
+  "key": "11.4 l/100 km",
   "where": "script"
  },
  {
   "id": "w318",
-  "key": "Other",
+  "key": "Picked up by Tomasz W.",
   "where": "script"
  },
  {
   "id": "w319",
-  "key": "{plan} covers up to {max} vans and you run {n}.",
+  "key": "HU due in March",
   "where": "script"
  },
  {
   "id": "w320",
-  "key": "Your plan: {plan}, up to {n} vans",
+  "key": "Dropped off without proof",
   "where": "script"
  },
  {
   "id": "w321",
-  "key": "Your plan: {plan}, unlimited vans",
+  "key": "Handover video added by Sofia K.",
   "where": "script"
  },
  {
   "id": "w322",
-  "key": "See the plans",
+  "key": "Proof added",
   "where": "script"
  },
  {
   "id": "w323",
-  "key": "Enter your company's name.",
+  "key": "Other",
   "where": "script"
  },
  {
   "id": "w324",
-  "key": "Enter how many stations you run, 1 or more.",
+  "key": "{plan} covers up to {max} vans and you run {n}.",
   "where": "script"
  },
  {
   "id": "w325",
-  "key": "Enter how many vans you run, 1 or more.",
+  "key": "Your plan: {plan}, up to {n} vans",
   "where": "script"
  },
  {
   "id": "w326",
-  "key": "Enter your first name.",
+  "key": "Your plan: {plan}, unlimited vans",
   "where": "script"
  },
  {
   "id": "w327",
-  "key": "Enter your last name.",
+  "key": "See the plans",
   "where": "script"
  },
  {
   "id": "w328",
-  "key": "Enter an email address like name@company.de.",
+  "key": "Enter your company's name.",
   "where": "script"
  },
  {
   "id": "w329",
-  "key": "Enter a mobile number with the country code, like +49 151 2345 6789.",
+  "key": "Enter how many stations you run, 1 or more.",
   "where": "script"
  },
  {
   "id": "w330",
-  "key": "Plan",
+  "key": "Enter how many vans you run, 1 or more.",
   "where": "script"
  },
  {
   "id": "w331",
-  "key": "Contact",
+  "key": "Enter your first name.",
   "where": "script"
  },
  {
   "id": "w332",
-  "key": "Free until",
+  "key": "Enter your last name.",
   "where": "script"
  },
  {
   "id": "w333",
-  "key": "Thanks, {name}",
+  "key": "Enter an email address like name@company.de.",
   "where": "script"
  },
  {
   "id": "w334",
-  "key": "We've got your request for {company}. We'll email {email} with how to start your {days} days.",
+  "key": "Enter a mobile number with the country code, like +49 151 2345 6789.",
   "where": "script"
  },
  {
   "id": "w335",
-  "key": "That's it, {name}",
+  "key": "Plan",
   "where": "script"
  },
  {
   "id": "w336",
-  "key": "This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.",
+  "key": "Contact",
   "where": "script"
  },
  {
   "id": "w337",
-  "key": "You can also write to {email}.",
+  "key": "Free until",
   "where": "script"
  },
  {
   "id": "w338",
-  "key": "Tick the box to agree to the terms and the privacy policy.",
+  "key": "Thanks, {name}",
   "where": "script"
  },
  {
   "id": "w339",
-  "key": "Tick the box to confirm you have read the privacy policy.",
+  "key": "We've got your request for {company}. We'll email {email} with how to start your {days} days.",
   "where": "script"
  },
  {
   "id": "w340",
+  "key": "That's it, {name}",
+  "where": "script"
+ },
+ {
+  "id": "w341",
+  "key": "This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.",
+  "where": "script"
+ },
+ {
+  "id": "w342",
+  "key": "You can also write to {email}.",
+  "where": "script"
+ },
+ {
+  "id": "w343",
+  "key": "Tick the box to agree to the terms and the privacy policy.",
+  "where": "script"
+ },
+ {
+  "id": "w344",
+  "key": "Tick the box to confirm you have read the privacy policy.",
+  "where": "script"
+ },
+ {
+  "id": "w345",
   "key": "Your request didn't go through. Check your connection and try again.",
   "where": "script"
  }

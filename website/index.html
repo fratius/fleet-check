@@ -945,7 +945,7 @@ h1 .mark { position: relative; z-index: -1; }
       <div class="sec-head">
         <p class="eyebrow">Download</p>
         <h2>Get Fratius</h2>
-        <p class="sec-lede">The apps for iPhone and Android are on their way to the App Store and Google Play.</p>
+        <p class="sec-lede" id="dl-lede">The apps for iPhone and Android are on their way to the App Store and Google Play.</p>
       </div>
       <div class="stores" id="stores"></div>
       <p class="note" id="webapp-note"></p>
@@ -1107,7 +1107,7 @@ h1 .mark { position: relative; z-index: -1; }
     ],
     aiPlan: { name: N_('AI damage detection'), text: N_('Automatic damage checks on every walk-around. Price to follow.') },
     stores: {
-      appStore: null,     // App Store link once the iPhone app is live
+      appStore: 'https://apps.apple.com/app/id6829174647', // live since 6 Nov 2026 (Apple ID 6829174647)
       googlePlay: null,   // Google Play link once the Android app is live
       webApp: 'https://app.fratius.com',
     },
@@ -1237,9 +1237,17 @@ h1 .mark { position: relative; z-index: -1; }
       store(CONFIG.stores.appStore, { live: N_('Download on the'), soon: N_('Coming soon to the') }, 'App Store') +
       store(CONFIG.stores.googlePlay, { live: N_('Get it on'), soon: N_('Coming soon on') }, 'Google Play') +
       (CONFIG.stores.webApp ? `<a class="btn btn-lg" href="${esc(CONFIG.stores.webApp)}" target="_blank" rel="noopener">${esc(t('Open the web app'))}</a>` : '');
-    $('#webapp-note').textContent = CONFIG.stores.webApp
-      ? t("Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.")
-      : '';
+    // What the download section says follows which store links are set (the first one is the page's own text).
+    const ios = !!CONFIG.stores.appStore, android = !!CONFIG.stores.googlePlay;
+    if (ios || android) {
+      $('#dl-lede').textContent = ios && android ? t('Get the app for iPhone and Android.')
+        : ios ? t('The iPhone app is in the App Store. The Android app is on its way to Google Play.')
+          : t('The Android app is on Google Play. The iPhone app is on its way to the App Store.');
+    }
+    $('#webapp-note').textContent = !CONFIG.stores.webApp || (ios && android) ? ''
+      : ios ? t("On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.")
+        : android ? t("On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.")
+          : t("Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.");
     // The legal pages themselves stay in German and English: they are the binding versions.
     const legal = [['imprint', 'Impressum'], ['privacy', N_('Privacy')], ['appPrivacy', N_('App privacy')], ['deleteAccount', N_('Delete account')], ['terms', N_('Terms')]].filter(([k]) => CONFIG.legal[k]);
     $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${esc(k === 'imprint' ? label : t(label))}</a>`).join('')
