@@ -39,7 +39,7 @@ import {
 } from './billing';
 import {
   LAUNCH_COUPON, OFFER_CODE, billingOf, launchOfferOn, localesFor, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
-  payConfig, payWith, planOf, priceKey, readKey, vatType, type Address, type Offer, type Pay, type Sub,
+  payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
 
@@ -2702,7 +2702,10 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   if (!address) throw fail('invalid-argument', 'Enter the company\'s billing address.');
   const name = clean((req.data?.address as { name?: unknown } | undefined)?.name, 100) || String(org.name || '');
   const email = String(req.auth?.token?.email || '');
-  const cust = { name, email, address, locales: localesFor(await langOf(who.uid), address.country), orgId: who.orgId };
+  const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
+  const vatKind = vat ? vatType(/^[A-Z]{2}/.test(vat) && vat.slice(0, 2) !== 'EL' ? vat.slice(0, 2) : address.country) : null;
+  const reverse = reverseCharge(address.country, !!vatKind);
+  const cust = { name, email, address, locales: localesFor(await langOf(who.uid), address.country), orgId: who.orgId, reverse };
   let customer = p.customerId;
   if (customer) await pay.updateCustomer(customer, cust);
   else {
@@ -2710,9 +2713,8 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
     customer = await pay.createCustomer(cust, `cus-${who.orgId}-${keyOf(cust)}`);
     await pd.set({ customerId: customer, mode: cfg.mode, createdAt: Date.now() }, { merge: true });
   }
-  const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
   if (vat) {
-    const type = vatType(/^[A-Z]{2}/.test(vat) && vat.slice(0, 2) !== 'EL' ? vat.slice(0, 2) : address.country);
+    const type = vatKind;
     if (type) {
       try { await pay.addTaxId(customer, type, vat); } catch (e) {
         logger.warn('VAT ID refused', { orgId: who.orgId, message: String((e as Error)?.message || e) });
@@ -2748,7 +2750,7 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   const input = {
     customer,
     prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
-    trialEnd: trialEnd && Math.floor(trialEnd / 3600_000) * 3600_000, coupon, tax: cfg.tax, metadata: { orgId: who.orgId, ...(offer ? { offer: offer.code } : {}) },
+    trialEnd: trialEnd && Math.floor(trialEnd / 3600_000) * 3600_000, coupon, tax: cfg.tax, reverse, metadata: { orgId: who.orgId, ...(offer ? { offer: offer.code } : {}) },
   };
   const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
   await pd.set({ subscriptionId: sub.id, attempt, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });

@@ -68,7 +68,7 @@ export async function launchOfferOn(): Promise<boolean> {
 /* ---------- the parts of Stripe Fratius uses, as one small interface (real or fake) ---------- */
 
 export interface Address { line1: string; line2?: string; city: string; postal_code: string; state?: string; country: string }
-export interface CustomerInput { name: string; email: string; address: Address | null; locales: string[]; orgId: string }
+export interface CustomerInput { name: string; email: string; address: Address | null; locales: string[]; orgId: string; reverse?: boolean }
 export interface Sub {
   id: string;
   status: Stripe.Subscription.Status;
@@ -92,6 +92,8 @@ export interface SubInput {
   trialEnd: number | null;
   coupon: string | null;
   tax: PayConfig['tax'];
+  /** Reverse charge: no German VAT rate on the invoices (tax mode "rate"). */
+  reverse?: boolean;
   metadata: Record<string, string>;
 }
 export interface Coupon { percentOff: number | null; amountOff: number | null; months: number | null; name: string }
@@ -145,7 +147,7 @@ class RealPay implements Pay {
   constructor(private s: Stripe) {}
   async createCustomer(c: CustomerInput, idem: string) {
     const cu = await this.s.customers.create({
-      name: c.name, email: c.email, preferred_locales: c.locales, metadata: { orgId: c.orgId },
+      name: c.name, email: c.email, preferred_locales: c.locales, metadata: { orgId: c.orgId }, tax_exempt: c.reverse ? 'reverse' : 'none',
       ...(c.address ? { address: c.address, tax: { validate_location: 'deferred' } } : {}),
     }, { idempotencyKey: idem });
     return cu.id;
@@ -153,7 +155,7 @@ class RealPay implements Pay {
   async updateCustomer(id: string, c: Partial<CustomerInput>) {
     await this.s.customers.update(id, {
       ...(c.name ? { name: c.name } : {}), ...(c.email ? { email: c.email } : {}), ...(c.locales ? { preferred_locales: c.locales } : {}),
-      ...(c.address ? { address: c.address } : {}),
+      ...(c.address ? { address: c.address } : {}), ...(c.reverse !== undefined ? { tax_exempt: c.reverse ? 'reverse' as const : 'none' as const } : {}),
     });
   }
   async addTaxId(customer: string, type: string, value: string) {
@@ -169,7 +171,7 @@ class RealPay implements Pay {
       payment_settings: { payment_method_types: ['card'], save_default_payment_method: 'on_subscription' },
       ...(x.trialEnd ? { trial_end: Math.floor(x.trialEnd / 1000), trial_settings: { end_behavior: { missing_payment_method: 'cancel' } } } : {}),
       ...(x.coupon ? { discounts: [{ coupon: x.coupon }] } : {}),
-      ...(x.tax?.mode === 'automatic' ? { automatic_tax: { enabled: true } } : x.tax?.mode === 'rate' && x.tax.rateId ? { default_tax_rates: [x.tax.rateId] } : {}),
+      ...(x.tax?.mode === 'automatic' ? { automatic_tax: { enabled: true } } : x.tax?.mode === 'rate' && x.tax.rateId && !x.reverse ? { default_tax_rates: [x.tax.rateId] } : {}),
       metadata: x.metadata,
       expand: EXPAND,
     }, { idempotencyKey: idem });
@@ -414,6 +416,13 @@ export function offerPublic(o: Offer) {
 
 /** VAT ID types Stripe knows for the countries DSPs are in; others are left out. */
 const EU = new Set(['AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK']);
+export const inEU = (country: string) => EU.has(country);
+/**
+ * Without Stripe Tax (tax mode "rate"): German VAT for German companies and EU companies without a VAT ID; reverse charge
+ * (no VAT, "Reverse charge" on the invoice) for EU companies outside Germany with a VAT ID and for companies outside the
+ * EU (the service isn't taxed in Germany). Stripe Tax decides this by itself.
+ */
+export const reverseCharge = (country: string, hasVatId: boolean) => country !== 'DE' && (!EU.has(country) || hasVatId);
 export function vatType(country: string): string | null {
   if (EU.has(country)) return 'eu_vat';
   return ({ GB: 'gb_vat', CH: 'ch_vat', NO: 'no_vat', RS: 'rs_pib', AL: 'al_tin', TR: 'tr_tin', UA: 'ua_vat' } as Record<string, string>)[country] || null;
