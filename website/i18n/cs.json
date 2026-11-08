@@ -357,5 +357,10 @@
  "then {price} a year": "pak {price} ročně",
  "{n} % off the first year": "Sleva {n} % na první rok",
  "Paid yearly": "Placeno ročně",
- "Data processing agreement": "Smlouva o zpracování osobních údajů"
+ "Data processing agreement": "Smlouva o zpracování osobních údajů",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Tvůj účet, tvoje firma a karta v jednom kroku a zhruba za dvě minuty. Do konce 30 dní se nic neúčtuje; do té doby můžeš kdykoli zrušit.",
+ "Your name and a work email": "Tvoje jméno a pracovní e-mail",
+ "Your company's name and billing address": "Název a fakturační adresa tvé firmy",
+ "A card, charged only after the 30 days": "Karta, ze které se platba strhne až po 30 dnech",
+ "Questions first? Write to": "Máš nejdřív otázky? Napiš na"
 }

@@ -357,5 +357,10 @@
  "then {price} a year": "затем {price} в год",
  "{n} % off the first year": "Скидка {n}% на первый год",
  "Paid yearly": "Оплата за год",
- "Data processing agreement": "Соглашение об обработке данных"
+ "Data processing agreement": "Соглашение об обработке данных",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Аккаунт, компания и карта — за один шаг и примерно за две минуты. До окончания 30 дней ничего не списывается; отменить можно в любой момент до этого.",
+ "Your name and a work email": "Ваше имя и рабочий email",
+ "Your company's name and billing address": "Название и платёжный адрес компании",
+ "A card, charged only after the 30 days": "Карта, с которой деньги спишутся только после 30 дней",
+ "Questions first? Write to": "Есть вопросы до регистрации? Напишите на"
 }

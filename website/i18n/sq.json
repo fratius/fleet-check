@@ -357,5 +357,10 @@
  "then {price} a year": "pastaj {price} në vit",
  "{n} % off the first year": "{n} % zbritje vitin e parë",
  "Paid yearly": "Paguhet çdo vit",
- "Data processing agreement": "Marrëveshja për përpunimin e të dhënave"
+ "Data processing agreement": "Marrëveshja për përpunimin e të dhënave",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Llogaria jote, kompania jote dhe një kartë, në një hap dhe për rreth dy minuta. Nuk tarifohet asgjë para se të mbarojnë 30 ditët; deri atëherë mund ta anulosh në çdo kohë.",
+ "Your name and a work email": "Emri yt dhe një email pune",
+ "Your company's name and billing address": "Emri dhe adresa e faturimit të kompanisë",
+ "A card, charged only after the 30 days": "Një kartë që tarifohet vetëm pas 30 ditëve",
+ "Questions first? Write to": "Ke pyetje më parë? Shkruaj në"
 }

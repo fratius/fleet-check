@@ -357,5 +357,10 @@
  "then {price} a year": "sitten {price} vuodessa",
  "{n} % off the first year": "{n} %:n alennus ensimmäisenä vuonna",
  "Paid yearly": "Maksetaan vuosittain",
- "Data processing agreement": "Tietojenkäsittelysopimus"
+ "Data processing agreement": "Tietojenkäsittelysopimus",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Tilisi, yrityksesi ja kortti yhdellä kertaa ja noin kahdessa minuutissa. Mitään ei veloiteta ennen 30 päivän päättymistä; voit perua milloin tahansa sitä ennen.",
+ "Your name and a work email": "Nimesi ja työsähköposti",
+ "Your company's name and billing address": "Yrityksesi nimi ja laskutusosoite",
+ "A card, charged only after the 30 days": "Kortti, jota veloitetaan vasta 30 päivän jälkeen",
+ "Questions first? Write to": "Kysyttävää ensin? Kirjoita osoitteeseen"
 }

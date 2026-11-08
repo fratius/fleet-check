@@ -357,5 +357,10 @@
  "then {price} a year": "फिर {price} प्रति वर्ष",
  "{n} % off the first year": "पहले साल {n}% की छूट",
  "Paid yearly": "सालाना भुगतान",
- "Data processing agreement": "डेटा प्रोसेसिंग समझौता"
+ "Data processing agreement": "डेटा प्रोसेसिंग समझौता",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "आपका अकाउंट, आपकी कंपनी और एक कार्ड, एक ही चरण में और लगभग दो मिनट में। 30 दिन ख़त्म होने से पहले कोई पैसा नहीं कटता; उससे पहले कभी भी रद्द करें।",
+ "Your name and a work email": "आपका नाम और एक वर्क ईमेल",
+ "Your company's name and billing address": "आपकी कंपनी का नाम और बिलिंग पता",
+ "A card, charged only after the 30 days": "एक कार्ड, जिससे पैसा 30 दिन के बाद ही कटेगा",
+ "Questions first? Write to": "पहले कुछ पूछना है? हमें लिखें:"
 }

@@ -357,5 +357,10 @@
  "then {price} a year": "vėliau {price} per metus",
  "{n} % off the first year": "{n}% nuolaida pirmaisiais metais",
  "Paid yearly": "Mokama kasmet",
- "Data processing agreement": "Duomenų tvarkymo sutartis"
+ "Data processing agreement": "Duomenų tvarkymo sutartis",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Jūsų paskyra, įmonė ir kortelė – vienu žingsniu, maždaug per dvi minutes. Iki 30 dienų pabaigos nieko nenuskaičiuojama; atšaukti galite bet kada iki tol.",
+ "Your name and a work email": "Jūsų vardas ir darbo el. paštas",
+ "Your company's name and billing address": "Įmonės pavadinimas ir atsiskaitymo adresas",
+ "A card, charged only after the 30 days": "Kortelė, iš kurios nuskaičiuojama tik po 30 dienų",
+ "Questions first? Write to": "Turite klausimų prieš pradėdami? Rašykite adresu"
 }

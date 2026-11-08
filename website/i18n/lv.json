@@ -357,5 +357,10 @@
  "then {price} a year": "pēc tam {price} gadā",
  "{n} % off the first year": "{n}% atlaide pirmajā gadā",
  "Paid yearly": "Maksā reizi gadā",
- "Data processing agreement": "Datu apstrādes līgums"
+ "Data processing agreement": "Datu apstrādes līgums",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Jūsu konts, uzņēmums un karte vienā solī un aptuveni divās minūtēs. Līdz 30 dienu beigām nekas netiek iekasēts; atcelt varat jebkurā laikā pirms tam.",
+ "Your name and a work email": "Jūsu vārds un darba e-pasts",
+ "Your company's name and billing address": "Uzņēmuma nosaukums un norēķinu adrese",
+ "A card, charged only after the 30 days": "Karte, no kuras maksa tiek iekasēta tikai pēc 30 dienām",
+ "Questions first? Write to": "Jautājumi pirms sākšanas? Rakstiet uz"
 }

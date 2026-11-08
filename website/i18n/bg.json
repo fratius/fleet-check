@@ -357,5 +357,10 @@
  "then {price} a year": "след това {price} на година",
  "{n} % off the first year": "{n} % отстъпка за първата година",
  "Paid yearly": "Плаща се годишно",
- "Data processing agreement": "Споразумение за обработване на данни"
+ "Data processing agreement": "Споразумение за обработване на данни",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Вашият профил, вашата фирма и карта – с една стъпка и за около две минути. Преди 30-те дни да изтекат, нищо не се таксува; дотогава можете да прекратите по всяко време.",
+ "Your name and a work email": "Вашето име и служебен имейл",
+ "Your company's name and billing address": "Името и адресът за фактуриране на фирмата ви",
+ "A card, charged only after the 30 days": "Карта, която се таксува едва след 30-те дни",
+ "Questions first? Write to": "Имате въпроси преди това? Пишете на"
 }

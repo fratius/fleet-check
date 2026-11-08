@@ -357,5 +357,10 @@
  "then {price} a year": "sonra yıllık {price}",
  "{n} % off the first year": "İlk yıl %{n} indirim",
  "Paid yearly": "Yıllık ödenir",
- "Data processing agreement": "Veri işleme sözleşmesi"
+ "Data processing agreement": "Veri işleme sözleşmesi",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Hesabınız, şirketiniz ve bir kart, tek adımda ve yaklaşık iki dakikada. 30 gün bitmeden hiçbir ücret alınmaz; o zamana kadar istediğiniz zaman iptal edebilirsiniz.",
+ "Your name and a work email": "Adınız ve bir iş e-postası",
+ "Your company's name and billing address": "Şirketinizin adı ve fatura adresi",
+ "A card, charged only after the 30 days": "Ancak 30 gün bitince ücret alınacak bir kart",
+ "Questions first? Write to": "Önce sorularınız mı var? Bize yazın:"
 }

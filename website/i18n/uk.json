@@ -357,5 +357,10 @@
  "then {price} a year": "потім {price} на рік",
  "{n} % off the first year": "Знижка {n}% на перший рік",
  "Paid yearly": "Оплата за рік",
- "Data processing agreement": "Угода про обробку даних"
+ "Data processing agreement": "Угода про обробку даних",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Акаунт, компанія й картка — за один крок і приблизно за дві хвилини. До завершення 30 днів нічого не списується; скасувати можна будь-коли до цього.",
+ "Your name and a work email": "Ваше ім’я і робочий email",
+ "Your company's name and billing address": "Назва й платіжна адреса компанії",
+ "A card, charged only after the 30 days": "Картка, з якої кошти спишуться лише після 30 днів",
+ "Questions first? Write to": "Маєте запитання до реєстрації? Напишіть на"
 }

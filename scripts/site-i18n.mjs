@@ -33,13 +33,14 @@ function cutElement(s, i) {
   const open = s.slice(i).match(/^<([a-zA-Z][\w-]*)/);
   const tag = open[1].toLowerCase();
   const end = s.indexOf('>', i);
-  if (s[end - 1] === '/') return s.slice(0, i) + s.slice(end + 1);
+  // A boundary stays where the element was (<cut>), as the page's text nodes end there too.
+  if (s[end - 1] === '/') return s.slice(0, i) + '<cut>' + s.slice(end + 1);
   const re = new RegExp(`<(/?)${tag}\\b[^>]*>`, 'gi');
   re.lastIndex = end + 1;
   let depth = 1, m;
   while ((m = re.exec(s))) {
     depth += m[1] ? -1 : 1;
-    if (!depth) return s.slice(0, i) + s.slice(re.lastIndex);
+    if (!depth) return s.slice(0, i) + '<cut>' + s.slice(re.lastIndex);
   }
   throw new Error(`No closing </${tag}> for the element at ${i}`);
 }

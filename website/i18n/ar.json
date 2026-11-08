@@ -357,5 +357,10 @@
  "then {price} a year": "ثم {price} سنويًا",
  "{n} % off the first year": "خصم {n}% على السنة الأولى",
  "Paid yearly": "يُدفع سنويًا",
- "Data processing agreement": "اتفاقية معالجة البيانات"
+ "Data processing agreement": "اتفاقية معالجة البيانات",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "حسابك وشركتك وبطاقة، في خطوة واحدة وفي نحو دقيقتين. لا يُخصم أي مبلغ قبل انتهاء الأيام الـ30؛ ويمكنك الإلغاء في أي وقت قبل ذلك.",
+ "Your name and a work email": "اسمك وبريد عمل إلكتروني",
+ "Your company's name and billing address": "اسم شركتك وعنوان الفوترة",
+ "A card, charged only after the 30 days": "بطاقة لا يُخصم منها أي مبلغ إلا بعد الأيام الـ30",
+ "Questions first? Write to": "لديك أسئلة أولًا؟ راسلنا على"
 }
