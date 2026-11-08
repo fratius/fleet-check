@@ -196,7 +196,11 @@ jobs:
       - name: Deploy rules and functions
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
-        run: npx -y "$FIREBASE_TOOLS" deploy --only firestore,storage,functions --project "$PROJECT" --non-interactive --force
+        # Tried again once after a pause: Google's first Firestore trigger (countVans) or a new API sometimes fails with
+        # "Permission denied while using the Eventarc Service Agent" until its permissions have spread (a few minutes).
+        run: |
+          d() { npx -y "$FIREBASE_TOOLS" deploy --only firestore,storage,functions --project "$PROJECT" --non-interactive --force; }
+          d || { echo "::warning title=Deploy::Some functions failed; trying again in 3 minutes."; sleep 180; d; }
       - name: Publish the notification key for the app
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
