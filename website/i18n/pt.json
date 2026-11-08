@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "A app para iPhone está na App Store. A app para Android está a caminho do Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "A app para Android está no Google Play. A app para iPhone está a caminho da App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "No Android, o Fratius funciona como app web até a app estar disponível no Google Play: abra-a no navegador e adicione-a ao ecrã principal.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "No iPhone, o Fratius funciona como app web até a app estar disponível na App Store: abra-a no Safari e adicione-a ao ecrã principal."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "No iPhone, o Fratius funciona como app web até a app estar disponível na App Store: abra-a no Safari e adicione-a ao ecrã principal.",
+ "Billing": "Faturação",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Crie a sua conta e a sua empresa na app web, com um cartão. Os seus 30 dias começam de imediato e nada é cobrado antes de terminarem.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Preços por ano, sem IVA. Os planos anuais são pagos no registo, sem os dias grátis.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Precisa de mais algumas carrinhas no Basic ou no Pro? Adicione 15 por 10 € por mês.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "No registo, adiciona um cartão para verificar a sua empresa. Nada é cobrado durante os 30 dias grátis; pode cancelar a qualquer momento antes de terminarem.",
+ "Monthly": "Mensal",
+ "Yearly: {n} % off the first year": "Anual: {n}% de desconto no primeiro ano",
+ "Yearly": "Anual",
+ "the first year": "no primeiro ano",
+ "a year": "por ano",
+ "then {price} a year": "depois {price} por ano",
+ "{n} % off the first year": "{n}% de desconto no primeiro ano",
+ "Paid yearly": "Pagamento anual",
+ "Data processing agreement": "Acordo de tratamento de dados"
 }

@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone-sovellus on App Storessa. Android-sovellus on tulossa Google Playhin.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android-sovellus on Google Playssa. iPhone-sovellus on tulossa App Storeen.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Androidissa Fratius toimii verkkosovelluksena, kunnes sovellus ilmestyy Google Playhin: avaa se selaimessa ja lisää se aloitusnäytölle.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhonessa Fratius toimii verkkosovelluksena, kunnes sovellus ilmestyy App Storeen: avaa se Safarissa ja lisää se aloitusnäytölle."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhonessa Fratius toimii verkkosovelluksena, kunnes sovellus ilmestyy App Storeen: avaa se Safarissa ja lisää se aloitusnäytölle.",
+ "Billing": "Laskutusjakso",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Luo tilisi ja yrityksesi verkkosovelluksessa kortin kanssa. 30 päivääsi alkavat heti, eikä mitään veloiteta ennen kuin ne päättyvät.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Hinnat vuodessa, ilman arvonlisäveroa. Vuosipaketit maksetaan rekisteröityessä, ilman ilmaisia päiviä.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Tarvitsetko muutaman pakettiauton lisää Basic- tai Pro-paketissa? Lisää 15 hintaan 10 € kuukaudessa.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Lisäät rekisteröityessä kortin, jolla yrityksesi varmistetaan. Mitään ei veloiteta 30 ilmaisen päivän aikana; voit perua milloin tahansa ennen niiden loppua.",
+ "Monthly": "Kuukausittain",
+ "Yearly: {n} % off the first year": "Vuosittain: {n} %:n alennus ensimmäisenä vuonna",
+ "Yearly": "Vuosittain",
+ "the first year": "ensimmäisenä vuonna",
+ "a year": "vuodessa",
+ "then {price} a year": "sitten {price} vuodessa",
+ "{n} % off the first year": "{n} %:n alennus ensimmäisenä vuonna",
+ "Paid yearly": "Maksetaan vuosittain",
+ "Data processing agreement": "Tietojenkäsittelysopimus"
 }

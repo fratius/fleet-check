@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone-appen finns i App Store. Android-appen är på väg till Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android-appen finns på Google Play. iPhone-appen är på väg till App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "På Android fungerar Fratius som webbapp tills appen finns på Google Play: öppna den i webbläsaren och lägg till den på hemskärmen.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "På iPhone fungerar Fratius som webbapp tills appen finns i App Store: öppna den i Safari och lägg till den på hemskärmen."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "På iPhone fungerar Fratius som webbapp tills appen finns i App Store: öppna den i Safari och lägg till den på hemskärmen.",
+ "Billing": "Faktureringsperiod",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Skapa ditt konto och ditt företag i webbappen, med ett kort. Dina 30 dagar börjar direkt och inget debiteras innan de är slut.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Priser per år, exklusive moms. Årsplaner betalas vid registreringen, utan gratisdagarna.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Behöver du några skåpbilar till på Basic eller Pro? Lägg till 15 för 10 € per månad.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Du lägger till ett kort vid registreringen för att verifiera ditt företag. Inget debiteras under de 30 gratisdagarna; säg upp när som helst innan dess.",
+ "Monthly": "Månadsvis",
+ "Yearly: {n} % off the first year": "Årsvis: {n} % rabatt det första året",
+ "Yearly": "Årsvis",
+ "the first year": "första året",
+ "a year": "per år",
+ "then {price} a year": "sedan {price} per år",
+ "{n} % off the first year": "{n} % rabatt första året",
+ "Paid yearly": "Betalas årsvis",
+ "Data processing agreement": "Personuppgiftsbiträdesavtal"
 }

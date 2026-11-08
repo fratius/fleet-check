@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone programėlė jau yra App Store parduotuvėje. Android programėlė jau keliauja į Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android programėlė jau yra Google Play parduotuvėje. iPhone programėlė jau keliauja į App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android telefonuose Fratius veikia kaip žiniatinklio programėlė, kol Google Play parduotuvėje pasirodys programėlė: atidarykite ją naršyklėje ir pridėkite prie pradžios ekrano.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone telefonuose Fratius veikia kaip žiniatinklio programėlė, kol App Store parduotuvėje pasirodys programėlė: atidarykite ją Safari naršyklėje ir pridėkite prie pradžios ekrano."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone telefonuose Fratius veikia kaip žiniatinklio programėlė, kol App Store parduotuvėje pasirodys programėlė: atidarykite ją Safari naršyklėje ir pridėkite prie pradžios ekrano.",
+ "Billing": "Atsiskaitymo laikotarpis",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Sukurkite paskyrą ir įmonę žiniatinklio programėlėje, pridėdami kortelę. Jūsų 30 dienų prasideda iš karto, ir kol jos nesibaigs, nieko nenuskaičiuojama.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Kainos per metus be PVM. Metiniai planai apmokami registruojantis, be nemokamų dienų.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Reikia dar kelių furgonų Basic arba Pro plane? Pridėkite 15 už 10 € per mėnesį.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Registruodamiesi pridedate kortelę, kad patvirtintumėte savo įmonę. Per 30 nemokamų dienų nieko nenuskaičiuojama; atšaukti galite bet kada iki jų pabaigos.",
+ "Monthly": "Mėnesinis",
+ "Yearly: {n} % off the first year": "Metinis: {n}% nuolaida pirmaisiais metais",
+ "Yearly": "Metinis",
+ "the first year": "pirmaisiais metais",
+ "a year": "per metus",
+ "then {price} a year": "vėliau {price} per metus",
+ "{n} % off the first year": "{n}% nuolaida pirmaisiais metais",
+ "Paid yearly": "Mokama kasmet",
+ "Data processing agreement": "Duomenų tvarkymo sutartis"
 }

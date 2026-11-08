@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone lietotne ir pieejama App Store. Android lietotne jau ir ceļā uz Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android lietotne ir pieejama Google Play. iPhone lietotne jau ir ceļā uz App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android tālruņos Fratius darbojas kā tīmekļa lietotne, līdz lietotne būs pieejama Google Play: atveriet to pārlūkā un pievienojiet sākuma ekrānam.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone tālruņos Fratius darbojas kā tīmekļa lietotne, līdz lietotne būs pieejama App Store: atveriet to pārlūkā Safari un pievienojiet sākuma ekrānam."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone tālruņos Fratius darbojas kā tīmekļa lietotne, līdz lietotne būs pieejama App Store: atveriet to pārlūkā Safari un pievienojiet sākuma ekrānam.",
+ "Billing": "Norēķinu periods",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Izveidojiet savu kontu un uzņēmumu tīmekļa lietotnē, pievienojot karti. Jūsu 30 dienas sākas uzreiz, un līdz to beigām nekas netiek iekasēts.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Cenas gadā bez PVN. Gada plānus apmaksā reģistrējoties, bez bezmaksas dienām.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Vajag vēl dažus furgonus plānā Basic vai Pro? Pievienojiet 15 par 10 € mēnesī.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Reģistrējoties jūs pievienojat karti, lai pārbaudītu uzņēmumu. 30 bezmaksas dienās nekas netiek iekasēts; atcelt varat jebkurā laikā pirms to beigām.",
+ "Monthly": "Reizi mēnesī",
+ "Yearly: {n} % off the first year": "Reizi gadā: {n}% atlaide pirmajā gadā",
+ "Yearly": "Reizi gadā",
+ "the first year": "pirmajā gadā",
+ "a year": "gadā",
+ "then {price} a year": "pēc tam {price} gadā",
+ "{n} % off the first year": "{n}% atlaide pirmajā gadā",
+ "Paid yearly": "Maksā reizi gadā",
+ "Data processing agreement": "Datu apstrādes līgums"
 }

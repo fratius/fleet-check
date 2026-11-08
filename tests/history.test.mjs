@@ -1340,7 +1340,9 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
 
 test('sign-up: a new company gets 30 days free from the server; the owner can\'t change it; the trial\'s AI has a daily allowance', async () => {
   const o = await person('Nora Neu');
-  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: null };
+  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: '2026-11-08' };
+  // The terms (AGB) and the data processing agreement (AVV) are accepted with their version.
+  await fails(o.call('createCompany', { ...input, terms: null, rid: `rcc${run}0` }), 'failed-precondition');
   const r = await o.call('createCompany', { ...input, rid: `rcc${run}a` });
   // Sent twice (the answer got lost): one company.
   assert.equal((await o.call('createCompany', { ...input, rid: `rcc${run}a` })).orgId, r.orgId);
@@ -1486,4 +1488,193 @@ test('drivers sign up with the company\'s link, pick a station, and wait for an 
   await lena.call('requestToJoin', { token: fresh.token, stationId: S.s1, details: details('Lena', 'Leaving') });
   await lena.call('deleteAccount', {});
   assert.equal((await adminDb().doc(`orgs/${S.org}/joinRequests/${lena.uid}`).get()).exists, false);
+});
+
+/** Stripe's webhook, as Stripe sends it: the event signed with the endpoint's secret (functions/.secret.local). */
+async function stripeEvent(type, object, { id = `evt_${run}${Math.random().toString(36).slice(2, 8)}`, secret } = {}) {
+  const key = secret || readFileSync(new URL('../functions/.secret.local', import.meta.url), 'utf8').match(/^STRIPE_WEBHOOK_SECRET=(.+)$/m)[1].trim();
+  const body = JSON.stringify({ id, object: 'event', type, livemode: false, created: Math.floor(Date.now() / 1000), api_version: '2026-10-28.endive', data: { object } });
+  const t = Math.floor(Date.now() / 1000);
+  const sig = crypto.createHmac('sha256', key).update(`${t}.${body}`).digest('hex');
+  const r = await fetch(`http://${HOST}:5001/${cfg.projectId}/us-central1/stripeWebhook`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Stripe-Signature': `t=${t},v1=${sig}` }, body });
+  return { status: r.status, body: await r.json().catch(() => null), id };
+}
+const eventually = async (fn, ms = 15000) => {
+  const t0 = Date.now();
+  for (;;) {
+    try { return await fn(); } catch (e) { if (Date.now() - t0 > ms) throw e; }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+};
+
+test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, the van limit, Stripe\'s webhook', async () => {
+  // Payments on, with the tests' fake Stripe (payments.ts). Off again at the end, for the other tests.
+  await adminDb().doc('platform/stripe').set({ mode: 'fake', publishableKey: 'pk_test_fake', tax: { mode: 'rate', rateId: 'txr_fake' } });
+  const address = { name: 'Pay Logistik GmbH', address: { line1: 'Hauptstr. 1', city: 'Berlin', postal_code: '10115', country: 'DE' } };
+  const terms = '2026-11-08';
+  try {
+    const cfgNow = await S.own.call('billingConfig', {});
+    assert.equal(cfgNow.mode, 'fake');
+    assert.equal(cfgNow.prices.pro.month, 9000);
+    assert.equal(cfgNow.yearlyOff, 30);
+    assert.equal((await S.own.call('billingConfig', { offer: 'NOPE2345' })).offerError.t, 'This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
+
+    // 1. Monthly: the company starts without a card and can't work until one is added.
+    const pia = await person('Pia Pay');
+    const { orgId, needsCard } = await pia.call('createCompany', { company: 'Pay Logistik GmbH', station: 'DPY1', name: 'Pia Pay', source: 'website', plan: 'basic', terms, payments: true });
+    assert.equal(needsCard, true);
+    let org = (await getDoc(doc(pia.db, 'orgs', orgId))).data();
+    assert.equal(org.billing.status, 'incomplete');
+    assert.equal(org.billing.via, 'stripe');
+    assert.equal(org.billing.card, false);
+    const e1 = await fails(pia.call('setupStations', { orgId }), 'failed-precondition');
+    assert.match(e1.message, /no active plan/);
+    // Only the owner pays; the address is needed for the invoices; a VAT ID must look like one.
+    await fails(S.mgr.call('billingStart', { orgId: S.org, plan: 'pro', interval: 'month', address }), 'permission-denied');
+    await fails(pia.call('billingStart', { orgId, plan: 'basic', interval: 'month' }), 'invalid-argument');
+    const badVat = await fails(pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'DE12' }), 'invalid-argument');
+    assert.match(badVat.message, /VAT ID/);
+    const start = await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'de 123 456 789' });
+    assert.equal(start.kind, 'setup');
+    assert.match(start.clientSecret, /^seti_fake_/);
+    assert.equal(start.firstNet, 4000, 'the exact terms come back, for the page to check against what it showed');
+    // Asked again with the same terms (another card, a reload): the same subscription.
+    assert.equal((await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'DE123456789' })).clientSecret, start.clientSecret);
+    assert.ok(Math.abs(start.trialEnd - (Date.now() + 30 * 86400_000)) < 3_700_000, '30 days from adding the card');
+    const pd = (await adminDb().doc(`payments/${orgId}`).get()).data();
+    const cust = (await adminDb().doc(`fakeStripe/${pd.customerId}`).get()).data();
+    assert.equal(cust.name, 'Pay Logistik GmbH');
+    assert.equal(cust.taxId.value, 'DE123456789');
+    assert.deepEqual(cust.locales, ['de', 'en']);
+    org = (await getDoc(doc(pia.db, 'orgs', orgId))).data();
+    assert.equal(org.billing.status, 'incomplete', 'no card yet');
+    assert.equal(org.billing.vans, 50);
+    // Nobody reads the Stripe ids or the fake Stripe from the app.
+    await fails(getDoc(doc(pia.db, 'payments', orgId)), 'permission-denied');
+    // The browser confirms the card with Stripe.js; then the server makes it the subscription's.
+    await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).update({ confirmed: true });
+    const conf = await pia.call('billingConfirm', { orgId, setupIntent: start.clientSecret.split('_secret_')[0] });
+    assert.equal(conf.billing.status, 'trialing');
+    assert.equal(conf.billing.card, true);
+    assert.equal(conf.billing.plan, 'basic');
+    assert.equal((await pia.call('setupStations', { orgId })).done, false, 'works now');
+    await fails(pia.call('billingStart', { orgId, plan: 'pro', interval: 'month', address }), 'failed-precondition');
+    assert.ok((await adminDb().doc(`payments/${orgId}`).get()).data().confirmedAt);
+    // The owner can't write billing or the van count.
+    await fails(updateDoc(doc(pia.db, 'orgs', orgId), { 'billing.vans': 999 }), 'permission-denied');
+    await fails(updateDoc(doc(pia.db, 'orgs', orgId), { fleetSize: 5 }), 'permission-denied');
+
+    // 2. The van limit: Basic has 50. The server counts the vans in use (not retired ones).
+    const stationId = (await getDocs(collection(pia.db, 'orgs', orgId, 'stations'))).docs[0].id;
+    const addVan = (n) => setDoc(doc(collection(pia.db, 'orgs', orgId, 'vehicles')), { name: `Van P${n}`, plate: `P${n}`, cls: 'van', stationId, createdAt: Date.now(), createdBy: pia.uid });
+    await addVan(1);
+    await eventually(async () => assert.equal((await adminDb().doc(`orgs/${orgId}`).get()).data().fleetSize, 1));
+    await adminDb().doc(`orgs/${orgId}`).update({ fleetSize: 50 });
+    await fails(addVan(2), 'permission-denied');
+    // The add-on makes room (changePlan counts the vans again, so the test sets "full" once more after it).
+    const more = await pia.call('changePlan', { orgId, plan: 'basic', addon: true, rid: `rcp${run}a` });
+    assert.equal(more.billing.addon, true);
+    assert.equal(more.billing.vans, 65);
+    await adminDb().doc(`orgs/${orgId}`).update({ fleetSize: 50 });
+    await addVan(3);
+    let sub = (await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).get()).data();
+    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_month', 'fratius_basic_month']);
+    assert.equal(sub.lastChange.charge, false, 'nothing charged in the trial');
+    // Up to Pro (the add-on stays), then monthly to yearly with the launch offer; yearly back to monthly only by email.
+    const pro = await pia.call('changePlan', { orgId, plan: 'pro', rid: `rcp${run}b` });
+    assert.equal(pro.billing.plan, 'pro');
+    assert.equal(pro.billing.vans, 165);
+    const yearly = await pia.call('changePlan', { orgId, interval: 'year', rid: `rcp${run}c` });
+    assert.equal(yearly.billing.interval, 'year');
+    sub = (await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).get()).data();
+    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_year', 'fratius_pro_year']);
+    assert.deepEqual(sub.coupons, ['fratius_yearly_launch_30']);
+    await fails(pia.call('changePlan', { orgId, interval: 'month', rid: `rcp${run}d` }), 'failed-precondition');
+    assert.match((await pia.call('billingPortal', { orgId })).url, /^https:\/\/billing\.stripe\.test\//);
+
+    // 3. Stripe's webhook: signed, each event once, the subscription read back.
+    const pastDue = await stripeEvent('customer.subscription.updated', { object: 'subscription', id: pd.subscriptionId, status: 'past_due' });
+    assert.equal(pastDue.status, 200);
+    assert.equal((await adminDb().doc(`orgs/${orgId}`).get()).data().billing.status, 'past_due');
+    assert.equal((await pia.call('setupStations', { orgId })).done, false, 'past due still works while Stripe tries the card again');
+    assert.equal((await stripeEvent('customer.subscription.updated', { object: 'subscription', id: pd.subscriptionId, status: 'active' }, { id: pastDue.id })).body.duplicate, true);
+    assert.equal((await adminDb().doc(`orgs/${orgId}`).get()).data().billing.status, 'past_due', 'a repeated event changes nothing');
+    assert.equal((await stripeEvent('customer.subscription.updated', { object: 'subscription', id: pd.subscriptionId, status: 'active' }, { secret: 'whsec_wrong' })).status, 400);
+    await stripeEvent('customer.subscription.deleted', { object: 'subscription', id: pd.subscriptionId, status: 'canceled' });
+    assert.equal((await adminDb().doc(`orgs/${orgId}`).get()).data().billing.status, 'canceled');
+    await fails(pia.call('setupStations', { orgId }), 'failed-precondition');
+    // The app creator isn't stopped.
+    const cr = await appCreator('Petra Paylinks');
+    assert.equal((await cr.call('setupStations', { orgId })).done, false);
+
+    // 4. A sign-up link from the app creator: Pro, 60 days free, 20 % off for 6 months, one use.
+    await fails(pia.call('saveOffer', { note: 'x' }), 'permission-denied');
+    const off = await cr.call('saveOffer', { note: 'Hart Logistics, 80 vans', plan: 'pro', interval: 'month', trialDays: 60, percentOff: 20, months: 6, maxUses: 1, rid: `rso${run}a` });
+    assert.match(off.url, new RegExp(`/start\\?offer=${off.code}$`));
+    const peek = await pia.call('billingConfig', { offer: off.code.toLowerCase() });
+    assert.equal(peek.offer.trialDays, 60);
+    assert.equal(peek.offer.plan, 'pro');
+    assert.equal(peek.offer.note, undefined, 'the note is only for the app creator');
+    const hart = await person('Hanna Hart');
+    const h = await hart.call('createCompany', { company: 'Hart Logistics', station: 'DHL1', name: 'Hanna Hart', source: 'website', plan: 'basic', terms, payments: true });
+    const hs = await hart.call('billingStart', { orgId: h.orgId, plan: 'basic', interval: 'year', offer: off.code, address });
+    assert.equal(hs.kind, 'setup');
+    assert.ok(Math.abs(hs.trialEnd - (Date.now() + 60 * 86400_000)) < 3_700_000);
+    // The link's one use is taken when Hart starts: nobody else can start with it meanwhile.
+    const ole = await person('Ole Early');
+    const oe = await ole.call('createCompany', { company: 'Early GmbH', station: 'DER1', name: 'Ole Early', source: 'website', plan: 'pro', terms, payments: true });
+    assert.match((await fails(ole.call('billingStart', { orgId: oe.orgId, offer: off.code, address }), 'failed-precondition')).message, /already been used/);
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 1);
+    // Hart itself can come back to it (another card) and still sees the offer.
+    assert.equal((await hart.call('billingConfig', { offer: off.code, orgId: h.orgId })).offer.trialDays, 60);
+    const hpd = (await adminDb().doc(`payments/${h.orgId}`).get()).data();
+    let hsub = (await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).get()).data();
+    assert.deepEqual(hsub.items.map((i) => i.key), ['fratius_pro_month'], 'the link\'s plan, not the one picked');
+    assert.equal(hsub.coupons.length, 1);
+    assert.match(hsub.coupons[0], new RegExp(`^fratius_offer_${off.code.toLowerCase()}_[0-9a-f]{8}$`), 'the coupon is named after the link\'s terms');
+    // 20 % for 6 months, counted from the end of the 60 free days (Stripe counts from sign-up).
+    assert.equal((await adminDb().doc(`fakeStripe/coupon_${hsub.coupons[0]}`).get()).data().months, 8);
+    await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).update({ confirmed: true });
+    const hc = await hart.call('billingConfirm', { orgId: h.orgId, setupIntent: hs.clientSecret.split('_secret_')[0] });
+    assert.equal(hc.billing.status, 'trialing');
+    assert.equal(hc.billing.offer, off.code);
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 1);
+    assert.equal((await getDocs(collection(cr.db, 'offers'))).docs.some((d) => d.id === off.code), true, 'the app creator lists the links');
+    await fails(getDocs(collection(hart.db, 'offers')), 'permission-denied');
+    const late = await person('Lars Late');
+    const l = await late.call('createCompany', { company: 'Late GmbH', station: 'DLT1', name: 'Lars Late', source: 'website', plan: 'pro', terms, payments: true });
+    assert.match((await fails(late.call('billingStart', { orgId: l.orgId, offer: off.code, address }), 'failed-precondition')).message, /already been used/);
+
+    // 5. Yearly, paid at sign-up: Premium with 30 % off the first year, no trial.
+    const yan = await person('Yara Yearly');
+    const y = await yan.call('createCompany', { company: 'Yearly GmbH', station: 'DYR1', name: 'Yara Yearly', source: 'website', plan: 'premium', interval: 'year', terms, payments: true });
+    const ys = await yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address });
+    assert.equal(ys.kind, 'payment');
+    assert.equal(ys.amount, 168000);
+    assert.equal(ys.firstNet, 168000);
+    assert.equal(ys.trialEnd, null);
+    const ypd = (await adminDb().doc(`payments/${y.orgId}`).get()).data();
+    await adminDb().doc(`fakeStripe/${ypd.subscriptionId}`).update({ confirmed: true });
+    const yc = await yan.call('billingConfirm', { orgId: y.orgId });
+    assert.equal(yc.billing.status, 'active');
+    assert.equal(yc.billing.vans, null, 'unlimited');
+
+    // 6. With test keys, sign-up without the new page works as before (a trial without a card).
+    const old = await person('Otto Oldpage');
+    const o = await old.call('createCompany', { company: 'Old Page GmbH', station: 'DOP1', name: 'Otto Oldpage', source: 'app', plan: null, terms });
+    assert.equal((await adminDb().doc(`orgs/${o.orgId}`).get()).data().billing.status, 'trialing');
+    // Live keys: every new company adds a card, and older apps can't make one by themselves.
+    await adminDb().doc('platform/stripe').update({ mode: 'live' });
+    const live = await old.call('createCompany', { company: 'Live GmbH', station: 'DLV1', name: 'Otto Oldpage', source: 'app', plan: null, terms });
+    assert.equal(live.needsCard, true);
+    await fails(setDoc(doc(collection(old.db, 'orgs')), { name: 'Sneaky', createdBy: old.uid, createdAt: Date.now() }), 'permission-denied');
+    // A company that signed up with Stripe's test keys starts again with live keys: nothing real was agreed.
+    await fails(hart.call('setupStations', { orgId: h.orgId }), 'failed-precondition');
+    // An owner deleting their account ends the plan of the company that closes with it.
+    await adminDb().doc('platform/stripe').update({ mode: 'fake' });
+    await yan.call('deleteAccount', {});
+    assert.equal((await adminDb().doc(`fakeStripe/${ypd.subscriptionId}`).get()).data().status, 'canceled');
+  } finally {
+    await adminDb().doc('platform/stripe').delete();
+  }
 });

@@ -445,6 +445,16 @@ h1 .mark { position: relative; z-index: -1; }
 @media (max-width: 640px) { .dl-grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* Pricing */
+.seg { display: inline-flex; border: 2px solid var(--ink); border-radius: var(--r); overflow: hidden; margin: 0 0 20px; max-width: 100%; flex-wrap: wrap; }
+.seg[hidden] { display: none; }
+.seg button { font: inherit; font-weight: 600; background: var(--paper); color: var(--ink); border: 0; padding: 10px 16px; cursor: pointer; }
+.seg button + button { border-inline-start: 2px solid var(--ink); }
+.seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+@media (max-width: 560px) {
+  .seg { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .seg button { text-align: start; }
+  .seg button + button { border-inline-start: 0; border-top: 2px solid var(--ink); }
+}
 .plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .plan { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); padding: 24px; display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 14px; }
 .plan h3 { font-size: 34px; font-weight: 700; hyphens: auto; overflow-wrap: anywhere; }
@@ -453,6 +463,7 @@ h1 .mark { position: relative; z-index: -1; }
 .price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .price b { font: 700 66px/.9 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .price span { color: var(--ink2); font-size: 16px; }
+.price .then { flex-basis: 100%; }
 .plan .btn { width: 100%; }
 .plan.ai { background: transparent; border-style: dashed; border-color: var(--ink2); }
 .plan.ai .price b { font-size: 40px; line-height: 1; }
@@ -960,6 +971,7 @@ h1 .mark { position: relative; z-index: -1; }
       <h2>Pick a plan by the size of your fleet. Try it 30 days free.</h2>
       <p class="sec-lede">Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.</p>
     </div>
+    <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing" hidden></div>
     <div class="plans" id="plans"></div>
     <div class="includes">
       <h3>Every plan includes</h3>
@@ -997,8 +1009,8 @@ h1 .mark { position: relative; z-index: -1; }
         <li><span class="tick" aria-hidden="true"></span>A work email and a mobile number</li>
       </ul>
       <div class="selfserve" id="selfserve" hidden>
-        <p><strong>Rather start right away?</strong> Create your account and your company in the web app. Your 30 days start at once.</p>
-        <a class="btn btn-marker btn-lg" href="https://app.fratius.com/sign-in?mode=up" data-signup>Create your account</a>
+        <p><strong>Rather start right away?</strong> Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.</p>
+        <a class="btn btn-marker btn-lg" href="https://app.fratius.com/start" data-signup>Create your account</a>
       </div>
     </div>
 
@@ -1100,6 +1112,9 @@ h1 .mark { position: relative; z-index: -1; }
     currency: 'EUR',
     trialDays: 30,
     priceNote: N_('Prices per month, excluding VAT. 30 days free on every plan.'),
+    priceNoteYear: N_('Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.'),
+    addonNote: N_('Need a few more vans on Basic or Pro? Add 15 for €10 a month.'),
+    cardNote: N_('You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.'),
     plans: [
       { id: 'basic', name: 'Basic', price: 40, vans: 50 }, // vans: also PLAN_VANS in functions/src/website.ts
       { id: 'pro', name: 'Pro', price: 90, vans: 150 },
@@ -1112,7 +1127,9 @@ h1 .mark { position: relative; z-index: -1; }
       webApp: 'https://app.fratius.com',
     },
     /* The web app. Deploy points these links at the project's own address until app.fratius.com serves the app.
-       selfServe: the "Start 30 days free" buttons open "Create account" in the web app (else the request form). */
+       selfServe: the "Start" buttons open sign-up with a card in the web app (/start) instead of the request form.
+       It turns on by itself once payments are live (/api/billing, functions/src/payments.ts); with Stripe's test keys
+       only for whoever opens the page with ?stripe=test. */
     app: { url: 'https://app.fratius.com', selfServe: false },
     signup: {
       live: true,              // false shows a preview that sends nothing
@@ -1120,7 +1137,7 @@ h1 .mark { position: relative; z-index: -1; }
       payment: false,          // true once a payment provider is connected
     },
     contactEmail: 'info@fratius.com',
-    legal: { imprint: '/impressum', privacy: '/datenschutz', appPrivacy: '/app-privacy', deleteAccount: '/delete-account', terms: null }, // Impressum, Datenschutz, AGB
+    legal: { imprint: '/impressum', privacy: '/datenschutz', appPrivacy: '/app-privacy', deleteAccount: '/delete-account', terms: '/agb', dpa: '/avv' }, // Impressum, Datenschutz, AGB, AVV
   };
 
   /* The 32 languages of the app, by their own names. */
@@ -1199,25 +1216,54 @@ h1 .mark { position: relative; z-index: -1; }
   });
 
   /* ───────── Log in and sign up: the web app ───────── */
-  const signupUrl = (planId) => `${CONFIG.app.url}/sign-in?mode=up${planId ? '&plan=' + encodeURIComponent(planId) : ''}`;
+  // Payments (Stripe) decide whether the buttons sign up with a card in the web app, and whether yearly plans show.
+  const pay = { live: false, launchOffer: false, yearlyOff: 30 };
+  let interval = 'month';
+  const signupUrl = (planId) => `${CONFIG.app.url}/start${planId ? `?plan=${encodeURIComponent(planId)}&interval=${interval}` : ''}`;
   document.querySelectorAll('[data-login]').forEach((a) => { a.href = CONFIG.app.url + '/'; });
-  if (CONFIG.app.selfServe) {
-    document.querySelectorAll('[data-signup]').forEach((a) => { a.href = signupUrl(null); });
-    $('#selfserve').hidden = false;
-  } else {
-    document.querySelectorAll('[data-signup]').forEach((a) => { if (!a.closest('#selfserve')) a.href = '#start'; });
+  function signupLinks() {
+    if (CONFIG.app.selfServe) {
+      document.querySelectorAll('[data-signup]').forEach((a) => { a.href = signupUrl(null); });
+      $('#selfserve').hidden = false;
+    } else {
+      document.querySelectorAll('[data-signup]').forEach((a) => { if (!a.closest('#selfserve')) a.href = '#start'; });
+    }
   }
+  signupLinks();
+  // Asked next to drawing the page, not before it; the buttons switch once the answer is there.
+  fetch('/api/billing', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+    if (!j) return;
+    pay.live = j.payments === 'live' || (j.payments === 'test' && /[?&]stripe=test\b/.test(location.search));
+    pay.launchOffer = !!j.launchOffer;
+    pay.yearlyOff = j.yearlyOff || 30;
+    if (!pay.live || CONFIG.app.selfServe) return;
+    CONFIG.app.selfServe = true;
+    signupLinks();
+    renderPlans();
+  }).catch(() => { /* the request form stays */ });
 
   /* ───────── Pricing (the only place prices are shown), store buttons, legal links ───────── */
   function renderPlans() {
-    $('#plans').innerHTML = CONFIG.plans.map((p) => `
+    // Monthly or yearly: only with sign-up in the web app (yearly plans are paid there, at sign-up).
+    const yearly = CONFIG.app.selfServe && interval === 'year';
+    $('#billing-toggle').hidden = !CONFIG.app.selfServe;
+    $('#billing-toggle').innerHTML = [['month', t('Monthly')], ['year', pay.launchOffer ? t('Yearly: {n} % off the first year', { n: pay.yearlyOff }) : t('Yearly')]]
+      .map(([k, label]) => `<button type="button" role="radio" aria-checked="${interval === k}" data-interval="${k}">${esc(label)}</button>`).join('');
+    $('#plans').innerHTML = CONFIG.plans.map((p) => {
+      const year = p.price * 12, first = pay.launchOffer ? Math.round(year * (100 - pay.yearlyOff) / 100) : year;
+      const price = yearly
+        ? `<p class="price"><b>${esc(money(first))}</b><span>${esc(pay.launchOffer ? t('the first year') : t('a year'))}</span>${pay.launchOffer ? `<span class="then">${esc(t('then {price} a year', { price: money(year) }))}</span>` : ''}</p>`
+        : `<p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>`;
+      const pill = yearly ? (pay.launchOffer ? t('{n} % off the first year', { n: pay.yearlyOff }) : t('Paid yearly')) : t('{n} days free', { n: CONFIG.trialDays });
+      return `
       <article class="plan">
         <h3 translate="no">${esc(p.name)}</h3>
         <p class="limit">${esc(limitText(p))}<br><span class="muted">${esc(t('Unlimited drivers'))}</span></p>
-        <p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>
-        <p><span class="pill mk">${esc(t('{n} days free', { n: CONFIG.trialDays }))}</span></p>
+        ${price}
+        <p><span class="pill mk">${esc(pill)}</span></p>
         <a class="btn btn-marker" href="${esc(CONFIG.app.selfServe ? signupUrl(p.id) : '#start')}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
-      </article>`).join('') + `
+      </article>`;
+    }).join('') + `
       <article class="plan ai">
         <h3>${esc(t(CONFIG.aiPlan.name))}</h3>
         <p class="limit">${esc(t('Its own plan'))}</p>
@@ -1225,8 +1271,14 @@ h1 .mark { position: relative; z-index: -1; }
         <p class="desc">${esc(t(CONFIG.aiPlan.text))}</p>
         <a class="btn" href="#start" data-waitlist="1">${esc(t("Tell me when it's ready"))}</a>
       </article>`;
-    $('#price-note').textContent = t(CONFIG.priceNote);
+    $('#price-note').textContent = [t(yearly ? CONFIG.priceNoteYear : CONFIG.priceNote), t(CONFIG.addonNote), CONFIG.app.selfServe && !yearly ? t(CONFIG.cardNote) : ''].filter(Boolean).join(' ');
   }
+  $('#billing-toggle').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-interval]');
+    if (!b || b.dataset.interval === interval) return;
+    interval = b.dataset.interval;
+    renderPlans();
+  });
 
   const phone = '<svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="1.5" width="22" height="31" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 28h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
   const store = (url, before, name) => url
@@ -1249,14 +1301,13 @@ h1 .mark { position: relative; z-index: -1; }
         : android ? t("On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.")
           : t("Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.");
     // The legal pages themselves stay in German and English: they are the binding versions.
-    const legal = [['imprint', 'Impressum'], ['privacy', N_('Privacy')], ['appPrivacy', N_('App privacy')], ['deleteAccount', N_('Delete account')], ['terms', N_('Terms')]].filter(([k]) => CONFIG.legal[k]);
+    const legal = [['imprint', 'Impressum'], ['privacy', N_('Privacy')], ['appPrivacy', N_('App privacy')], ['deleteAccount', N_('Delete account')], ['terms', N_('Terms')], ['dpa', N_('Data processing agreement')]].filter(([k]) => CONFIG.legal[k]);
     $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${esc(k === 'imprint' ? label : t(label))}</a>`).join('')
       + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
     const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
-    if (CONFIG.legal.privacy && !CONFIG.legal.terms) {
+    // The request form is a request, not the contract: the terms are accepted when the company is made in the app.
+    if (CONFIG.legal.privacy) {
       $('#terms-text').innerHTML = esc(t('I have read the {privacy}.')).replace('{privacy}', link(CONFIG.legal.privacy, t('privacy policy')));
-    } else if (CONFIG.legal.terms && CONFIG.legal.privacy) {
-      $('#terms-text').innerHTML = esc(t('I agree to the {terms} and the {privacy}.')).replace('{terms}', link(CONFIG.legal.terms, t('terms'))).replace('{privacy}', link(CONFIG.legal.privacy, t('privacy policy')));
     }
   }
   $('#pay').hidden = !CONFIG.signup.payment;

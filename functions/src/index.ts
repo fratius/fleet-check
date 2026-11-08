@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { promises as fsp } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,6 +10,7 @@ import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
 import { onCall, onRequest, type CallableRequest } from 'firebase-functions/https';
 import { onSchedule } from 'firebase-functions/scheduler';
+import { onDocumentWritten } from 'firebase-functions/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import nodemailer from 'nodemailer';
 import webpush from 'web-push';
@@ -32,7 +33,14 @@ import {
 } from './purchases';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
-import { AI_DAY, AI_DAY_MESSAGE, MAX_COMPANIES, PLAN_IDS, TERMS_VERSION, berlinDay, newTrial, standing, type AiKind } from './billing';
+import {
+  AI_DAY, AI_DAY_MESSAGE, BLOCKED, MAX_COMPANIES, PLAN_IDS, PLAN_VANS, ADDON_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, YEARLY_LAUNCH_OFF,
+  allowedVans, berlinDay, newTrial, standing, type AiKind, type Billing, type Interval, type PlanId,
+} from './billing';
+import {
+  LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
+  payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
+} from './payments';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
 
 initializeApp();
@@ -44,6 +52,9 @@ const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const WEBPUSH_KEYS = defineSecret('WEBPUSH_KEYS');
 /** How the website's request form sends email, e.g. smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465, or "none". */
 const SMTP_URL = defineSecret('SMTP_URL');
+/** Stripe's secret key (sk_test_… or sk_live_…), or "none" while payments are off; and its webhook's signing secret. */
+const STRIPE_SECRET_KEY = defineSecret('STRIPE_SECRET_KEY');
+const STRIPE_WEBHOOK_SECRET = defineSecret('STRIPE_WEBHOOK_SECRET');
 const db = () => getFirestore();
 const bucket = () => getStorage().bucket();
 const opts = (timeoutSeconds: number) => ({ secrets: [ANTHROPIC_API_KEY], memory: '2GiB' as const, cpu: 1, timeoutSeconds, concurrency: 4 });
@@ -81,21 +92,41 @@ async function viewAsOf(uid: string): Promise<ViewAs | null> {
 }
 
 /**
- * The company's AI model, as the app creator set it (orgs/{org}.aiTier; Fast by default since 2026-10-25). Only the
- * app creator picks it (product owner, 2026-11-02), so the model a phone asks for is never used.
+ * The company can't work until the owner adds a card or a plan (billing.ts, BLOCKED). Only while payments are on:
+ * with live keys for every company that signed up after self-serve started; with test keys only for the companies
+ * that signed up through Stripe (so testing doesn't stop real companies). The app creator is never stopped.
  */
-async function tierOf(orgId: string): Promise<Tier> {
-  const t = await db().doc(`orgs/${orgId}`).get().then((d) => d.data()?.aiTier, () => null);
-  return TIERS.includes(t as Tier) ? (t as Tier) : 'quick';
+async function paymentsBlock(org: { createdAt?: unknown; demo?: unknown; billing?: unknown } | undefined): Promise<boolean> {
+  const mode = (await payConfig()).mode;
+  if (!mode || !org) return false;
+  const b = org.billing as Partial<Billing> | undefined;
+  if (mode !== 'live' && b?.via !== 'stripe') return false;
+  // Signed up with Stripe's test keys: nothing real was ever agreed, so with live keys it starts again (a card first).
+  if (mode === 'live' && b?.testMode) return true;
+  return BLOCKED.includes(standing(org).standing);
 }
+const BLOCKED_MESSAGE = N_('This company has no active plan. The owner adds a card or a plan in the web app: Account, then Plan and billing.');
 
-/** Signed in, a member of the company (or the app creator); the company's model tier. */
-async function guard(req: CallableRequest<{ orgId?: unknown }>): Promise<Who> {
+/**
+ * Signed in, a member of the company (or the app creator); the company's model tier. Companies without an active
+ * plan are stopped here (paymentsBlock), except for what works without one (unpaid: true): adding a plan, and making
+ * room for a smaller one or leaving (retiring vans, removing people, handing the company to another owner).
+ */
+async function guard(req: CallableRequest<{ orgId?: unknown }>, o: { unpaid?: boolean } = {}): Promise<Who> {
+  const orgId = String(req.data?.orgId || '');
+  // The company is read next to the membership, not after it: whether it may work, and its AI model as the app creator
+  // set it (aiTier; Fast by default since 2026-10-25). Only the app creator picks it (product owner, 2026-11-02), so the
+  // model a phone asks for is never used.
+  const orgP = ID.test(orgId) ? db().doc(`orgs/${orgId}`).get().then((d) => d.data(), () => undefined) : Promise.resolve(undefined);
+  const who = await guardOnly(req, orgP.then((d) => (TIERS.includes(d?.aiTier as Tier) ? (d?.aiTier as Tier) : 'quick')));
+  if (!o.unpaid && req.auth?.token?.creator !== true && (await paymentsBlock(await orgP))) throw fail('failed-precondition', BLOCKED_MESSAGE);
+  return who;
+}
+async function guardOnly(req: CallableRequest<{ orgId?: unknown }>, tierP: Promise<Tier>): Promise<Who> {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   const orgId = String(req.data?.orgId || '');
   if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
-  const tierP = tierOf(orgId); // read next to the membership, not after it
   const creator = req.auth?.token?.creator === true;
   const tokenName = String(req.auth?.token?.name || req.auth?.token?.email || '').split('@')[0];
   if (creator) {
@@ -713,7 +744,13 @@ export const createCompany = onCallOnce('createCompany', { timeoutSeconds: 30, s
   }
   const now = Date.now();
   const org = db().collection('orgs').doc();
-  const billing = newTrial(now, source, plan);
+  // With payments on, the company starts without a card and the web app asks the owner for one next (payments.ts):
+  // the trial starts once it's added. With Stripe's test keys only the new sign-up page does this (payments: true), so
+  // a test doesn't change sign-up for real companies.
+  const mode = (await payConfig(true)).mode;
+  const viaStripe = mode === 'live' || (!!mode && req.data?.payments === true);
+  const interval: Interval = req.data?.interval === 'year' ? 'year' : 'month';
+  const billing: Billing = viaStripe ? { ...newTrial(now, source, plan), status: 'incomplete', via: 'stripe', interval, card: false } : newTrial(now, source, plan);
   const b = db().batch();
   b.create(org, {
     name: company, createdBy: uid, createdAt: now, stationsReady: true, billing,
@@ -727,11 +764,11 @@ export const createCompany = onCallOnce('createCompany', { timeoutSeconds: 30, s
   const until = new Date(billing.trialEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' });
   await Promise.all(creators.filter((c) => c !== uid).map((c) => notify(c, {
     title: `New company: ${company}`,
-    body: `${name}, ${email} · ${source === 'website' ? 'from the website' : 'in the app'}${plan ? ` · ${plan}` : ''} · free until ${until}`,
+    body: `${name}, ${email} · ${source === 'website' ? 'from the website' : 'in the app'}${plan ? ` · ${plan}` : ''} · ${viaStripe ? 'adding a card' : `free until ${until}`}`,
     url: '/', tag: `org-${org.id}`,
   }).catch(() => 0)));
-  logger.info('New company', { orgId: org.id, source, plan });
-  return { orgId: org.id, trialEnd: billing.trialEnd };
+  logger.info('New company', { orgId: org.id, source, plan, viaStripe });
+  return { orgId: org.id, trialEnd: billing.trialEnd, needsCard: viaStripe };
 });
 
 /* ---------- 7. Demo company: made-up stations, people, vans and checks to try the app with ---------- */
@@ -747,7 +784,7 @@ export const createDemoCompany = onCallOnce('createDemoCompany', { timeoutSecond
 });
 
 export const deleteDemoCompany = onCallOnce('deleteDemoCompany', { timeoutSeconds: 120 }, async (req) => {
-  const who = await guard(req);
+  const who = await guard(req, { unpaid: true });
   if (who.role !== 'owner') throw fail('permission-denied', 'Only the owner can remove the demo company.');
   const org = await db().doc(`orgs/${who.orgId}`).get();
   if (!org.exists || org.data()?.demo !== true) throw fail('failed-precondition', 'Only a demo company can be removed this way.');
@@ -855,7 +892,7 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
 
 /** Retires a van (or brings it back). Vans are never deleted: their walk-arounds, checks and history stay. */
 export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (req) => {
-  const who = await guard(req);
+  const who = await guard(req, { unpaid: true });
   needStaff(who);
   const vehicleId = String(req.data?.vehicleId || '');
   const restore = req.data?.restore === true;
@@ -867,7 +904,17 @@ export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (
     if (!v.exists) throw fail('not-found', 'Unknown van.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     needStation(who, van.stationId);
-    if (restore) { tx.update(vref, { retired: false, retiredAt: null, retiredBy: null }); return; }
+    if (restore) {
+      // Back in use: only while the company has a plan, and with room on it.
+      const o = (await tx.get(org)).data();
+      if (!who.creator && (await paymentsBlock(o))) throw fail('failed-precondition', BLOCKED_MESSAGE);
+      const max = (o?.billing as Partial<Billing> | undefined)?.vans;
+      if (max != null && !who.creator && Number(o?.fleetSize || 0) >= max) {
+        throw fail('failed-precondition', 'Your plan is for {n} vans and they are all in use. Add 15 more vans, or choose a bigger plan, under Account, then Plan and billing.', { n: max });
+      }
+      tx.update(vref, { retired: false, retiredAt: null, retiredBy: null });
+      return;
+    }
     if (van.assignedTo?.assignmentId) tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'van retired'));
     tx.update(vref, { retired: true, retiredAt: Date.now(), retiredBy: who.name, assignedTo: null });
   });
@@ -901,7 +948,7 @@ export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req)
 
 /** Removes someone from the company. Their van becomes free; their history stays. */
 export const removePerson = onCallOnce('removePerson', { timeoutSeconds: 30 }, async (req) => {
-  const who = await guard(req);
+  const who = await guard(req, { unpaid: true });
   needStaff(who);
   const uid = String(req.data?.uid || '');
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw fail('invalid-argument', 'Unknown person.');
@@ -931,7 +978,7 @@ export const removePerson = onCallOnce('removePerson', { timeoutSeconds: 30 }, a
  * also leaves its van: their open assignment ends and the van becomes free. Their history stays.
  */
 export const changePerson = onCallOnce('changePerson', { timeoutSeconds: 30 }, async (req) => {
-  const who = await guard(req);
+  const who = await guard(req, { unpaid: true });
   if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner changes roles and stations.');
   const uid = String(req.data?.uid || '');
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid)) throw fail('invalid-argument', 'Unknown person.');
@@ -2366,7 +2413,7 @@ async function accountPlan(uid: string): Promise<AccountCompany[]> {
   return out;
 }
 
-export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB', secrets: [STRIPE_SECRET_KEY] }, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in again, then try again.');
   if (req.auth?.token?.creator === true) throw fail('failed-precondition', 'The app creator\'s account can\'t be deleted in the app.');
@@ -2382,7 +2429,7 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB' }, a
     throw fail('failed-precondition', 'You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.', { companies: blocked.map((c) => c.name).join(', ') });
   }
   for (const c of plan) {
-    if (c.outcome === 'close') { await deleteCompany(c.id); continue; }
+    if (c.outcome === 'close') { await endPlan(c.id); await deleteCompany(c.id); continue; }
     const org = db().doc(`orgs/${c.id}`);
     const mref = org.collection('members').doc(uid);
     await db().runTransaction(async (tx) => {
@@ -2458,6 +2505,9 @@ export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'E
   logger.info('Old join requests expired', { n: await expireJoinRequests(now).catch((e) => { logger.warn('Join requests not expired', e as Error); return -1; }) });
   // Kept answers of calls that may be sent twice (once.ts), after a week.
   logger.info('Old call answers deleted', { n: await cleanRequests().catch((e) => { logger.warn('Call answers not cleaned', e as Error); return -1; }) });
+  // Stripe events are kept 30 days, so one sent twice is handled once.
+  const events = await db().collection('stripeEvents').where('until', '<', now).limit(400).get().catch(() => null);
+  if (events?.size) { const b = db().batch(); events.docs.forEach((d) => b.delete(d.ref)); await b.commit(); }
 });
 
 /** The app creator runs the clean-up for one company now. On the emulators the tests pass a day in the future. */
@@ -2468,3 +2518,510 @@ export const cleanMediaNow = onCall({ timeoutSeconds: 540, memory: '512MiB' }, a
   const now = process.env.FUNCTIONS_EMULATOR === 'true' && Number(req.data?.now) > 0 ? Number(req.data.now) : Date.now();
   return runClean(now, orgId);
 });
+
+/* ---------- 19. Payments: plans, cards and invoices through Stripe (payments.ts), on the web only ---------- */
+// The store apps sell nothing and show no prices (store/README.md); everything here is called from the web app.
+
+const DAY_MS = 86400_000;
+const PAYMENTS_OFF = N_('Payments aren\'t set up yet. Write to info@fratius.com.');
+async function payOrFail() {
+  const cfg = await payConfig();
+  const pay = payWith(STRIPE_SECRET_KEY.value(), cfg.mode);
+  if (!pay || !cfg.mode) throw fail('failed-precondition', PAYMENTS_OFF);
+  return { pay, cfg };
+}
+/** Stripe's price for a lookup key (the fake Stripe of the tests uses the key itself). */
+function priceId(cfg: Awaited<ReturnType<typeof payConfig>>, key: string): string {
+  if (cfg.mode === 'fake') return key;
+  const id = cfg.prices?.[key];
+  if (!id) throw fail('failed-precondition', PAYMENTS_OFF);
+  return id;
+}
+async function appUrl(): Promise<string> {
+  const u = (await db().doc('config/web').get()).data()?.url;
+  return typeof u === 'string' && /^https:\/\//.test(u) ? u : 'https://app.fratius.com';
+}
+/** payments/{org}, server only: the company's Stripe customer and subscription, in one mode (test or live). */
+interface PayDoc {
+  customerId?: string; subscriptionId?: string; attempt?: number; offer?: string | null; mode?: string | null;
+  /** Net amount of the first invoice after discounts, for the confirmation email. */
+  firstNet?: number;
+  /** A card was added (or the first payment made): no second free trial. */
+  confirmedAt?: number | null;
+  /** A billingStart running now (another tab waits), and when Stripe was last read for billing. */
+  starting?: number | null;
+  syncedAt?: number;
+}
+const payDoc = (orgId: string) => db().doc(`payments/${orgId}`);
+/**
+ * The company's Stripe ids in the mode payments run in now. After switching from test keys to live ones the test
+ * customer and subscription don't exist in live mode: the company starts again (attempt keeps counting).
+ */
+async function payState(orgId: string, mode: string | null): Promise<PayDoc> {
+  const p = ((await payDoc(orgId).get()).data() || {}) as PayDoc;
+  return (p.mode || null) === mode || !p.customerId ? p : { attempt: p.attempt };
+}
+const keyOf = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex').slice(0, 16);
+const planName = (p: string | null | undefined) => PLANS[p || ''] || p || '';
+function needOwner(w: Who) {
+  if (w.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can change the plan and the card.');
+}
+
+/** Vans in use (not retired); kept on the company as fleetSize for the plan's limit (firestore.rules). */
+async function countFleet(orgId: string): Promise<number> {
+  const col = db().collection(`orgs/${orgId}/vehicles`);
+  const [all, retired] = await Promise.all([col.count().get(), col.where('retired', '==', true).count().get()]);
+  const n = Math.max(0, all.data().count - retired.data().count);
+  await db().doc(`orgs/${orgId}`).update({ fleetSize: n }).catch(() => {});
+  return n;
+}
+export const countVans = onDocumentWritten({ document: 'orgs/{orgId}/vehicles/{vanId}', timeoutSeconds: 30, memory: '256MiB' }, async (e) => {
+  const before = e.data?.before?.data(), after = e.data?.after?.data();
+  const was = !!before && before.retired !== true, is = !!after && after.retired !== true;
+  if (was !== is) await countFleet(e.params.orgId);
+});
+function roomFor(plan: PlanId, addon: boolean, fleet: number) {
+  const max = allowedVans(plan, addon);
+  if (max != null && fleet > max) {
+    throw fail('failed-precondition', 'This company has {n} vans; {plan} is for up to {max}. Choose a bigger plan or retire vans first.', { n: fleet, plan: planName(plan), max });
+  }
+}
+
+/**
+ * Writes the company's billing from Stripe's subscription, if it's still the company's subscription and nothing read
+ * from Stripe later was written already (readAt: when it was read; a slower handler doesn't write an older state).
+ */
+async function saveBilling(orgId: string, sub: Sub, readAt: number): Promise<Billing | null> {
+  const ref = db().doc(`orgs/${orgId}`);
+  return db().runTransaction(async (tx) => {
+    const [d, p] = await Promise.all([tx.get(ref), tx.get(payDoc(orgId))]);
+    const pd = p.data() as PayDoc | undefined;
+    if (!d.exists || pd?.subscriptionId !== sub.id) return null;
+    if ((pd.syncedAt || 0) > readAt) return (d.data()?.billing as Billing | undefined) || null;
+    const b = billingOf(sub, d.data()?.billing as Partial<Billing> | undefined);
+    tx.update(ref, { billing: b });
+    tx.update(payDoc(orgId), { syncedAt: readAt });
+    return b;
+  });
+}
+
+/**
+ * Once the card is on file (or the first payment made): the app creator hears of it, and the
+ * owner gets the email with what was ordered, the terms and how to cancel. Once per company, whoever sees it first
+ * (billingConfirm or the webhook).
+ */
+async function confirmedOnce(orgId: string, b: Billing) {
+  if (b.status !== 'trialing' && b.status !== 'active') return;
+  const pd = payDoc(orgId);
+  const first = await db().runTransaction(async (tx) => {
+    const p = (await tx.get(pd)).data() as PayDoc | undefined;
+    if (!p || p.confirmedAt) return null;
+    tx.update(pd, { confirmedAt: Date.now() });
+    if (p.offer) tx.set(db().doc(`offers/${p.offer}/uses/${orgId}`), { confirmedAt: Date.now() }, { merge: true });
+    return p;
+  });
+  if (!first) return;
+  const org = (await db().doc(`orgs/${orgId}`).get()).data() || {};
+  const owners = (await db().collection(`orgs/${orgId}/members`).where('role', 'in', ['owner', 'admin']).get()).docs;
+  const owner = owners.find((d) => d.id === org.createdBy) || owners[0];
+  const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
+  const what = `${planName(b.plan)}${b.addon ? ' + 15' : ''} ${b.interval === 'year' ? 'yearly' : 'monthly'}${b.offer ? ` · link ${b.offer}` : ''}${b.testMode ? ' · TEST' : ''}`;
+  await Promise.all(creators.map((c) => notify(c, {
+    title: b.status === 'active' ? `Paid: ${org.name}` : `Card added: ${org.name}`, body: what, url: '/', tag: `pay-${orgId}`,
+  }).catch(() => 0)));
+  const smtp = (SMTP_URL.value() || '').trim();
+  const email = String(owner?.data()?.email || '');
+  if (!owner || !email || !smtp || smtp === 'none') return;
+  const lang = await langOf(owner.id);
+  const net = b.plan && PLAN_IDS.includes(b.plan as PlanId) ? netCents(b.plan as PlanId, b.interval || 'month', !!b.addon) : 0;
+  const mail = orderMail({
+    lang, name: String(owner.data().name || '').split(' ')[0] || email.split('@')[0], company: String(org.name || ''), b,
+    netCents: net, firstCents: first.firstNet ?? net, appUrl: await appUrl(), termsVersion: TERMS_VERSION,
+  });
+  const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
+  await nodemailer.createTransport(smtp).sendMail({ from: `Fratius <${from}>`, to: email, replyTo: SIGNUP_TO, bcc: SIGNUP_TO, subject: mail.subject, text: mail.text, html: mail.html })
+    .then(() => pd.update({ mailedAt: Date.now() }), (e) => logger.error('Order email not sent', { orgId, message: String((e as Error)?.message || e) }));
+}
+
+/** For the website: whether to send its buttons to the sign-up page (only with live keys), and the yearly offer. */
+export const billingInfo = onRequest({ timeoutSeconds: 10, memory: '256MiB', maxInstances: 3, concurrency: 50 }, async (_req, res) => {
+  const cfg = await payConfig();
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS });
+});
+
+/**
+ * A sign-up link and whether this company may use it. A company that already took one of its uses (it started and
+ * comes back, another card) keeps it.
+ */
+async function offerFor(code: string, orgId: string | null): Promise<{ offer: Offer | null; why: string | null }> {
+  if (!code) return { offer: null, why: null };
+  const o = OFFER_CODE.test(code) ? ((await db().doc(`offers/${code}`).get()).data() as Offer | undefined) : undefined;
+  const held = !!o && !!orgId && ID.test(orgId) && (await db().doc(`offers/${code}/uses/${orgId}`).get()).exists;
+  const why = offerUsable(o, Date.now(), held);
+  return { offer: why ? null : o!, why };
+}
+
+/** For the sign-up page and the plan screen: Stripe's publishable key, the prices, and the offer of a sign-up link. */
+export const billingConfig = onCall({ timeoutSeconds: 15 }, async (req) => {
+  const cfg = await payConfig();
+  const code = String(req.data?.offer || '').trim().toUpperCase();
+  const orgId = req.auth?.uid && typeof req.data?.orgId === 'string' ? req.data.orgId : null;
+  const { offer, why } = await offerFor(code, orgId);
+  const on = cfg.mode === 'fake' || (!!cfg.mode && !!cfg.publishableKey);
+  return {
+    mode: on ? cfg.mode : null, publishableKey: on ? cfg.publishableKey || null : null,
+    prices: PRICE_CENTS, planVans: PLAN_VANS, addonVans: ADDON_VANS, trialDays: TRIAL_DAYS,
+    launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
+    offer: offer ? offerPublic(offer) : null, offerError: why ? { t: why } : null,
+  };
+});
+
+function readAddress(v: unknown): Address | null {
+  const a = (v && typeof v === 'object' ? (v as { address?: unknown }).address : null) as Record<string, unknown> | null;
+  if (!a) return null;
+  const country = clean(a.country, 2).toUpperCase();
+  const line1 = clean(a.line1, 200), city = clean(a.city, 100), postal = clean(a.postal_code, 20);
+  if (!/^[A-Z]{2}$/.test(country) || !line1 || !city) return null;
+  return { line1, city, postal_code: postal, country, ...(clean(a.line2, 200) ? { line2: clean(a.line2, 200) } : {}), ...(clean(a.state, 100) ? { state: clean(a.state, 100) } : {}) };
+}
+
+/**
+ * The free days of a new subscription, as the sign-up page shows them (components/plansetup.tsx): a sign-up link's;
+ * for a monthly plan 30 from now when the company never had a card (in this mode), what is left of a trial from
+ * before payments; yearly none.
+ */
+function trialFor(offer: Offer | null, interval: Interval, org: Record<string, unknown>, p: PayDoc, now: number): number | null {
+  if (offer) return offer.trialDays > 0 ? now + offer.trialDays * DAY_MS : null;
+  if (interval !== 'month' || p.confirmedAt) return null;
+  const b = org.billing as Partial<Billing> | undefined;
+  if (b?.via !== 'stripe') {
+    const st = standing(org);
+    if (st.standing === 'trial' || st.standing === 'trial_over') return (st.trialEnd || 0) > now + 3600_000 ? st.trialEnd : null;
+  }
+  return now + TRIAL_DAYS * DAY_MS;
+}
+
+/**
+ * Step 1 of sign-up's payment, right after the company is made (or later, for a company without a plan): the Stripe
+ * customer with the company's billing address and VAT ID, and the subscription. Returns what the browser confirms
+ * with Stripe.js (the card for a trial, or the first payment), with the exact terms: the page checks them against
+ * what it showed before the card is used.
+ */
+export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY, SMTP_URL, WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req, { unpaid: true });
+  needOwner(who);
+  const { pay, cfg } = await payOrFail();
+  const org = (await db().doc(`orgs/${who.orgId}`).get()).data() || {};
+  const code = String(req.data?.offer || '').trim().toUpperCase();
+  const { offer, why } = await offerFor(code, who.orgId);
+  if (why) throw fail('failed-precondition', why);
+  const plan = offer?.plan || PLAN_IDS.find((x) => x === req.data?.plan);
+  if (!plan) throw fail('invalid-argument', 'Choose a plan.');
+  const interval: Interval = offer?.interval || (req.data?.interval === 'year' ? 'year' : 'month');
+  const addon = req.data?.addon === true && plan !== 'premium';
+  roomFor(plan, addon, await countFleet(who.orgId));
+  const address = readAddress(req.data?.address);
+  if (!address) throw fail('invalid-argument', 'Enter the company\'s billing address.');
+
+  // One start at a time per company (two tabs would make two subscriptions).
+  const pd = payDoc(who.orgId);
+  const now = Date.now();
+  await db().runTransaction(async (tx) => {
+    const x = (await tx.get(pd)).data() as PayDoc | undefined;
+    if (x?.starting && now - x.starting < 60_000) throw fail('aborted', 'Already working on it. Wait a moment, then try again.');
+    tx.set(pd, { starting: now }, { merge: true });
+  });
+  try {
+    const p = await payState(who.orgId, cfg.mode);
+    const readAt = Date.now();
+    const cur = p.subscriptionId ? await pay.getSubscription(p.subscriptionId) : null;
+    if (cur && cur.card && ['trialing', 'active', 'past_due', 'unpaid'].includes(cur.status)) {
+      throw fail('failed-precondition', 'This company already has a plan. Change it under Account, then Plan and billing.');
+    }
+
+    // The customer first (also when coming back): the company's billing address and VAT ID go on its invoices.
+    const name = clean((req.data?.address as { name?: unknown } | undefined)?.name, 100) || String(org.name || '');
+    const email = String(req.auth?.token?.email || '');
+    const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
+    const vatKind = vat ? vatType(/^[A-Z]{2}/.test(vat) && vat.slice(0, 2) !== 'EL' ? vat.slice(0, 2) : address.country) : null;
+    // Without Stripe Tax: reverse charge for companies outside Germany (payments.ts); Stripe Tax decides by itself.
+    const reverse = cfg.tax?.mode === 'automatic' ? undefined : reverseCharge(address.country, !!vatKind);
+    const cust = { name, email, address, locales: localesFor(await langOf(who.uid), address.country), orgId: who.orgId, reverse };
+    let customer = p.customerId;
+    if (customer) await pay.updateCustomer(customer, cust);
+    else {
+      // Stripe keeps a key's first answer for a day, an error too: the key changes with what is sent.
+      customer = await pay.createCustomer(cust, `cus-${who.orgId}-${cfg.mode}-${keyOf(cust)}`);
+      await pd.set({ customerId: customer, subscriptionId: null, mode: cfg.mode, confirmedAt: null, createdAt: Date.now() }, { merge: true });
+    }
+    if (vatKind) {
+      try { await pay.addTaxId(customer, vatKind, vat); } catch (e) {
+        logger.warn('VAT ID refused', { orgId: who.orgId, message: String((e as Error)?.message || e) });
+        throw fail('invalid-argument', 'Check the VAT ID {id}: it should start with the country code, like DE123456789.', { id: vat });
+      }
+    }
+
+    // The discount: the sign-up link's, or the launch offer on a yearly plan (on the plan only, not on the add-on).
+    let coupon: string | null = null;
+    const net = netCents(plan, interval, addon);
+    let discount = 0;
+    if (offer && (offer.percentOff || offer.amountOff)) {
+      const c = offerCoupon(offer);
+      coupon = c.id;
+      await pay.ensureCoupon(c.id, { percentOff: offer.percentOff, amountOff: offer.amountOff, months: c.months, name: `Fratius offer ${offer.code}` });
+      discount = offer.percentOff ? Math.round((net * offer.percentOff) / 100) : Math.min(net, offer.amountOff || 0);
+    } else if (!offer && interval === 'year' && (await launchOfferOn())) {
+      coupon = LAUNCH_COUPON;
+      discount = Math.round((PRICE_CENTS[plan].year * YEARLY_LAUNCH_OFF) / 100);
+    }
+    const trial = trialFor(offer, interval, org, p, now);
+    const trialEnd = trial && Math.floor(trial / 3600_000) * 3600_000;
+    const firstNet = Math.max(0, net - discount);
+    const terms = keyOf({ plan, interval, addon, offer: offer?.code || null, coupon, trialEnd, reverse: reverse ?? null, country: address.country, vat });
+
+    // Asked again (another card, a reload): the same subscription while the terms are the same, else a new one.
+    if (cur && cur.next && cur.metadata.terms === terms && !['canceled', 'incomplete_expired'].includes(cur.status)) {
+      await saveBilling(who.orgId, cur, readAt);
+      return { kind: cur.next.kind, clientSecret: cur.next.clientSecret, amount: cur.next.amount, trialEnd: cur.trialEnd, firstNet };
+    }
+    if (cur && !['canceled', 'incomplete_expired'].includes(cur.status)) await pay.cancelNow(cur.id);
+
+    // The sign-up link's use is taken now, before anything can be paid with it.
+    if (offer) {
+      await db().runTransaction(async (tx) => {
+        const oref = db().doc(`offers/${offer.code}`), uref = oref.collection('uses').doc(who.orgId);
+        const [o, u] = await Promise.all([tx.get(oref), tx.get(uref)]);
+        if (u.exists) return;
+        const no = offerUsable(o.data() as Offer | undefined);
+        if (no) throw fail('failed-precondition', no);
+        tx.set(uref, { at: Date.now(), by: who.uid });
+        tx.update(oref, { uses: FieldValue.increment(1) });
+      });
+    }
+
+    // Counted before Stripe is asked, so a try that failed half-way never meets its cached answer again.
+    const attempt = (p.attempt || 0) + 1;
+    await pd.set({ attempt }, { merge: true });
+    const input = {
+      customer,
+      prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
+      trialEnd, coupon, tax: cfg.tax, reverse: !!reverse, metadata: { orgId: who.orgId, terms, ...(offer ? { offer: offer.code } : {}) },
+    };
+    const madeAt = Date.now();
+    const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
+    await pd.set({ subscriptionId: sub.id, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });
+    const b = await saveBilling(who.orgId, sub, madeAt);
+    logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
+    if (b && !sub.next) await confirmedOnce(who.orgId, b);
+    return { kind: sub.next?.kind || 'none', clientSecret: sub.next?.clientSecret || null, amount: sub.next?.amount || 0, trialEnd: sub.trialEnd, firstNet };
+  } finally {
+    await pd.set({ starting: null }, { merge: true }).catch(() => {});
+  }
+});
+
+/**
+ * Step 2, after Stripe.js confirmed the card (or the payment) in the browser: the card becomes the subscription's,
+ * and billing is written from Stripe. Called again while a payment is still on its way; the webhook gets there too.
+ */
+export const billingConfirm = onCall({ timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY, SMTP_URL, WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req, { unpaid: true });
+  needOwner(who);
+  const { pay, cfg } = await payOrFail();
+  const p = await payState(who.orgId, cfg.mode);
+  if (!p.subscriptionId || !p.customerId) throw fail('failed-precondition', 'Choose a plan first.');
+  const readAt = Date.now();
+  let sub = await pay.getSubscription(p.subscriptionId);
+  if (!sub) throw fail('failed-precondition', 'Choose a plan first.');
+  const si = String(req.data?.setupIntent || '');
+  if (!sub.card && /^seti_[A-Za-z0-9_]{6,120}$/.test(si)) {
+    const card = await pay.setupCard(si, p.customerId);
+    if (card) sub = await pay.useCard(sub.id, p.customerId, card);
+  }
+  const b = await saveBilling(who.orgId, sub, readAt);
+  if (b) await confirmedOnce(who.orgId, b);
+  return { billing: b, next: sub.next };
+});
+
+/** Stripe's page for the card, billing address, VAT ID, invoices and cancelling. */
+export const billingPortal = onCall({ timeoutSeconds: 30, secrets: [STRIPE_SECRET_KEY] }, async (req) => {
+  const who = await guard(req, { unpaid: true });
+  needOwner(who);
+  const { pay, cfg } = await payOrFail();
+  const p = await payState(who.orgId, cfg.mode);
+  if (!p.customerId) throw fail('failed-precondition', 'Choose a plan first.');
+  return { url: await pay.portalUrl(p.customerId, `${await appUrl()}/plan`, cfg.portalConfig || null) };
+});
+
+/**
+ * Another plan, the add-on, or monthly to yearly. Upgrades are charged now for the rest of the period (nothing in the
+ * trial); downgrades are credited on the next invoice. Not below the vans in use; yearly to monthly by email. Only
+ * what changes is touched: an add-on alone leaves the plan on the price it has.
+ */
+export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY] }, async (req) => {
+  const who = await guard(req, { unpaid: true });
+  needOwner(who);
+  const { pay, cfg } = await payOrFail();
+  const p = await payState(who.orgId, cfg.mode);
+  const readAt = Date.now();
+  const sub = p.subscriptionId ? await pay.getSubscription(p.subscriptionId) : null;
+  if (!sub || !sub.card || !['trialing', 'active', 'past_due'].includes(sub.status)) throw fail('failed-precondition', 'Choose a plan first.');
+  const cur = planOf(sub);
+  if (!cur.plan || !cur.interval) throw fail('failed-precondition', 'This plan can\'t be changed in the app. Write to info@fratius.com.');
+  const plan = PLAN_IDS.find((x) => x === req.data?.plan) || cur.plan;
+  const interval: Interval = req.data?.interval === 'year' || req.data?.interval === 'month' ? req.data.interval : cur.interval;
+  if (cur.interval === 'year' && interval === 'month') throw fail('failed-precondition', 'A yearly plan can\'t switch to monthly in the app. Write to info@fratius.com.');
+  const addon = (req.data?.addon === undefined ? cur.addon : req.data.addon === true) && plan !== 'premium';
+  if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub, readAt), next: null };
+  roomFor(plan, addon, await countFleet(who.orgId));
+
+  const main = sub.items.find((i) => { const r = readKey(i.key); return r && r.item !== 'addon'; });
+  const extra = sub.items.find((i) => readKey(i.key)?.item === 'addon');
+  if (!main) throw fail('failed-precondition', 'This plan can\'t be changed in the app. Write to info@fratius.com.');
+  const changes: { id?: string; price?: string; deleted?: boolean }[] = [];
+  if (plan !== cur.plan || interval !== cur.interval) changes.push({ id: main.id, price: priceId(cfg, priceKey(plan, interval)) });
+  if (addon && extra) { if (interval !== cur.interval) changes.push({ id: extra.id, price: priceId(cfg, priceKey('addon', interval)) }); }
+  else if (addon) changes.push({ price: priceId(cfg, priceKey('addon', interval)) });
+  else if (extra) changes.push({ id: extra.id, deleted: true });
+  const perMonth = (pl: PlanId, i: Interval, a: boolean) => netCents(pl, i, a) / (i === 'year' ? 12 : 1);
+  const up = interval !== cur.interval || perMonth(plan, interval, addon) > perMonth(cur.plan, cur.interval, cur.addon);
+  const charge = up && sub.status !== 'trialing';
+  // The launch offer when switching to yearly, unless the plan already has a discount (a sign-up link's stays).
+  const coupon = interval === 'year' && cur.interval === 'month' && !sub.coupons.length && (await launchOfferOn()) ? LAUNCH_COUPON : null;
+  const changedAt = Date.now();
+  let next: Sub;
+  try { next = await pay.changeItems(sub.id, changes, { charge, coupon }); } catch (e) {
+    const code = String((e as { code?: string; type?: string })?.code || (e as { type?: string })?.type || '');
+    logger.warn('Plan not changed', { orgId: who.orgId, code, message: String((e as Error)?.message || e) });
+    if (/card|payment|authentication|declin/i.test(code + ' ' + String((e as Error)?.message || ''))) {
+      throw fail('failed-precondition', 'The bank didn\'t accept the payment for the change. Check the card under payment details, then try again.');
+    }
+    throw e;
+  }
+  const b = await saveBilling(who.orgId, next, changedAt);
+  logger.info('Plan changed', { orgId: who.orgId, from: cur, to: { plan, interval, addon } });
+  // Only a charge made by this change can need the bank's confirmation (an older open invoice is the portal's).
+  return { billing: b, next: charge && next.next?.kind === 'payment' ? next.next : null };
+});
+
+/** The app creator: the yearly launch offer (30 % off the first year) on or off. */
+export const setLaunchOffer = onCall({ timeoutSeconds: 15 }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const on = req.data?.on === true;
+  await db().doc('platform/billing').set({ launchOffer: on, launchOfferBy: req.auth.uid, launchOfferAt: Date.now() }, { merge: true });
+  return { launchOffer: on };
+});
+
+/**
+ * The app creator makes (or changes, or ends) a sign-up link for one DSP: its free days, a discount and a fixed plan.
+ * The link is <web app>/start?offer=CODE; it works maxUses times. Offers are in offers/{code} (the creator reads them).
+ */
+export const saveOffer = onCallOnce('saveOffer', { timeoutSeconds: 15 }, async (req) => {
+  const uid = req.auth?.uid;
+  if (!uid || req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const d = (req.data || {}) as Record<string, unknown>;
+  const num = (v: unknown, lo: number, hi: number) => (v == null || v === '' ? null : Number.isFinite(Number(v)) ? Math.max(lo, Math.min(hi, Math.round(Number(v)))) : null);
+  let code = String(d.code || '').trim().toUpperCase();
+  const ref = () => db().doc(`offers/${code}`);
+  if (code) {
+    if (!OFFER_CODE.test(code) || !(await ref().get()).exists) throw fail('not-found', 'This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
+    if (d.ended === true) { await ref().update({ ended: true, endedAt: Date.now() }); return { code, url: `${await appUrl()}/start?offer=${code}` }; }
+    // A link already used keeps its terms (Stripe's discount was made from them); a new link is the way to change them.
+    const used = Number((await ref().get()).data()?.uses || 0) > 0;
+    if (used) throw fail('failed-precondition', 'This link was used already, so its terms stay. Make a new link instead.');
+  } else {
+    for (let i = 0; i < 5 && (!code || (await ref().get()).exists); i++) code = newOfferCode();
+  }
+  const plan = PLAN_IDS.find((x) => x === d.plan) || null;
+  const interval: Interval | null = d.interval === 'month' || d.interval === 'year' ? d.interval : null;
+  const percentOff = num(d.percentOff, 1, 100);
+  const amountOff = percentOff ? null : num(d.amountOff, 1, 1_000_000);
+  const o: Offer = {
+    code, note: clean(d.note, 120), plan, interval,
+    trialDays: num(d.trialDays, 0, 365) ?? TRIAL_DAYS,
+    percentOff, amountOff, months: percentOff || amountOff ? num(d.months, 1, 60) : null,
+    validUntil: num(d.validUntil, Date.now(), Date.now() + 730 * DAY_MS), maxUses: num(d.maxUses, 1, 1000) ?? 1, uses: 0, ended: false,
+    createdAt: Date.now(), createdBy: uid,
+  };
+  if (amountOff && !plan) throw fail('invalid-argument', 'A discount in euros needs a fixed plan.');
+  await ref().set(o);
+  logger.info('Offer saved', { code, plan, interval, trialDays: o.trialDays, percentOff, amountOff });
+  return { code, url: `${await appUrl()}/start?offer=${code}` };
+});
+
+/**
+ * Stripe tells us about subscriptions and invoices. The signature is checked with the signing secret Deploy stored;
+ * each event is handled once (stripeEvents/{id}); the subscription is then read back from Stripe, so events that come
+ * late or out of order change nothing.
+ */
+export const stripeWebhook = onRequest({ timeoutSeconds: 60, memory: '256MiB', maxInstances: 5, concurrency: 20, secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SMTP_URL, WEBPUSH_KEYS] }, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (req.method !== 'POST') { res.status(405).send('POST only'); return; }
+  const cfg = await payConfig(true);
+  const pay = payWith(STRIPE_SECRET_KEY.value(), cfg.mode);
+  const secret = (STRIPE_WEBHOOK_SECRET.value() || '').trim();
+  if (!pay || !secret || secret === 'none') { res.status(503).send('Payments are off.'); return; }
+  let ev: Awaited<ReturnType<Pay['event']>>;
+  try { ev = await pay.event(req.rawBody, String(req.headers['stripe-signature'] || ''), secret); } catch {
+    logger.warn('Stripe webhook with a wrong signature');
+    res.status(400).send('Wrong signature'); return;
+  }
+  if (ev.live !== (cfg.mode === 'live')) { res.json({ received: true, ignored: 'other mode' }); return; }
+  const seen = db().doc(`stripeEvents/${ev.id}`);
+  try { await seen.create({ type: ev.type, at: Date.now(), until: Date.now() + 30 * DAY_MS }); } catch { res.json({ received: true, duplicate: true }); return; }
+  try {
+    if (ev.subscription) {
+      const q = await db().collection('payments').where('subscriptionId', '==', ev.subscription).limit(1).get();
+      const orgId = q.docs[0]?.id;
+      const readAt = Date.now();
+      const sub = orgId ? await pay.getSubscription(ev.subscription) : null;
+      const b = orgId && sub ? await saveBilling(orgId, sub, readAt) : null;
+      if (orgId && b) {
+        await confirmedOnce(orgId, b);
+        await tellOwners(orgId, ev.type, b);
+      }
+      logger.info('Stripe event', { type: ev.type, orgId: orgId || null, status: b?.status || null });
+    } else if (ev.customer && /^customer\.(updated|tax_id\.)/.test(ev.type)) {
+      // A new billing address or VAT ID on Stripe's page: reverse charge or German VAT again (without Stripe Tax).
+      const q = await db().collection('payments').where('customerId', '==', ev.customer).limit(1).get();
+      const pd = q.docs[0]?.data() as PayDoc | undefined;
+      if (pd && cfg.tax?.mode === 'rate' && cfg.tax.rateId) {
+        const info = await pay.taxInfo(ev.customer);
+        if (info.country) await pay.setReverse(ev.customer, pd.subscriptionId || null, reverseCharge(info.country, info.vatIds > 0), cfg.tax.rateId);
+      }
+    }
+    res.json({ received: true });
+  } catch (e) {
+    await seen.delete().catch(() => {});
+    logger.error('Stripe event not handled', { type: ev.type, id: ev.id, message: String((e as Error)?.message || e) });
+    res.status(500).send('Not handled, send it again.');
+  }
+});
+
+/** A payment that didn't go through, and the end of a trial: the owners hear it on their phones (Stripe emails too). */
+async function tellOwners(orgId: string, type: string, b: Billing) {
+  const owners = (await db().collection(`orgs/${orgId}/members`).where('role', 'in', ['owner', 'admin']).get()).docs.map((d) => d.id);
+  if (type === 'invoice.payment_failed') {
+    await Promise.all(owners.map((uid) => notify(uid, (lang) => ({
+      title: tr(lang, 'Payment didn\'t go through'),
+      body: tr(lang, 'Stripe couldn\'t charge the card for Fratius. Check the card under Account, then Plan and billing.'),
+      url: '/plan', tag: `pay-${orgId}`,
+    })).catch(() => 0)));
+  } else if (type === 'customer.subscription.trial_will_end' && b.status === 'trialing') {
+    await Promise.all(owners.map((uid) => notify(uid, (lang) => ({
+      title: tr(lang, 'Your free trial ends soon'),
+      body: tr(lang, 'Your plan starts on {date} and the card is charged then. Change or cancel it under Account, then Plan and billing.', { date: new Date(b.trialEnd).toLocaleDateString(payLoc(lang), { day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }) }),
+      url: '/plan', tag: `pay-${orgId}`,
+    })).catch(() => 0)));
+  }
+}
+
+/** A company that is closed: its plan ends now, nothing more is charged (Stripe keeps its invoices). */
+async function endPlan(orgId: string) {
+  const p = (await payDoc(orgId).get()).data() as PayDoc | undefined;
+  if (!p?.subscriptionId) return;
+  const pay = payWith(STRIPE_SECRET_KEY.value(), (await payConfig()).mode);
+  if (!pay) { logger.error('Plan of a closed company not cancelled: payments are off', { orgId, subscription: p.subscriptionId }); return; }
+  await pay.cancelNow(p.subscriptionId);
+  await payDoc(orgId).update({ closedAt: Date.now() });
+}

@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone ऐप App Store पर उपलब्ध है। Android ऐप जल्द ही Google Play पर आने वाला है।",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android ऐप Google Play पर उपलब्ध है। iPhone ऐप जल्द ही App Store पर आने वाला है।",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android पर, जब तक Google Play पर ऐप नहीं आ जाता, Fratius वेब ऐप के रूप में चलता है: इसे ब्राउज़र में खोलें और होम स्क्रीन पर जोड़ें।",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone पर, जब तक App Store पर ऐप नहीं आ जाता, Fratius वेब ऐप के रूप में चलता है: इसे Safari में खोलें और होम स्क्रीन पर जोड़ें।"
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone पर, जब तक App Store पर ऐप नहीं आ जाता, Fratius वेब ऐप के रूप में चलता है: इसे Safari में खोलें और होम स्क्रीन पर जोड़ें।",
+ "Billing": "बिलिंग अवधि",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "वेब ऐप में कार्ड के साथ अपना अकाउंट और अपनी कंपनी बनाएँ। आपके 30 दिन तुरंत शुरू होते हैं और उनके ख़त्म होने से पहले कोई पैसा नहीं कटता।",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "कीमतें प्रति वर्ष, VAT के बिना। सालाना प्लान का भुगतान साइन-अप पर होता है, मुफ़्त दिनों के बिना।",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Basic या Pro पर कुछ और वैन चाहिए? €10 प्रति माह में 15 वैन जोड़ें।",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "अपनी कंपनी की पुष्टि के लिए आप साइन-अप पर कार्ड जोड़ते हैं। 30 मुफ़्त दिनों में कोई पैसा नहीं कटता; उनके ख़त्म होने से पहले कभी भी रद्द करें।",
+ "Monthly": "मासिक",
+ "Yearly: {n} % off the first year": "सालाना: पहले साल {n}% की छूट",
+ "Yearly": "सालाना",
+ "the first year": "पहले साल",
+ "a year": "प्रति वर्ष",
+ "then {price} a year": "फिर {price} प्रति वर्ष",
+ "{n} % off the first year": "पहले साल {n}% की छूट",
+ "Paid yearly": "सालाना भुगतान",
+ "Data processing agreement": "डेटा प्रोसेसिंग समझौता"
 }

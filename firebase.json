@@ -92,6 +92,13 @@
             "functionId": "websiteSignup",
             "region": "us-central1"
           }
+        },
+        {
+          "source": "/api/billing",
+          "function": {
+            "functionId": "billingInfo",
+            "region": "us-central1"
+          }
         }
       ],
       "headers": [

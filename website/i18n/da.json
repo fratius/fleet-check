@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone-appen er i App Store. Android-appen er på vej til Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android-appen er på Google Play. iPhone-appen er på vej til App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "På Android kører Fratius som webapp, indtil appen er ude på Google Play: åbn den i browseren, og føj den til hjemmeskærmen.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "På iPhone kører Fratius som webapp, indtil appen er ude i App Store: åbn den i Safari, og føj den til hjemmeskærmen."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "På iPhone kører Fratius som webapp, indtil appen er ude i App Store: åbn den i Safari, og føj den til hjemmeskærmen.",
+ "Billing": "Faktureringsperiode",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Opret din konto og dit firma i webappen med et kort. Dine 30 dage starter med det samme, og der trækkes intet, før de er slut.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Priser pr. år ekskl. moms. Årsplaner betales ved tilmeldingen, uden de gratis dage.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Brug for lidt flere varebiler på Basic eller Pro? Tilføj 15 for 10 € pr. måned.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Du tilføjer et kort ved tilmeldingen for at bekræfte dit firma. Der trækkes intet i de 30 gratis dage; opsig når som helst inden da.",
+ "Monthly": "Månedlig",
+ "Yearly: {n} % off the first year": "Årlig: {n}% rabat det første år",
+ "Yearly": "Årlig",
+ "the first year": "det første år",
+ "a year": "pr. år",
+ "then {price} a year": "derefter {price} pr. år",
+ "{n} % off the first year": "{n}% rabat det første år",
+ "Paid yearly": "Betales årligt",
+ "Data processing agreement": "Databehandleraftale"
 }

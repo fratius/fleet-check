@@ -39,6 +39,8 @@ function parseViewAs(v: unknown): ViewAs | null {
   return { org: x.org, role, st: role !== 'owner' && typeof x.st === 'string' ? x.st : null };
 }
 
+export interface CreateOrgOptions { payments?: boolean; plan?: string | null; interval?: 'month' | 'year'; name?: string; open?: boolean }
+
 export interface Session {
   status: Status;
   mode: 'firebase' | 'local';
@@ -105,7 +107,8 @@ export interface Session {
   setTier(t: Tier): Promise<void>;
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string, name: string): Promise<void>;
-  createOrg(company: string, station: string, acceptedTerms?: string | null): Promise<void>;
+  /** A new company (the server's createCompany); its id. With payments: made, then opened once the card is in. */
+  createOrg(company: string, station: string, acceptedTerms?: string | null, o?: CreateOrgOptions): Promise<string>;
   /** Uses an invite link (one person, 24 hours) with the person's details. */
   joinWithLink(token: string, details: JoinDetails): Promise<{ orgName: string; role: string; stationName: string }>;
   /** Makes (or reopens) the person's demo company with made-up stations, people, vans and checks. `fresh` starts it over. */
@@ -313,14 +316,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
    * A new company with its first station and 30 days free; the person becomes its owner. Made by the server
    * (createCompany), which records the trial and the accepted terms and tells the app creator.
    */
-  const createOrg = useCallback(async (company: string, station: string, accepted: string | null = null) => {
+  const createOrg = useCallback(async (company: string, station: string, accepted: string | null = null, o: CreateOrgOptions = {}) => {
     const u = fb()!.auth.currentUser || fbUser.current!;
     const r = await ai.createCompany({
-      company: company.trim(), station: station.trim(), mainStation: t('Main station'), name: displayName(u),
-      source: signupIntent.signup ? 'website' : 'app', plan: signupIntent.plan, terms: accepted,
+      company: company.trim(), station: station.trim(), mainStation: t('Main station'), name: o.name || displayName(u),
+      source: signupIntent.signup ? 'website' : 'app', plan: o.plan ?? signupIntent.plan, terms: accepted,
+      ...(o.payments ? { payments: true, interval: o.interval || 'month' } : {}),
     });
+    // With payments the card comes next (components/plansetup.tsx), and the company opens after it.
+    if (o.open === false) return r.orgId;
     signupDone();
     await load(u, r.orgId);
+    return r.orgId;
   }, [load]);
 
   const joinWithLink = useCallback(async (token: string, details: JoinDetails) => {
@@ -510,6 +517,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (store.mode === 'firebase' && uid && !staff) {
       subs.push(onSnapshot(doc(fb()!.db, 'orgs', store.orgId, 'driverRecords', uid),
         (d) => setOwnRecord(d.exists() ? ({ ...(d.data() as Omit<DriverRecord, 'id'>), id: d.id }) : null), () => setOwnRecord(null)));
+    }
+    // The company's plan (billing, which the server writes from Stripe) and the vans counted for it, as they change.
+    if (store.mode === 'firebase') {
+      const orgId = store.orgId;
+      subs.push(onSnapshot(doc(fb()!.db, 'orgs', orgId), (d) => {
+        const x = d.data() as Partial<Org> | undefined;
+        if (x) setOrg((o) => (o && o.id === orgId && (o.billing !== x.billing || o.fleetSize !== x.fleetSize) ? { ...o, billing: x.billing, fleetSize: x.fleetSize } : o));
+      }, () => {}));
     }
     // Type scans and AI speed and cost: only the app creator reads them (the rules refuse everyone else).
     if (seesAiStats) {

@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 
 import { FramesPanel } from '@/components/frames';
 import { Button, Card, Chip, Field, Notice, Photo, Pill, Row, Screen, Segmented, T, secs, useColors } from '@/components/ui';
@@ -98,6 +98,7 @@ export default function AddVehicle() {
     const same = s.vehicles.find((v) => plateKey(v.plate) === pk);
     if (same) { setPlateErr(t('{plate} is already in your fleet.', { plate: vanName(same) })); return; }
     if (!stationId) { setErr(t('Add a station under People first.')); return; }
+    if (full) { setErr(fullText); return; }
     setSaving(true);
     try {
       const fromScan = res?.scan.predicted ? res.scan : null;
@@ -116,6 +117,12 @@ export default function AddVehicle() {
 
   const sp = cls ? makeSpec(cls, attrs) : null;
   const sc = res?.scan;
+  // The plan's vans are all in use (firestore.rules refuses another): the add-on of 15, or the next plan.
+  const maxVans = s.org?.billing?.vans;
+  const full = maxVans != null && (s.org?.fleetSize || 0) >= maxVans && !s.creator;
+  const fullText = s.role === 'owner'
+    ? t('Your plan is for {n} vans and they are all in use. Add 15 more vans, or choose a bigger plan, under Account, then Plan and billing.', { n: maxVans ?? 0 })
+    : t('The company\'s plan is for {n} vans and they are all in use. Ask the owner for more room.', { n: maxVans ?? 0 });
   const conf = sc?.confidence;
   return (
     <Screen edges={[]}>
@@ -123,6 +130,12 @@ export default function AddVehicle() {
         <T v="h1">{t('Add vehicle')}</T>
         <T v="hint">{t('Scan it and the app picks its type, or pick the type yourself.')}</T>
       </View>
+      {full ? (
+        <Card>
+          <Notice tone="bad" text={fullText} />
+          {s.role === 'owner' && Platform.OS === 'web' ? <Button v="primary" title={t('Plan and billing')} onPress={() => router.push('/plan')} /> : null}
+        </Card>
+      ) : null}
 
       <Card>
         <T v="h2">{t('Scan it')}</T>

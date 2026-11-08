@@ -10,7 +10,10 @@
 #   EXPO_TOKEN                personal access token from expo.dev/settings/access-tokens
 #   SMTP_URL                  optional: how the website's request form sends email to info@fratius.com,
 #                             e.g. smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465 (requests are stored either way)
-# Variable (same page, Variables tab), optional:
+#   STRIPE_SECRET_KEY         optional: Stripe's secret key (sk_test_… to test, sk_live_… to take real payments);
+#                             without it payments are off and sign-up works without a card (README, "Payments")
+# Variables (same page, Variables tab), optional:
+#   STRIPE_PUBLISHABLE_KEY    Stripe's publishable key (pk_test_… or pk_live_…, the same mode as the secret key)
 #   APP_CREATOR_EMAILS        who gets the app creator view, comma separated (default casian.colto@gmail.com)
 #   WEBSITE_SITE              the Firebase Hosting site for fratius.com (default fratius-web)
 name: Deploy
@@ -56,7 +59,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
       - name: Assignments, pick-up photos and history on the emulators (sign-in, rules, functions, storage)
         shell: bash
         run: |
@@ -64,6 +67,8 @@ jobs:
           # A throwaway key pair for the notification test (the test reads it back to check the signature).
           echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
       - name: Show failures
         if: always()
@@ -94,7 +99,7 @@ jobs:
         with:
           node-version: 22
       - name: Install and build the functions
-        run: npm ci --prefix functions && npm --prefix functions run build
+        run: bash scripts/ci-functions.sh && npm --prefix functions run build
       - name: Turn on the Google Cloud services the functions need
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
@@ -142,6 +147,34 @@ jobs:
             [ "$WANT" = "none" ] && echo "No SMTP_URL secret: website requests are stored but not emailed." || echo "Website email updated."
           else
             echo "Website email unchanged."
+          fi
+      - name: Set up payments in Stripe (prices, tax, customer portal, webhook)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          SK: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
+          # The functions read both secrets; "none" while payments are off.
+          WANT="${SK:-none}"
+          CUR=$(fb functions:secrets:access STRIPE_SECRET_KEY 2>/dev/null || true)
+          if [ "$CUR" != "$WANT" ]; then
+            F="$RUNNER_TEMP/stripe.key"; printf '%s' "$WANT" > "$F"
+            fb functions:secrets:set STRIPE_SECRET_KEY --data-file "$F" --force; rm -f "$F"
+            echo "Stripe key updated."
+          fi
+          CURW=$(fb functions:secrets:access STRIPE_WEBHOOK_SECRET 2>/dev/null || true)
+          if [ -n "$CURW" ]; then echo "::add-mask::$CURW"; fi
+          rm -f "$RUNNER_TEMP/stripe-webhook.secret"
+          STRIPE_SECRET_KEY="$WANT" CURRENT_WEBHOOK_SECRET="$CURW" node functions/scripts/stripe-setup.cjs
+          if [ -s "$RUNNER_TEMP/stripe-webhook.secret" ]; then
+            fb functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file "$RUNNER_TEMP/stripe-webhook.secret" --force
+            rm -f "$RUNNER_TEMP/stripe-webhook.secret"
+            echo "Stripe webhook signing secret stored."
+          elif [ -z "$CURW" ]; then
+            F="$RUNNER_TEMP/none"; printf 'none' > "$F"
+            fb functions:secrets:set STRIPE_WEBHOOK_SECRET --data-file "$F" --force; rm -f "$F"
           fi
       - name: Make the key pair for phone notifications (once)
         env:

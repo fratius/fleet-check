@@ -7,6 +7,8 @@
     "@expo-google-fonts/barlow-condensed": "^0.4.1",
     "@expo/ui": "~58.0.23",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@stripe/react-stripe-js": "^7.0.1",
+    "@stripe/stripe-js": "^10.2.1",
     "expo": "~58.0.19",
     "expo-camera": "~58.0.12",
     "expo-constants": "~58.0.13",

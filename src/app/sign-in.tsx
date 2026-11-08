@@ -8,7 +8,7 @@ import { AllCompanies } from '@/components/companies';
 import { LanguageLink } from '@/components/language';
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
-import { TERMS_VERSION, TRIAL_DAYS, signupIntent } from '@/lib/billing';
+import { TERMS_VERSION, TRIAL_DAYS, payMode, signupIntent, type PayMode } from '@/lib/billing';
 import { tokenFrom, watchMyJoinRequest, watchMyProfile } from '@/lib/people';
 import { t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
@@ -31,8 +31,13 @@ export default function SignIn() {
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // With live payments a new company starts with a card, on the web (start.tsx); the store apps sell nothing.
+  const [pm, setPm] = useState<PayMode['mode']>(null);
+  useEffect(() => { payMode().then((x) => setPm(x.mode)); }, []);
+  const cardFirst = pm === 'live';
+  const canCreate = !cardFirst || Platform.OS === 'web';
 
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<unknown>) => {
     setErr(null); setInfo(null); setBusy(true);
     try { await fn(); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
   };
@@ -47,9 +52,15 @@ export default function SignIn() {
         </View>
         <LanguageLink />
         <Waiting />
-        <Segmented label={t('Company')} value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', t('I have an invite link')], ['create', t('Create a company')]]} />
+        {canCreate ? <Segmented label={t('Company')} value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', t('I have an invite link')], ['create', t('Create a company')]]} /> : null}
+        {!canCreate ? <T v="hint">{t('Fleet owners create their company in the web app.')}</T> : null}
         <Card>
-          {orgMode === 'create' ? (
+          {orgMode === 'create' && canCreate && cardFirst ? (
+            <>
+              <T>{t('Choose the plan, add the company\'s billing address and the card, and you\'re in. Nothing is charged during the free trial.')}</T>
+              <Button v="primary" wide title={t('Create company')} onPress={() => router.push({ pathname: '/start', params: signupIntent.plan ? { plan: signupIntent.plan } : {} })} />
+            </>
+          ) : orgMode === 'create' && canCreate ? (
             <>
               <Field label={t('Company name')} value={company} onChangeText={setCompany} autoCapitalize="words" placeholder={t('For example: Hart Logistics GmbH')} />
               <Field label={t('First station')} hint={t('you can add more later')} value={station} onChangeText={setStation} autoCapitalize="characters" placeholder={t('For example: DXX1 Berlin')} />

@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacija za iPhone je na App Store-u. Aplikacija za Android uskoro stiže na Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacija za Android je na Google Play-u. Aplikacija za iPhone uskoro stiže na App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidu Fratius radi kao veb-aplikacija dok aplikacija ne stigne na Google Play: otvorite ga u pregledaču i dodajte na početni ekran.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhone-u Fratius radi kao veb-aplikacija dok aplikacija ne stigne na App Store: otvorite ga u Safariju i dodajte na početni ekran."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhone-u Fratius radi kao veb-aplikacija dok aplikacija ne stigne na App Store: otvorite ga u Safariju i dodajte na početni ekran.",
+ "Billing": "Period naplate",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Napravite nalog i firmu u veb aplikaciji, uz karticu. Vaših 30 dana počinje odmah i ništa se ne naplaćuje pre nego što isteknu.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Cene su godišnje, bez PDV-a. Godišnji paketi se plaćaju pri registraciji, bez besplatnih dana.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Treba vam još nekoliko kombija uz Basic ili Pro? Dodajte 15 za 10 € mesečno.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Pri registraciji dodajete karticu radi provere firme. Tokom 30 besplatnih dana ništa se ne naplaćuje; otkazati možete bilo kada pre nego što isteknu.",
+ "Monthly": "Mesečno",
+ "Yearly: {n} % off the first year": "Godišnje: {n} % popusta na prvu godinu",
+ "Yearly": "Godišnje",
+ "the first year": "prve godine",
+ "a year": "godišnje",
+ "then {price} a year": "zatim {price} godišnje",
+ "{n} % off the first year": "{n} % popusta na prvu godinu",
+ "Paid yearly": "Plaća se godišnje",
+ "Data processing agreement": "Ugovor o obradi podataka"
 }

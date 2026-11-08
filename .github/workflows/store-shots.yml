@@ -38,6 +38,8 @@ jobs:
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
           echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
           APP_DIR="$PWD/dist-e2e" OUT_DIR="$RUNNER_TEMP/shots" npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "node tests/store-shots.mjs" 2>&1 | tee shots.log
           test -n "$(ls "$RUNNER_TEMP/shots/en" 2>/dev/null)"
       - name: Show what happened

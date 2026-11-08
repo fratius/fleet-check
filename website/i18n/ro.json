@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplicația pentru iPhone este în App Store. Aplicația pentru Android este pe drum spre Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplicația pentru Android este pe Google Play. Aplicația pentru iPhone este pe drum spre App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Pe Android, Fratius merge ca aplicație web până apare aplicația pe Google Play: deschide-o în browser și adaug-o pe ecranul principal.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Pe iPhone, Fratius merge ca aplicație web până apare aplicația în App Store: deschide-o în Safari și adaug-o pe ecranul principal."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Pe iPhone, Fratius merge ca aplicație web până apare aplicația în App Store: deschide-o în Safari și adaug-o pe ecranul principal.",
+ "Billing": "Facturare",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Creează-ți contul și compania în aplicația web, cu un card. Cele 30 de zile încep pe loc și nu se plătește nimic înainte să se termine.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Prețuri pe an, fără TVA. Planurile anuale se plătesc la înregistrare, fără zilele gratuite.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Ai nevoie de câteva dube în plus la Basic sau Pro? Adaugă 15 pentru 10 € pe lună.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "La înregistrare adaugi un card ca să verificăm compania. Nu se plătește nimic în cele 30 de zile gratuite; poți anula oricând înainte să se termine.",
+ "Monthly": "Lunar",
+ "Yearly: {n} % off the first year": "Anual: {n}% reducere în primul an",
+ "Yearly": "Anual",
+ "the first year": "în primul an",
+ "a year": "pe an",
+ "then {price} a year": "apoi {price} pe an",
+ "{n} % off the first year": "{n}% reducere în primul an",
+ "Paid yearly": "Plată anuală",
+ "Data processing agreement": "Acord de prelucrare a datelor"
 }

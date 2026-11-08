@@ -36,8 +36,9 @@ function Routes() {
         <Stack.Protected guard={status === 'signedOut' || status === 'needsOrg'}>
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
-        {/* Invite links open here whether or not the person is signed in. */}
+        {/* Invite links and sign-up with a card open here whether or not the person is signed in. */}
         <Stack.Screen name="join/[token]" />
+        <Stack.Screen name="start" />
       </Stack>
     </>
   );

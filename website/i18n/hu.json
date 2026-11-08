@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Az iPhone-app elérhető az App Store-ban. Az Android-app hamarosan elérhető lesz a Google Playen.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Az Android-app elérhető a Google Playen. Az iPhone-app hamarosan elérhető lesz az App Store-ban.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Androidon a Fratius webappként fut, amíg meg nem jelenik az app a Google Playen: nyisd meg a böngészőben, és add hozzá a kezdőképernyőhöz.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone-on a Fratius webappként fut, amíg meg nem jelenik az app az App Store-ban: nyisd meg a Safariban, és add hozzá a kezdőképernyőhöz."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone-on a Fratius webappként fut, amíg meg nem jelenik az app az App Store-ban: nyisd meg a Safariban, és add hozzá a kezdőképernyőhöz.",
+ "Billing": "Számlázási időszak",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Hozd létre a fiókodat és a cégedet a webappban, kártyával. A 30 napod azonnal elindul, és amíg le nem telik, semmit sem terhelünk.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Éves árak, áfa nélkül. Az éves csomagokat a regisztrációkor kell kifizetni, ingyenes napok nélkül.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Néhány furgonnal több kellene a Basic vagy a Pro csomaghoz? Adj hozzá 15-öt havonta 10 €-ért.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "A regisztrációkor kártyát adsz meg a céged ellenőrzéséhez. A 30 ingyenes nap alatt semmit sem terhelünk; a lejáratuk előtt bármikor lemondhatod.",
+ "Monthly": "Havi",
+ "Yearly: {n} % off the first year": "Éves: {n} % kedvezmény az első évben",
+ "Yearly": "Éves",
+ "the first year": "az első évben",
+ "a year": "évente",
+ "then {price} a year": "utána {price} évente",
+ "{n} % off the first year": "{n} % kedvezmény az első évben",
+ "Paid yearly": "Éves fizetés",
+ "Data processing agreement": "Adatfeldolgozási szerződés"
 }

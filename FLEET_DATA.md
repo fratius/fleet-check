@@ -230,6 +230,18 @@ owner turns dashboard photos on, the app says to tell the drivers what is record
 the works council where there is one. A deletion period for the records of people who left is still to be set
 (the van history keeps their name).
 
+## The company's plan (payments, built)
+
+- `orgs/{org}.billing` (everyone in the company reads it, only the server writes it): Stripe's status, the plan, monthly
+  or yearly, the add-on, the vans it allows, whether a card is on file, the trial's and the period's end, a planned
+  end, the sign-up link used, test mode. `orgs/{org}.fleetSize`: the vans in use, counted by the server.
+- `payments/{org}` (server only): the Stripe customer and subscription ids, the sign-up link, when the order email
+  went out. `offers/{code}` (the app creator reads them): sign-up links and how often each was used.
+  `stripeEvents/{id}` (server only, 30 days): Stripe events already handled. `platform/stripe` (the app creator):
+  what Deploy set up in Stripe, no secrets; `config/payments` (public): live, test or off, and the publishable key.
+- Card numbers never reach Fratius: they go from Stripe's own fields straight to Stripe. Stripe keeps the company's
+  billing name, address, VAT ID, email, the card's brand and last four digits, invoices and payments.
+
 ## Later
 
 - **Fuel card import**: the provider's own list of transactions per card, to match against the receipts in the app
