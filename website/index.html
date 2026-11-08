@@ -487,8 +487,7 @@ h1 .mark { position: relative; z-index: -1; }
 .need { list-style: none; padding: 0; margin: 24px 0 0; }
 .need li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--rule); font-size: 16px; }
 .need li .tick { margin-top: 3px; }
-.selfserve { margin-top: 24px; padding: 18px; border: 2px solid var(--ink); border-radius: 6px; background: var(--paper); display: grid; gap: 14px; justify-items: start; }
-.selfserve p { margin: 0; font-size: 16px; }
+.start-cta { margin: 24px 0 12px; }
 .form-card { background: var(--paper); border: 2px solid var(--ink); border-radius: var(--r); }
 .preview-note { margin: 16px 16px 0; padding: 12px 14px; border: 2px dashed var(--ink2); border-radius: var(--r); font-size: 14px; color: var(--ink2); }
 .stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); list-style: none; margin: 16px 0 0; padding: 0; border-block: 2px solid var(--ink); }
@@ -971,7 +970,7 @@ h1 .mark { position: relative; z-index: -1; }
       <h2>Pick a plan by the size of your fleet. Try it 30 days free.</h2>
       <p class="sec-lede">Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.</p>
     </div>
-    <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing" hidden></div>
+    <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing"></div>
     <div class="plans" id="plans"></div>
     <div class="includes">
       <h3>Every plan includes</h3>
@@ -996,74 +995,19 @@ h1 .mark { position: relative; z-index: -1; }
 </section>
 
 <section class="sec paper-band" id="start">
-  <div class="wrap signup-grid">
-    <div>
-      <div class="sec-head" style="margin-bottom:0">
-        <p class="eyebrow">Sign up</p>
-        <h2>Start your 30 days</h2>
-        <p class="sec-lede">Two short steps: tell us about your company, then send. Your plan follows from the number of vans. Nothing is charged now; we email you how to start.</p>
-      </div>
-      <ul class="need">
-        <li><span class="tick" aria-hidden="true"></span>Your company's name and country</li>
-        <li><span class="tick" aria-hidden="true"></span>How many stations and vans you run</li>
-        <li><span class="tick" aria-hidden="true"></span>A work email and a mobile number</li>
-      </ul>
-      <div class="selfserve" id="selfserve" hidden>
-        <p><strong>Rather start right away?</strong> Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.</p>
-        <a class="btn btn-marker btn-lg" href="https://app.fratius.com/start" data-signup>Create your account</a>
-      </div>
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:0">
+      <p class="eyebrow">Sign up</p>
+      <h2>Start your 30 days</h2>
+      <p class="sec-lede">Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.</p>
     </div>
-
-    <form class="form-card" id="signup" novalidate>
-      <p class="preview-note" id="preview-note" hidden>Sign-up and payment aren't connected yet. You can go through the steps; nothing is sent and nothing is charged.</p>
-      <ol class="stepper" aria-label="Sign-up steps">
-        <li data-s="1"><span class="n">1</span>Company</li>
-        <li data-s="2"><span class="n">2</span>Send</li>
-      </ol>
-
-      <div class="step-pane" data-step="1">
-        <h3 tabindex="-1">Your company</h3>
-        <div class="fields">
-          <div class="field full"><label for="f-company">Company name</label><input id="f-company" name="company" autocomplete="organization"><span class="err" id="e-company" hidden></span></div>
-          <div class="field"><label for="f-country">Country</label>
-            <select id="f-country" name="country" autocomplete="country-name">
-            </select>
-          </div>
-          <div class="field"><label for="f-stations">Stations</label><input id="f-stations" name="stations" inputmode="numeric" autocomplete="off" placeholder="1"><span class="err" id="e-stations" hidden></span></div>
-          <div class="field"><label for="f-vans">Vans</label><input id="f-vans" name="vans" inputmode="numeric" autocomplete="off" placeholder="30"><span class="err" id="e-vans" hidden></span></div>
-          <div class="field"><label for="f-first">First name</label><input id="f-first" name="first" autocomplete="given-name"><span class="err" id="e-first" hidden></span></div>
-          <div class="field"><label for="f-last">Last name</label><input id="f-last" name="last" autocomplete="family-name"><span class="err" id="e-last" hidden></span></div>
-          <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" autocomplete="email"><span class="err" id="e-email" hidden></span></div>
-          <div class="field full"><label for="f-phone">Mobile number</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="+49 151 2345 6789"><span class="err" id="e-phone" hidden></span></div>
-        </div>
-        <div class="fit" id="fit" aria-live="polite" hidden></div>
-        <div class="actions"><span></span><button class="btn btn-primary" type="button" data-go="2">Continue</button></div>
-      </div>
-
-      <div class="step-pane" data-step="2" hidden>
-        <h3 tabindex="-1">Check and send</h3>
-        <dl class="summary" id="summary"></dl>
-        <div class="pay" id="pay" hidden>
-          <strong>Payment</strong>
-          <p id="pay-text">Card or bank details go here once the payment provider is connected.</p>
-        </div>
-        <p class="hint" id="next-text">Nothing is charged now. We set up your company and email you how to start your 30 days.</p>
-        <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
-        <label class="check" for="f-ai"><input type="checkbox" id="f-ai" name="aiWaitlist"> Tell me when AI damage detection is ready</label>
-        <label class="check" for="f-terms"><input type="checkbox" id="f-terms" name="terms"> <span id="terms-text">I have read the privacy policy.</span></label>
-        <span class="err" id="e-terms" hidden></span>
-        <span class="err" id="e-send" hidden></span>
-        <div class="actions"><button class="btn" type="button" data-go="1">Back</button><button class="btn btn-marker" type="submit" id="submit">Send request</button></div>
-      </div>
-
-      <div class="step-pane" data-step="3" hidden>
-        <div class="done-box">
-          <h3 tabindex="-1" class="big" id="done-title">Done</h3>
-          <p id="done-text"></p>
-          <button class="btn" type="button" id="again">Start again</button>
-        </div>
-      </div>
-    </form>
+    <ul class="need">
+      <li><span class="tick" aria-hidden="true"></span>Your name and a work email</li>
+      <li><span class="tick" aria-hidden="true"></span>Your company's name and billing address</li>
+      <li><span class="tick" aria-hidden="true"></span>A card, charged only after the 30 days</li>
+    </ul>
+    <p class="start-cta"><a class="btn btn-marker btn-lg" href="https://app.fratius.com/start" data-signup>Create your account</a></p>
+    <p class="hint">Questions first? Write to <a href="mailto:info@fratius.com" translate="no">info@fratius.com</a>.</p>
   </div>
 </section>
 
@@ -1126,16 +1070,9 @@ h1 .mark { position: relative; z-index: -1; }
       googlePlay: null,   // Google Play link once the Android app is live
       webApp: 'https://app.fratius.com',
     },
-    /* The web app. Deploy points these links at the project's own address until app.fratius.com serves the app.
-       selfServe: the "Start" buttons open sign-up with a card in the web app (/start) instead of the request form.
-       It turns on by itself once payments are live (/api/billing, functions/src/payments.ts); with Stripe's test keys
-       only for whoever opens the page with ?stripe=test. */
-    app: { url: 'https://app.fratius.com', selfServe: false },
-    signup: {
-      live: true,              // false shows a preview that sends nothing
-      endpoint: '/api/signup', // the websiteSignup function, through Firebase Hosting
-      payment: false,          // true once a payment provider is connected
-    },
+    /* The web app (sign-up with a card is its /start page). Deploy points this at the project's own address until
+       app.fratius.com serves the app. */
+    app: { url: 'https://app.fratius.com' },
     contactEmail: 'info@fratius.com',
     legal: { imprint: '/impressum', privacy: '/datenschutz', appPrivacy: '/app-privacy', deleteAccount: '/delete-account', terms: '/agb', dpa: '/avv' }, // Impressum, Datenschutz, AGB, AVV
   };
@@ -1207,8 +1144,6 @@ h1 .mark { position: relative; z-index: -1; }
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href^="#"]');
     if (!a) return;
-    if (a.dataset.plan) setPlan(a.dataset.plan);
-    if (a.dataset.waitlist) { $('#f-ai').checked = true; }
     const el = document.getElementById(a.getAttribute('href').slice(1));
     if (!el) return;
     e.preventDefault();
@@ -1216,37 +1151,25 @@ h1 .mark { position: relative; z-index: -1; }
   });
 
   /* ───────── Log in and sign up: the web app ───────── */
-  // Payments (Stripe) decide whether the buttons sign up with a card in the web app, and whether yearly plans show.
-  const pay = { live: false, launchOffer: false, yearlyOff: 30 };
+  // Every "Start" button opens sign-up with a card in the web app, in one step (product owner, 2026-11-08: no request
+  // form, as little friction as possible). The yearly launch offer is asked from the server (/api/billing).
+  const pay = { launchOffer: true, yearlyOff: 30 };
   let interval = 'month';
   const signupUrl = (planId) => `${CONFIG.app.url}/start${planId ? `?plan=${encodeURIComponent(planId)}&interval=${interval}` : ''}`;
   document.querySelectorAll('[data-login]').forEach((a) => { a.href = CONFIG.app.url + '/'; });
-  function signupLinks() {
-    if (CONFIG.app.selfServe) {
-      document.querySelectorAll('[data-signup]').forEach((a) => { a.href = signupUrl(null); });
-      $('#selfserve').hidden = false;
-    } else {
-      document.querySelectorAll('[data-signup]').forEach((a) => { if (!a.closest('#selfserve')) a.href = '#start'; });
-    }
-  }
-  signupLinks();
-  // Asked next to drawing the page, not before it; the buttons switch once the answer is there.
+  document.querySelectorAll('[data-signup]').forEach((a) => { a.href = signupUrl(null); });
   fetch('/api/billing', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => {
     if (!j) return;
-    pay.live = j.payments === 'live' || (j.payments === 'test' && /[?&]stripe=test\b/.test(location.search));
     pay.launchOffer = !!j.launchOffer;
     pay.yearlyOff = j.yearlyOff || 30;
-    if (!pay.live || CONFIG.app.selfServe) return;
-    CONFIG.app.selfServe = true;
-    signupLinks();
     renderPlans();
-  }).catch(() => { /* the request form stays */ });
+  }).catch(() => {});
 
   /* ───────── Pricing (the only place prices are shown), store buttons, legal links ───────── */
   function renderPlans() {
     // Monthly or yearly: only with sign-up in the web app (yearly plans are paid there, at sign-up).
-    const yearly = CONFIG.app.selfServe && interval === 'year';
-    $('#billing-toggle').hidden = !CONFIG.app.selfServe;
+    const yearly = interval === 'year';
+    $('#billing-toggle').hidden = false;
     $('#billing-toggle').innerHTML = [['month', t('Monthly')], ['year', pay.launchOffer ? t('Yearly: {n} % off the first year', { n: pay.yearlyOff }) : t('Yearly')]]
       .map(([k, label]) => `<button type="button" role="radio" aria-checked="${interval === k}" data-interval="${k}">${esc(label)}</button>`).join('');
     $('#plans').innerHTML = CONFIG.plans.map((p) => {
@@ -1261,7 +1184,7 @@ h1 .mark { position: relative; z-index: -1; }
         <p class="limit">${esc(limitText(p))}<br><span class="muted">${esc(t('Unlimited drivers'))}</span></p>
         ${price}
         <p><span class="pill mk">${esc(pill)}</span></p>
-        <a class="btn btn-marker" href="${esc(CONFIG.app.selfServe ? signupUrl(p.id) : '#start')}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
+        <a class="btn btn-marker" href="${esc(signupUrl(p.id))}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
       </article>`;
     }).join('') + `
       <article class="plan ai">
@@ -1269,9 +1192,9 @@ h1 .mark { position: relative; z-index: -1; }
         <p class="limit">${esc(t('Its own plan'))}</p>
         <p class="price"><b>${esc(t('Coming soon'))}</b></p>
         <p class="desc">${esc(t(CONFIG.aiPlan.text))}</p>
-        <a class="btn" href="#start" data-waitlist="1">${esc(t("Tell me when it's ready"))}</a>
+        <a class="btn" href="mailto:info@fratius.com?subject=AI%20damage%20detection">${esc(t("Tell me when it's ready"))}</a>
       </article>`;
-    $('#price-note').textContent = [t(yearly ? CONFIG.priceNoteYear : CONFIG.priceNote), t(CONFIG.addonNote), CONFIG.app.selfServe && !yearly ? t(CONFIG.cardNote) : ''].filter(Boolean).join(' ');
+    $('#price-note').textContent = [t(yearly ? CONFIG.priceNoteYear : CONFIG.priceNote), t(CONFIG.addonNote), !yearly ? t(CONFIG.cardNote) : ''].filter(Boolean).join(' ');
   }
   $('#billing-toggle').addEventListener('click', (e) => {
     const b = e.target.closest('[data-interval]');
@@ -1304,14 +1227,7 @@ h1 .mark { position: relative; z-index: -1; }
     const legal = [['imprint', 'Impressum'], ['privacy', N_('Privacy')], ['appPrivacy', N_('App privacy')], ['deleteAccount', N_('Delete account')], ['terms', N_('Terms')], ['dpa', N_('Data processing agreement')]].filter(([k]) => CONFIG.legal[k]);
     $('#legal').innerHTML = legal.map(([k, label]) => `<a href="${esc(CONFIG.legal[k])}">${esc(k === 'imprint' ? label : t(label))}</a>`).join('')
       + (CONFIG.contactEmail ? `<a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : '');
-    const link = (href, text) => `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
-    // The request form is a request, not the contract: the terms are accepted when the company is made in the app.
-    if (CONFIG.legal.privacy) {
-      $('#terms-text').innerHTML = esc(t('I have read the {privacy}.')).replace('{privacy}', link(CONFIG.legal.privacy, t('privacy policy')));
-    }
   }
-  $('#pay').hidden = !CONFIG.signup.payment;
-  $('#next-text').hidden = !!CONFIG.signup.payment;
   $('#year').textContent = new Date().getFullYear();
 
   $('#langs').innerHTML = LANGS.map(([c, n]) => `<li lang="${c}"${RTL.includes(c) ? ' dir="rtl"' : ''}>${n}</li>`).join('');
@@ -1479,179 +1395,6 @@ h1 .mark { position: relative; z-index: -1; }
     requestAnimationFrame(frame);
   }
 
-  /* ───────── Sign-up: two steps; the plan follows from the number of vans ───────── */
-  const form = $('#signup');
-  const f = (n) => form.elements[n];
-  let plan = CONFIG.plans[0].id;
-  let picked = null; // the plan of the "Start with …" button used, if any
-  const openedAt = Date.now();
-  if (!CONFIG.signup.live) $('#preview-note').hidden = false;
-
-  const COUNTRIES = [['DE', 'Germany'], ['AT', 'Austria'], ['CH', 'Switzerland'], ['NL', 'Netherlands'], ['BE', 'Belgium'], ['FR', 'France'], ['IT', 'Italy'], ['ES', 'Spain'], ['PL', 'Poland'], ['GB', 'United Kingdom'], ['IE', 'Ireland']];
-  function renderCountries() {
-    const sel = f('country');
-    const was = sel.value;
-    let names = null;
-    try { names = new Intl.DisplayNames([loc(), 'en'], { type: 'region' }); } catch (e) { /* older browsers: English names */ }
-    // The value stays English, so the team reads every request the same way.
-    sel.innerHTML = COUNTRIES.map(([code, en]) => `<option value="${en}">${esc((names && names.of(code)) || en)}</option>`).join('')
-      + `<option value="Other">${esc(t('Other'))}</option>`;
-    if (was) sel.value = was;
-  }
-
-  const fitPlan = (n) => CONFIG.plans.find((p) => !p.vans || p.vans >= n);
-  const curPlan = () => CONFIG.plans.find((p) => p.id === plan);
-  function setPlan(id) {
-    if (!CONFIG.plans.some((p) => p.id === id)) return;
-    picked = id;
-    updatePlan();
-  }
-  /* The plan shown under the fields: the one picked on the pricing cards if it covers the vans, else the smallest that does. */
-  function updatePlan() {
-    const box = $('#fit');
-    const n = parseInt(f('vans').value, 10);
-    const mine = picked && CONFIG.plans.find((p) => p.id === picked);
-    let note = '';
-    if (n >= 1) {
-      if (mine && (!mine.vans || n <= mine.vans)) plan = mine.id;
-      else {
-        if (mine) note = t('{plan} covers up to {max} vans and you run {n}.', { plan: mine.name, max: num(mine.vans), n: num(n) });
-        plan = fitPlan(n).id;
-      }
-    } else if (mine) plan = mine.id;
-    else { box.hidden = true; return; }
-    const p = curPlan();
-    box.innerHTML = (note ? `<span>${esc(note)}</span>` : '')
-      + `<b>${esc(p.vans ? t('Your plan: {plan}, up to {n} vans', { plan: p.name, n: num(p.vans) }) : t('Your plan: {plan}, unlimited vans', { plan: p.name }))}</b>`
-      + `<a href="#pricing">${esc(t('See the plans'))}</a>`;
-    box.hidden = false;
-  }
-  f('vans').addEventListener('input', updatePlan);
-
-  const RULES = {
-    company: (v) => v.trim().length >= 2 || N_("Enter your company's name."),
-    stations: (v) => (/^\d{1,3}$/.test(v.trim()) && +v >= 1) || N_('Enter how many stations you run, 1 or more.'),
-    vans: (v) => (/^\d{1,4}$/.test(v.trim()) && +v >= 1) || N_('Enter how many vans you run, 1 or more.'),
-    first: (v) => !!v.trim() || N_('Enter your first name.'),
-    last: (v) => !!v.trim() || N_('Enter your last name.'),
-    email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || N_('Enter an email address like name@company.de.'),
-    phone: (v) => v.replace(/\D/g, '').length >= 7 || N_('Enter a mobile number with the country code, like +49 151 2345 6789.'),
-  };
-  function check(name) {
-    const ok = RULES[name](f(name).value);
-    const err = $('#e-' + name);
-    f(name).setAttribute('aria-invalid', ok === true ? 'false' : 'true');
-    if (ok === true) { err.hidden = true; delete err.dataset.key; f(name).removeAttribute('aria-describedby'); }
-    else { err.dataset.key = ok; err.textContent = t(ok); err.hidden = false; f(name).setAttribute('aria-describedby', 'e-' + name); }
-    return ok === true;
-  }
-  Object.keys(RULES).forEach((n) => f(n).addEventListener('blur', () => { if (f(n).value) check(n); }));
-
-  const trialEnd = () => { const d = new Date(); d.setDate(d.getDate() + CONFIG.trialDays); return d.toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' }); };
-  function fillSummary() {
-    const p = curPlan();
-    const items = [
-      [t('Plan'), `${p.name} · ${limitText(p)}`],
-      [t('Company'), `${f('company').value.trim()} · ${f('country').selectedOptions[0]?.textContent || f('country').value}`],
-      [t('Stations'), f('stations').value.trim()],
-      [t('Vans'), f('vans').value.trim()],
-      [t('Contact'), `${f('first').value.trim()} ${f('last').value.trim()} · ${f('email').value.trim()} · ${f('phone').value.trim()}`],
-      [t('Free until'), trialEnd()],
-    ];
-    $('#summary').innerHTML = items.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
-  }
-
-  let step = 1;
-  function show(n, focus = true) {
-    step = n;
-    $$('.step-pane', form).forEach((s) => { s.hidden = +s.dataset.step !== n; });
-    $$('.stepper li', form).forEach((li) => {
-      const s = +li.dataset.s;
-      li.classList.toggle('on', s === n);
-      li.classList.toggle('done', s < n);
-      li.toggleAttribute('aria-current', s === n);
-    });
-    if (n === 2) fillSummary();
-    if (focus) {
-      const h = $(`.step-pane[data-step="${n}"] h3`, form);
-      h.focus({ preventScroll: true });
-      const top = form.getBoundingClientRect().top;
-      if (top < 70) form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    }
-  }
-  form.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-go]');
-    if (!b) return;
-    const to = +b.dataset.go;
-    if (to > step && step === 1) {
-      const bad = Object.keys(RULES).filter((n) => !check(n));
-      if (bad.length) { f(bad[0]).focus(); return; }
-      updatePlan();
-    }
-    show(to);
-  });
-
-  let done = null; // the last result, so it can be redrawn in another language
-  const renderDone = () => {
-    if (!done) return;
-    const d = done;
-    if (d.sent) {
-      $('#done-title').textContent = t('Thanks, {name}', { name: d.firstName });
-      $('#done-text').innerHTML = esc(t("We've got your request for {company}. We'll email {email} with how to start your {days} days.", { days: CONFIG.trialDays }))
-        .replace('{company}', esc(d.company)).replace('{email}', `<b>${esc(d.email)}</b>`);
-    } else {
-      $('#done-title').textContent = t("That's it, {name}", { name: d.firstName });
-      $('#done-text').textContent = t("This is a preview, so nothing was sent and nothing was charged. Once sign-up and payment are connected, this is where {company}'s {days} days begin.", { company: d.company, days: CONFIG.trialDays });
-    }
-  };
-  let sendError = null;
-  const renderSendError = () => {
-    const el = $('#e-send');
-    if (!sendError) return;
-    el.textContent = t(sendError) + (CONFIG.contactEmail && sendError !== N_('Too many requests today. Write to info@fratius.com instead.') ? ' ' + t('You can also write to {email}.', { email: CONFIG.contactEmail }) : '');
-  };
-  const termsMsg = () => (CONFIG.legal.terms ? N_('Tick the box to agree to the terms and the privacy policy.') : N_('Tick the box to confirm you have read the privacy policy.'));
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const terms = $('#e-terms');
-    if (!f('terms').checked) { terms.dataset.key = termsMsg(); terms.textContent = t(termsMsg()); terms.hidden = false; f('terms').focus(); return; }
-    terms.hidden = true;
-    const data = {
-      plan, aiWaitlist: f('aiWaitlist').checked, lang,
-      company: f('company').value.trim(), country: f('country').value,
-      stations: +f('stations').value, vans: +f('vans').value,
-      firstName: f('first').value.trim(), lastName: f('last').value.trim(),
-      email: f('email').value.trim(), phone: f('phone').value.trim(),
-      website: f('website').value, elapsed: Date.now() - openedAt,
-    };
-    if (CONFIG.signup.live && CONFIG.signup.endpoint) {
-      const btn = $('#submit'); const sendErr = $('#e-send');
-      btn.disabled = true; sendErr.hidden = true; sendError = null;
-      try {
-        const res = await fetch(CONFIG.signup.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || '');
-        done = { sent: true, firstName: data.firstName, company: data.company, email: data.email };
-        renderDone();
-        show(3);
-      } catch (err) {
-        sendError = (err && err.message) || N_("Your request didn't go through. Check your connection and try again.");
-        renderSendError();
-        sendErr.hidden = false;
-      } finally { btn.disabled = false; }
-      return;
-    }
-    done = { sent: false, firstName: data.firstName, company: data.company };
-    renderDone();
-    show(3);
-  });
-  $('#again').addEventListener('click', () => {
-    form.reset(); renderCountries(); plan = CONFIG.plans[0].id; picked = null; done = null; sendError = null;
-    $$('[aria-invalid]', form).forEach((i) => i.removeAttribute('aria-invalid')); $$('.err', form).forEach((x) => { x.hidden = true; });
-    $('#fit').hidden = true; show(1);
-  });
-
   /* ───────── Feature slider ───────── */
   const track = $('#track');
   const slides = $$('.slide', track);
@@ -1708,14 +1451,8 @@ h1 .mark { position: relative; z-index: -1; }
     renderLinks();
     renderFrames();
     renderHu();
-    renderCountries();
     renderFeed();
     tickClock();
-    if (!$('#fit').hidden) updatePlan();
-    $$('.err[data-key]').forEach((el) => { el.textContent = t(el.dataset.key); });
-    renderSendError();
-    if (step === 2) fillSummary();
-    renderDone();
     pin();
     fitHeader();
   }
@@ -1737,7 +1474,6 @@ h1 .mark { position: relative; z-index: -1; }
   renderAll();
   document.documentElement.classList.remove('i18n-wait');
 
-  show(1, false);
   mark(0);
 
   readColors(); resize();

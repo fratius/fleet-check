@@ -148,6 +148,9 @@ jobs:
           else
             echo "Website email unchanged."
           fi
+          # Without it nobody gets an email from Fratius: not the confirmation after signing up with a card (it carries
+          # the order and the AGB), not the email to info@fratius.com about new companies.
+          if [ "$WANT" = "none" ]; then echo "::warning title=No emails::The SMTP_URL secret is missing, so Fratius sends no emails (the sign-up confirmation with the AGB included). README, \"Email\", says how to add it."; fi
       - name: Set up payments in Stripe (prices, tax, customer portal, webhook)
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

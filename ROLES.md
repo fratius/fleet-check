@@ -84,7 +84,9 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   card at sign-up, in one step, also with a free trial or a custom offer, "to verify your company and keep out fake
   accounts"; nothing is charged before the trial ends.
   - Sign-up is one page in the web app (`/start`, `components/plansetup.tsx`): account, plan, monthly or yearly, the
-    add-on, the company's billing address and card (Stripe's own fields), the AGB and AVV, and one button. Before the
+    company's billing address and card (Stripe's own fields), the AGB and AVV, and one button (a VAT ID on request;
+    the first station is "Main station"; the add-on is offered at the van limit). The website has no request form
+    (product owner, 2026-11-08: as little friction as possible): every "Start" button opens this page. Before the
     button it says what is charged when (AGB § 2); the button says it too ("Start free, paid from {date}").
   - Plans go by vans only; drivers and stations are unlimited. Basic €40 a month up to 50 vans, Pro €90 up to 150,
     Premium €200 unlimited; the add-on of 15 more vans for €10 a month (€120 a year) on Basic and Pro, once; beyond
