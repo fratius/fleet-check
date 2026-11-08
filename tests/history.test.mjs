@@ -1604,7 +1604,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.equal((await adminDb().doc(`orgs/${orgId}`).get()).data().billing.status, 'canceled');
     await fails(pia.call('setupStations', { orgId }), 'failed-precondition');
     // The app creator isn't stopped.
-    const cr = await appCreator('Cleo Creator');
+    const cr = await appCreator('Petra Paylinks');
     assert.equal((await cr.call('setupStations', { orgId })).done, false);
 
     // 4. A sign-up link from the app creator: Pro, 60 days free, 20 % off for 6 months, one use.
