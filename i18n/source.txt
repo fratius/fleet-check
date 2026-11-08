@@ -2057,7 +2057,7 @@ d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx]
 c6188994	Use at least 6 characters for the password.
 a75e1e28	Use photo	[app/scan/[id].tsx]
 ece6901e	Use Safari: other browsers on iPhone can't add apps to the home screen.
-02c0e4a1	Used	[data.tsx, components/offers.tsx]
+02c0e4a1	Used	[data.tsx]
 6187e87c	Used for every type scan and damage check in this company.
 1805f33b	Used: {list}	[people.tsx]
 6dbb74cc	Valid for days	[components/offers.tsx]
