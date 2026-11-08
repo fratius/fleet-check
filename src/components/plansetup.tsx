@@ -55,6 +55,18 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   const [cardReady, setCardReady] = useState(false);
   const signedOut = s.status === 'signedOut';
 
+  // Back from a bank's page (3-D Secure by redirect, rare): Stripe adds the result to the address.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !org?.id) return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('redirect_status') !== 'succeeded') return;
+    const si = q.get('setup_intent');
+    setBusy(true); setStep(t('Almost done…'));
+    ai.billingConfirm({ orgId: org.id, setupIntent: si }).then((r) => {
+      if (r.billing && (r.billing.status === 'trialing' || r.billing.status === 'active')) { signupDone(); onDone(org.id); }
+    }, (e) => setErr(authMessage(e))).finally(() => { setBusy(false); setStep(null); });
+  }, [org?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let live = true;
     ai.billingConfig({ offer: offerCode || null }).then((x) => { if (live) setCfg(x); }, (e) => { if (live) setCfgErr(authMessage(e)); });

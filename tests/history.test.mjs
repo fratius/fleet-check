@@ -1537,7 +1537,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const start = await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'de 123 456 789' });
     assert.equal(start.kind, 'setup');
     assert.match(start.clientSecret, /^seti_fake_/);
-    assert.ok(Math.abs(start.trialEnd - (Date.now() + 30 * 86400_000)) < 120_000, '30 days from adding the card');
+    assert.ok(Math.abs(start.trialEnd - (Date.now() + 30 * 86400_000)) < 3_700_000, '30 days from adding the card');
     const pd = (await adminDb().doc(`payments/${orgId}`).get()).data();
     const cust = (await adminDb().doc(`fakeStripe/${pd.customerId}`).get()).data();
     assert.equal(cust.name, 'Pay Logistik GmbH');
@@ -1616,7 +1616,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const h = await hart.call('createCompany', { company: 'Hart Logistics', station: 'DHL1', name: 'Hanna Hart', source: 'website', plan: 'basic', terms, payments: true });
     const hs = await hart.call('billingStart', { orgId: h.orgId, plan: 'basic', interval: 'year', offer: off.code, address });
     assert.equal(hs.kind, 'setup');
-    assert.ok(Math.abs(hs.trialEnd - (Date.now() + 60 * 86400_000)) < 120_000);
+    assert.ok(Math.abs(hs.trialEnd - (Date.now() + 60 * 86400_000)) < 3_700_000);
     const hpd = (await adminDb().doc(`payments/${h.orgId}`).get()).data();
     let hsub = (await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).get()).data();
     assert.deepEqual(hsub.items.map((i) => i.key), ['fratius_pro_month'], 'the link\'s plan, not the one picked');

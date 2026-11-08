@@ -107,7 +107,8 @@ function Fields({ kind, amount, company, onApi }: Omit<CardFormProps, 'publishab
   return (
     <View style={{ gap: 14 }}>
       <AddressElement options={{ mode: 'billing', display: { name: 'organization' }, defaultValues: { name: company || '', address: { country: 'DE' } } }} />
-      <PaymentElement options={{ layout: 'tabs', fields: { billingDetails: { address: 'never' } } }} />
+      {/* With the Address Element in the same group, the Payment Element takes the billing address from it. */}
+      <PaymentElement options={{ layout: 'tabs' }} />
     </View>
   );
 }

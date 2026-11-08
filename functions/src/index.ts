@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { promises as fsp } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -2537,6 +2537,7 @@ interface PayDoc {
   confirmedAt?: number | null;
 }
 const payDoc = (orgId: string) => db().doc(`payments/${orgId}`);
+const keyOf = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex').slice(0, 16);
 const planName = (p: string | null | undefined) => PLANS[p || ''] || p || '';
 function needOwner(w: Who) {
   if (w.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can change the plan and the card.');
@@ -2705,7 +2706,8 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   let customer = p.customerId;
   if (customer) await pay.updateCustomer(customer, cust);
   else {
-    customer = await pay.createCustomer(cust, `cus-${who.orgId}`);
+    // Stripe keeps a key's first answer for a day, an error too: the key changes with what is sent.
+    customer = await pay.createCustomer(cust, `cus-${who.orgId}-${keyOf(cust)}`);
     await pd.set({ customerId: customer, mode: cfg.mode, createdAt: Date.now() }, { merge: true });
   }
   const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
@@ -2743,11 +2745,12 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   const firstNet = Math.max(0, net - discount);
 
   const attempt = (p.attempt || 0) + 1;
-  const sub = await pay.createSubscription({
+  const input = {
     customer,
     prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
-    trialEnd, coupon, tax: cfg.tax, metadata: { orgId: who.orgId, ...(offer ? { offer: offer.code } : {}) },
-  }, `sub-${who.orgId}-${attempt}`);
+    trialEnd: trialEnd && Math.floor(trialEnd / 3600_000) * 3600_000, coupon, tax: cfg.tax, metadata: { orgId: who.orgId, ...(offer ? { offer: offer.code } : {}) },
+  };
+  const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
   await pd.set({ subscriptionId: sub.id, attempt, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });
   const b = await saveBilling(who.orgId, sub);
   logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
