@@ -90,6 +90,10 @@ service cloud.firestore {
     match /config/{doc} {
       allow read: if signedIn();
     }
+    // Whether payments are on and Stripe's publishable key (public by design): the sign-up page reads it signed out.
+    match /config/payments {
+      allow read: if true;
+    }
 
     // Who the app creators are, and how payments are set up (written by the Deploy workflow; no secrets).
     match /platform/{doc} {

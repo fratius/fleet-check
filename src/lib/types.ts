@@ -660,7 +660,15 @@ export interface Org {
   /** Sign-in accounts of the demo company (made up, for trying the roles). */
   demoLogins?: { role: 'driver' | 'manager'; name: string; email: string; password: string; uid: string }[];
   /** Free trial and plan, written only by the server (lib/billing.ts). Companies set up by hand have none. */
-  billing?: { status: 'trialing' | 'active' | 'past_due' | 'unpaid' | 'paused' | 'canceled' | 'comped'; trialStart?: number; trialEnd?: number; source?: 'website' | 'app'; plan?: string | null };
+  billing?: {
+    status: 'incomplete' | 'trialing' | 'active' | 'past_due' | 'unpaid' | 'paused' | 'canceled' | 'comped';
+    trialStart?: number; trialEnd?: number; source?: 'website' | 'app'; plan?: string | null;
+    /** Billed through Stripe (functions/src/payments.ts); then the rest is Stripe's. */
+    via?: 'stripe'; interval?: 'month' | 'year'; addon?: boolean; vans?: number | null; card?: boolean;
+    periodEnd?: number | null; cancelAt?: number | null; offer?: string | null; testMode?: boolean;
+  };
+  /** Vans in use (not retired), counted by the server for the plan's limit. */
+  fleetSize?: number;
   /** The terms the fleet owner accepted when creating the company (server only). */
   terms?: { version: string; acceptedAt: number; byName?: string };
 }
@@ -779,3 +787,29 @@ export function aiWasRight(k: Check, i: number): boolean | null {
   }
   return p.feedback ? p.feedback === 'right' : null;
 }
+
+/** What the sign-up page and the plan screen need (billingConfig, functions/src/index.ts). */
+export interface BillingConfig {
+  /** null: payments are off. 'fake' only in the emulator tests. */
+  mode: 'live' | 'test' | 'fake' | null;
+  publishableKey: string | null;
+  prices: Record<'basic' | 'pro' | 'premium' | 'addon', Record<'month' | 'year', number>>;
+  planVans: Record<'basic' | 'pro' | 'premium', number | null>;
+  addonVans: number;
+  trialDays: number;
+  launchOffer: boolean;
+  yearlyOff: number;
+  offer: OfferPublic | null;
+  offerError: { t: string } | null;
+}
+/** A sign-up link's terms, as the sign-up page shows them. */
+export interface OfferPublic {
+  code: string; plan: 'basic' | 'pro' | 'premium' | null; interval: 'month' | 'year' | null; trialDays: number;
+  percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null;
+}
+/** A sign-up link the app creator makes (offers/{code}; saveOffer). */
+export interface OfferInput {
+  note: string; plan: 'basic' | 'pro' | 'premium' | null; interval: 'month' | 'year' | null; trialDays: number;
+  percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null; maxUses: number;
+}
+export interface Offer extends OfferInput { code: string; uses: number; ended: boolean; createdAt: number; createdBy: string }

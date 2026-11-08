@@ -2,7 +2,8 @@
 //   products and prices (by lookup key, from PRICE_CENTS in src/billing.ts), the yearly launch coupon, tax (Stripe Tax
 //   if it's on, else 19 % German VAT), the customer portal, the web app's domains (Google Pay, Apple Pay), and the
 //   webhook that tells the functions about subscriptions and invoices.
-// What it made goes to platform/stripe in Firestore (no secrets). A new webhook's signing secret is written to
+// What it made goes to platform/stripe in Firestore (no secrets), and the mode and publishable key to config/payments
+// for the app. A new webhook's signing secret is written to
 // $RUNNER_TEMP/stripe-webhook.secret for the workflow to store in Secret Manager.
 //
 // Env: PROJECT, STRIPE_SECRET_KEY ("none" or empty: payments off), STRIPE_PUBLISHABLE_KEY, CURRENT_WEBHOOK_SECRET.
@@ -52,6 +53,7 @@ const EVENTS = [
 
   if (!key || key === 'none') {
     await ref.set({ mode: null, updatedAt: now }, { merge: true });
+    await db.doc('config/payments').set({ mode: null, publishableKey: null, updatedAt: now });
     gh('notice', 'Payments off', 'No STRIPE_SECRET_KEY secret, so sign-up works without a card. README, "Payments", says how to turn them on.');
     summary(['### Payments', 'Off (no STRIPE_SECRET_KEY secret).']);
     return;
@@ -191,6 +193,8 @@ const EVENTS = [
     prices, coupon: LAUNCH_COUPON, tax, portalConfig: portalConfig.id, webhookId, webhookSecretHash,
     liveSince: mode === 'live' ? cur.liveSince || now : null, updatedAt: now,
   });
+  // What the app reads (config/* is readable by everyone signed in): whether to ask for a card, and Stripe.js's key.
+  await db.doc('config/payments').set({ mode, publishableKey: pk, updatedAt: now });
   const name = (account && ((account.settings && account.settings.dashboard && account.settings.dashboard.display_name) || account.id)) || 'Stripe';
   console.log(`Payments ${mode === 'live' ? 'LIVE' : 'in test mode'} with ${name}.${made.length ? ` Made: ${made.join(', ')}.` : ' Nothing new.'}`);
   if (mode === 'test') gh('notice', 'Payments in test mode', 'Stripe test keys: cards are not charged. The website keeps its request form; the new sign-up page is at /start in the web app. Switch to live keys to go live.');

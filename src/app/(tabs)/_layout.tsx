@@ -7,6 +7,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { F, MARKER, fitSize, useColors, useFontsReady, hs } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { UploadsStrip } from '@/components/uploads';
+import { BillingGate, BillingStrip, useGate } from '@/components/billinggate';
 import { ViewingStrip } from '@/components/viewas';
 import { useSession } from '@/lib/session';
 import { missingHandovers, needsPickup } from '@/lib/videos';
@@ -37,6 +38,7 @@ export default function TabsLayout() {
   const c = useColors();
   const s = useSession();
   const insets = useSafeAreaInsets();
+  const gate = useGate();
   const staff = s.staff;
   // The badge: checks to review plus handovers missing their drop-off video (see the Review tab).
   const toReview = s.checks.filter((k) => k.status === 'submitted' && s.runs(k.stationId)).length
@@ -52,9 +54,11 @@ export default function TabsLayout() {
     + (staff && s.org?.dashScans ? tourGaps(s.tours.filter((x) => s.runs(x.stationId)), s.assignments.filter((a) => s.runs(a.stationId)), Date.now() - 7 * 86400_000, s.org.dashScansAt || 0).length : 0);
   // The driver's badge: a van they were given that still needs its pick-up video or photos.
   const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
+  // A company that waits for its owner's card or plan (payments on): that first, instead of the tabs.
+  if (gate) return <BillingGate />;
   return (
     // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
-    <Tabs tabBar={(props) => <><UploadsStrip /><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
+    <Tabs tabBar={(props) => <><UploadsStrip /><BillingStrip /><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,

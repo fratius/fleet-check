@@ -581,6 +581,12 @@ describe('payments: the plan\'s van limit, sign-up links, Stripe\'s data', () =>
     await assertFails(setDoc(doc(as('own'), `payments/${O}`), { customerId: 'cus_2' }));
     await assertFails(getDoc(doc(as('boss2', C), 'stripeEvents/evt_1')));
   });
+  test('whether payments are on: anyone reads it (the sign-up page, signed out), nobody writes it', async () => {
+    await setup((db) => setDoc(doc(db, 'config/payments'), { mode: 'test', publishableKey: 'pk_test_1' }));
+    await assertSucceeds(getDoc(doc(env.unauthenticatedContext().firestore(), 'config/payments')));
+    await assertFails(setDoc(doc(as('boss2', C), 'config/payments'), { mode: 'live' }));
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'config/push')));
+  });
   test('how payments are set up: the app creator reads it, nobody writes it', async () => {
     await setup((db) => setDoc(doc(db, 'platform/stripe'), { mode: 'test', publishableKey: 'pk_test_1' }));
     await assertSucceeds(getDoc(doc(as('boss2', C), 'platform/stripe')));
