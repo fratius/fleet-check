@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Η εφαρμογή για iPhone είναι στο App Store. Η εφαρμογή για Android έρχεται σύντομα στο Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Η εφαρμογή για Android είναι στο Google Play. Η εφαρμογή για iPhone έρχεται σύντομα στο App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Στο Android, το Fratius λειτουργεί ως εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο Google Play: ανοίξτε το στον browser και προσθέστε το στην αρχική οθόνη.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Στο iPhone, το Fratius λειτουργεί ως εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο App Store: ανοίξτε το στο Safari και προσθέστε το στην αρχική οθόνη."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Στο iPhone, το Fratius λειτουργεί ως εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο App Store: ανοίξτε το στο Safari και προσθέστε το στην αρχική οθόνη.",
+ "Billing": "Περίοδος χρέωσης",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Δημιουργήστε τον λογαριασμό και την εταιρεία σας στην εφαρμογή web, με κάρτα. Οι 30 ημέρες σας ξεκινούν αμέσως και δεν χρεώνεται τίποτα πριν τελειώσουν.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Τιμές ανά έτος, χωρίς ΦΠΑ. Τα ετήσια πακέτα πληρώνονται κατά την εγγραφή, χωρίς τις δωρεάν ημέρες.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Χρειάζεστε μερικά ακόμη βαν στο Basic ή στο Pro; Προσθέστε 15 με 10 € τον μήνα.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Προσθέτετε κάρτα κατά την εγγραφή για να επαληθεύσουμε την εταιρεία σας. Δεν χρεώνεται τίποτα κατά τις 30 δωρεάν ημέρες· μπορείτε να ακυρώσετε οποιαδήποτε στιγμή πριν από τη λήξη τους.",
+ "Monthly": "Μηνιαία",
+ "Yearly: {n} % off the first year": "Ετήσια: {n}% έκπτωση τον πρώτο χρόνο",
+ "Yearly": "Ετήσια",
+ "the first year": "τον πρώτο χρόνο",
+ "a year": "τον χρόνο",
+ "then {price} a year": "έπειτα {price} τον χρόνο",
+ "{n} % off the first year": "{n}% έκπτωση τον πρώτο χρόνο",
+ "Paid yearly": "Ετήσια πληρωμή",
+ "Data processing agreement": "Σύμβαση επεξεργασίας δεδομένων"
 }

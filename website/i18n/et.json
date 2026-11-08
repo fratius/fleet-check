@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone’i rakendus on App Store’is. Androidi rakendus on teel Google Play’sse.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Androidi rakendus on Google Play’s. iPhone’i rakendus on teel App Store’i.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Androidis töötab Fratius veebirakendusena, kuni rakendus Google Play’sse jõuab: ava see brauseris ja lisa avaekraanile.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone’is töötab Fratius veebirakendusena, kuni rakendus App Store’i jõuab: ava see Safaris ja lisa avaekraanile."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone’is töötab Fratius veebirakendusena, kuni rakendus App Store’i jõuab: ava see Safaris ja lisa avaekraanile.",
+ "Billing": "Arveldusperiood",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Loo veebirakenduses oma konto ja ettevõte koos kaardiga. Sinu 30 päeva algavad kohe ja enne nende lõppu tasu ei võeta.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Hinnad aastas, ilma käibemaksuta. Aastapaketid makstakse registreerumisel, ilma tasuta päevadeta.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Vajad Basic- või Pro-paketis paar kaubikut juurde? Lisa 15 hinnaga 10 € kuus.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Lisad registreerumisel kaardi, et kinnitada oma ettevõte. 30 tasuta päeva jooksul tasu ei võeta; tühistada saad igal ajal enne nende lõppu.",
+ "Monthly": "Kord kuus",
+ "Yearly: {n} % off the first year": "Kord aastas: esimesel aastal {n}% allahindlust",
+ "Yearly": "Kord aastas",
+ "the first year": "esimesel aastal",
+ "a year": "aastas",
+ "then {price} a year": "seejärel {price} aastas",
+ "{n} % off the first year": "{n}% allahindlust esimesel aastal",
+ "Paid yearly": "Makstakse kord aastas",
+ "Data processing agreement": "Andmetöötlusleping"
 }

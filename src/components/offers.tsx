@@ -81,7 +81,7 @@ function OfferRow({ o, onChange }: { o: Offer; onChange(): void }) {
     <View style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 10, gap: 4 }}>
       <Row>
         <T v="medium" selectable>{o.code}</T>
-        <Pill v={over ? 'muted' : 'good'} text={o.ended ? t('Ended') : o.uses >= o.maxUses ? t('Used') : t('{n} of {max} used', { n: o.uses, max: o.maxUses })} />
+        <Pill v={over ? 'muted' : 'good'} text={o.ended ? t('Ended') : t('{n} of {max} used', { n: o.uses, max: o.maxUses })} />
       </Row>
       {o.note ? <T>{o.note}</T> : null}
       <T v="hint">{terms(o)}{o.validUntil ? ` · ${t('until {date}', { date: new Date(o.validUntil).toLocaleDateString(loc()) })}` : ''}</T>
