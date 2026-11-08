@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Приложението за iPhone е в App Store. Приложението за Android скоро ще е в Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Приложението за Android е в Google Play. Приложението за iPhone скоро ще е в App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "На Android Fratius работи като уеб приложение, докато приложението не излезе в Google Play: отворете го в браузъра и го добавете към началния екран.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius работи като уеб приложение, докато приложението не излезе в App Store: отворете го в Safari и го добавете към началния екран."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius работи като уеб приложение, докато приложението не излезе в App Store: отворете го в Safari и го добавете към началния екран.",
+ "Billing": "Период на плащане",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Създайте профила и фирмата си в уеб приложението, с карта. 30-те ви дни започват веднага и нищо не се таксува, преди да изтекат.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Цени на година, без ДДС. Годишните планове се плащат при регистрацията, без безплатните дни.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Трябват ви още няколко буса към Basic или Pro? Добавете 15 за 10 € на месец.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "При регистрацията добавяте карта, за да потвърдите фирмата си. През 30-те безплатни дни нищо не се таксува; можете да прекратите по всяко време преди края им.",
+ "Monthly": "Месечно",
+ "Yearly: {n} % off the first year": "Годишно: {n} % отстъпка за първата година",
+ "Yearly": "Годишно",
+ "the first year": "първата година",
+ "a year": "на година",
+ "then {price} a year": "след това {price} на година",
+ "{n} % off the first year": "{n} % отстъпка за първата година",
+ "Paid yearly": "Плаща се годишно",
+ "Data processing agreement": "Споразумение за обработване на данни"
 }

@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacija za iPhone je v trgovini App Store. Aplikacija za Android je na poti v trgovino Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacija za Android je v trgovini Google Play. Aplikacija za iPhone je na poti v trgovino App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidu Fratius deluje kot spletna aplikacija, dokler aplikacija ne izide v trgovini Google Play: odprite ga v brskalniku in ga dodajte na začetni zaslon.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonu Fratius deluje kot spletna aplikacija, dokler aplikacija ne izide v trgovini App Store: odprite ga v Safariju in ga dodajte na začetni zaslon."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonu Fratius deluje kot spletna aplikacija, dokler aplikacija ne izide v trgovini App Store: odprite ga v Safariju in ga dodajte na začetni zaslon.",
+ "Billing": "Obračunsko obdobje",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Ustvarite račun in podjetje v spletni aplikaciji, s kartico. Vaših 30 dni se začne takoj in nič se ne zaračuna, preden se iztečejo.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Cene so letne, brez DDV. Letni paketi se plačajo ob registraciji, brez brezplačnih dni.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Potrebujete pri paketu Basic ali Pro še nekaj kombijev? Dodajte 15 za 10 € na mesec.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Ob registraciji dodate kartico, da preverimo vaše podjetje. V 30 brezplačnih dneh se nič ne zaračuna; odpoveste lahko kadar koli pred njihovim iztekom.",
+ "Monthly": "Mesečno",
+ "Yearly: {n} % off the first year": "Letno: {n} % popusta na prvo leto",
+ "Yearly": "Letno",
+ "the first year": "prvo leto",
+ "a year": "na leto",
+ "then {price} a year": "nato {price} na leto",
+ "{n} % off the first year": "{n} % popusta na prvo leto",
+ "Paid yearly": "Plačilo letno",
+ "Data processing agreement": "Pogodba o obdelavi podatkov"
 }

@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikace pro iPhone je v App Storu. Aplikace pro Android brzy dorazí na Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikace pro Android je na Google Play. Aplikace pro iPhone brzy dorazí do App Storu.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidu běží Fratius jako webová aplikace, dokud aplikace nevyjde na Google Play: otevři ji v prohlížeči a přidej na plochu.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonu běží Fratius jako webová aplikace, dokud aplikace nevyjde v App Storu: otevři ji v Safari a přidej na plochu."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonu běží Fratius jako webová aplikace, dokud aplikace nevyjde v App Storu: otevři ji v Safari a přidej na plochu.",
+ "Billing": "Fakturační období",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Vytvoř si účet a firmu ve webové aplikaci, s kartou. Tvých 30 dní začne hned a nic se neúčtuje, dokud neskončí.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Ceny za rok bez DPH. Roční tarify se platí při registraci, bez dnů zdarma.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Potřebuješ k tarifu Basic nebo Pro pár dodávek navíc? Přidej 15 za 10 € měsíčně.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Při registraci přidáš kartu k ověření firmy. Během 30 dní zdarma se nic neúčtuje; zrušit můžeš kdykoli předtím, než skončí.",
+ "Monthly": "Měsíčně",
+ "Yearly: {n} % off the first year": "Ročně: sleva {n} % na první rok",
+ "Yearly": "Ročně",
+ "the first year": "první rok",
+ "a year": "ročně",
+ "then {price} a year": "pak {price} ročně",
+ "{n} % off the first year": "Sleva {n} % na první rok",
+ "Paid yearly": "Placeno ročně",
+ "Data processing agreement": "Smlouva o zpracování osobních údajů"
 }

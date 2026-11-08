@@ -438,7 +438,8 @@ export function localesFor(lang: string, country: string | null): string[] {
 /* ---------- the email after sign-up (what was ordered, the terms, how to cancel) ---------- */
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
-const loc = (lang: string) => `${lang === 'en' ? 'en-GB' : lang}-u-nu-latn`;
+/** Dates and amounts in the person's language: Western digits everywhere, Serbian in Latin script as in the app. */
+export const loc = (lang: string) => `${lang === 'en' ? 'en-GB' : lang === 'sr' ? 'sr-Latn' : lang}-u-nu-latn`;
 export function euro(cents: number, lang: string) {
   try { return new Intl.NumberFormat(loc(lang), { style: 'currency', currency: 'EUR' }).format(cents / 100); } catch { return `€${(cents / 100).toFixed(2)}`; }
 }

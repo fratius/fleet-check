@@ -38,7 +38,7 @@ import {
   allowedVans, berlinDay, newTrial, standing, type AiKind, type Billing, type Interval, type PlanId,
 } from './billing';
 import {
-  LAUNCH_COUPON, OFFER_CODE, billingOf, launchOfferOn, localesFor, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
+  LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
   payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
@@ -2925,7 +2925,7 @@ async function tellOwners(orgId: string, type: string, b: Billing) {
   } else if (type === 'customer.subscription.trial_will_end' && b.status === 'trialing') {
     await Promise.all(owners.map((uid) => notify(uid, (lang) => ({
       title: tr(lang, 'Your free trial ends soon'),
-      body: tr(lang, 'Your plan starts on {date} and the card is charged then. Change or cancel it under Account, then Plan and billing.', { date: new Date(b.trialEnd).toLocaleDateString(`${lang}-u-nu-latn`, { day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }) }),
+      body: tr(lang, 'Your plan starts on {date} and the card is charged then. Change or cancel it under Account, then Plan and billing.', { date: new Date(b.trialEnd).toLocaleDateString(payLoc(lang), { day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }) }),
       url: '/plan', tag: `pay-${orgId}`,
     })).catch(() => 0)));
   }

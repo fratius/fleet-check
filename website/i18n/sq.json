@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacioni për iPhone është në App Store. Aplikacioni për Android po vjen së shpejti në Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacioni për Android është në Google Play. Aplikacioni për iPhone po vjen së shpejti në App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Në Android, Fratius punon si aplikacion web derisa të dalë aplikacioni në Google Play: hape në shfletues dhe shtoje në ekranin kryesor.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Në iPhone, Fratius punon si aplikacion web derisa të dalë aplikacioni në App Store: hape në Safari dhe shtoje në ekranin kryesor."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Në iPhone, Fratius punon si aplikacion web derisa të dalë aplikacioni në App Store: hape në Safari dhe shtoje në ekranin kryesor.",
+ "Billing": "Periudha e faturimit",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Krijo llogarinë dhe kompaninë në aplikacionin web, me një kartë. 30 ditët e tua fillojnë menjëherë dhe nuk tarifohet asgjë para se të mbarojnë.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Çmimet janë vjetore, pa TVSH. Paketat vjetore paguhen në regjistrim, pa ditët falas.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Të duhen edhe disa furgonë në Basic ose Pro? Shto 15 për 10 € në muaj.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Në regjistrim shton një kartë për të verifikuar kompaninë. Gjatë 30 ditëve falas nuk tarifohet asgjë; mund ta anulosh në çdo kohë para se të mbarojnë.",
+ "Monthly": "Mujore",
+ "Yearly: {n} % off the first year": "Vjetore: {n} % zbritje vitin e parë",
+ "Yearly": "Vjetore",
+ "the first year": "vitin e parë",
+ "a year": "në vit",
+ "then {price} a year": "pastaj {price} në vit",
+ "{n} % off the first year": "{n} % zbritje vitin e parë",
+ "Paid yearly": "Paguhet çdo vit",
+ "Data processing agreement": "Marrëveshja për përpunimin e të dhënave"
 }
