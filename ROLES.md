@@ -76,19 +76,38 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
     cancel them. (The server still accepts one-time links for drivers, which the app no longer offers: the tests
     use them, and approving a sign-up gives the same access.)
 - **New companies** are made by the server (`createCompany`): the person becomes its fleet owner, with a first
-  station and **30 days free** (`billing` on the company: `trialing`, trial start and end, where they signed up,
-  the plan picked on the website). The website's "Start 30 days free" button (when `CONFIG.app.selfServe` is on)
-  opens "Create account" in the web app and then "Create a company". Only the server writes `billing` and the
-  accepted `terms` (version and time, once the AGB and AVV are published: `TERMS_VERSION` in
-  `functions/src/billing.ts` and `src/lib/billing.ts`); owners can't change them, nor when the company was made.
-  One account creates up to 3 companies (demo companies don't count); the app creator is told about each new one.
-  Older store apps still create companies directly (the rules allow it without those fields, made now): their
-  trial counts from `createdAt`. Companies made before 1 November 2026 were set up by hand: no trial, no limits.
+  station. Only the server writes `billing` and the accepted `terms` (the AGB and AVV version, `TERMS_VERSION` in
+  `functions/src/billing.ts` and `src/lib/billing.ts`, now `2026-11-08`); owners can't change them, nor when the
+  company was made. One account creates up to 3 companies (demo companies don't count); the app creator is told about
+  each new one. Companies made before 1 November 2026 were set up by hand: no trial, no limits.
+- **Payments (Stripe, on the web only; the store apps sell nothing).** Product owner, 2026-11-05: everyone adds a
+  card at sign-up, in one step, also with a free trial or a custom offer, "to verify your company and keep out fake
+  accounts"; nothing is charged before the trial ends.
+  - Sign-up is one page in the web app (`/start`, `components/plansetup.tsx`): account, plan, monthly or yearly, the
+    add-on, the company's billing address and card (Stripe's own fields), the AGB and AVV, and one button. Before the
+    button it says what is charged when (AGB § 2); the button says it too ("Start free, paid from {date}").
+  - Plans go by vans only; drivers and stations are unlimited. Basic €40 a month up to 50 vans, Pro €90 up to 150,
+    Premium €200 unlimited; the add-on of 15 more vans for €10 a month (€120 a year) on Basic and Pro, once; beyond
+    that, the next plan. Prices plus VAT. Yearly = 12 months, paid at sign-up with no trial; the launch offer takes 30 %
+    off the plan in the first year while the app creator leaves it on (Account tab). Monthly plans: 30 days free.
+  - The van limit: the server counts the vans in use (`fleetSize`, not retired ones) and the rules refuse another van
+    once `billing.vans` is reached; the owner takes the add-on or a bigger plan under Account, Plan and billing.
+    Plan changes: bigger now (the rest of the period charged), smaller now (credited on the next invoice), never
+    below the vans in use; yearly to monthly by email.
+  - **Who pays:** only the fleet owner adds the card, changes the plan and opens Stripe's page for the card, billing
+    address, VAT ID, invoices and cancelling (to the end of the period paid for). Managers and drivers never see prices.
+  - **Without an active plan** (no card yet, a trial without a card that ran out, cancelled, not paid, paused) the
+    company's calls to the server are refused and the app shows the owner the plan and card step instead of the tabs;
+    managers and drivers hear that the owner adds it. A plan that ended leaves 30 days to look at and export the
+    data first. `past_due` still works while Stripe tries the card again. The app creator is never stopped.
+  - **Sign-up links:** the app creator makes them for one DSP (Account tab): free days, a discount in % or € for some
+    months or for good, a fixed plan or interval, how many sign-ups, until when. Link: `/start?offer=CODE`.
+  - With Stripe's **test keys** only companies that signed up on `/start` are on Stripe; sign-up without a card keeps
+    working for everyone else until the live keys are in.
 - **AI allowance during the trial** (and in demo companies): 20 damage checks and 100 other photo readings (type
   scans, documents) a day per company, German time, counted on the server (`orgs/{org}/aiDaily/{day}`, server
   only). Dashboard photos and the refuel steps are never held back, so no driver is stuck at a tour or the pump.
-  The app creator isn't counted. Payment (Stripe, on the web only: the store apps sell nothing) comes later and
-  writes Stripe's status into `billing` (`active`, `past_due`, `unpaid`, `paused`, `canceled`; `comped` for pilots).
+  The app creator isn't counted.
 - **One exception, for testing:** the app creator's own test driver account (Actions > Test driver account) is added
   as a driver to a station of a company the creator owns, without a link, so the creator can see the app exactly as a
   driver does. It never adds anyone else, and it never prints a password (set it with "Forgot your password?").

@@ -109,9 +109,20 @@ The app is built on Expo SDK 58 because that's what Expo Go in the App Store run
 
 The store app is built by the **Store build** workflow (Actions tab) on EAS, as Fratius, `com.fratius.app`. The steps for the developer accounts, signing and submitting, and the texts for the store pages, are in [store/README.md](store/README.md) and [store/listing.md](store/listing.md). Every Deploy also updates the store app, as long as no native package changed since its builds (`scripts/native.mjs`).
 
+## Payments (Stripe)
+
+Fleet owners pay on the web only, by card, through Stripe; the store apps sell nothing. Everything in Stripe is made by the Deploy workflow from two keys, so nothing needs setting up by hand in Stripe's product catalogue:
+
+1. In Stripe, **Developers > API keys**: copy the secret key (`sk_test_…` to test, `sk_live_…` for real money) and the publishable key (`pk_test_…` or `pk_live_…`, the same mode).
+2. In GitHub, **Settings > Secrets and variables > Actions**: the secret `STRIPE_SECRET_KEY`, and under **Variables** the variable `STRIPE_PUBLISHABLE_KEY`. Run Deploy.
+
+Deploy then makes the products and prices (by lookup key, from `PRICE_CENTS` in `functions/src/billing.ts`), the 30 % launch coupon for yearly plans, tax (Stripe Tax if it's on, else 19 % German VAT), the customer portal and the webhook (its signing secret goes to Secret Manager by itself), and writes what it made to `platform/stripe`. A changed price becomes a new Stripe price; companies already paying keep theirs.
+
+With **test keys** nobody pays real money: the website keeps its request form, and the sign-up page is at `<web app>/start` (or open the website with `?stripe=test`). Use the card 4242 4242 4242 4242. With **live keys** the website's buttons open the sign-up page and every new company adds a card. In the Stripe dashboard, once: your business details and the Steuernummer or USt-IdNr. (Settings > Business, and the invoice template), **Settings > Billing > Subscriptions and emails**: send a reminder 7 days before a free trial ends (the AGB promise it), emails about failed payments, and what happens when all retries fail (cancel the subscription).
+
 ## The website (fratius.com)
 
-The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The header has **Log in** (the web app) and **Start 30 days free**. With `CONFIG.app.selfServe: false` (now, until the AGB and AVV are approved) that button opens the request form; with `true` it opens "Create account" in the web app (`/sign-in?mode=up&plan=…`), which goes on to "Create a company" with 30 days free, and the request form stays as the way to talk to us first. The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
+The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The header has **Log in** (the web app) and **Start 30 days free**. Until payments are live that button opens the request form; with Stripe's live keys (it asks `/api/billing`) it and the plan buttons open sign-up with a card in the web app (`/start?plan=…&interval=…`), the pricing gets a monthly/yearly switch, and the request form stays as the way to talk to us first. The AGB and AVV are at `/agb` and `/avv` (English: `/terms`, `/dpa`). The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
 
 ## What the AI costs
 
@@ -150,7 +161,7 @@ The app uses the Firebase project in `app.json`. Start with `FLEET_TEST_MODE=1 n
 
 Checks before pushing: `npm run typecheck`. Pushing a branch other than `main` runs the Test workflow (rules on the emulator, the van history flow end to end, type checks).
 
-**Everything on your computer, no real data:** `npm run emulators` (needs Java 21) starts the Firebase emulators for sign-in, data, photos and functions, under a demo project that never touches the real one. In a second terminal, `npm run web:emulators` opens the web app against them. Put any text in `functions/.secret.local` as `ANTHROPIC_API_KEY=...` and `WEBPUSH_KEYS={}` first (AI checks need a real key and phone notifications a real key pair; nothing else does).
+**Everything on your computer, no real data:** `npm run emulators` (needs Java 21) starts the Firebase emulators for sign-in, data, photos and functions, under a demo project that never touches the real one. In a second terminal, `npm run web:emulators` opens the web app against them. Put any text in `functions/.secret.local` as `ANTHROPIC_API_KEY=...`, `WEBPUSH_KEYS={}`, `SMTP_URL=none`, `STRIPE_SECRET_KEY=not-used-in-tests` and `STRIPE_WEBHOOK_SECRET=whsec_test` first (AI checks need a real key and phone notifications a real key pair; nothing else does).
 
 ## Project layout
 
