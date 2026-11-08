@@ -81,6 +81,8 @@ export function payMode(): Promise<PayMode> {
 export function blocked(o: Org | null | undefined, mode: PayMode['mode'], creator: boolean): boolean {
   if (!o || !mode || creator) return false;
   if (mode !== 'live' && o.billing?.via !== 'stripe') return false;
+  // Signed up with Stripe's test keys: with live keys it starts again, with a card.
+  if (mode === 'live' && o.billing?.testMode) return true;
   return BLOCKED.includes(standing(o).standing);
 }
 /** Euros, the way the person's language writes them. */

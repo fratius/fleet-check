@@ -802,6 +802,15 @@ export interface BillingConfig {
   offer: OfferPublic | null;
   offerError: { t: string } | null;
 }
+/** What billingStart made: what Stripe.js confirms, and the exact terms (the page checks them against what it showed). */
+export interface BillingStarted {
+  kind: 'setup' | 'payment' | 'none'; clientSecret: string | null;
+  /** A payment now: the first invoice with VAT, in cents. */
+  amount: number;
+  trialEnd: number | null;
+  /** The first invoice before VAT, after discounts. */
+  firstNet: number;
+}
 /** A sign-up link's terms, as the sign-up page shows them. */
 export interface OfferPublic {
   code: string; plan: 'basic' | 'pro' | 'premium' | null; interval: 'month' | 'year' | null; trialDays: number;

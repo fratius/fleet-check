@@ -261,6 +261,7 @@ e273d235	Add check	[components/routines.tsx]
 506111ca	Add or change checks
 a82690ab	Add station	[people.tsx]
 037d55e4	Add the breakdown number and the insurer, so drivers have them at the van.
+73463517	Add the card and start
 c68a2faf	Add the drop-off video
 ac6932e5	Add the incident	[components/driverrec.tsx]
 0c82d98a	Add the odometer reading to follow the mileage.
@@ -307,6 +308,7 @@ f55038f9	Allow it	[buy/[id].tsx]
 e95f7cf7	Almost done…	[components/plansetup.tsx]
 6603c2f3	Already have an account? Sign in
 992a3106	Already on the van: {damage}, found {when}. It stays one damage, seen again.
+64b424ef	Already working on it. Wait a moment, then try again.
 05417857	Also close: {types}.	[add.tsx]
 6a1f0c2a	Also on the receipt: {items}.
 c18a1a2a	Amazon livery	[components/vanfacts.tsx]
@@ -379,6 +381,7 @@ e81cdad2	Call your fleet manager. They allow or refuse it in the app, and this s
 3bddb099	Camera access	[app/scan/[id].tsx]
 77dfd213	Cancel	[buy/[id].tsx, check/[id].tsx, vehicle/[id].tsx]
 f54c1375	Cancel an invite link
+e577b7bf	Cancel before {date} and you pay nothing.
 9fe73f01	Cancel before {date} and you pay nothing. Stripe reminds you by email 7 days before.
 6e689208	Cancel my request	[app/sign-in.tsx]
 4ad41471	Cancel the parts purchase
@@ -438,6 +441,7 @@ ee732d19	Checked by {name}: {note}
 c65e5123	checked with close-ups	[log.tsx]
 ce3c5359	Checking the card…	[buy/[id].tsx, components/plansetup.tsx]
 3e5748ab	Checking the close-ups, spot {i} of {n}
+425365c7	Checking the terms…	[components/plansetup.tsx]
 abb464b5	Checking the video…	[components/uploads.tsx]
 226deaae	Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.
 2752e2cc	Checks drivers haven't done yet (red after 3 hours), and problems they found in the last 7 days.
@@ -774,6 +778,7 @@ fd776819	For example: use the card in the glovebox
 83f9e343	For how many months
 7584b929	For my company, I accept the terms (AGB) and the data processing agreement (AVV).
 9b5de981	For the fuel used on each tour
+a20a8c3c	For this company the terms are different from what was shown above:
 c1ce9404	For whom	[components/offers.tsx]
 a2f060b7	Forgot your password?	[app/sign-in.tsx]
 2244036e	Former people	[people.tsx]
@@ -1335,6 +1340,7 @@ fec127a7	Parts, why, receipt	[buy/[id].tsx]
 8be3c943	Password	[app/join/[token].tsx, app/sign-in.tsx, components/deleteaccount.tsx]
 f9078931	Password: {password}	[account.tsx]
 44e3cbda	Paste the whole link you were sent.
+f7cb926a	Pay {price} and start
 2f457bbc	Pay {price} plus VAT and start
 9313e27a	Pay or change the card
 6f891554	Pay yearly	[plan.tsx]
@@ -1406,6 +1412,7 @@ ae2f98a0	Plan	[components/offers.tsx, components/plansetup.tsx]
 3dea4dc0	Plans and the card are set up in the web app, in a browser on a computer or phone.
 bb08fcf7	Plate, name and type
 e92d2b4c	playback copy {size}	[video/[id].tsx]
+0d92d311	Please check before you go on
 01ffec64	Plugged in to charge
 9e79750a	Policy number	[components/vanfacts.tsx]
 52d57635	Possible, {pct}%	[check/[id].tsx]
@@ -1782,6 +1789,7 @@ c4251eee	The AI marks possible damage, then asks for close-ups of each spot.
 d9260181	The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.
 732a2984	The app creator's account can't be deleted in the app.
 8e92141c	The app keeps the latest 500 handovers here; older ones are on the van's Drivers tab.
+4c60e61c	The bank didn't accept the payment for the change. Check the card under payment details, then try again.
 3e5c42fa	The camera couldn't start.
 7f319ebe	The camera isn't allowed. Allow it in the phone's settings.
 9b46aa3c	The camera shows the outline to fit for each one.
@@ -1973,6 +1981,7 @@ d130cd05	Time per scan	[log.tsx]
 d1cf730a	Today when you change the odometer
 37087aec	Today: {price} plus VAT for the first month.
 55b5b84f	Today: {price} plus VAT for the first year.
+6d0bd7b3	Today: {price}, VAT included.
 1ec1d529	Today: {price}.	[components/plansetup.tsx]
 2dac81d6	tomorrow	[lib/fleet.ts]
 db97c592	Too many AI checks at once. Wait a minute and try again.

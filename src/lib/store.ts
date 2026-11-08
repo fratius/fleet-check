@@ -8,7 +8,7 @@ import { fb } from './firebase';
 import { N_, t } from './i18n';
 import { newId } from './images';
 import { retrying } from './net';
-import type { AccountCompany, Assignment, BillingConfig, OfferInput, Org, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   /** `fromCache`: only what this phone has (no connection yet), not confirmed by the server. */
@@ -263,9 +263,8 @@ export const ai = {
   createDemoCompany: call<{ fresh?: boolean }, { orgId: string; existed: boolean }>('createDemoCompany', 130000),
   createCompany: call<{ company: string; station: string; mainStation: string; name: string; source: 'website' | 'app'; plan: string | null; terms: string | null; payments?: boolean; interval?: 'month' | 'year' }, { orgId: string; trialEnd: number; needsCard?: boolean }>('createCompany', 40000),
   /** Payments (functions/src/payments.ts), on the web only. */
-  billingConfig: call<{ offer?: string | null }, BillingConfig>('billingConfig', 20000),
-  billingStart: call<{ orgId: string; plan: string; interval: 'month' | 'year'; addon: boolean; offer: string | null; address: unknown; vatId: string },
-    { kind: 'setup' | 'payment' | 'none'; clientSecret: string | null; amount: number; trialEnd: number | null }>('billingStart', 70000),
+  billingConfig: call<{ offer?: string | null; orgId?: string | null }, BillingConfig>('billingConfig', 20000),
+  billingStart: call<{ orgId: string; plan: string; interval: 'month' | 'year'; addon: boolean; offer: string | null; address: unknown; vatId: string }, BillingStarted>('billingStart', 70000),
   billingConfirm: call<{ orgId: string; setupIntent?: string | null }, { billing: Org['billing'] | null; next: { kind: 'setup' | 'payment'; clientSecret: string; amount: number } | null }>('billingConfirm', 70000),
   billingPortal: call<{ orgId: string }, { url: string }>('billingPortal', 40000),
   changePlan: call<{ orgId: string; plan?: string; interval?: 'month' | 'year'; addon?: boolean }, { billing: Org['billing'] | null; next: { kind: 'payment'; clientSecret: string; amount: number } | null }>('changePlan', 70000),

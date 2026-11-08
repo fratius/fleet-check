@@ -1,5 +1,5 @@
 import { AddressElement, Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe, type Appearance, type Stripe, type StripeElementLocale, type StripeElementsOptions } from '@stripe/stripe-js';
+import { loadStripe, type Appearance, type Stripe, type StripeElementLocale, type StripeElementsOptionsMode } from '@stripe/stripe-js';
 import { useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 
@@ -49,9 +49,10 @@ export function CardForm({ publishableKey, kind, amount, company, onApi }: CardF
   const c = useColors();
   const l = lang();
   // Made once; later changes go through elements.update (below), so what was typed stays.
-  const options = useMemo(() => {
-    const common = { currency: 'eur', paymentMethodTypes: ['card'], locale: (LOCALES.has(l) ? l : 'auto') as StripeElementLocale, appearance: appearance(c) };
-    return (kind === 'payment' ? { ...common, mode: 'subscription', amount: Math.max(50, amount) } : { ...common, mode: 'setup' }) as StripeElementsOptions;
+  // Cards only (product owner, 2026-11-05), as the subscription's intents accept.
+  const options = useMemo((): StripeElementsOptionsMode => {
+    const common = { currency: 'eur', allowedPaymentMethodTypes: ['card'], locale: (LOCALES.has(l) ? l : 'auto') as StripeElementLocale, appearance: appearance(c) };
+    return kind === 'payment' ? { ...common, mode: 'subscription', amount: Math.max(50, amount) } : { ...common, mode: 'setup' };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <Elements stripe={stripeOf(publishableKey)} options={options}>
@@ -87,7 +88,7 @@ function Fields({ kind, amount, company, onApi }: Omit<CardFormProps, 'publishab
         // The server decides (a trial, or a payment now); if the form expected the other, it follows and checks again.
         if (k !== shown.current.kind || (k === 'payment' && amt !== shown.current.amount)) {
           shown.current = { kind: k, amount: amt };
-          elements.update({ mode: elementsMode(k), ...(k === 'payment' ? { amount: Math.max(50, amt) } : {}) });
+          await elements.update({ mode: elementsMode(k), ...(k === 'payment' ? { amount: Math.max(50, amt) } : {}) });
           const again = await elements.submit();
           if (again.error) return { error: message(again.error) };
         }
@@ -107,8 +108,10 @@ function Fields({ kind, amount, company, onApi }: Omit<CardFormProps, 'publishab
   return (
     <View style={{ gap: 14 }}>
       <AddressElement options={{ mode: 'billing', display: { name: 'organization' }, defaultValues: { name: company || '', address: { country: 'DE' } } }} />
-      {/* With the Address Element in the same group, the Payment Element takes the billing address from it. */}
-      <PaymentElement options={{ layout: 'tabs' }} />
+      {/* With the Address Element in the same group, the Payment Element takes the billing address from it. Card fields
+          only: wallets open their own sheet when the fields are checked, which can't happen again after the server
+          answered (the amount with VAT is known only then). */}
+      <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'never', googlePay: 'never', link: 'never' } }} />
     </View>
   );
 }

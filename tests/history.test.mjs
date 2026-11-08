@@ -1537,6 +1537,9 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const start = await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'de 123 456 789' });
     assert.equal(start.kind, 'setup');
     assert.match(start.clientSecret, /^seti_fake_/);
+    assert.equal(start.firstNet, 4000, 'the exact terms come back, for the page to check against what it showed');
+    // Asked again with the same terms (another card, a reload): the same subscription.
+    assert.equal((await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'DE123456789' })).clientSecret, start.clientSecret);
     assert.ok(Math.abs(start.trialEnd - (Date.now() + 30 * 86400_000)) < 3_700_000, '30 days from adding the card');
     const pd = (await adminDb().doc(`payments/${orgId}`).get()).data();
     const cust = (await adminDb().doc(`fakeStripe/${pd.customerId}`).get()).data();
@@ -1617,10 +1620,20 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const hs = await hart.call('billingStart', { orgId: h.orgId, plan: 'basic', interval: 'year', offer: off.code, address });
     assert.equal(hs.kind, 'setup');
     assert.ok(Math.abs(hs.trialEnd - (Date.now() + 60 * 86400_000)) < 3_700_000);
+    // The link's one use is taken when Hart starts: nobody else can start with it meanwhile.
+    const ole = await person('Ole Early');
+    const oe = await ole.call('createCompany', { company: 'Early GmbH', station: 'DER1', name: 'Ole Early', source: 'website', plan: 'pro', terms, payments: true });
+    assert.match((await fails(ole.call('billingStart', { orgId: oe.orgId, offer: off.code, address }), 'failed-precondition')).message, /already been used/);
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 1);
+    // Hart itself can come back to it (another card) and still sees the offer.
+    assert.equal((await hart.call('billingConfig', { offer: off.code, orgId: h.orgId })).offer.trialDays, 60);
     const hpd = (await adminDb().doc(`payments/${h.orgId}`).get()).data();
     let hsub = (await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).get()).data();
     assert.deepEqual(hsub.items.map((i) => i.key), ['fratius_pro_month'], 'the link\'s plan, not the one picked');
-    assert.deepEqual(hsub.coupons, [`fratius_offer_${off.code.toLowerCase()}`]);
+    assert.equal(hsub.coupons.length, 1);
+    assert.match(hsub.coupons[0], new RegExp(`^fratius_offer_${off.code.toLowerCase()}_[0-9a-f]{8}$`), 'the coupon is named after the link\'s terms');
+    // 20 % for 6 months, counted from the end of the 60 free days (Stripe counts from sign-up).
+    assert.equal((await adminDb().doc(`fakeStripe/coupon_${hsub.coupons[0]}`).get()).data().months, 8);
     await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).update({ confirmed: true });
     const hc = await hart.call('billingConfirm', { orgId: h.orgId, setupIntent: hs.clientSecret.split('_secret_')[0] });
     assert.equal(hc.billing.status, 'trialing');
@@ -1638,6 +1651,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const ys = await yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address });
     assert.equal(ys.kind, 'payment');
     assert.equal(ys.amount, 168000);
+    assert.equal(ys.firstNet, 168000);
     assert.equal(ys.trialEnd, null);
     const ypd = (await adminDb().doc(`payments/${y.orgId}`).get()).data();
     await adminDb().doc(`fakeStripe/${ypd.subscriptionId}`).update({ confirmed: true });
@@ -1654,6 +1668,8 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const live = await old.call('createCompany', { company: 'Live GmbH', station: 'DLV1', name: 'Otto Oldpage', source: 'app', plan: null, terms });
     assert.equal(live.needsCard, true);
     await fails(setDoc(doc(collection(old.db, 'orgs')), { name: 'Sneaky', createdBy: old.uid, createdAt: Date.now() }), 'permission-denied');
+    // A company that signed up with Stripe's test keys starts again with live keys: nothing real was agreed.
+    await fails(hart.call('setupStations', { orgId: h.orgId }), 'failed-precondition');
     // An owner deleting their account ends the plan of the company that closes with it.
     await adminDb().doc('platform/stripe').update({ mode: 'fake' });
     await yan.call('deleteAccount', {});
