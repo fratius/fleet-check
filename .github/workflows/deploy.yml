@@ -152,7 +152,8 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
           SK: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY }}
+          # A variable (it's public); a secret of the same name works too.
+          STRIPE_PUBLISHABLE_KEY: ${{ vars.STRIPE_PUBLISHABLE_KEY || secrets.STRIPE_PUBLISHABLE_KEY }}
         run: |
           set -euo pipefail
           fb() { npx -y "$FIREBASE_TOOLS" "$@" --project "$PROJECT" --non-interactive; }
