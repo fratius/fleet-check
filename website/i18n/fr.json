@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "L’app iPhone est disponible sur l’App Store. L’app Android arrive bientôt sur Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "L’app Android est disponible sur Google Play. L’app iPhone arrive bientôt sur l’App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Sur Android, Fratius fonctionne comme app web en attendant la sortie de l’app sur Google Play : ouvrez-la dans le navigateur et ajoutez-la à l’écran d’accueil.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Sur iPhone, Fratius fonctionne comme app web en attendant la sortie de l’app sur l’App Store : ouvrez-la dans Safari et ajoutez-la à l’écran d’accueil."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Sur iPhone, Fratius fonctionne comme app web en attendant la sortie de l’app sur l’App Store : ouvrez-la dans Safari et ajoutez-la à l’écran d’accueil.",
+ "Billing": "Facturation",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Créez votre compte et votre entreprise dans l’app web, avec une carte. Vos 30 jours commencent aussitôt et rien n’est facturé avant leur fin.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Prix annuels hors TVA. Les formules annuelles sont payées à l’inscription, sans les jours gratuits.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Besoin de quelques fourgons de plus avec Basic ou Pro ? Ajoutez-en 15 pour 10 € par mois.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Vous ajoutez une carte à l’inscription pour vérifier votre entreprise. Rien n’est facturé pendant les 30 jours gratuits ; vous pouvez résilier à tout moment avant leur fin.",
+ "Monthly": "Mensuel",
+ "Yearly: {n} % off the first year": "Annuel : {n} % de réduction la première année",
+ "Yearly": "Annuel",
+ "the first year": "la première année",
+ "a year": "par an",
+ "then {price} a year": "puis {price} par an",
+ "{n} % off the first year": "{n} % de réduction la première année",
+ "Paid yearly": "Paiement annuel",
+ "Data processing agreement": "Accord de traitement des données"
 }

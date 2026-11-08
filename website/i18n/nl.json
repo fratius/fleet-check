@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "De iPhone-app staat in de App Store. De Android-app komt binnenkort op Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "De Android-app staat op Google Play. De iPhone-app komt binnenkort in de App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Op Android werkt Fratius als webapp tot de app op Google Play staat: open hem in de browser en zet hem op het beginscherm.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Op iPhone werkt Fratius als webapp tot de app in de App Store staat: open hem in Safari en zet hem op het beginscherm."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Op iPhone werkt Fratius als webapp tot de app in de App Store staat: open hem in Safari en zet hem op het beginscherm.",
+ "Billing": "Facturatie",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Maak je account en je bedrijf aan in de webapp, met een kaart. Je 30 dagen gaan direct in en er wordt niets afgeschreven voordat ze voorbij zijn.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Prijzen per jaar, exclusief btw. Jaarabonnementen worden bij de aanmelding betaald, zonder de gratis dagen.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Een paar bestelbussen extra nodig bij Basic of Pro? Voeg er 15 toe voor € 10 per maand.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Bij de aanmelding voeg je een kaart toe om je bedrijf te verifiëren. Tijdens de 30 gratis dagen wordt niets afgeschreven; je kunt op elk moment opzeggen voordat ze voorbij zijn.",
+ "Monthly": "Maandelijks",
+ "Yearly: {n} % off the first year": "Jaarlijks: {n}% korting in het eerste jaar",
+ "Yearly": "Jaarlijks",
+ "the first year": "het eerste jaar",
+ "a year": "per jaar",
+ "then {price} a year": "daarna {price} per jaar",
+ "{n} % off the first year": "{n}% korting in het eerste jaar",
+ "Paid yearly": "Jaarlijkse betaling",
+ "Data processing agreement": "Verwerkersovereenkomst"
 }

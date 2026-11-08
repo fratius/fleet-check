@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Die iPhone-App ist im App Store. Die Android-App ist auf dem Weg zu Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Die Android-App ist bei Google Play. Die iPhone-App ist auf dem Weg in den App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Auf Android läuft Fratius als Web-App, bis die App bei Google Play erscheint: im Browser öffnen und zum Home-Bildschirm hinzufügen.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Auf dem iPhone läuft Fratius als Web-App, bis die App im App Store erscheint: in Safari öffnen und zum Home-Bildschirm hinzufügen."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Auf dem iPhone läuft Fratius als Web-App, bis die App im App Store erscheint: in Safari öffnen und zum Home-Bildschirm hinzufügen.",
+ "Billing": "Abrechnung",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Erstelle dein Konto und deine Firma in der Web-App, mit einer Karte. Deine 30 Tage starten sofort, und vor ihrem Ende wird nichts berechnet.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Preise pro Jahr, zzgl. MwSt. Jahrestarife werden bei der Anmeldung bezahlt, ohne die kostenlosen Tage.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Brauchst du bei Basic oder Pro ein paar Transporter mehr? Füge 15 für 10 € pro Monat hinzu.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Bei der Anmeldung hinterlegst du eine Karte, um deine Firma zu verifizieren. In den 30 kostenlosen Tagen wird nichts berechnet; du kannst jederzeit vorher kündigen.",
+ "Monthly": "Monatlich",
+ "Yearly: {n} % off the first year": "Jährlich: {n} % Rabatt im ersten Jahr",
+ "Yearly": "Jährlich",
+ "the first year": "im ersten Jahr",
+ "a year": "pro Jahr",
+ "then {price} a year": "danach {price} pro Jahr",
+ "{n} % off the first year": "{n} % Rabatt im ersten Jahr",
+ "Paid yearly": "Jährliche Zahlung",
+ "Data processing agreement": "Auftragsverarbeitungsvertrag"
 }

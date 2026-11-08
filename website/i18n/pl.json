@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Aplikacja na iPhone’a jest dostępna w App Store. Aplikacja na Androida jest w drodze do Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Aplikacja na Androida jest dostępna w Google Play. Aplikacja na iPhone’a jest w drodze do App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Na Androidzie Fratius działa jako aplikacja webowa, dopóki aplikacja nie pojawi się w Google Play: otwórz ją w przeglądarce i dodaj do ekranu głównego.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonie Fratius działa jako aplikacja webowa, dopóki aplikacja nie pojawi się w App Store: otwórz ją w Safari i dodaj do ekranu głównego."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Na iPhonie Fratius działa jako aplikacja webowa, dopóki aplikacja nie pojawi się w App Store: otwórz ją w Safari i dodaj do ekranu głównego.",
+ "Billing": "Rozliczenie",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Załóż konto i firmę w aplikacji webowej, podając kartę. Twój 30-dniowy okres startuje natychmiast, a przed jego końcem nic nie pobieramy.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Ceny roczne netto (bez VAT). Plany roczne są opłacane przy rejestracji, bez darmowych dni.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Potrzebujesz kilku furgonetek więcej w planie Basic lub Pro? Dodaj 15 za 10 € miesięcznie.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Przy rejestracji podajesz kartę, aby zweryfikować firmę. W ciągu 30 darmowych dni nic nie pobieramy; możesz anulować w każdej chwili przed ich końcem.",
+ "Monthly": "Miesięcznie",
+ "Yearly: {n} % off the first year": "Rocznie: {n}% rabatu w pierwszym roku",
+ "Yearly": "Rocznie",
+ "the first year": "w pierwszym roku",
+ "a year": "rocznie",
+ "then {price} a year": "potem {price} rocznie",
+ "{n} % off the first year": "{n}% rabatu w pierwszym roku",
+ "Paid yearly": "Płatność roczna",
+ "Data processing agreement": "Umowa powierzenia przetwarzania danych"
 }
