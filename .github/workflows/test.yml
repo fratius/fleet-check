@@ -45,7 +45,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
       - name: Assignments, pick-up photos and history on the emulators (sign-in, rules, functions, storage)
         shell: bash
         run: |
@@ -78,7 +78,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm ci && npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: npm ci && npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
       - run: cd tests && npx playwright install --with-deps chromium
       - name: The web app for the emulators
         run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-e2e
@@ -107,7 +107,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci && npm ci --prefix functions
+      - run: npm ci && npm ci --prefix functions --ignore-scripts
       - run: npm run typecheck
       - name: Uploads that wait on the phone (the outbox's logic, src/lib/outboxcore.ts)
         run: node --test tests/outbox.test.mjs

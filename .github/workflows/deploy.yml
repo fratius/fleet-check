@@ -59,7 +59,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - run: npm ci --prefix tests && npm ci --prefix functions && npm --prefix functions run build
+      - run: npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
       - name: Assignments, pick-up photos and history on the emulators (sign-in, rules, functions, storage)
         shell: bash
         run: |
@@ -99,7 +99,7 @@ jobs:
         with:
           node-version: 22
       - name: Install and build the functions
-        run: npm ci --prefix functions && npm --prefix functions run build
+        run: bash scripts/ci-functions.sh && npm --prefix functions run build
       - name: Turn on the Google Cloud services the functions need
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
