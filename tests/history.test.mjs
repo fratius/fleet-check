@@ -1562,7 +1562,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.ok((await adminDb().doc(`payments/${orgId}`).get()).data().confirmedAt);
     // The owner can't write billing or the van count.
     await fails(updateDoc(doc(pia.db, 'orgs', orgId), { 'billing.vans': 999 }), 'permission-denied');
-    await fails(updateDoc(doc(pia.db, 'orgs', orgId), { fleetSize: 0 }), 'permission-denied');
+    await fails(updateDoc(doc(pia.db, 'orgs', orgId), { fleetSize: 5 }), 'permission-denied');
 
     // 2. The van limit: Basic has 50. The server counts the vans in use (not retired ones).
     const stationId = (await getDocs(collection(pia.db, 'orgs', orgId, 'stations'))).docs[0].id;
