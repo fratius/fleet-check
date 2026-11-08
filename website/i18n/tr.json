@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "iPhone uygulaması App Store'da. Android uygulaması Google Play'e geliyor.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Android uygulaması Google Play'de. iPhone uygulaması App Store'a geliyor.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Android'de Fratius, uygulama Google Play'de yayınlanana kadar web uygulaması olarak çalışır: tarayıcıda açın ve ana ekrana ekleyin.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone'da Fratius, uygulama App Store'da yayınlanana kadar web uygulaması olarak çalışır: Safari'de açın ve ana ekrana ekleyin."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "iPhone'da Fratius, uygulama App Store'da yayınlanana kadar web uygulaması olarak çalışır: Safari'de açın ve ana ekrana ekleyin.",
+ "Billing": "Faturalama dönemi",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Hesabınızı ve şirketinizi web uygulamasında bir kartla oluşturun. 30 gününüz hemen başlar ve bitmeden hiçbir ücret alınmaz.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Fiyatlar yıllık, KDV hariç. Yıllık planlar kayıt sırasında, ücretsiz günler olmadan ödenir.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Basic veya Pro'da birkaç panelvan daha mı gerekiyor? Aylık 10 € karşılığında 15 panelvan ekleyin.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Şirketinizi doğrulamak için kayıt sırasında bir kart eklersiniz. 30 ücretsiz gün boyunca hiçbir ücret alınmaz; bu süre bitmeden istediğiniz zaman iptal edebilirsiniz.",
+ "Monthly": "Aylık",
+ "Yearly: {n} % off the first year": "Yıllık: ilk yıl %{n} indirim",
+ "Yearly": "Yıllık",
+ "the first year": "ilk yıl",
+ "a year": "yıllık",
+ "then {price} a year": "sonra yıllık {price}",
+ "{n} % off the first year": "İlk yıl %{n} indirim",
+ "Paid yearly": "Yıllık ödenir",
+ "Data processing agreement": "Veri işleme sözleşmesi"
 }

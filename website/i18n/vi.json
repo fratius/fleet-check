@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Ứng dụng cho iPhone đã có trên App Store. Ứng dụng cho Android sắp có trên Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Ứng dụng cho Android đã có trên Google Play. Ứng dụng cho iPhone sắp có trên App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "Trên Android, Fratius chạy dưới dạng ứng dụng web cho đến khi ứng dụng có mặt trên Google Play: mở trong trình duyệt và thêm vào màn hình chính.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Trên iPhone, Fratius chạy dưới dạng ứng dụng web cho đến khi ứng dụng có mặt trên App Store: mở trong Safari và thêm vào màn hình chính."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "Trên iPhone, Fratius chạy dưới dạng ứng dụng web cho đến khi ứng dụng có mặt trên App Store: mở trong Safari và thêm vào màn hình chính.",
+ "Billing": "Chu kỳ thanh toán",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Tạo tài khoản và công ty trong ứng dụng web, kèm thẻ. 30 ngày của bạn bắt đầu ngay và không tính phí trước khi 30 ngày kết thúc.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Giá mỗi năm, chưa gồm VAT. Gói năm được thanh toán khi đăng ký, không có ngày miễn phí.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Cần thêm vài xe van cho gói Basic hoặc Pro? Thêm 15 xe với giá 10 € mỗi tháng.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Bạn thêm thẻ khi đăng ký để xác minh công ty. Không tính phí trong 30 ngày miễn phí; bạn có thể hủy bất cứ lúc nào trước khi hết 30 ngày.",
+ "Monthly": "Theo tháng",
+ "Yearly: {n} % off the first year": "Theo năm: giảm {n}% năm đầu",
+ "Yearly": "Theo năm",
+ "the first year": "năm đầu",
+ "a year": "mỗi năm",
+ "then {price} a year": "sau đó {price} mỗi năm",
+ "{n} % off the first year": "Giảm {n}% năm đầu",
+ "Paid yearly": "Thanh toán theo năm",
+ "Data processing agreement": "Thỏa thuận xử lý dữ liệu"
 }

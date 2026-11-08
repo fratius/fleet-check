@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Застосунок для iPhone уже в App Store. Застосунок для Android скоро з’явиться в Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Застосунок для Android уже в Google Play. Застосунок для iPhone скоро з’явиться в App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "На Android Fratius працює як вебзастосунок, доки застосунок не з’явиться в Google Play: відкрийте його в браузері й додайте на головний екран.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius працює як вебзастосунок, доки застосунок не з’явиться в App Store: відкрийте його в Safari й додайте на головний екран."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius працює як вебзастосунок, доки застосунок не з’явиться в App Store: відкрийте його в Safari й додайте на головний екран.",
+ "Billing": "Період оплати",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Створіть акаунт і компанію у вебзастосунку, додавши картку. Ваші 30 днів почнуться одразу, і до їх завершення нічого не списується.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Ціни за рік, без ПДВ. Річні тарифи оплачуються під час реєстрації, без безкоштовних днів.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Потрібно ще кілька фургонів на Basic чи Pro? Додайте 15 за 10 € на місяць.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "Під час реєстрації ви додаєте картку, щоб підтвердити компанію. Протягом 30 безкоштовних днів нічого не списується; скасувати можна будь-коли до їх завершення.",
+ "Monthly": "Помісячно",
+ "Yearly: {n} % off the first year": "За рік: знижка {n}% на перший рік",
+ "Yearly": "За рік",
+ "the first year": "за перший рік",
+ "a year": "на рік",
+ "then {price} a year": "потім {price} на рік",
+ "{n} % off the first year": "Знижка {n}% на перший рік",
+ "Paid yearly": "Оплата за рік",
+ "Data processing agreement": "Угода про обробку даних"
 }

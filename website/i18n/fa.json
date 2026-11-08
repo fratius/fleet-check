@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "اپ iPhone در App Store است. اپ Android در راه Google Play است.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "اپ Android در Google Play است. اپ iPhone در راه App Store است.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "روی Android، تا وقتی اپ در Google Play منتشر نشده، Fratius به‌صورت وب‌اپ کار می‌کند: آن را در مرورگر باز کنید و به صفحه اصلی اضافه کنید.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "روی iPhone، تا وقتی اپ در App Store منتشر نشده، Fratius به‌صورت وب‌اپ کار می‌کند: آن را در Safari باز کنید و به صفحه اصلی اضافه کنید."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "روی iPhone، تا وقتی اپ در App Store منتشر نشده، Fratius به‌صورت وب‌اپ کار می‌کند: آن را در Safari باز کنید و به صفحه اصلی اضافه کنید.",
+ "Billing": "دوره پرداخت",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "حساب و شرکت خود را با یک کارت در وب‌اپ بسازید. 30 روز شما بلافاصله شروع می‌شود و پیش از پایانش هیچ مبلغی کسر نمی‌شود.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "قیمت‌ها سالانه و بدون مالیات بر ارزش افزوده. پلن‌های سالانه هنگام ثبت‌نام و بدون روزهای رایگان پرداخت می‌شوند.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "در Basic یا Pro به چند ون بیشتر نیاز دارید؟ 15 ون با 10 € در ماه اضافه کنید.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "هنگام ثبت‌نام برای تأیید شرکتتان یک کارت اضافه می‌کنید. در 30 روز رایگان هیچ مبلغی کسر نمی‌شود؛ پیش از پایان آن هر وقت خواستید لغو کنید.",
+ "Monthly": "ماهانه",
+ "Yearly: {n} % off the first year": "سالانه: {n}% تخفیف سال اول",
+ "Yearly": "سالانه",
+ "the first year": "سال اول",
+ "a year": "در سال",
+ "then {price} a year": "سپس {price} در سال",
+ "{n} % off the first year": "{n}% تخفیف سال اول",
+ "Paid yearly": "پرداخت سالانه",
+ "Data processing agreement": "قرارداد پردازش داده"
 }

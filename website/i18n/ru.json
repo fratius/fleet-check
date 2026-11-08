@@ -343,5 +343,19 @@
  "The iPhone app is in the App Store. The Android app is on its way to Google Play.": "Приложение для iPhone уже в App Store. Приложение для Android скоро появится в Google Play.",
  "The Android app is on Google Play. The iPhone app is on its way to the App Store.": "Приложение для Android уже в Google Play. Приложение для iPhone скоро появится в App Store.",
  "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.": "На Android Fratius работает как веб-приложение, пока приложение не появится в Google Play: откройте его в браузере и добавьте на главный экран.",
- "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius работает как веб-приложение, пока приложение не появится в App Store: откройте его в Safari и добавьте на главный экран."
+ "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.": "На iPhone Fratius работает как веб-приложение, пока приложение не появится в App Store: откройте его в Safari и добавьте на главный экран.",
+ "Billing": "Период оплаты",
+ "Create your account and your company in the web app, with a card. Your 30 days start at once and nothing is charged before they end.": "Создайте аккаунт и компанию в веб-приложении, указав карту. Ваши 30 дней начнутся сразу, и до их окончания ничего не списывается.",
+ "Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.": "Цены за год, без НДС. Годовые тарифы оплачиваются при регистрации, без бесплатных дней.",
+ "Need a few more vans on Basic or Pro? Add 15 for €10 a month.": "Нужно ещё несколько фургонов на Basic или Pro? Добавьте 15 за 10 € в месяц.",
+ "You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.": "При регистрации вы добавляете карту, чтобы подтвердить компанию. В течение 30 бесплатных дней ничего не списывается; отменить можно в любой момент до их окончания.",
+ "Monthly": "Помесячно",
+ "Yearly: {n} % off the first year": "За год: скидка {n}% на первый год",
+ "Yearly": "За год",
+ "the first year": "за первый год",
+ "a year": "в год",
+ "then {price} a year": "затем {price} в год",
+ "{n} % off the first year": "Скидка {n}% на первый год",
+ "Paid yearly": "Оплата за год",
+ "Data processing agreement": "Соглашение об обработке данных"
 }
