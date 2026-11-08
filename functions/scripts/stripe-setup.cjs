@@ -53,18 +53,22 @@ const EVENTS = [
   const cur = (await ref.get()).data() || {};
   const now = Date.now();
 
-  if (!key || key === 'none') {
+  // Keys missing or not matching: payments stay off and the rest of Deploy goes on (the app and its updates don't
+  // wait for the payment setup); the run shows what to fix.
+  const off = async (kind, title, msg) => {
     await ref.set({ mode: null, updatedAt: now }, { merge: true });
     await db.doc('config/payments').set({ mode: null, publishableKey: null, updatedAt: now });
-    gh('notice', 'Payments off', 'No STRIPE_SECRET_KEY secret, so sign-up works without a card. README, "Payments", says how to turn them on.');
-    summary(['### Payments', 'Off (no STRIPE_SECRET_KEY secret).']);
-    return;
+    gh(kind, title, msg);
+    summary(['### Payments', `Off: ${msg}`]);
+  };
+  if (!key || key === 'none') {
+    return off('notice', 'Payments off', 'No STRIPE_SECRET_KEY secret, so sign-up works without a card. README, "Payments", says how to turn them on.');
   }
   const mode = /^(sk|rk)_live_/.test(key) ? 'live' : /^(sk|rk)_test_/.test(key) ? 'test' : null;
-  if (!mode) throw new Error('The STRIPE_SECRET_KEY secret isn\'t a Stripe secret key (it starts with sk_test_ or sk_live_). Copy it again from Stripe: Developers, API keys.');
-  if (!pk) throw new Error('Add the STRIPE_PUBLISHABLE_KEY variable (Settings > Secrets and variables > Actions > Variables), with the publishable key from Stripe: Developers, API keys.');
+  if (!mode) return off('error', 'Payments off', 'The STRIPE_SECRET_KEY secret isn\'t a Stripe secret key (it starts with sk_test_ or sk_live_). Copy it again from Stripe: Developers, API keys.');
+  if (!pk) return off('error', 'Payments off', 'There is no publishable key. In GitHub: Settings > Secrets and variables > Actions > Variables > New repository variable, name STRIPE_PUBLISHABLE_KEY, value the publishable key (pk_test_... or pk_live_...) from Stripe: Developers, API keys. Then run Deploy again.');
   if (!pk.startsWith(mode === 'live' ? 'pk_live_' : 'pk_test_')) {
-    throw new Error(`The secret key is a ${mode} key but the publishable key isn't (it should start with ${mode === 'live' ? 'pk_live_' : 'pk_test_'}). Use both keys from the same mode in Stripe.`);
+    return off('error', 'Payments off', `The secret key is a ${mode} key but the publishable key isn't (it should start with ${mode === 'live' ? 'pk_live_' : 'pk_test_'}). Use both keys from the same mode in Stripe, then run Deploy again.`);
   }
   const stripe = new Stripe(key, { apiVersion: STRIPE_API, maxNetworkRetries: 2 });
   const web = (await db.doc('config/web').get()).data() || {};
@@ -208,7 +212,8 @@ const EVENTS = [
     ...items.map((i) => `| ${NAMES[i]} | ${euro(PRICE_CENTS[i].month)} | ${euro(PRICE_CENTS[i].year)} |`),
   ]);
 })().catch((e) => {
+  // Stripe refused or didn't answer: what was set up before stays as it was, and the rest of Deploy goes on.
   const msg = String((e && e.message) || e).split('\n')[0];
-  console.log(process.env.GITHUB_ACTIONS ? `::error title=Payments::${msg}` : msg);
-  process.exit(1);
+  console.log(process.env.GITHUB_ACTIONS ? `::error title=Payments not set up::${msg} (the payment setup from before stays; run Deploy again)` : msg);
+  summary(['### Payments', `Not set up this time: ${msg}`]);
 });
