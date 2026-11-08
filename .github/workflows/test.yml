@@ -53,6 +53,8 @@ jobs:
           # A throwaway key pair for the notification test (the test reads it back to check the signature).
           echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run history" 2>&1 | tee history.log
       - name: Show failures
         if: always()
@@ -86,6 +88,8 @@ jobs:
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
           echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
           echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
           APP_DIR="$PWD/dist-e2e" npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run offline" 2>&1 | tee offline.log
       - name: Show failures
         if: always()

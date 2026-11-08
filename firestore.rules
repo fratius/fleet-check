@@ -91,9 +91,23 @@ service cloud.firestore {
       allow read: if signedIn();
     }
 
-    // Who the app creators are (written by the Deploy workflow).
+    // Who the app creators are, and how payments are set up (written by the Deploy workflow; no secrets).
     match /platform/{doc} {
       allow read: if creator();
+    }
+    function paymentsLive() {
+      let p = /databases/$(database)/documents/platform/stripe;
+      return exists(p) && get(p).data.get('mode', null) == 'live';
+    }
+
+    // Sign-up links the app creator makes for one DSP (saveOffer): trial days, a discount, a fixed plan. Server only;
+    // the creator lists them in the Account tab. payments/{org} (Stripe's ids), stripeEvents and fakeStripe (the
+    // tests' Stripe) have no rules: nobody reads or writes them from the app.
+    match /offers/{code} {
+      allow read: if creator();
+      match /uses/{orgId} {
+        allow read: if creator();
+      }
     }
 
     // Invite links: made and used only by the server (createInvite, acceptInvite), one person each,
@@ -112,15 +126,23 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // What only the server writes on a company: the free trial and plan (billing), the accepted terms, the demo marks.
-    function serverOrgKeys() { return ['billing', 'terms', 'demo', 'demoLogins']; }
+    // What only the server writes on a company: the free trial and plan (billing), the accepted terms, the demo marks,
+    // and the vans in use (fleetSize, counted by the server for the plan's limit).
+    function serverOrgKeys() { return ['billing', 'terms', 'demo', 'demoLogins', 'fleetSize']; }
+    // Room for another van on the company's plan (billing.vans; null or missing: no limit).
+    function vanRoom(orgId) {
+      let o = get(/databases/$(database)/documents/orgs/$(orgId)).data;
+      let max = o.get('billing', {}).get('vans', null);
+      return max == null || o.get('fleetSize', 0) < max;
+    }
     match /orgs/{orgId} {
       allow get: if member(orgId) || creator();
       allow list: if creator();
       // New companies are made by the server (createCompany). Older apps still make them here: without the server's
-      // fields, and with a creation time of now (the trial counts from it, functions/src/billing.ts).
+      // fields, and with a creation time of now (the trial counts from it, functions/src/billing.ts); not once payments
+      // are live, since then every new company adds a card first.
       // Only the app creator picks the company's AI model (aiTier; product owner, 2026-11-02).
-      allow create: if signedIn() && request.resource.data.createdBy == me()
+      allow create: if signedIn() && request.resource.data.createdBy == me() && !paymentsLive()
         && !request.resource.data.keys().hasAny(serverOrgKeys())
         && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000
         && (creator() || !request.resource.data.keys().hasAny(['aiTier']));
@@ -171,8 +193,10 @@ service cloud.firestore {
         allow read: if at(orgId, resource.data.stationId);
         // Who has it (assignedTo, with their km), its latest dashboard (dash: km, levels, warning lights) and its
         // checks for drivers (todo: due now; routines: when each was last done) are the server's.
+        // Not beyond the vans of the company's plan: then the owner takes the add-on or the next plan (Plan and billing).
         allow create: if runs(orgId, request.resource.data.stationId)
-          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines']);
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines'])
+          && (creator() || vanRoom(orgId));
         allow update: if runs(orgId, resource.data.stationId)
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines']);
       }

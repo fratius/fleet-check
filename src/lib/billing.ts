@@ -12,7 +12,7 @@ const SIGNUP_START = Date.UTC(2026, 10, 1);
  * The version of the terms (AGB) and data processing agreement (AVV) a new fleet owner accepts; null until they are
  * published on fratius.com. Set it together with TERMS_VERSION in functions/src/billing.ts.
  */
-export const TERMS_VERSION: string | null = null;
+export const TERMS_VERSION: string | null = '2026-11-08';
 export const TERMS_URL = 'https://fratius.com/agb';
 export const AVV_URL = 'https://fratius.com/avv';
 

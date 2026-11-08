@@ -549,3 +549,49 @@ describe('requests from the website', () => {
     await assertFails(setDoc(doc(as('own'), 'siteLimits/day-2026-10-26'), { n: 0 }));
   });
 });
+
+describe('payments: the plan\'s van limit, sign-up links, Stripe\'s data', () => {
+  const C = { creator: true };
+  const setup = (fn) => env.withSecurityRulesDisabled(async (ctx) => fn(ctx.firestore()));
+  const van = (db, id) => setDoc(doc(db, `orgs/${O}/vehicles/${id}`), { name: id, stationId: S1, createdAt: 3 });
+  const full = (fleetSize, vans = 50) => setup((db) => updateDoc(doc(db, `orgs/${O}`), { billing: { status: 'trialing', via: 'stripe', plan: 'basic', vans, card: true, trialStart: 1, trialEnd: 2 }, fleetSize }));
+  test('a van fits while the plan has room', async () => { await full(49); await assertSucceeds(van(as('mgr1'), 'v8')); });
+  test('not beyond the plan\'s vans: then the add-on or the next plan', async () => { await full(50); await assertFails(van(as('own'), 'v8')); await assertFails(van(as('mgr1'), 'v9')); });
+  test('the app creator still can (support)', async () => { await full(50); await assertSucceeds(van(as('boss2', C), 'v8')); });
+  test('no limit on Premium, or without a plan from Stripe', async () => {
+    await full(500, null); await assertSucceeds(van(as('own'), 'v8'));
+    await setup((db) => updateDoc(doc(db, `orgs/${O}`), { billing: { status: 'trialing', trialStart: 1, trialEnd: 2, source: 'app', plan: null } }));
+    await assertSucceeds(van(as('own'), 'v9'));
+  });
+  test('the vans in use are counted by the server only', async () => {
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { fleetSize: 0 }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { 'billing.vans': 999 }));
+  });
+  test('sign-up links: only the app creator reads them, nobody writes them from the app', async () => {
+    await setup((db) => setDoc(doc(db, 'offers/ABCD2345'), { code: 'ABCD2345', note: 'Hart', uses: 0, maxUses: 1 }));
+    await assertSucceeds(getDoc(doc(as('boss2', C), 'offers/ABCD2345')));
+    await assertFails(getDoc(doc(as('own'), 'offers/ABCD2345')));
+    await assertFails(setDoc(doc(as('boss2', C), 'offers/NEWW2345'), { code: 'NEWW2345' }));
+    await assertFails(updateDoc(doc(as('boss2', C), 'offers/ABCD2345'), { uses: 0 }));
+  });
+  test('Stripe\'s ids and events: nobody reads or writes them from the app', async () => {
+    await setup((db) => setDoc(doc(db, `payments/${O}`), { customerId: 'cus_1', subscriptionId: 'sub_1' }));
+    await assertFails(getDoc(doc(as('own'), `payments/${O}`)));
+    await assertFails(getDoc(doc(as('boss2', C), `payments/${O}`)));
+    await assertFails(setDoc(doc(as('own'), `payments/${O}`), { customerId: 'cus_2' }));
+    await assertFails(getDoc(doc(as('boss2', C), 'stripeEvents/evt_1')));
+  });
+  test('how payments are set up: the app creator reads it, nobody writes it', async () => {
+    await setup((db) => setDoc(doc(db, 'platform/stripe'), { mode: 'test', publishableKey: 'pk_test_1' }));
+    await assertSucceeds(getDoc(doc(as('boss2', C), 'platform/stripe')));
+    await assertFails(getDoc(doc(as('own'), 'platform/stripe')));
+    await assertFails(setDoc(doc(as('boss2', C), 'platform/stripe'), { mode: 'live' }));
+  });
+  test('with test keys an older app still makes a company by itself; with live keys only the server does', async () => {
+    const mine = (db, id) => setDoc(doc(db, `orgs/${id}`), { name: 'Mine', createdBy: 'newbie', createdAt: Date.now() });
+    await setup((db) => setDoc(doc(db, 'platform/stripe'), { mode: 'test' }));
+    await assertSucceeds(mine(as('newbie'), 'orgN1'));
+    await setup((db) => setDoc(doc(db, 'platform/stripe'), { mode: 'live' }));
+    await assertFails(mine(as('newbie'), 'orgN2'));
+  });
+});
