@@ -357,5 +357,10 @@
  "then {price} a year": "apoi {price} pe an",
  "{n} % off the first year": "{n}% reducere în primul an",
  "Paid yearly": "Plată anuală",
- "Data processing agreement": "Acord de prelucrare a datelor"
+ "Data processing agreement": "Acord de prelucrare a datelor",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Contul tău, compania ta și un card, într-un singur pas și în circa două minute. Nu se plătește nimic înainte să se termine cele 30 de zile; poți anula oricând până atunci.",
+ "Your name and a work email": "Numele tău și un e-mail de serviciu",
+ "Your company's name and billing address": "Numele și adresa de facturare a companiei tale",
+ "A card, charged only after the 30 days": "Un card, debitat abia după cele 30 de zile",
+ "Questions first? Write to": "Ai întrebări înainte? Scrie-ne la"
 }

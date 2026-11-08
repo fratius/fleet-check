@@ -357,5 +357,10 @@
  "then {price} a year": "seejärel {price} aastas",
  "{n} % off the first year": "{n}% allahindlust esimesel aastal",
  "Paid yearly": "Makstakse kord aastas",
- "Data processing agreement": "Andmetöötlusleping"
+ "Data processing agreement": "Andmetöötlusleping",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Sinu konto, ettevõte ja kaart ühe sammuga ja umbes kahe minutiga. Enne 30 päeva lõppu tasu ei võeta; tühistada saad igal ajal enne seda.",
+ "Your name and a work email": "Sinu nimi ja töö e-post",
+ "Your company's name and billing address": "Sinu ettevõtte nimi ja arveldusaadress",
+ "A card, charged only after the 30 days": "Kaart, millelt võetakse tasu alles pärast 30 päeva",
+ "Questions first? Write to": "Küsimusi enne alustamist? Kirjuta aadressile"
 }

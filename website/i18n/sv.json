@@ -357,5 +357,10 @@
  "then {price} a year": "sedan {price} per år",
  "{n} % off the first year": "{n} % rabatt första året",
  "Paid yearly": "Betalas årsvis",
- "Data processing agreement": "Personuppgiftsbiträdesavtal"
+ "Data processing agreement": "Personuppgiftsbiträdesavtal",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Ditt konto, ditt företag och ett kort i ett steg och på ungefär två minuter. Inget debiteras innan de 30 dagarna är slut; säg upp när som helst innan dess.",
+ "Your name and a work email": "Ditt namn och en jobbmejl",
+ "Your company's name and billing address": "Företagets namn och faktureringsadress",
+ "A card, charged only after the 30 days": "Ett kort som debiteras först efter de 30 dagarna",
+ "Questions first? Write to": "Har du frågor först? Skriv till"
 }

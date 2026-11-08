@@ -357,5 +357,10 @@
  "then {price} a year": "derefter {price} pr. år",
  "{n} % off the first year": "{n}% rabat det første år",
  "Paid yearly": "Betales årligt",
- "Data processing agreement": "Databehandleraftale"
+ "Data processing agreement": "Databehandleraftale",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Din konto, dit firma og et kort i ét trin og på cirka to minutter. Der trækkes intet, før de 30 dage er slut; opsig når som helst inden da.",
+ "Your name and a work email": "Dit navn og en arbejdsmail",
+ "Your company's name and billing address": "Firmaets navn og faktureringsadresse",
+ "A card, charged only after the 30 days": "Et kort, som først belastes efter de 30 dage",
+ "Questions first? Write to": "Har du spørgsmål først? Skriv til"
 }

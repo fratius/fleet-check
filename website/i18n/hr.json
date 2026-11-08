@@ -357,5 +357,10 @@
  "then {price} a year": "zatim {price} godišnje",
  "{n} % off the first year": "{n} % popusta na prvu godinu",
  "Paid yearly": "Plaća se godišnje",
- "Data processing agreement": "Ugovor o obradi podataka"
+ "Data processing agreement": "Ugovor o obradi podataka",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Vaš korisnički račun, vaša tvrtka i kartica u jednom koraku i za otprilike dvije minute. Do isteka 30 dana ništa se ne naplaćuje; do tada možete otkazati bilo kada.",
+ "Your name and a work email": "Vaše ime i poslovna e-pošta",
+ "Your company's name and billing address": "Naziv i adresa za naplatu vaše tvrtke",
+ "A card, charged only after the 30 days": "Kartica koja se tereti tek nakon 30 dana",
+ "Questions first? Write to": "Imate pitanja prije početka? Pišite na"
 }

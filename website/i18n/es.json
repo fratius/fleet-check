@@ -357,5 +357,10 @@
  "then {price} a year": "después {price} al año",
  "{n} % off the first year": "{n} % de descuento el primer año",
  "Paid yearly": "Pago anual",
- "Data processing agreement": "Contrato de tratamiento de datos"
+ "Data processing agreement": "Contrato de tratamiento de datos",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Tu cuenta, tu empresa y una tarjeta, en un solo paso y en unos dos minutos. No se cobra nada antes de que terminen los 30 días; puedes cancelar en cualquier momento hasta entonces.",
+ "Your name and a work email": "Tu nombre y un email de trabajo",
+ "Your company's name and billing address": "El nombre y la dirección de facturación de tu empresa",
+ "A card, charged only after the 30 days": "Una tarjeta, con cargo solo después de los 30 días",
+ "Questions first? Write to": "¿Alguna pregunta antes? Escribe a"
 }

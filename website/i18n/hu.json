@@ -357,5 +357,10 @@
  "then {price} a year": "utána {price} évente",
  "{n} % off the first year": "{n} % kedvezmény az első évben",
  "Paid yearly": "Éves fizetés",
- "Data processing agreement": "Adatfeldolgozási szerződés"
+ "Data processing agreement": "Adatfeldolgozási szerződés",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "A fiókod, a céged és egy kártya egy lépésben, nagyjából két perc alatt. A 30 nap lejárta előtt semmit sem terhelünk; addig bármikor lemondhatod.",
+ "Your name and a work email": "A neved és egy céges e-mail-cím",
+ "Your company's name and billing address": "A céged neve és számlázási címe",
+ "A card, charged only after the 30 days": "Egy kártya, amelyet csak a 30 nap után terhelünk",
+ "Questions first? Write to": "Előbb kérdeznél? Írj nekünk:"
 }

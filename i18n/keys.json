@@ -252,7 +252,7 @@
   "key": "{n} % off",
   "where": [
    "src/components/offers.tsx:70",
-   "src/components/plansetup.tsx:198"
+   "src/components/plansetup.tsx:199"
   ]
  },
  {
@@ -260,7 +260,7 @@
   "key": "{n} % off for {m} months",
   "where": [
    "src/components/offers.tsx:70",
-   "src/components/plansetup.tsx:198"
+   "src/components/plansetup.tsx:199"
   ]
  },
  {
@@ -362,7 +362,7 @@
   "one": "{n} day free",
   "where": [
    "src/components/offers.tsx:68",
-   "src/components/plansetup.tsx:197"
+   "src/components/plansetup.tsx:198"
   ]
  },
  {
@@ -472,8 +472,7 @@
   "id": "c9607d94",
   "key": "{n} more vans for {price} {per}",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:140",
-   "src/components/plansetup.tsx:240"
+   "src/app/(tabs)/(me)/plan.tsx:140"
   ]
  },
  {
@@ -1147,7 +1146,7 @@
   "key": "{price} a month",
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:131",
-   "src/components/plansetup.tsx:186"
+   "src/components/plansetup.tsx:187"
   ]
  },
  {
@@ -1163,7 +1162,7 @@
   "key": "{price} a year",
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:131",
-   "src/components/plansetup.tsx:186"
+   "src/components/plansetup.tsx:187"
   ]
  },
  {
@@ -1179,7 +1178,7 @@
   "key": "{price} off each invoice",
   "where": [
    "src/components/offers.tsx:71",
-   "src/components/plansetup.tsx:199"
+   "src/components/plansetup.tsx:200"
   ]
  },
  {
@@ -1187,14 +1186,14 @@
   "key": "{price} off each invoice for {m} months",
   "where": [
    "src/components/offers.tsx:71",
-   "src/components/plansetup.tsx:199"
+   "src/components/plansetup.tsx:200"
   ]
  },
  {
   "id": "12ac959b",
   "key": "{price} the first year, then {full} a year",
   "where": [
-   "src/components/plansetup.tsx:185"
+   "src/components/plansetup.tsx:186"
   ]
  },
  {
@@ -1682,7 +1681,7 @@
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:101",
    "src/app/(tabs)/(me)/plan.tsx:55",
-   "src/components/plansetup.tsx:100"
+   "src/components/plansetup.tsx:101"
   ]
  },
  {
@@ -1757,7 +1756,7 @@
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:101",
    "src/app/(tabs)/(me)/plan.tsx:55",
-   "src/components/plansetup.tsx:100"
+   "src/components/plansetup.tsx:101"
   ]
  },
  {
@@ -1819,7 +1818,7 @@
    "functions/src/index.ts:736",
    "src/app/(tabs)/(me)/account.tsx:204",
    "src/app/sign-in.tsx:74",
-   "src/components/plansetup.tsx:148"
+   "src/components/plansetup.tsx:149"
   ]
  },
  {
@@ -1930,6 +1929,13 @@
   ]
  },
  {
+  "id": "d4e7a9f1",
+  "key": "Add a VAT ID (optional)",
+  "where": [
+   "src/components/plansetup.tsx:245"
+  ]
+ },
+ {
   "id": "6b8d73f6",
   "key": "Add an incident",
   "where": [
@@ -1999,7 +2005,7 @@
   "id": "73463517",
   "key": "Add the card and start",
   "where": [
-   "src/components/plansetup.tsx:293"
+   "src/components/plansetup.tsx:285"
   ]
  },
  {
@@ -2095,7 +2101,7 @@
   "id": "2278f838",
   "key": "Adding the card…",
   "where": [
-   "src/components/plansetup.tsx:113"
+   "src/components/plansetup.tsx:114"
   ]
  },
  {
@@ -2323,7 +2329,7 @@
   "id": "e95f7cf7",
   "key": "Almost done…",
   "where": [
-   "src/components/plansetup.tsx:118",
+   "src/components/plansetup.tsx:119",
    "src/components/plansetup.tsx:64"
   ]
  },
@@ -2509,7 +2515,7 @@
   "where": [
    "src/app/join/[token].tsx:141",
    "src/app/join/[token].tsx:282",
-   "src/components/plansetup.tsx:208"
+   "src/components/plansetup.tsx:209"
   ]
  },
  {
@@ -2695,7 +2701,7 @@
   "key": "Billed",
   "where": [
    "src/components/offers.tsx:145",
-   "src/components/plansetup.tsx:215"
+   "src/components/plansetup.tsx:216"
   ]
  },
  {
@@ -2903,14 +2909,14 @@
   "id": "e577b7bf",
   "key": "Cancel before {date} and you pay nothing.",
   "where": [
-   "src/components/plansetup.tsx:267"
+   "src/components/plansetup.tsx:259"
   ]
  },
  {
   "id": "9fe73f01",
   "key": "Cancel before {date} and you pay nothing. Stripe reminds you by email 7 days before.",
   "where": [
-   "src/components/plansetup.tsx:266"
+   "src/components/plansetup.tsx:258"
   ]
  },
  {
@@ -3325,7 +3331,7 @@
   "key": "Checking the card…",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:221",
-   "src/components/plansetup.tsx:153"
+   "src/components/plansetup.tsx:154"
   ]
  },
  {
@@ -3339,7 +3345,7 @@
   "id": "425365c7",
   "key": "Checking the terms…",
   "where": [
-   "src/components/plansetup.tsx:163"
+   "src/components/plansetup.tsx:164"
   ]
  },
  {
@@ -3626,7 +3632,7 @@
   "id": "e5117c34",
   "key": "Company and card",
   "where": [
-   "src/components/plansetup.tsx:248"
+   "src/components/plansetup.tsx:239"
   ]
  },
  {
@@ -4169,14 +4175,14 @@
   "id": "0a1d899a",
   "key": "Creating your account…",
   "where": [
-   "src/components/plansetup.tsx:158"
+   "src/components/plansetup.tsx:159"
   ]
  },
  {
   "id": "636fee27",
   "key": "Creating your company…",
   "where": [
-   "src/components/plansetup.tsx:159"
+   "src/components/plansetup.tsx:160"
   ]
  },
  {
@@ -5006,7 +5012,7 @@
    "src/app/join/[token].tsx:140",
    "src/app/join/[token].tsx:281",
    "src/app/sign-in.tsx:108",
-   "src/components/plansetup.tsx:207"
+   "src/components/plansetup.tsx:208"
   ]
  },
  {
@@ -5218,7 +5224,7 @@
    "src/app/join/[token].tsx:192",
    "src/app/join/[token].tsx:54",
    "src/app/sign-in.tsx:113",
-   "src/components/plansetup.tsx:145"
+   "src/components/plansetup.tsx:146"
   ]
  },
  {
@@ -5236,7 +5242,7 @@
   "id": "dacddcd9",
   "key": "Enter your name.",
   "where": [
-   "src/components/plansetup.tsx:144"
+   "src/components/plansetup.tsx:145"
   ]
  },
  {
@@ -5630,8 +5636,7 @@
   "key": "First station",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:200",
-   "src/app/sign-in.tsx:66",
-   "src/components/plansetup.tsx:249"
+   "src/app/sign-in.tsx:66"
   ]
  },
  {
@@ -5790,8 +5795,7 @@
   "key": "For example: DXX1 Berlin",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:200",
-   "src/app/sign-in.tsx:66",
-   "src/components/plansetup.tsx:249"
+   "src/app/sign-in.tsx:66"
   ]
  },
  {
@@ -5868,7 +5872,7 @@
   "id": "a20a8c3c",
   "key": "For this company the terms are different from what was shown above:",
   "where": [
-   "src/components/plansetup.tsx:282"
+   "src/components/plansetup.tsx:274"
   ]
  },
  {
@@ -7190,7 +7194,7 @@
   "id": "76869386",
   "key": "Launch offer: {n} % off the plan in the first year.",
   "where": [
-   "src/components/plansetup.tsx:276"
+   "src/components/plansetup.tsx:268"
   ]
  },
  {
@@ -7581,7 +7585,7 @@
    "src/components/driverrec.tsx:161",
    "src/components/history.tsx:132",
    "src/components/history.tsx:177",
-   "src/components/plansetup.tsx:180"
+   "src/components/plansetup.tsx:181"
   ]
  },
  {
@@ -7969,7 +7973,7 @@
    "src/app/(tabs)/(me)/account.tsx:159",
    "src/app/(tabs)/(me)/plan.tsx:69",
    "src/components/offers.tsx:145",
-   "src/components/plansetup.tsx:216"
+   "src/components/plansetup.tsx:217"
   ]
  },
  {
@@ -9289,16 +9293,16 @@
   "id": "acd6408e",
   "key": "On {date} we charge {price} plus VAT, then every month, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:264",
-   "src/components/plansetup.tsx:289"
+   "src/components/plansetup.tsx:256",
+   "src/components/plansetup.tsx:281"
   ]
  },
  {
   "id": "3ae1c464",
   "key": "On {date} we charge {price} plus VAT, then every year, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:263",
-   "src/components/plansetup.tsx:288"
+   "src/components/plansetup.tsx:255",
+   "src/components/plansetup.tsx:280"
   ]
  },
  {
@@ -9767,7 +9771,7 @@
   "id": "5fa2951a",
   "key": "optional, for example DE123456789",
   "where": [
-   "src/components/plansetup.tsx:253"
+   "src/components/plansetup.tsx:244"
   ]
  },
  {
@@ -9972,7 +9976,7 @@
    "src/app/join/[token].tsx:282",
    "src/app/sign-in.tsx:109",
    "src/components/deleteaccount.tsx:57",
-   "src/components/plansetup.tsx:208"
+   "src/components/plansetup.tsx:209"
   ]
  },
  {
@@ -9994,14 +9998,14 @@
   "id": "f7cb926a",
   "key": "Pay {price} and start",
   "where": [
-   "src/components/plansetup.tsx:292"
+   "src/components/plansetup.tsx:284"
   ]
  },
  {
   "id": "2f457bbc",
   "key": "Pay {price} plus VAT and start",
   "where": [
-   "src/components/plansetup.tsx:297"
+   "src/components/plansetup.tsx:289"
   ]
  },
  {
@@ -10022,7 +10026,7 @@
   "id": "9d8e2f03",
   "key": "Paying…",
   "where": [
-   "src/components/plansetup.tsx:113"
+   "src/components/plansetup.tsx:114"
   ]
  },
  {
@@ -10047,7 +10051,7 @@
   "where": [
    "functions/src/index.ts:2526",
    "src/app/(tabs)/(me)/plan.tsx:38",
-   "src/components/plansetup.tsx:181"
+   "src/components/plansetup.tsx:182"
   ]
  },
  {
@@ -10465,7 +10469,7 @@
   "key": "Plan",
   "where": [
    "src/components/offers.tsx:144",
-   "src/components/plansetup.tsx:213"
+   "src/components/plansetup.tsx:214"
   ]
  },
  {
@@ -10517,7 +10521,7 @@
    "src/app/(tabs)/(me)/plan.tsx:35",
    "src/app/start.tsx:36",
    "src/components/billinggate.tsx:61",
-   "src/components/plansetup.tsx:177"
+   "src/components/plansetup.tsx:178"
   ]
  },
  {
@@ -10538,7 +10542,7 @@
   "id": "0d92d311",
   "key": "Please check before you go on",
   "where": [
-   "src/components/plansetup.tsx:281"
+   "src/components/plansetup.tsx:273"
   ]
  },
  {
@@ -10583,7 +10587,7 @@
   "id": "4f04ad2a",
   "key": "Prices plus VAT.",
   "where": [
-   "src/components/plansetup.tsx:244"
+   "src/components/plansetup.tsx:235"
   ]
  },
  {
@@ -12378,8 +12382,8 @@
   "id": "3b0f6d1e",
   "key": "Start free, paid from {date}",
   "where": [
-   "src/components/plansetup.tsx:293",
-   "src/components/plansetup.tsx:297"
+   "src/components/plansetup.tsx:285",
+   "src/components/plansetup.tsx:289"
   ]
  },
  {
@@ -13119,7 +13123,7 @@
   "id": "969acbc9",
   "key": "Test mode: no real money is charged. Use the card 4242 4242 4242 4242, any future date and any CVC.",
   "where": [
-   "src/components/plansetup.tsx:192"
+   "src/components/plansetup.tsx:193"
   ]
  },
  {
@@ -13445,7 +13449,7 @@
   "id": "e7537c03",
   "key": "The company's name and billing address go on your invoices.",
   "where": [
-   "src/components/plansetup.tsx:250"
+   "src/components/plansetup.tsx:240"
   ]
  },
  {
@@ -13757,7 +13761,7 @@
   "id": "6f97d1e7",
   "key": "The offer's discount is for {m} months; then the plan costs {price} plus VAT {per}.",
   "where": [
-   "src/components/plansetup.tsx:275"
+   "src/components/plansetup.tsx:267"
   ]
  },
  {
@@ -13778,14 +13782,14 @@
   "id": "503dcb8f",
   "key": "The payment form is still loading. Try again in a moment.",
   "where": [
-   "src/components/plansetup.tsx:150"
+   "src/components/plansetup.tsx:151"
   ]
  },
  {
   "id": "8a4c03a1",
   "key": "The payment is still on its way. Your company opens as soon as Stripe confirms it.",
   "where": [
-   "src/components/plansetup.tsx:123"
+   "src/components/plansetup.tsx:124"
   ]
  },
  {
@@ -14118,16 +14122,16 @@
   "id": "7e789a05",
   "key": "Then {price} plus VAT every month, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:272",
-   "src/components/plansetup.tsx:290"
+   "src/components/plansetup.tsx:264",
+   "src/components/plansetup.tsx:282"
   ]
  },
  {
   "id": "a25106e6",
   "key": "Then {price} plus VAT every year, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:272",
-   "src/components/plansetup.tsx:290"
+   "src/components/plansetup.tsx:264",
+   "src/components/plansetup.tsx:282"
   ]
  },
  {
@@ -14763,29 +14767,29 @@
   "id": "37087aec",
   "key": "Today: {price} plus VAT for the first month.",
   "where": [
-   "src/components/plansetup.tsx:271"
+   "src/components/plansetup.tsx:263"
   ]
  },
  {
   "id": "55b5b84f",
   "key": "Today: {price} plus VAT for the first year.",
   "where": [
-   "src/components/plansetup.tsx:271"
+   "src/components/plansetup.tsx:263"
   ]
  },
  {
   "id": "6d0bd7b3",
   "key": "Today: {price}, VAT included.",
   "where": [
-   "src/components/plansetup.tsx:284"
+   "src/components/plansetup.tsx:276"
   ]
  },
  {
   "id": "1ec1d529",
   "key": "Today: {price}.",
   "where": [
-   "src/components/plansetup.tsx:261",
-   "src/components/plansetup.tsx:285"
+   "src/components/plansetup.tsx:253",
+   "src/components/plansetup.tsx:277"
   ]
  },
  {
@@ -15302,7 +15306,7 @@
   "id": "7274bf49",
   "key": "unlimited drivers and stations",
   "where": [
-   "src/components/plansetup.tsx:228"
+   "src/components/plansetup.tsx:229"
   ]
  },
  {
@@ -15326,7 +15330,7 @@
   "key": "Unlimited vans",
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:129",
-   "src/components/plansetup.tsx:188"
+   "src/components/plansetup.tsx:189"
   ]
  },
  {
@@ -15356,7 +15360,7 @@
   "key": "Up to {n} vans",
   "where": [
    "src/app/(tabs)/(me)/plan.tsx:129",
-   "src/components/plansetup.tsx:188"
+   "src/components/plansetup.tsx:189"
   ]
  },
  {
@@ -15444,7 +15448,7 @@
   "where": [
    "src/app/join/[token].tsx:193",
    "src/app/join/[token].tsx:55",
-   "src/components/plansetup.tsx:146",
+   "src/components/plansetup.tsx:147",
    "src/lib/session.tsx:137"
   ]
  },
@@ -15576,7 +15580,7 @@
   "id": "e132c7a6",
   "key": "VAT ID",
   "where": [
-   "src/components/plansetup.tsx:253"
+   "src/components/plansetup.tsx:244"
   ]
  },
  {
@@ -15933,7 +15937,7 @@
   "id": "471404a0",
   "key": "We ask for a card to verify your company and keep out fake accounts. Nothing is charged before {date}; cancel any time before then.",
   "where": [
-   "src/components/plansetup.tsx:254"
+   "src/components/plansetup.tsx:246"
   ]
  },
  {
@@ -16028,7 +16032,7 @@
   "id": "74647abe",
   "key": "What you pay",
   "where": [
-   "src/components/plansetup.tsx:258"
+   "src/components/plansetup.tsx:250"
   ]
  },
  {
@@ -16269,7 +16273,7 @@
    "src/app/(tabs)/(me)/account.tsx:159",
    "src/app/(tabs)/(me)/plan.tsx:69",
    "src/components/offers.tsx:145",
-   "src/components/plansetup.tsx:216"
+   "src/components/plansetup.tsx:217"
   ]
  },
  {
@@ -16283,7 +16287,7 @@
   "id": "69422c8f",
   "key": "Yearly, {n} % off the first year",
   "where": [
-   "src/components/plansetup.tsx:216"
+   "src/components/plansetup.tsx:217"
   ]
  },
  {
@@ -16386,15 +16390,14 @@
   "key": "you can add more later",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:200",
-   "src/app/sign-in.tsx:66",
-   "src/components/plansetup.tsx:249"
+   "src/app/sign-in.tsx:66"
   ]
  },
  {
   "id": "cf86156a",
   "key": "You can cancel any time to the end of the period paid for: Account, then Plan and billing.",
   "where": [
-   "src/components/plansetup.tsx:277"
+   "src/components/plansetup.tsx:269"
   ]
  },
  {
@@ -16677,7 +16680,7 @@
   "id": "4ab29102",
   "key": "Your account",
   "where": [
-   "src/components/plansetup.tsx:205"
+   "src/components/plansetup.tsx:206"
   ]
  },
  {
@@ -16815,7 +16818,7 @@
   "key": "Your name",
   "where": [
    "src/app/sign-in.tsx:107",
-   "src/components/plansetup.tsx:206"
+   "src/components/plansetup.tsx:207"
   ]
  },
  {
@@ -16829,7 +16832,7 @@
   "id": "b3a2c273",
   "key": "Your offer",
   "where": [
-   "src/components/plansetup.tsx:196"
+   "src/components/plansetup.tsx:197"
   ]
  },
  {

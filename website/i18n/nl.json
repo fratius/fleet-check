@@ -357,5 +357,10 @@
  "then {price} a year": "daarna {price} per jaar",
  "{n} % off the first year": "{n}% korting in het eerste jaar",
  "Paid yearly": "Jaarlijkse betaling",
- "Data processing agreement": "Verwerkersovereenkomst"
+ "Data processing agreement": "Verwerkersovereenkomst",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "Je account, je bedrijf en een kaart, in één stap en in ongeveer twee minuten. Er wordt niets afgeschreven voordat de 30 dagen voorbij zijn; tot dan kun je op elk moment opzeggen.",
+ "Your name and a work email": "Je naam en een zakelijk e-mailadres",
+ "Your company's name and billing address": "De naam en het factuuradres van je bedrijf",
+ "A card, charged only after the 30 days": "Een kaart, waarvan pas na de 30 dagen wordt afgeschreven",
+ "Questions first? Write to": "Eerst nog vragen? Mail naar"
 }

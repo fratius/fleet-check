@@ -357,5 +357,10 @@
  "then {price} a year": "سپس {price} در سال",
  "{n} % off the first year": "{n}% تخفیف سال اول",
  "Paid yearly": "پرداخت سالانه",
- "Data processing agreement": "قرارداد پردازش داده"
+ "Data processing agreement": "قرارداد پردازش داده",
+ "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.": "حساب شما، شرکت شما و یک کارت، در یک مرحله و در حدود دو دقیقه. پیش از پایان 30 روز هیچ مبلغی کسر نمی‌شود؛ تا آن زمان هر وقت خواستید لغو کنید.",
+ "Your name and a work email": "نام شما و یک ایمیل کاری",
+ "Your company's name and billing address": "نام و نشانی صورتحساب شرکت شما",
+ "A card, charged only after the 30 days": "یک کارت که فقط پس از 30 روز مبلغی از آن کسر می‌شود",
+ "Questions first? Write to": "اول سؤالی دارید؟ برای ما بنویسید:"
 }

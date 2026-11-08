@@ -122,7 +122,17 @@ With **test keys** nobody pays real money: the website keeps its request form, a
 
 ## The website (fratius.com)
 
-The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The header has **Log in** (the web app) and **Start 30 days free**. Until payments are live that button opens the request form; with Stripe's live keys (it asks `/api/billing`) it and the plan buttons open sign-up with a card in the web app (`/start?plan=…&interval=…`), the pricing gets a monthly/yearly switch, and the request form stays as the way to talk to us first. The AGB and AVV are at `/agb` and `/avv` (English: `/terms`, `/dpa`). The request form ("Start your 30 days") stores requests in Firestore (`siteRequests`, read in the Firebase console) and emails them to info@fratius.com once the `SMTP_URL` secret is set, for example `smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465` for Google Workspace (an app password, not the account password).
+The marketing website lives in `website/` and goes live with every Deploy, next to the app, as a second Firebase Hosting site (`fratius-web.web.app`; set the `WEBSITE_SITE` variable to use another name). To put it on fratius.com: in the Firebase console open **Hosting**, pick the `fratius-web` site, click **Add custom domain**, enter `fratius.com` (and `www.fratius.com`, redirecting to it), and add the DNS records it shows at the domain registrar. The header has **Log in** (the web app) and **Start 30 days free**. That button and the plan buttons open sign-up with a card in the web app (`/start?plan=…&interval=…`); the pricing has a monthly/yearly switch. There is no request form any more: questions go to info@fratius.com. While Stripe has test keys, the sign-up page says so and takes test cards only. The AGB and AVV are at `/agb` and `/avv` (English: `/terms`, `/dpa`).
+
+### Email
+
+Fratius sends email from info@fratius.com only when the GitHub secret `SMTP_URL` is set: the confirmation after signing up with a card (the order, the dates, how to cancel, the AGB and AVV), and a copy of it to info@fratius.com. Without it Deploy warns "No emails". For a Google Workspace mailbox:
+
+1. Sign in as info@fratius.com at myaccount.google.com > **Security**: turn on **2-Step Verification**, then open **App passwords**, make one called "Fratius" and copy the 16 letters (without spaces).
+2. GitHub > Settings > Secrets and variables > Actions > **New repository secret**: name `SMTP_URL`, value `smtps://info%40fratius.com:THE16LETTERS@smtp.gmail.com:465` (the `@` of the address written as `%40`).
+3. Run Deploy. If "App passwords" is missing, the Workspace admin console must allow 2-Step Verification (Security > Authentication) first.
+
+Stripe sends its own emails (receipts, invoices, the trial reminder) only with live keys.
 
 ## What the AI costs
 

@@ -5,7 +5,7 @@ import { CardForm, cardFormSupported, type CardApi } from '@/components/cardform
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, F, Field, Notice, Segmented, T, hs, useColors } from '@/components/ui';
 import {
-  ADDON_VANS, PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, euro, netCents, signupDone, standing, type Interval, type PlanId,
+  PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, euro, netCents, signupDone, standing, type Interval, type PlanId,
 } from '@/lib/billing';
 import { fb } from '@/lib/firebase';
 import { loc, t, tp } from '@/lib/i18n';
@@ -18,7 +18,8 @@ const day = (ms: number) => new Date(ms).toLocaleDateString(loc(), { day: 'numer
 
 /**
  * One step from the website to a working company: the plan, the company's billing address and the card, the terms,
- * and one button (product owner, 2026-11-05: "in one step, nice and easy, no friction"). Everyone adds a card, also
+ * and one button; nothing else is asked (the first station is "Main station", renamed under People; the add-on comes
+ * up at the van limit; the VAT ID only on request) (product owner, 2026-11-05: "in one step, nice and easy, no friction"). Everyone adds a card, also
  * with a free trial or a custom sign-up link; nothing is charged before the trial ends.
  *
  * Signed out it also makes the account, and without `org` the company (createCompany, payments: true), then the
@@ -40,11 +41,10 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [station, setStation] = useState('');
   const [plan, setPlan] = useState<PlanId>(PLAN_IDS.find((p) => p === wantPlan) || 'basic');
   const [interval, setInterval] = useState<Interval>(wantInterval === 'year' ? 'year' : 'month');
-  const [addon, setAddon] = useState(false);
   const [vatId, setVatId] = useState('');
+  const [vatOpen, setVatOpen] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<string | null>(null);
@@ -77,7 +77,8 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   const offer = cfg?.offer || null;
   const p: PlanId = offer?.plan || plan;
   const iv: Interval = offer?.interval || interval;
-  const withAddon = addon && p !== 'premium';
+  // The add-on of 15 vans is offered where it's needed (the van limit, Plan and billing), not at sign-up.
+  const withAddon = false;
   const now = Date.now();
   // The free days, as the server decides them (trialFor in functions/src/index.ts): a sign-up link's; for a monthly
   // plan 30 when the company never had a card, what is left of a trial from before payments; yearly none. The server
@@ -157,7 +158,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
       if (!id) {
         if (!fb()?.auth.currentUser) { setStep(t('Creating your account…')); await s.signUp(email, password, name); }
         setStep(t('Creating your company…'));
-        id = await s.createOrg(sub.address.name, station, TERMS_VERSION, { payments: true, plan: p, interval: iv, name: name.trim() || undefined, open: false });
+        id = await s.createOrg(sub.address.name, '', TERMS_VERSION, { payments: true, plan: p, interval: iv, name: name.trim() || undefined, open: false });
         setOrgId(id);
       }
       setStep(t('Checking the terms…'));
@@ -231,26 +232,17 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
             </Pressable>
           );
         })}
-        {p !== 'premium' ? (
-          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: withAddon }} onPress={() => setAddon(!addon)} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-            <View style={{ width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.ink, backgroundColor: withAddon ? c.ink : 'transparent', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-              {withAddon ? <Text style={{ color: c.paper, fontFamily: F.semi, fontSize: 15, lineHeight: 17 }}>✓</Text> : null}
-            </View>
-            <View style={{ flex: 1 }}>
-              <T>{t('{n} more vans for {price} {per}', { n: ADDON_VANS, price: euro(PRICE_CENTS.addon[iv], L), per })}</T>
-            </View>
-          </Pressable>
-        ) : null}
         <T v="small">{t('Prices plus VAT.')}</T>
       </Card>
 
       <Card>
         <T v="h3">{t('Company and card')}</T>
-        {!orgId ? <Field label={t('First station')} hint={t('you can add more later')} value={station} onChangeText={setStation} autoCapitalize="characters" placeholder={t('For example: DXX1 Berlin')} /> : null}
         <T v="hint">{t('The company\'s name and billing address go on your invoices.')}</T>
         <CardForm publishableKey={cfg.publishableKey || 'pk_test_fake'} kind={kind} amount={Math.round(first * 1.19)} company={org?.name || ''}
           onApi={(a) => { card.current = a; setCardReady(!!a); }} />
-        <Field label={t('VAT ID')} hint={t('optional, for example DE123456789')} value={vatId} onChangeText={setVatId} autoCapitalize="characters" autoCorrect={false} />
+        {vatOpen || vatId
+          ? <Field label={t('VAT ID')} hint={t('optional, for example DE123456789')} value={vatId} onChangeText={setVatId} autoCapitalize="characters" autoCorrect={false} />
+          : <Button v="link" small title={t('Add a VAT ID (optional)')} onPress={() => setVatOpen(true)} />}
         {trialEnd ? <T v="hint">{t('We ask for a card to verify your company and keep out fake accounts. Nothing is charged before {date}; cancel any time before then.', { date: day(trialEnd) })}</T> : null}
       </Card>
 

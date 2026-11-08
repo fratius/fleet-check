@@ -252,6 +252,7 @@ d7e0bea3	Add a page	[components/docscan.tsx]
 3155bd1b	Add a pick-up video
 fa22c031	Add a station	[people.tsx]
 e4e2af43	Add a station under People first.
+d4e7a9f1	Add a VAT ID (optional)
 6b8d73f6	Add an incident	[components/driverrec.tsx]
 1986621b	Add another photo	[buy/[id].tsx]
 83d4cdcf	Add at least one photo of the vehicle first.
@@ -746,7 +747,7 @@ de8ce29c	Fines	[data.tsx]
 ea9dd635	First aid kit and warning triangle
 7e568a90	First name	[app/join/[token].tsx]
 617ef619	First registration	[components/vanfacts.tsx]
-c6b3590a	First station	[account.tsx, app/sign-in.tsx, components/plansetup.tsx]
+c6b3590a	First station	[account.tsx, app/sign-in.tsx]
 47516235	First, the dashboard	[buy/[id].tsx]
 d7819728	Fit the vehicle to the outline.
 2a561bf1	Flat, in good light, the whole page in the picture. More pages? Add them before reading.
