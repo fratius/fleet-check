@@ -99,8 +99,10 @@ async function viewAsOf(uid: string): Promise<ViewAs | null> {
 async function paymentsBlock(org: { createdAt?: unknown; demo?: unknown; billing?: unknown } | undefined): Promise<boolean> {
   const mode = (await payConfig()).mode;
   if (!mode || !org) return false;
-  const via = (org.billing as Partial<Billing> | undefined)?.via;
-  if (mode !== 'live' && via !== 'stripe') return false;
+  const b = org.billing as Partial<Billing> | undefined;
+  if (mode !== 'live' && b?.via !== 'stripe') return false;
+  // Signed up with Stripe's test keys: nothing real was ever agreed, so with live keys it starts again (a card first).
+  if (mode === 'live' && b?.testMode) return true;
   return BLOCKED.includes(standing(org).standing);
 }
 const BLOCKED_MESSAGE = N_('This company has no active plan. The owner adds a card or a plan in the web app: Account, then Plan and billing.');
@@ -902,7 +904,17 @@ export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (
     if (!v.exists) throw fail('not-found', 'Unknown van.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     needStation(who, van.stationId);
-    if (restore) { tx.update(vref, { retired: false, retiredAt: null, retiredBy: null }); return; }
+    if (restore) {
+      // Back in use: only while the company has a plan, and with room on it.
+      const o = (await tx.get(org)).data();
+      if (!who.creator && (await paymentsBlock(o))) throw fail('failed-precondition', BLOCKED_MESSAGE);
+      const max = (o?.billing as Partial<Billing> | undefined)?.vans;
+      if (max != null && !who.creator && Number(o?.fleetSize || 0) >= max) {
+        throw fail('failed-precondition', 'Your plan is for {n} vans and they are all in use. Add 15 more vans, or choose a bigger plan, under Account, then Plan and billing.', { n: max });
+      }
+      tx.update(vref, { retired: false, retiredAt: null, retiredBy: null });
+      return;
+    }
     if (van.assignedTo?.assignmentId) tx.update(org.collection('assignments').doc(van.assignedTo.assignmentId), closeWith(who, 'van retired'));
     tx.update(vref, { retired: true, retiredAt: Date.now(), retiredBy: who.name, assignedTo: null });
   });
@@ -2529,14 +2541,26 @@ async function appUrl(): Promise<string> {
   const u = (await db().doc('config/web').get()).data()?.url;
   return typeof u === 'string' && /^https:\/\//.test(u) ? u : 'https://app.fratius.com';
 }
-/** payments/{org}, server only: the company's Stripe customer and subscription. */
+/** payments/{org}, server only: the company's Stripe customer and subscription, in one mode (test or live). */
 interface PayDoc {
-  customerId?: string; subscriptionId?: string; attempt?: number; offer?: string | null; mode?: string;
+  customerId?: string; subscriptionId?: string; attempt?: number; offer?: string | null; mode?: string | null;
   /** Net amount of the first invoice after discounts, for the confirmation email. */
   firstNet?: number;
+  /** A card was added (or the first payment made): no second free trial. */
   confirmedAt?: number | null;
+  /** A billingStart running now (another tab waits), and when Stripe was last read for billing. */
+  starting?: number | null;
+  syncedAt?: number;
 }
 const payDoc = (orgId: string) => db().doc(`payments/${orgId}`);
+/**
+ * The company's Stripe ids in the mode payments run in now. After switching from test keys to live ones the test
+ * customer and subscription don't exist in live mode: the company starts again (attempt keeps counting).
+ */
+async function payState(orgId: string, mode: string | null): Promise<PayDoc> {
+  const p = ((await payDoc(orgId).get()).data() || {}) as PayDoc;
+  return (p.mode || null) === mode || !p.customerId ? p : { attempt: p.attempt };
+}
 const keyOf = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex').slice(0, 16);
 const planName = (p: string | null | undefined) => PLANS[p || ''] || p || '';
 function needOwner(w: Who) {
@@ -2563,20 +2587,26 @@ function roomFor(plan: PlanId, addon: boolean, fleet: number) {
   }
 }
 
-/** Writes the company's billing from Stripe's subscription, if it's still the company's subscription. */
-async function saveBilling(orgId: string, sub: Sub): Promise<Billing | null> {
+/**
+ * Writes the company's billing from Stripe's subscription, if it's still the company's subscription and nothing read
+ * from Stripe later was written already (readAt: when it was read; a slower handler doesn't write an older state).
+ */
+async function saveBilling(orgId: string, sub: Sub, readAt: number): Promise<Billing | null> {
   const ref = db().doc(`orgs/${orgId}`);
   return db().runTransaction(async (tx) => {
     const [d, p] = await Promise.all([tx.get(ref), tx.get(payDoc(orgId))]);
-    if (!d.exists || (p.data() as PayDoc | undefined)?.subscriptionId !== sub.id) return null;
+    const pd = p.data() as PayDoc | undefined;
+    if (!d.exists || pd?.subscriptionId !== sub.id) return null;
+    if ((pd.syncedAt || 0) > readAt) return (d.data()?.billing as Billing | undefined) || null;
     const b = billingOf(sub, d.data()?.billing as Partial<Billing> | undefined);
     tx.update(ref, { billing: b });
+    tx.update(payDoc(orgId), { syncedAt: readAt });
     return b;
   });
 }
 
 /**
- * Once the card is on file (or the first payment made): the offer counts as used, the app creator hears of it, and the
+ * Once the card is on file (or the first payment made): the app creator hears of it, and the
  * owner gets the email with what was ordered, the terms and how to cancel. Once per company, whoever sees it first
  * (billingConfirm or the webhook).
  */
@@ -2586,15 +2616,8 @@ async function confirmedOnce(orgId: string, b: Billing) {
   const first = await db().runTransaction(async (tx) => {
     const p = (await tx.get(pd)).data() as PayDoc | undefined;
     if (!p || p.confirmedAt) return null;
-    if (p.offer) {
-      const oref = db().doc(`offers/${p.offer}`);
-      const used = await tx.get(oref.collection('uses').doc(orgId));
-      if (!used.exists) {
-        tx.set(oref.collection('uses').doc(orgId), { at: Date.now() });
-        tx.update(oref, { uses: FieldValue.increment(1) });
-      }
-    }
     tx.update(pd, { confirmedAt: Date.now() });
+    if (p.offer) tx.set(db().doc(`offers/${p.offer}/uses/${orgId}`), { confirmedAt: Date.now() }, { merge: true });
     return p;
   });
   if (!first) return;
@@ -2627,21 +2650,30 @@ export const billingInfo = onRequest({ timeoutSeconds: 10, memory: '256MiB', max
   res.json({ payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS });
 });
 
+/**
+ * A sign-up link and whether this company may use it. A company that already took one of its uses (it started and
+ * comes back, another card) keeps it.
+ */
+async function offerFor(code: string, orgId: string | null): Promise<{ offer: Offer | null; why: string | null }> {
+  if (!code) return { offer: null, why: null };
+  const o = OFFER_CODE.test(code) ? ((await db().doc(`offers/${code}`).get()).data() as Offer | undefined) : undefined;
+  const held = !!o && !!orgId && ID.test(orgId) && (await db().doc(`offers/${code}/uses/${orgId}`).get()).exists;
+  const why = offerUsable(o, Date.now(), held);
+  return { offer: why ? null : o!, why };
+}
+
 /** For the sign-up page and the plan screen: Stripe's publishable key, the prices, and the offer of a sign-up link. */
 export const billingConfig = onCall({ timeoutSeconds: 15 }, async (req) => {
   const cfg = await payConfig();
   const code = String(req.data?.offer || '').trim().toUpperCase();
-  let offer: ReturnType<typeof offerPublic> | null = null, offerError: { t: string } | null = null;
-  if (code) {
-    const o = OFFER_CODE.test(code) ? ((await db().doc(`offers/${code}`).get()).data() as Offer | undefined) : undefined;
-    const why = offerUsable(o);
-    if (why) offerError = { t: why }; else offer = offerPublic(o!);
-  }
+  const orgId = req.auth?.uid && typeof req.data?.orgId === 'string' ? req.data.orgId : null;
+  const { offer, why } = await offerFor(code, orgId);
   const on = cfg.mode === 'fake' || (!!cfg.mode && !!cfg.publishableKey);
   return {
     mode: on ? cfg.mode : null, publishableKey: on ? cfg.publishableKey || null : null,
     prices: PRICE_CENTS, planVans: PLAN_VANS, addonVans: ADDON_VANS, trialDays: TRIAL_DAYS,
-    launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false, offer, offerError,
+    launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
+    offer: offer ? offerPublic(offer) : null, offerError: why ? { t: why } : null,
   };
 });
 
@@ -2655,109 +2687,137 @@ function readAddress(v: unknown): Address | null {
 }
 
 /**
+ * The free days of a new subscription, as the sign-up page shows them (components/plansetup.tsx): a sign-up link's;
+ * for a monthly plan 30 from now when the company never had a card (in this mode), what is left of a trial from
+ * before payments; yearly none.
+ */
+function trialFor(offer: Offer | null, interval: Interval, org: Record<string, unknown>, p: PayDoc, now: number): number | null {
+  if (offer) return offer.trialDays > 0 ? now + offer.trialDays * DAY_MS : null;
+  if (interval !== 'month' || p.confirmedAt) return null;
+  const b = org.billing as Partial<Billing> | undefined;
+  if (b?.via !== 'stripe') {
+    const st = standing(org);
+    if (st.standing === 'trial' || st.standing === 'trial_over') return (st.trialEnd || 0) > now + 3600_000 ? st.trialEnd : null;
+  }
+  return now + TRIAL_DAYS * DAY_MS;
+}
+
+/**
  * Step 1 of sign-up's payment, right after the company is made (or later, for a company without a plan): the Stripe
  * customer with the company's billing address and VAT ID, and the subscription. Returns what the browser confirms
- * with Stripe.js: the card for a trial (setup), or the first payment (yearly, or no trial).
+ * with Stripe.js (the card for a trial, or the first payment), with the exact terms: the page checks them against
+ * what it showed before the card is used.
  */
-export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY] }, async (req) => {
+export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY, SMTP_URL, WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req, { unpaid: true });
   needOwner(who);
   const { pay, cfg } = await payOrFail();
   const org = (await db().doc(`orgs/${who.orgId}`).get()).data() || {};
-  const prev = (org.billing || {}) as Partial<Billing>;
   const code = String(req.data?.offer || '').trim().toUpperCase();
-  let offer: Offer | null = null;
-  if (code) {
-    const o = OFFER_CODE.test(code) ? ((await db().doc(`offers/${code}`).get()).data() as Offer | undefined) : undefined;
-    const why = offerUsable(o);
-    if (why) throw fail('failed-precondition', why);
-    offer = o!;
-  }
-  const plan = offer?.plan || PLAN_IDS.find((p) => p === req.data?.plan);
+  const { offer, why } = await offerFor(code, who.orgId);
+  if (why) throw fail('failed-precondition', why);
+  const plan = offer?.plan || PLAN_IDS.find((x) => x === req.data?.plan);
   if (!plan) throw fail('invalid-argument', 'Choose a plan.');
   const interval: Interval = offer?.interval || (req.data?.interval === 'year' ? 'year' : 'month');
   const addon = req.data?.addon === true && plan !== 'premium';
   roomFor(plan, addon, await countFleet(who.orgId));
+  const address = readAddress(req.data?.address);
+  if (!address) throw fail('invalid-argument', 'Enter the company\'s billing address.');
 
+  // One start at a time per company (two tabs would make two subscriptions).
   const pd = payDoc(who.orgId);
-  const p = ((await pd.get()).data() || {}) as PayDoc;
-  if (p.subscriptionId) {
-    const cur = await pay.getSubscription(p.subscriptionId);
+  const now = Date.now();
+  await db().runTransaction(async (tx) => {
+    const x = (await tx.get(pd)).data() as PayDoc | undefined;
+    if (x?.starting && now - x.starting < 60_000) throw fail('aborted', 'Already working on it. Wait a moment, then try again.');
+    tx.set(pd, { starting: now }, { merge: true });
+  });
+  try {
+    const p = await payState(who.orgId, cfg.mode);
+    const readAt = Date.now();
+    const cur = p.subscriptionId ? await pay.getSubscription(p.subscriptionId) : null;
     if (cur && cur.card && ['trialing', 'active', 'past_due', 'unpaid'].includes(cur.status)) {
       throw fail('failed-precondition', 'This company already has a plan. Change it under Account, then Plan and billing.');
     }
-    // Asked again (another card, or a reload): the same subscription while nothing changed, else a new one.
-    if (cur && cur.next && !['canceled', 'incomplete_expired'].includes(cur.status)) {
-      const was = planOf(cur);
-      if (was.plan === plan && was.interval === interval && was.addon === addon && (cur.metadata.offer || '') === (offer?.code || '')) {
-        await saveBilling(who.orgId, cur);
-        return { kind: cur.next.kind, clientSecret: cur.next.clientSecret, amount: cur.next.amount, trialEnd: cur.trialEnd };
-      }
-    }
-    if (cur && !['canceled', 'incomplete_expired'].includes(cur.status)) await pay.cancelNow(cur.id);
-  }
 
-  // The customer: the company's billing address and VAT ID go on its invoices.
-  const address = readAddress(req.data?.address);
-  if (!address) throw fail('invalid-argument', 'Enter the company\'s billing address.');
-  const name = clean((req.data?.address as { name?: unknown } | undefined)?.name, 100) || String(org.name || '');
-  const email = String(req.auth?.token?.email || '');
-  const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
-  const vatKind = vat ? vatType(/^[A-Z]{2}/.test(vat) && vat.slice(0, 2) !== 'EL' ? vat.slice(0, 2) : address.country) : null;
-  const reverse = reverseCharge(address.country, !!vatKind);
-  const cust = { name, email, address, locales: localesFor(await langOf(who.uid), address.country), orgId: who.orgId, reverse };
-  let customer = p.customerId;
-  if (customer) await pay.updateCustomer(customer, cust);
-  else {
-    // Stripe keeps a key's first answer for a day, an error too: the key changes with what is sent.
-    customer = await pay.createCustomer(cust, `cus-${who.orgId}-${keyOf(cust)}`);
-    await pd.set({ customerId: customer, mode: cfg.mode, createdAt: Date.now() }, { merge: true });
-  }
-  if (vat) {
-    const type = vatKind;
-    if (type) {
-      try { await pay.addTaxId(customer, type, vat); } catch (e) {
+    // The customer first (also when coming back): the company's billing address and VAT ID go on its invoices.
+    const name = clean((req.data?.address as { name?: unknown } | undefined)?.name, 100) || String(org.name || '');
+    const email = String(req.auth?.token?.email || '');
+    const vat = String(req.data?.vatId || '').replace(/[\s.\-]/g, '').toUpperCase().slice(0, 20);
+    const vatKind = vat ? vatType(/^[A-Z]{2}/.test(vat) && vat.slice(0, 2) !== 'EL' ? vat.slice(0, 2) : address.country) : null;
+    // Without Stripe Tax: reverse charge for companies outside Germany (payments.ts); Stripe Tax decides by itself.
+    const reverse = cfg.tax?.mode === 'automatic' ? undefined : reverseCharge(address.country, !!vatKind);
+    const cust = { name, email, address, locales: localesFor(await langOf(who.uid), address.country), orgId: who.orgId, reverse };
+    let customer = p.customerId;
+    if (customer) await pay.updateCustomer(customer, cust);
+    else {
+      // Stripe keeps a key's first answer for a day, an error too: the key changes with what is sent.
+      customer = await pay.createCustomer(cust, `cus-${who.orgId}-${cfg.mode}-${keyOf(cust)}`);
+      await pd.set({ customerId: customer, subscriptionId: null, mode: cfg.mode, confirmedAt: null, createdAt: Date.now() }, { merge: true });
+    }
+    if (vatKind) {
+      try { await pay.addTaxId(customer, vatKind, vat); } catch (e) {
         logger.warn('VAT ID refused', { orgId: who.orgId, message: String((e as Error)?.message || e) });
         throw fail('invalid-argument', 'Check the VAT ID {id}: it should start with the country code, like DE123456789.', { id: vat });
       }
     }
-  }
 
-  // The discount: the sign-up link's, or the launch offer on a yearly plan. The free days: 30 for a new monthly plan
-  // (from now: the card is added now), what is left of a trial from before payments, the link's, or none.
-  // The launch offer is on the plan only, not on the add-on (AGB, price list).
-  let coupon: string | null = null;
-  const net = netCents(plan, interval, addon);
-  let discount = 0;
-  if (offer && (offer.percentOff || offer.amountOff)) {
-    coupon = offerCoupon(offer);
-    await pay.ensureCoupon(coupon, { percentOff: offer.percentOff, amountOff: offer.amountOff, months: offer.months, name: `Fratius offer ${offer.code}` });
-    discount = offer.percentOff ? Math.round((net * offer.percentOff) / 100) : offer.amountOff || 0;
-  } else if (!offer && interval === 'year' && (await launchOfferOn())) {
-    coupon = LAUNCH_COUPON;
-    discount = Math.round((PRICE_CENTS[plan].year * YEARLY_LAUNCH_OFF) / 100);
-  }
-  const now = Date.now();
-  let trialEnd: number | null = null;
-  if (offer) trialEnd = offer.trialDays > 0 ? now + offer.trialDays * DAY_MS : null;
-  else if (interval === 'month') {
-    if (prev.status === 'incomplete') trialEnd = now + TRIAL_DAYS * DAY_MS;
-    else if (prev.status === 'trialing' && prev.via !== 'stripe' && Number(prev.trialEnd) > now + 3600_000) trialEnd = Number(prev.trialEnd);
-  }
-  const firstNet = Math.max(0, net - discount);
+    // The discount: the sign-up link's, or the launch offer on a yearly plan (on the plan only, not on the add-on).
+    let coupon: string | null = null;
+    const net = netCents(plan, interval, addon);
+    let discount = 0;
+    if (offer && (offer.percentOff || offer.amountOff)) {
+      const c = offerCoupon(offer);
+      coupon = c.id;
+      await pay.ensureCoupon(c.id, { percentOff: offer.percentOff, amountOff: offer.amountOff, months: c.months, name: `Fratius offer ${offer.code}` });
+      discount = offer.percentOff ? Math.round((net * offer.percentOff) / 100) : Math.min(net, offer.amountOff || 0);
+    } else if (!offer && interval === 'year' && (await launchOfferOn())) {
+      coupon = LAUNCH_COUPON;
+      discount = Math.round((PRICE_CENTS[plan].year * YEARLY_LAUNCH_OFF) / 100);
+    }
+    const trial = trialFor(offer, interval, org, p, now);
+    const trialEnd = trial && Math.floor(trial / 3600_000) * 3600_000;
+    const firstNet = Math.max(0, net - discount);
+    const terms = keyOf({ plan, interval, addon, offer: offer?.code || null, coupon, trialEnd, reverse: reverse ?? null, country: address.country, vat });
 
-  const attempt = (p.attempt || 0) + 1;
-  const input = {
-    customer,
-    prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
-    trialEnd: trialEnd && Math.floor(trialEnd / 3600_000) * 3600_000, coupon, tax: cfg.tax, reverse, metadata: { orgId: who.orgId, ...(offer ? { offer: offer.code } : {}) },
-  };
-  const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
-  await pd.set({ subscriptionId: sub.id, attempt, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });
-  const b = await saveBilling(who.orgId, sub);
-  logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
-  if (b && !sub.next) await confirmedOnce(who.orgId, b);
-  return { kind: sub.next?.kind || 'none', clientSecret: sub.next?.clientSecret || null, amount: sub.next?.amount || 0, trialEnd: sub.trialEnd };
+    // Asked again (another card, a reload): the same subscription while the terms are the same, else a new one.
+    if (cur && cur.next && cur.metadata.terms === terms && !['canceled', 'incomplete_expired'].includes(cur.status)) {
+      await saveBilling(who.orgId, cur, readAt);
+      return { kind: cur.next.kind, clientSecret: cur.next.clientSecret, amount: cur.next.amount, trialEnd: cur.trialEnd, firstNet };
+    }
+    if (cur && !['canceled', 'incomplete_expired'].includes(cur.status)) await pay.cancelNow(cur.id);
+
+    // The sign-up link's use is taken now, before anything can be paid with it.
+    if (offer) {
+      await db().runTransaction(async (tx) => {
+        const oref = db().doc(`offers/${offer.code}`), uref = oref.collection('uses').doc(who.orgId);
+        const [o, u] = await Promise.all([tx.get(oref), tx.get(uref)]);
+        if (u.exists) return;
+        const no = offerUsable(o.data() as Offer | undefined);
+        if (no) throw fail('failed-precondition', no);
+        tx.set(uref, { at: Date.now(), by: who.uid });
+        tx.update(oref, { uses: FieldValue.increment(1) });
+      });
+    }
+
+    // Counted before Stripe is asked, so a try that failed half-way never meets its cached answer again.
+    const attempt = (p.attempt || 0) + 1;
+    await pd.set({ attempt }, { merge: true });
+    const input = {
+      customer,
+      prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
+      trialEnd, coupon, tax: cfg.tax, reverse: !!reverse, metadata: { orgId: who.orgId, terms, ...(offer ? { offer: offer.code } : {}) },
+    };
+    const madeAt = Date.now();
+    const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
+    await pd.set({ subscriptionId: sub.id, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });
+    const b = await saveBilling(who.orgId, sub, madeAt);
+    logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
+    if (b && !sub.next) await confirmedOnce(who.orgId, b);
+    return { kind: sub.next?.kind || 'none', clientSecret: sub.next?.clientSecret || null, amount: sub.next?.amount || 0, trialEnd: sub.trialEnd, firstNet };
+  } finally {
+    await pd.set({ starting: null }, { merge: true }).catch(() => {});
+  }
 });
 
 /**
@@ -2767,9 +2827,10 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
 export const billingConfirm = onCall({ timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY, SMTP_URL, WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req, { unpaid: true });
   needOwner(who);
-  const { pay } = await payOrFail();
-  const p = ((await payDoc(who.orgId).get()).data() || {}) as PayDoc;
+  const { pay, cfg } = await payOrFail();
+  const p = await payState(who.orgId, cfg.mode);
   if (!p.subscriptionId || !p.customerId) throw fail('failed-precondition', 'Choose a plan first.');
+  const readAt = Date.now();
   let sub = await pay.getSubscription(p.subscriptionId);
   if (!sub) throw fail('failed-precondition', 'Choose a plan first.');
   const si = String(req.data?.setupIntent || '');
@@ -2777,7 +2838,7 @@ export const billingConfirm = onCall({ timeoutSeconds: 60, secrets: [STRIPE_SECR
     const card = await pay.setupCard(si, p.customerId);
     if (card) sub = await pay.useCard(sub.id, p.customerId, card);
   }
-  const b = await saveBilling(who.orgId, sub);
+  const b = await saveBilling(who.orgId, sub, readAt);
   if (b) await confirmedOnce(who.orgId, b);
   return { billing: b, next: sub.next };
 });
@@ -2787,20 +2848,22 @@ export const billingPortal = onCall({ timeoutSeconds: 30, secrets: [STRIPE_SECRE
   const who = await guard(req, { unpaid: true });
   needOwner(who);
   const { pay, cfg } = await payOrFail();
-  const p = ((await payDoc(who.orgId).get()).data() || {}) as PayDoc;
+  const p = await payState(who.orgId, cfg.mode);
   if (!p.customerId) throw fail('failed-precondition', 'Choose a plan first.');
   return { url: await pay.portalUrl(p.customerId, `${await appUrl()}/plan`, cfg.portalConfig || null) };
 });
 
 /**
  * Another plan, the add-on, or monthly to yearly. Upgrades are charged now for the rest of the period (nothing in the
- * trial); downgrades are credited on the next invoice. Not below the vans in use; yearly to monthly by email.
+ * trial); downgrades are credited on the next invoice. Not below the vans in use; yearly to monthly by email. Only
+ * what changes is touched: an add-on alone leaves the plan on the price it has.
  */
 export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets: [STRIPE_SECRET_KEY] }, async (req) => {
   const who = await guard(req, { unpaid: true });
   needOwner(who);
   const { pay, cfg } = await payOrFail();
-  const p = ((await payDoc(who.orgId).get()).data() || {}) as PayDoc;
+  const p = await payState(who.orgId, cfg.mode);
+  const readAt = Date.now();
   const sub = p.subscriptionId ? await pay.getSubscription(p.subscriptionId) : null;
   if (!sub || !sub.card || !['trialing', 'active', 'past_due'].includes(sub.status)) throw fail('failed-precondition', 'Choose a plan first.');
   const cur = planOf(sub);
@@ -2809,23 +2872,36 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
   const interval: Interval = req.data?.interval === 'year' || req.data?.interval === 'month' ? req.data.interval : cur.interval;
   if (cur.interval === 'year' && interval === 'month') throw fail('failed-precondition', 'A yearly plan can\'t switch to monthly in the app. Write to info@fratius.com.');
   const addon = (req.data?.addon === undefined ? cur.addon : req.data.addon === true) && plan !== 'premium';
-  if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub), next: null };
+  if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub, readAt), next: null };
   roomFor(plan, addon, await countFleet(who.orgId));
 
-  const main = sub.items.find((i) => readKey(i.key)?.item !== 'addon');
+  const main = sub.items.find((i) => { const r = readKey(i.key); return r && r.item !== 'addon'; });
   const extra = sub.items.find((i) => readKey(i.key)?.item === 'addon');
   if (!main) throw fail('failed-precondition', 'This plan can\'t be changed in the app. Write to info@fratius.com.');
-  const changes: { id?: string; price?: string; deleted?: boolean }[] = [{ id: main.id, price: priceId(cfg, priceKey(plan, interval)) }];
+  const changes: { id?: string; price?: string; deleted?: boolean }[] = [];
+  if (plan !== cur.plan || interval !== cur.interval) changes.push({ id: main.id, price: priceId(cfg, priceKey(plan, interval)) });
   if (addon && extra) { if (interval !== cur.interval) changes.push({ id: extra.id, price: priceId(cfg, priceKey('addon', interval)) }); }
   else if (addon) changes.push({ price: priceId(cfg, priceKey('addon', interval)) });
   else if (extra) changes.push({ id: extra.id, deleted: true });
   const perMonth = (pl: PlanId, i: Interval, a: boolean) => netCents(pl, i, a) / (i === 'year' ? 12 : 1);
   const up = interval !== cur.interval || perMonth(plan, interval, addon) > perMonth(cur.plan, cur.interval, cur.addon);
+  const charge = up && sub.status !== 'trialing';
+  // The launch offer when switching to yearly, unless the plan already has a discount (a sign-up link's stays).
   const coupon = interval === 'year' && cur.interval === 'month' && !sub.coupons.length && (await launchOfferOn()) ? LAUNCH_COUPON : null;
-  const next = await pay.changeItems(sub.id, changes, { charge: up && sub.status !== 'trialing', coupon });
-  const b = await saveBilling(who.orgId, next);
+  const changedAt = Date.now();
+  let next: Sub;
+  try { next = await pay.changeItems(sub.id, changes, { charge, coupon }); } catch (e) {
+    const code = String((e as { code?: string; type?: string })?.code || (e as { type?: string })?.type || '');
+    logger.warn('Plan not changed', { orgId: who.orgId, code, message: String((e as Error)?.message || e) });
+    if (/card|payment|authentication|declin/i.test(code + ' ' + String((e as Error)?.message || ''))) {
+      throw fail('failed-precondition', 'The bank didn\'t accept the payment for the change. Check the card under payment details, then try again.');
+    }
+    throw e;
+  }
+  const b = await saveBilling(who.orgId, next, changedAt);
   logger.info('Plan changed', { orgId: who.orgId, from: cur, to: { plan, interval, addon } });
-  return { billing: b, next: next.next?.kind === 'payment' ? next.next : null };
+  // Only a charge made by this change can need the bank's confirmation (an older open invoice is the portal's).
+  return { billing: b, next: charge && next.next?.kind === 'payment' ? next.next : null };
 });
 
 /** The app creator: the yearly launch offer (30 % off the first year) on or off. */
@@ -2897,13 +2973,22 @@ export const stripeWebhook = onRequest({ timeoutSeconds: 60, memory: '256MiB', m
     if (ev.subscription) {
       const q = await db().collection('payments').where('subscriptionId', '==', ev.subscription).limit(1).get();
       const orgId = q.docs[0]?.id;
+      const readAt = Date.now();
       const sub = orgId ? await pay.getSubscription(ev.subscription) : null;
-      const b = orgId && sub ? await saveBilling(orgId, sub) : null;
+      const b = orgId && sub ? await saveBilling(orgId, sub, readAt) : null;
       if (orgId && b) {
         await confirmedOnce(orgId, b);
         await tellOwners(orgId, ev.type, b);
       }
       logger.info('Stripe event', { type: ev.type, orgId: orgId || null, status: b?.status || null });
+    } else if (ev.customer && /^customer\.(updated|tax_id\.)/.test(ev.type)) {
+      // A new billing address or VAT ID on Stripe's page: reverse charge or German VAT again (without Stripe Tax).
+      const q = await db().collection('payments').where('customerId', '==', ev.customer).limit(1).get();
+      const pd = q.docs[0]?.data() as PayDoc | undefined;
+      if (pd && cfg.tax?.mode === 'rate' && cfg.tax.rateId) {
+        const info = await pay.taxInfo(ev.customer);
+        if (info.country) await pay.setReverse(ev.customer, pd.subscriptionId || null, reverseCharge(info.country, info.vatIds > 0), cfg.tax.rateId);
+      }
     }
     res.json({ received: true });
   } catch (e) {

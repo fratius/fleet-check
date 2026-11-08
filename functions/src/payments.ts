@@ -112,6 +112,10 @@ export interface Pay {
   setupCard(setupIntent: string, customer: string): Promise<string | null>;
   useCard(sub: string, customer: string, card: string): Promise<Sub>;
   portalUrl(customer: string, returnUrl: string, config: string | null): Promise<string>;
+  /** Where the customer is and the VAT IDs it gave (they can change both on Stripe's page). */
+  taxInfo(customer: string): Promise<{ country: string | null; vatIds: number }>;
+  /** Reverse charge on or off (tax mode "rate"): the customer's tax status and the subscription's VAT rate. */
+  setReverse(customer: string, sub: string | null, reverse: boolean, rateId: string | null): Promise<void>;
   ensureCoupon(id: string, c: Coupon): Promise<void>;
   /** Checks the webhook's signature; throws when it's wrong. */
   event(raw: Buffer, signature: string, secret: string): Promise<PayEvent>;
@@ -130,24 +134,31 @@ function fromStripe(s: Stripe.Subscription): Sub {
     next = { kind: 'payment', clientSecret: inv.confirmation_secret.client_secret, amount: inv.amount_due };
   }
   const ends = s.items.data.map((i) => i.current_period_end).filter(Boolean);
+  const cust = s.customer && typeof s.customer === 'object' ? s.customer : null;
   return {
     id: s.id, status: s.status, live: s.livemode, customer: idOf(s.customer), created: s.created * 1000,
     trialStart: sec(s.trial_start), trialEnd: sec(s.trial_end), periodEnd: ends.length ? Math.max(...ends) * 1000 : null,
     cancelAt: sec(s.cancel_at) || (s.cancel_at_period_end && ends.length ? Math.max(...ends) * 1000 : null),
-    card: !!s.default_payment_method,
-    items: s.items.data.map((i) => ({ id: i.id, key: i.price.lookup_key, price: i.price.id })),
+    card: !!s.default_payment_method || !!(cust && !('deleted' in cust) && cust.invoice_settings?.default_payment_method),
+    // By product and interval, not by lookup key: a price changed later moves the key to the new price, and companies
+    // still on the old one must keep their plan.
+    items: s.items.data.map((i) => {
+      const product = idOf(i.price.product as string);
+      return { id: i.id, key: product.startsWith('fratius_') && i.price.recurring ? `${product}_${i.price.recurring.interval}` : i.price.lookup_key, price: i.price.id };
+    }),
     metadata: { ...(s.metadata || {}) },
     coupons: (s.discounts || []).map((d) => (typeof d === 'object' ? idOf(d.source?.coupon) : '')).filter(Boolean),
     next,
   };
 }
-const EXPAND = ['latest_invoice.confirmation_secret', 'pending_setup_intent'];
+const EXPAND = ['latest_invoice.confirmation_secret', 'pending_setup_intent', 'discounts', 'customer'];
 
 class RealPay implements Pay {
   constructor(private s: Stripe) {}
   async createCustomer(c: CustomerInput, idem: string) {
     const cu = await this.s.customers.create({
-      name: c.name, email: c.email, preferred_locales: c.locales, metadata: { orgId: c.orgId }, tax_exempt: c.reverse ? 'reverse' : 'none',
+      name: c.name, email: c.email, preferred_locales: c.locales, metadata: { orgId: c.orgId },
+      ...(c.reverse !== undefined ? { tax_exempt: c.reverse ? 'reverse' as const : 'none' as const } : {}),
       ...(c.address ? { address: c.address, tax: { validate_location: 'deferred' } } : {}),
     }, { idempotencyKey: idem });
     return cu.id;
@@ -184,11 +195,13 @@ class RealPay implements Pay {
     }
   }
   async changeItems(id: string, items: { id?: string; price?: string; deleted?: boolean }[], o: { charge: boolean; coupon: string | null }) {
-    if (o.coupon) await this.s.subscriptions.update(id, { discounts: [{ coupon: o.coupon }] });
     const s = await this.s.subscriptions.update(id, {
       items, proration_behavior: o.charge ? 'always_invoice' : 'create_prorations',
-      // A bank that asks to confirm the payment: the change waits until the owner confirms it (Sub.next).
-      payment_behavior: o.charge ? 'pending_if_incomplete' : 'allow_incomplete', expand: EXPAND,
+      // With the launch discount (monthly to yearly) all in one, or nothing if the payment fails: the discount must
+      // never stay on a monthly plan. Otherwise a bank that asks to confirm the payment makes the change wait for it.
+      ...(o.coupon ? { discounts: [{ coupon: o.coupon }], payment_behavior: 'error_if_incomplete' as const }
+        : { payment_behavior: o.charge ? 'pending_if_incomplete' as const : 'allow_incomplete' as const }),
+      expand: EXPAND,
     });
     return fromStripe(s);
   }
@@ -209,6 +222,14 @@ class RealPay implements Pay {
     const p = await this.s.billingPortal.sessions.create({ customer, return_url: returnUrl, locale: 'auto', ...(config ? { configuration: config } : {}) });
     return p.url;
   }
+  async taxInfo(customer: string) {
+    const [c, ids] = await Promise.all([this.s.customers.retrieve(customer), this.s.customers.listTaxIds(customer, { limit: 20 })]);
+    return { country: 'deleted' in c ? null : c.address?.country || null, vatIds: ids.data.length };
+  }
+  async setReverse(customer: string, sub: string | null, reverse: boolean, rateId: string | null) {
+    await this.s.customers.update(customer, { tax_exempt: reverse ? 'reverse' : 'none' });
+    if (sub && rateId) await this.s.subscriptions.update(sub, { default_tax_rates: reverse ? '' : [rateId] });
+  }
   async ensureCoupon(id: string, c: Coupon) {
     try { await this.s.coupons.retrieve(id); return; } catch (e) {
       if ((e as { code?: string }).code !== 'resource_missing') throw e;
@@ -227,7 +248,8 @@ class RealPay implements Pay {
 function eventOf(e: Stripe.Event): PayEvent {
   const o = e.data.object as unknown as { object?: string; id?: string; customer?: unknown; parent?: { subscription_details?: { subscription?: unknown } | null } | null };
   const subscription = o.object === 'subscription' ? String(o.id) : idOf(o.parent?.subscription_details?.subscription as string) || null;
-  return { id: e.id, type: e.type, live: e.livemode, subscription, customer: idOf(o.customer as string) || null };
+  const customer = o.object === 'customer' ? String(o.id) : idOf(o.customer as string) || null;
+  return { id: e.id, type: e.type, live: e.livemode, subscription, customer };
 }
 
 /**
@@ -308,6 +330,14 @@ class FakePay implements Pay {
     return this.view(sub);
   }
   async portalUrl(customer: string, returnUrl: string) { return `https://billing.stripe.test/p/${customer}?return=${encodeURIComponent(returnUrl)}`; }
+  async taxInfo(customer: string) {
+    const c = (await this.col().doc(customer).get()).data() as { address?: Address; taxId?: unknown } | undefined;
+    return { country: c?.address?.country || null, vatIds: c?.taxId ? 1 : 0 };
+  }
+  async setReverse(customer: string, sub: string | null, reverse: boolean) {
+    await this.put(customer, { reverse });
+    if (sub) await this.put(sub, { reverse });
+  }
   async ensureCoupon(id: string, c: Coupon) { await this.put(`coupon_${id}`, { amount: c.percentOff || 0, ...c }); }
   async event(raw: Buffer, signature: string, secret: string) {
     const e = new Stripe('sk_test_fake').webhooks.constructEvent(raw, signature, secret);
@@ -328,6 +358,8 @@ export function payWith(key: string | undefined, mode: PayConfig['mode']): Pay |
   if (!mode || !k || k === 'none') return null;
   if (k === TEST_KEY) return mode === 'fake' ? new FakePay() : null;
   if (mode === 'fake') return null;
+  // A key from the other mode (Deploy switched modes and the functions don't have the new key yet): nothing at all.
+  if ((mode === 'live') !== /^(sk|rk)_live_/.test(k)) return null;
   return new RealPay(new Stripe(k, { apiVersion: STRIPE_API, maxNetworkRetries: 2, timeout: 20_000, appInfo: { name: 'Fratius', url: 'https://fratius.com' } }));
 }
 
@@ -349,9 +381,10 @@ export function billingOf(s: Sub, prev: Partial<Billing> | undefined, now = Date
   const { plan, interval, addon } = planOf(s);
   // A trial without a card is not a trial yet: the owner still has to add one (or Stripe ends it at the trial's end).
   let status: BillingStatus;
-  if (s.status === 'trialing') status = s.card ? 'trialing' : 'incomplete';
+  // Everyone adds a card, also when nothing is charged (a 100 % offer): without one it isn't started.
+  if (s.status === 'trialing' || s.status === 'active') status = s.card ? (s.status === 'trialing' ? 'trialing' : 'active') : 'incomplete';
   else if (s.status === 'incomplete') status = 'incomplete';
-  else if (['active', 'past_due', 'unpaid', 'paused', 'canceled'].includes(s.status)) status = s.status as BillingStatus;
+  else if (['past_due', 'unpaid', 'paused', 'canceled'].includes(s.status)) status = s.status as BillingStatus;
   else status = 'canceled'; // incomplete_expired, or a status Stripe adds later
   const p = plan || (PLAN_IDS.find((x) => x === prev?.plan) ?? null);
   return {
@@ -402,11 +435,20 @@ export function newOfferCode(): string {
   for (let i = 0; i < 8; i++) s += abc[Math.floor(Math.random() * abc.length)];
   return s;
 }
-export const offerCoupon = (o: Pick<Offer, 'code'>) => `fratius_offer_${o.code.toLowerCase()}`;
-export function offerUsable(o: Offer | undefined, now = Date.now()): string | null {
+/**
+ * The Stripe coupon of a sign-up link, named after its terms (a link edited before anyone finished signing up gets a new
+ * one). A discount for some months starts counting at sign-up in Stripe, so the free trial's months are added to it.
+ */
+export function offerCoupon(o: Pick<Offer, 'code' | 'percentOff' | 'amountOff' | 'months' | 'trialDays'>): { id: string; months: number | null } {
+  const months = o.months ? o.months + Math.ceil((o.trialDays || 0) / 30) : null;
+  const h = createHash('sha256').update(JSON.stringify([o.percentOff, o.amountOff, months])).digest('hex').slice(0, 8);
+  return { id: `fratius_offer_${o.code.toLowerCase()}_${h}`, months };
+}
+/** Why a sign-up link can't be used (null: it can). `held`: this company already took one of its uses. */
+export function offerUsable(o: Offer | undefined, now = Date.now(), held = false): string | null {
   if (!o) return N_('This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
   if (o.ended || (o.validUntil && now > o.validUntil)) return N_('This sign-up link has ended. Write to info@fratius.com for a new one.');
-  if (o.uses >= o.maxUses) return N_('This sign-up link has already been used. Write to info@fratius.com for a new one.');
+  if (!held && o.uses >= o.maxUses) return N_('This sign-up link has already been used. Write to info@fratius.com for a new one.');
   return null;
 }
 /** What the sign-up page may show about an offer (not the note, not who made it). */

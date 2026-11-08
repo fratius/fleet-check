@@ -41,6 +41,8 @@ const EVENTS = [
   'customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted',
   'customer.subscription.paused', 'customer.subscription.resumed', 'customer.subscription.trial_will_end',
   'invoice.paid', 'invoice.payment_failed', 'invoice.payment_action_required',
+  // A new billing address or VAT ID on Stripe's page changes the VAT (reverse charge) while Stripe Tax is off.
+  'customer.updated', 'customer.tax_id.created', 'customer.tax_id.updated', 'customer.tax_id.deleted',
 ];
 
 (async () => {
