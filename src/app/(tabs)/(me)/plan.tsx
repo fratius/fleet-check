@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 import { PortalButton, usePayMode } from '@/components/billinggate';
@@ -94,6 +94,13 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  // Monthly to yearly only while yearly plans are offered (the app creator's switch).
+  const [yearly, setYearly] = useState(false);
+  useEffect(() => {
+    let live = true;
+    ai.billingConfig({ orgId }).then((r) => { if (live) setYearly(!!r.yearly); }, () => {});
+    return () => { live = false; };
+  }, [orgId]);
   const withAddon = a && p !== 'premium';
   const same = p === plan && iv === interval && withAddon === addon;
   const room = allowedVans(p, withAddon);
@@ -140,7 +147,7 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
           <T>{t('{n} more vans for {price} {per}', { n: ADDON_VANS, price: euro(PRICE_CENTS.addon[iv], L), per })}</T>
         </Pressable>
       ) : null}
-      {interval === 'month' ? (
+      {interval === 'month' && (yearly || iv === 'year') ? (
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: iv === 'year' }} onPress={() => setIv(iv === 'year' ? 'month' : 'year')} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
           <View style={{ width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.ink, backgroundColor: iv === 'year' ? c.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             {iv === 'year' ? <Text style={{ color: c.paper, fontFamily: F.semi, fontSize: 15, lineHeight: 17 }}>✓</Text> : null}

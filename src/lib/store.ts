@@ -268,7 +268,7 @@ export const ai = {
   billingConfirm: call<{ orgId: string; setupIntent?: string | null }, { billing: Org['billing'] | null; next: { kind: 'setup' | 'payment'; clientSecret: string; amount: number } | null }>('billingConfirm', 70000),
   billingPortal: call<{ orgId: string }, { url: string }>('billingPortal', 40000),
   changePlan: call<{ orgId: string; plan?: string; interval?: 'month' | 'year'; addon?: boolean }, { billing: Org['billing'] | null; next: { kind: 'payment'; clientSecret: string; amount: number } | null }>('changePlan', 70000),
-  setLaunchOffer: call<{ on: boolean }, { launchOffer: boolean }>('setLaunchOffer', 20000),
+  setLaunchOffer: call<{ on?: boolean; yearly?: boolean }, { launchOffer: boolean; yearly: boolean }>('setLaunchOffer', 20000),
   saveOffer: call<Partial<OfferInput> & { code?: string; ended?: boolean }, { code: string; url: string }>('saveOffer', 20000),
   assignVan: call<{ orgId: string; vehicleId: string; driverId: string | null }, { assignmentId: string | null; unchanged?: boolean; notified?: number }>('assignVan', 30000),
   retireVan: call<{ orgId: string; vehicleId: string; restore?: boolean }, { ok: boolean }>('retireVan', 30000),

@@ -61,8 +61,19 @@ export async function payConfig(fresh = false): Promise<PayConfig> {
 }
 /** platform/billing: the app creator's switches. */
 export async function launchOfferOn(): Promise<boolean> {
+  return (await switches()).launchOffer;
+}
+/**
+ * Yearly plans at sign-up, on the plan screen and on the website. Off until the app creator turns them on (product
+ * owner, 2026-11-10: live payments for pilots first; a yearly plan is paid, with an invoice, at sign-up). A sign-up
+ * link with a yearly plan still works.
+ */
+export async function yearlyOn(): Promise<boolean> {
+  return (await switches()).yearly;
+}
+export async function switches(): Promise<{ launchOffer: boolean; yearly: boolean }> {
   const d = (await getFirestore().doc('platform/billing').get()).data();
-  return d?.launchOffer !== false;
+  return { launchOffer: d?.launchOffer !== false, yearly: d?.yearly === true };
 }
 
 /* ---------- the parts of Stripe Fratius uses, as one small interface (real or fake) ---------- */

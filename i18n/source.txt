@@ -2180,6 +2180,9 @@ f58dc68c	Wrong, was {type}	[log.tsx]
 cafcb25c	yearly	[components/offers.tsx]
 7622eb5a	Yearly	[account.tsx, plan.tsx, components/offers.tsx]
 252b1a27	Yearly check for company vehicles
+6f397e95	Yearly plans are paid at sign-up, with an invoice. Off: everyone signs up monthly, with the free days.
+0524f056	Yearly plans aren't offered yet. Choose monthly, or write to info@fratius.com.
+12d2a3e9	Yearly plans at sign-up and on the website
 69422c8f	Yearly, {n} % off the first year
 dd4e9ec0	Yearly: the next is due a year later
 fb360f9c	yes	[data.tsx]

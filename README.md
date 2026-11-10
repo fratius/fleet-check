@@ -114,11 +114,13 @@ The store app is built by the **Store build** workflow (Actions tab) on EAS, as 
 Fleet owners pay on the web only, by card, through Stripe; the store apps sell nothing. Everything in Stripe is made by the Deploy workflow from two keys, so nothing needs setting up by hand in Stripe's product catalogue:
 
 1. In Stripe, **Developers > API keys**: copy the secret key (`sk_test_…` to test, `sk_live_…` for real money) and the publishable key (`pk_test_…` or `pk_live_…`, the same mode).
-2. In GitHub, **Settings > Secrets and variables > Actions**: the secret `STRIPE_SECRET_KEY`, and under **Variables** the variable `STRIPE_PUBLISHABLE_KEY`. Run Deploy.
+2. In GitHub, **Settings > Secrets and variables > Actions**: the secret `STRIPE_SECRET_KEY`, and `STRIPE_PUBLISHABLE_KEY` (a secret or a variable). Run Deploy; its summary says "Payments (live)" or "Payments in test mode".
 
 Deploy then makes the products and prices (by lookup key, from `PRICE_CENTS` in `functions/src/billing.ts`), the 30 % launch coupon for yearly plans, tax (Stripe Tax if it's on, else 19 % German VAT), the customer portal and the webhook (its signing secret goes to Secret Manager by itself), and writes what it made to `platform/stripe`. A changed price becomes a new Stripe price; companies already paying keep theirs.
 
-With **test keys** nobody pays real money: the website keeps its request form, and the sign-up page is at `<web app>/start` (or open the website with `?stripe=test`). Use the card 4242 4242 4242 4242. With **live keys** the website's buttons open the sign-up page and every new company adds a card. In the Stripe dashboard, once: your business details and the Steuernummer or USt-IdNr. (Settings > Business, and the invoice template), **Settings > Billing > Subscriptions and emails**: send a reminder 7 days before a free trial ends (the AGB promise it), emails about failed payments, and what happens when all retries fail (cancel the subscription).
+With **test keys** nobody pays real money: the sign-up page (`<web app>/start`) says so and takes the card 4242 4242 4242 4242. With **live keys** every new company adds a real card; a company that signed up with test keys adds one again.
+
+**Yearly plans** are off until the app creator turns them on (Account tab, **Sign-up links and offers**): a yearly plan is paid, with an invoice, at sign-up. While off, the website and the sign-up page show monthly only (a sign-up link with a yearly plan still works). **Free pilots:** make a sign-up link with 100 % off, the months left empty (for as long as they stay) and one sign-up. The pilot adds a card and is never charged; Stripe makes €0 invoices and sends no receipt for them, as nothing is charged (keep **Send finalized invoices to customers** off). In the Stripe dashboard, once: your business details and the Steuernummer or USt-IdNr. (Settings > Business, and the invoice template), **Settings > Billing > Subscriptions and emails**: send a reminder 7 days before a free trial ends (the AGB promise it), emails about failed payments, and what happens when all retries fail (cancel the subscription).
 
 ## The website (fratius.com)
 
