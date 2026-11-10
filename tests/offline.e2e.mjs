@@ -3,6 +3,8 @@
 // connection is back everything goes through by itself, once.
 // Also with a connection: a photo as big as a phone camera's is shrunk in the browser and identified (Add vehicle),
 // and the app doesn't say "No connection" when the server has answered with nothing new.
+// And an incident written without signal that reaches the server much later (the rules want its time near the
+// server's) is sent once more as made now, instead of stopping as "refused".
 // Run: emulators:exec --only auth,firestore,functions,storage "node --test tests/offline.e2e.mjs" (APP_DIR = the web build).
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -248,5 +250,43 @@ test('with a working connection the app never says "No connection": the same lis
   // (The page is there, not between two states.)
   await visible(page, 'Your companies').waitFor({ timeout: 30_000 });
   assert.equal(await offlineStrip(page).count(), 0);
+  await ctx.close();
+});
+
+test('an incident written without signal and sent twenty minutes later still goes through, as made when it arrives', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  // The page's clock starts twenty minutes ago and runs on from there: what's written now is twenty minutes old
+  // once the clock is put right below, as if the phone had been without signal (or closed) that long. The rules
+  // only take an incident whose time is within ten minutes of the server's.
+  await page.clock.install({ time: new Date(Date.now() - 20 * 60_000) });
+  await signIn(page, OWNER);
+  await visible(page, 'B-OF 1').waitFor({ timeout: 60_000 });
+  await page.locator('text="People" >> visible=true').last().click();
+  await page.locator(`[aria-label^="${DRIVER.name}"] >> visible=true`).first().click();
+  await button(page, 'Add an incident').waitFor({ timeout: 30_000 });
+
+  // The signal is gone: the incident is written and kept on the phone.
+  await ctx.setOffline(true);
+  await button(page, 'Add an incident').click();
+  await page.locator('textarea >> visible=true').last().fill('Parked on the pavement');
+  await button(page, 'Add the incident').click();
+  await visible(page, 'Parked on the pavement').waitFor({ timeout: 30_000 });
+  assert.equal((await db.collection(`orgs/${ORG}/incidents`).get()).size, 0);
+
+  // Twenty minutes later the signal is back: it goes through by itself, nobody writes it again.
+  await page.clock.setSystemTime(new Date());
+  await ctx.setOffline(false);
+  const inc = await until(async () => {
+    const q = await db.collection(`orgs/${ORG}/incidents`).get();
+    return q.size ? q.docs[0].data() : null;
+  }, 90_000, 'the incident to reach the server');
+  assert.equal(inc.note, 'Parked on the pavement');
+  assert.equal(inc.driverId, DRIVER.uid);
+  assert.equal(inc.by, OWNER.uid);
+  // It counts from when it arrived (like every change made without a connection).
+  assert.ok(Math.abs(inc.createdAt - Date.now()) < 5 * 60_000, `createdAt is ${Math.round((Date.now() - inc.createdAt) / 60_000)} minutes old`);
+  await until(async () => (await page.locator('text=/stopped\\. Tap to see why/ >> visible=true').count()) === 0 && (await page.locator('text=/wait(s)? on this phone/ >> visible=true').count()) === 0, 60_000, 'nothing left waiting or stopped');
+  await visible(page, 'Parked on the pavement').waitFor({ timeout: 30_000 });
   await ctx.close();
 });
