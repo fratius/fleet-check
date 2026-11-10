@@ -503,15 +503,12 @@ af6b940f	Cosmetic	[check/[id].tsx, components/damage.tsx]
 96b78de2	Could also be {what}.
 d3df3743	Couldn't add the station.
 29c1f881	Couldn't cancel the link.
-935996b0	Couldn't cancel. Check the connection.
-834ef378	Couldn't check the card. Check the connection and try again.
 7cc2d991	Couldn't convert the video. The original is kept.
-69772bd4	Couldn't give the van. Check the connection.
 2201dbd9	Couldn't load all of this van's records, so only the latest are shown.
-4c3ccbaf	Couldn't load all the numbers. Check the connection, then open the tab again.
+17eae097	Couldn't load all the numbers. Open the tab again.
 fb5ca6f6	Couldn't load the companies. Sign out and in again so the app creator access is picked up.
-e1f3f136	Couldn't load the fleet data. Check your internet, then reopen the app.
-0f6d9aee	Couldn't load the history. Check the connection.
+43b21e81	Couldn't load the fleet data. Reopen the app.
+6663fa22	Couldn't load the history.
 10f6b4bc	Couldn't load the invite links.
 91dd700f	Couldn't load the payment form. Check the connection and try again.
 56b4b2c2	Couldn't load the people of this company.
@@ -522,31 +519,19 @@ e6161e7f	Couldn't make the links.
 8f65c334	Couldn't open the camera or photos.
 f04ae2f9	Couldn't open the camera.
 e17b636b	Couldn't open the photos.
-510ecc64	Couldn't reach the AI service. Check the connection and try again.
 47e051c2	Couldn't reach the AI service. Try again.
-9affa153	Couldn't reach the server. Check the connection and try again.
-264356e4	Couldn't read the receipt. Check the connection and try again.
 d326553e	Couldn't remove the station.
 eeb58fb9	Couldn't remove the vehicle.
 67362afb	Couldn't save that change.
 dd59e15b	Couldn't save that.	[people.tsx, app/sign-in.tsx]
-d9b971d1	Couldn't save that. Check the connection.
 ad01de6f	Couldn't save the changes.
-6618ce72	Couldn't save the check. Check the connection.
-df50093b	Couldn't save the comment. Check the connection.
 4a6273cd	Couldn't save the photos on this phone. Try again.
 5df8d986	Couldn't save the photos.
-692bfbde	Couldn't save the review. Check the connection and try again.
-21f890bd	Couldn't save the vehicle. Try again.
 29272847	Couldn't save the video on this phone. Record it again.
 12690f8e	Couldn't save your answer.
 2873d0fd	Couldn't save.	[people.tsx]
-4a2456e2	Couldn't save. Check the connection and try again.
-f7495464	Couldn't save. Check the connection.
-08ee6b58	Couldn't send it. Check the connection and try again.
 2df44d47	Couldn't take the photo. Try again.
 832bda04	Couldn't turn notifications on.
-d219bbf3	Couldn't upload the photos. Check the connection and try again.
 8b656a5d	Cover	[components/vanfacts.tsx]
 35e3dee8	Cover and renewal date.
 e8521910	crack	[check/[id].tsx]
@@ -1654,7 +1639,6 @@ ca29f290	someone	[people.tsx]
 f5785ccf	Someone else has to allow your own.
 06afd560	Someone else has to check your own licence.
 3c1bf34f	Something went wrong on the server. Try again.
-c19fab4a	Something went wrong with the AI check. Try again.
 4244e822	Something went wrong. Try again.
 18bc1586	Sort by {column}	[components/table.tsx]
 7bf5ec86	Speed and cost	[check/[id].tsx]
@@ -1857,13 +1841,11 @@ a258fcb9	The odometer ({km} km) is lower than the van's last reading ({last} km)
 cf2abed0	The parts	[buy/[id].tsx]
 503dcb8f	The payment form is still loading. Try again in a moment.
 8a4c03a1	The payment is still on its way. Your company opens as soon as Stripe confirms it.
-c3acf501	The photo didn't upload. Check the connection and try again.
 14216d56	The photo didn't upload. Take it again.
 4615b331	The photo was read and deleted; it isn't kept with the record.
 43aecc03	The photo was read and deleted; it isn't kept with the van.
 0e91970e	The photos are saved as a walk-around.
 080d6247	The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.
-a73ac728	The photos didn't upload. Check the connection and try again.
 3866abda	The photos of this check were deleted on {date}. The decisions and the van's damage record stay.
 85b63340	The photos or the video aren't on this phone any more.
 f19fa04d	The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.

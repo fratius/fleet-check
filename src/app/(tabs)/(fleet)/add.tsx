@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { ai, failText } from '@/lib/store';
 import { TIERS, TIER_NAME, type IdentifyResult } from '@/lib/types';
 import { plateKey, vanName } from '@/lib/vans';
 
@@ -58,15 +58,13 @@ export default function AddVehicle() {
     if (!shots.length) { setErr(t('Add at least one photo of the vehicle first.')); return; }
     setErr(null); setRes(null);
     const t0 = Date.now();
-    // Getting the photos ready happens on this phone; only sending them needs a connection. Which part failed
-    // decides what the person is told: a photo that can't be opened isn't a connection problem.
-    let sending = false;
     try {
       setBusy(t('Uploading photos'));
       const scanId = newId();
-      const small = await Promise.all(shots.map((sh) => prepare(sh.uri, sh.w, sh.h)));
-      sending = true;
-      const paths = await Promise.all(small.map((p, i) => upload(p.uri, `orgs/${s.store!.orgId}/scans/${scanId}/${i + 1}.jpg`)));
+      const paths = await Promise.all(shots.map(async (sh, i) => {
+        const p = await prepare(sh.uri, sh.w, sh.h);
+        return upload(p.uri, `orgs/${s.store!.orgId}/scans/${scanId}/${i + 1}.jpg`);
+      }));
       const uploadMs = Date.now() - t0;
       setBusy(t('Identifying'));
       const r = await retrying(() => ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId }));
@@ -76,9 +74,8 @@ export default function AddVehicle() {
         choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear });
       }
     } catch (e) {
-      // The real reason, for whoever looks into it (the text on the screen is for the person).
-      console.warn('Add vehicle: identifying the type failed', e);
-      setErr(e instanceof AiError ? e.message : sending ? t('Couldn\'t upload the photos. Check the connection and try again.') : t('Couldn\'t open the photos.'));
+      // A photo that can't be opened, a refused upload, the server: each in its own words (lib/store.ts).
+      setErr(failText(e, 'Identifying the vehicle type'));
     } finally { setBusy(null); }
   };
 
@@ -115,7 +112,7 @@ export default function AddVehicle() {
       setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setAttrs(defaultAttrs());
       // Replace the form, so Back from the new van goes to the fleet, not to the empty form.
       router.replace(`/vehicle/${id}`);
-    } catch { setErr(t('Couldn\'t save the vehicle. Try again.')); }
+    } catch (e) { setErr(failText(e, 'Saving the vehicle')); }
     finally { setSaving(false); }
   };
 

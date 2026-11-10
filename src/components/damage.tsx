@@ -10,6 +10,7 @@ import { fwd, loc, t, tp } from '@/lib/i18n';
 import { photoUrl } from '@/lib/images';
 import { addDamageNote, watchVanRecords } from '@/lib/people';
 import { useSession } from '@/lib/session';
+import { failText } from '@/lib/store';
 import type { Assignment, Check, DamageNote, Photo, Walkaround } from '@/lib/types';
 import type { Pos } from '@/lib/van3d';
 
@@ -234,7 +235,7 @@ function Notes({ d, notes, vehicleId, stationId }: { d: Damage; notes: DamageNot
     try {
       await addDamageNote(s.org!.id, { vehicleId, stationId, damageKey: d.key, text, by: s.user!.uid, byName: s.user!.name });
       setText('');
-    } catch { setErr(t('Couldn\'t save the comment. Check the connection.')); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, 'Saving the comment on damage')); } finally { setBusy(false); }
   };
   return (
     <Section label={notes.length ? t('Comments ({n})', { n: notes.length }) : t('Comments')}>

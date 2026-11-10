@@ -459,7 +459,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!store) return;
     // A list the server refused: it answered, so that isn't "No connection" (the strip isn't shown for it).
     let refused = false;
-    const err = () => { refused = true; setOfflineAt(null); setDataError(t('Couldn\'t load the fleet data. Check your internet, then reopen the app.')); };
+    const err = () => { refused = true; setOfflineAt(null); setDataError(t('Couldn\'t load the fleet data. Reopen the app.')); };
     // Until the server answers, what this phone saw last is shown, with what Firestore has here laid over it.
     const saved: Partial<Record<CacheName, { id: string }[]>> = {};
     const now: Partial<Record<CacheName, { id: string }[]>> = {};

@@ -10,9 +10,9 @@ import type { ErrKind } from './outboxcore';
  * back to the front), and counts what's waiting, for the strip above the tab bar (components/uploads.tsx).
  */
 
-// Storage errors that won't go away by trying again.
+// Storage errors that won't go away by trying again ('unauthenticated': the sign-in itself was refused).
 const STORAGE_FINAL = new Set([
-  'storage/unauthorized', 'storage/quota-exceeded', 'storage/invalid-argument', 'storage/invalid-checksum',
+  'storage/unauthorized', 'storage/unauthenticated', 'storage/quota-exceeded', 'storage/invalid-argument', 'storage/invalid-checksum',
   'storage/no-default-bucket', 'storage/cannot-slice-blob', 'storage/invalid-root-operation', 'storage/invalid-format',
   'storage/invalid-url', 'storage/invalid-default-bucket', 'storage/app-deleted', 'storage/project-not-found',
   'storage/bucket-not-found', 'storage/object-not-found', 'storage/unsupported-environment', 'storage/invalid-event-name',
@@ -24,7 +24,10 @@ export function netKind(e: unknown): ErrKind {
   const x = (e || {}) as { net?: unknown; code?: unknown; message?: unknown };
   if (x.net === 'offline' || x.net === 'flaky') return x.net;
   const code = typeof x.code === 'string' ? x.code : '';
-  if (code.startsWith('storage/')) return STORAGE_FINAL.has(code) ? null : 'offline';
+  // 'storage/unknown': the server answered, with something it doesn't take (the SDK tries a busy server and a lost
+  // connection again by itself and names those differently). A few more tries, then the person hears about it,
+  // instead of "No connection" for good.
+  if (code.startsWith('storage/')) return STORAGE_FINAL.has(code) ? null : code === 'storage/unknown' ? 'flaky' : 'offline';
   if (code === 'unavailable' || code === 'firestore/unavailable' || code === 'auth/network-request-failed') return 'offline';
   if (code === 'deadline-exceeded' || code === 'firestore/deadline-exceeded') return 'flaky';
   const m = typeof x.message === 'string' ? x.message : '';

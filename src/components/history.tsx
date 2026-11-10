@@ -10,7 +10,7 @@ import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
 import { flash } from '@/lib/flash';
 import { fwd, t, tp } from '@/lib/i18n';
-import { AiError, ai } from '@/lib/store';
+import { ai, failText } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 import { vanName, vanAlias } from '@/lib/vans';
 
@@ -58,7 +58,8 @@ export function useHistory(by: { vehicleId?: string; driverId?: string }) {
     const stations = own || scope === '*' ? null : scope ? scope.split(',') : [];
     if (stations && !stations.length) { setRows([]); return; }
     return watchHistory(orgId, by, stations, setRows,
-      () => setError(t('Couldn\'t load the history. Check the connection.')));
+      // The server refused the list (never the connection: without one the list just waits).
+      () => setError(t('Couldn\'t load the history.')));
   }, [orgId, by.vehicleId, by.driverId, own, scope, fromSession]);
   const local = useMemo(() => s.assignments.filter((a) => (by.vehicleId ? a.vehicleId === by.vehicleId : a.driverId === by.driverId)),
     [s.assignments, by.vehicleId, by.driverId]);
@@ -168,7 +169,7 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
       flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
       onDone();
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
+    catch (e) { setErr(failText(e, 'Giving the van')); } finally { setBusy(null); }
   };
   return (
     <View style={{ gap: 8 }}>
@@ -212,7 +213,7 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
       flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
       onDone();
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t give the van. Check the connection.')); } finally { setBusy(null); }
+    catch (e) { setErr(failText(e, 'Giving the van')); } finally { setBusy(null); }
   };
   return (
     <View style={{ gap: 8 }}>

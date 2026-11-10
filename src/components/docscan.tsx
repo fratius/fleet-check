@@ -14,7 +14,7 @@ import { today } from '@/lib/fleet';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
-import { AiError, ai, type DocRead } from '@/lib/store';
+import { ai, failText, type DocRead } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import type { Member, Vehicle } from '@/lib/types';
 import { N_, t, tp } from '@/lib/i18n';
@@ -136,7 +136,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
       setRead(r);
       setCheck(false);
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : t('The photos didn\'t upload. Check the connection and try again.'));
+      setErr(failText(e, 'Reading the document'));
     } finally { setStep(null); }
   };
   const isLicence = read?.kind === 'driving licence';
@@ -167,7 +167,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
         : tp(chosen.length, 'Saved {n} detail from {what}. The photo wasn\'t kept.', 'Saved {n} details from {what}. The photo wasn\'t kept.', { what }));
       reset();
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : t('Couldn\'t save. Check the connection and try again.'));
+      setErr(failText(e, 'Saving the details from the document'));
     } finally { setStep(null); }
   };
   const setRow = (key: string, patch: Partial<Row>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));

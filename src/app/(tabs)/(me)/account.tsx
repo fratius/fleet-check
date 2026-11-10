@@ -13,6 +13,7 @@ import { Notifications } from '@/components/pickup';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
 import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
+import { failText } from '@/lib/store';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
 import { ADDON_VANS, PLAN_NAME, PLAN_IDS, TERMS_VERSION, standing, type PlanId } from '@/lib/billing';
@@ -289,7 +290,7 @@ function FleetSettings() {
   const months = s.org?.licenceCheckMonths || 6;
   const set = async (patch: Parameters<typeof s.setOrgSettings>[0]) => {
     setBusy(true); setErr(null);
-    try { await s.setOrgSettings(patch); } catch { setErr(t('Couldn\'t save that. Check the connection.')); } finally { setBusy(false); }
+    try { await s.setOrgSettings(patch); } catch (e) { setErr(failText(e, 'Saving the company setting')); } finally { setBusy(false); }
   };
   return (
     <Card>

@@ -12,6 +12,11 @@ import type { Assignment, Check, DamageNote, DriverLink, Invite, JoinRequest, Me
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
 const db = () => fb()!.db;
+/**
+ * A list the server refused (the rules, or an index missing in firestore.indexes.json). It never comes by itself and
+ * isn't the connection (without one a list just waits), so it's said in the console, then the screen does its part.
+ */
+const refused = (what: string, then?: () => void) => (e: unknown) => { console.warn(`The list ${what} was refused:`, e); then?.(); };
 export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onError?: () => void) {
   // Without a connection: the people this phone saw last (lib/offline.ts), until the server answers.
   const uid = fb()?.auth.currentUser?.uid;
@@ -23,7 +28,7 @@ export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onErro
     if (!snap.metadata.fromCache) { live = true; if (key) writeCache(key, rows); }
     else if (!live && !rows.length) return;
     cb(rows);
-  }, () => onError?.());
+  }, refused('members', onError));
   return () => { gone = true; off(); };
 }
 
@@ -44,18 +49,18 @@ export function watchCheck(orgId: string, id: string, cb: (k: Check | null) => v
 export function watchMember(orgId: string, uid: string, cb: (m: Member | null) => void, onError?: () => void) {
   return onSnapshot(doc(db(), 'orgs', orgId, 'members', uid),
     (d) => cb(d.exists() ? ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }) : null),
-    () => onError?.());
+    refused('member', onError));
 }
 
 export function watchInvites(orgId: string, cb: (rows: Invite[]) => void, onError?: () => void) {
   return onSnapshot(query(collection(db(), 'invites'), where('orgId', '==', orgId), orderBy('createdAt', 'desc')),
     (snap) => cb(snap.docs.map((d) => d.data() as Invite)),
-    () => onError?.());
+    refused('invites', onError));
 }
 
 /** The company's driver link (owners and managers read it; the server makes it). null while there's none yet. */
 export function watchDriverLink(orgId: string, cb: (l: DriverLink | null) => void, onError?: () => void) {
-  return onSnapshot(doc(db(), 'orgs', orgId, 'links', 'drivers'), (d) => cb(d.exists() ? (d.data() as DriverLink) : null), () => onError?.());
+  return onSnapshot(doc(db(), 'orgs', orgId, 'links', 'drivers'), (d) => cb(d.exists() ? (d.data() as DriverLink) : null), refused('driver link', onError));
 }
 
 /**
@@ -70,7 +75,7 @@ export function watchJoinRequests(orgId: string, stationIds: string[] | null, cb
   return onSnapshot(q, (snap) => {
     const now = Date.now();
     cb(snap.docs.map((d) => d.data() as JoinRequest).filter((r) => r.expiresAt > now).sort((a, b) => b.createdAt - a.createdAt));
-  }, () => onError?.());
+  }, refused('join requests', onError));
 }
 
 /** The signed-in person's own sign-up request in a company, while they wait. */
@@ -147,7 +152,7 @@ export function watchHistory(orgId: string, by: { vehicleId?: string; driverId?:
   const f = by.vehicleId ? where('vehicleId', '==', by.vehicleId) : where('driverId', '==', by.driverId);
   const q = stations ? query(base, f, where('stationId', 'in', stations.slice(0, 30)), orderBy('start', 'desc'), limit(300))
     : query(base, f, orderBy('start', 'desc'), limit(300));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Assignment, 'id'>) }))), () => onError?.());
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Assignment, 'id'>) }))), refused('history', onError));
 }
 
 /**
@@ -163,8 +168,8 @@ export function watchVanRecords(orgId: string, vehicleId: string, stations: stri
       : query(base, where('vehicleId', '==', vehicleId), orderBy('createdAt', 'desc'), limit(300));
   };
   if (stations && !stations.length) { cb({ walks: [], checks: [] }); return () => {}; }
-  const a = onSnapshot(q('walkarounds'), (snap) => { walks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Walkaround, 'id'>) })); cb({ walks, checks }); }, () => onError?.());
-  const b = onSnapshot(q('checks'), (snap) => { checks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Check, 'id'>) })); cb({ walks, checks }); }, () => onError?.());
+  const a = onSnapshot(q('walkarounds'), (snap) => { walks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Walkaround, 'id'>) })); cb({ walks, checks }); }, refused('walk-arounds of the van', onError));
+  const b = onSnapshot(q('checks'), (snap) => { checks = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Check, 'id'>) })); cb({ walks, checks }); }, refused('damage checks of the van', onError));
   return () => { a(); b(); };
 }
 
@@ -174,7 +179,7 @@ export function watchDamageNotes(orgId: string, vehicleId: string, stations: str
   if (stations && !stations.length) { cb([]); return () => {}; }
   const q = stations ? query(base, where('vehicleId', '==', vehicleId), where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'asc'), limit(500))
     : query(base, where('vehicleId', '==', vehicleId), orderBy('createdAt', 'asc'), limit(500));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DamageNote, 'id'>) }))), () => onError?.());
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DamageNote, 'id'>) }))), refused('damage comments', onError));
 }
 export async function addDamageNote(orgId: string, n: Omit<DamageNote, 'id' | 'createdAt'>) {
   const ref = doc(collection(db(), 'orgs', orgId, 'damageNotes'));

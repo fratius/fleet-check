@@ -9,8 +9,8 @@ import { t } from './i18n';
 import { newId, prepare, putBlob } from './images';
 import { dropKept, keepFile, keptBlob, keptSize, sweepKept } from './keep';
 import { nap, netKind, retrying } from './net';
-import { Outbox, type Change, type Job, type Live, type OutFile, type Then } from './outboxcore';
-import { AiError, ai, callServer, newRid, setWriter } from './store';
+import { Outbox, staleRecord, type Change, type Job, type Live, type OutFile, type Then } from './outboxcore';
+import { AiError, ai, callServer, newRid, setWriter, whyFailed } from './store';
 import type { Photo, Vehicle } from './types';
 import type { Recorded } from './videos';
 import type { LocalShot } from './walks';
@@ -75,15 +75,11 @@ export const outbox = new Outbox({
   },
   async dropFiles(j) { await dropKept(j.id, j.files.map((f) => f.key)); },
   errKind: netKind,
+  // What stopped it, in words for the person (the same as on the screens, lib/store.ts), and the real reason in
+  // the console.
   message(e) {
-    const code = (e as { code?: string })?.code;
-    if (e instanceof AiError) return e.message;
-    if (code === 'outbox/missing') return t('The photos or the video aren\'t on this phone any more.');
-    if ((code === 'permission-denied' || code === 'firestore/permission-denied') && !(e instanceof AiError)) return t('This change was refused. Check that you still belong to this company and may change it.');
-    if (code === 'not-found' || code === 'firestore/not-found') return t('What this change was for isn\'t there any more.');
-    if (code === 'storage/unauthorized') return t('The upload was refused. Check that you still belong to this company, then try again.');
-    if (code === 'storage/quota-exceeded') return t('The company\'s storage is full. Tell your fleet manager.');
-    return t('Something went wrong. Try again.');
+    console.warn('A waiting item stopped:', e);
+    return whyFailed(e);
   },
   nap,
 });
@@ -262,7 +258,15 @@ async function sendChange(j: Job, onStall: (stalled: boolean) => void): Promise<
   if (c.kind === 'call') return callServer(c.fn, c.data, 180000);
   // Started already in this session: wait for it (without a connection Firestore sends it when it's back).
   const slow = setTimeout(() => onStall(true), 5000);
-  try { await (writing.get(j.id) || startWrite(j.id, c)); } finally { clearTimeout(slow); onStall(false); writing.delete(j.id); }
+  try {
+    try { await (writing.get(j.id) || startWrite(j.id, c)); } catch (e) {
+      // An incident or a comment on damage that waited here longer than the rules allow between its time and the
+      // server's (outboxcore.ts): once more, as made now, so nobody has to write it again.
+      if (!staleRecord(c, e, Date.now())) throw e;
+      c.data = { ...c.data, createdAt: Date.now() };
+      await startWrite(j.id, c);
+    }
+  } finally { clearTimeout(slow); onStall(false); writing.delete(j.id); }
   return null;
 }
 
