@@ -457,7 +457,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setOfflineAt(null);
     liveData.current = false;
     if (!store) return;
-    const err = () => setDataError(t('Couldn\'t load the fleet data. Check your internet, then reopen the app.'));
+    // A list the server refused: it answered, so that isn't "No connection" (the strip isn't shown for it).
+    let refused = false;
+    const err = () => { refused = true; setOfflineAt(null); setDataError(t('Couldn\'t load the fleet data. Check your internet, then reopen the app.')); };
     // Until the server answers, what this phone saw last is shown, with what Firestore has here laid over it.
     const saved: Partial<Record<CacheName, { id: string }[]>> = {};
     const now: Partial<Record<CacheName, { id: string }[]>> = {};
@@ -489,8 +491,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           (sets[name] as (r: { id: string }[]) => void)(overlay(rows, now[name] || []));
         }
         setLoaded({ vehicles: true, walks: true, checks: true, scans: true, stations: true });
-        // Said only when the server doesn't answer soon (not for the moment before it does).
-        setTimeout(() => { if (!gone && !liveData.current) setOfflineAt(c.at); }, 4000);
+        // Said only when the server doesn't answer soon (not for the moment before it does). It goes as soon as the
+        // server has confirmed the vans, also when they are the same as on this phone (lib/store.ts asks to hear that).
+        setTimeout(() => { if (!gone && !liveData.current && !refused) setOfflineAt(c.at); }, 4000);
       });
     }
     const subs = [

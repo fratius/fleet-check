@@ -9,13 +9,14 @@ export const MAX_EDGE = 2400;
 
 export interface Prepared { uri: string; w: number; h: number }
 
-/** Resizes to at most MAX_EDGE on the long side and re-encodes as JPEG. */
+/**
+ * Resizes to at most MAX_EDGE on the long side and re-encodes as JPEG. Only the long side is given, the other
+ * follows the photo's shape. Never `null` for the other side: the web app's resize takes it for zero and fails,
+ * so no photo bigger than `maxEdge` (every phone camera's) got through there.
+ */
 export async function prepare(uri: string, w: number, h: number, maxEdge = MAX_EDGE, compress = 0.85): Promise<Prepared> {
   const ctx = ImageManipulator.manipulate(uri);
-  if (w && h && Math.max(w, h) > maxEdge) {
-    if (w >= h) ctx.resize({ width: maxEdge, height: null });
-    else ctx.resize({ width: null, height: maxEdge });
-  }
+  if (w && h && Math.max(w, h) > maxEdge) ctx.resize(w >= h ? { width: maxEdge } : { height: maxEdge });
   const img = await ctx.renderAsync();
   const out = await img.saveAsync({ format: SaveFormat.JPEG, compress });
   return { uri: out.uri, w: out.width, h: out.height };

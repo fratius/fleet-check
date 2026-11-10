@@ -52,8 +52,17 @@ function fsColl<T extends { id: string }>(orgId: string, name: string, stations:
         : stations
           ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
           : query(base, orderBy('createdAt', 'desc'), limit(500));
-      return onSnapshot(q,
-        (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T), { fromCache: snap.metadata.fromCache }),
+      // Asked with metadata changes, so the app hears when the server has confirmed a list it first got from this
+      // phone's copy. Without them an unchanged list (no vans yet, or the same vans after the lists were asked
+      // again in the same session) stays "from this phone" for good, and the app said "No connection" on a working
+      // one. What changes neither the rows nor that (a write being confirmed) is left out.
+      let fromCache: boolean | null = null;
+      return onSnapshot(q, { includeMetadataChanges: true },
+        (snap) => {
+          const same = fromCache === snap.metadata.fromCache && !snap.docChanges().length;
+          fromCache = snap.metadata.fromCache;
+          if (!same) cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T), { fromCache });
+        },
         (e) => onError?.(e));
     },
     async add(data, id) {

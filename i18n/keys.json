@@ -1137,7 +1137,7 @@
   "id": "e79490c2",
   "key": "{plate} is already in your fleet.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:99",
+   "src/app/(tabs)/(fleet)/add.tsx:103",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:372"
   ]
  },
@@ -1639,7 +1639,7 @@
   "id": "dc0c4f9e",
   "key": "A company setting",
   "where": [
-   "src/lib/session.tsx:587"
+   "src/lib/session.tsx:590"
   ]
  },
  {
@@ -1932,7 +1932,7 @@
   "id": "e4e2af43",
   "key": "Add a station under People first.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:100"
+   "src/app/(tabs)/(fleet)/add.tsx:104"
   ]
  },
  {
@@ -2061,7 +2061,7 @@
   "id": "12a934c1",
   "key": "Add vehicle",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:130",
+   "src/app/(tabs)/(fleet)/add.tsx:134",
    "src/app/(tabs)/(fleet)/index.tsx:114",
    "src/app/(tabs)/(fleet)/index.tsx:60",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:45"
@@ -2129,7 +2129,7 @@
   "id": "c3460f99",
   "key": "AI checks need the Firebase backend. Finish the setup first.",
   "where": [
-   "src/lib/store.ts:207"
+   "src/lib/store.ts:216"
   ]
  },
  {
@@ -2151,7 +2151,7 @@
   "id": "6572e8b8",
   "key": "AI model",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:157"
+   "src/app/(tabs)/(fleet)/add.tsx:161"
   ]
  },
  {
@@ -2366,7 +2366,7 @@
   "id": "05417857",
   "key": "Also close: {types}.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:177"
+   "src/app/(tabs)/(fleet)/add.tsx:181"
   ]
  },
  {
@@ -3091,7 +3091,7 @@
   "id": "64fbd995",
   "key": "Change",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:181"
+   "src/app/(tabs)/(fleet)/add.tsx:185"
   ]
  },
  {
@@ -3140,7 +3140,7 @@
   "id": "44505ab7",
   "key": "Change the type",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:189"
+   "src/app/(tabs)/(fleet)/add.tsx:193"
   ]
  },
  {
@@ -3446,7 +3446,7 @@
   "id": "0df966e4",
   "key": "Choose photos",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:155",
+   "src/app/(tabs)/(fleet)/add.tsx:159",
    "src/components/docscan.tsx:207"
   ]
  },
@@ -3861,7 +3861,7 @@
   "id": "e1f3f136",
   "key": "Couldn't load the fleet data. Check your internet, then reopen the app.",
   "where": [
-   "src/lib/session.tsx:460"
+   "src/lib/session.tsx:462"
   ]
  },
  {
@@ -3939,6 +3939,7 @@
   "id": "e17b636b",
   "key": "Couldn't open the photos.",
   "where": [
+   "src/app/(tabs)/(fleet)/add.tsx:81",
    "src/components/docscan.tsx:108"
   ]
  },
@@ -3946,7 +3947,7 @@
   "id": "510ecc64",
   "key": "Couldn't reach the AI service. Check the connection and try again.",
   "where": [
-   "src/lib/store.ts:248"
+   "src/lib/store.ts:257"
   ]
  },
  {
@@ -4060,7 +4061,7 @@
   "id": "21f890bd",
   "key": "Couldn't save the vehicle. Try again.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:114"
+   "src/app/(tabs)/(fleet)/add.tsx:118"
   ]
  },
  {
@@ -4074,7 +4075,7 @@
   "id": "12690f8e",
   "key": "Couldn't save your answer.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:85"
+   "src/app/(tabs)/(fleet)/add.tsx:89"
   ]
  },
  {
@@ -4127,7 +4128,7 @@
   "id": "d219bbf3",
   "key": "Couldn't upload the photos. Check the connection and try again.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:77",
+   "src/app/(tabs)/(fleet)/add.tsx:81",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:123"
   ]
  },
@@ -5191,7 +5192,7 @@
   "id": "e73e1f01",
   "key": "Enter the number plate: it's how this van is shown everywhere.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:97",
+   "src/app/(tabs)/(fleet)/add.tsx:101",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:370"
   ]
  },
@@ -5287,7 +5288,7 @@
   "id": "ad6f5883",
   "key": "Est. cost {cost}",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:174"
+   "src/app/(tabs)/(fleet)/add.tsx:178"
   ]
  },
  {
@@ -5972,7 +5973,7 @@
   "id": "8ea6990e",
   "key": "Frames for this type",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:205"
+   "src/app/(tabs)/(fleet)/add.tsx:209"
   ]
  },
  {
@@ -6587,7 +6588,7 @@
   "id": "e841ab06",
   "key": "High confidence, {pct}%",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:173"
+   "src/app/(tabs)/(fleet)/add.tsx:177"
   ]
  },
  {
@@ -6688,28 +6689,28 @@
   "id": "852860bd",
   "key": "Identified in {time} with the {tier} model ({model}). Upload took {upload}.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:169"
+   "src/app/(tabs)/(fleet)/add.tsx:173"
   ]
  },
  {
   "id": "a7b34b5a",
   "key": "Identify the type",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:158"
+   "src/app/(tabs)/(fleet)/add.tsx:162"
   ]
  },
  {
   "id": "5c927cc5",
   "key": "Identifying",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:69"
+   "src/app/(tabs)/(fleet)/add.tsx:71"
   ]
  },
  {
   "id": "29b8a5e4",
   "key": "Identifying from photos needs the Firebase backend. Until it's connected, pick the type below.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:162"
+   "src/app/(tabs)/(fleet)/add.tsx:166"
   ]
  },
  {
@@ -6923,14 +6924,14 @@
   "id": "5a4f7da7",
   "key": "Is {type} the right type?",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:182"
+   "src/app/(tabs)/(fleet)/add.tsx:186"
   ]
  },
  {
   "id": "c6a0023b",
   "key": "Is it right that there's no vehicle?",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:182"
+   "src/app/(tabs)/(fleet)/add.tsx:186"
   ]
  },
  {
@@ -7642,7 +7643,7 @@
   "id": "a3ca212a",
   "key": "Looks like a {model}",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:171"
+   "src/app/(tabs)/(fleet)/add.tsx:175"
   ]
  },
  {
@@ -7663,7 +7664,7 @@
   "id": "ccfbeb59",
   "key": "Low confidence, {pct}%",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:173"
+   "src/app/(tabs)/(fleet)/add.tsx:177"
   ]
  },
  {
@@ -7865,14 +7866,14 @@
   "id": "13018e30",
   "key": "Marked right",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:181"
+   "src/app/(tabs)/(fleet)/add.tsx:185"
   ]
  },
  {
   "id": "76ba2046",
   "key": "Marked wrong. Actual type: {type}",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:181"
+   "src/app/(tabs)/(fleet)/add.tsx:185"
   ]
  },
  {
@@ -7895,7 +7896,7 @@
   "id": "1de7b06e",
   "key": "Medium confidence, {pct}%",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:173"
+   "src/app/(tabs)/(fleet)/add.tsx:177"
   ]
  },
  {
@@ -8370,7 +8371,7 @@
   "id": "9637416a",
   "key": "No connection. Try again when you have a signal.",
   "where": [
-   "src/lib/store.ts:221"
+   "src/lib/store.ts:230"
   ]
  },
  {
@@ -8643,7 +8644,7 @@
   "id": "b675b026",
   "key": "No station",
   "where": [
-   "src/lib/session.tsx:576"
+   "src/lib/session.tsx:579"
   ]
  },
  {
@@ -8729,7 +8730,7 @@
   "id": "1e972a98",
   "key": "No vehicle found",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:170"
+   "src/app/(tabs)/(fleet)/add.tsx:174"
   ]
  },
  {
@@ -8771,7 +8772,7 @@
   "id": "d265ea75",
   "key": "No, wrong",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:183"
+   "src/app/(tabs)/(fleet)/add.tsx:187"
   ]
  },
  {
@@ -8893,7 +8894,7 @@
   "id": "2cbd2224",
   "key": "Not connected to Firebase yet: vehicles are saved on this phone only.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:208"
+   "src/app/(tabs)/(fleet)/add.tsx:212"
   ]
  },
  {
@@ -9197,7 +9198,7 @@
   "id": "445a0f2c",
   "key": "Number plate",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:198",
+   "src/app/(tabs)/(fleet)/add.tsx:202",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:392",
    "src/components/docscan.tsx:32"
   ]
@@ -9447,7 +9448,7 @@
   "id": "2dd84770",
   "key": "One photo from a front corner works best. Add the side or the rear to pick up door details.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:144"
+   "src/app/(tabs)/(fleet)/add.tsx:148"
   ]
  },
  {
@@ -9781,7 +9782,7 @@
   "id": "48a7b888",
   "key": "optional",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:199",
+   "src/app/(tabs)/(fleet)/add.tsx:203",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:425",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:390",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:393",
@@ -9814,7 +9815,7 @@
   "id": "89f6bf5c",
   "key": "Or pick the type yourself",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:189"
+   "src/app/(tabs)/(fleet)/add.tsx:193"
   ]
  },
  {
@@ -9874,7 +9875,7 @@
   "id": "0cd93fe4",
   "key": "Own name or fleet number",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:199",
+   "src/app/(tabs)/(fleet)/add.tsx:203",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:393"
   ]
  },
@@ -10275,7 +10276,7 @@
   "id": "2d8fc3c9",
   "key": "Photos are stored with the scan in your company's storage.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:159"
+   "src/app/(tabs)/(fleet)/add.tsx:163"
   ]
  },
  {
@@ -10348,7 +10349,7 @@
   "id": "79a561e0",
   "key": "Pick the type",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:189"
+   "src/app/(tabs)/(fleet)/add.tsx:193"
   ]
  },
  {
@@ -10504,7 +10505,7 @@
   "id": "9940ff96",
   "key": "Plan and billing",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:136",
+   "src/app/(tabs)/(fleet)/add.tsx:140",
    "src/app/(tabs)/(me)/account.tsx:159",
    "src/app/(tabs)/(me)/account.tsx:162",
    "src/app/(tabs)/(me)/plan.tsx:31",
@@ -11055,7 +11056,7 @@
   "id": "91f23418",
   "key": "Remove photo {n}",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:147"
+   "src/app/(tabs)/(fleet)/add.tsx:151"
   ]
  },
  {
@@ -11622,8 +11623,8 @@
   "id": "9a6f9ec7",
   "key": "Save to the fleet",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:196",
-   "src/app/(tabs)/(fleet)/add.tsx:203"
+   "src/app/(tabs)/(fleet)/add.tsx:200",
+   "src/app/(tabs)/(fleet)/add.tsx:207"
   ]
  },
  {
@@ -11789,14 +11790,14 @@
   "id": "d7e87b6a",
   "key": "Scan it",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:141"
+   "src/app/(tabs)/(fleet)/add.tsx:145"
   ]
  },
  {
   "id": "83e13bed",
   "key": "Scan it and the app picks its type, or pick the type yourself.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:131"
+   "src/app/(tabs)/(fleet)/add.tsx:135"
   ]
  },
  {
@@ -12124,7 +12125,7 @@
    "functions/src/index.ts:711",
    "functions/src/index.ts:730",
    "functions/src/index.ts:779",
-   "src/lib/store.ts:243"
+   "src/lib/store.ts:252"
   ]
  },
  {
@@ -12328,7 +12329,7 @@
   "id": "c19fab4a",
   "key": "Something went wrong with the AI check. Try again.",
   "where": [
-   "src/lib/store.ts:249"
+   "src/lib/store.ts:258"
   ]
  },
  {
@@ -12517,7 +12518,7 @@
   "id": "4cb8d854",
   "key": "Station",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:201",
+   "src/app/(tabs)/(fleet)/add.tsx:205",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:402",
    "src/app/(tabs)/(table)/data.tsx:216",
    "src/app/(tabs)/(table)/data.tsx:241",
@@ -12545,7 +12546,7 @@
   "id": "48c27acb",
   "key": "Station: {station}",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:202"
+   "src/app/(tabs)/(fleet)/add.tsx:206"
   ]
  },
  {
@@ -12858,7 +12859,7 @@
   "id": "7ebd5d4c",
   "key": "Take photo",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:154",
+   "src/app/(tabs)/(fleet)/add.tsx:158",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:174"
   ]
  },
@@ -13084,14 +13085,14 @@
   "id": "5fdeeb4e",
   "key": "Tap the type it really is",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:189"
+   "src/app/(tabs)/(fleet)/add.tsx:193"
   ]
  },
  {
   "id": "3765b22e",
   "key": "Tap the type it really is, below.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:180"
+   "src/app/(tabs)/(fleet)/add.tsx:184"
   ]
  },
  {
@@ -13265,7 +13266,7 @@
   "id": "36cc054d",
   "key": "The AI functions aren't deployed yet. Check that the GitHub deploy ran.",
   "where": [
-   "src/lib/store.ts:242"
+   "src/lib/store.ts:251"
   ]
  },
  {
@@ -13317,7 +13318,7 @@
   "id": "3c48497c",
   "key": "The AI service isn't set up. Add the ANTHROPIC_API_KEY secret.",
   "where": [
-   "src/lib/store.ts:246"
+   "src/lib/store.ts:255"
   ]
  },
  {
@@ -13326,7 +13327,7 @@
   "server": true,
   "where": [
    "functions/src/claude.ts:80",
-   "src/lib/store.ts:247"
+   "src/lib/store.ts:256"
   ]
  },
  {
@@ -13492,7 +13493,7 @@
   "id": "b8de3c42",
   "key": "The company's plan is for {n} vans and they are all in use. Ask the owner for more room.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:125"
+   "src/app/(tabs)/(fleet)/add.tsx:129"
   ]
  },
  {
@@ -14839,7 +14840,7 @@
   "id": "427660e9",
   "key": "Too many AI checks in a short time, or the Anthropic credit has run out.",
   "where": [
-   "src/lib/store.ts:245"
+   "src/lib/store.ts:254"
   ]
  },
  {
@@ -15246,7 +15247,7 @@
   "id": "b8c800b4",
   "key": "Unknown station",
   "where": [
-   "src/lib/session.tsx:576"
+   "src/lib/session.tsx:579"
   ]
  },
  {
@@ -15426,7 +15427,7 @@
   "id": "756570c4",
   "key": "Uploading photos",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:62"
+   "src/app/(tabs)/(fleet)/add.tsx:65"
   ]
  },
  {
@@ -16387,7 +16388,7 @@
   "id": "843f90df",
   "key": "Yes, right",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:183"
+   "src/app/(tabs)/(fleet)/add.tsx:187"
   ]
  },
  {
@@ -16417,7 +16418,7 @@
   "id": "c8b37064",
   "key": "You aren't managing a station yet.",
   "where": [
-   "src/app/(tabs)/(fleet)/add.tsx:202"
+   "src/app/(tabs)/(fleet)/add.tsx:206"
   ]
  },
  {
@@ -16739,7 +16740,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:143",
-   "src/lib/store.ts:244"
+   "src/lib/store.ts:253"
   ]
  },
  {
@@ -16912,7 +16913,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:913",
-   "src/app/(tabs)/(fleet)/add.tsx:124"
+   "src/app/(tabs)/(fleet)/add.tsx:128"
   ]
  },
  {
