@@ -370,7 +370,7 @@
   "key": "{n} days left, until {day}.",
   "one": "{n} day left, until {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:137",
+   "src/app/(tabs)/(me)/account.tsx:138",
    "src/components/companies.tsx:61"
   ]
  },
@@ -457,7 +457,7 @@
   "key": "{n} months",
   "one": "{n} month",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:308"
+   "src/app/(tabs)/(me)/account.tsx:309"
   ]
  },
  {
@@ -690,7 +690,7 @@
   "key": "{n} things made on this phone aren't sent yet. If you sign out, they wait here and go through when you sign in again on this phone.",
   "one": "{n} thing made on this phone isn't sent yet. If you sign out, it waits here and goes through when you sign in again on this phone.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:106"
+   "src/app/(tabs)/(me)/account.tsx:107"
   ]
  },
  {
@@ -1281,7 +1281,7 @@
   "id": "aeb045b9",
   "key": "{used} of {max} vans in use",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:159"
+   "src/app/(tabs)/(me)/account.tsx:160"
   ]
  },
  {
@@ -1355,14 +1355,14 @@
   "id": "83d78021",
   "key": "{version} ({build}), {where}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:326"
+   "src/app/(tabs)/(me)/account.tsx:327"
   ]
  },
  {
   "id": "1756a552",
   "key": "{version}, {where}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:326"
+   "src/app/(tabs)/(me)/account.tsx:327"
   ]
  },
  {
@@ -1685,6 +1685,13 @@
   ]
  },
  {
+  "id": "eacc9bf9",
+  "key": "A new version of the app is ready ({version}).",
+  "where": [
+   "src/components/apkstrip.tsx:17"
+  ]
+ },
+ {
   "id": "56599b1b",
   "key": "A notification on this phone, so you know before you get to the station.",
   "where": [
@@ -1799,7 +1806,7 @@
   "id": "046fd29b",
   "key": "About {photo} per photo, so {check} for a 14-photo van check before close-ups.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:90"
+   "src/app/(tabs)/(me)/account.tsx:91"
   ]
  },
  {
@@ -1816,7 +1823,7 @@
   "server": true,
   "where": [
    "functions/src/index.ts:736",
-   "src/app/(tabs)/(me)/account.tsx:204",
+   "src/app/(tabs)/(me)/account.tsx:205",
    "src/app/sign-in.tsx:74",
    "src/components/plansetup.tsx:149"
   ]
@@ -1854,9 +1861,9 @@
   "key": "Account",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:28",
-   "src/app/(tabs)/(me)/account.tsx:38",
+   "src/app/(tabs)/(me)/account.tsx:39",
    "src/app/(tabs)/(me)/plan.tsx:30",
-   "src/app/(tabs)/_layout.tsx:76",
+   "src/app/(tabs)/_layout.tsx:78",
    "src/app/join/[token].tsx:139",
    "src/app/join/[token].tsx:280",
    "src/app/sign-in.tsx:105"
@@ -2151,7 +2158,7 @@
   "id": "0aa50b71",
   "key": "AI model for checks",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:79"
+   "src/app/(tabs)/(me)/account.tsx:80"
   ]
  },
  {
@@ -2415,11 +2422,18 @@
   ]
  },
  {
+  "id": "88b9ef5c",
+  "key": "Android test version",
+  "where": [
+   "src/app/(tabs)/(me)/account.tsx:325"
+  ]
+ },
+ {
   "id": "949fa485",
   "key": "Another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:188",
-   "src/app/(tabs)/(me)/account.tsx:189"
+   "src/app/(tabs)/(me)/account.tsx:189",
+   "src/app/(tabs)/(me)/account.tsx:190"
   ]
  },
  {
@@ -2447,8 +2461,8 @@
   "id": "a168c0e9",
   "key": "App creator",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:33",
-   "src/app/(tabs)/(me)/account.tsx:47",
+   "src/app/(tabs)/(me)/account.tsx:34",
+   "src/app/(tabs)/(me)/account.tsx:48",
    "src/components/companies.tsx:46",
    "src/lib/types.ts:441"
   ]
@@ -2664,7 +2678,7 @@
   "id": "4ab0f1ad",
   "key": "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:304"
+   "src/app/(tabs)/(me)/account.tsx:305"
   ]
  },
  {
@@ -2876,7 +2890,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:397",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:213",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:408",
-   "src/app/(tabs)/(me)/account.tsx:210",
+   "src/app/(tabs)/(me)/account.tsx:211",
    "src/app/(tabs)/(people)/people.tsx:116",
    "src/app/(tabs)/(people)/people.tsx:351",
    "src/app/(tabs)/(people)/people.tsx:92",
@@ -2979,7 +2993,7 @@
   "id": "9ac12815",
   "key": "Cancelled: the plan ends on {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:153"
+   "src/app/(tabs)/(me)/account.tsx:154"
   ]
  },
  {
@@ -3141,7 +3155,7 @@
   "id": "59853957",
   "key": "Changed by {name}, {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:302"
+   "src/app/(tabs)/(me)/account.tsx:303"
   ]
  },
  {
@@ -3155,7 +3169,7 @@
   "id": "2f9607e7",
   "key": "Changed by {name}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:302"
+   "src/app/(tabs)/(me)/account.tsx:303"
   ]
  },
  {
@@ -3184,7 +3198,7 @@
   "id": "be27a37d",
   "key": "Check drivers' licences every",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:307"
+   "src/app/(tabs)/(me)/account.tsx:308"
   ]
  },
  {
@@ -3624,7 +3638,7 @@
   "id": "7a199499",
   "key": "Company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:43",
+   "src/app/(tabs)/(me)/account.tsx:44",
    "src/app/sign-in.tsx:55"
   ]
  },
@@ -3639,7 +3653,7 @@
   "id": "1e5f7dc4",
   "key": "Company name",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:199",
+   "src/app/(tabs)/(me)/account.tsx:200",
    "src/app/sign-in.tsx:65"
   ]
  },
@@ -3668,7 +3682,7 @@
   "id": "2e026239",
   "key": "Continue",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:195",
+   "src/app/(tabs)/(me)/account.tsx:196",
    "src/app/sign-in.tsx:81"
   ]
  },
@@ -3993,7 +4007,7 @@
   "key": "Couldn't save that. Check the connection.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:71",
-   "src/app/(tabs)/(me)/account.tsx:291",
+   "src/app/(tabs)/(me)/account.tsx:292",
    "src/components/keep.tsx:52",
    "src/components/routines.tsx:117",
    "src/components/routines.tsx:249",
@@ -4142,7 +4156,7 @@
   "id": "c8170422",
   "key": "Create a company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:189",
+   "src/app/(tabs)/(me)/account.tsx:190",
    "src/app/sign-in.tsx:55"
   ]
  },
@@ -4158,8 +4172,8 @@
   "id": "77af29dd",
   "key": "Create company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:191",
-   "src/app/(tabs)/(me)/account.tsx:202",
+   "src/app/(tabs)/(me)/account.tsx:192",
+   "src/app/(tabs)/(me)/account.tsx:203",
    "src/app/sign-in.tsx:61",
    "src/app/sign-in.tsx:71"
   ]
@@ -4363,7 +4377,7 @@
   "id": "b353847f",
   "key": "Dashboard photos",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:298"
+   "src/app/(tabs)/(me)/account.tsx:299"
   ]
  },
  {
@@ -4378,7 +4392,7 @@
   "id": "a2e230ae",
   "key": "Dashboard photos on every tour",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:297"
+   "src/app/(tabs)/(me)/account.tsx:298"
   ]
  },
  {
@@ -4395,7 +4409,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:26",
    "src/app/(tabs)/(table)/data.tsx:119",
    "src/app/(tabs)/(table)/data.tsx:79",
-   "src/app/(tabs)/_layout.tsx:74"
+   "src/app/(tabs)/_layout.tsx:76"
   ]
  },
  {
@@ -4491,14 +4505,14 @@
   "id": "1189c74f",
   "key": "Demo account",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:233"
+   "src/app/(tabs)/(me)/account.tsx:234"
   ]
  },
  {
   "id": "c747cec0",
   "key": "Demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:240"
+   "src/app/(tabs)/(me)/account.tsx:241"
   ]
  },
  {
@@ -4632,6 +4646,13 @@
   ]
  },
  {
+  "id": "a479c9c3",
+  "key": "Download",
+  "where": [
+   "src/components/apkstrip.tsx:22"
+  ]
+ },
+ {
   "id": "2aa3d69f",
   "key": "Download for Excel",
   "where": [
@@ -4703,7 +4724,7 @@
   "id": "639a2c19",
   "key": "Driver: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:250"
+   "src/app/(tabs)/(me)/account.tsx:251"
   ]
  },
  {
@@ -4742,7 +4763,7 @@
   "id": "075aaa9e",
   "key": "Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:300"
+   "src/app/(tabs)/(me)/account.tsx:301"
   ]
  },
  {
@@ -4941,7 +4962,7 @@
   "id": "e216ffda",
   "key": "During the trial the AI does up to {checks} damage checks and {reads} other photo readings a day for the company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:138"
+   "src/app/(tabs)/(me)/account.tsx:139"
   ]
  },
  {
@@ -4955,7 +4976,7 @@
   "id": "6c14de32",
   "key": "Each run records its model, time and cost, so the test log can compare them.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:80"
+   "src/app/(tabs)/(me)/account.tsx:81"
   ]
  },
  {
@@ -5121,7 +5142,7 @@
   "id": "d1f552c3",
   "key": "Enter the company name.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:203"
+   "src/app/(tabs)/(me)/account.tsx:204"
   ]
  },
  {
@@ -5635,7 +5656,7 @@
   "id": "c6b3590a",
   "key": "First station",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:200",
+   "src/app/(tabs)/(me)/account.tsx:201",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -5666,7 +5687,7 @@
   "where": [
    "src/app/(tabs)/(fleet)/index.tsx:57",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:23",
-   "src/app/(tabs)/_layout.tsx:71"
+   "src/app/(tabs)/_layout.tsx:73"
   ]
  },
  {
@@ -5691,7 +5712,7 @@
   "id": "7aeaaa6f",
   "key": "Fleet manager: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:250"
+   "src/app/(tabs)/(me)/account.tsx:251"
   ]
  },
  {
@@ -5794,7 +5815,7 @@
   "id": "a3af3156",
   "key": "For example: DXX1 Berlin",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:200",
+   "src/app/(tabs)/(me)/account.tsx:201",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -5991,7 +6012,7 @@
   "id": "22357ca6",
   "key": "Free trial",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:136",
+   "src/app/(tabs)/(me)/account.tsx:137",
    "src/app/(tabs)/(me)/plan.tsx:71",
    "src/components/companies.tsx:59"
   ]
@@ -6000,7 +6021,7 @@
   "id": "e0312576",
   "key": "Free until {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:152"
+   "src/app/(tabs)/(me)/account.tsx:153"
   ]
  },
  {
@@ -6884,8 +6905,8 @@
   "id": "601e9d6c",
   "key": "Invite link",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:189",
-   "src/app/(tabs)/(me)/account.tsx:194",
+   "src/app/(tabs)/(me)/account.tsx:190",
+   "src/app/(tabs)/(me)/account.tsx:195",
    "src/app/join/[token].tsx:74",
    "src/app/sign-in.tsx:80"
   ]
@@ -6953,7 +6974,7 @@
   "id": "c30cc528",
   "key": "Join or create another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:183"
+   "src/app/(tabs)/(me)/account.tsx:184"
   ]
  },
  {
@@ -7188,6 +7209,13 @@
   "key": "Last working day",
   "where": [
    "src/components/driverrec.tsx:29"
+  ]
+ },
+ {
+  "id": "56e2f5d3",
+  "key": "Later",
+  "where": [
+   "src/components/apkstrip.tsx:19"
   ]
  },
  {
@@ -7433,7 +7461,7 @@
   "id": "9be05fd2",
   "key": "Licence check interval",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:308"
+   "src/app/(tabs)/(me)/account.tsx:309"
   ]
  },
  {
@@ -7970,7 +7998,7 @@
   "id": "d31edb7b",
   "key": "Monthly",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:159",
+   "src/app/(tabs)/(me)/account.tsx:160",
    "src/app/(tabs)/(me)/plan.tsx:69",
    "src/components/offers.tsx:145",
    "src/components/plansetup.tsx:217"
@@ -8242,7 +8270,7 @@
   "id": "ba3b7ff3",
   "key": "No card yet.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:151"
+   "src/app/(tabs)/(me)/account.tsx:152"
   ]
  },
  {
@@ -8830,7 +8858,7 @@
   "id": "dc5862b5",
   "key": "Not at a station yet. Ask your fleet manager.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:52"
+   "src/app/(tabs)/(me)/account.tsx:53"
   ]
  },
  {
@@ -9255,7 +9283,7 @@
   "id": "e3de5ab0",
   "key": "Off",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:298"
+   "src/app/(tabs)/(me)/account.tsx:299"
   ]
  },
  {
@@ -9286,7 +9314,7 @@
   "id": "e0049a66",
   "key": "On",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:298"
+   "src/app/(tabs)/(me)/account.tsx:299"
   ]
  },
  {
@@ -9739,7 +9767,7 @@
   "id": "bdd5e48d",
   "key": "Open the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:269"
+   "src/app/(tabs)/(me)/account.tsx:270"
   ]
  },
  {
@@ -9983,14 +10011,14 @@
   "id": "f9078931",
   "key": "Password: {password}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:252"
+   "src/app/(tabs)/(me)/account.tsx:253"
   ]
  },
  {
   "id": "44e3cbda",
   "key": "Paste the whole link you were sent.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:195",
+   "src/app/(tabs)/(me)/account.tsx:196",
    "src/app/sign-in.tsx:82"
   ]
  },
@@ -10061,7 +10089,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:25",
    "src/app/(tabs)/(people)/people.tsx:34",
    "src/app/(tabs)/(people)/people.tsx:42",
-   "src/app/(tabs)/_layout.tsx:73"
+   "src/app/(tabs)/_layout.tsx:75"
   ]
  },
  {
@@ -10149,7 +10177,7 @@
   "id": "e48322d5",
   "key": "phone app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:324"
+   "src/app/(tabs)/(me)/account.tsx:325"
   ]
  },
  {
@@ -10477,8 +10505,8 @@
   "key": "Plan and billing",
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:136",
-   "src/app/(tabs)/(me)/account.tsx:158",
-   "src/app/(tabs)/(me)/account.tsx:161",
+   "src/app/(tabs)/(me)/account.tsx:159",
+   "src/app/(tabs)/(me)/account.tsx:162",
    "src/app/(tabs)/(me)/plan.tsx:31",
    "src/components/billinggate.tsx:87"
   ]
@@ -10511,7 +10539,7 @@
   "id": "73931766",
   "key": "Plans and payment are coming soon. Nothing is charged until you choose a plan.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:139"
+   "src/app/(tabs)/(me)/account.tsx:140"
   ]
  },
  {
@@ -11041,7 +11069,7 @@
   "id": "80453614",
   "key": "Remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:261"
+   "src/app/(tabs)/(me)/account.tsx:262"
   ]
  },
  {
@@ -11084,7 +11112,7 @@
   "id": "fe34fc11",
   "key": "Renews on {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:155"
+   "src/app/(tabs)/(me)/account.tsx:156"
   ]
  },
  {
@@ -11196,7 +11224,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:24",
    "src/app/(tabs)/(review)/review.tsx:37",
    "src/app/(tabs)/(review)/review.tsx:78",
-   "src/app/(tabs)/_layout.tsx:72"
+   "src/app/(tabs)/_layout.tsx:74"
   ]
  },
  {
@@ -12112,7 +12140,7 @@
   "id": "dc1649a1",
   "key": "Sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:109",
+   "src/app/(tabs)/(me)/account.tsx:110",
    "src/app/sign-in.tsx:89",
    "src/app/start.tsx:49",
    "src/app/start.tsx:63",
@@ -12411,7 +12439,7 @@
   "id": "c83920dd",
   "key": "Start the demo over",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:257"
+   "src/app/(tabs)/(me)/account.tsx:258"
   ]
  },
  {
@@ -12524,7 +12552,7 @@
   "id": "a84e5ec6",
   "key": "Station: {stations}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:52"
+   "src/app/(tabs)/(me)/account.tsx:53"
   ]
  },
  {
@@ -12993,7 +13021,7 @@
   "id": "3afaa47c",
   "key": "Tap again to remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:261"
+   "src/app/(tabs)/(me)/account.tsx:262"
   ]
  },
  {
@@ -13007,7 +13035,7 @@
   "id": "2a31ad29",
   "key": "Tap again to sign out",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:109"
+   "src/app/(tabs)/(me)/account.tsx:110"
   ]
  },
  {
@@ -13021,7 +13049,7 @@
   "id": "256d0bed",
   "key": "Tap again: everything in the demo is made new",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:257"
+   "src/app/(tabs)/(me)/account.tsx:258"
   ]
  },
  {
@@ -13087,7 +13115,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:27",
    "src/app/(tabs)/(log)/log.tsx:29",
    "src/app/(tabs)/(log)/log.tsx:33",
-   "src/app/(tabs)/_layout.tsx:75"
+   "src/app/(tabs)/_layout.tsx:77"
   ]
  },
  {
@@ -13102,7 +13130,7 @@
   "id": "9b5a5702",
   "key": "Test mode on this phone",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:39"
+   "src/app/(tabs)/(me)/account.tsx:40"
   ]
  },
  {
@@ -13116,7 +13144,7 @@
   "id": "f02a9817",
   "key": "Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:101"
+   "src/app/(tabs)/(me)/account.tsx:102"
   ]
  },
  {
@@ -13593,14 +13621,14 @@
   "id": "ed26b746",
   "key": "The fleet owner changes these.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:311"
+   "src/app/(tabs)/(me)/account.tsx:312"
   ]
  },
  {
   "id": "506537f0",
   "key": "The free trial ended on {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:137",
+   "src/app/(tabs)/(me)/account.tsx:138",
    "src/components/companies.tsx:62"
   ]
  },
@@ -13674,7 +13702,7 @@
   "id": "5e298156",
   "key": "The last payment didn't go through. Check the card.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:154",
+   "src/app/(tabs)/(me)/account.tsx:155",
    "src/components/billinggate.tsx:81"
   ]
  },
@@ -13746,7 +13774,7 @@
   "id": "6d2117d8",
   "key": "The next check shows on each driver's record and in Review. Every 6 months is common practice.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:309"
+   "src/app/(tabs)/(me)/account.tsx:310"
   ]
  },
  {
@@ -14339,7 +14367,7 @@
   "id": "cbac1194",
   "key": "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:256"
+   "src/app/(tabs)/(me)/account.tsx:257"
   ]
  },
  {
@@ -14394,7 +14422,7 @@
   "id": "12fadf41",
   "key": "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:234"
+   "src/app/(tabs)/(me)/account.tsx:235"
   ]
  },
  {
@@ -14926,7 +14954,7 @@
   "id": "c5f48842",
   "key": "Tours and driver records",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:295"
+   "src/app/(tabs)/(me)/account.tsx:296"
   ]
  },
  {
@@ -14978,7 +15006,7 @@
   "id": "63b84bd9",
   "key": "Try it as someone else",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:246"
+   "src/app/(tabs)/(me)/account.tsx:247"
   ]
  },
  {
@@ -15007,14 +15035,14 @@
   "id": "89341260",
   "key": "Two of the made-up people have real logins. Sign out and sign in with one, or use a private browser window so you stay signed in here.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:247"
+   "src/app/(tabs)/(me)/account.tsx:248"
   ]
  },
  {
   "id": "e8edc31d",
   "key": "Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, refuels, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:268"
+   "src/app/(tabs)/(me)/account.tsx:269"
   ]
  },
  {
@@ -15322,7 +15350,7 @@
   "server": true,
   "where": [
    "functions/src/payments.ts:496",
-   "src/app/(tabs)/(me)/account.tsx:159"
+   "src/app/(tabs)/(me)/account.tsx:160"
   ]
  },
  {
@@ -15477,7 +15505,7 @@
   "id": "6187e87c",
   "key": "Used for every type scan and damage check in this company.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:80"
+   "src/app/(tabs)/(me)/account.tsx:81"
   ]
  },
  {
@@ -15543,7 +15571,7 @@
    "src/app/(tabs)/(table)/data.tsx:109",
    "src/app/(tabs)/(table)/data.tsx:149",
    "src/app/(tabs)/(table)/data.tsx:198",
-   "src/app/(tabs)/_layout.tsx:71"
+   "src/app/(tabs)/_layout.tsx:73"
   ]
  },
  {
@@ -15610,7 +15638,7 @@
   "id": "2da600bf",
   "key": "Version",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:100"
+   "src/app/(tabs)/(me)/account.tsx:101"
   ]
  },
  {
@@ -15952,7 +15980,7 @@
   "id": "5a9649da",
   "key": "web app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:324"
+   "src/app/(tabs)/(me)/account.tsx:325"
   ]
  },
  {
@@ -16082,7 +16110,7 @@
   "id": "7a714c4a",
   "key": "When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:301"
+   "src/app/(tabs)/(me)/account.tsx:302"
   ]
  },
  {
@@ -16270,7 +16298,7 @@
   "id": "7622eb5a",
   "key": "Yearly",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:159",
+   "src/app/(tabs)/(me)/account.tsx:160",
    "src/app/(tabs)/(me)/plan.tsx:69",
    "src/components/offers.tsx:145",
    "src/components/plansetup.tsx:217"
@@ -16360,7 +16388,7 @@
   "id": "f86f21c8",
   "key": "You approve or reject damage found at your station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:53"
+   "src/app/(tabs)/(me)/account.tsx:54"
   ]
  },
  {
@@ -16389,7 +16417,7 @@
   "id": "8a5390b3",
   "key": "you can add more later",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:200",
+   "src/app/(tabs)/(me)/account.tsx:201",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -16568,7 +16596,7 @@
   "id": "e24cfeaa",
   "key": "You scan the vans of your station; your fleet manager reviews the damage checks.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:54"
+   "src/app/(tabs)/(me)/account.tsx:55"
   ]
  },
  {
@@ -16576,21 +16604,21 @@
   "key": "You see and manage all {n} stations.",
   "one": "You see and manage all {n} station.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:51"
+   "src/app/(tabs)/(me)/account.tsx:52"
   ]
  },
  {
   "id": "380e4d48",
   "key": "You see and manage all of {station}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:51"
+   "src/app/(tabs)/(me)/account.tsx:52"
   ]
  },
  {
   "id": "0dd26b17",
   "key": "You, viewing as this role",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:48"
+   "src/app/(tabs)/(me)/account.tsx:49"
   ]
  },
  {
@@ -16629,7 +16657,7 @@
   "id": "20767b9b",
   "key": "You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:243"
+   "src/app/(tabs)/(me)/account.tsx:244"
   ]
  },
  {

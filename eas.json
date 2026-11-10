@@ -13,6 +13,7 @@
     "preview": {
       "channel": "production",
       "distribution": "internal",
+      "autoIncrement": true,
       "env": { "STORE_BUILD": "1" },
       "android": { "buildType": "apk" }
     }

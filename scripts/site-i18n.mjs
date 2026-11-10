@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Texts of the website (website/index.html) and its translations (website/i18n/<code>.json).
+ * Texts of the website (website/index.html, and the Android test page website/android.html, which uses the same
+ * translations) and its translations (website/i18n/<code>.json).
  *
  *   node scripts/site-i18n.mjs            writes i18n/site-keys.json (every English text, with an id) and lists
  *                                         what each language misses
@@ -17,7 +18,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const html = readFileSync(join(root, 'website/index.html'), 'utf8');
+const PAGES = ['index.html', 'android.html'].filter((f) => existsSync(join(root, 'website', f)));
 const strict = process.argv.includes('--strict');
 
 const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', middot: '·', rarr: '→', minus: '−', ndash: '–', mdash: '—' };
@@ -48,19 +49,22 @@ function cutElement(s, i) {
 const keys = new Map(); // key -> where
 const add = (k, where) => { k = norm(k); if (k && letters(k) && !keys.has(k)) keys.set(k, where); };
 
-// 1. The body's text nodes and labels.
-let body = html.slice(html.indexOf('<body'), html.lastIndexOf('</body>'));
-body = body.replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[\s\S]*?<\/script>/gi, '').replace(/<style\b[\s\S]*?<\/style>/gi, '');
-for (let i; (i = body.search(/<[a-zA-Z][\w-]*\b[^>]*\btranslate="no"/)) >= 0;) body = cutElement(body, i);
-for (const m of body.matchAll(/<[a-zA-Z][^>]*>/g)) {
-  for (const a of m[0].matchAll(/\b(aria-label|placeholder|title|alt)="([^"]*)"/g)) add(decode(a[2]), `attribute ${a[1]}`);
-}
-for (const m of body.matchAll(/>([^<]+)</g)) add(decode(m[1]), 'page');
+for (const page of PAGES) {
+  const html = readFileSync(join(root, 'website', page), 'utf8');
+  // 1. The body's text nodes and labels.
+  let body = html.slice(html.indexOf('<body'), html.lastIndexOf('</body>'));
+  body = body.replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[\s\S]*?<\/script>/gi, '').replace(/<style\b[\s\S]*?<\/style>/gi, '');
+  for (let i; (i = body.search(/<[a-zA-Z][\w-]*\b[^>]*\btranslate="no"/)) >= 0;) body = cutElement(body, i);
+  for (const m of body.matchAll(/<[a-zA-Z][^>]*>/g)) {
+    for (const a of m[0].matchAll(/\b(aria-label|placeholder|title|alt)="([^"]*)"/g)) add(decode(a[2]), `${page === 'index.html' ? '' : page + ' '}attribute ${a[1]}`);
+  }
+  for (const m of body.matchAll(/>([^<]+)</g)) add(decode(m[1]), page === 'index.html' ? 'page' : page);
 
-// 2. The script's t('…') and N_('…').
-const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join('\n');
-for (const m of script.matchAll(/\b(?:t|N_)\(\s*('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")/g)) {
-  add(Function(`return ${m[1]}`)(), 'script');
+  // 2. The script's t('…') and N_('…').
+  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join('\n');
+  for (const m of script.matchAll(/\b(?:t|N_)\(\s*('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")/g)) {
+    add(Function(`return ${m[1]}`)(), page === 'index.html' ? 'script' : `${page} script`);
+  }
 }
 
 const list = [...keys].map(([key, where], i) => ({ id: `w${String(i + 1).padStart(3, '0')}`, key, where }));

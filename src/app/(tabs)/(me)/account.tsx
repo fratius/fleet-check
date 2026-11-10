@@ -20,6 +20,7 @@ import { usePayMode } from '@/components/billinggate';
 import { OffersCard } from '@/components/offers';
 import { AcceptTerms } from '@/components/terms';
 import { useOutbox } from '@/lib/outbox';
+import { isApk } from '@/lib/apk';
 
 export default function Account() {
   const s = useSession();
@@ -321,7 +322,7 @@ function FleetSettings() {
  */
 function versionLine() {
   const b = (Constants.expoConfig?.extra as { build?: { sha?: string } } | undefined)?.build;
-  const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : t('phone app');
+  const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : isApk() ? t('Android test version') : t('phone app');
   const version = Constants.expoConfig?.version || '';
   return b?.sha ? t('{version} ({build}), {where}', { version, build: b.sha, where }) : t('{version}, {where}', { version, where });
 }

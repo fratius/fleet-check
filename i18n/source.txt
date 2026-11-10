@@ -220,6 +220,7 @@ dc0c4f9e	A company setting	[lib/session.tsx]
 ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
 7fc4ef1f	A manager has already reviewed this check.
 1f6df70e	a month	[plan.tsx, components/plansetup.tsx]
+eacc9bf9	A new version of the app is ready ({version}).
 56599b1b	A notification on this phone, so you know before you get to the station.
 54173bc8	A photo is missing from storage. Upload it again.
 1e8c5fb8	A photo of the dashboard with the ignition on: the odometer and the fuel gauge readable.
@@ -318,6 +319,7 @@ ec850950	An answer about the vehicle type
 76f1059b	An incident	[lib/store.ts]
 163702d3	and {n} earlier || and {n} earlier	[components/driverrec.tsx]
 6963af2d	and {n} more || and {n} more	[components/vanfacts.tsx]
+88b9ef5c	Android test version	[account.tsx]
 949fa485	Another company	[account.tsx]
 d2335e37	any plan	[components/offers.tsx]
 e33cf6f8	Anything else to remember about working with them.
@@ -614,6 +616,7 @@ e9b450d1	Done	[app/scan/[id].tsx, components/buy.tsx, components/offers.tsx]
 ed2e582a	Done inviting	[people.tsx]
 7a3f2854	Done with close-ups	[check/[id].tsx]
 6c3f832c	Done, all fine	[components/routines.tsx]
+a479c9c3	Download	[components/apkstrip.tsx]
 2aa3d69f	Download for Excel	[data.tsx]
 9e6f732f	Download the original	[video/[id].tsx]
 67f7e737	Download the video	[video/[id].tsx]
@@ -961,6 +964,7 @@ c1161351	Last reading: {km}, {when}.
 3f26ee1e	Last walk-around {when}	[index.tsx]
 a7ba28a5	Last walk-around {when}, by {name}
 472d38f9	Last working day	[components/driverrec.tsx]
+56e2f5d3	Later	[components/apkstrip.tsx]
 76869386	Launch offer: {n} % off the plan in the first year.
 c6e0e600	Launch offer: 30 % off the first year on yearly plans
 71c79b27	Lease contract	[components/docscan.tsx]

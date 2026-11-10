@@ -42,3 +42,10 @@ handover, tour, fuel card, review, damage record, licence check…). In addition
    plates (B-FC 2041), DVIC, Amazon, Fratius, App Store, Google Play, Excel, AdBlue, VIN, HU, UVV, km, l, €.
    Write numbers, dates, times and months the way your language does (84.213 km, 62,4 l, 108,20 € in German).
 5. `Impressum` is not in the list on purpose (German legal page name). The legal pages stay German/English.
+6. The Android test page (`website/android.html`, `where` = `android.html`) uses the same files. Its readers are
+   drivers and managers installing the test version on an Android phone. Buttons of Android, Chrome and Play
+   Protect (`Download anyway`, `Settings`, `Allow from this source`, `Install`, `Open`, `More details`,
+   `Install anyway`): use the labels phones show in your language. `Download for Android` in the steps is the
+   page's own button (same words as that key); `Download` in the Updates text is the app's button (the app's
+   `Download` in `public/i18n/<code>.json`). `{version}` is like 1.0.0, `{size}` a number of megabytes, `{date}`
+   the day the file was made.

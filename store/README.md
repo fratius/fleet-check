@@ -10,7 +10,7 @@ the overview, with Google Play.
 - Name, bundle ID and package `com.fratius.app`, iPhone only (no iPad layout), permission texts (camera, photos;
   videos are recorded in the app at 720p without sound) in all 32 languages (`locales/ios`), the iPhone privacy
   manifest, no export-controlled encryption. `eas.json`: `production` builds for the stores,
-  `preview` for an Android file to install directly. Build numbers are counted by EAS.
+  `preview` for the Android test version on fratius.com/android (below). Build numbers are counted by EAS.
 - **Account deletion in the app** (Account tab, and on the first screen for people without a company), and the
   page for Google Play: https://fratius.com/delete-account
 - **Privacy policy of the app**: https://fratius.com/app-privacy, linked in the app (Account tab, sign-in screen).
@@ -24,6 +24,35 @@ the overview, with Google Play.
   fratius.com and in the web app only; once payments are live the store apps only join companies. The iPhone and Android apps show no prices, plans, payment buttons or links to them
   (Apple 3.1.3(c) enterprise services; Google Play "consumption-only"): trial and plan texts are web-only
   (`Platform.OS === 'web'`). Keep it that way, or the review will ask for in-app purchases.
+
+## Android test version (until Fratius is in Google Play)
+
+For the pilot DSPs (product owner, 10 Nov 2026): the Android app as a file from **https://fratius.com/android**,
+installed from the browser. The page isn't linked from the website or in the sitemap (`noindex`); send the address
+to the test DSPs. Anyone with the address can download the file, but it's no use without an account in a company.
+
+- It is the same app as the store builds (`eas.json` profile `preview`: an `.apk`, `STORE_BUILD=1`, channel
+  `production`), so it gets every Deploy's update on its next start, like the App Store app. Sign-up with the card,
+  custom offer links and payment stay on the web; the test version, like the store apps, shows no prices or plans.
+- A new **app version** (a new native package or SDK, when Deploy warns "Store app not updated") needs a new file:
+  raise the version, `node scripts/native.mjs --write`, then build it (below). The app asks
+  `fratius.com/downloads/android.json` for the newest version and shows **A new version of the app is ready** with
+  **Download** above the tab bar (`src/lib/apk.ts`, `components/apkstrip.tsx`); the Account tab shows "Android test
+  version". Installed over the old one, the person stays signed in and keeps what waits to be sent.
+- **Building it**: Actions > **Store build** > Run workflow, profile `preview` (always Android). It waits for EAS,
+  then starts Deploy, which puts the file on the website (`scripts/website-apk.sh`, in the "Web app" job). Every
+  Deploy takes the newest finished `preview` build from EAS; if that can't be downloaded it keeps the file the
+  website already serves.
+- **Before the first build, once**: the Android upload key, kept by EAS (from a computer with Node.js, in a copy of
+  this repository): `npx eas-cli@latest credentials -p android` > `production` > Keystore > **Set up a new
+  keystore**. It's the same key Google Play will use as the upload key. Then the notification key of step 4
+  (Android), so push notifications reach the test version.
+- **When Fratius is in Google Play**: tell the testers to check that nothing waits to be sent, uninstall the test
+  version, and install Fratius from Google Play (Google re-signs the Play app with its own key, so it can't install
+  over the file's version). Then delete `website/android.html`, the "Android test app for the website" steps in
+  `deploy.yml` with `scripts/website-apk.sh`, the `/downloads` and `/android` headers in `firebase.json`, and
+  `src/lib/apk*.ts` with `components/apkstrip.tsx`. Until the code is removed nothing shows in the app: without
+  `android.json` on the website there is no newer version to offer.
 
 ## Steps (yours)
 

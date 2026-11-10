@@ -277,6 +277,23 @@ jobs:
           fi
           echo "### Web app" >> "$GITHUB_STEP_SUMMARY"
           echo "https://app.fratius.com (once the domain is connected), https://$PROJECT.web.app" >> "$GITHUB_STEP_SUMMARY"
+      # The Android test version on fratius.com/android, for the pilot DSPs until Fratius is in Google Play
+      # (scripts/website-apk.sh). Without EXPO_TOKEN the website keeps the file it already serves.
+      - name: Check for the Expo token
+        id: expo
+        env:
+          T: ${{ secrets.EXPO_TOKEN }}
+        run: echo "ok=$([ -n "$T" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - uses: expo/expo-github-action@v8
+        if: steps.expo.outputs.ok == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Android test app for the website
+        env:
+          SITE: ${{ vars.WEBSITE_SITE || 'fratius-web' }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: scripts/website-apk.sh
       - name: Deploy the website (fratius.com)
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

@@ -17,7 +17,7 @@ on:
         options: [all, ios, android]
         default: all
       profile:
-        description: production = for the stores; preview = an Android file (.apk) to install directly, for testing
+        description: production = for the stores; preview = the Android test version (.apk) on fratius.com/android
         type: choice
         options: [production, preview]
         default: production
@@ -32,6 +32,12 @@ concurrency:
 
 env:
   FIREBASE_TOOLS: firebase-tools@15.33.0
+  # preview is the Android test version only (an iPhone "preview" would need registered devices).
+  PLATFORM: ${{ inputs.profile == 'preview' && 'android' || inputs.platform }}
+
+permissions:
+  contents: read
+  actions: write # preview: starts Deploy when the build is done, so fratius.com/android gets it
 
 jobs:
   build:
@@ -60,7 +66,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       - name: Android app in Firebase, for notifications (google-services.json)
-        if: inputs.platform != 'ios'
+        if: env.PLATFORM != 'ios'
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: |
@@ -81,7 +87,7 @@ jobs:
           printf '%s' "$CFG" > google-services.json
           jq -e '.project_info.project_id' google-services.json > /dev/null
       - name: App Store Connect key (optional)
-        if: inputs.platform != 'android'
+        if: env.PLATFORM != 'android'
         env:
           P8: ${{ secrets.ASC_API_KEY_P8 }}
           KID: ${{ secrets.ASC_KEY_ID }}
@@ -109,7 +115,7 @@ jobs:
         run: |
           set -euo pipefail
           SUBMIT=""
-          if [ "${{ inputs.testflight }}" = "true" ] && [ "${{ inputs.platform }}" != "android" ] && [ "${{ inputs.profile }}" = "production" ]; then
+          if [ "${{ inputs.testflight }}" = "true" ] && [ "$PLATFORM" != "android" ] && [ "${{ inputs.profile }}" = "production" ]; then
             if [ -n "$(jq -r '.submit.production.ios.ascAppId // empty' eas.json)" ]; then
               SUBMIT="--auto-submit"
               echo "The iPhone build goes to TestFlight when it's done."
@@ -117,13 +123,13 @@ jobs:
               echo "::warning title=Not sent to TestFlight::eas.json has no submit.production.ios.ascAppId yet (the app's Apple ID from App Store Connect). The build is made; upload it from its page on expo.dev."
             fi
           fi
-          if [ -n "$SUBMIT" ] && [ "${{ inputs.platform }}" = "all" ]; then
+          if [ -n "$SUBMIT" ] && [ "$PLATFORM" = "all" ]; then
             # Android's first upload to Google Play is by hand, so only the iPhone build is sent.
             eas build --platform ios --profile production --non-interactive --no-wait --json $SUBMIT > "$RUNNER_TEMP/ios.json"
             eas build --platform android --profile production --non-interactive --no-wait --json > "$RUNNER_TEMP/android.json"
             jq -s 'add' "$RUNNER_TEMP/ios.json" "$RUNNER_TEMP/android.json" > "$RUNNER_TEMP/builds.json"
           else
-            eas build --platform "${{ inputs.platform }}" --profile "${{ inputs.profile }}" --non-interactive --no-wait --json $SUBMIT > "$RUNNER_TEMP/builds.json"
+            eas build --platform "$PLATFORM" --profile "${{ inputs.profile }}" --non-interactive --no-wait --json $SUBMIT > "$RUNNER_TEMP/builds.json"
           fi
           OWNER=$(jq -r .expo.owner app.json); SLUG=$(jq -r .expo.slug app.json)
           {
@@ -133,6 +139,27 @@ jobs:
             jq -r --arg o "$OWNER" --arg s "$SLUG" '.[] | "- \(.platform): https://expo.dev/accounts/\($o)/projects/\($s)/builds/\(.id)"' "$RUNNER_TEMP/builds.json"
           } >> "$GITHUB_STEP_SUMMARY"
           jq -r --arg o "$OWNER" --arg s "$SLUG" '.[] | "::notice title=\(.platform) build::https://expo.dev/accounts/\($o)/projects/\($s)/builds/\(.id)"' "$RUNNER_TEMP/builds.json"
+      # The Android test version: once EAS has built it, Deploy puts it on fratius.com/android (scripts/website-apk.sh),
+      # where the test DSPs download it and the app finds out about it.
+      - name: Wait for the Android test app, then put it on the website
+        if: inputs.profile == 'preview'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          ID=$(jq -r '.[0].id' "$RUNNER_TEMP/builds.json")
+          for i in $(seq 1 120); do
+            STATUS=$(eas build:view "$ID" --json 2> /dev/null | jq -r '.status // empty')
+            case "$STATUS" in
+              FINISHED) break ;;
+              ERRORED|CANCELED) echo "::error title=Android test app::The build $STATUS. Its page on expo.dev shows why."; exit 1 ;;
+            esac
+            sleep 60
+          done
+          [ "$STATUS" = FINISHED ] || { echo "::warning title=Android test app::Still building after 2 hours. When it's done, run Deploy (Actions > Deploy > Run workflow) to put it on the website."; exit 0; }
+          gh workflow run deploy.yml --ref main --repo "$GITHUB_REPOSITORY"
+          echo "::notice title=Android test app::Built. Deploy started: it's on https://fratius.com/android when Deploy is done (about 10 minutes)."
+          echo "Built. Deploy puts it on https://fratius.com/android." >> "$GITHUB_STEP_SUMMARY"
       - name: If it failed
         if: failure()
         run: |
