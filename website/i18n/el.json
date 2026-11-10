@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Θα σας ενημερώσουμε. Τότε απεγκαταστήστε αυτή τη δοκιμαστική έκδοση και εγκαταστήστε το Fratius από το Google Play. Πριν την απεγκαταστήσετε, ελέγξτε ότι στην εφαρμογή δεν περιμένει τίποτα για αποστολή.",
  "Fratius for Android (test version)": "Fratius για Android (δοκιμαστική έκδοση)",
  "Download the Fratius test version for Android and how to install it.": "Κατεβάστε τη δοκιμαστική έκδοση του Fratius για Android και δείτε πώς να την εγκαταστήσετε.",
- "Version {version} · {size} MB · {date}": "Έκδοση {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Έκδοση {version} · {size} MB · {date}",
+ "Test version": "Δοκιμαστική έκδοση",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Στο Android, εγκαταστήστε τη δοκιμαστική έκδοση ή χρησιμοποιήστε την εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο Google Play."
 }

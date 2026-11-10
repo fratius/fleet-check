@@ -28,8 +28,10 @@ the overview, with Google Play.
 ## Android test version (until Fratius is in Google Play)
 
 For the pilot DSPs (product owner, 10 Nov 2026): the Android app as a file from **https://fratius.com/android**,
-installed from the browser. The page isn't linked from the website or in the sitemap (`noindex`); send the address
-to the test DSPs. Anyone with the address can download the file, but it's no use without an account in a company.
+installed from the browser. The website's download section links to it with an "Android, test version" button next to
+the store buttons (`CONFIG.stores.androidTest` in `website/index.html`, shown only while `googlePlay` is empty); the
+page itself isn't in the sitemap and is `noindex`. Anyone can download the file, but it's no use without an account
+in a company.
 
 - It is the same app as the store builds (`eas.json` profile `preview`: an `.apk`, `STORE_BUILD=1`, channel
   `production`), so it gets every Deploy's update on its next start, like the App Store app. Sign-up with the card,
@@ -49,7 +51,8 @@ to the test DSPs. Anyone with the address can download the file, but it's no use
   (Android), so push notifications reach the test version.
 - **When Fratius is in Google Play**: tell the testers to check that nothing waits to be sent, uninstall the test
   version, and install Fratius from Google Play (Google re-signs the Play app with its own key, so it can't install
-  over the file's version). Then delete `website/android.html`, the "Android test app for the website" steps in
+  over the file's version). Setting `CONFIG.stores.googlePlay` hides the website's Android test button by itself. Then delete
+  `website/android.html`, the `androidTest` line in `website/index.html`, the "Android test app for the website" steps in
   `deploy.yml` with `scripts/website-apk.sh`, the `/downloads` and `/android` headers in `firebase.json`, and
   `src/lib/apk*.ts` with `components/apkstrip.tsx`. Until the code is removed nothing shows in the app: without
   `android.json` on the website there is no newer version to offer.

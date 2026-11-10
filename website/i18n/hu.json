@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Szólunk. Akkor töröld ezt a tesztverziót, és telepítsd a Fratiust a Google Playről. Törlés előtt nézd meg, hogy az appban semmi sem vár küldésre.",
  "Fratius for Android (test version)": "Fratius Androidra (tesztverzió)",
  "Download the Fratius test version for Android and how to install it.": "Töltsd le a Fratius tesztverzióját Androidra, és nézd meg, hogyan telepítheted.",
- "Version {version} · {size} MB · {date}": "Verzió: {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Verzió: {version} · {size} MB · {date}",
+ "Test version": "Tesztverzió",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Androidon telepítsd a tesztverziót, vagy használd a webappot, amíg meg nem jelenik az app a Google Playen."
 }

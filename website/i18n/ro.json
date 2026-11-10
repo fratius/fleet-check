@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Te anunțăm. Atunci dezinstalează această versiune de test și instalează Fratius din Google Play. Înainte s-o dezinstalezi, verifică să nu mai aștepte nimic de trimis în aplicație.",
  "Fratius for Android (test version)": "Fratius pentru Android (versiune de test)",
  "Download the Fratius test version for Android and how to install it.": "Descarcă versiunea de test Fratius pentru Android și vezi cum o instalezi.",
- "Version {version} · {size} MB · {date}": "Versiunea {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Versiunea {version} · {size} MB · {date}",
+ "Test version": "Versiune de test",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Pe Android, instalează versiunea de test sau folosește aplicația web până apare aplicația pe Google Play."
 }

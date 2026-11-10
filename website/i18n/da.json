@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Vi giver dig besked. Så afinstallerer du denne testversion og installerer Fratius fra Google Play. Tjek før afinstallationen, at intet i appen venter på at blive sendt.",
  "Fratius for Android (test version)": "Fratius til Android (testversion)",
  "Download the Fratius test version for Android and how to install it.": "Download testversionen af Fratius til Android, og se hvordan du installerer den.",
- "Version {version} · {size} MB · {date}": "Version {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Version {version} · {size} MB · {date}",
+ "Test version": "Testversion",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "På Android kan du installere testversionen eller bruge webappen, indtil appen er ude på Google Play."
 }

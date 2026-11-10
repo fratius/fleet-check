@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "हम आपको बता देंगे। तब यह टेस्ट वर्ज़न हटाएँ और Fratius को Google Play से इंस्टॉल करें। हटाने से पहले देख लें कि ऐप में भेजे जाने के लिए कुछ बाकी नहीं है।",
  "Fratius for Android (test version)": "Android के लिए Fratius (टेस्ट वर्ज़न)",
  "Download the Fratius test version for Android and how to install it.": "Android के लिए Fratius का टेस्ट वर्ज़न डाउनलोड करें और जानें कि उसे कैसे इंस्टॉल करें।",
- "Version {version} · {size} MB · {date}": "वर्ज़न {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "वर्ज़न {version} · {size} MB · {date}",
+ "Test version": "टेस्ट वर्ज़न",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Android पर, जब तक Google Play पर ऐप नहीं आ जाता, टेस्ट वर्ज़न इंस्टॉल करें या वेब ऐप इस्तेमाल करें।"
 }

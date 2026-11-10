@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Javićemo vam. Tada deinstalirajte ovu test verziju i instalirajte Fratius sa Google Play-a. Pre deinstalacije proverite da u aplikaciji ništa ne čeka na slanje.",
  "Fratius for Android (test version)": "Fratius za Android (test verzija)",
  "Download the Fratius test version for Android and how to install it.": "Preuzmite test verziju Fratiusa za Android i pogledajte kako da je instalirate.",
- "Version {version} · {size} MB · {date}": "Verzija {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Verzija {version} · {size} MB · {date}",
+ "Test version": "Test verzija",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Na Androidu instalirajte test verziju ili koristite veb-aplikaciju dok aplikacija ne stigne na Google Play."
 }
