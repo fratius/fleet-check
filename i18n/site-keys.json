@@ -1306,331 +1306,341 @@
  },
  {
   "id": "w262",
-  "key": "Open the web app",
+  "key": "Test version",
   "where": "script"
  },
  {
   "id": "w263",
-  "key": "Get the app for iPhone and Android.",
+  "key": "Open the web app",
   "where": "script"
  },
  {
   "id": "w264",
-  "key": "The iPhone app is in the App Store. The Android app is on its way to Google Play.",
+  "key": "Get the app for iPhone and Android.",
   "where": "script"
  },
  {
   "id": "w265",
-  "key": "The Android app is on Google Play. The iPhone app is on its way to the App Store.",
+  "key": "The iPhone app is in the App Store. The Android app is on its way to Google Play.",
   "where": "script"
  },
  {
   "id": "w266",
-  "key": "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.",
+  "key": "The Android app is on Google Play. The iPhone app is on its way to the App Store.",
   "where": "script"
  },
  {
   "id": "w267",
-  "key": "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.",
+  "key": "On Android, install the test version, or use the web app until the Google Play app is out.",
   "where": "script"
  },
  {
   "id": "w268",
-  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
+  "key": "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w269",
-  "key": "Privacy",
+  "key": "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w270",
-  "key": "App privacy",
+  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w271",
-  "key": "Delete account",
+  "key": "Privacy",
   "where": "script"
  },
  {
   "id": "w272",
-  "key": "Terms",
+  "key": "App privacy",
   "where": "script"
  },
  {
   "id": "w273",
-  "key": "Data processing agreement",
+  "key": "Delete account",
   "where": "script"
  },
  {
   "id": "w274",
-  "key": "Front",
+  "key": "Terms",
   "where": "script"
  },
  {
   "id": "w275",
-  "key": "Front left",
+  "key": "Data processing agreement",
   "where": "script"
  },
  {
   "id": "w276",
-  "key": "Left side",
+  "key": "Front",
   "where": "script"
  },
  {
   "id": "w277",
-  "key": "Rear left",
+  "key": "Front left",
   "where": "script"
  },
  {
   "id": "w278",
-  "key": "Rear",
+  "key": "Left side",
   "where": "script"
  },
  {
   "id": "w279",
-  "key": "Rear right",
+  "key": "Rear left",
   "where": "script"
  },
  {
   "id": "w280",
-  "key": "Right side",
+  "key": "Rear",
   "where": "script"
  },
  {
   "id": "w281",
-  "key": "Front right",
+  "key": "Rear right",
   "where": "script"
  },
  {
   "id": "w282",
-  "key": "HU sticker, due {date}",
+  "key": "Right side",
   "where": "script"
  },
  {
   "id": "w283",
-  "key": "All languages",
+  "key": "Front right",
   "where": "script"
  },
  {
   "id": "w284",
-  "key": "Choose a language",
+  "key": "HU sticker, due {date}",
   "where": "script"
  },
  {
   "id": "w285",
-  "key": "Picked up by Andrei M.",
+  "key": "All languages",
   "where": "script"
  },
  {
   "id": "w286",
-  "key": "Tour started at 84,213 km",
+  "key": "Choose a language",
   "where": "script"
  },
  {
   "id": "w287",
-  "key": "Dashboard read",
+  "key": "Picked up by Andrei M.",
   "where": "script"
  },
  {
   "id": "w288",
-  "key": "Refuel 62.4 l · €108.20",
+  "key": "Tour started at 84,213 km",
   "where": "script"
  },
  {
   "id": "w289",
-  "key": "Card matched",
+  "key": "Dashboard read",
   "where": "script"
  },
  {
   "id": "w290",
-  "key": "Wrong fuel card, driver waiting",
+  "key": "Refuel 62.4 l · €108.20",
   "where": "script"
  },
  {
   "id": "w291",
-  "key": "Refuel allowed by Sofia K.",
+  "key": "Card matched",
   "where": "script"
  },
  {
   "id": "w292",
-  "key": "Allowed",
+  "key": "Wrong fuel card, driver waiting",
   "where": "script"
  },
  {
   "id": "w293",
-  "key": "Check",
+  "key": "Refuel allowed by Sofia K.",
   "where": "script"
  },
  {
   "id": "w294",
-  "key": "Dropped off by Elif D.",
+  "key": "Allowed",
   "where": "script"
  },
  {
   "id": "w295",
-  "key": "Video 1:12",
+  "key": "Check",
   "where": "script"
  },
  {
   "id": "w296",
-  "key": "Damage approved: rear left door",
+  "key": "Dropped off by Elif D.",
   "where": "script"
  },
  {
   "id": "w297",
-  "key": "#4 on record",
+  "key": "Video 1:12",
   "where": "script"
  },
  {
   "id": "w298",
-  "key": "Taken over from Lukas B.",
+  "key": "Damage approved: rear left door",
   "where": "script"
  },
  {
   "id": "w299",
-  "key": "Tour ended · 138 km · 9 h 05",
+  "key": "#4 on record",
   "where": "script"
  },
  {
   "id": "w300",
-  "key": "11.4 l/100 km",
+  "key": "Taken over from Lukas B.",
   "where": "script"
  },
  {
   "id": "w301",
-  "key": "Picked up by Tomasz W.",
+  "key": "Tour ended · 138 km · 9 h 05",
   "where": "script"
  },
  {
   "id": "w302",
-  "key": "HU due in March",
+  "key": "11.4 l/100 km",
   "where": "script"
  },
  {
   "id": "w303",
-  "key": "Dropped off without proof",
+  "key": "Picked up by Tomasz W.",
   "where": "script"
  },
  {
   "id": "w304",
-  "key": "Handover video added by Sofia K.",
+  "key": "HU due in March",
   "where": "script"
  },
  {
   "id": "w305",
-  "key": "Proof added",
+  "key": "Dropped off without proof",
   "where": "script"
  },
  {
   "id": "w306",
+  "key": "Handover video added by Sofia K.",
+  "where": "script"
+ },
+ {
+  "id": "w307",
+  "key": "Proof added",
+  "where": "script"
+ },
+ {
+  "id": "w308",
   "key": "Back to the website",
   "where": "android.html"
  },
  {
-  "id": "w307",
+  "id": "w309",
   "key": "Fratius for Android",
   "where": "android.html"
  },
  {
-  "id": "w308",
+  "id": "w310",
   "key": "The test version, for the delivery partners trying Fratius before it is in Google Play.",
   "where": "android.html"
  },
  {
-  "id": "w309",
+  "id": "w311",
   "key": "Download for Android",
   "where": "android.html"
  },
  {
-  "id": "w310",
+  "id": "w312",
   "key": "Open this page on the Android phone you want to install Fratius on:",
   "where": "android.html"
  },
  {
-  "id": "w311",
+  "id": "w313",
   "key": "The test version isn't ready yet. Until then, use the web app in Chrome and add it to the home screen.",
   "where": "android.html"
  },
  {
-  "id": "w312",
+  "id": "w314",
   "key": "Install it",
   "where": "android.html"
  },
  {
-  "id": "w313",
+  "id": "w315",
   "key": "Tap Download for Android. If Chrome warns about the file, tap Download anyway.",
   "where": "android.html"
  },
  {
-  "id": "w314",
+  "id": "w316",
   "key": "Open the downloaded file. The first time, Android asks to allow installing apps from Chrome: tap Settings, turn on Allow from this source, and go back.",
   "where": "android.html"
  },
  {
-  "id": "w315",
+  "id": "w317",
   "key": "Tap Install, then Open, and sign in with your Fratius account.",
   "where": "android.html"
  },
  {
-  "id": "w316",
+  "id": "w318",
   "key": "If Play Protect warns about an unknown app, tap More details, then Install anyway. Fratius isn't in Google Play yet, so Google doesn't know it.",
   "where": "android.html"
  },
  {
-  "id": "w317",
+  "id": "w319",
   "key": "Updates",
   "where": "android.html"
  },
  {
-  "id": "w318",
+  "id": "w320",
   "key": "The app updates itself when it starts. Now and then a new version needs a new download: then the app shows a Download button. Install it over the old one; you stay signed in and nothing waiting to send is lost.",
   "where": "android.html"
  },
  {
-  "id": "w319",
+  "id": "w321",
   "key": "Company phones",
   "where": "android.html"
  },
  {
-  "id": "w320",
+  "id": "w322",
   "key": "Some company phones don't allow apps from outside Google Play. Ask whoever looks after the phones, or use the web app: open it in Chrome and add it to the home screen.",
   "where": "android.html"
  },
  {
-  "id": "w321",
+  "id": "w323",
   "key": "Feedback",
   "where": "android.html"
  },
  {
-  "id": "w322",
+  "id": "w324",
   "key": "Something not working, or missing? Tell us, ideally with a screenshot. Every message helps us get Fratius ready for Google Play.",
   "where": "android.html"
  },
  {
-  "id": "w323",
+  "id": "w325",
   "key": "When Fratius is in Google Play",
   "where": "android.html"
  },
  {
-  "id": "w324",
+  "id": "w326",
   "key": "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.",
   "where": "android.html"
  },
  {
-  "id": "w325",
+  "id": "w327",
   "key": "Fratius for Android (test version)",
   "where": "android.html script"
  },
  {
-  "id": "w326",
+  "id": "w328",
   "key": "Download the Fratius test version for Android and how to install it.",
   "where": "android.html script"
  },
  {
-  "id": "w327",
+  "id": "w329",
   "key": "Version {version} · {size} MB · {date}",
   "where": "android.html script"
  }

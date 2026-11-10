@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Avisamos. Nessa altura, desinstale esta versão de teste e instale o Fratius a partir do Google Play. Antes de a desinstalar, confirme que a app não tem nada a aguardar envio.",
  "Fratius for Android (test version)": "Fratius para Android (versão de teste)",
  "Download the Fratius test version for Android and how to install it.": "Transfira a versão de teste do Fratius para Android e veja como a instalar.",
- "Version {version} · {size} MB · {date}": "Versão {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Versão {version} · {size} MB · {date}",
+ "Test version": "Versão de teste",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "No Android, instale a versão de teste ou use a app web até a app estar disponível no Google Play."
 }

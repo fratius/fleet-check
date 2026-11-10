@@ -384,5 +384,7 @@
  "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.": "Pranešime jums. Tada pašalinkite šią bandomąją versiją ir įdiekite Fratius iš Google Play. Prieš šalindami patikrinkite, ar programėlėje niekas nelaukia išsiuntimo.",
  "Fratius for Android (test version)": "Fratius Android telefonams (bandomoji versija)",
  "Download the Fratius test version for Android and how to install it.": "Atsisiųskite Fratius bandomąją versiją Android telefonams ir sužinokite, kaip ją įdiegti.",
- "Version {version} · {size} MB · {date}": "Versija {version} · {size} MB · {date}"
+ "Version {version} · {size} MB · {date}": "Versija {version} · {size} MB · {date}",
+ "Test version": "Bandomoji versija",
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Android telefonuose įdiekite bandomąją versiją arba naudokite žiniatinklio programėlę, kol Google Play parduotuvėje pasirodys programėlė."
 }

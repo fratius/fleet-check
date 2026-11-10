@@ -1068,6 +1068,9 @@ h1 .mark { position: relative; z-index: -1; }
     stores: {
       appStore: 'https://apps.apple.com/app/id6829174647', // live since 6 Nov 2026 (Apple ID 6829174647)
       googlePlay: null,   // Google Play link once the Android app is live
+      // The Android test version for the pilot DSPs (android.html). Shown only while googlePlay is null; delete this
+      // line with the page once the app is in Google Play (store/README.md, "Android test version").
+      androidTest: '/android',
       webApp: 'https://app.fratius.com',
     },
     /* The web app (sign-up with a card is its /start page). Deploy points this at the project's own address until
@@ -1207,13 +1210,17 @@ h1 .mark { position: relative; z-index: -1; }
   });
 
   const phone = '<svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="1.5" width="22" height="31" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M10 28h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const phoneDown = '<svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true"><rect x="2" y="1.5" width="22" height="31" rx="4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M13 9v10M8.8 15 13 19.2 17.2 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 28h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
   const store = (url, before, name) => url
     ? `<a class="store" href="${esc(url)}" target="_blank" rel="noopener">${phone}<span><small>${esc(t(before.live))}</small><b>${name}</b></span></a>`
     : `<span class="store soon" aria-label="${esc(t('{store}: coming soon', { store: name }))}">${phone}<span><small>${esc(t(before.soon))}</small><b>${name}</b></span></span>`;
   function renderLinks() {
+    // Until the app is in Google Play: the Android test version's page (android.html), on this site.
+    const androidTest = !CONFIG.stores.googlePlay && CONFIG.stores.androidTest;
     $('#stores').innerHTML =
       store(CONFIG.stores.appStore, { live: N_('Download on the'), soon: N_('Coming soon to the') }, 'App Store') +
       store(CONFIG.stores.googlePlay, { live: N_('Get it on'), soon: N_('Coming soon on') }, 'Google Play') +
+      (androidTest ? `<a class="store" href="${esc(androidTest)}">${phoneDown}<span><small>${esc(t('Test version'))}</small><b>Android</b></span></a>` : '') +
       (CONFIG.stores.webApp ? `<a class="btn btn-lg" href="${esc(CONFIG.stores.webApp)}" target="_blank" rel="noopener">${esc(t('Open the web app'))}</a>` : '');
     // What the download section says follows which store links are set (the first one is the page's own text).
     const ios = !!CONFIG.stores.appStore, android = !!CONFIG.stores.googlePlay;
@@ -1223,6 +1230,7 @@ h1 .mark { position: relative; z-index: -1; }
           : t('The Android app is on Google Play. The iPhone app is on its way to the App Store.');
     }
     $('#webapp-note').textContent = !CONFIG.stores.webApp || (ios && android) ? ''
+      : ios && androidTest ? t('On Android, install the test version, or use the web app until the Google Play app is out.')
       : ios ? t("On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.")
         : android ? t("On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.")
           : t("Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.");
