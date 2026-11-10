@@ -970,7 +970,7 @@ h1 .mark { position: relative; z-index: -1; }
       <h2>Pick a plan by the size of your fleet. Try it 30 days free.</h2>
       <p class="sec-lede">Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.</p>
     </div>
-    <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing"></div>
+    <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing" hidden></div>
     <div class="plans" id="plans"></div>
     <div class="includes">
       <h3>Every plan includes</h3>
@@ -1152,8 +1152,9 @@ h1 .mark { position: relative; z-index: -1; }
 
   /* ───────── Log in and sign up: the web app ───────── */
   // Every "Start" button opens sign-up with a card in the web app, in one step (product owner, 2026-11-08: no request
-  // form, as little friction as possible). The yearly launch offer is asked from the server (/api/billing).
-  const pay = { launchOffer: true, yearlyOff: 30 };
+  // form, as little friction as possible). Whether yearly plans are offered, and the launch offer, are asked from the
+  // server (/api/billing); until it answers, monthly only.
+  const pay = { launchOffer: true, yearlyOff: 30, yearly: false };
   let interval = 'month';
   const signupUrl = (planId) => `${CONFIG.app.url}/start${planId ? `?plan=${encodeURIComponent(planId)}&interval=${interval}` : ''}`;
   document.querySelectorAll('[data-login]').forEach((a) => { a.href = CONFIG.app.url + '/'; });
@@ -1162,14 +1163,16 @@ h1 .mark { position: relative; z-index: -1; }
     if (!j) return;
     pay.launchOffer = !!j.launchOffer;
     pay.yearlyOff = j.yearlyOff || 30;
+    pay.yearly = j.yearly === true;
+    if (!pay.yearly) interval = 'month';
     renderPlans();
   }).catch(() => {});
 
   /* ───────── Pricing (the only place prices are shown), store buttons, legal links ───────── */
   function renderPlans() {
-    // Monthly or yearly: only with sign-up in the web app (yearly plans are paid there, at sign-up).
-    const yearly = interval === 'year';
-    $('#billing-toggle').hidden = false;
+    // Monthly or yearly: yearly plans only while the app creator offers them (they're paid at sign-up).
+    const yearly = pay.yearly && interval === 'year';
+    $('#billing-toggle').hidden = !pay.yearly;
     $('#billing-toggle').innerHTML = [['month', t('Monthly')], ['year', pay.launchOffer ? t('Yearly: {n} % off the first year', { n: pay.yearlyOff }) : t('Yearly')]]
       .map(([k, label]) => `<button type="button" role="radio" aria-checked="${interval === k}" data-interval="${k}">${esc(label)}</button>`).join('');
     $('#plans').innerHTML = CONFIG.plans.map((p) => {

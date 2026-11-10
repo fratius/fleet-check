@@ -1517,6 +1517,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.equal(cfgNow.mode, 'fake');
     assert.equal(cfgNow.prices.pro.month, 9000);
     assert.equal(cfgNow.yearlyOff, 30);
+    assert.equal(cfgNow.yearly, false, 'yearly plans are off until the app creator turns them on');
     assert.equal((await S.own.call('billingConfig', { offer: 'NOPE2345' })).offerError.t, 'This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
 
     // 1. Monthly: the company starts without a card and can't work until one is added.
@@ -1584,6 +1585,8 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const pro = await pia.call('changePlan', { orgId, plan: 'pro', rid: `rcp${run}b` });
     assert.equal(pro.billing.plan, 'pro');
     assert.equal(pro.billing.vans, 165);
+    await fails(pia.call('changePlan', { orgId, interval: 'year', rid: `rcp${run}y` }), 'failed-precondition');
+    await adminDb().doc('platform/billing').set({ yearly: true }, { merge: true });
     const yearly = await pia.call('changePlan', { orgId, interval: 'year', rid: `rcp${run}c` });
     assert.equal(yearly.billing.interval, 'year');
     sub = (await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).get()).data();
@@ -1648,6 +1651,12 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     // 5. Yearly, paid at sign-up: Premium with 30 % off the first year, no trial.
     const yan = await person('Yara Yearly');
     const y = await yan.call('createCompany', { company: 'Yearly GmbH', station: 'DYR1', name: 'Yara Yearly', source: 'website', plan: 'premium', interval: 'year', terms, payments: true });
+    // Only while the app creator offers yearly plans (a sign-up link with a yearly plan works anyway).
+    await fails(pia.call('setLaunchOffer', { yearly: false }), 'permission-denied');
+    assert.deepEqual(await cr.call('setLaunchOffer', { yearly: false }), { launchOffer: true, yearly: false });
+    assert.equal((await yan.call('billingConfig', { orgId: y.orgId })).yearly, false);
+    await fails(yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address }), 'failed-precondition');
+    assert.deepEqual(await cr.call('setLaunchOffer', { yearly: true }), { launchOffer: true, yearly: true });
     const ys = await yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address });
     assert.equal(ys.kind, 'payment');
     assert.equal(ys.amount, 168000);
@@ -1676,5 +1685,6 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.equal((await adminDb().doc(`fakeStripe/${ypd.subscriptionId}`).get()).data().status, 'canceled');
   } finally {
     await adminDb().doc('platform/stripe').delete();
+    await adminDb().doc('platform/billing').delete();
   }
 });

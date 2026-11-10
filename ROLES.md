@@ -91,7 +91,9 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   - Plans go by vans only; drivers and stations are unlimited. Basic €40 a month up to 50 vans, Pro €90 up to 150,
     Premium €200 unlimited; the add-on of 15 more vans for €10 a month (€120 a year) on Basic and Pro, once; beyond
     that, the next plan. Prices plus VAT. Yearly = 12 months, paid at sign-up with no trial; the launch offer takes 30 %
-    off the plan in the first year while the app creator leaves it on (Account tab). Monthly plans: 30 days free.
+    off the plan in the first year while the app creator leaves it on (Account tab). Yearly plans are offered only while
+    the app creator turns them on (Account tab; off at first, product owner 2026-11-10: pilots first, a yearly plan
+    is invoiced at sign-up). Monthly plans: 30 days free.
   - The van limit: the server counts the vans in use (`fleetSize`, not retired ones) and the rules refuse another van
     once `billing.vans` is reached; the owner takes the add-on or a bigger plan under Account, Plan and billing.
     Plan changes: bigger now (the rest of the period charged), smaller now (credited on the next invoice), never

@@ -76,7 +76,8 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
 
   const offer = cfg?.offer || null;
   const p: PlanId = offer?.plan || plan;
-  const iv: Interval = offer?.interval || interval;
+  // Yearly only while the app creator offers it (or a sign-up link sets it).
+  const iv: Interval = offer?.interval || (cfg?.yearly ? interval : 'month');
   // The add-on of 15 vans is offered where it's needed (the van limit, Plan and billing), not at sign-up.
   const withAddon = false;
   const now = Date.now();
@@ -212,7 +213,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
 
       <Card>
         <T v="h3">{t('Plan')}</T>
-        {!offer?.interval ? (
+        {!offer?.interval && cfg.yearly ? (
           <Segmented label={t('Billed')} value={interval} onChange={setInterval}
             options={[['month', t('Monthly')], ['year', cfg.launchOffer ? t('Yearly, {n} % off the first year', { n: cfg.yearlyOff }) : t('Yearly')]]} />
         ) : null}

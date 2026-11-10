@@ -14,14 +14,15 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(',', '.'))
 
 /**
  * The app creator's sign-up links (product owner, 2026-11-05: "links that DSPs register with, where I set up their
- * free trial, prices and other details"), and the yearly launch offer. Each link is <web app>/start?offer=CODE; the
- * DSP still adds a card. Web only, like everything about prices.
+ * free trial, prices and other details"), yearly plans on or off, and the yearly launch offer. Each link is
+ * <web app>/start?offer=CODE; the DSP still adds a card. Web only, like everything about prices.
  */
 export function OffersCard() {
   const s = useSession();
   const c = useColors();
   const [list, setList] = useState<Offer[] | null>(null);
   const [launch, setLaunch] = useState<boolean | null>(null);
+  const [yearly, setYearly] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const reload = useCallback(async () => {
@@ -31,6 +32,7 @@ export function OffersCard() {
       const [q, pb] = await Promise.all([getDocs(query(collection(f.db, 'offers'), orderBy('createdAt', 'desc'), limit(50))), getDoc(doc(f.db, 'platform', 'billing'))]);
       setList(q.docs.map((d) => d.data() as Offer));
       setLaunch(pb.data()?.launchOffer !== false);
+      setYearly(pb.data()?.yearly === true);
     } catch (e) { setErr(authMessage(e)); }
   }, []);
   useEffect(() => { if (s.creator && Platform.OS === 'web') reload(); }, [s.creator, reload]);
@@ -39,21 +41,34 @@ export function OffersCard() {
     <Card>
       <T v="h3">{t('Sign-up links and offers')}</T>
       <T v="hint">{t('Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.')}</T>
-      {launch != null ? (
-        <Pressable accessibilityRole="switch" accessibilityState={{ checked: launch }} onPress={async () => {
-          try { const r = await ai.setLaunchOffer({ on: !launch }); setLaunch(r.launchOffer); } catch (e) { setErr(authMessage(e)); }
-        }} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-          <View style={{ width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.ink, backgroundColor: launch ? c.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-            {launch ? <Text style={{ color: c.paper, fontFamily: F.semi, fontSize: 15, lineHeight: 17 }}>✓</Text> : null}
-          </View>
-          <T>{t('Launch offer: 30 % off the first year on yearly plans')}</T>
-        </Pressable>
+      {yearly != null ? (
+        <Switch on={yearly} label={t('Yearly plans at sign-up and on the website')} hint={t('Yearly plans are paid at sign-up, with an invoice. Off: everyone signs up monthly, with the free days.')}
+          onPress={async () => { try { const r = await ai.setLaunchOffer({ yearly: !yearly }); setYearly(r.yearly); setLaunch(r.launchOffer); } catch (e) { setErr(authMessage(e)); } }} />
+      ) : null}
+      {launch != null && yearly ? (
+        <Switch on={launch} label={t('Launch offer: 30 % off the first year on yearly plans')}
+          onPress={async () => { try { const r = await ai.setLaunchOffer({ on: !launch }); setLaunch(r.launchOffer); setYearly(r.yearly); } catch (e) { setErr(authMessage(e)); } }} />
       ) : null}
       {open ? <NewOffer onDone={() => { setOpen(false); reload(); }} onCancel={() => setOpen(false)} /> : <Button title={t('New sign-up link')} onPress={() => setOpen(true)} />}
       {(list || []).map((o) => <OfferRow key={o.code} o={o} onChange={reload} />)}
       {list && !list.length ? <T v="hint">{t('No sign-up links yet.')}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </Card>
+  );
+}
+
+function Switch({ on, label, hint, onPress }: { on: boolean; label: string; hint?: string; onPress(): void }) {
+  const c = useColors();
+  return (
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} onPress={onPress} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+      <View style={{ width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.ink, backgroundColor: on ? c.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+        {on ? <Text style={{ color: c.paper, fontFamily: F.semi, fontSize: 15, lineHeight: 17 }}>✓</Text> : null}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <T>{label}</T>
+        {hint ? <T v="hint">{hint}</T> : null}
+      </View>
+    </Pressable>
   );
 }
 

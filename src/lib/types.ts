@@ -798,6 +798,8 @@ export interface BillingConfig {
   addonVans: number;
   trialDays: number;
   launchOffer: boolean;
+  /** Yearly plans offered (the app creator's switch; a sign-up link with a yearly plan works anyway). */
+  yearly: boolean;
   yearlyOff: number;
   offer: OfferPublic | null;
   offerError: { t: string } | null;

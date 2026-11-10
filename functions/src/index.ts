@@ -38,7 +38,7 @@ import {
   allowedVans, berlinDay, newTrial, standing, type AiKind, type Billing, type Interval, type PlanId,
 } from './billing';
 import {
-  LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
+  LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, switches as paySwitches, yearlyOn, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
   payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
 import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
@@ -2643,11 +2643,12 @@ async function confirmedOnce(orgId: string, b: Billing) {
     .then(() => pd.update({ mailedAt: Date.now() }), (e) => logger.error('Order email not sent', { orgId, message: String((e as Error)?.message || e) }));
 }
 
-/** For the website: whether to send its buttons to the sign-up page (only with live keys), and the yearly offer. */
+/** For the website: whether payments are on, whether yearly plans are offered, and the yearly launch offer. */
 export const billingInfo = onRequest({ timeoutSeconds: 10, memory: '256MiB', maxInstances: 3, concurrency: 50 }, async (_req, res) => {
   const cfg = await payConfig();
   res.set('Cache-Control', 'public, max-age=60');
-  res.json({ payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS });
+  const sw = await paySwitches();
+  res.json({ payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: sw.launchOffer, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS });
 });
 
 /**
@@ -2669,10 +2670,11 @@ export const billingConfig = onCall({ timeoutSeconds: 15 }, async (req) => {
   const orgId = req.auth?.uid && typeof req.data?.orgId === 'string' ? req.data.orgId : null;
   const { offer, why } = await offerFor(code, orgId);
   const on = cfg.mode === 'fake' || (!!cfg.mode && !!cfg.publishableKey);
+  const sw = await paySwitches();
   return {
     mode: on ? cfg.mode : null, publishableKey: on ? cfg.publishableKey || null : null,
     prices: PRICE_CENTS, planVans: PLAN_VANS, addonVans: ADDON_VANS, trialDays: TRIAL_DAYS,
-    launchOffer: await launchOfferOn(), yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
+    launchOffer: sw.launchOffer, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
     offer: offer ? offerPublic(offer) : null, offerError: why ? { t: why } : null,
   };
 });
@@ -2719,6 +2721,7 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   const plan = offer?.plan || PLAN_IDS.find((x) => x === req.data?.plan);
   if (!plan) throw fail('invalid-argument', 'Choose a plan.');
   const interval: Interval = offer?.interval || (req.data?.interval === 'year' ? 'year' : 'month');
+  if (interval === 'year' && !offer?.interval && !(await yearlyOn())) throw fail('failed-precondition', YEARLY_CLOSED);
   const addon = req.data?.addon === true && plan !== 'premium';
   roomFor(plan, addon, await countFleet(who.orgId));
   const address = readAddress(req.data?.address);
@@ -2871,6 +2874,7 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
   const plan = PLAN_IDS.find((x) => x === req.data?.plan) || cur.plan;
   const interval: Interval = req.data?.interval === 'year' || req.data?.interval === 'month' ? req.data.interval : cur.interval;
   if (cur.interval === 'year' && interval === 'month') throw fail('failed-precondition', 'A yearly plan can\'t switch to monthly in the app. Write to info@fratius.com.');
+  if (cur.interval === 'month' && interval === 'year' && !(await yearlyOn())) throw fail('failed-precondition', YEARLY_CLOSED);
   const addon = (req.data?.addon === undefined ? cur.addon : req.data.addon === true) && plan !== 'premium';
   if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub, readAt), next: null };
   roomFor(plan, addon, await countFleet(who.orgId));
@@ -2904,12 +2908,20 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
   return { billing: b, next: charge && next.next?.kind === 'payment' ? next.next : null };
 });
 
-/** The app creator: the yearly launch offer (30 % off the first year) on or off. */
+const YEARLY_CLOSED = N_('Yearly plans aren\'t offered yet. Choose monthly, or write to info@fratius.com.');
+
+/**
+ * The app creator's switches: the yearly launch offer (30 % off the first year), `on`, and yearly plans at all,
+ * `yearly` (payments.ts yearlyOn). Each is changed only when sent.
+ */
 export const setLaunchOffer = onCall({ timeoutSeconds: 15 }, async (req) => {
   if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
-  const on = req.data?.on === true;
-  await db().doc('platform/billing').set({ launchOffer: on, launchOfferBy: req.auth.uid, launchOfferAt: Date.now() }, { merge: true });
-  return { launchOffer: on };
+  const set: Record<string, unknown> = {};
+  if (typeof req.data?.on === 'boolean') Object.assign(set, { launchOffer: req.data.on, launchOfferBy: req.auth.uid, launchOfferAt: Date.now() });
+  if (typeof req.data?.yearly === 'boolean') Object.assign(set, { yearly: req.data.yearly, yearlyBy: req.auth.uid, yearlyAt: Date.now() });
+  if (Object.keys(set).length) await db().doc('platform/billing').set(set, { merge: true });
+  logger.info('Billing switches', { launchOffer: set.launchOffer, yearly: set.yearly });
+  return paySwitches();
 });
 
 /**

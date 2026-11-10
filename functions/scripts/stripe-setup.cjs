@@ -203,10 +203,12 @@ const EVENTS = [
   await db.doc('config/payments').set({ mode, publishableKey: pk, updatedAt: now });
   const name = (account && ((account.settings && account.settings.dashboard && account.settings.dashboard.display_name) || account.id)) || 'Stripe';
   console.log(`Payments ${mode === 'live' ? 'LIVE' : 'in test mode'} with ${name}.${made.length ? ` Made: ${made.join(', ')}.` : ' Nothing new.'}`);
-  if (mode === 'test') gh('notice', 'Payments in test mode', 'Stripe test keys: cards are not charged. The website keeps its request form; the new sign-up page is at /start in the web app. Switch to live keys to go live.');
+  if (mode === 'test') gh('notice', 'Payments in test mode', 'Stripe test keys: cards are not charged, and the sign-up page takes test cards only. Switch to live keys to go live.');
+  const yearly = ((await db.doc('platform/billing').get()).data() || {}).yearly === true;
+  if (mode === 'live') gh('notice', 'Payments live', `Real cards. Yearly plans are ${yearly ? 'on' : 'off: turn them on in the app under Account, Sign-up links and offers'}.`);
   summary([
     `### Payments (${mode === 'live' ? 'live' : 'test mode'})`,
-    `Stripe account: ${name}. Tax: ${tax.mode === 'automatic' ? 'Stripe Tax' : '19 % German VAT'}. Webhook: ${url}`,
+    `Stripe account: ${name}. Tax: ${tax.mode === 'automatic' ? 'Stripe Tax' : '19 % German VAT'}. Yearly plans: ${yearly ? 'on' : 'off'}. Webhook: ${url}`,
     '',
     '| Plan | Monthly | Yearly |', '|---|---|---|',
     ...items.map((i) => `| ${NAMES[i]} | ${euro(PRICE_CENTS[i].month)} | ${euro(PRICE_CENTS[i].year)} |`),
