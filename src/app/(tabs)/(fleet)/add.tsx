@@ -58,13 +58,15 @@ export default function AddVehicle() {
     if (!shots.length) { setErr(t('Add at least one photo of the vehicle first.')); return; }
     setErr(null); setRes(null);
     const t0 = Date.now();
+    // Getting the photos ready happens on this phone; only sending them needs a connection. Which part failed
+    // decides what the person is told: a photo that can't be opened isn't a connection problem.
+    let sending = false;
     try {
       setBusy(t('Uploading photos'));
       const scanId = newId();
-      const paths = await Promise.all(shots.map(async (sh, i) => {
-        const p = await prepare(sh.uri, sh.w, sh.h);
-        return upload(p.uri, `orgs/${s.store!.orgId}/scans/${scanId}/${i + 1}.jpg`);
-      }));
+      const small = await Promise.all(shots.map((sh) => prepare(sh.uri, sh.w, sh.h)));
+      sending = true;
+      const paths = await Promise.all(small.map((p, i) => upload(p.uri, `orgs/${s.store!.orgId}/scans/${scanId}/${i + 1}.jpg`)));
       const uploadMs = Date.now() - t0;
       setBusy(t('Identifying'));
       const r = await retrying(() => ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId }));
@@ -74,7 +76,9 @@ export default function AddVehicle() {
         choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear });
       }
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : t('Couldn\'t upload the photos. Check the connection and try again.'));
+      // The real reason, for whoever looks into it (the text on the screen is for the person).
+      console.warn('Add vehicle: identifying the type failed', e);
+      setErr(e instanceof AiError ? e.message : sending ? t('Couldn\'t upload the photos. Check the connection and try again.') : t('Couldn\'t open the photos.'));
     } finally { setBusy(null); }
   };
 
