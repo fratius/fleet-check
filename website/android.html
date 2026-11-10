@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- The Android test version for the pilot DSPs, until Fratius is in Google Play. Not linked from the website and not
+     in the sitemap: the product owner sends the address to the test DSPs. The app file and its version are put into
+     /downloads/ when the website is deployed (scripts/website-apk.sh). When Fratius is in Google Play, delete this
+     page and that step (store/README.md, "Android test version"). -->
+<meta name="robots" content="noindex">
+<title>Fratius for Android (test version)</title>
+<meta name="description" content="Download the Fratius test version for Android and how to install it.">
+<link rel="canonical" href="https://fratius.com/android">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="stylesheet" href="/legal.css">
+<script>
+/* Language, as on the website: ?lang=xx, then the visitor's earlier choice there, then the browser's languages, else
+   English. The texts are the website's (website/i18n/<code>.json, listed by scripts/site-i18n.mjs). */
+(function () {
+  var L = 'en de fr es it pt nl pl ro bg cs sk hu hr sr sl sq el lt lv et fi sv da nb tr ru uk ar fa hi vi'.split(' ');
+  var has = function (c) { return L.indexOf(c) >= 0; };
+  var base = function (c) { c = String(c || '').toLowerCase().split(/[-_]/)[0]; return c === 'no' || c === 'nn' ? 'nb' : c === 'bs' ? 'hr' : c; };
+  var lang = 'en', pick = null;
+  var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language];
+  for (var i = 0; i < list.length; i++) { if (has(base(list[i]))) { lang = base(list[i]); break; } }
+  try { var q = base(new URLSearchParams(location.search).get('lang')); if (has(q)) pick = q; } catch (e) {}
+  if (!pick) { try { var s = localStorage.getItem('fratius.lang'); if (has(s)) pick = s; } catch (e) {} }
+  lang = pick || lang;
+  window.__fratiusLang = { lang: lang, dict: lang === 'en' ? Promise.resolve({}) : fetch('/i18n/' + lang + '.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }) };
+  if (lang !== 'en') {
+    var h = document.documentElement;
+    h.lang = lang;
+    if (lang === 'ar' || lang === 'fa') h.dir = 'rtl';
+    h.classList.add('i18n-wait');
+    setTimeout(function () { h.classList.remove('i18n-wait'); }, 2500);
+  }
+})();
+</script>
+<style>
+.i18n-wait main { visibility: hidden; }
+/* Tessera lacks a few letters of these languages: their whole text in the phone's own font, so no word mixes two. */
+:root:lang(lt), :root:lang(lv), :root:lang(sk), :root:lang(vi) { --display: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.get { display: inline-flex; align-items: center; gap: 12px; font: 700 26px/1 var(--display); text-decoration: none; background: var(--marker); color: var(--on-marker); border: 2px solid var(--marker-edge); border-radius: 4px; padding: 18px 24px; min-height: 64px; }
+.get:hover { filter: brightness(.95); }
+.get svg { flex: none; }
+.dl { display: grid; gap: 12px; justify-items: start; margin-bottom: 8px; }
+.dl .meta { color: var(--ink2); font-size: 15px; }
+.addr { font-weight: 700; }
+.btn { display: inline-block; font: 600 18px/1 var(--display); text-decoration: none; border: 2px solid var(--ink); border-radius: 4px; padding: 12px 16px; }
+.btn:hover { background: var(--marker); color: var(--on-marker); border-color: var(--marker-edge); }
+ol { margin: 0 0 14px; max-width: 70ch; padding-inline-start: 26px; }
+ol li { margin-bottom: 10px; padding-inline-start: 4px; }
+[hidden] { display: none !important; }
+@media (max-width: 480px) { .get { font-size: 22px; padding: 16px 18px; width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/favicon.png" alt=""><span class="brand-text"><b translate="no">Fratius</b><small>Fleet management</small></span></a>
+    <a class="back" href="/">Back to the website</a>
+  </div>
+</header>
+<main class="wrap">
+<h1>Fratius for Android</h1>
+<p class="sub">The test version, for the delivery partners trying Fratius before it is in Google Play.</p>
+
+<div class="card dl" id="ready">
+  <a class="get" id="get" href="/downloads/fratius-android.apk" download="Fratius.apk">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M13 3v13M7 11l6 6 6-6M4 22h18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Download for Android</span>
+  </a>
+  <p class="meta" id="meta" hidden></p>
+  <p id="elsewhere" hidden>Open this page on the Android phone you want to install Fratius on: <span class="addr" translate="no">fratius.com/android</span></p>
+</div>
+<div class="card" id="missing" hidden>
+  <p>The test version isn't ready yet. Until then, use the web app in Chrome and add it to the home screen.</p>
+</div>
+
+<h2>Install it</h2>
+<ol>
+  <li>Tap Download for Android. If Chrome warns about the file, tap Download anyway.</li>
+  <li>Open the downloaded file. The first time, Android asks to allow installing apps from Chrome: tap Settings, turn on Allow from this source, and go back.</li>
+  <li>Tap Install, then Open, and sign in with your Fratius account.</li>
+</ol>
+<p>If Play Protect warns about an unknown app, tap More details, then Install anyway. Fratius isn't in Google Play yet, so Google doesn't know it.</p>
+
+<h2>Updates</h2>
+<p>The app updates itself when it starts. Now and then a new version needs a new download: then the app shows a Download button. Install it over the old one; you stay signed in and nothing waiting to send is lost.</p>
+
+<h2>Company phones</h2>
+<p>Some company phones don't allow apps from outside Google Play. Ask whoever looks after the phones, or use the web app: open it in Chrome and add it to the home screen.</p>
+<p><a class="btn" href="https://app.fratius.com">Open the web app</a></p>
+
+<h2>Feedback</h2>
+<p>Something not working, or missing? Tell us, ideally with a screenshot. Every message helps us get Fratius ready for Google Play.</p>
+<p><a class="btn" href="mailto:info@fratius.com?subject=Fratius%20Android" translate="no">info@fratius.com</a></p>
+
+<h2>When Fratius is in Google Play</h2>
+<p>We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.</p>
+</main>
+<footer class="foot" translate="no">
+  <div class="wrap">
+    <span>© 2026 Fratius</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+    <a href="/app-privacy">Privacy (app)</a>
+    <a href="mailto:info@fratius.com">info@fratius.com</a>
+  </div>
+</footer>
+
+<script>
+(async () => {
+  const N_ = (s) => s;
+  const PAGE_TITLE = N_('Fratius for Android (test version)');
+  const PAGE_DESC = N_('Download the Fratius test version for Android and how to install it.');
+  const RTL = ['ar', 'fa'];
+  const LOCALE = { en: 'en-GB', nb: 'nb-NO', sr: 'sr-Latn-RS', ar: 'ar-u-nu-latn', fa: 'fa-u-nu-latn' };
+  const boot = window.__fratiusLang || { lang: 'en', dict: Promise.resolve({}) };
+  const lang = boot.lang;
+  const dict = await boot.dict.catch(() => ({}));
+  const t = (key, vars) => {
+    const s = typeof dict[key] === 'string' && dict[key] ? dict[key] : key;
+    return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
+  };
+  const loc = LOCALE[lang] || lang;
+  const $ = (s) => document.querySelector(s);
+
+  // Every text node and label of the body, as on the website (the English text is the key).
+  const norm = (s) => s.replace(/\s+/g, ' ').trim();
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement && !n.parentElement.closest('script, style, [translate="no"]') && /\p{L}/u.test(n.nodeValue)
+      ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT),
+  });
+  const nodes = [];
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
+  for (const n of nodes) {
+    const v = n.nodeValue;
+    n.nodeValue = v.match(/^\s*/)[0] + t(norm(v)) + v.match(/\s*$/)[0];
+  }
+  for (const el of document.querySelectorAll('[aria-label], [title], [alt]')) {
+    for (const a of ['aria-label', 'title', 'alt']) { const v = el.getAttribute(a); if (v && /\p{L}/u.test(v)) el.setAttribute(a, t(norm(v))); }
+  }
+  document.title = t(PAGE_TITLE);
+  $('meta[name="description"]').content = t(PAGE_DESC);
+  document.documentElement.lang = lang;
+  document.documentElement.dir = RTL.includes(lang) ? 'rtl' : 'ltr';
+  document.documentElement.classList.remove('i18n-wait');
+
+  // On a computer or an iPhone: say where to open it.
+  if (!/Android/i.test(navigator.userAgent)) $('#elsewhere').hidden = false;
+
+  // The version, size and date of the app file (or: not there yet).
+  try {
+    const r = await fetch('/downloads/android.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error(String(r.status));
+    const a = await r.json();
+    const date = a.at ? new Date(a.at).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    const size = new Intl.NumberFormat(loc, { maximumFractionDigits: 0 }).format((a.size || 0) / 1048576);
+    $('#meta').textContent = t('Version {version} · {size} MB · {date}', { version: a.version || '', size, date });
+    $('#meta').hidden = false;
+    if (a.file) $('#get').href = a.file;
+  } catch (e) {
+    $('#ready').hidden = true;
+    $('#missing').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

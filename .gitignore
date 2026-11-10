@@ -49,3 +49,6 @@ functions/lib/
 functions/.secret.local
 *service-account*.json
 i18n/out/
+
+# The Android test app, fetched by scripts/website-apk.sh when the website is deployed
+website/downloads/

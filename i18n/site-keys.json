@@ -1523,5 +1523,115 @@
   "id": "w305",
   "key": "Proof added",
   "where": "script"
+ },
+ {
+  "id": "w306",
+  "key": "Back to the website",
+  "where": "android.html"
+ },
+ {
+  "id": "w307",
+  "key": "Fratius for Android",
+  "where": "android.html"
+ },
+ {
+  "id": "w308",
+  "key": "The test version, for the delivery partners trying Fratius before it is in Google Play.",
+  "where": "android.html"
+ },
+ {
+  "id": "w309",
+  "key": "Download for Android",
+  "where": "android.html"
+ },
+ {
+  "id": "w310",
+  "key": "Open this page on the Android phone you want to install Fratius on:",
+  "where": "android.html"
+ },
+ {
+  "id": "w311",
+  "key": "The test version isn't ready yet. Until then, use the web app in Chrome and add it to the home screen.",
+  "where": "android.html"
+ },
+ {
+  "id": "w312",
+  "key": "Install it",
+  "where": "android.html"
+ },
+ {
+  "id": "w313",
+  "key": "Tap Download for Android. If Chrome warns about the file, tap Download anyway.",
+  "where": "android.html"
+ },
+ {
+  "id": "w314",
+  "key": "Open the downloaded file. The first time, Android asks to allow installing apps from Chrome: tap Settings, turn on Allow from this source, and go back.",
+  "where": "android.html"
+ },
+ {
+  "id": "w315",
+  "key": "Tap Install, then Open, and sign in with your Fratius account.",
+  "where": "android.html"
+ },
+ {
+  "id": "w316",
+  "key": "If Play Protect warns about an unknown app, tap More details, then Install anyway. Fratius isn't in Google Play yet, so Google doesn't know it.",
+  "where": "android.html"
+ },
+ {
+  "id": "w317",
+  "key": "Updates",
+  "where": "android.html"
+ },
+ {
+  "id": "w318",
+  "key": "The app updates itself when it starts. Now and then a new version needs a new download: then the app shows a Download button. Install it over the old one; you stay signed in and nothing waiting to send is lost.",
+  "where": "android.html"
+ },
+ {
+  "id": "w319",
+  "key": "Company phones",
+  "where": "android.html"
+ },
+ {
+  "id": "w320",
+  "key": "Some company phones don't allow apps from outside Google Play. Ask whoever looks after the phones, or use the web app: open it in Chrome and add it to the home screen.",
+  "where": "android.html"
+ },
+ {
+  "id": "w321",
+  "key": "Feedback",
+  "where": "android.html"
+ },
+ {
+  "id": "w322",
+  "key": "Something not working, or missing? Tell us, ideally with a screenshot. Every message helps us get Fratius ready for Google Play.",
+  "where": "android.html"
+ },
+ {
+  "id": "w323",
+  "key": "When Fratius is in Google Play",
+  "where": "android.html"
+ },
+ {
+  "id": "w324",
+  "key": "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.",
+  "where": "android.html"
+ },
+ {
+  "id": "w325",
+  "key": "Fratius for Android (test version)",
+  "where": "android.html script"
+ },
+ {
+  "id": "w326",
+  "key": "Download the Fratius test version for Android and how to install it.",
+  "where": "android.html script"
+ },
+ {
+  "id": "w327",
+  "key": "Version {version} · {size} MB · {date}",
+  "where": "android.html script"
  }
 ]
