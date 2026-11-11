@@ -113,6 +113,33 @@ jobs:
           gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:${NUM}-compute@developer.gserviceaccount.com" \
             --role=roles/cloudbuild.builds.builder --condition=None --quiet > /dev/null \
             || echo "::warning::Couldn't give the build role to the compute service account. If the functions deploy fails with a build permission error, give ${NUM}-compute@developer.gserviceaccount.com the Cloud Build Service Account role."
+      - name: Let the upload rules read the database
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        # storage.rules ask the database who belongs to a company (firestore.exists / firestore.get). Google only
+        # answers when the Storage service account has this role. The Firebase tools give it only when a person
+        # deploys at a keyboard, never here, and without it every upload and every photo is refused for everyone
+        # ("The upload was refused"; found 11 Nov 2026, the emulators need nothing of the kind). Given once, then
+        # only checked.
+        run: |
+          set -euo pipefail
+          ROLE=roles/firebaserules.firestoreServiceAgent
+          NUM=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+          echo "::add-mask::$NUM"
+          SA="service-${NUM}@gcp-sa-firebasestorage.iam.gserviceaccount.com"
+          has() {
+            local roles
+            roles=$(gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' --filter="bindings.members:serviceAccount:${SA}" --format='value(bindings.role)') || return 1
+            grep -qx "$ROLE" <<< "$roles"
+          }
+          if has; then echo "The upload rules can read the database."; exit 0; fi
+          gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:${SA}" --role="$ROLE" --condition=None --quiet > /dev/null || true
+          if has; then
+            echo "::notice title=Uploads::The upload rules couldn't read the database, so every upload from the app was refused. They can now (it can take a few minutes to spread)."
+          else
+            echo "::error title=Uploads::Couldn't let the upload rules read the database: the app can't upload or show photos. In the Firebase console open Storage > Rules and accept the request to let Storage read Firestore, or give ${ROLE} to the Cloud Storage for Firebase service account, then run Deploy again."
+            exit 1
+          fi
       - name: Store the Anthropic key in Secret Manager
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
