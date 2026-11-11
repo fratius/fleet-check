@@ -15,19 +15,28 @@ export interface Prepared { uri: string; w: number; h: number }
  * so no photo bigger than `maxEdge` (every phone camera's) got through there.
  */
 export async function prepare(uri: string, w: number, h: number, maxEdge = MAX_EDGE, compress = 0.85): Promise<Prepared> {
-  const ctx = ImageManipulator.manipulate(uri);
-  if (w && h && Math.max(w, h) > maxEdge) ctx.resize(w >= h ? { width: maxEdge } : { height: maxEdge });
-  const img = await ctx.renderAsync();
-  const out = await img.saveAsync({ format: SaveFormat.JPEG, compress });
-  return { uri: out.uri, w: out.width, h: out.height };
+  try {
+    const ctx = ImageManipulator.manipulate(uri);
+    if (w && h && Math.max(w, h) > maxEdge) ctx.resize(w >= h ? { width: maxEdge } : { height: maxEdge });
+    const img = await ctx.renderAsync();
+    const out = await img.saveAsync({ format: SaveFormat.JPEG, compress });
+    return { uri: out.uri, w: out.width, h: out.height };
+  } catch (e) { throw unreadable(e); }
 }
+/**
+ * A photo this phone or browser couldn't open or shrink (a format it doesn't read, a file that's gone, too big for
+ * its memory). It happens on the phone, before anything is sent: the screens say so (whyFailed in lib/store.ts),
+ * not "check the connection".
+ */
+const unreadable = (cause: unknown) => Object.assign(new Error('The photo could not be opened'), { code: 'photo/unreadable', cause });
 
 /**
  * Uploads a local image to Firebase Storage. Without a connection it waits and tries again by itself until it's
  * up (the strip above the tab bar says so), so nobody has to take the photo again.
  */
 export async function upload(uri: string, path: string, onProgress?: (f: number) => void): Promise<string> {
-  const blob = await (await fetch(uri)).blob();
+  // Reading the file is on the phone too (no connection involved).
+  const blob = await fetch(uri).then((r) => r.blob()).catch((e) => { throw unreadable(e); });
   let tried = false;
   const key = `u:${path}`;
   await retrying(async () => {

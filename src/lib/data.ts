@@ -20,7 +20,8 @@ function watch<T>(orgId: string, name: string, scope: Scope, cons: QueryConstrai
   const base = collection(db(), 'orgs', orgId, name);
   const who: QueryConstraint[] = scope.driverId ? [where(name === 'damageLog' ? 'driverIds' : 'driverId', name === 'damageLog' ? 'array-contains' : '==', scope.driverId)]
     : scope.stations ? [where('stationId', 'in', scope.stations.slice(0, 30))] : [];
-  return onSnapshot(query(base, ...who, ...cons, limit(max)), (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)), () => onError());
+  return onSnapshot(query(base, ...who, ...cons, limit(max)), (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T)),
+    (e) => { console.warn(`The list ${name} was refused:`, e); onError(); });
 }
 
 export interface PeriodData { tours: Tour[]; assignments: Assignment[]; logs: DamageLog[]; incidents: Incident[]; purchases: Purchase[]; loading: boolean; error: string | null }
@@ -54,7 +55,8 @@ export function usePeriodData(from: number): PeriodData {
       return () => { a(); b(); };
     }
     setTours(null); setAssignments(null); setLogs(null); setIncidents(null); setPurchases(null);
-    const fail = () => setError(t('Couldn\'t load all the numbers. Check the connection, then open the tab again.'));
+    // A list the server refused (never the connection: without one the lists just wait).
+    const fail = () => setError(t('Couldn\'t load all the numbers. Open the tab again.'));
     const sc = { stations: stations ? stations : null };
     const fromDay = new Date(from).toISOString().slice(0, 10);
     const subs = [
@@ -115,12 +117,12 @@ export function useDriverData(uid: string | undefined) {
     const st = stations && !own ? [where('stationId', 'in', stations.slice(0, 30))] : [];
     const map = <T,>(cb: (r: T[]) => void) => (snap: { docs: { id: string; data(): unknown }[] }) => cb(snap.docs.map((d) => ({ ...(d.data() as object), id: d.id }) as T));
     const subs = [
-      onSnapshot(query(base('tours'), mine('driverId'), ...st, orderBy('createdAt', 'desc'), limit(300)), map<Tour>(setTours), () => setTours([])),
-      onSnapshot(query(base('incidents'), mine('driverId'), ...st, orderBy('createdAt', 'desc'), limit(200)), map<Incident>(setIncidents), () => setIncidents([])),
+      onSnapshot(query(base('tours'), mine('driverId'), ...st, orderBy('createdAt', 'desc'), limit(300)), map<Tour>(setTours), (e) => { console.warn('The list tours of the person was refused:', e); setTours([]); }),
+      onSnapshot(query(base('incidents'), mine('driverId'), ...st, orderBy('createdAt', 'desc'), limit(200)), map<Incident>(setIncidents), (e) => { console.warn('The list incidents of the person was refused:', e); setIncidents([]); }),
       // Managers read the damage log of their station and keep this driver's lines; owners and the driver ask by driver.
       stations && !own
-        ? onSnapshot(query(base('damageLog'), ...st, orderBy('foundAt', 'desc'), limit(500)), map<DamageLog>((r) => setLogs(r.filter((l) => l.driverIds?.includes(uid)))), () => setLogs([]))
-        : onSnapshot(query(base('damageLog'), mine('driverIds', 'array-contains'), orderBy('foundAt', 'desc'), limit(300)), map<DamageLog>(setLogs), () => setLogs([])),
+        ? onSnapshot(query(base('damageLog'), ...st, orderBy('foundAt', 'desc'), limit(500)), map<DamageLog>((r) => setLogs(r.filter((l) => l.driverIds?.includes(uid)))), (e) => { console.warn('The list damage log of the person was refused:', e); setLogs([]); })
+        : onSnapshot(query(base('damageLog'), mine('driverIds', 'array-contains'), orderBy('foundAt', 'desc'), limit(300)), map<DamageLog>(setLogs), (e) => { console.warn('The list damage log of the person was refused:', e); setLogs([]); }),
     ];
     return () => subs.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -7,7 +7,7 @@ import { CHECK_MONTHS, EMPLOYMENT, LICENCE_CLASSES, addMonths, driverDeadlines, 
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
-import { AiError, ai } from '@/lib/store';
+import { ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
@@ -105,7 +105,7 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
       await sendCall('recordLicenceCheck', { orgId: s.org!.id, uid: m.uid, ok, note: note.trim(), day: d }, { title: t('Licence check of {name}', { name: m.name }), personId: m.uid });
       setOpen(false); setNote(''); setOk(true);
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save the check. Check the connection.')); } finally { setBusy(false); }
+    catch (e) { setErr(failText(e, 'Recording the licence check')); } finally { setBusy(false); }
   };
   if (!canCheck && !checks.length) return null;
   return (
@@ -212,7 +212,7 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
       if (prev) await s.store!.incidents.update(prev.id, { ...fields, updatedAt: Date.now(), updatedByName: s.user?.name || null });
       else await s.store!.incidents.add({ ...fields, driverId: m.uid, driverName: m.name, stationId, by: s.user!.uid, byName: s.user?.name || '', createdAt: Date.now() });
       onDone();
-    } catch { setErr(t('Couldn\'t save. Check the connection.')); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, 'Saving the incident')); } finally { setBusy(false); }
   };
   return (
     <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>

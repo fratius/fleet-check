@@ -10,7 +10,7 @@ import { newId, prepare } from '@/lib/images';
 import { pendingChange, sendCall, useOutbox } from '@/lib/outbox';
 import { N_, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
-import { AiError } from '@/lib/store';
+import { failText } from '@/lib/store';
 import type { Routine, RoutineHow, RoutineTodo, Vehicle } from '@/lib/types';
 import { vanName } from '@/lib/vans';
 
@@ -94,7 +94,8 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
   const late = Date.now() - x.since > 3 * 3600_000;
   const shoot = async () => {
     setErr(null);
-    try { const p = await takePhoto(); if (p) setPhoto(p); } catch { setErr(t('The camera isn\'t allowed. Allow it in the phone\'s settings.')); }
+    try { const p = await takePhoto(); if (p) setPhoto(p); }
+    catch (e) { setErr(e instanceof Error && e.message === 'camera' ? t('The camera isn\'t allowed. Allow it in the phone\'s settings.') : failText(e, 'Taking the photo for a check')); }
   };
   const save = async (ok: boolean) => {
     if (x.photo && !photo) { setErr(t('Take the photo first.')); return; }
@@ -114,7 +115,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
         { title: t('{check} on {van}', { check: routineName(x), van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v), files });
       setBusy(null);
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.'));
+      setErr(failText(e, 'Saving the check done'));
       setBusy(null);
     }
   };
@@ -246,13 +247,13 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
       await sendCall('routine', { orgId: s.org!.id, action: 'save', ...(r ? { id: r.id } : {}), key: k, name: name.trim(), how, days: how === 'days' ? days : null,
         vans: vans === 'pick' ? picked : vans, stationId: station, photo }, { title: t('Save the check "{name}"', { name: name.trim() }) });
       onDone();
-    } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, 'Saving the check for drivers')); } finally { setBusy(false); }
   };
   const remove = async () => {
     if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
     setBusy(true); setErr(null);
     try { await sendCall('routine', { orgId: s.org!.id, action: 'delete', id: r!.id }, { title: t('Remove the check "{name}"', { name: routineName(r!) }) }); onDone(); }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); setBusy(false); }
+    catch (e) { setErr(failText(e, 'Removing the check for drivers')); setBusy(false); }
   };
   return (
     <Card>
