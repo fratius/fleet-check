@@ -8,9 +8,19 @@ import { MODELS, costOf, round, type Tier, type Usage } from './models';
 
 let client: Anthropic | null = null;
 let clientKey = '';
+/**
+ * Which Anthropic workspace the requests are for. Only a key that works in several workspaces needs it: Anthropic
+ * refuses every request from such a key that doesn't name one ("This API key is not scoped to a workspace", as on
+ * 11 Nov 2026). A key made for one workspace needs nothing. Deploy passes the GitHub variable
+ * ANTHROPIC_WORKSPACE_ID (wrkspc_…) to the functions and checks the key before anything goes out.
+ */
+export function workspaceHeader(env: Record<string, string | undefined> = process.env): Record<string, string> {
+  const id = (env.ANTHROPIC_WORKSPACE_ID || '').trim();
+  return /^wrkspc_[A-Za-z0-9]+$/.test(id) ? { 'anthropic-workspace-id': id } : {};
+}
 function getClient(key: string) {
   if (!key) throw fail('failed-precondition', 'The AI key isn\'t set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.');
-  if (!client || clientKey !== key) { client = new Anthropic({ apiKey: key, maxRetries: 2, timeout: 240_000 }); clientKey = key; }
+  if (!client || clientKey !== key) { client = new Anthropic({ apiKey: key, maxRetries: 2, timeout: 240_000, defaultHeaders: workspaceHeader() }); clientKey = key; }
   return client;
 }
 
@@ -75,6 +85,9 @@ export function parseJSON(t: string): unknown {
   return JSON.parse(t.slice(a, b + 1));
 }
 
+/** Anthropic's answers about the workspace: none named for a key that needs one, not a workspace ID, or not this key's. */
+export const wrongWorkspace = (msg: string) => /anthropic-workspace-id|not scoped to a workspace|Workspace \S+ not found/i.test(msg);
+
 function toHttps(e: unknown): HttpsError {
   if (e instanceof HttpsError) return e;
   if (e instanceof Anthropic.APIConnectionTimeoutError) return fail('deadline-exceeded', 'The AI took too long to answer. Try again.');
@@ -86,7 +99,12 @@ function toHttps(e: unknown): HttpsError {
     const msg = String(e.message || '');
     logger.error('Anthropic API error', { status: e.status, message: msg });
     if (/credit balance|billing/i.test(msg)) return fail('resource-exhausted', 'The Anthropic account is out of credit. Add credit in the Claude Console.');
-    if (e.status === 400) return fail('invalid-argument', 'The AI rejected the request: {why}', { why: msg.slice(0, 200) });
+    // The key works in several workspaces and the request named none, or one the key can't use: the key's setup,
+    // like a refused key, and nothing the person at the van can do about it (see workspaceHeader).
+    if (wrongWorkspace(msg)) return fail('failed-precondition', 'The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.');
+    // What Anthropic said, without the wrapping around it.
+    const said = (e.error as { error?: { message?: unknown } } | undefined)?.error?.message;
+    if (e.status === 400) return fail('invalid-argument', 'The AI rejected the request: {why}', { why: (typeof said === 'string' && said ? said : msg).slice(0, 200) });
     if (e.status === 404) return fail('failed-precondition', 'This AI model isn\'t available on the Anthropic account. Pick another model in Account.');
     return fail('unavailable', 'The AI service is busy or down. Try again in a minute.');
   }

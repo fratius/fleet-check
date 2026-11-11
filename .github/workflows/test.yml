@@ -79,7 +79,17 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: npm ci && npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
-      - run: cd tests && npx playwright install --with-deps chromium
+      # The test browser. Its system packages come from Ubuntu's package servers, which GitHub's runner sometimes
+      # can't reach for hours (11 Nov 2026: "Temporary failure resolving azure.archive.ubuntu.com", five runs in a
+      # row, and the tests never started). The runner already has what Chromium needs, so then only the browser is
+      # fetched.
+      - name: The test browser
+        run: |
+          cd tests
+          npx playwright install --with-deps chromium || {
+            echo "::warning title=Test browser::Ubuntu's package servers didn't answer; using the system packages already on the runner."
+            npx playwright install chromium
+          }
       - name: The web app for the emulators
         run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-e2e
       - name: No signal, then the signal is back (a real browser, the emulators)
