@@ -71,8 +71,9 @@ At [console.firebase.google.com](https://console.firebase.google.com), in projec
 
 ### 3. Anthropic key (the AI)
 
-1. At [console.anthropic.com](https://console.anthropic.com): **API keys > Create key**. Add some credit under Billing and set a monthly spend limit.
+1. In the [Claude Console](https://platform.claude.com/settings/keys): **API keys > Create key**, and scope the key to **one workspace** when you make it. Add some credit under Billing and set a monthly spend limit. If you give the key an expiry date, the AI stops on that day until you save a new key.
 2. GitHub secret `ANTHROPIC_API_KEY` with the key.
+3. Only if the key works in several workspaces (Anthropic then refuses every request that doesn't name one): add the GitHub **variable** `ANTHROPIC_WORKSPACE_ID` with the workspace's ID (`wrkspc_…`, the ID column under Workspaces in the Claude Console). Deploy checks the key before anything goes out and says what to do if Anthropic refuses it.
 
 ### 4. Expo token (the phone app)
 

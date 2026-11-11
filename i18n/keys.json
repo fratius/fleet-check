@@ -3927,7 +3927,7 @@
   "key": "Couldn't reach the AI service. Try again.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:93"
+   "functions/src/claude.ts:111"
   ]
  },
  {
@@ -12208,7 +12208,7 @@
   "key": "Something went wrong on the server. Try again.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:95",
+   "functions/src/claude.ts:113",
    "src/lib/store.ts:263"
   ]
  },
@@ -13140,7 +13140,7 @@
   "key": "The AI declined to answer for these photos. Try other photos.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:59"
+   "functions/src/claude.ts:69"
   ]
  },
  {
@@ -13162,7 +13162,7 @@
   "key": "The AI key isn't set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:12"
+   "functions/src/claude.ts:22"
   ]
  },
  {
@@ -13184,7 +13184,7 @@
   "key": "The AI rejected the request: {why}",
   "server": true,
   "where": [
-   "functions/src/claude.ts:89"
+   "functions/src/claude.ts:107"
   ]
  },
  {
@@ -13192,7 +13192,7 @@
   "key": "The AI service is busy or down. Try again in a minute.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:91"
+   "functions/src/claude.ts:109"
   ]
  },
  {
@@ -13207,7 +13207,7 @@
   "key": "The AI took too long to answer. Try again.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:80",
+   "functions/src/claude.ts:93",
    "src/lib/store.ts:260"
   ]
  },
@@ -13216,7 +13216,7 @@
   "key": "The Anthropic account is out of credit. Add credit in the Claude Console.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:88"
+   "functions/src/claude.ts:101"
   ]
  },
  {
@@ -13224,7 +13224,8 @@
   "key": "The Anthropic API key was refused. Check the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow again.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:82"
+   "functions/src/claude.ts:104",
+   "functions/src/claude.ts:95"
   ]
  },
  {
@@ -14109,7 +14110,7 @@
   "key": "This AI model isn't available on the Anthropic account. Pick another model in Account.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:90"
+   "functions/src/claude.ts:108"
   ]
  },
  {
@@ -14698,7 +14699,7 @@
   "key": "Too many AI checks at once. Wait a minute and try again.",
   "server": true,
   "where": [
-   "functions/src/claude.ts:84"
+   "functions/src/claude.ts:97"
   ]
  },
  {

@@ -6,7 +6,7 @@
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
-#   ANTHROPIC_API_KEY         key from console.anthropic.com
+#   ANTHROPIC_API_KEY         key from the Claude Console, made for one workspace (or set ANTHROPIC_WORKSPACE_ID below)
 #   EXPO_TOKEN                personal access token from expo.dev/settings/access-tokens
 #   SMTP_URL                  optional: how the website's request form sends email to info@fratius.com,
 #                             e.g. smtps://info%40fratius.com:APP-PASSWORD@smtp.gmail.com:465 (requests are stored either way)
@@ -15,6 +15,8 @@
 # Variables (same page, Variables tab), optional:
 #   STRIPE_PUBLISHABLE_KEY    Stripe's publishable key (pk_test_… or pk_live_…, the same mode as the secret key)
 #   APP_CREATOR_EMAILS        who gets the app creator view, comma separated (default casian.colto@gmail.com)
+#   ANTHROPIC_WORKSPACE_ID    only for an Anthropic key that works in several workspaces: the ID of the workspace
+#                             to use (wrkspc_…, Claude Console > Workspaces). A key made for one workspace needs nothing.
 #   WEBSITE_SITE              the Firebase Hosting site for fratius.com (default fratius-web)
 name: Deploy
 
@@ -100,6 +102,41 @@ jobs:
           node-version: 22
       - name: Install and build the functions
         run: bash scripts/ci-functions.sh && npm --prefix functions run build
+      # No test calls the real AI, so nothing else can see a key Anthropic refuses (11 Nov 2026: a key that works in
+      # several workspaces, and every AI request from the app was refused). One free request, the list of models,
+      # before anything goes out. A refused key stops the deploy; Anthropic not answering doesn't.
+      - name: Check that Anthropic accepts the AI key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WS: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+        run: |
+          set -uo pipefail
+          WS=$(printf '%s' "$WS" | tr -d '[:space:]')
+          if [ -n "$WS" ] && ! printf '%s' "$WS" | grep -Eq '^wrkspc_[A-Za-z0-9]+$'; then
+            echo "::error title=AI key::The variable ANTHROPIC_WORKSPACE_ID isn't a workspace ID. It starts with wrkspc_: copy it from the Workspaces page of the Claude Console (the ID column)."
+            exit 1
+          fi
+          OUT="$RUNNER_TEMP/anthropic-check.json"
+          args=(-sS -m 30 -o "$OUT" -w '%{http_code}' -H "x-api-key: $KEY" -H 'anthropic-version: 2023-06-01')
+          if [ -n "$WS" ]; then args+=(-H "anthropic-workspace-id: $WS"); fi
+          code=$(curl "${args[@]}" 'https://api.anthropic.com/v1/models?limit=1' 2>/dev/null || true)
+          said=$(jq -r '.error.message // empty' "$OUT" 2>/dev/null | head -c 300 || true)
+          rm -f "$OUT"
+          FIX="Easiest: in the Claude Console make a key for one workspace (API keys > Create key, scoped to a workspace) and save it as the secret ANTHROPIC_API_KEY. Or keep the key and add the variable ANTHROPIC_WORKSPACE_ID with the workspace's ID (wrkspc_…, Claude Console > Workspaces). Then run Deploy again."
+          case "$code" in
+            200) echo "Anthropic accepts the key." ;;
+            400|404)
+              if printf '%s' "$said" | grep -Eqi 'workspace'; then
+                echo "::error title=AI key::Anthropic refuses every AI request from the app: the key and the workspace don't fit. Anthropic says: $said $FIX"
+              else
+                echo "::error title=AI key::Anthropic refused the check of the AI key ($code): $said"
+              fi
+              exit 1 ;;
+            401|403)
+              echo "::error title=AI key::Anthropic refused the AI key ($code): $said Make a new key in the Claude Console, save it as the secret ANTHROPIC_API_KEY and run Deploy again."
+              exit 1 ;;
+            *) echo "::warning title=AI key::Couldn't check the AI key (Anthropic answered '${code:-nothing}'). Deploying anyway; try a scan in the app afterwards." ;;
+          esac
       - name: Turn on the Google Cloud services the functions need
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
@@ -223,6 +260,24 @@ jobs:
             rm -f "$F"
             echo "Notification keys made."
           fi
+      # Only for a key that works in several workspaces: the functions name the workspace on every AI request
+      # (functions/src/claude.ts, workspaceHeader). The Firebase tools pass functions/.env to the functions.
+      - name: Tell the functions which Anthropic workspace to use
+        env:
+          WS: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
+        run: |
+          set -euo pipefail
+          WS=$(printf '%s' "$WS" | tr -d '[:space:]')
+          touch functions/.env
+          { grep -v '^ANTHROPIC_WORKSPACE_ID=' functions/.env || true; } > functions/.env.new
+          mv functions/.env.new functions/.env
+          if [ -n "$WS" ]; then
+            printf 'ANTHROPIC_WORKSPACE_ID=%s\n' "$WS" >> functions/.env
+            echo "The functions use the workspace from ANTHROPIC_WORKSPACE_ID."
+          else
+            echo "No workspace set: right for a key made for one workspace."
+          fi
+          [ -s functions/.env ] || rm -f functions/.env
       - name: Deploy rules and functions
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
