@@ -1688,3 +1688,105 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     await adminDb().doc('platform/billing').delete();
   }
 });
+
+test('the app creator tries both sides from one sign-in: given a van as a driver, allows their own refuel as a manager; nobody else can', async () => {
+  // A company of its own, so nothing above is counted differently: an owner, one station, a manager, a van with a fuel card.
+  const own = await person('Tara Owner');
+  const orgRef = doc(collection(own.db, 'orgs'));
+  const org = orgRef.id;
+  await setDoc(orgRef, { name: 'Try DSP', createdBy: own.uid, createdAt: Date.now(), stationsReady: true });
+  await setDoc(doc(own.db, 'orgs', org, 'members', own.uid), { role: 'owner', stationIds: [], email: '', name: 'Tara Owner', joinedAt: Date.now() });
+  const stRef = doc(collection(own.db, 'orgs', org, 'stations'));
+  await setDoc(stRef, { name: 'DTR1', code: 'DTR1', createdAt: Date.now() });
+  const st = stRef.id;
+  const { invites } = await own.call('createInvite', { orgId: org, role: 'manager', stationId: st, count: 1 });
+  const mgr = await person('Mia Manager');
+  await mgr.call('acceptInvite', { token: invites[0].token, details: { firstName: 'Mia', lastName: 'Manager', phone: '+49 151 2', transporterId: '' } });
+  const vRef = doc(collection(own.db, 'orgs', org, 'vehicles'));
+  const van = { id: vRef.id, name: 'Van T1', stationId: st };
+  await setDoc(vRef, { name: van.name, plate: 'T1', cls: 'van', stationId: st, createdAt: Date.now(), createdBy: own.uid });
+  await setDoc(doc(own.db, 'orgs', org, 'vehicleDetails', van.id), { fuelCard: 'DKV card ending 4471' }, { merge: true });
+  const shot = async (p) => {
+    const path = `orgs/${org}/buys/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const assignment = async (p, id) => (await getDoc(doc(p.db, 'orgs', org, 'assignments', id))).data();
+  const buy = async (p, id) => (await getDoc(doc(p.db, 'orgs', org, 'purchases', id))).data();
+  /** A refuel stopped for a manager: started, then no fuel card at the pump. */
+  const stopped = async (p) => {
+    const b = await p.call('purchase', { orgId: org, action: 'start', kind: 'fuel', vehicleId: van.id, path: await shot(p) });
+    assert.equal((await p.call('purchase', { orgId: org, action: 'card', id: b.id, missing: true })).result, 'missing');
+    return b.id;
+  };
+
+  const cr = await appCreator('Tess Tryout');
+  const viewAs = (v) => setDoc(doc(cr.db, 'users', cr.uid), { viewAs: v }, { merge: true });
+
+  // Everybody else, as before: a van goes to someone on the people list, a driver or a manager of its station.
+  await fails(mgr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid }), 'not-found');
+  await fails(own.call('assignVan', { orgId: org, vehicleId: van.id, driverId: own.uid }), 'invalid-argument');
+  // And nobody allows their own stopped refuel: the manager's waits for someone else (here the owner refuses it).
+  const mine = await stopped(mgr);
+  const e = await fails(mgr.call('purchase', { orgId: org, action: 'decide', id: mine, allow: true }), 'failed-precondition');
+  assert.match(e.message, /Someone else has to allow your own/);
+  await own.call('purchase', { orgId: org, action: 'decide', id: mine, allow: false });
+  await mgr.call('purchase', { orgId: org, action: 'cancel', id: mine });
+
+  // The app creator, viewing the company as a fleet manager of the station, gives the van to themselves. It's
+  // recorded like a van given by someone else: the pick-up photos or video are asked for.
+  await viewAs({ org, role: 'manager', st });
+  const r = await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid });
+  const a = await assignment(own, r.assignmentId);
+  assert.equal(a.driverId, cr.uid);
+  assert.equal(a.driverName, 'Tess Tryout');
+  assert.equal(a.startedBy, cr.uid);
+  assert.equal(a.stationId, st);
+  assert.equal(a.pickupRequested, true);
+  // They still aren't on the people list.
+  assert.equal((await getDoc(doc(own.db, 'orgs', org, 'members', cr.uid))).exists(), false);
+
+  // As a driver of that station they have the van: they read their own handover and add the pick-up photos, which
+  // count as the pick-up, not as added later.
+  await viewAs({ org, role: 'driver', st });
+  assert.equal((await getDoc(doc(cr.db, 'orgs', org, 'vehicles', van.id))).data().assignedTo.driverId, cr.uid);
+  assert.equal((await assignment(cr, r.assignmentId)).vehicleId, van.id);
+  await fails(cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: null }), 'permission-denied');
+  const pick = await photos(cr, org, van);
+  await cr.call('addHandoverPhotos', { orgId: org, assignmentId: r.assignmentId, kind: 'pickup', walkId: pick });
+  assert.deepEqual((await getDoc(doc(cr.db, 'orgs', org, 'walkarounds', pick))).data().handover, { kind: 'pickup', assignmentId: r.assignmentId, late: false });
+  // Their refuel is stopped (no fuel card). As a driver they can't allow it.
+  const theirs = await stopped(cr);
+  assert.equal((await buy(cr, theirs)).status, 'waiting');
+  await fails(cr.call('purchase', { orgId: org, action: 'decide', id: theirs, allow: true }), 'permission-denied');
+
+  // As the station's fleet manager they allow their own: the one sign-in that may.
+  await viewAs({ org, role: 'manager', st });
+  await cr.call('purchase', { orgId: org, action: 'decide', id: theirs, allow: true, note: 'Trying it out.' });
+  const b = await buy(own, theirs);
+  assert.equal(b.status, 'open');
+  assert.equal(b.by, cr.uid);
+  assert.equal(b.decision.by, cr.uid);
+  assert.equal(b.decision.allow, true);
+  await cr.call('purchase', { orgId: org, action: 'cancel', id: theirs, reason: 'Only a try' });
+
+  // One van per driver holds for them too: as an owner they end it, the history keeps it, and the van is free.
+  await viewAs({ org, role: 'owner', st: null });
+  await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: null });
+  assert.equal((await getDoc(doc(own.db, 'orgs', org, 'vehicles', van.id))).data().assignedTo, null);
+  const ended = await assignment(own, r.assignmentId);
+  assert.ok(ended.end > 0);
+  assert.equal(ended.endedBy, cr.uid);
+  // The same from the owner's view, and as themselves.
+  const r2 = await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid });
+  assert.equal((await assignment(own, r2.assignmentId)).pickupRequested, true);
+  await viewAs(null);
+  await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: null });
+  const r3 = await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid });
+  assert.notEqual(r3.assignmentId, r2.assignmentId);
+  await cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: null });
+
+  // It hangs on the sign-in claim: without it the same account gets nothing.
+  await setCreator(cr, false);
+  await fails(cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid }), 'permission-denied');
+});

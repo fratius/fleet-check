@@ -17,11 +17,19 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    **View as:** in the Account tab the app creator (and nobody else) can view the open company as a fleet owner,
    a fleet manager or a driver of one station (`users/{uid}.viewAs = {org, role, st}`). The rules, Storage rules
    and Cloud Functions then treat them exactly as that role in that company and nowhere else; their app creator
-   access is off until they switch back. It only takes access away, and the field means nothing without the
+   access is off until they switch back. It only takes access away (but see "Both sides" below), and the field means nothing without the
    `creator` claim (the rules also refuse it from anyone else). What they do while viewing is real and saved under
    their own name (walk-arounds, pick-ups in the permanent history, reviews, invites); try things in the demo
-   company. As a driver they aren't a real member, so nobody can give them a van; they can pick one up where the
-   station allows it.
+   company.
+   **Both sides from the one sign-in** (product owner, 2026-11-11; the app creator's sign-in only, `Who.claim` in
+   the functions, never anyone else): so the whole app can be tried without a second account, the app creator
+   (as themselves, or viewing as a fleet owner or fleet manager) can give a van to themselves without being on
+   the people list (`assignVan`: they count as a driver of the van's station, the pick-up photos or video are
+   asked for as when someone else gives a van, one van per driver still holds, the assignment is ordinary
+   permanent history under their name), then view the company as a driver of that station and have it. And viewing
+   as a fleet manager they allow or refuse their own stopped refuel or wash (`purchase`, `decide`). Nothing else
+   changes: they still can't check their own licence, and they join no people list. As a driver they can also pick
+   a van up themselves where the station allows it.
    **AI speed, AI cost and the Test log are theirs only** (not owners, managers or drivers, and not the app creator
    while viewing as someone): the speed and cost of each damage check are kept in `orgs/{org}/checkUsage`, type scans
    (which carry cost) in `orgs/{org}/scans`, both readable only by the app creator; the functions leave them out of
@@ -122,7 +130,9 @@ These rules were set by the product owner and must stay as they are. A change th
 the product owner's explicit decision first.
 
 - **A van has at most one driver at a time, and a driver has at most one van.** Vans go to drivers (or fleet
-  managers) of the van's station. Fleet owners don't hold vans.
+  managers) of the van's station. Fleet owners don't hold vans. (One exception, decided by the product owner on
+  2026-11-11: the app creator's own sign-in can be given a van to try the app, see "View as". It is an ordinary
+  assignment in the same history, and they too have one van at a time.)
 - **Every assignment is a record** in `orgs/{org}/assignments`: van, driver, station, `start`, `end` (null while it
   lasts), who started and who ended it, why it ended (`endReason`), and the pick-up and drop-off photos
   (`startWalkId`, `endWalkId`) when the driver picked the van up themselves.
@@ -267,7 +277,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   check the van's fuel card (the last digits in `vehicleDetails.fuelCard`) from a photo: the photo is deleted
   straight away and only the last 4 digits are kept. A card that isn't the van's, or none, stops the driver: the
   station's managers (or the owners where there is none) get a notification and allow or refuse it; nobody allows
-  their own (owners excepted). Then the receipt; the AI reads it, the person confirms, and the managers get a
+  their own (owners excepted, and the app creator's sign-in while trying the app: "View as"). Then the receipt; the AI reads it, the person confirms, and the managers get a
   notification with the details and what looks wrong (flags: more litres than the tank had room for, another card
   on the receipt, an old receipt, the wrong fuel, numbers typed over the receipt). Flags never block. Parts need a
   note saying why, and the owners get the notification.

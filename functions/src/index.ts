@@ -77,7 +77,13 @@ function normBox(b: unknown): Box | null {
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 type Role = 'owner' | 'manager' | 'driver';
-interface Who { uid: string; name: string; orgId: string; tier: Tier; role: Role; stationIds: string[]; creator: boolean }
+/**
+ * `creator`: the app creator as themselves (every company). `claim`: the app creator's sign-in, also while they view
+ * a company as an owner, manager or driver. That one account may be on both sides of a handover or a decision, to
+ * try the app from one sign-in (ROLES.md, "View as"): it's given a van without being a driver on the people list
+ * (assignVan), and allows its own stopped refuel as a fleet manager (buyDecide). Nobody else gets either.
+ */
+interface Who { uid: string; name: string; orgId: string; tier: Tier; role: Role; stationIds: string[]; creator: boolean; claim?: boolean }
 
 /**
  * The app creator viewing the app as an owner, fleet manager or driver of one company (set in the Account tab, on
@@ -134,17 +140,17 @@ async function guardOnly(req: CallableRequest<{ orgId?: unknown }>, tierP: Promi
     if (va) {
       if (va.org !== orgId) throw fail('permission-denied', 'You\'re viewing another company as someone else. Switch back to yourself in the Account tab first.');
       const real = (await db().doc(`orgs/${orgId}/members/${uid}`).get()).data() as { name?: string } | undefined;
-      return { uid, name: real?.name || tokenName || 'App creator', orgId, tier: await tierP, role: va.role, stationIds: va.st ? [va.st] : [], creator: false };
+      return { uid, name: real?.name || tokenName || 'App creator', orgId, tier: await tierP, role: va.role, stationIds: va.st ? [va.st] : [], creator: false, claim: true };
     }
   }
   const m = await db().doc(`orgs/${orgId}/members/${uid}`).get();
   if (!m.exists) {
-    if (creator) return { uid, name: tokenName || 'App creator', orgId, tier: await tierP, role: 'owner', stationIds: [], creator };
+    if (creator) return { uid, name: tokenName || 'App creator', orgId, tier: await tierP, role: 'owner', stationIds: [], creator, claim: true };
     throw fail('permission-denied', 'Your account isn\'t a member of this company.');
   }
   const d = m.data() as { role?: string; stationIds?: string[]; name?: string };
   const role: Role = creator || d.role === 'owner' || d.role === 'admin' ? 'owner' : d.role === 'manager' ? 'manager' : 'driver';
-  return { uid, name: d.name || tokenName, orgId, tier: await tierP, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator };
+  return { uid, name: d.name || tokenName, orgId, tier: await tierP, role, stationIds: Array.isArray(d.stationIds) ? d.stationIds : [], creator, claim: creator };
 }
 /** Can this person work at this station? Owners and the app creator can work everywhere. */
 function needStation(w: Who, stationId: string | undefined | null, message: string = N_('This van belongs to another station.')) {
@@ -831,6 +837,9 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
   const vref = org.collection('vehicles').doc(vehicleId);
   const aCol = org.collection('assignments');
   let touched = [vehicleId];
+  // The app creator trying the app from their one sign-in gives a van to themselves, to have it as a driver
+  // afterwards (ROLES.md, "View as"). It's recorded like a van given by someone else: the pick-up proof is asked for.
+  const tryOut = !!driverId && driverId === who.uid && who.claim === true;
   const r = await db().runTransaction(async (tx) => {
     touched = [vehicleId];
     const v = await tx.get(vref);
@@ -840,7 +849,13 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
     if (van.retired && driverId) throw fail('failed-precondition', 'This van is retired. Bring it back first.');
     let person: { name: string; role: string; stationIds?: string[] } | null = null;
     let personOpen: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-    if (driverId) {
+    if (driverId && tryOut) {
+      // The app creator, to themselves: a driver of the van's station for this, whatever they are in the company
+      // (nothing, or its owner). Then they view the company as a driver of that station and have the van.
+      if (!van.stationId) throw fail('failed-precondition', 'This van has no station yet.');
+      person = { name: who.name, role: 'driver', stationIds: [van.stationId] };
+      personOpen = (await tx.get(aCol.where('driverId', '==', driverId).where('end', '==', null))).docs;
+    } else if (driverId) {
       const m = await tx.get(org.collection('members').doc(driverId));
       if (!m.exists) throw fail('not-found', 'This person isn\'t in the company any more.');
       person = m.data() as { name: string; role: string; stationIds?: string[] };
@@ -869,7 +884,7 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
     const a: Assignment & { createdAt: number } = {
       vehicleId, vehicleName: vanName(van), plate: van.plate || '', driverId, driverName: person.name, stationId: van.stationId || null,
       start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
-      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid, kmStart, kmEnd: null,
+      startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid || tryOut, kmStart, kmEnd: null,
     };
     tx.set(aref, a);
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now, kmStart, kmEnd: null } });
@@ -879,7 +894,7 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
   if (!('unchanged' in r)) await refreshTodo(org, touched).catch((e) => logger.warn('Checks not worked out', e as Error));
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).
   let notified = 0;
-  if (driverId && r.assignmentId && !('unchanged' in r) && driverId !== who.uid && 'vanName' in r) {
+  if (driverId && r.assignmentId && !('unchanged' in r) && (driverId !== who.uid || tryOut) && 'vanName' in r) {
     const van = r.vanName;
     notified = await notify(driverId, (lang) => ({
       title: tr(lang, '{van} is yours', { van: r.vanName }),
@@ -1296,11 +1311,12 @@ export const addHandoverVideo = onCallOnce('addHandoverVideo', { timeoutSeconds:
 });
 
 /**
- * Was this proof added late? A driver filming the van a manager gave them is the normal pick-up, not late. Anything
+ * Was this proof added late? A driver filming the van a manager gave them is the normal pick-up, not late (also the
+ * app creator's, who gave it to themselves to try the app: pickupRequested). Anything
  * else added after the handover (a drop-off video later, or a manager's video) is marked as added later.
  */
 function isLate(who: Who, a: Assignment, kind: 'pickup' | 'dropoff') {
-  return !(kind === 'pickup' && a.driverId === who.uid && a.startedBy !== a.driverId);
+  return !(kind === 'pickup' && a.driverId === who.uid && (a.startedBy !== a.driverId || a.pickupRequested === true));
 }
 /** In the transaction: nobody added photos or a video for this end of the handover yet. */
 async function noProofYet(tx: FirebaseFirestore.Transaction, org: FirebaseFirestore.DocumentReference, assignmentId: string, kind: 'pickup' | 'dropoff') {
@@ -2016,7 +2032,8 @@ async function buyDecide(who: Who, org: R, d: Record<string, unknown>) {
   const p = await db().runTransaction(async (tx) => {
     const cur = (await tx.get(ref)).data() as BuyDoc;
     if (!staffAt(who, cur.stationId)) throw fail('permission-denied', 'Only the station\'s fleet managers and owners decide this.');
-    if (cur.by === who.uid && who.role !== 'owner') throw fail('failed-precondition', 'Someone else has to allow your own.');
+    // Nobody allows their own, except owners, and the app creator trying both sides from one sign-in (Who.claim).
+    if (cur.by === who.uid && who.role !== 'owner' && !who.claim) throw fail('failed-precondition', 'Someone else has to allow your own.');
     if (cur.status !== 'waiting') throw fail('failed-precondition', cur.status === 'cancelled' ? 'It was cancelled.' : 'It was already decided.');
     tx.update(ref, { status: allow ? 'open' : 'refused', decision: { allow, by: who.uid, byName: who.name, at: Date.now(), note }, updatedAt: Date.now() });
     return cur;

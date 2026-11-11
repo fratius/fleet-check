@@ -49,6 +49,12 @@ export interface Session {
   creator: boolean;
   /** Can switch to viewing the app as an owner, manager or driver: the app creator (and test mode). */
   canViewAs: boolean;
+  /**
+   * The app creator's sign-in, also while they view the company as a role: the one account that may be on both sides
+   * (given a van as a driver, allowing its own stopped refuel as a fleet manager), to try the app without signing
+   * out. The server decides (Who.claim in the functions); this only shows what it allows. ROLES.md, "View as".
+   */
+  tryOut: boolean;
   /** Sees AI speed and cost and the test log: the app creator as themselves (and test mode, as the owner). */
   seesAiStats: boolean;
   /** Viewing the open company as this role; null when being yourself. The server and the rules apply it too. */
@@ -600,7 +606,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return x.vehicleId !== undefined ? vanName({ plate: x.plate, name: x.vehicleName ?? x.name }) : vanName(x);
   }, [vanById]);
   const value: Session = {
-    status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
+    status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, tryOut: mode === 'firebase' && creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
     store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };

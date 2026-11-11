@@ -84,7 +84,8 @@ export function ViewAsCard() {
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       {s.mode === 'firebase' ? (
         <T v="small">
-          {t('What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van\'s permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren\'t on the people list, so nobody can give you a van: pick one up yourself where the station allows it.', { company: s.org?.name })}
+          {[t('What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van\'s permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone.', { company: s.org?.name }),
+            t('To have a van as a driver, view as a fleet owner or fleet manager first, open a van, tap "{button}" and pick yourself. As a fleet manager you can also allow or refuse your own refuel or wash. Only your sign-in can do these two things.', { button: t('Give to a driver') })].join(' ')}
         </T>
       ) : null}
     </Card>
