@@ -175,7 +175,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
           <T>{who.line}</T>
           {s.staff ? who.people.map((a) => (
             <Pressable key={a.id} onPress={() => router.push(`/person/${a.driverId}`)} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <T v="small" style={{ flex: 1 }}>{a.startedBy === a.driverId
+              <T v="small" style={{ flex: 1 }}>{a.startedBy === a.driverId && !a.pickupRequested
                 ? t('{name}: {from} to {to}, picked up themselves', { name: a.driverName, from: fmtWhen(a.start), to: a.end ? fmtWhen(a.end) : t('now') })
                 : t('{name}: {from} to {to}, given by {by}', { name: a.driverName, from: fmtWhen(a.start), to: a.end ? fmtWhen(a.end) : t('now'), by: a.startedByName })}</T>
               <T v="h3" color={c.ink2}>{fwd()}</T>

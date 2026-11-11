@@ -95,7 +95,7 @@ fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
 c67738c1	{name} (retired)	[data.tsx]
-26d4d69c	{name} (you)	[person/[uid].tsx, people.tsx]
+26d4d69c	{name} (you)	[person/[uid].tsx, people.tsx, components/history.tsx]
 171eff37	{name} allowed it: "{note}"
 399c7daa	{name} allowed it.	[buy/[id].tsx]
 44f828df	{name} allowed it. Fill up, then take the photo of the receipt.
@@ -1943,6 +1943,7 @@ d0c536fe	This sign-up link doesn't exist. Check the link, or write to info@frati
 f6b7896e	This sign-up link has ended. Write to info@fratius.com for a new one.
 1277ca07	This station was removed. Reject the request and ask the driver to pick another station.
 4271e4f1	This van belongs to another station.
+84a17eb5	This van has no station yet.
 7484d14f	This van is retired.
 cb03ba7e	This van is retired. Bring it back first.
 e2ed7b54	This van isn't in the fleet any more.
@@ -1963,6 +1964,7 @@ a67535de	This video belongs to another station.
 a31e2a60	Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.
 d130cd05	Time per scan	[log.tsx]
 368487ef	To check	[buy/[id].tsx, data.tsx]
+16fc847f	To have a van as a driver, view as a fleet owner or fleet manager first, open a van, tap "{button}" and pick yourself. As a fleet manager you can also allow or refuse your own refuel or wash. Only your sign-in can do these two things.
 066f77ce	To review	[review.tsx]
 2dd2bed7	today	[lib/fleet.ts]
 d1cf730a	Today when you change the odometer
@@ -2126,7 +2128,7 @@ d2d42d35	What is the problem?
 c66b4d48	What the close-ups showed
 46676e04	What this change was for isn't there any more.
 2e062db2	What to check	[components/routines.tsx]
-a494a5c0	What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone. As a driver you aren't on the people list, so nobody can give you a van: pick one up yourself where the station allows it.
+586800dc	What you do while viewing is real and saved under your name in {company}: a walk-around, a video, a pick-up (it goes into the van's permanent history), a review, an invite link. To try things out, switch back to yourself, open the demo company, then view it as someone.
 74647abe	What you pay	[components/plansetup.tsx]
 762d995f	What you sent us
 c41f5e8e	What your company keeps about you as a driver. Ask your fleet manager to correct anything that's wrong.

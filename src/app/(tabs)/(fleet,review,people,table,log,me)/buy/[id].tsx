@@ -57,7 +57,10 @@ export default function BuyPage() {
     );
   }
   const mine = !p || p.by === s.user?.uid;
-  if (p && (!mine || !isOpenBuy(p))) return <Screen edges={[]}>{title}<Summary p={p} /></Screen>;
+  // The app creator trying both sides from one sign-in (session.tryOut): their own stopped one opens the way the
+  // fleet manager sees it, to allow or refuse it. Once decided it's their own again, to carry on or cancel.
+  const decideOwn = !!p && mine && s.tryOut && p.status === 'waiting' && s.runs(p.stationId);
+  if (p && (!mine || !isOpenBuy(p) || decideOwn)) return <Screen edges={[]}>{title}<Summary p={p} /></Screen>;
   if (!van) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{s.loaded.vehicles ? t('This van isn\'t in the fleet any more.') : t('Loading…')}</T></Card></Screen>;
   if (kind === 'parts' && !s.runs(van.stationId)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Owners and the station\'s fleet managers buy parts.')}</T></Card></Screen>;
   if (kind === 'fuel' && van.fuel === 'electric') return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Electric vans are charged, not refuelled.')}</T></Card></Screen>;
@@ -397,7 +400,7 @@ function Summary({ p }: { p: Purchase }) {
   const allowing = t('Allowing…'), refusing = t('Refusing…');
   const decide = (allow: boolean) => act(allow ? allowing : refusing, () => sendCall('purchase', { orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() },
     { title: allow ? t('Allow {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }) : t('Refuse {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }));
-  const ownAsk = p.by === s.user?.uid && s.role !== 'owner';
+  const ownAsk = p.by === s.user?.uid && s.role !== 'owner' && !s.tryOut;
   // Finished: what was confirmed. Not finished: only what the AI read from the dashboard photo so far.
   const done = p.status === 'done';
   const facts = ([

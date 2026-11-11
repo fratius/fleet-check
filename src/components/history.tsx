@@ -97,7 +97,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       <T v="small">{open ? t('{from} to now, {time}', { from: fmtWhen(a.start), time: dur(end - a.start) }) : t('{from} to {to}, {time}', { from: fmtWhen(a.start), to: fmtWhen(a.end), time: dur(end - a.start) })}</T>
       {kmLine(a) ? <T v="small" style={{ fontFamily: F.semi }} color={c.ink}>{kmLine(a)}</T> : null}
       <T v="small">
-        {[a.startedBy === a.driverId ? t('Picked up by the driver') : t('Given by {name}', { name: a.startedByName }),
+        {[a.startedBy === a.driverId && !a.pickupRequested ? t('Picked up by the driver') : t('Given by {name}', { name: a.startedByName }),
           !open && a.endReason ? (a.endedByName ? t('{reason} by {name}', { reason: t(END_REASON[a.endReason] || a.endReason), name: a.endedByName }) : t(END_REASON[a.endReason] || a.endReason)) : '',
           s.stations.length > 1 && s.staff ? s.stationName(a.stationId) : ''].filter(Boolean).join('. ')}
       </T>
@@ -160,6 +160,12 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
   const people = (members || [])
     .filter((m) => ['driver', 'manager'].includes(roleOf(m) || '') && (m.stationIds || []).includes(v.stationId || ''))
     .sort((a, b) => (roleOf(a) === roleOf(b) ? a.name.localeCompare(b.name) : roleOf(a) === 'driver' ? -1 : 1));
+  // The app creator trying the app from their one sign-in: they give the van to themselves, then view the company as
+  // a driver of this station and have it (ROLES.md, "View as"; the server allows it for that sign-in only). First in
+  // the list, unless they really work at this station.
+  const me = s.tryOut && s.user && v.stationId && !people.some((m) => m.uid === s.user!.uid)
+    ? ({ uid: s.user.uid, name: s.member?.name || s.user.name, email: s.user.email, role: 'driver', stationIds: [v.stationId] } as Member) : null;
+  const shown = me ? [me, ...people] : people;
   const give = async (m: Member) => {
     setBusy(m.uid); setErr(null);
     try {
@@ -175,15 +181,15 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
     <View style={{ gap: 8 }}>
       <T v="medium">{t('Give {van} to', { van: vanName(v) })}</T>
       <T v="small">{t('People of {station}. Someone who already has a van hands it back: it becomes free.', { station: s.stationName(v.stationId) })}</T>
-      {!members ? <T v="hint">{t('Loading…')}</T> : !people.length ? <T v="hint">{t('Nobody at this station yet. Invite drivers under People.')}</T> : null}
-      {people.map((m) => {
+      {!members ? <T v="hint">{t('Loading…')}</T> : !shown.length ? <T v="hint">{t('Nobody at this station yet. Invite drivers under People.')}</T> : null}
+      {(members ? shown : []).map((m) => {
         const has = vanOf.get(m.uid);
         const current = v.assignedTo?.driverId === m.uid;
         return (
           <Pressable key={m.uid} disabled={!!busy || current} onPress={() => give(m)} accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== m.uid ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <T v="medium" numberOfLines={1}>{m.name}</T>
+              <T v="medium" numberOfLines={1}>{m === me ? t('{name} (you)', { name: m.name }) : m.name}</T>
               <T v="small" numberOfLines={1}>{[current ? t('Has this van now') : has ? t('Has {van} now', { van: has.name }) : t('No van'), roleOf(m) === 'manager' ? t(ROLE_NAME.manager) : ''].filter(Boolean).join(', ')}</T>
             </View>
             {busy === m.uid ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? t('Swap') : t('Give')} /> : null}

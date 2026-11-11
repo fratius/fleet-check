@@ -93,7 +93,7 @@ export function BuyNow({ v }: { v: Vehicle }) {
   const s = useSession();
   if (s.mode !== 'firebase' || !s.user) return null;
   const mine = s.purchases.find((p) => p.vehicleId === v.id && p.by === s.user!.uid && isOpenBuy(p) && Date.now() - p.createdAt < STALE_BUY);
-  const asking = s.runs(v.stationId) ? s.purchases.filter((p) => p.vehicleId === v.id && p.status === 'waiting' && p.by !== s.user!.uid) : [];
+  const asking = s.runs(v.stationId) ? s.purchases.filter((p) => p.vehicleId === v.id && p.status === 'waiting' && (p.by !== s.user!.uid || s.tryOut)) : [];
   if (!mine && !asking.length) return null;
   return <View style={{ gap: 10 }}>{asking.map((p) => <WaitingCard key={p.id} p={p} />)}{mine ? <MineCard p={mine} /> : null}</View>;
 }
