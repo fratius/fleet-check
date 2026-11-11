@@ -112,9 +112,14 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   scans, documents) a day per company, German time, counted on the server (`orgs/{org}/aiDaily/{day}`, server
   only). Dashboard photos and the refuel steps are never held back, so no driver is stuck at a tour or the pump.
   The app creator isn't counted.
-- **One exception, for testing:** the app creator's own test driver account (Actions > Test driver account) is added
-  as a driver to a station of a company the creator owns, without a link, so the creator can see the app exactly as a
-  driver does. It never adds anyone else, and it never prints a password (set it with "Forgot your password?").
+- **One exception, for testing:** the app creator's own test company (Actions > Test accounts,
+  `functions/scripts/test-accounts.cjs`): "Casian Test DSP" (marked `testCompanyOf`, billing `comped`), with three real
+  sign-ins at the creator's own address with +owner, +manager and +driver: its fleet owner, and a fleet manager and a
+  driver at station 1 (where drivers pick up vans themselves), added without a link. Unlike View as (not a real
+  member, so nobody can give them a van) and the demo company (replaced when its version changes), it is a normal
+  company: what the three accounts do stays, and running the workflow again only adds what is missing. It never adds
+  anyone else, and it never prints a password (set it with "Forgot your password?"). It replaces the earlier test
+  driver workflow; a +driver account that workflow added to another company stays there too.
 
 ## Vans, drivers and history (permanent: do not change)
 

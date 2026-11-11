@@ -1,0 +1,32 @@
+# The app creator's own test company with three real sign-ins (fleet owner, fleet manager, driver), to use the app
+# exactly as each role does. Your address with +owner, +manager and +driver (Gmail delivers them to your inbox).
+# By hand only: Actions > Test accounts > Run workflow. Safe to run again: it only adds what is missing and never
+# deletes or resets anything. No password is made public: set each one in the app with "Forgot your password?".
+name: Test accounts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  accounts:
+    name: Make the test company and accounts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci --prefix functions
+      - name: Make or update the company and accounts
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+          CREATOR_EMAIL: ${{ vars.APP_CREATOR_EMAILS || 'casian.colto@gmail.com' }}
+        run: |
+          set -euo pipefail
+          # The first app creator address.
+          export CREATOR_EMAIL="$(printf '%s' "$CREATOR_EMAIL" | tr ',; ' '\n\n\n' | sed '/^$/d' | head -n1)"
+          node functions/scripts/test-accounts.cjs
