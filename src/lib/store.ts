@@ -7,7 +7,7 @@ import { httpsCallable } from 'firebase/functions';
 import { fb } from './firebase';
 import { N_, t } from './i18n';
 import { newId } from './images';
-import { retrying } from './net';
+import { netKind, retrying } from './net';
 import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
@@ -52,9 +52,20 @@ function fsColl<T extends { id: string }>(orgId: string, name: string, stations:
         : stations
           ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
           : query(base, orderBy('createdAt', 'desc'), limit(500));
-      return onSnapshot(q,
-        (snap) => cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T), { fromCache: snap.metadata.fromCache }),
-        (e) => onError?.(e));
+      // Asked with metadata changes, so the app hears when the server has confirmed a list it first got from this
+      // phone's copy. Without them an unchanged list (no vans yet, or the same vans after the lists were asked
+      // again in the same session) stays "from this phone" for good, and the app said "No connection" on a working
+      // one. What changes neither the rows nor that (a write being confirmed) is left out.
+      let fromCache: boolean | null = null;
+      return onSnapshot(q, { includeMetadataChanges: true },
+        (snap) => {
+          const same = fromCache === snap.metadata.fromCache && !snap.docChanges().length;
+          fromCache = snap.metadata.fromCache;
+          if (!same) cb(snap.docs.map((d) => ({ ...(d.data() as Omit<T, 'id'>), id: d.id }) as T), { fromCache });
+        },
+        // The server refused the list (the rules, or an index that's missing in firestore.indexes.json): it never
+        // comes by itself, so it's said in the console even where the screen has nothing to show for it.
+        (e) => { console.warn(`The list ${name} was refused:`, e); onError?.(e); });
     },
     async add(data, id) {
       const ref = id ? doc(base, id) : doc(base);
@@ -218,6 +229,8 @@ export async function callServer<O>(name: string, input: object, timeout = 18000
     // A repeat that found the first try still running (functions/src/once.ts) is asked again like without a connection.
     const stillRunning = !!(d?.v && typeof d.v === 'object' && (d.v as { wait?: unknown }).wait);
     const net = (code === 'internal' && /\[0\]\s*$/.test(err.message || '')) || stillRunning ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
+    // What the server really said, for whoever looks into it (the person reads the text below).
+    if (net !== 'offline') console.warn(`${name} failed:`, code, err.message || '');
     throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
   }
 }
@@ -245,9 +258,37 @@ export function aiMessage(code: string, raw?: string): string {
     case 'resource-exhausted': return t('Too many AI checks in a short time, or the Anthropic credit has run out.');
     case 'failed-precondition': return raw ? t(raw) : t('The AI service isn\'t set up. Add the ANTHROPIC_API_KEY secret.');
     case 'deadline-exceeded': return t('The AI took too long to answer. Try again.');
-    case 'unavailable': case 'internal': return t('Couldn\'t reach the AI service. Check the connection and try again.');
-    default: return raw ? t(raw) : t('Something went wrong with the AI check. Try again.');
+    // The server answered that it failed or is too busy: not the connection (a call that never got an answer is
+    // 'offline' in callServer, with its own text, and is sent again by itself).
+    case 'unavailable': case 'internal': return t('Something went wrong on the server. Try again.');
+    // The SDK's own messages are just the code ("cancelled"): nothing to show a person.
+    default: return raw && !/^[a-z _-]+$/i.test(raw) ? t(raw) : t('Something went wrong. Try again.');
   }
+}
+
+/**
+ * What to tell the person when something they did failed. Never "check the connection" unless it is the connection:
+ * without one, changes wait on the phone and uploads and readings try again by themselves (lib/outbox.ts,
+ * lib/net.ts), so what does fail on a screen is nearly always something else: the server refused it, a photo
+ * couldn't be opened, or the server itself failed.
+ */
+export function whyFailed(e: unknown): string {
+  if (e instanceof AiError) return e.message;
+  const code = String((e as { code?: unknown } | null)?.code || '');
+  if (code === 'photo/unreadable') return t('Couldn\'t open the photos.');
+  if (code === 'outbox/missing') return t('The photos or the video aren\'t on this phone any more.');
+  if (code === 'permission-denied' || code === 'firestore/permission-denied') return t('This change was refused. Check that you still belong to this company and may change it.');
+  if (code === 'not-found' || code === 'firestore/not-found') return t('What this change was for isn\'t there any more.');
+  if (code === 'storage/unauthorized') return t('The upload was refused. Check that you still belong to this company, then try again.');
+  if (code === 'storage/unauthenticated' || code === 'unauthenticated') return t('Sign in again, then try again.');
+  if (code === 'storage/quota-exceeded') return t('The company\'s storage is full. Tell your fleet manager.');
+  if (netKind(e) === 'offline') return t('No connection. Try again when you have a signal.');
+  return t('Something went wrong. Try again.');
+}
+/** The same for a screen: the text for the person, and the real reason in the console for whoever looks into it. */
+export function failText(e: unknown, where: string): string {
+  console.warn(`${where} failed:`, e);
+  return whyFailed(e);
 }
 
 export const ai = {

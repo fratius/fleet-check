@@ -1,0 +1,47 @@
+# A one-off, read-only check (11 Nov 2026, asked for by the product owner): can the upload rules (storage.rules)
+# read the database? They ask Firestore who belongs to a company (firestore.exists / firestore.get). Google only
+# allows that when the Storage service account has the role roles/firebaserules.firestoreServiceAgent, and a deploy
+# without a person at the keyboard never gives it. Nothing is changed here; this branch is a throwaway.
+name: Check the upload rules (read-only)
+
+on:
+  push:
+    branches: [check-new-tests-without-the-fix]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Can the upload rules read the database?
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Look (nothing is changed)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          set -uo pipefail
+          gcloud config set project "$PROJECT" --quiet
+          NUM=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+          echo "::add-mask::$NUM"
+          SA="service-${NUM}@gcp-sa-firebasestorage.iam.gserviceaccount.com"
+          if ROLES=$(gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' --filter="bindings.members:serviceAccount:${SA}" --format='value(bindings.role)' 2>/tmp/err); then
+            ROLES=$(echo "$ROLES" | sort | tr '\n' ' ')
+            echo "::notice title=Roles of the Storage service account::${ROLES:-none}"
+            if echo "$ROLES" | grep -q 'roles/firebaserules.firestoreServiceAgent'; then
+              echo "::notice title=Upload rules::CAN read the database: the role is there."
+            else
+              echo "::warning title=Upload rules::CANNOT read the database: roles/firebaserules.firestoreServiceAgent is missing, so every upload and every photo is refused."
+            fi
+          else
+            echo "::warning title=Upload rules::Couldn't read the project's access list: $(head -c 300 /tmp/err | tr '\n' ' ')"
+          fi
+          TOKEN=$(gcloud auth print-access-token)
+          MAY=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+            "https://cloudresourcemanager.googleapis.com/v1/projects/${PROJECT}:testIamPermissions" \
+            -d '{"permissions":["resourcemanager.projects.getIamPolicy","resourcemanager.projects.setIamPolicy"]}' | tr -d '\n ' | head -c 300)
+          echo "::notice title=The deploy account may::${MAY}"

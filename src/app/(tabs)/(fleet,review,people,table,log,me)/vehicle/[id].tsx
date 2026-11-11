@@ -22,7 +22,7 @@ import { watchDamageNotes } from '@/lib/people';
 import { useFlash } from '@/lib/flash';
 import { pendingChange, pendingHandover, sendCall, useOutbox } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { AiError, ai, failText } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
 import { fwd, loc, t, tp } from '@/lib/i18n';
@@ -68,7 +68,7 @@ export default function VehicleScreen() {
   const arm = (k: string) => { setArmed(k); setTimeout(() => setArmed((a) => (a === k ? null : a)), 3000); };
   const act = async (k: string, fn: () => Promise<unknown>) => {
     setBusy(k); setErr(null); setArmed(null);
-    try { await fn(); } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); } finally { setBusy(null); }
+    try { await fn(); } catch (e) { setErr(failText(e, `The van page (${k})`)); } finally { setBusy(null); }
   };
 
   if (!v || !CLS[v.cls]) {
@@ -120,7 +120,7 @@ export default function VehicleScreen() {
         (d, total) => setUpload(t('Uploading {done} of {total}', { done: d, total })));
       setUpload(null);
       router.push({ pathname: '/check/[id]', params: { id: 'new', walk: walkId } });
-    } catch { setUpload(null); setErr(t('Couldn\'t upload the photos. Check the connection and try again.')); }
+    } catch (e) { setUpload(null); setErr(failText(e, 'Photos from the library for a damage check')); }
   };
 
   return (

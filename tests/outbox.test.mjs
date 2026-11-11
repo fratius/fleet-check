@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { FLAKY_TRIES, Outbox } from '../src/lib/outboxcore.ts';
+import { FLAKY_TRIES, Outbox, STALE_MS, staleRecord } from '../src/lib/outboxcore.ts';
 
 const offline = () => Object.assign(new Error('Network request failed'), { kind: 'offline' });
 const flaky = () => Object.assign(new Error('deadline-exceeded'), { kind: 'flaky' });
@@ -277,4 +277,23 @@ test('a record write that already reached the server (Firestore sent it) is not 
   await settle(ob);
   assert.ok(sends <= 1, 'at most the one try that was already under way');
   assert.equal(ob.jobs.length, 0);
+});
+
+test('an incident or a comment on damage that waited too long is sent once more as made now; nothing else is', () => {
+  const now = 1_800_000_000_000;
+  const denied = Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
+  const write = (coll, createdAt, op = 'set') => ({ kind: 'write', op, path: ['orgs', 'o1', coll, 'x1'], data: { note: 'n', createdAt } });
+  // Made twenty minutes ago without a connection: the rules refuse a time that far from the server's.
+  assert.equal(staleRecord(write('incidents', now - 20 * 60_000), denied, now), true);
+  assert.equal(staleRecord(write('damageNotes', now - STALE_MS - 1), { code: 'firestore/permission-denied' }, now), true);
+  // Just made and refused: refused for another reason (not the person's to add), told as it is.
+  assert.equal(staleRecord(write('incidents', now - 1000), denied, now), false);
+  // A phone whose clock runs ahead: sending it again as "now" wouldn't help.
+  assert.equal(staleRecord(write('incidents', now + 30 * 60_000), denied, now), false);
+  // Another failure, another kind of record, a correction, a call: never.
+  assert.equal(staleRecord(write('incidents', now - 20 * 60_000), { code: 'unavailable' }, now), false);
+  assert.equal(staleRecord(write('vehicles', now - 20 * 60_000), denied, now), false);
+  assert.equal(staleRecord(write('incidents', now - 20 * 60_000, 'update'), denied, now), false);
+  assert.equal(staleRecord({ kind: 'call', fn: 'assignVan', data: { createdAt: now - 20 * 60_000 } }, denied, now), false);
+  assert.equal(staleRecord({ kind: 'write', op: 'set', path: ['orgs', 'o1', 'incidents', 'x1'], data: null }, denied, now), false);
 });

@@ -11,7 +11,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
-import { AiError, ai, type DashRead } from '@/lib/store';
+import { AiError, ai, failText, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { vanName, vanAlias } from '@/lib/vans';
@@ -146,7 +146,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       }
     } catch (e) {
       setErr(e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to take the photo.')
-        : e instanceof AiError ? e.message : t('The photo didn\'t upload. Check the connection and try again.'));
+        : failText(e, 'The dashboard photo'));
     } finally { setStep(null); }
   };
   // Ending their own tour with this photo: the refuelling question makes the fuel figure possible.
@@ -168,7 +168,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       onDone();
     } catch (e) {
       if (e instanceof AiError && e.code === 'out-of-range') setJump(e.message);
-      else setErr(e instanceof AiError ? e.message : t('Couldn\'t save. Check the connection and try again.'));
+      else setErr(failText(e, 'Saving the dashboard reading'));
     } finally { setStep(null); }
   };
 

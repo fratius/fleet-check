@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { ai, failText } from '@/lib/store';
 import { TIERS, TIER_NAME, type IdentifyResult } from '@/lib/types';
 import { plateKey, vanName } from '@/lib/vans';
 
@@ -74,7 +74,8 @@ export default function AddVehicle() {
         choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear });
       }
     } catch (e) {
-      setErr(e instanceof AiError ? e.message : t('Couldn\'t upload the photos. Check the connection and try again.'));
+      // A photo that can't be opened, a refused upload, the server: each in its own words (lib/store.ts).
+      setErr(failText(e, 'Identifying the vehicle type'));
     } finally { setBusy(null); }
   };
 
@@ -111,7 +112,7 @@ export default function AddVehicle() {
       setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setAttrs(defaultAttrs());
       // Replace the form, so Back from the new van goes to the fleet, not to the empty form.
       router.replace(`/vehicle/${id}`);
-    } catch { setErr(t('Couldn\'t save the vehicle. Try again.')); }
+    } catch (e) { setErr(failText(e, 'Saving the vehicle')); }
     finally { setSaving(false); }
   };
 

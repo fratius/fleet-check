@@ -6,6 +6,7 @@ import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
 import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, parseDay, today, type Deadline } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
+import { failText } from '@/lib/store';
 import type { Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 
@@ -198,7 +199,7 @@ function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; val
     // A new odometer reading is from today unless another day is given.
     if ('odometerKm' in out && out.odometerKm !== get(values, 'odometerKm') && form.odometerAt === init.odometerAt) out.odometerAt = today();
     setBusy(true);
-    try { await onSave(out); } catch { setErr(t('Couldn\'t save. Check the connection.')); } finally { setBusy(false); }
+    try { await onSave(out); } catch (e) { setErr(failText(e, 'Saving the details')); } finally { setBusy(false); }
   };
   return (
     <View style={{ gap: 12 }}>

@@ -15,7 +15,7 @@ import { retrying } from '@/lib/net';
 import { day, deleteFrom } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
 
@@ -114,7 +114,11 @@ function CheckView({ id }: { id: string }) {
       const a = r.assets[0];
       const prep = await prepare(a.uri, a.width, a.height);
       setLocal((L) => { const cur = (L[spot] || [null, null]).slice(); cur[slot] = prep.uri; return { ...L, [spot]: cur }; });
-    } catch { setErr(t('Couldn\'t open the camera.')); }
+    } catch (e) {
+      // The camera that didn't open, or a photo that couldn't be got ready afterwards: not the same thing.
+      console.warn('A close-up failed:', e);
+      setErr((e as { code?: string } | null)?.code === 'photo/unreadable' ? t('Couldn\'t open the photos.') : t('Couldn\'t open the camera.'));
+    }
   };
 
   const runPass2 = async (L: Local = local) => {
@@ -202,7 +206,7 @@ function CheckView({ id }: { id: string }) {
     const fields: Partial<Check> & { reviewedAt?: number | null } = { review: next };
     if (finish === 'reviewed') { next.by = s.user?.uid || null; next.byName = s.user?.name || null; next.at = Date.now(); fields.status = 'reviewed'; fields.reviewedAt = Date.now(); }
     if (finish === 'submitted') fields.status = 'submitted';
-    try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch { setErr(t('Couldn\'t save the review. Check the connection and try again.')); return; }
+    try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch (e) { setErr(failText(e, 'Saving the damage review')); return; }
     // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
     if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) {
       sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) }).catch(() => {});
@@ -225,7 +229,7 @@ function CheckView({ id }: { id: string }) {
         { title: t('Send the damage check of {van} to the fleet manager', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) });
       setNote(null);
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t send it. Check the connection and try again.')); }
+    catch (e) { setErr(failText(e, 'Sending the damage check to the fleet manager')); }
     finally { setSending(false); }
   };
 

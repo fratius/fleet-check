@@ -90,6 +90,25 @@ export const backoff = (n: number) => Math.min(30_000, 2000 * 2 ** Math.max(0, n
 /** A slow or busy server is tried this many times, then the job stops with its reason (it can be tried again). */
 export const FLAKY_TRIES = 5;
 
+/**
+ * Records the rules only take with the server's time on them (firestore.rules: `createdAt` within ten minutes of
+ * the server's clock, so nobody dates an incident or a comment on damage back).
+ */
+const TIMED = new Set(['incidents', 'damageNotes']);
+/** Older than this, a refused record of that kind is taken to have waited too long. */
+export const STALE_MS = 5 * 60_000;
+/**
+ * Was this record refused only because it waited on the phone (no connection, or the app was closed) for longer
+ * than the rules allow between the time on it and the server's? Then it's sent once more as made now: like every
+ * change made without a connection, it counts from when it reaches the server, and nobody has to write it again.
+ */
+export function staleRecord(c: Change, e: unknown, now: number): boolean {
+  const code = String((e as { code?: unknown } | null)?.code || '');
+  if (c.kind !== 'write' || c.op !== 'set' || !TIMED.has(c.path[2]) || (code !== 'permission-denied' && code !== 'firestore/permission-denied')) return false;
+  const at = c.data?.createdAt;
+  return typeof at === 'number' && now - at > STALE_MS;
+}
+
 class Stopped extends Error { constructor() { super('stopped'); } }
 
 export class Outbox {

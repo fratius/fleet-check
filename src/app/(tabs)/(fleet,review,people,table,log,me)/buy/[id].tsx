@@ -10,7 +10,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
-import { AiError, ai, type Contact } from '@/lib/store';
+import { ai, failText, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
 import { N_, loc, t } from '@/lib/i18n';
 import { vanAlias, vanName } from '@/lib/vans';
@@ -26,7 +26,8 @@ const KINDS: BuyKind[] = ['fuel', 'wash', 'parts'];
 const EIGHTHS: [number, string][] = [[0, N_('Empty')], [12.5, '1/8'], [25, '1/4'], [37.5, '3/8'], [50, '1/2'], [62.5, '5/8'], [75, '3/4'], [87.5, '7/8'], [100, N_('Full')]];
 const num = (txt: string) => { const x = txt.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); return x ? Number(x) : null; };
 const show = (n: number | null | undefined, dp?: number) => (n == null ? '' : (dp != null ? n.toFixed(dp) : String(n)).replace('.', ','));
-const errText = (e: unknown, fallback: string) => (e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to take the photo.') : e instanceof AiError ? e.message : fallback);
+// `where`: what was being done, for the console (lib/store.ts says what went wrong in words for the person).
+const errText = (e: unknown, where: string) => (e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to take the photo.') : failText(e, where));
 
 /** The van's fuel on the receipt, in litres (the server works it out the same way). */
 function fuelLitres(r: ReceiptRead, vanFuel: Vehicle['fuel']): number | null {
@@ -129,13 +130,13 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
     ai.buy.contacts({ orgId, action: 'contacts', id: p.id }).then((r) => setPeople(r.people)).catch(() => {});
   }, [p, people, orgId]);
 
-  const run = async (label: string, fn: () => Promise<void>, fallback: string) => {
+  const run = async (label: string, fn: () => Promise<void>, where: string) => {
     setErr(null); setBusy(label);
-    try { await fn(); } catch (e) { setErr(errText(e, fallback)); } finally { setBusy(null); }
+    try { await fn(); } catch (e) { setErr(errText(e, where)); } finally { setBusy(null); }
   };
   const cancel = () => run(t('Cancelling…'), async () => {
     await sendCall('purchase', { orgId, action: 'cancel', id: p!.id }, { title: cancelText(kind), vehicleId: van.id, vehicleName: vanName(van) });
-  }, t('Couldn\'t cancel. Check the connection.'));
+  }, 'Cancelling the purchase');
 
   const head = (
     <View style={{ gap: 6 }}>
@@ -159,7 +160,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       // Read while the driver carries on.
       ai.buy.dash({ orgId, action: 'dash', id: r.id }).catch(() => { dashAsked.current = false; });
       onStarted(r.id);
-    }, t('The photo didn\'t upload. Check the connection and try again.'));
+    }, 'The dashboard photo of the purchase');
     return (
       <>
         {head}
@@ -224,11 +225,11 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       const w = r as { whyT?: string; whyV?: Record<string, string | number> };
       if (r.result === 'retake') setCardMsg(w.whyT ? t(w.whyT, w.whyV) : t(r.why));
       if ('people' in r) setPeople(r.people);
-    }, t('Couldn\'t check the card. Check the connection and try again.'));
+    }, 'Checking the fuel card');
     const noCard = () => run(t('Telling your fleet manager…'), async () => {
       const r = await ai.buy.card({ orgId, action: 'card', id: p.id, missing: true });
       if ('people' in r) setPeople(r.people);
-    }, t('Couldn\'t reach the server. Check the connection and try again.'));
+    }, 'Telling the fleet manager there is no card');
     return (
       <>
         {head}
@@ -249,7 +250,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
     const addPart = () => run(t('Uploading…'), async () => {
       const ph = await shoot(orgId, uid);
       if (ph) setParts((x) => [...x, ph].slice(0, 6));
-    }, t('The photo didn\'t upload. Check the connection and try again.'));
+    }, 'The photo of the parts');
     const takeReceipt = () => {
       if (!parts.length) { setErr(t('Take a photo of the parts first.')); return; }
       if (note.trim().length < 5) { setErr(t('Say why the parts were needed.')); return; }
@@ -259,7 +260,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
         setThumbs((x) => ({ ...x, receipt: ph.uri }));
         setBusy(t('Reading the receipt…'));
         await retrying(() => ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path, parts: parts.map((x) => x.path), note: note.trim() }));
-      }, t('Couldn\'t read the receipt. Check the connection and try again.'));
+      }, 'Reading the parts receipt');
     };
     return (
       <>
@@ -288,7 +289,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
       setThumbs((x) => ({ ...x, receipt: ph.uri }));
       setBusy(t('Reading the receipt…'));
       await retrying(() => ai.buy.receipt({ orgId, action: 'receipt', id: p.id, path: ph.path }));
-    }, t('Couldn\'t read the receipt. Check the connection and try again.'));
+    }, 'Reading the receipt');
     const ok = p.card.result === 'match';
     return (
       <>
@@ -342,7 +343,7 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
     setBusy(t('Saving…'));
     try {
       await ai.buy.finish({ orgId: s.org!.id, action: 'finish', id: p.id, values: { odometerKm, fuelPct, litres, total } });
-    } catch (e) { setErr(errText(e, t('Couldn\'t save. Check the connection and try again.'))); } finally { setBusy(null); }
+    } catch (e) { setErr(errText(e, 'Saving the purchase')); } finally { setBusy(null); }
   };
   return (
     <>
@@ -391,7 +392,7 @@ function Summary({ p }: { p: Purchase }) {
   const [err, setErr] = useState<string | null>(null);
   const act = async (label: string, fn: () => Promise<unknown>) => {
     setErr(null); setBusy(label);
-    try { await fn(); } catch (e) { setErr(errText(e, t('Couldn\'t save. Check the connection.'))); } finally { setBusy(null); }
+    try { await fn(); } catch (e) { setErr(errText(e, 'The fleet manager\'s answer')); } finally { setBusy(null); }
   };
   const allowing = t('Allowing…'), refusing = t('Refusing…');
   const decide = (allow: boolean) => act(allow ? allowing : refusing, () => sendCall('purchase', { orgId: s.org!.id, action: 'decide', id: p.id, allow, note: note.trim() },

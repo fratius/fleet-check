@@ -5,7 +5,7 @@ import { Button, Card, Pill, Row, T, fmtWhen, useColors } from '@/components/ui'
 import { t } from '@/lib/i18n';
 import { damageDeleteFrom, day, deleteFrom, mediaGone } from '@/lib/media';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { ai, failText } from '@/lib/store';
 import { QUEUED, sendCall } from '@/lib/outbox';
 import type { KeepMark } from '@/lib/types';
 
@@ -49,7 +49,7 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
     try {
       const r = await sendCall<{ keepUntil: number | null }>('markDamage', { orgId: s.org!.id, kind, id, on }, { title: on ? t('Mark as damage') : t('Take off the damage mark') });
       setMine({ mark: on ? { by: s.user!.uid, byName: s.user!.name, at: Date.now() } : null, until: r === QUEUED ? null : r.keepUntil });
-    } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that. Check the connection.')); } finally { setBusy(false); }
+    } catch (e) { setErr(failText(e, 'Marking as damage')); } finally { setBusy(false); }
   };
   const damage = (keepDamage || []).length > 0;
   return (
