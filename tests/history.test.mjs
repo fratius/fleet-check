@@ -1705,7 +1705,7 @@ test('the app creator tries both sides from one sign-in: given a van as a driver
   const vRef = doc(collection(own.db, 'orgs', org, 'vehicles'));
   const van = { id: vRef.id, name: 'Van T1', stationId: st };
   await setDoc(vRef, { name: van.name, plate: 'T1', cls: 'van', stationId: st, createdAt: Date.now(), createdBy: own.uid });
-  await setDoc(doc(own.db, 'orgs', org, 'vehicleDetails', van.id), { fuelCard: 'DKV card ending 4471' }, { merge: true });
+  await setDoc(doc(own.db, 'orgs', org, 'vehicleDetails', van.id), { stationId: st, createdAt: Date.now(), fuelCard: 'DKV card ending 4471' });
   const shot = async (p) => {
     const path = `orgs/${org}/buys/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
     await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
