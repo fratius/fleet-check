@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Скачайте тестовую версию Fratius для Android и узнайте, как её установить.",
  "Version {version} · {size} MB · {date}": "Версия {version} · {size} МБ · {date}",
  "Test version": "Тестовая версия",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "На Android установите тестовую версию или пользуйтесь веб-приложением, пока приложение не появится в Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "На Android установите тестовую версию или пользуйтесь веб-приложением, пока приложение не появится в Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Ранние цены действуют при регистрации до {date}. После этого новые клиенты платят обычные цены.",
+ "Regular price: {price}": "Обычная цена: {price}",
+ "From {price} per van": "От {price} за фургон",
+ "Early bird: {n} % off every plan": "Раннее предложение: скидка {n}% на любой тариф",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "От {price} за фургон в месяц. Зарегистрируйтесь до {date} и сохраните эту цену, пока действует ваш тариф.",
+ "Time left": "Осталось времени",
+ "days": "дней",
+ "hours": "часов",
+ "minutes": "минут",
+ "seconds": "секунд",
+ "{n} % off": "скидка {n}%"
 }

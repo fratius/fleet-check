@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Tải phiên bản thử nghiệm Fratius cho Android và xem cách cài đặt.",
  "Version {version} · {size} MB · {date}": "Phiên bản {version} · {size} MB · {date}",
  "Test version": "Bản thử nghiệm",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Trên Android, hãy cài bản thử nghiệm hoặc dùng ứng dụng web cho đến khi ứng dụng có mặt trên Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Trên Android, hãy cài bản thử nghiệm hoặc dùng ứng dụng web cho đến khi ứng dụng có mặt trên Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Giá ưu đãi sớm áp dụng cho đăng ký đến hết {date}. Sau đó, khách đăng ký mới trả giá thông thường.",
+ "Regular price: {price}": "Giá thông thường: {price}",
+ "From {price} per van": "Từ {price} mỗi xe van",
+ "Early bird: {n} % off every plan": "Ưu đãi sớm: giảm {n}% cho mọi gói",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Từ {price} mỗi xe van mỗi tháng. Đăng ký đến hết {date} và giữ mức giá đó chừng nào gói của bạn còn hiệu lực.",
+ "Time left": "Thời gian còn lại",
+ "days": "ngày",
+ "hours": "giờ",
+ "minutes": "phút",
+ "seconds": "giây",
+ "{n} % off": "giảm {n}%"
 }

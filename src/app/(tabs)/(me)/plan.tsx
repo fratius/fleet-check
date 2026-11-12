@@ -6,7 +6,7 @@ import { PortalButton, usePayMode } from '@/components/billinggate';
 import { confirmAction } from '@/components/cardform';
 import { PlanSetup } from '@/components/plansetup';
 import { Button, Card, F, Notice, Pill, Row, Screen, T, hs, useColors } from '@/components/ui';
-import { ADDON_VANS, PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, allowedVans, euro, netCents, payMode, type Interval, type PlanId } from '@/lib/billing';
+import { ADDON_PLANS, ADDON_VANS, ALL_PLANS, EARLY_BIRD_OFF, PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, addonOn, allowedVans, earlyBird, euro, netCents, offered, payMode, planCents, type Interval, type PlanId } from '@/lib/billing';
 import { loc, t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { ai } from '@/lib/store';
@@ -47,10 +47,14 @@ export default function PlanScreen() {
     );
   }
 
-  const plan = (PLAN_IDS.find((x) => x === b!.plan) || 'basic') as PlanId;
+  const plan: PlanId = ALL_PLANS.find((x) => x === b!.plan) || 'basic';
   const interval: Interval = b!.interval === 'year' ? 'year' : 'month';
   const addon = !!b!.addon;
-  const price = netCents(plan, interval, addon);
+  // The early-bird price: the server says so for this plan (billing.early); a plan from before that was written
+  // started before the early bird's end.
+  const early = b!.early ?? earlyBird(Date.now());
+  // What Stripe charges for this plan (a company that signed up at an older price keeps it), else the price list's.
+  const price = typeof b!.net === 'number' ? b!.net : netCents(plan, interval, addon, early);
   const used = org.fleetSize || 0;
   const per = interval === 'year' ? t('a year') : t('a month');
   let status = '';
@@ -72,9 +76,10 @@ export default function PlanScreen() {
         </Row>
         <T>{b!.vans == null ? t('{used} vans in use, unlimited on this plan.', { used }) : t('{used} of {max} vans in use.', { used, max: b!.vans })}{addon ? ' ' + t('With the add-on of {n} more vans.', { n: ADDON_VANS }) : ''}</T>
         <T>{status}</T>
+        {early && offered(plan) ? <T v="hint">{t('Early-bird price: {n} % off, for as long as your plan runs.', { n: EARLY_BIRD_OFF })}</T> : null}
         <T v="small">{t('Unlimited drivers and stations. Prices plus VAT.')}</T>
       </Card>
-      <ChangePlan orgId={org.id} plan={plan} interval={interval} addon={addon} used={used} trial={b!.status === 'trialing'} />
+      <ChangePlan orgId={org.id} plan={plan} interval={interval} addon={addon} used={used} trial={b!.status === 'trialing'} early={early} />
       <Card>
         <T v="h3">{t('Card, billing address and invoices')}</T>
         <T v="hint">{t('On Stripe\'s page: change the card, the billing address or the VAT ID, download invoices, or cancel to the end of the period paid for.')}</T>
@@ -85,7 +90,7 @@ export default function PlanScreen() {
 }
 
 /** Another plan, the add-on, or monthly to yearly (changePlan). Not below the vans in use. */
-function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: string; plan: PlanId; interval: Interval; addon: boolean; used: number; trial: boolean }) {
+function ChangePlan({ orgId, plan, interval, addon, used, trial, early }: { orgId: string; plan: PlanId; interval: Interval; addon: boolean; used: number; trial: boolean; early: boolean }) {
   const c = useColors();
   const L = loc();
   const [p, setP] = useState<PlanId>(plan);
@@ -101,7 +106,7 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
     ai.billingConfig({ orgId }).then((r) => { if (live) setYearly(!!r.yearly); }, () => {});
     return () => { live = false; };
   }, [orgId]);
-  const withAddon = a && p !== 'premium';
+  const withAddon = addonOn(p, a);
   const same = p === plan && iv === interval && withAddon === addon;
   const room = allowedVans(p, withAddon);
   const fits = room == null || used <= room;
@@ -123,7 +128,7 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
       <T v="h3">{t('Change the plan')}</T>
       {PLAN_IDS.map((id) => {
         const on = p === id;
-        const max = allowedVans(id, a && id !== 'premium');
+        const max = allowedVans(id, a);
         const tooSmall = max != null && used > max;
         return (
           <Pressable key={id} accessibilityRole="radio" accessibilityState={{ checked: on, disabled: tooSmall }} disabled={tooSmall} onPress={() => setP(id)}
@@ -135,11 +140,11 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
               <Text style={{ fontFamily: F.cond, fontSize: hs(20), color: c.ink }}>{PLAN_NAME[id]}</Text>
               <T v="hint">{PLAN_VANS[id] == null ? t('Unlimited vans') : t('Up to {n} vans', { n: PLAN_VANS[id] })}{tooSmall ? ` · ${t('fewer than the vans in use')}` : ''}</T>
             </View>
-            <T v="medium">{iv === 'year' ? t('{price} a year', { price: euro(PRICE_CENTS[id].year, L) }) : t('{price} a month', { price: euro(PRICE_CENTS[id].month, L) })}</T>
+            <T v="medium">{iv === 'year' ? t('{price} a year', { price: euro(planCents(id, 'year', early), L) }) : t('{price} a month', { price: euro(planCents(id, 'month', early), L) })}</T>
           </Pressable>
         );
       })}
-      {p !== 'premium' ? (
+      {ADDON_PLANS.includes(p) ? (
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: withAddon }} onPress={() => setA(!a)} style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
           <View style={{ width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.ink, backgroundColor: withAddon ? c.ink : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             {withAddon ? <Text style={{ color: c.paper, fontFamily: F.semi, fontSize: 15, lineHeight: 17 }}>✓</Text> : null}
@@ -155,7 +160,7 @@ function ChangePlan({ orgId, plan, interval, addon, used, trial }: { orgId: stri
           <T>{t('Pay yearly')}</T>
         </Pressable>
       ) : null}
-      {!same ? <T>{t('New price: {price} plus VAT {per}.', { price: euro(netCents(p, iv, withAddon), L), per })}</T> : null}
+      {!same ? <T>{t('New price: {price} plus VAT {per}.', { price: euro(netCents(p, iv, withAddon, early), L), per })}</T> : null}
       <T v="hint">{trial ? t('Nothing is charged during the free trial.') : t('A bigger plan is charged now for the rest of the period; a smaller one is credited on the next invoice.')}</T>
       <Button v="primary" title={t('Change plan')} disabled={same || !fits} loading={busy} onPress={save} />
       {done ? <T v="hint" color={c.ok}>{done}</T> : null}

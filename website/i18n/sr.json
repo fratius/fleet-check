@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Preuzmite test verziju Fratiusa za Android i pogledajte kako da je instalirate.",
  "Version {version} · {size} MB · {date}": "Verzija {version} · {size} MB · {date}",
  "Test version": "Test verzija",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Na Androidu instalirajte test verziju ili koristite veb-aplikaciju dok aplikacija ne stigne na Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Na Androidu instalirajte test verziju ili koristite veb-aplikaciju dok aplikacija ne stigne na Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Early bird cene važe za registracije do {date}. Posle toga novi korisnici plaćaju redovne cene.",
+ "Regular price: {price}": "Redovna cena: {price}",
+ "From {price} per van": "Od {price} po kombiju",
+ "Early bird: {n} % off every plan": "Early bird: {n} % popusta na svaki paket",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Od {price} po kombiju mesečno. Registrujte se do {date} i zadržite tu cenu dok vaš paket traje.",
+ "Time left": "Preostalo vreme",
+ "days": "dana",
+ "hours": "sati",
+ "minutes": "minuta",
+ "seconds": "sekundi",
+ "{n} % off": "{n} % popusta"
 }

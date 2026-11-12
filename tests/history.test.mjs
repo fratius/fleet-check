@@ -1349,7 +1349,7 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
 
 test('sign-up: a new company gets 30 days free from the server; the owner can\'t change it; the trial\'s AI has a daily allowance', async () => {
   const o = await person('Nora Neu');
-  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: '2026-11-08' };
+  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: '2026-11-12' };
   // The terms (AGB) and the data processing agreement (AVV) are accepted with their version.
   await fails(o.call('createCompany', { ...input, terms: null, rid: `rcc${run}0` }), 'failed-precondition');
   const r = await o.call('createCompany', { ...input, rid: `rcc${run}a` });
@@ -1520,11 +1520,20 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
   // Payments on, with the tests' fake Stripe (payments.ts). Off again at the end, for the other tests.
   await adminDb().doc('platform/stripe').set({ mode: 'fake', publishableKey: 'pk_test_fake', tax: { mode: 'rate', rateId: 'txr_fake' } });
   const address = { name: 'Pay Logistik GmbH', address: { line1: 'Hauptstr. 1', city: 'Berlin', postal_code: '10115', country: 'DE' } };
-  const terms = '2026-11-08';
+  const terms = '2026-11-12';
+  // The early-bird price (functions/src/billing.ts): every plan started before 1 April 2027 (German time) is on it.
+  // The checks below hold on both sides of that day.
+  const early = Date.now() < Date.UTC(2027, 2, 31, 22);
+  const k = (key) => (early ? `${key}_early` : key);
   try {
     const cfgNow = await S.own.call('billingConfig', {});
     assert.equal(cfgNow.mode, 'fake');
-    assert.equal(cfgNow.prices.pro.month, 9000);
+    assert.deepEqual([cfgNow.prices.basic.month, cfgNow.prices.pro.month, cfgNow.prices.business.month, cfgNow.prices.ultimate.month], [10000, 30000, 80000, 200000]);
+    assert.deepEqual([cfgNow.earlyPrices.basic.month, cfgNow.earlyPrices.pro.month, cfgNow.earlyPrices.business.month, cfgNow.earlyPrices.ultimate.month], [4000, 12000, 32000, 80000], '60 % off: EUR 0.80 a van on a full plan');
+    assert.deepEqual([cfgNow.planVans.basic, cfgNow.planVans.pro, cfgNow.planVans.business, cfgNow.planVans.ultimate], [50, 150, 400, 1000]);
+    assert.equal(cfgNow.earlyBird, early);
+    assert.equal(cfgNow.earlyBirdEnd, Date.UTC(2027, 2, 31, 22));
+    assert.equal(cfgNow.launchOffer, !early, 'no yearly launch offer on top of the early-bird price');
     assert.equal(cfgNow.yearlyOff, 30);
     assert.equal(cfgNow.yearly, false, 'yearly plans are off until the app creator turns them on');
     assert.equal((await S.own.call('billingConfig', { offer: 'NOPE2345' })).offerError.t, 'This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
@@ -1547,7 +1556,9 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const start = await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'de 123 456 789' });
     assert.equal(start.kind, 'setup');
     assert.match(start.clientSecret, /^seti_fake_/);
-    assert.equal(start.firstNet, 4000, 'the exact terms come back, for the page to check against what it showed');
+    assert.equal(start.firstNet, early ? 4000 : 10000, 'the exact terms come back, for the page to check against what it showed');
+    // Premium (unlimited vans) isn't sold any more.
+    await fails(pia.call('billingStart', { orgId, plan: 'premium', interval: 'month', address }), 'invalid-argument');
     // Asked again with the same terms (another card, a reload): the same subscription.
     assert.equal((await pia.call('billingStart', { orgId, plan: 'basic', interval: 'month', address, vatId: 'DE123456789' })).clientSecret, start.clientSecret);
     assert.ok(Math.abs(start.trialEnd - (Date.now() + 30 * 86400_000)) < 3_700_000, '30 days from adding the card');
@@ -1567,6 +1578,8 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.equal(conf.billing.status, 'trialing');
     assert.equal(conf.billing.card, true);
     assert.equal(conf.billing.plan, 'basic');
+    assert.equal(conf.billing.early, early);
+    assert.equal(conf.billing.net, early ? 4000 : 10000, 'what Stripe charges per invoice');
     assert.equal((await pia.call('setupStations', { orgId })).done, false, 'works now');
     await fails(pia.call('billingStart', { orgId, plan: 'pro', interval: 'month', address }), 'failed-precondition');
     assert.ok((await adminDb().doc(`payments/${orgId}`).get()).data().confirmedAt);
@@ -1588,19 +1601,27 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     await adminDb().doc(`orgs/${orgId}`).update({ fleetSize: 50 });
     await addVan(3);
     let sub = (await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).get()).data();
-    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_month', 'fratius_basic_month']);
+    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_month', k('fratius_basic_month')], 'the add-on has no early-bird price');
     assert.equal(sub.lastChange.charge, false, 'nothing charged in the trial');
-    // Up to Pro (the add-on stays), then monthly to yearly with the launch offer; yearly back to monthly only by email.
+    // Up to Pro (the add-on stays, and the plan keeps the early-bird price it started with), then monthly to yearly
+    // (with the launch offer once the early bird is over); yearly back to monthly only by email.
     const pro = await pia.call('changePlan', { orgId, plan: 'pro', rid: `rcp${run}b` });
     assert.equal(pro.billing.plan, 'pro');
     assert.equal(pro.billing.vans, 165);
+    assert.equal(pro.billing.net, (early ? 12000 : 30000) + 1000);
+    // Business has no add-on: 400 vans.
+    const biz = await pia.call('changePlan', { orgId, plan: 'business', rid: `rcp${run}b2` });
+    assert.equal(biz.billing.vans, 400);
+    assert.equal(biz.billing.addon, false);
+    assert.equal(biz.billing.net, early ? 32000 : 80000);
+    assert.equal((await pia.call('changePlan', { orgId, plan: 'pro', addon: true, rid: `rcp${run}b3` })).billing.vans, 165);
     await fails(pia.call('changePlan', { orgId, interval: 'year', rid: `rcp${run}y` }), 'failed-precondition');
     await adminDb().doc('platform/billing').set({ yearly: true }, { merge: true });
     const yearly = await pia.call('changePlan', { orgId, interval: 'year', rid: `rcp${run}c` });
     assert.equal(yearly.billing.interval, 'year');
     sub = (await adminDb().doc(`fakeStripe/${pd.subscriptionId}`).get()).data();
-    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_year', 'fratius_pro_year']);
-    assert.deepEqual(sub.coupons, ['fratius_yearly_launch_30']);
+    assert.deepEqual(sub.items.map((i) => i.key).sort(), ['fratius_addon15_year', k('fratius_pro_year')]);
+    assert.deepEqual(sub.coupons, early ? [] : ['fratius_yearly_launch_30_v2']);
     await fails(pia.call('changePlan', { orgId, interval: 'month', rid: `rcp${run}d` }), 'failed-precondition');
     assert.match((await pia.call('billingPortal', { orgId })).url, /^https:\/\/billing\.stripe\.test\//);
 
@@ -1641,7 +1662,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     assert.equal((await hart.call('billingConfig', { offer: off.code, orgId: h.orgId })).offer.trialDays, 60);
     const hpd = (await adminDb().doc(`payments/${h.orgId}`).get()).data();
     let hsub = (await adminDb().doc(`fakeStripe/${hpd.subscriptionId}`).get()).data();
-    assert.deepEqual(hsub.items.map((i) => i.key), ['fratius_pro_month'], 'the link\'s plan, not the one picked');
+    assert.deepEqual(hsub.items.map((i) => i.key), [k('fratius_pro_month')], 'the link\'s plan, not the one picked');
     assert.equal(hsub.coupons.length, 1);
     assert.match(hsub.coupons[0], new RegExp(`^fratius_offer_${off.code.toLowerCase()}_[0-9a-f]{8}$`), 'the coupon is named after the link\'s terms');
     // 20 % for 6 months, counted from the end of the 60 free days (Stripe counts from sign-up).
@@ -1657,25 +1678,32 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
     const l = await late.call('createCompany', { company: 'Late GmbH', station: 'DLT1', name: 'Lars Late', source: 'website', plan: 'pro', terms, payments: true });
     assert.match((await fails(late.call('billingStart', { orgId: l.orgId, offer: off.code, address }), 'failed-precondition')).message, /already been used/);
 
-    // 5. Yearly, paid at sign-up: Premium with 30 % off the first year, no trial.
+    // 5. Yearly, paid at sign-up, no trial: Ultimate at the early-bird price (after the early bird: the regular
+    //    price with 30 % off the first year).
     const yan = await person('Yara Yearly');
-    const y = await yan.call('createCompany', { company: 'Yearly GmbH', station: 'DYR1', name: 'Yara Yearly', source: 'website', plan: 'premium', interval: 'year', terms, payments: true });
+    const y = await yan.call('createCompany', { company: 'Yearly GmbH', station: 'DYR1', name: 'Yara Yearly', source: 'website', plan: 'ultimate', interval: 'year', terms, payments: true });
     // Only while the app creator offers yearly plans (a sign-up link with a yearly plan works anyway).
     await fails(pia.call('setLaunchOffer', { yearly: false }), 'permission-denied');
     assert.deepEqual(await cr.call('setLaunchOffer', { yearly: false }), { launchOffer: true, yearly: false });
     assert.equal((await yan.call('billingConfig', { orgId: y.orgId })).yearly, false);
-    await fails(yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address }), 'failed-precondition');
+    await fails(yan.call('billingStart', { orgId: y.orgId, plan: 'ultimate', interval: 'year', address }), 'failed-precondition');
     assert.deepEqual(await cr.call('setLaunchOffer', { yearly: true }), { launchOffer: true, yearly: true });
-    const ys = await yan.call('billingStart', { orgId: y.orgId, plan: 'premium', interval: 'year', address });
+    const ys = await yan.call('billingStart', { orgId: y.orgId, plan: 'ultimate', interval: 'year', address });
     assert.equal(ys.kind, 'payment');
-    assert.equal(ys.amount, 168000);
-    assert.equal(ys.firstNet, 168000);
+    assert.equal(ys.amount, early ? 960000 : 1680000);
+    assert.equal(ys.firstNet, early ? 960000 : 1680000);
     assert.equal(ys.trialEnd, null);
     const ypd = (await adminDb().doc(`payments/${y.orgId}`).get()).data();
     await adminDb().doc(`fakeStripe/${ypd.subscriptionId}`).update({ confirmed: true });
     const yc = await yan.call('billingConfirm', { orgId: y.orgId });
     assert.equal(yc.billing.status, 'active');
-    assert.equal(yc.billing.vans, null, 'unlimited');
+    assert.equal(yc.billing.vans, 1000);
+    // A company still on Premium (sold until 12 November 2026) keeps it: unlimited vans, at its price.
+    await stripeEvent('customer.subscription.updated', { object: 'subscription', id: ypd.subscriptionId, status: 'active', items: [{ id: 'si_fake_premium', key: 'fratius_premium_month', price: 'fratius_premium_month', cents: 20000 }] });
+    const prem = (await adminDb().doc(`orgs/${y.orgId}`).get()).data().billing;
+    assert.equal(prem.plan, 'premium');
+    assert.equal(prem.vans, null, 'unlimited');
+    assert.equal(prem.net, 20000);
 
     // 6. With test keys, sign-up without the new page works as before (a trial without a card).
     const old = await person('Otto Oldpage');

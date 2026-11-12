@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Stiahnite si testovaciu verziu Fratius pre Android a pozrite sa, ako ju nainštalovať.",
  "Version {version} · {size} MB · {date}": "Verzia {version} · {size} MB · {date}",
  "Test version": "Testovacia verzia",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Na Androide si nainštalujte testovaciu verziu alebo používajte webovú aplikáciu, kým aplikácia nevyjde na Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Na Androide si nainštalujte testovaciu verziu alebo používajte webovú aplikáciu, kým aplikácia nevyjde na Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Ceny early bird platia pri registrácii do {date}. Potom noví zákazníci platia bežné ceny.",
+ "Regular price: {price}": "Bežná cena: {price}",
+ "From {price} per van": "Od {price} za dodávku",
+ "Early bird: {n} % off every plan": "Early bird: zľava {n} % na každý plán",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Od {price} za dodávku mesačne. Zaregistrujte sa do {date} a cena vám zostane, kým váš plán beží.",
+ "Time left": "Zostávajúci čas",
+ "days": "dní",
+ "hours": "hodín",
+ "minutes": "minút",
+ "seconds": "sekúnd",
+ "{n} % off": "Zľava {n} %"
 }

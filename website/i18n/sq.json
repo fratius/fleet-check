@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Shkarko versionin provë të Fratius për Android dhe shiko si ta instalosh.",
  "Version {version} · {size} MB · {date}": "Versioni {version} · {size} MB · {date}",
  "Test version": "Version provë",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Në Android, instalo versionin provë ose përdor aplikacionin web derisa të dalë aplikacioni në Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Në Android, instalo versionin provë ose përdor aplikacionin web derisa të dalë aplikacioni në Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Çmimet early bird vlejnë për regjistrimet deri më {date}. Pas kësaj, klientët e rinj paguajnë çmimet e rregullta.",
+ "Regular price: {price}": "Çmimi i rregullt: {price}",
+ "From {price} per van": "Nga {price} për furgon",
+ "Early bird: {n} % off every plan": "Early bird: {n} % zbritje në çdo paketë",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Nga {price} për furgon në muaj. Regjistrohu deri më {date} dhe mbaje atë çmim për sa kohë paketa jote vazhdon.",
+ "Time left": "Koha e mbetur",
+ "days": "ditë",
+ "hours": "orë",
+ "minutes": "minuta",
+ "seconds": "sekonda",
+ "{n} % off": "{n} % zbritje"
 }

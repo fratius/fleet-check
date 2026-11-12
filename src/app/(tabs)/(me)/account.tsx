@@ -16,7 +16,7 @@ import { authMessage, useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
 import { loc, t, tp } from '@/lib/i18n';
-import { ADDON_VANS, PLAN_NAME, PLAN_IDS, TERMS_VERSION, standing, type PlanId } from '@/lib/billing';
+import { ADDON_VANS, ALL_PLANS, PLAN_NAME, TERMS_VERSION, standing, type PlanId } from '@/lib/billing';
 import { usePayMode } from '@/components/billinggate';
 import { OffersCard } from '@/components/offers';
 import { AcceptTerms } from '@/components/terms';
@@ -147,7 +147,7 @@ function TrialCard() {
 function PlanCard() {
   const s = useSession();
   const b = s.org?.billing;
-  const plan = PLAN_IDS.find((x) => x === b?.plan) as PlanId | undefined;
+  const plan: PlanId | undefined = ALL_PLANS.find((x) => x === b?.plan);
   const day = (ms: number) => new Date(ms).toLocaleDateString(loc(), { day: 'numeric', month: 'long', year: 'numeric' });
   const st = standing(s.org).standing;
   const line = !b?.card ? t('No card yet.')

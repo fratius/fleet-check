@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Atsisiųskite Fratius bandomąją versiją Android telefonams ir sužinokite, kaip ją įdiegti.",
  "Version {version} · {size} MB · {date}": "Versija {version} · {size} MB · {date}",
  "Test version": "Bandomoji versija",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Android telefonuose įdiekite bandomąją versiją arba naudokite žiniatinklio programėlę, kol Google Play parduotuvėje pasirodys programėlė."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Android telefonuose įdiekite bandomąją versiją arba naudokite žiniatinklio programėlę, kol Google Play parduotuvėje pasirodys programėlė.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Ankstyvosios kainos galioja registruojantis iki {date}. Vėliau nauji klientai moka įprastas kainas.",
+ "Regular price: {price}": "Įprasta kaina: {price}",
+ "From {price} per van": "Nuo {price} už furgoną",
+ "Early bird: {n} % off every plan": "Ankstyvas pasiūlymas: {n}% nuolaida kiekvienam planui",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Nuo {price} už furgoną per mėnesį. Užsiregistruokite iki {date} ir išlaikykite šią kainą, kol galioja jūsų planas.",
+ "Time left": "Liko laiko",
+ "days": "dienos",
+ "hours": "valandos",
+ "minutes": "minutės",
+ "seconds": "sekundės",
+ "{n} % off": "{n}% nuolaida"
 }

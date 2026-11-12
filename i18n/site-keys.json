@@ -101,12 +101,12 @@
  },
  {
   "id": "w021",
-  "key": "Fratius app icon",
+  "key": "Billing",
   "where": "attribute aria-label"
  },
  {
   "id": "w022",
-  "key": "Billing",
+  "key": "Fratius app icon",
   "where": "attribute aria-label"
  },
  {
@@ -926,122 +926,122 @@
  },
  {
   "id": "w186",
-  "key": "Get Fratius",
-  "where": "page"
- },
- {
-  "id": "w187",
-  "key": "The apps for iPhone and Android are on their way to the App Store and Google Play.",
-  "where": "page"
- },
- {
-  "id": "w188",
   "key": "Pick a plan by the size of your fleet. Try it 30 days free.",
   "where": "page"
  },
  {
-  "id": "w189",
+  "id": "w187",
   "key": "Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.",
   "where": "page"
  },
  {
-  "id": "w190",
+  "id": "w188",
   "key": "Every plan includes",
   "where": "page"
  },
  {
-  "id": "w191",
+  "id": "w189",
   "key": "Unlimited drivers",
   "where": "page"
  },
  {
-  "id": "w192",
+  "id": "w190",
   "key": "Live fleet board",
   "where": "page"
  },
  {
-  "id": "w193",
+  "id": "w191",
   "key": "Handovers with photos or video",
   "where": "page"
  },
  {
-  "id": "w194",
+  "id": "w192",
   "key": "Permanent van and driver history",
   "where": "page"
  },
  {
-  "id": "w195",
+  "id": "w193",
   "key": "Tours from dashboard photos",
   "where": "page"
  },
  {
-  "id": "w196",
+  "id": "w194",
   "key": "Refuel, wash and parts with card check",
   "where": "page"
  },
  {
-  "id": "w197",
+  "id": "w195",
   "key": "Deadlines: HU, UVV, service, tyres",
   "where": "page"
  },
  {
-  "id": "w198",
+  "id": "w196",
   "key": "Driver records and licence checks",
   "where": "page"
  },
  {
-  "id": "w199",
+  "id": "w197",
   "key": "Paperwork from a photo",
   "where": "page"
  },
  {
-  "id": "w200",
+  "id": "w198",
   "key": "Data tables and Excel export",
   "where": "page"
  },
  {
-  "id": "w201",
+  "id": "w199",
   "key": "Owner, manager and driver roles",
   "where": "page"
  },
  {
-  "id": "w202",
+  "id": "w200",
   "key": "Sign up",
   "where": "page"
  },
  {
-  "id": "w203",
+  "id": "w201",
   "key": "Start your 30 days",
   "where": "page"
  },
  {
-  "id": "w204",
+  "id": "w202",
   "key": "Your account, your company and a card, in one step and about two minutes. Nothing is charged before the 30 days end; cancel any time before then.",
   "where": "page"
  },
  {
-  "id": "w205",
+  "id": "w203",
   "key": "Your name and a work email",
   "where": "page"
  },
  {
-  "id": "w206",
+  "id": "w204",
   "key": "Your company's name and billing address",
   "where": "page"
  },
  {
-  "id": "w207",
+  "id": "w205",
   "key": "A card, charged only after the 30 days",
   "where": "page"
  },
  {
-  "id": "w208",
+  "id": "w206",
   "key": "Create your account",
   "where": "page"
  },
  {
-  "id": "w209",
+  "id": "w207",
   "key": "Questions first? Write to",
+  "where": "page"
+ },
+ {
+  "id": "w208",
+  "key": "Get Fratius",
+  "where": "page"
+ },
+ {
+  "id": "w209",
+  "key": "The apps for iPhone and Android are on their way to the App Store and Google Play.",
   "where": "page"
  },
  {
@@ -1166,481 +1166,536 @@
  },
  {
   "id": "w234",
-  "key": "Automatic damage checks on every walk-around. Price to follow.",
+  "key": "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.",
   "where": "script"
  },
  {
   "id": "w235",
-  "key": "Fratius · Fleet management for delivery partners",
+  "key": "Automatic damage checks on every walk-around. Price to follow.",
   "where": "script"
  },
  {
   "id": "w236",
-  "key": "Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.",
+  "key": "Fratius · Fleet management for delivery partners",
   "where": "script"
  },
  {
   "id": "w237",
-  "key": "Pick a plan.",
+  "key": "Fratius Fleet management: every van, every driver, right now. Handovers with photo proof, fuel card checks, deadlines and a van history nobody can rewrite, for delivery partners who run their own vans.",
   "where": "script"
  },
  {
   "id": "w238",
-  "key": "Enter your first and last name.",
+  "key": "Pick a plan.",
   "where": "script"
  },
  {
   "id": "w239",
-  "key": "Send the form from the website.",
+  "key": "Enter your first and last name.",
   "where": "script"
  },
  {
   "id": "w240",
-  "key": "Too many requests today. Write to info@fratius.com instead.",
+  "key": "Send the form from the website.",
   "where": "script"
  },
  {
   "id": "w241",
-  "key": "Up to {n} vans",
+  "key": "Too many requests today. Write to info@fratius.com instead.",
   "where": "script"
  },
  {
   "id": "w242",
-  "key": "Unlimited vans",
+  "key": "Up to {n} vans",
   "where": "script"
  },
  {
   "id": "w243",
-  "key": "Monthly",
+  "key": "Unlimited vans",
   "where": "script"
  },
  {
   "id": "w244",
-  "key": "Yearly: {n} % off the first year",
+  "key": "Monthly",
   "where": "script"
  },
  {
   "id": "w245",
-  "key": "Yearly",
+  "key": "Yearly: {n} % off the first year",
   "where": "script"
  },
  {
   "id": "w246",
-  "key": "the first year",
+  "key": "Yearly",
   "where": "script"
  },
  {
   "id": "w247",
-  "key": "a year",
+  "key": "Regular price: {price}",
   "where": "script"
  },
  {
   "id": "w248",
-  "key": "then {price} a year",
+  "key": "{n} % off",
   "where": "script"
  },
  {
   "id": "w249",
-  "key": "a month",
+  "key": "the first year",
   "where": "script"
  },
  {
   "id": "w250",
-  "key": "{n} % off the first year",
+  "key": "a year",
   "where": "script"
  },
  {
   "id": "w251",
-  "key": "Paid yearly",
+  "key": "then {price} a year",
   "where": "script"
  },
  {
   "id": "w252",
-  "key": "{n} days free",
+  "key": "a month",
   "where": "script"
  },
  {
   "id": "w253",
-  "key": "Start with {plan}",
+  "key": "From {price} per van",
   "where": "script"
  },
  {
   "id": "w254",
-  "key": "Its own plan",
+  "key": "{n} % off the first year",
   "where": "script"
  },
  {
   "id": "w255",
-  "key": "Coming soon",
+  "key": "Paid yearly",
   "where": "script"
  },
  {
   "id": "w256",
-  "key": "Tell me when it's ready",
+  "key": "{n} days free",
   "where": "script"
  },
  {
   "id": "w257",
-  "key": "{store}: coming soon",
+  "key": "Start with {plan}",
   "where": "script"
  },
  {
   "id": "w258",
-  "key": "Download on the",
+  "key": "Its own plan",
   "where": "script"
  },
  {
   "id": "w259",
-  "key": "Coming soon to the",
+  "key": "Coming soon",
   "where": "script"
  },
  {
   "id": "w260",
-  "key": "Get it on",
+  "key": "Tell me when it's ready",
   "where": "script"
  },
  {
   "id": "w261",
-  "key": "Coming soon on",
+  "key": "Early bird: {n} % off every plan",
   "where": "script"
  },
  {
   "id": "w262",
-  "key": "Test version",
+  "key": "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.",
   "where": "script"
  },
  {
   "id": "w263",
-  "key": "Open the web app",
+  "key": "Time left",
   "where": "script"
  },
  {
   "id": "w264",
-  "key": "Get the app for iPhone and Android.",
+  "key": "days",
   "where": "script"
  },
  {
   "id": "w265",
-  "key": "The iPhone app is in the App Store. The Android app is on its way to Google Play.",
+  "key": "hours",
   "where": "script"
  },
  {
   "id": "w266",
-  "key": "The Android app is on Google Play. The iPhone app is on its way to the App Store.",
+  "key": "minutes",
   "where": "script"
  },
  {
   "id": "w267",
-  "key": "On Android, install the test version, or use the web app until the Google Play app is out.",
+  "key": "seconds",
   "where": "script"
  },
  {
   "id": "w268",
-  "key": "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.",
+  "key": "{store}: coming soon",
   "where": "script"
  },
  {
   "id": "w269",
-  "key": "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.",
+  "key": "Download on the",
   "where": "script"
  },
  {
   "id": "w270",
-  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
+  "key": "Coming soon to the",
   "where": "script"
  },
  {
   "id": "w271",
-  "key": "Privacy",
+  "key": "Get it on",
   "where": "script"
  },
  {
   "id": "w272",
-  "key": "App privacy",
+  "key": "Coming soon on",
   "where": "script"
  },
  {
   "id": "w273",
-  "key": "Delete account",
+  "key": "Test version",
   "where": "script"
  },
  {
   "id": "w274",
-  "key": "Terms",
+  "key": "Open the web app",
   "where": "script"
  },
  {
   "id": "w275",
-  "key": "Data processing agreement",
+  "key": "Get the app for iPhone and Android.",
   "where": "script"
  },
  {
   "id": "w276",
-  "key": "Front",
+  "key": "The iPhone app is in the App Store. The Android app is on its way to Google Play.",
   "where": "script"
  },
  {
   "id": "w277",
-  "key": "Front left",
+  "key": "The Android app is on Google Play. The iPhone app is on its way to the App Store.",
   "where": "script"
  },
  {
   "id": "w278",
-  "key": "Left side",
+  "key": "On Android, install the test version, or use the web app until the Google Play app is out.",
   "where": "script"
  },
  {
   "id": "w279",
-  "key": "Rear left",
+  "key": "On Android, Fratius runs as a web app until the Google Play app is out: open it in the browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w280",
-  "key": "Rear",
+  "key": "On iPhone, Fratius runs as a web app until the App Store app is out: open it in Safari and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w281",
-  "key": "Rear right",
+  "key": "Until then, Fratius runs as a web app: open it in the phone's browser and add it to the home screen.",
   "where": "script"
  },
  {
   "id": "w282",
-  "key": "Right side",
+  "key": "Privacy",
   "where": "script"
  },
  {
   "id": "w283",
-  "key": "Front right",
+  "key": "App privacy",
   "where": "script"
  },
  {
   "id": "w284",
-  "key": "HU sticker, due {date}",
+  "key": "Delete account",
   "where": "script"
  },
  {
   "id": "w285",
-  "key": "All languages",
+  "key": "Terms",
   "where": "script"
  },
  {
   "id": "w286",
-  "key": "Choose a language",
+  "key": "Data processing agreement",
   "where": "script"
  },
  {
   "id": "w287",
-  "key": "Picked up by Andrei M.",
+  "key": "Front",
   "where": "script"
  },
  {
   "id": "w288",
-  "key": "Tour started at 84,213 km",
+  "key": "Front left",
   "where": "script"
  },
  {
   "id": "w289",
-  "key": "Dashboard read",
+  "key": "Left side",
   "where": "script"
  },
  {
   "id": "w290",
-  "key": "Refuel 62.4 l · €108.20",
+  "key": "Rear left",
   "where": "script"
  },
  {
   "id": "w291",
-  "key": "Card matched",
+  "key": "Rear",
   "where": "script"
  },
  {
   "id": "w292",
-  "key": "Wrong fuel card, driver waiting",
+  "key": "Rear right",
   "where": "script"
  },
  {
   "id": "w293",
-  "key": "Refuel allowed by Sofia K.",
+  "key": "Right side",
   "where": "script"
  },
  {
   "id": "w294",
-  "key": "Allowed",
+  "key": "Front right",
   "where": "script"
  },
  {
   "id": "w295",
-  "key": "Check",
+  "key": "HU sticker, due {date}",
   "where": "script"
  },
  {
   "id": "w296",
-  "key": "Dropped off by Elif D.",
+  "key": "All languages",
   "where": "script"
  },
  {
   "id": "w297",
-  "key": "Video 1:12",
+  "key": "Choose a language",
   "where": "script"
  },
  {
   "id": "w298",
-  "key": "Damage approved: rear left door",
+  "key": "Picked up by Andrei M.",
   "where": "script"
  },
  {
   "id": "w299",
-  "key": "#4 on record",
+  "key": "Tour started at 84,213 km",
   "where": "script"
  },
  {
   "id": "w300",
-  "key": "Taken over from Lukas B.",
+  "key": "Dashboard read",
   "where": "script"
  },
  {
   "id": "w301",
-  "key": "Tour ended · 138 km · 9 h 05",
+  "key": "Refuel 62.4 l · €108.20",
   "where": "script"
  },
  {
   "id": "w302",
-  "key": "11.4 l/100 km",
+  "key": "Card matched",
   "where": "script"
  },
  {
   "id": "w303",
-  "key": "Picked up by Tomasz W.",
+  "key": "Wrong fuel card, driver waiting",
   "where": "script"
  },
  {
   "id": "w304",
-  "key": "HU due in March",
+  "key": "Refuel allowed by Sofia K.",
   "where": "script"
  },
  {
   "id": "w305",
-  "key": "Dropped off without proof",
+  "key": "Allowed",
   "where": "script"
  },
  {
   "id": "w306",
-  "key": "Handover video added by Sofia K.",
+  "key": "Check",
   "where": "script"
  },
  {
   "id": "w307",
-  "key": "Proof added",
+  "key": "Dropped off by Elif D.",
   "where": "script"
  },
  {
   "id": "w308",
+  "key": "Video 1:12",
+  "where": "script"
+ },
+ {
+  "id": "w309",
+  "key": "Damage approved: rear left door",
+  "where": "script"
+ },
+ {
+  "id": "w310",
+  "key": "#4 on record",
+  "where": "script"
+ },
+ {
+  "id": "w311",
+  "key": "Taken over from Lukas B.",
+  "where": "script"
+ },
+ {
+  "id": "w312",
+  "key": "Tour ended · 138 km · 9 h 05",
+  "where": "script"
+ },
+ {
+  "id": "w313",
+  "key": "11.4 l/100 km",
+  "where": "script"
+ },
+ {
+  "id": "w314",
+  "key": "Picked up by Tomasz W.",
+  "where": "script"
+ },
+ {
+  "id": "w315",
+  "key": "HU due in March",
+  "where": "script"
+ },
+ {
+  "id": "w316",
+  "key": "Dropped off without proof",
+  "where": "script"
+ },
+ {
+  "id": "w317",
+  "key": "Handover video added by Sofia K.",
+  "where": "script"
+ },
+ {
+  "id": "w318",
+  "key": "Proof added",
+  "where": "script"
+ },
+ {
+  "id": "w319",
   "key": "Back to the website",
   "where": "android.html"
  },
  {
-  "id": "w309",
+  "id": "w320",
   "key": "Fratius for Android",
   "where": "android.html"
  },
  {
-  "id": "w310",
+  "id": "w321",
   "key": "The test version, for the delivery partners trying Fratius before it is in Google Play.",
   "where": "android.html"
  },
  {
-  "id": "w311",
+  "id": "w322",
   "key": "Download for Android",
   "where": "android.html"
  },
  {
-  "id": "w312",
+  "id": "w323",
   "key": "Open this page on the Android phone you want to install Fratius on:",
   "where": "android.html"
  },
  {
-  "id": "w313",
+  "id": "w324",
   "key": "The test version isn't ready yet. Until then, use the web app in Chrome and add it to the home screen.",
   "where": "android.html"
  },
  {
-  "id": "w314",
+  "id": "w325",
   "key": "Install it",
   "where": "android.html"
  },
  {
-  "id": "w315",
+  "id": "w326",
   "key": "Tap Download for Android. If Chrome warns about the file, tap Download anyway.",
   "where": "android.html"
  },
  {
-  "id": "w316",
+  "id": "w327",
   "key": "Open the downloaded file. The first time, Android asks to allow installing apps from Chrome: tap Settings, turn on Allow from this source, and go back.",
   "where": "android.html"
  },
  {
-  "id": "w317",
+  "id": "w328",
   "key": "Tap Install, then Open, and sign in with your Fratius account.",
   "where": "android.html"
  },
  {
-  "id": "w318",
+  "id": "w329",
   "key": "If Play Protect warns about an unknown app, tap More details, then Install anyway. Fratius isn't in Google Play yet, so Google doesn't know it.",
   "where": "android.html"
  },
  {
-  "id": "w319",
+  "id": "w330",
   "key": "Updates",
   "where": "android.html"
  },
  {
-  "id": "w320",
+  "id": "w331",
   "key": "The app updates itself when it starts. Now and then a new version needs a new download: then the app shows a Download button. Install it over the old one; you stay signed in and nothing waiting to send is lost.",
   "where": "android.html"
  },
  {
-  "id": "w321",
+  "id": "w332",
   "key": "Company phones",
   "where": "android.html"
  },
  {
-  "id": "w322",
+  "id": "w333",
   "key": "Some company phones don't allow apps from outside Google Play. Ask whoever looks after the phones, or use the web app: open it in Chrome and add it to the home screen.",
   "where": "android.html"
  },
  {
-  "id": "w323",
+  "id": "w334",
   "key": "Feedback",
   "where": "android.html"
  },
  {
-  "id": "w324",
+  "id": "w335",
   "key": "Something not working, or missing? Tell us, ideally with a screenshot. Every message helps us get Fratius ready for Google Play.",
   "where": "android.html"
  },
  {
-  "id": "w325",
+  "id": "w336",
   "key": "When Fratius is in Google Play",
   "where": "android.html"
  },
  {
-  "id": "w326",
+  "id": "w337",
   "key": "We'll let you know. Then remove this test version and install Fratius from Google Play. Before removing it, check that the app shows nothing waiting to send.",
   "where": "android.html"
  },
  {
-  "id": "w327",
+  "id": "w338",
   "key": "Fratius for Android (test version)",
   "where": "android.html script"
  },
  {
-  "id": "w328",
+  "id": "w339",
   "key": "Download the Fratius test version for Android and how to install it.",
   "where": "android.html script"
  },
  {
-  "id": "w329",
+  "id": "w340",
   "key": "Version {version} · {size} MB · {date}",
   "where": "android.html script"
  }

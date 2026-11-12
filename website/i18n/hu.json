@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Töltsd le a Fratius tesztverzióját Androidra, és nézd meg, hogyan telepítheted.",
  "Version {version} · {size} MB · {date}": "Verzió: {version} · {size} MB · {date}",
  "Test version": "Tesztverzió",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Androidon telepítsd a tesztverziót, vagy használd a webappot, amíg meg nem jelenik az app a Google Playen."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Androidon telepítsd a tesztverziót, vagy használd a webappot, amíg meg nem jelenik az app a Google Playen.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "A korai előfizetői ár az eddig regisztrálóknak jár: {date}. Utána az új előfizetők a normál árat fizetik.",
+ "Regular price: {price}": "Normál ár: {price}",
+ "From {price} per van": "Furgononként már {price}",
+ "Early bird: {n} % off every plan": "Korai előfizetés: {n} % kedvezmény minden csomagra",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Furgononként már havi {price}. Regisztrálj eddig: {date}, és az ár megmarad, amíg a csomagod él.",
+ "Time left": "Hátralévő idő",
+ "days": "nap",
+ "hours": "óra",
+ "minutes": "perc",
+ "seconds": "másodperc",
+ "{n} % off": "{n} % kedvezmény"
 }

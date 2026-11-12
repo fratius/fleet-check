@@ -34,8 +34,8 @@ handover, tour, fuel card, review, damage record, licence check…). In addition
    tab (a noun). `Website` is a hidden spam-trap field label. `Driver` (table header) = the driver's name column.
    `Done` = sign-up finished. `Send` = the last sign-up step. `Plan`, `Company`, `Stations`, `Vans`, `Contact`,
    `Free until` = row labels of the sign-up summary.
-3. Placeholders: `{n}` in `Up to {n} vans` is 50 or 150; in `{n} days free` it is 30; `{plan}` is Basic, Pro or
-   Premium (never translated); `{store}` is App Store or Google Play; `{privacy}` / `{terms}` are links whose
+3. Placeholders: `{n}` in `Up to {n} vans` is 50, 150, 400 or 1,000; in `{n} % off` and `Early bird: {n} % off every plan` it is 60; in `{n} days free` it is 30; `{plan}` is Basic, Pro, Business or
+   Ultimate (never translated); `{price}` is an amount like €0.80; `{store}` is App Store or Google Play; `{privacy}` / `{terms}` are links whose
    text is the separate keys `privacy policy` / `terms`; `{email}`, `{company}`, `{name}`, `{date}`, `{max}`,
    `{days}` as named.
 4. Example data stays example data: keep names (Andrei M., Sofia K., Lukas B., Tomasz W., Elif D., Mehmet Y.),

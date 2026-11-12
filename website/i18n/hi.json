@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Android के लिए Fratius का टेस्ट वर्ज़न डाउनलोड करें और जानें कि उसे कैसे इंस्टॉल करें।",
  "Version {version} · {size} MB · {date}": "वर्ज़न {version} · {size} MB · {date}",
  "Test version": "टेस्ट वर्ज़न",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Android पर, जब तक Google Play पर ऐप नहीं आ जाता, टेस्ट वर्ज़न इंस्टॉल करें या वेब ऐप इस्तेमाल करें।"
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Android पर, जब तक Google Play पर ऐप नहीं आ जाता, टेस्ट वर्ज़न इंस्टॉल करें या वेब ऐप इस्तेमाल करें।",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "अर्ली-बर्ड कीमतें {date} तक के साइन-अप के लिए हैं। उसके बाद नए ग्राहक सामान्य कीमतें चुकाते हैं।",
+ "Regular price: {price}": "सामान्य कीमत: {price}",
+ "From {price} per van": "प्रति वैन {price} से",
+ "Early bird: {n} % off every plan": "अर्ली बर्ड: हर प्लान पर {n}% की छूट",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "प्रति वैन {price} प्रति माह से। {date} तक साइन अप करें और जब तक आपका प्लान चलता है, यही कीमत रखें।",
+ "Time left": "बचा हुआ समय",
+ "days": "दिन",
+ "hours": "घंटे",
+ "minutes": "मिनट",
+ "seconds": "सेकंड",
+ "{n} % off": "{n}% की छूट"
 }

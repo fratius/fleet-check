@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 import { Button, Card, F, Field, Pill, Row, Segmented, T, useColors } from '@/components/ui';
-import { PLAN_NAME, euro } from '@/lib/billing';
+import { PLAN_IDS, PLAN_NAME, euro, type OfferedPlan } from '@/lib/billing';
 import { fb } from '@/lib/firebase';
 import { loc, t, tp } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
@@ -114,7 +114,7 @@ function OfferRow({ o, onChange }: { o: Offer; onChange(): void }) {
 function NewOffer({ onDone, onCancel }: { onDone(): void; onCancel(): void }) {
   const c = useColors();
   const [note, setNote] = useState('');
-  const [plan, setPlan] = useState<'any' | 'basic' | 'pro' | 'premium'>('any');
+  const [plan, setPlan] = useState<'any' | OfferedPlan>('any');
   const [interval, setInterval] = useState<'any' | 'month' | 'year'>('month');
   const [trial, setTrial] = useState('30');
   const [kind, setKind] = useState<'none' | 'percent' | 'euro'>('none');
@@ -156,7 +156,7 @@ function NewOffer({ onDone, onCancel }: { onDone(): void; onCancel(): void }) {
   return (
     <View style={{ gap: 10, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12 }}>
       <Field label={t('For whom')} hint={t('only you see it')} value={note} onChangeText={setNote} placeholder={t('For example: Hart Logistics, 80 vans')} />
-      <Segmented label={t('Plan')} value={plan} onChange={setPlan} options={[['any', t('They choose')], ['basic', 'Basic'], ['pro', 'Pro'], ['premium', 'Premium']]} />
+      <Segmented label={t('Plan')} value={plan} onChange={setPlan} options={[['any', t('They choose')], ...PLAN_IDS.map((id): [OfferedPlan, string] => [id, PLAN_NAME[id]])]} />
       <Segmented label={t('Billed')} value={interval} onChange={setInterval} options={[['month', t('Monthly')], ['year', t('Yearly')], ['any', t('They choose')]]} />
       <Field label={t('Free days')} hint={t('0: they pay at sign-up')} value={trial} onChangeText={setTrial} keyboardType="number-pad" />
       <Segmented label={t('Discount')} value={kind} onChange={setKind} options={[['none', t('None')], ['percent', '%'], ['euro', '€']]} />

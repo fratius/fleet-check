@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Lataa Fratiuksen testiversio Androidille ja katso, miten asennat sen.",
  "Version {version} · {size} MB · {date}": "Versio {version} · {size} Mt · {date}",
  "Test version": "Testiversio",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Androidissa asenna testiversio tai käytä verkkosovellusta, kunnes sovellus ilmestyy Google Playhin."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Androidissa asenna testiversio tai käytä verkkosovellusta, kunnes sovellus ilmestyy Google Playhin.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Early bird -hinnat koskevat rekisteröitymisiä {date} asti. Sen jälkeen uudet asiakkaat maksavat normaalihinnat.",
+ "Regular price: {price}": "Normaalihinta: {price}",
+ "From {price} per van": "Alkaen {price} per pakettiauto",
+ "Early bird: {n} % off every plan": "Early bird: {n} %:n alennus kaikista paketeista",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Alkaen {price} per pakettiauto kuukaudessa. Rekisteröidy viimeistään {date} ja pidä hinta niin kauan kuin pakettisi on voimassa.",
+ "Time left": "Aikaa jäljellä",
+ "days": "päivää",
+ "hours": "tuntia",
+ "minutes": "minuuttia",
+ "seconds": "sekuntia",
+ "{n} % off": "{n} %:n alennus"
 }

@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Lade die Fratius-Testversion für Android herunter, und so installierst du sie.",
  "Version {version} · {size} MB · {date}": "Version {version} · {size} MB · {date}",
  "Test version": "Testversion",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Auf Android: Testversion installieren oder die Web-App nutzen, bis die App bei Google Play erscheint."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Auf Android: Testversion installieren oder die Web-App nutzen, bis die App bei Google Play erscheint.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Frühbucherpreise gelten bei Registrierung bis {date}. Danach zahlen neue Kunden die regulären Preise.",
+ "Regular price: {price}": "Regulärer Preis: {price}",
+ "From {price} per van": "Ab {price} pro Transporter",
+ "Early bird: {n} % off every plan": "Frühbucher: {n} % Rabatt auf jeden Tarif",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Ab {price} pro Transporter im Monat. Registrier dich bis {date} und behalte den Preis, solange dein Tarif läuft.",
+ "Time left": "Verbleibende Zeit",
+ "days": "Tage",
+ "hours": "Stunden",
+ "minutes": "Minuten",
+ "seconds": "Sekunden",
+ "{n} % off": "{n} % Rabatt"
 }

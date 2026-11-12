@@ -6,9 +6,10 @@ import { createHash } from 'node:crypto';
 
 import { tr } from './i18n';
 
-export const PLANS: Record<string, string> = { basic: 'Basic', pro: 'Pro', premium: 'Premium' };
+/** Premium: sold until 12 November 2026 (billing.ts); kept for the names of companies still on it. */
+export const PLANS: Record<string, string> = { basic: 'Basic', pro: 'Pro', business: 'Business', ultimate: 'Ultimate', premium: 'Premium' };
 /** Vans each plan covers (null = unlimited). The website's CONFIG.plans shows the same: change both. */
-export const PLAN_VANS: Record<string, number | null> = { basic: 50, pro: 150, premium: null };
+export const PLAN_VANS: Record<string, number | null> = { basic: 50, pro: 150, business: 400, ultimate: 1000, premium: null };
 /** Where requests go. The SMTP_URL secret decides which mailbox sends them. */
 export const SIGNUP_TO = 'info@fratius.com';
 /** Requests from one connection per day, and from everyone per day, before the form says "try later". */

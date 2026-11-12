@@ -647,6 +647,8 @@ e216ffda	During the trial the AI does up to {checks} damage checks and {reads} o
 3e96504e	Each kilometre over the allowance
 6c14de32	Each run records its model, time and cost, so the test log can compare them.
 99bc58ec	Each starts with a photo of the dashboard; a wash then checks the fuel card and takes the receipt.
+b322b353	Early-bird price: {n} % off for sign-ups until {date}. It stays yours for as long as your plan runs.
+a98de641	Early-bird price: {n} % off, for as long as your plan runs.
 5301648d	Edit	[components/driverrec.tsx, components/vanfacts.tsx]
 972fd71f	Edit vehicle	[vehicle/[id].tsx]
 5612bd0a	Electric	[vehicle/[id].tsx, lib/fleet.ts]
@@ -1924,6 +1926,7 @@ ae75b618	This invite link isn't complete. Ask for a new one.
 6e46dd06	This invite link was already used. Each link works for one person; ask for a new one.
 12fadf41	This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.
 9afd8934	This is information about how employees work. Drivers see their own numbers on their page. Tell them what is recorded and why; with a works council, agree it with them.
+1b4bca38	This is the early-bird price. It stays yours for as long as your plan runs.
 52916641	This link doesn't exist or was cancelled.
 c9af11f9	This link doesn't exist. Ask your fleet manager for the link again.
 9b47e988	This link has expired. Links work for 24 hours.
