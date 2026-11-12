@@ -631,6 +631,9 @@ export interface Scan {
   rear: Vehicle['rear'];
   verdict: 'correct' | 'wrong' | null;
   actual: string | null;
+  /** The number plate read from the photos (since 2026-11-12), and whether two reads agreed. */
+  plate?: string | null;
+  plateSure?: boolean | null;
 }
 
 export interface IdentifyResult {
@@ -638,6 +641,8 @@ export interface IdentifyResult {
   reason: string | null;
   issues: string[];
   alternatives: { cls: string; confidence: number | null }[];
+  /** The plate for the form's field; not sure means the reads didn't agree. Missing from servers before 2026-11-12. */
+  plate?: { text: string; sure: boolean } | null;
 }
 
 export interface Org {

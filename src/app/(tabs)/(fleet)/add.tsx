@@ -30,6 +30,8 @@ export default function AddVehicle() {
   const [name, setName] = useState('');
   const [plate, setPlate] = useState('');
   const [plateErr, setPlateErr] = useState<string | null>(null);
+  // The plate the scan read from the photos (functions: readPlate). It fills the field; the person checks it.
+  const [plateRead, setPlateRead] = useState<{ text: string; sure: boolean } | null>(null);
   const [saving, setSaving] = useState(false);
   const aiOn = s.mode === 'firebase';
   // Stations this person can add vans to: every station for owners, their own for managers.
@@ -70,6 +72,15 @@ export default function AddVehicle() {
       const r = await retrying(() => ai.identify({ orgId: s.store!.orgId, scanId, paths, tier: s.tier, stationId }));
       setRes({ ...r, uploadMs, totalMs: Date.now() - t0 });
       setPicking(false);
+      // The plate from the photos goes into the field, unless the person typed one themselves. Photos without a
+      // readable plate leave the field as it was.
+      const read = r.plate ?? null;
+      if (read) {
+        const before = plateRead?.text;
+        setPlateRead(read);
+        setPlate((cur) => (!cur.trim() || cur === before ? read.text : cur));
+        setPlateErr(null);
+      }
       if (r.scan.predicted && CLS[r.scan.predicted]) {
         choose(r.scan.predicted, { roof: r.scan.roof, slideL: r.scan.slideL, slideR: r.scan.slideR, rear: r.scan.rear });
       }
@@ -109,7 +120,7 @@ export default function AddVehicle() {
         make: fromScan?.vMake ?? null, model: fromScan?.vModel ?? null, scanId: fromScan?.id ?? null, stationId,
         createdAt: Date.now(), createdBy: s.user?.uid ?? null,
       });
-      setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setAttrs(defaultAttrs());
+      setShots([]); setRes(null); setCls(null); setName(''); setPlate(''); setPlateRead(null); setAttrs(defaultAttrs());
       // Replace the form, so Back from the new van goes to the fleet, not to the empty form.
       router.replace(`/vehicle/${id}`);
     } catch (e) { setErr(failText(e, 'Saving the vehicle')); }
@@ -125,6 +136,9 @@ export default function AddVehicle() {
     ? t('Your plan is for {n} vans and they are all in use. Add 15 more vans, or choose a bigger plan, under Account, then Plan and billing.', { n: maxVans ?? 0 })
     : t('The company\'s plan is for {n} vans and they are all in use. Ask the owner for more room.', { n: maxVans ?? 0 });
   const conf = sc?.confidence;
+  // What the field holds came from the photos (and wasn't changed): say so, and whether it's a van already in the fleet.
+  const fromPhoto = !!plateRead && plate === plateRead.text;
+  const seen = fromPhoto ? s.vehicles.find((v) => plateKey(v.plate) === plateKey(plate)) : undefined;
   return (
     <Screen edges={[]}>
       <View style={{ gap: 4 }}>
@@ -142,7 +156,7 @@ export default function AddVehicle() {
         <T v="h2">{t('Scan it')}</T>
         {aiOn ? (
           <>
-            <T v="hint">{t('One photo from a front corner works best. Add the side or the rear to pick up door details.')}</T>
+            <T v="hint">{t('One photo from a front corner, with the number plate in view, works best. Add the side or the rear to pick up door details.')}</T>
             <Row>
               {shots.map((sh, i) => (
                 <Pressable key={sh.uri} accessibilityLabel={t('Remove photo {n}', { n: i + 1 })} onPress={() => setShots(shots.filter((_, k) => k !== i))}>
@@ -197,6 +211,12 @@ export default function AddVehicle() {
             <T v="h2">{t('Save to the fleet')}</T>
             <Row>{attrPills(sp, attrs, undefined).map((p) => <Pill key={p} text={t(p)} />)}</Row>
             <Field label={t('Number plate')} value={plate} error={plateErr} onChangeText={(x) => { setPlate(x.toUpperCase()); setPlateErr(null); }} autoCapitalize="characters" autoCorrect={false} maxLength={14} placeholder="B-DX 1234" />
+            {plateErr ? null
+              : seen ? <T v="hint" color={c.alert}>{t('{plate} is already in your fleet.', { plate: vanName(seen) })}</T>
+              : fromPhoto ? <T v="hint" color={plateRead!.sure ? undefined : c.alert}>{plateRead!.sure ? t('Read from the photo. Check it against the van.') : t('Read from the photo, but not clearly. Check each character against the van.')}</T>
+              // `plate` is missing (not null) in answers from a server before the plate was read.
+              : res && res.plate === null && !plate.trim() ? <T v="hint">{t('The plate couldn\'t be read from the photos. Type it in.')}</T>
+              : null}
             <Field label={t('Own name or fleet number')} hint={t('optional')} value={name} onChangeText={setName} maxLength={60} />
             {canAddTo.length > 1 ? (
               <><T v="medium">{t('Station')}</T><Row>{canAddTo.map((st) => <Chip key={st.id} text={st.name} on={st.id === stationId} onPress={() => setStationPick(st.id)} />)}</Row></>

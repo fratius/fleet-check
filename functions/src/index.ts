@@ -17,9 +17,9 @@ import webpush from 'web-push';
 
 import { ask } from './claude';
 import { createDemo, deleteCompany, deleteDemo } from './demo';
-import { fit, markBox, refCrop, type Sent } from './images';
+import { fit, markBox, plateCrop, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
-import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, spotPrompt, spotSchema } from './prompts';
+import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, platePrompt, plateSchema, spotPrompt, spotSchema } from './prompts';
 import { FIRST_RUN, cleanMedia, keepUntil, thisMonthsRun } from './media';
 import { vanName } from './vans';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
@@ -28,7 +28,7 @@ import { makePlayback, playsAsIs, probe } from './video';
 import { N_, fail, langOf, tr } from './i18n';
 import { cleanRequests, onCallOnce } from './once';
 import {
-  BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, purchaseFlags,
+  BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, normPlate, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
@@ -200,7 +200,54 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T, i: number) => Promis
   return out;
 }
 
-/* ---------- 1. identifyVehicle: which body class, so the app picks the photo frames ---------- */
+/* ---------- 1. identifyVehicle: which body class, so the app picks the photo frames; and the number plate ---------- */
+
+/** A plate as the AI wrote it, tidied: capitals, single spaces, at most 14 characters (the app's plate field). */
+function cleanPlate(v: unknown): string | null {
+  const p = str(v, 20)?.toUpperCase().replace(/\s+/g, ' ').replace(/\s*-\s*/g, '-');
+  const k = normPlate(p);
+  return p && k.length >= 2 && k.length <= 12 && p.length <= 14 ? p : null;
+}
+/** The plate read for the Add vehicle form. Not sure: the person is asked to check it against the van. */
+interface PlateRead { text: string; sure: boolean }
+
+/**
+ * The van's number plate from the type scan's photos (product owner, 2026-11-12: the photo that identifies the type
+ * fills in the plate too). The type scan finds the plate and reads it, but it sees each photo at about 2,000 image
+ * tokens, where a plate from a front corner is only a few dozen pixels high. So the plate is cut out of the full-size
+ * photo and read again: two reads that agree are sure. Otherwise a stronger model reads the crop; if it agrees with
+ * one of the two, that's sure too, else its reading (or the one there is) goes to the form marked not sure.
+ * Nothing is saved from here: the plate goes into the form's field, the person checks it and saves the van.
+ * A failure here never fails the type scan: the person types the plate as before.
+ */
+async function readPlate(tier: Tier, first: Record<string, unknown>, originals: Buffer[]): Promise<{ plate: PlateRead | null; usage: Usage; models: string[] }> {
+  let usage = noUsage();
+  const models: string[] = [];
+  const t1 = cleanPlate(first.plate);
+  const n = Math.round(Number(first.plateImage));
+  const box = n >= 1 && n <= originals.length ? normBox(first.plateBox) : null;
+  const unsure = (x: string | null) => (x ? { text: x, sure: false } : null);
+  if (!box) return { plate: unsure(t1), usage, models };
+  try {
+    const crop = await fit(await plateCrop(originals[n - 1], box), 1600, 1600);
+    const read = async (t: Tier) => {
+      const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), t, [{ image: crop }], platePrompt(), plateSchema, 200);
+      usage = addUsage(usage, a.usage);
+      models.push(a.model);
+      return a.obj.readable === false ? null : cleanPlate(a.obj.plate);
+    };
+    const same = (a: string | null, b: string | null) => !!a && !!b && normPlate(a) === normPlate(b);
+    const t2 = await read(tier);
+    if (same(t1, t2)) return { plate: { text: t2!, sure: true }, usage, models };
+    const t3 = await read(tier === 'quick' ? 'default' : 'complex');
+    if (same(t3, t2) || same(t3, t1)) return { plate: { text: t3!, sure: true }, usage, models };
+    return { plate: unsure(t3 || t2 || t1), usage, models };
+  } catch (e) {
+    logger.warn('Plate read failed, the type scan goes on', { message: String((e as Error)?.message || e) });
+    return { plate: unsure(t1), usage, models };
+  }
+}
+
 export const identifyVehicle = onCallOnce('identifyVehicle', opts(120), async (req) => {
   const who = await guard(req);
   const { uid, orgId, tier } = who;
@@ -214,19 +261,24 @@ export const identifyVehicle = onCallOnce('identifyVehicle', opts(120), async (r
   const paths = raw.map((p: unknown) => checkPath(p, `orgs/${orgId}/scans/${scanId}/`));
   await useAi(who, 'reads');
 
-  // The body shape doesn't need full detail: about 2,000 image tokens per photo keeps it fast and cheap.
-  const imgs = await Promise.all(paths.map(async (p: string) => fit(await download(p), 2000, 1568)));
+  // The body shape doesn't need full detail: about 2,000 image tokens per photo keeps it fast and cheap. The plate is
+  // read again from the full-size photo (readPlate).
+  const originals = await Promise.all(paths.map((p: string) => download(p)));
+  const imgs = await Promise.all(originals.map((b) => fit(b, 2000, 1568)));
   const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), tier, imgs.map((image) => ({ image })), identifyPrompt(imgs.length), identifySchema, 1500);
   const r = a.obj;
   const pick = <K extends string>(v: unknown, ok: K[], d: K): K => (ok.includes(v as K) ? (v as K) : d);
   const cls = CLASS_IDS.includes(r.class as string) ? (r.class as string) : null;
+  // No vehicle found: no plate either.
+  const pr = cls ? await readPlate(tier, r, originals) : { plate: null, usage: noUsage(), models: [] };
+  const usage = addUsage(a.usage, pr.usage);
   const alternatives = (Array.isArray(r.alternatives) ? r.alternatives : [])
     .filter((x: { class?: string }) => x && CLASS_IDS.includes(x.class as string) && x.class !== cls).slice(0, 2)
     .map((x: { class: string; confidence?: unknown }) => ({ cls: x.class, confidence: typeof x.confidence === 'number' ? clamp01(x.confidence) : null }));
   const issues = (Array.isArray(r.photoIssues) ? r.photoIssues : []).filter((x: unknown) => typeof x === 'string' && x.trim()).slice(0, 4).map((x: string) => x.trim().slice(0, 90));
   const scan = {
-    createdAt: Date.now(), createdBy: uid, tier, model: a.model, ms: a.usage.ms, photos: imgs.length,
-    inTok: a.usage.inTok, outTok: a.usage.outTok, cost: a.usage.cost,
+    createdAt: Date.now(), createdBy: uid, tier, model: a.model, ms: usage.ms, photos: imgs.length,
+    inTok: usage.inTok, outTok: usage.outTok, cost: usage.cost,
     predicted: cls, confidence: typeof r.confidence === 'number' ? clamp01(r.confidence) : null,
     vMake: str(r.make, 40), vModel: str(r.model, 40),
     roof: pick(r.roof, ['high', 'low', 'unknown'], 'unknown'),
@@ -234,11 +286,14 @@ export const identifyVehicle = onCallOnce('identifyVehicle', opts(120), async (r
     slideR: pick(r.slidingDoorRight, ['yes', 'no', 'unknown'], 'unknown'),
     rear: pick(r.rearDoors, ['barn', 'tailgate', 'roller', 'open_bed', 'unknown'], 'unknown'),
     verdict: null, actual: null, paths, reason: str(r.reason, 200), issues, stationId,
+    // The plate read (kept so its accuracy can be compared with the plate the van was saved with) and the models
+    // that read the crop. Time and cost above include those reads.
+    plate: pr.plate?.text ?? null, plateSure: pr.plate ? pr.plate.sure : null, plateModels: pr.models,
   };
   await db().doc(`orgs/${orgId}/scans/${scanId}`).set(scan);
   // AI speed and cost are for the app creator only (type scans are read only by them, see the rules).
   const shown = who.creator ? scan : { ...scan, ms: null, inTok: null, outTok: null, cost: null };
-  return { scan: { ...shown, id: scanId }, reason: scan.reason, issues, alternatives };
+  return { scan: { ...shown, id: scanId }, reason: scan.reason, issues, alternatives, plate: pr.plate };
 });
 
 /**

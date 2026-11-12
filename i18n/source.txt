@@ -1255,7 +1255,7 @@ a9afbb0e	Once a day	[components/routines.tsx]
 f7955906	One link for all your drivers. They pick their station when they sign up, and you approve them here.
 c0afb056	One link per person, sent to them. A link works once and expires after 24 hours.
 2d6a96cb	One of the vans was removed.
-2dd84770	One photo from a front corner works best. Add the side or the rear to pick up door details.
+324e1e0a	One photo from a front corner, with the number plate in view, works best. Add the side or the rear to pick up door details.
 ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives which van and whether drivers pick up vans themselves. Final word on damage. Allows or refuses a refuel with the wrong fuel card. Keeps the drivers' records; sees the station's history, videos and numbers, not the costs.
 602afbd3	Only a demo company can be removed this way.
 70aabbbb	Only drivers and fleet managers pick up vans.
@@ -1421,6 +1421,8 @@ b21bc692	Purchase price	[components/vanfacts.tsx]
 5177429b	Raised roof	[lib/frames.ts]
 a16c5bbe	Range	[components/dash.tsx, components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
+77b4c4b0	Read from the photo, but not clearly. Check each character against the van.
+bc743540	Read from the photo. Check it against the van.
 1de9b5aa	Read on	[components/vanfacts.tsx]
 1e43e14b	Read the document	[components/docscan.tsx]
 c3e106ea	Read the document ({n} page) || Read the document ({n} pages)
@@ -1856,6 +1858,7 @@ acd77d7c	The plan has ended
 e9b9251d	The plan has ended. You can look at and export the data until {date}.
 14ea5dbc	The plan is changed.
 9d5660b8	The plan isn't paid. Pay the open invoice or change the card below.
+81abdba7	The plate couldn't be read from the photos. Type it in.
 9b7b265f	The receipt	[buy/[id].tsx]
 f4ab4f15	The receipt couldn't be read: {issue}. Type the numbers from it.
 aebdea71	The receipt couldn't be read. Type the numbers from it.

@@ -45,6 +45,23 @@ export async function refCrop(buf: Buffer, box: Box): Promise<Buffer> {
     .jpeg({ quality: 86 }).toBuffer();
 }
 
+/**
+ * The number plate cut out of the full-size photo, for a second, closer read. The box comes from the type scan, which
+ * saw the photo at about 2,000 image tokens, so it's taken generously: at least twice the plate's width and a fifth of
+ * the photo's width, at least four times its height and a third of the crop's width. Scaled to 1,000 px wide, so the
+ * model gets the characters large (about 450 to 1,000 image tokens).
+ */
+export async function plateCrop(buf: Buffer, box: Box): Promise<Buffer> {
+  const { data, info } = await sharp(buf, { failOn: 'none' }).rotate().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height;
+  const bw = (box[2] - box[0]) * W, bh = (box[3] - box[1]) * H;
+  const cw = Math.min(W, Math.max(bw * 2, W * 0.2)), ch = Math.min(H, Math.max(bh * 4, cw / 3));
+  const cx = Math.max(0, Math.min(W - cw, box[0] * W + bw / 2 - cw / 2)), cy = Math.max(0, Math.min(H - ch, box[1] * H + bh / 2 - ch / 2));
+  const left = Math.round(cx), top = Math.round(cy);
+  const width = Math.max(1, Math.min(W - left, Math.round(cw))), height = Math.max(1, Math.min(H - top, Math.round(ch)));
+  return sharp(data).extract({ left, top, width, height }).resize({ width: 1000 }).jpeg({ quality: 92 }).toBuffer();
+}
+
 /** The whole photo, at most 1400 px wide, with a box drawn on it. Used to mark damage on a close-up. */
 export async function markBox(buf: Buffer, box: Box): Promise<Buffer> {
   const { data, info } = await sharp(buf, { failOn: 'none' }).rotate().resize({ width: 1400, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });

@@ -212,6 +212,9 @@ test('a phone camera photo, bigger than the app sends, is shrunk in the browser 
   // The emulator's stand-in for the AI answers "Test Van" (functions/src/claude.ts): the photo got there.
   await visible(page, 'Looks like a Test Van').waitFor({ timeout: 120_000 });
   assert.equal(await page.locator('text=/Couldn.t (upload|open) the photos/ >> visible=true').count(), 0);
+  // The plate read from the same photo is in the plate field, with a note to check it against the van.
+  await visible(page, 'Read from the photo. Check it against the van.').waitFor({ timeout: 10_000 });
+  assert.ok((await page.locator('input').evaluateAll((els) => els.map((e) => e.value))).includes('B-FR 1234'), 'the plate field filled from the photo');
   const scans = await db.collection(`orgs/${orgId}/scans`).get();
   assert.equal(scans.size, 1);
   assert.equal(scans.docs[0].data().photos, 1);
