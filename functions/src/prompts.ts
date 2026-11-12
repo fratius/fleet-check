@@ -21,6 +21,16 @@ export const VERDICTS = ['damage', 'dirt', 'reflection', 'no_damage', 'unclear']
 const nullable = (type: string, extra: object = {}) => ({ anyOf: [{ type, ...extra }, { type: 'null' }] });
 const tri = { type: 'string', enum: ['yes', 'no', 'unknown'] };
 
+/**
+ * How a plate is written, the same in both reads and the same way people type it into the app (the placeholder there
+ * is "B-DX 1234"), so the plate field gets one spelling.
+ */
+const PLATE_RULES = `Write the plate in capitals, the way it is usually written:
+  - German plates: the district letters, a hyphen, the letters, a space, the digits, and an E (electric) or H (historic) at the end if the plate has one: "B-DX 1234", "M-AB 123E". Keep Ä, Ö and Ü (TÜ, MÜ). The round stickers between the district and the letters aren't characters.
+  - Other countries: the characters as printed, with one space between the groups: "B 123 ABC" (Romania).
+  - Leave out the blue band with the country letters (D, RO, PL).
+  - Tell O from 0, I from 1, B from 8 and S from 5 by the country's format: on a German plate only letters come before the digits, and only digits after them (then E or H).`;
+
 /* ---------- 1. Which body class is this? ---------- */
 export function identifyPrompt(n: number) {
   return `You are the check-in step of a fleet damage-inspection app. From ${n === 1 ? 'this photo' : `these ${n} photos`} of one vehicle, choose the body class that decides which walk-around photo frames the driver gets. The exact model matters less than the body shape, its length and its doors.
@@ -37,12 +47,15 @@ Also report:
 - alternatives: up to 2 other classes that could also fit, each with a confidence.
 - photoIssues: short phrases for problems that made identification harder, such as "too dark", "vehicle cut off", "only the rear visible". Empty if none.
 - reason: one short sentence on what decided the class.
+- plate: the number plate of this vehicle, or null if no photo shows it. Only this vehicle's plate, never one of another vehicle in the background. ${PLATE_RULES}
+- plateImage: the number of the photo where that plate is clearest (1 for the first), or null.
+- plateBox: [x0, y0, x1, y1] around the whole plate in that photo, as fractions of the image width and height (0 to 1, origin top left), or null.
 If there is no vehicle in the photos, set class to null and say why in photoIssues.`;
 }
 export const identifySchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['class', 'confidence', 'make', 'model', 'roof', 'slidingDoorLeft', 'slidingDoorRight', 'rearDoors', 'alternatives', 'photoIssues', 'reason'],
+  required: ['class', 'confidence', 'make', 'model', 'roof', 'slidingDoorLeft', 'slidingDoorRight', 'rearDoors', 'alternatives', 'photoIssues', 'reason', 'plate', 'plateImage', 'plateBox'],
   properties: {
     class: nullable('string', { enum: CLASS_IDS }),
     confidence: { type: 'number' },
@@ -55,6 +68,29 @@ export const identifySchema = {
     alternatives: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['class', 'confidence'], properties: { class: { type: 'string', enum: CLASS_IDS }, confidence: { type: 'number' } } } },
     photoIssues: { type: 'array', items: { type: 'string' } },
     reason: { type: 'string' },
+    plate: nullable('string'),
+    plateImage: nullable('integer'),
+    plateBox: nullable('array', { items: { type: 'number' } }),
+  },
+};
+
+/* ---------- 1b. Read the plate again from a close crop of the full-size photo ---------- */
+export function platePrompt() {
+  return `This is a close crop around the number plate of a vehicle, cut from a photo taken when the vehicle is added to a fleet app. The plate becomes the vehicle's name in the app, so read every character exactly.
+If more than one plate shows, read the one nearest the middle of the crop.
+${PLATE_RULES}
+Set readable to false, and plate to null, if there is no plate or any character can't be read for sure; say why in issue (for example "plate cut off", "too blurred", "glare on the plate").
+confidence: 0 to 1, how sure you are of every character.`;
+}
+export const plateSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['readable', 'plate', 'confidence', 'issue'],
+  properties: {
+    readable: { type: 'boolean' },
+    plate: nullable('string'),
+    confidence: { type: 'number' },
+    issue: nullable('string'),
   },
 };
 

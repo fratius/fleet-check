@@ -159,6 +159,7 @@ Phone or web (Expo, React Native)        Firebase
 ```
 
 - The API key stays on the server (Secret Manager). The app calls three functions: `identifyVehicle`, `findDamage` and `checkSpot`.
+- `identifyVehicle` picks the body class from 1 to 3 photos (Add vehicle) and finds the number plate in them. The plate is then cut out of the full-size photo and read again; two reads that agree are sure, otherwise a stronger model (Sonnet; Opus on Balanced and Best) reads the crop too. The plate goes into the form's field with a note to check it against the van; nothing is saved until the person saves the van.
 - `findDamage` sends the walk-around photos in batches of up to 10, marks up to 8 spots and saves a cropped photo of each spot with a yellow box.
 - `checkSpot` sends that crop with the driver's close-ups (straight on, then a low angle) and stores the verdict, with the damage boxed on the close-up.
 - Prompts are in `functions/src/prompts.ts`. Models and prices are in `functions/src/models.ts` and `src/lib/types.ts`.

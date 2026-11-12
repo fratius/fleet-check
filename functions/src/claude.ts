@@ -138,11 +138,14 @@ function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
       items: [{ product: 'diesel', description: 'Diesel', quantity: 45.2, unit: 'l', unitPrice: 1.75, total: 79.1 }], total: 79.1, confidence: 0.9, issue: null }
     : 'odometerKm' in props
     ? { readable: true, odometerKm: 48213, unit: 'km', fuelPct: 62.5, batteryPct: null, rangeKm: 410, warnings: ['Tyre pressure'], confidence: 0.92, issue: null }
+    : 'plate' in props && 'readable' in props
+    ? { readable: true, plate: 'B-FR 1234', confidence: 0.95, issue: null }
     : 'spots' in props
     ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }
     : 'verdict' in props
       ? { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.', closeupBox: [0.3, 0.3, 0.6, 0.6] }
-      : { class: 'large_van', confidence: 0.9, make: 'Test', model: 'Van', roof: 'high', slidingDoorLeft: 'no', slidingDoorRight: 'yes', rearDoors: 'barn', alternatives: [], photoIssues: [], reason: 'Test answer.' };
+      : { class: 'large_van', confidence: 0.9, make: 'Test', model: 'Van', roof: 'high', slidingDoorLeft: 'no', slidingDoorRight: 'yes', rearDoors: 'barn', alternatives: [], photoIssues: [], reason: 'Test answer.',
+        plate: 'B-FR 1234', plateImage: 1, plateBox: [0.4, 0.62, 0.6, 0.7] };
   const inTok = 1500 * parts.length, outTok = 200;
   return { obj: obj as T, usage: { ms: 1234, calls: 1, images: parts.length, inTok, outTok, cost: round(costOf(tier, inTok, outTok)) }, model: MODELS[tier].id };
 }

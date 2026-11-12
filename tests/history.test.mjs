@@ -502,9 +502,18 @@ test('AI speed and cost: only the app creator sees them, in the functions\' answ
   assert.equal(id.scan.predicted, 'large_van');
   assert.equal(id.scan.cost, null);
   assert.equal(id.scan.ms, null);
+  // The plate from the photo for the form: found by the type scan, read again from a crop of the full-size photo.
+  // The stand-in for the AI reads the same plate both times, so it's sure; the third read isn't needed.
+  assert.deepEqual(id.plate, { text: 'B-FR 1234', sure: true });
   await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'scans', scanId)), 'permission-denied');
   await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'scans', scanId), { verdict: 'correct', actual: 'large_van' });
-  assert.ok((await getDoc(doc(cr.db, 'orgs', S.org, 'scans', scanId))).data().cost > 0);
+  const scanDoc = (await getDoc(doc(cr.db, 'orgs', S.org, 'scans', scanId))).data();
+  assert.ok(scanDoc.cost > 0);
+  assert.equal(scanDoc.plate, 'B-FR 1234');
+  assert.equal(scanDoc.plateSure, true);
+  assert.equal(scanDoc.plateModels.length, 1);
+  // The plate read is part of the scan's cost: the type read and one plate read.
+  assert.ok(scanDoc.inTok > 1500);
   // Checks saved before this change: the Deploy workflow moves their speed and cost out. Safe to run twice.
   const old = adminDb().collection(`orgs/${S.org}/checks`).doc();
   await old.set({ vehicleId: v1.id, vehicleName: v1.name, stationId: S.s1, createdAt: Date.now(), tier: 'default', model: 'm', status: 'reviewed',
