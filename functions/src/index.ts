@@ -34,7 +34,7 @@ import {
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
 import {
-  AI_DAY, AI_DAY_MESSAGE, BLOCKED, MAX_COMPANIES, PLAN_IDS, PLAN_VANS, ADDON_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, YEARLY_LAUNCH_OFF,
+  AI_DAY, AI_DAY_MESSAGE, ALL_PLANS, BLOCKED, EARLY_BIRD_END, EARLY_BIRD_OFF, EARLY_CENTS, MAX_COMPANIES, PLAN_IDS, PLAN_VANS, ADDON_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, YEARLY_LAUNCH_OFF, addonOn, earlyBird,
   allowedVans, berlinDay, newTrial, standing, type AiKind, type Billing, type Interval, type PlanId,
 } from './billing';
 import {
@@ -2705,7 +2705,7 @@ async function confirmedOnce(orgId: string, b: Billing) {
   const email = String(owner?.data()?.email || '');
   if (!owner || !email || !smtp || smtp === 'none') return;
   const lang = await langOf(owner.id);
-  const net = b.plan && PLAN_IDS.includes(b.plan as PlanId) ? netCents(b.plan as PlanId, b.interval || 'month', !!b.addon) : 0;
+  const net = b.plan && ALL_PLANS.includes(b.plan as PlanId) ? netCents(b.plan as PlanId, b.interval || 'month', !!b.addon, !!b.early) : 0;
   const mail = orderMail({
     lang, name: String(owner.data().name || '').split(' ')[0] || email.split('@')[0], company: String(org.name || ''), b,
     netCents: net, firstCents: first.firstNet ?? net, appUrl: await appUrl(), termsVersion: TERMS_VERSION,
@@ -2720,7 +2720,12 @@ export const billingInfo = onRequest({ timeoutSeconds: 10, memory: '256MiB', max
   const cfg = await payConfig();
   res.set('Cache-Control', 'public, max-age=60');
   const sw = await paySwitches();
-  res.json({ payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: sw.launchOffer, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS });
+  const early = earlyBird(Date.now());
+  // No yearly launch offer on top of the early-bird price (billing.ts).
+  res.json({
+    payments: cfg.mode === 'live' && cfg.publishableKey ? 'live' : cfg.mode ? 'test' : 'off', launchOffer: sw.launchOffer && !early, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, trialDays: TRIAL_DAYS,
+    earlyBird: early, earlyBirdEnd: EARLY_BIRD_END,
+  });
 });
 
 /**
@@ -2743,10 +2748,13 @@ export const billingConfig = onCall({ timeoutSeconds: 15 }, async (req) => {
   const { offer, why } = await offerFor(code, orgId);
   const on = cfg.mode === 'fake' || (!!cfg.mode && !!cfg.publishableKey);
   const sw = await paySwitches();
+  const early = earlyBird(Date.now());
   return {
     mode: on ? cfg.mode : null, publishableKey: on ? cfg.publishableKey || null : null,
     prices: PRICE_CENTS, planVans: PLAN_VANS, addonVans: ADDON_VANS, trialDays: TRIAL_DAYS,
-    launchOffer: sw.launchOffer, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
+    // The early-bird price of a new subscription made now (billing.ts); no yearly launch offer on top of it.
+    earlyBird: early, earlyBirdEnd: EARLY_BIRD_END, earlyBirdOff: EARLY_BIRD_OFF, earlyPrices: EARLY_CENTS,
+    launchOffer: sw.launchOffer && !early, yearly: sw.yearly, yearlyOff: YEARLY_LAUNCH_OFF, taxIncluded: false,
     offer: offer ? offerPublic(offer) : null, offerError: why ? { t: why } : null,
   };
 });
@@ -2794,7 +2802,7 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
   if (!plan) throw fail('invalid-argument', 'Choose a plan.');
   const interval: Interval = offer?.interval || (req.data?.interval === 'year' ? 'year' : 'month');
   if (interval === 'year' && !offer?.interval && !(await yearlyOn())) throw fail('failed-precondition', YEARLY_CLOSED);
-  const addon = req.data?.addon === true && plan !== 'premium';
+  const addon = addonOn(plan, req.data?.addon === true);
   roomFor(plan, addon, await countFleet(who.orgId));
   const address = readAddress(req.data?.address);
   if (!address) throw fail('invalid-argument', 'Enter the company\'s billing address.');
@@ -2837,23 +2845,26 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
       }
     }
 
-    // The discount: the sign-up link's, or the launch offer on a yearly plan (on the plan only, not on the add-on).
+    // The price: the early-bird one for every subscription made before EARLY_BIRD_END (billing.ts). The discount: the
+    // sign-up link's (off that price), or after the early bird the launch offer on a yearly plan (on the plan only,
+    // not on the add-on).
+    const early = earlyBird(now);
     let coupon: string | null = null;
-    const net = netCents(plan, interval, addon);
+    const net = netCents(plan, interval, addon, early);
     let discount = 0;
     if (offer && (offer.percentOff || offer.amountOff)) {
       const c = offerCoupon(offer);
       coupon = c.id;
       await pay.ensureCoupon(c.id, { percentOff: offer.percentOff, amountOff: offer.amountOff, months: c.months, name: `Fratius offer ${offer.code}` });
       discount = offer.percentOff ? Math.round((net * offer.percentOff) / 100) : Math.min(net, offer.amountOff || 0);
-    } else if (!offer && interval === 'year' && (await launchOfferOn())) {
+    } else if (!offer && !early && interval === 'year' && (await launchOfferOn())) {
       coupon = LAUNCH_COUPON;
       discount = Math.round((PRICE_CENTS[plan].year * YEARLY_LAUNCH_OFF) / 100);
     }
     const trial = trialFor(offer, interval, org, p, now);
     const trialEnd = trial && Math.floor(trial / 3600_000) * 3600_000;
     const firstNet = Math.max(0, net - discount);
-    const terms = keyOf({ plan, interval, addon, offer: offer?.code || null, coupon, trialEnd, reverse: reverse ?? null, country: address.country, vat });
+    const terms = keyOf({ plan, interval, addon, early, offer: offer?.code || null, coupon, trialEnd, reverse: reverse ?? null, country: address.country, vat });
 
     // Asked again (another card, a reload): the same subscription while the terms are the same, else a new one.
     if (cur && cur.next && cur.metadata.terms === terms && !['canceled', 'incomplete_expired'].includes(cur.status)) {
@@ -2880,14 +2891,14 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
     await pd.set({ attempt }, { merge: true });
     const input = {
       customer,
-      prices: [priceId(cfg, priceKey(plan, interval)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
+      prices: [priceId(cfg, priceKey(plan, interval, early)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
       trialEnd, coupon, tax: cfg.tax, reverse: !!reverse, metadata: { orgId: who.orgId, terms, ...(offer ? { offer: offer.code } : {}) },
     };
     const madeAt = Date.now();
     const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
     await pd.set({ subscriptionId: sub.id, offer: offer?.code || null, firstNet, startedAt: now, startedBy: who.uid }, { merge: true });
     const b = await saveBilling(who.orgId, sub, madeAt);
-    logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
+    logger.info('Payment started', { orgId: who.orgId, plan, interval, addon, early, offer: offer?.code || null, kind: sub.next?.kind || 'none' });
     if (b && !sub.next) await confirmedOnce(who.orgId, b);
     return { kind: sub.next?.kind || 'none', clientSecret: sub.next?.clientSecret || null, amount: sub.next?.amount || 0, trialEnd: sub.trialEnd, firstNet };
   } finally {
@@ -2947,23 +2958,25 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
   const interval: Interval = req.data?.interval === 'year' || req.data?.interval === 'month' ? req.data.interval : cur.interval;
   if (cur.interval === 'year' && interval === 'month') throw fail('failed-precondition', 'A yearly plan can\'t switch to monthly in the app. Write to info@fratius.com.');
   if (cur.interval === 'month' && interval === 'year' && !(await yearlyOn())) throw fail('failed-precondition', YEARLY_CLOSED);
-  const addon = (req.data?.addon === undefined ? cur.addon : req.data.addon === true) && plan !== 'premium';
+  const addon = addonOn(plan, req.data?.addon === undefined ? cur.addon : req.data.addon === true);
   if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub, readAt), next: null };
+  // A subscription from before EARLY_BIRD_END keeps the early-bird price on every plan it moves to (billing.ts).
+  const early = earlyBird(sub.created);
   roomFor(plan, addon, await countFleet(who.orgId));
 
   const main = sub.items.find((i) => { const r = readKey(i.key); return r && r.item !== 'addon'; });
   const extra = sub.items.find((i) => readKey(i.key)?.item === 'addon');
   if (!main) throw fail('failed-precondition', 'This plan can\'t be changed in the app. Write to info@fratius.com.');
   const changes: { id?: string; price?: string; deleted?: boolean }[] = [];
-  if (plan !== cur.plan || interval !== cur.interval) changes.push({ id: main.id, price: priceId(cfg, priceKey(plan, interval)) });
+  if (plan !== cur.plan || interval !== cur.interval) changes.push({ id: main.id, price: priceId(cfg, priceKey(plan, interval, early)) });
   if (addon && extra) { if (interval !== cur.interval) changes.push({ id: extra.id, price: priceId(cfg, priceKey('addon', interval)) }); }
   else if (addon) changes.push({ price: priceId(cfg, priceKey('addon', interval)) });
   else if (extra) changes.push({ id: extra.id, deleted: true });
-  const perMonth = (pl: PlanId, i: Interval, a: boolean) => netCents(pl, i, a) / (i === 'year' ? 12 : 1);
+  const perMonth = (pl: PlanId, i: Interval, a: boolean) => netCents(pl, i, a, early) / (i === 'year' ? 12 : 1);
   const up = interval !== cur.interval || perMonth(plan, interval, addon) > perMonth(cur.plan, cur.interval, cur.addon);
   const charge = up && sub.status !== 'trialing';
   // The launch offer when switching to yearly, unless the plan already has a discount (a sign-up link's stays).
-  const coupon = interval === 'year' && cur.interval === 'month' && !sub.coupons.length && (await launchOfferOn()) ? LAUNCH_COUPON : null;
+  const coupon = !early && interval === 'year' && cur.interval === 'month' && !sub.coupons.length && (await launchOfferOn()) ? LAUNCH_COUPON : null;
   const changedAt = Date.now();
   let next: Sub;
   try { next = await pay.changeItems(sub.id, changes, { charge, coupon }); } catch (e) {
@@ -2975,7 +2988,7 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
     throw e;
   }
   const b = await saveBilling(who.orgId, next, changedAt);
-  logger.info('Plan changed', { orgId: who.orgId, from: cur, to: { plan, interval, addon } });
+  logger.info('Plan changed', { orgId: who.orgId, from: cur, to: { plan, interval, addon }, early });
   // Only a charge made by this change can need the bank's confirmation (an older open invoice is the portal's).
   return { billing: b, next: charge && next.next?.kind === 'payment' ? next.next : null };
 });
@@ -3016,7 +3029,7 @@ export const saveOffer = onCallOnce('saveOffer', { timeoutSeconds: 15 }, async (
   } else {
     for (let i = 0; i < 5 && (!code || (await ref().get()).exists); i++) code = newOfferCode();
   }
-  const plan = PLAN_IDS.find((x) => x === d.plan) || null;
+  const plan = ALL_PLANS.find((x) => x === d.plan) || null;
   const interval: Interval | null = d.interval === 'month' || d.interval === 'year' ? d.interval : null;
   const percentOff = num(d.percentOff, 1, 100);
   const amountOff = percentOff ? null : num(d.amountOff, 1, 1_000_000);

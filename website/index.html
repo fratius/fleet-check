@@ -465,12 +465,34 @@ h1 .mark { position: relative; z-index: -1; }
 .price span { color: var(--ink2); font-size: 16px; }
 .price .then { flex-basis: 100%; }
 .plan .btn { width: 100%; }
-.plan.ai { background: transparent; border-style: dashed; border-color: var(--ink2); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Sign up, then Download: one line between the two bands, not two. */
+.paper-band + .dl { border-top: 0; }
+.price-box { display: grid; gap: 6px; align-content: start; }
+.was { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 26px; }
+.was s { font: 600 24px/1 var(--display); color: var(--ink2); font-variant-numeric: tabular-nums; text-decoration-thickness: 2px; }
+.per-van { font-size: 15px; font-weight: 600; }
+/* The early-bird offer: what it is, and the time left. */
+.early { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; align-items: center; margin: 0 0 20px; padding: 20px 24px; background: var(--marker); color: var(--on-marker); border: 2px solid var(--marker-edge); border-radius: var(--r); }
+.early[hidden] { display: none; }
+.early h3 { font-size: 34px; font-weight: 700; }
+.early p { margin-top: 6px; font-size: 17px; line-height: 1.4; max-width: 56ch; }
+.count { display: grid; grid-template-columns: repeat(4, minmax(64px, auto)); gap: 8px; text-align: center; }
+.count div { background: var(--paper); color: var(--ink); border: 2px solid var(--marker-edge); border-radius: var(--r); padding: 8px 6px 6px; }
+.count b { display: block; font: 700 38px/1 var(--display); font-variant-numeric: tabular-nums; }
+.count span { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; overflow-wrap: anywhere; }
+@media (max-width: 860px) { .early { grid-template-columns: minmax(0, 1fr); } .count { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .early { padding: 16px; } .early h3 { font-size: 28px; } .count b { font-size: 30px; } }
+/* The AI plan: one wide card under the plans. */
+.plan.ai { margin-top: 16px; background: transparent; border-style: dashed; border-color: var(--ink2); grid-template-rows: none; grid-template-columns: minmax(0, 1fr) auto; column-gap: 32px; row-gap: 8px; align-items: center; }
+.plan.ai > * { grid-column: 1; }
 .plan.ai .price b { font-size: 40px; line-height: 1; }
 .plan.ai p.desc { font-size: 15px; color: var(--ink2); }
+.plan.ai .btn { grid-column: 2; grid-row: 1 / span 4; width: auto; }
+@media (max-width: 760px) { .plan.ai { grid-template-columns: minmax(0, 1fr); row-gap: 14px; } .plan.ai .btn { grid-column: 1; grid-row: auto; width: 100%; } }
 @supports (grid-template-rows: subgrid) {
   .plans { row-gap: 16px; }
-  .plan { grid-row: span 5; grid-template-rows: subgrid; row-gap: 14px; }
+  .plans .plan { grid-row: span 5; grid-template-rows: subgrid; row-gap: 14px; }
 }
 .includes { margin-top: 32px; padding-top: 26px; border-top: 2px solid var(--ink); display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px 32px; }
 .includes h3 { font-size: 26px; font-weight: 600; }
@@ -948,21 +970,6 @@ h1 .mark { position: relative; z-index: -1; }
   </div>
 </section>
 
-<section class="sec dl" id="download">
-  <div class="wrap dl-grid">
-    <svg class="app-icon" viewBox="0 0 1024 1024" role="img" aria-label="Fratius app icon"><use href="#appicon"/></svg>
-    <div>
-      <div class="sec-head">
-        <p class="eyebrow">Download</p>
-        <h2>Get Fratius</h2>
-        <p class="sec-lede" id="dl-lede">The apps for iPhone and Android are on their way to the App Store and Google Play.</p>
-      </div>
-      <div class="stores" id="stores"></div>
-      <p class="note" id="webapp-note"></p>
-    </div>
-  </div>
-</section>
-
 <section class="sec" id="pricing">
   <div class="wrap">
     <div class="sec-head">
@@ -970,8 +977,10 @@ h1 .mark { position: relative; z-index: -1; }
       <h2>Pick a plan by the size of your fleet. Try it 30 days free.</h2>
       <p class="sec-lede">Every plan comes with every feature and as many stations as you run. The only difference is how many vans you have.</p>
     </div>
+    <div class="early" id="early" hidden></div>
     <div class="seg" id="billing-toggle" role="radiogroup" aria-label="Billing" hidden></div>
     <div class="plans" id="plans"></div>
+    <div id="ai-plan"></div>
     <div class="includes">
       <h3>Every plan includes</h3>
       <ul>
@@ -1008,6 +1017,21 @@ h1 .mark { position: relative; z-index: -1; }
     </ul>
     <p class="start-cta"><a class="btn btn-marker btn-lg" href="https://app.fratius.com/start" data-signup>Create your account</a></p>
     <p class="hint">Questions first? Write to <a href="mailto:info@fratius.com" translate="no">info@fratius.com</a>.</p>
+  </div>
+</section>
+
+<section class="sec dl" id="download">
+  <div class="wrap dl-grid">
+    <svg class="app-icon" viewBox="0 0 1024 1024" role="img" aria-label="Fratius app icon"><use href="#appicon"/></svg>
+    <div>
+      <div class="sec-head">
+        <p class="eyebrow">Download</p>
+        <h2>Get Fratius</h2>
+        <p class="sec-lede" id="dl-lede">The apps for iPhone and Android are on their way to the App Store and Google Play.</p>
+      </div>
+      <div class="stores" id="stores"></div>
+      <p class="note" id="webapp-note"></p>
+    </div>
   </div>
 </section>
 
@@ -1059,11 +1083,20 @@ h1 .mark { position: relative; z-index: -1; }
     priceNoteYear: N_('Prices per year, excluding VAT. Yearly plans are paid at sign-up, without the free days.'),
     addonNote: N_('Need a few more vans on Basic or Pro? Add 15 for €10 a month.'),
     cardNote: N_('You add a card at sign-up to verify your company. Nothing is charged during the 30 free days; cancel any time before.'),
+    /* price: the regular price a month; early: the early-bird price (60 % off). The same numbers are PRICE_CENTS and
+       EARLY_CENTS in functions/src/billing.ts and src/lib/billing.ts (what Stripe charges), PLAN_VANS in
+       functions/src/website.ts, and the price list in agb.html and terms.html: change all of them together. */
     plans: [
-      { id: 'basic', name: 'Basic', price: 40, vans: 50 }, // vans: also PLAN_VANS in functions/src/website.ts
-      { id: 'pro', name: 'Pro', price: 90, vans: 150 },
-      { id: 'premium', name: 'Premium', price: 200, vans: null }, // null = unlimited
+      { id: 'basic', name: 'Basic', price: 100, early: 40, vans: 50 },
+      { id: 'pro', name: 'Pro', price: 300, early: 120, vans: 150 },
+      { id: 'business', name: 'Business', price: 800, early: 320, vans: 400 },
+      { id: 'ultimate', name: 'Ultimate', price: 2000, early: 800, vans: 1000 },
     ],
+    /* The early-bird price, for sign-ups before `end` (EARLY_BIRD_END in the two billing.ts files: 1 April 2027,
+       00:00 in Germany). The server has the last word (/api/billing); the countdown runs to this moment and the offer
+       then leaves the page by itself. A real deadline: don't move it to keep the counter running. */
+    earlyBird: { end: Date.UTC(2027, 2, 31, 22, 0, 0), off: 60 },
+    earlyNote: N_('Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.'),
     aiPlan: { name: N_('AI damage detection'), text: N_('Automatic damage checks on every walk-around. Price to follow.') },
     stores: {
       appStore: 'https://apps.apple.com/app/id6829174647', // live since 6 Nov 2026 (Apple ID 6829174647)
@@ -1157,7 +1190,8 @@ h1 .mark { position: relative; z-index: -1; }
   // Every "Start" button opens sign-up with a card in the web app, in one step (product owner, 2026-11-08: no request
   // form, as little friction as possible). Whether yearly plans are offered, and the launch offer, are asked from the
   // server (/api/billing); until it answers, monthly only.
-  const pay = { launchOffer: true, yearlyOff: 30, yearly: false };
+  const pay = { launchOffer: false, yearlyOff: 30, yearly: false, earlyEnd: CONFIG.earlyBird.end };
+  const earlyOn = () => Date.now() < pay.earlyEnd;
   let interval = 'month';
   const signupUrl = (planId) => `${CONFIG.app.url}/start${planId ? `?plan=${encodeURIComponent(planId)}&interval=${interval}` : ''}`;
   document.querySelectorAll('[data-login]').forEach((a) => { a.href = CONFIG.app.url + '/'; });
@@ -1167,6 +1201,7 @@ h1 .mark { position: relative; z-index: -1; }
     pay.launchOffer = !!j.launchOffer;
     pay.yearlyOff = j.yearlyOff || 30;
     pay.yearly = j.yearly === true;
+    if (typeof j.earlyBirdEnd === 'number') pay.earlyEnd = j.earlyBirdEnd;
     if (!pay.yearly) interval = 'month';
     renderPlans();
   }).catch(() => {});
@@ -1176,23 +1211,33 @@ h1 .mark { position: relative; z-index: -1; }
     // Monthly or yearly: yearly plans only while the app creator offers them (they're paid at sign-up).
     const yearly = pay.yearly && interval === 'year';
     $('#billing-toggle').hidden = !pay.yearly;
-    $('#billing-toggle').innerHTML = [['month', t('Monthly')], ['year', pay.launchOffer ? t('Yearly: {n} % off the first year', { n: pay.yearlyOff }) : t('Yearly')]]
+    const early = earlyOn();
+    const launch = pay.launchOffer && !early;
+    $('#billing-toggle').innerHTML = [['month', t('Monthly')], ['year', launch ? t('Yearly: {n} % off the first year', { n: pay.yearlyOff }) : t('Yearly')]]
       .map(([k, label]) => `<button type="button" role="radio" aria-checked="${interval === k}" data-interval="${k}">${esc(label)}</button>`).join('');
+    renderEarly();
     $('#plans').innerHTML = CONFIG.plans.map((p) => {
-      const year = p.price * 12, first = pay.launchOffer ? Math.round(year * (100 - pay.yearlyOff) / 100) : year;
+      // What a new sign-up pays: the early-bird price while it runs, with the regular price crossed out above it.
+      const month = early ? p.early : p.price;
+      const year = month * 12, first = launch ? Math.round(year * (100 - pay.yearlyOff) / 100) : year;
+      const was = early
+        ? `<p class="was"><span class="sr">${esc(t('Regular price: {price}', { price: money(yearly ? p.price * 12 : p.price) }))}</span><s aria-hidden="true">${esc(money(yearly ? p.price * 12 : p.price))}</s><span class="pill solid">${esc(t('{n} % off', { n: CONFIG.earlyBird.off }))}</span></p>`
+        : '';
       const price = yearly
-        ? `<p class="price"><b>${esc(money(first))}</b><span>${esc(pay.launchOffer ? t('the first year') : t('a year'))}</span>${pay.launchOffer ? `<span class="then">${esc(t('then {price} a year', { price: money(year) }))}</span>` : ''}</p>`
-        : `<p class="price"><b>${esc(money(p.price))}</b><span>${esc(t('a month'))}</span></p>`;
-      const pill = yearly ? (pay.launchOffer ? t('{n} % off the first year', { n: pay.yearlyOff }) : t('Paid yearly')) : t('{n} days free', { n: CONFIG.trialDays });
+        ? `<p class="price"><b>${esc(money(first))}</b><span>${esc(launch ? t('the first year') : t('a year'))}</span>${launch ? `<span class="then">${esc(t('then {price} a year', { price: money(year) }))}</span>` : ''}</p>`
+        : `<p class="price"><b>${esc(money(month))}</b><span>${esc(t('a month'))}</span></p>`;
+      const perVan = p.vans ? `<p class="per-van">${esc(t('From {price} per van', { price: cents(month / p.vans) }))}</p>` : '';
+      const pill = yearly ? (launch ? t('{n} % off the first year', { n: pay.yearlyOff }) : t('Paid yearly')) : t('{n} days free', { n: CONFIG.trialDays });
       return `
       <article class="plan">
         <h3 translate="no">${esc(p.name)}</h3>
         <p class="limit">${esc(limitText(p))}<br><span class="muted">${esc(t('Unlimited drivers'))}</span></p>
-        ${price}
+        <div class="price-box">${was}${price}${perVan}</div>
         <p><span class="pill mk">${esc(pill)}</span></p>
         <a class="btn btn-marker" href="${esc(signupUrl(p.id))}" data-plan="${p.id}">${esc(t('Start with {plan}', { plan: p.name }))}</a>
       </article>`;
-    }).join('') + `
+    }).join('');
+    $('#ai-plan').innerHTML = `
       <article class="plan ai">
         <h3>${esc(t(CONFIG.aiPlan.name))}</h3>
         <p class="limit">${esc(t('Its own plan'))}</p>
@@ -1200,8 +1245,38 @@ h1 .mark { position: relative; z-index: -1; }
         <p class="desc">${esc(t(CONFIG.aiPlan.text))}</p>
         <a class="btn" href="mailto:info@fratius.com?subject=AI%20damage%20detection">${esc(t("Tell me when it's ready"))}</a>
       </article>`;
-    $('#price-note').textContent = [t(yearly ? CONFIG.priceNoteYear : CONFIG.priceNote), t(CONFIG.addonNote), !yearly ? t(CONFIG.cardNote) : ''].filter(Boolean).join(' ');
+    $('#price-note').textContent = [t(yearly ? CONFIG.priceNoteYear : CONFIG.priceNote), early ? t(CONFIG.earlyNote, { date: earlyDate() }) : '', t(CONFIG.addonNote), !yearly ? t(CONFIG.cardNote) : ''].filter(Boolean).join(' ');
   }
+
+  /* The early-bird offer above the plans, with the time left. It ends for everyone at the same moment (midnight in
+     Germany after the last day), so the date is written in German time. */
+  const earlyDate = () => new Date(pay.earlyEnd - 1).toLocaleDateString(loc(), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' });
+  const cents = (n) => new Intl.NumberFormat(loc(), { style: 'currency', currency: CONFIG.currency, currencyDisplay: 'narrowSymbol', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  const two = (n) => String(n).padStart(2, '0');
+  function renderEarly() {
+    const box = $('#early');
+    box.hidden = !earlyOn();
+    if (box.hidden) { box.innerHTML = ''; return; }
+    const low = Math.min(...CONFIG.plans.map((p) => p.early / p.vans));
+    box.innerHTML = `
+      <div>
+        <h3>${esc(t('Early bird: {n} % off every plan', { n: CONFIG.earlyBird.off }))}</h3>
+        <p>${esc(t('From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.', { price: cents(low), date: earlyDate() }))}</p>
+      </div>
+      <div class="count" role="timer" aria-label="${esc(t('Time left'))}">
+        ${[['d', t('days')], ['h', t('hours')], ['m', t('minutes')], ['s', t('seconds')]].map(([k, label]) => `<div><b data-count="${k}">00</b><span>${esc(label)}</span></div>`).join('')}
+      </div>`;
+    tick();
+  }
+  function tick() {
+    const left = pay.earlyEnd - Date.now();
+    // Over: the offer leaves the page and the plans show the regular prices.
+    if (left <= 0) { if (!$('#early').hidden) renderPlans(); return; }
+    const sec = Math.floor(left / 1000);
+    const v = { d: String(Math.floor(sec / 86400)), h: two(Math.floor(sec / 3600) % 24), m: two(Math.floor(sec / 60) % 60), s: two(sec % 60) };
+    $$('#early [data-count]').forEach((b) => { if (b.textContent !== v[b.dataset.count]) b.textContent = v[b.dataset.count]; });
+  }
+  setInterval(tick, 1000);
   $('#billing-toggle').addEventListener('click', (e) => {
     const b = e.target.closest('[data-interval]');
     if (!b || b.dataset.interval === interval) return;

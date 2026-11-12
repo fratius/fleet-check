@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Last ned testversjonen av Fratius for Android, og se hvordan du installerer den.",
  "Version {version} · {size} MB · {date}": "Versjon {version} · {size} MB · {date}",
  "Test version": "Testversjon",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "På Android kan du installere testversjonen eller bruke nettappen til appen er ute på Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "På Android kan du installere testversjonen eller bruke nettappen til appen er ute på Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Early bird-prisene gjelder for registreringer til og med {date}. Etter det betaler nye kunder vanlig pris.",
+ "Regular price: {price}": "Vanlig pris: {price}",
+ "From {price} per van": "Fra {price} per varebil",
+ "Early bird: {n} % off every plan": "Early bird: {n} % rabatt på alle planer",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Fra {price} per varebil per måned. Registrer deg senest {date} og behold prisen så lenge planen din løper.",
+ "Time left": "Tid igjen",
+ "days": "dager",
+ "hours": "timer",
+ "minutes": "minutter",
+ "seconds": "sekunder",
+ "{n} % off": "{n} % rabatt"
 }

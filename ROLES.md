@@ -85,7 +85,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
     use them, and approving a sign-up gives the same access.)
 - **New companies** are made by the server (`createCompany`): the person becomes its fleet owner, with a first
   station. Only the server writes `billing` and the accepted `terms` (the AGB and AVV version, `TERMS_VERSION` in
-  `functions/src/billing.ts` and `src/lib/billing.ts`, now `2026-11-08`); owners can't change them, nor when the
+  `functions/src/billing.ts` and `src/lib/billing.ts`, now `2026-11-12`: the price list of 12 November 2026); owners can't change them, nor when the
   company was made. One account creates up to 3 companies (demo companies don't count); the app creator is told about
   each new one. Companies made before 1 November 2026 were set up by hand: no trial, no limits.
 - **Payments (Stripe, on the web only; the store apps sell nothing).** Product owner, 2026-11-05: everyone adds a
@@ -96,10 +96,18 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
     the first station is "Main station"; the add-on is offered at the van limit). The website has no request form
     (product owner, 2026-11-08: as little friction as possible): every "Start" button opens this page. Before the
     button it says what is charged when (AGB § 2); the button says it too ("Start free, paid from {date}").
-  - Plans go by vans only; drivers and stations are unlimited. Basic €40 a month up to 50 vans, Pro €90 up to 150,
-    Premium €200 unlimited; the add-on of 15 more vans for €10 a month (€120 a year) on Basic and Pro, once; beyond
-    that, the next plan. Prices plus VAT. Yearly = 12 months, paid at sign-up with no trial; the launch offer takes 30 %
-    off the plan in the first year while the app creator leaves it on (Account tab). Yearly plans are offered only while
+  - Plans go by vans only; drivers and stations are unlimited (product owner, 2026-11-12). Regular prices a month:
+    Basic €100 up to 50 vans, Pro €300 up to 150, Business €800 up to 400, Ultimate €2,000 up to 1,000 (€2 a van on
+    a full plan); more than 1,000 vans by a sign-up link. **Early bird:** every company that signs up before 1 April
+    2027 (German time; `EARLY_BIRD_END`) pays 60 % less, €40 / €120 / €320 / €800 (€0.80 a van on a full plan), for
+    as long as its plan runs, also after a change of plan; a company that cancels and comes back later pays the
+    regular price. The early-bird prices are their own prices in Stripe, and a sign-up link's discount comes off them.
+    The website counts down to that moment and then shows the regular prices by itself; the price list in the terms
+    (AGB, Anlage 1) says the same. The add-on of 15 more vans for €10 a month (€120 a year) on Basic and Pro, once
+    (no early-bird price); beyond that, the next plan. Premium (unlimited vans, €200) was sold until 12 November
+    2026: a company on it keeps it until it changes plan, nobody can choose it any more. Prices plus VAT. Yearly =
+    12 months, paid at sign-up with no trial; the launch offer (30 % off the plan in the first year, the app
+    creator's switch in the Account tab) is not given on top of the early-bird price. Yearly plans are offered only while
     the app creator turns them on (Account tab; off at first, product owner 2026-11-10: pilots first, a yearly plan
     is invoiced at sign-up). Monthly plans: 30 days free.
   - The van limit: the server counts the vans in use (`fleetSize`, not retired ones) and the rules refuse another van

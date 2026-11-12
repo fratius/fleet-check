@@ -671,6 +671,8 @@ export interface Org {
     /** Billed through Stripe (functions/src/payments.ts); then the rest is Stripe's. */
     via?: 'stripe'; interval?: 'month' | 'year'; addon?: boolean; vans?: number | null; card?: boolean;
     periodEnd?: number | null; cancelAt?: number | null; offer?: string | null; testMode?: boolean;
+    /** On the early-bird price (the plan started before its end), and what Stripe charges per invoice before VAT and discounts. */
+    early?: boolean; net?: number | null;
   };
   /** Vans in use (not retired), counted by the server for the plan's limit. */
   fleetSize?: number;
@@ -793,13 +795,20 @@ export function aiWasRight(k: Check, i: number): boolean | null {
   return p.feedback ? p.feedback === 'right' : null;
 }
 
+/** The plans (src/lib/billing.ts); Premium isn't offered any more. */
+export type PlanName = 'basic' | 'pro' | 'business' | 'ultimate' | 'premium';
 /** What the sign-up page and the plan screen need (billingConfig, functions/src/index.ts). */
 export interface BillingConfig {
   /** null: payments are off. 'fake' only in the emulator tests. */
   mode: 'live' | 'test' | 'fake' | null;
   publishableKey: string | null;
-  prices: Record<'basic' | 'pro' | 'premium' | 'addon', Record<'month' | 'year', number>>;
-  planVans: Record<'basic' | 'pro' | 'premium', number | null>;
+  prices: Record<PlanName | 'addon', Record<'month' | 'year', number>>;
+  planVans: Record<PlanName, number | null>;
+  /** A plan started now gets the early-bird price (until earlyBirdEnd), earlyBirdOff % under the regular one. */
+  earlyBird: boolean;
+  earlyBirdEnd: number;
+  earlyBirdOff: number;
+  earlyPrices: Record<Exclude<PlanName, 'premium'>, Record<'month' | 'year', number>>;
   addonVans: number;
   trialDays: number;
   launchOffer: boolean;
@@ -820,12 +829,12 @@ export interface BillingStarted {
 }
 /** A sign-up link's terms, as the sign-up page shows them. */
 export interface OfferPublic {
-  code: string; plan: 'basic' | 'pro' | 'premium' | null; interval: 'month' | 'year' | null; trialDays: number;
+  code: string; plan: PlanName | null; interval: 'month' | 'year' | null; trialDays: number;
   percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null;
 }
 /** A sign-up link the app creator makes (offers/{code}; saveOffer). */
 export interface OfferInput {
-  note: string; plan: 'basic' | 'pro' | 'premium' | null; interval: 'month' | 'year' | null; trialDays: number;
+  note: string; plan: PlanName | null; interval: 'month' | 'year' | null; trialDays: number;
   percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null; maxUses: number;
 }
 export interface Offer extends OfferInput { code: string; uses: number; ended: boolean; createdAt: number; createdBy: string }

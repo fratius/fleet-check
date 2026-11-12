@@ -14,7 +14,7 @@ const SIGNUP_START = Date.UTC(2026, 10, 1);
  * The version of the terms (AGB) and data processing agreement (AVV) a new fleet owner accepts; null until they are
  * published on fratius.com. Set it together with TERMS_VERSION in functions/src/billing.ts.
  */
-export const TERMS_VERSION: string | null = '2026-11-08';
+export const TERMS_VERSION: string | null = '2026-11-12';
 export const TERMS_URL = 'https://fratius.com/agb';
 export const AVV_URL = 'https://fratius.com/avv';
 
@@ -38,25 +38,50 @@ export function standing(o: Org | null | undefined, now = Date.now()): { standin
 
 /* ---------- Plans and payment (the server: functions/src/billing.ts and payments.ts; change both) ---------- */
 
-export const PLAN_IDS = ['basic', 'pro', 'premium'] as const;
-export type PlanId = (typeof PLAN_IDS)[number];
+/** The plans a company can choose. */
+export const PLAN_IDS = ['basic', 'pro', 'business', 'ultimate'] as const;
+/** Every plan a company can be on: the ones offered, and Premium (sold until 12 November 2026; nobody can choose it any more). */
+export const ALL_PLANS = [...PLAN_IDS, 'premium'] as const;
+export type PlanId = (typeof ALL_PLANS)[number];
+export type OfferedPlan = (typeof PLAN_IDS)[number];
+export const offered = (p: unknown): OfferedPlan | undefined => PLAN_IDS.find((x) => x === p);
 export type Interval = 'month' | 'year';
-export const PLAN_NAME: Record<PlanId, string> = { basic: 'Basic', pro: 'Pro', premium: 'Premium' };
+export const PLAN_NAME: Record<PlanId, string> = { basic: 'Basic', pro: 'Pro', business: 'Business', ultimate: 'Ultimate', premium: 'Premium' };
 /** Plans go by vans only; drivers and stations are unlimited. null: unlimited. */
-export const PLAN_VANS: Record<PlanId, number | null> = { basic: 50, pro: 150, premium: null };
+export const PLAN_VANS: Record<PlanId, number | null> = { basic: 50, pro: 150, business: 400, ultimate: 1000, premium: null };
 export const ADDON_VANS = 15;
-/** Net prices in euro cents (VAT on top); a year is 12 months. The launch offer takes 30 % off the first year's plan. */
+/** The add-on of 15 more vans is for Basic and Pro. */
+export const ADDON_PLANS: readonly PlanId[] = ['basic', 'pro'];
+export const addonOn = (plan: PlanId, addon: boolean) => addon && ADDON_PLANS.includes(plan);
+/** Regular net prices in euro cents (VAT on top); a year is 12 months. */
 export const PRICE_CENTS: Record<PlanId | 'addon', Record<Interval, number>> = {
-  basic: { month: 4000, year: 48000 }, pro: { month: 9000, year: 108000 }, premium: { month: 20000, year: 240000 }, addon: { month: 1000, year: 12000 },
+  basic: { month: 10000, year: 120000 }, pro: { month: 30000, year: 360000 }, business: { month: 80000, year: 960000 }, ultimate: { month: 200000, year: 2400000 },
+  premium: { month: 20000, year: 240000 }, addon: { month: 1000, year: 12000 },
 };
+/**
+ * The early-bird price: 60 % off every plan for companies that sign up before EARLY_BIRD_END, for as long as their
+ * plan runs (also after a change of plan). Not on the add-on. The yearly launch offer isn't given on top of it.
+ */
+export const EARLY_BIRD_END = Date.UTC(2027, 2, 31, 22, 0, 0); // 1 April 2027, 00:00 in Germany
+export const EARLY_BIRD_OFF = 60;
+export const EARLY_CENTS: Record<OfferedPlan, Record<Interval, number>> = {
+  basic: { month: 4000, year: 48000 }, pro: { month: 12000, year: 144000 }, business: { month: 32000, year: 384000 }, ultimate: { month: 80000, year: 960000 },
+};
+/** Does a subscription that started at `started` have the early-bird price? */
+export const earlyBird = (started: number) => started < EARLY_BIRD_END;
+/** A plan's net price per invoice (without the add-on), at the early-bird price or the regular one. */
+export function planCents(plan: PlanId, interval: Interval, early: boolean): number {
+  const o = offered(plan);
+  return early && o ? EARLY_CENTS[o][interval] : PRICE_CENTS[plan][interval];
+}
 export const YEARLY_LAUNCH_OFF = 30;
 export function allowedVans(plan: string | null | undefined, addon: boolean): number | null {
-  const p = PLAN_IDS.find((x) => x === plan);
+  const p = ALL_PLANS.find((x) => x === plan);
   if (!p) return null;
   const n = PLAN_VANS[p];
-  return n == null ? null : n + (addon ? ADDON_VANS : 0);
+  return n == null ? null : n + (addonOn(p, addon) ? ADDON_VANS : 0);
 }
-export const netCents = (plan: PlanId, interval: Interval, addon: boolean) => PRICE_CENTS[plan][interval] + (addon && plan !== 'premium' ? PRICE_CENTS.addon[interval] : 0);
+export const netCents = (plan: PlanId, interval: Interval, addon: boolean, early: boolean) => planCents(plan, interval, early) + (addonOn(plan, addon) ? PRICE_CENTS.addon[interval] : 0);
 /** Where the company can't work until the owner adds a card or a plan (only while payments are on). */
 export const BLOCKED: readonly Standing[] = ['incomplete', 'trial_over', 'canceled', 'unpaid', 'paused'];
 
@@ -104,7 +129,7 @@ function readIntent(): SignupIntent {
     // The website's buttons: /sign-in?mode=up&plan=pro (free trial without a card), or /start?plan=pro&interval=year
     // and the app creator's sign-up links /start?offer=CODE (with a card, payments.ts).
     if (q.get('mode') === 'up' || window.location.pathname.replace(/\/+$/, '') === '/start') {
-      const plan = ['basic', 'pro', 'premium'].find((p) => p === q.get('plan')) || null;
+      const plan = offered(q.get('plan')) || null;
       const offer = (q.get('offer') || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16) || null;
       const it: SignupIntent = { signup: true, plan, interval: q.get('interval') === 'year' ? 'year' : 'month', offer };
       try { window.sessionStorage.setItem('fc.signup', JSON.stringify(it)); } catch { /* private mode */ }

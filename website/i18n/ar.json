@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "نزّل النسخة التجريبية من Fratius لنظام Android وتعرّف على طريقة تثبيتها.",
  "Version {version} · {size} MB · {date}": "الإصدار {version} · {size} ميغابايت · {date}",
  "Test version": "نسخة تجريبية",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "على Android، ثبّت النسخة التجريبية أو استخدم تطبيق الويب إلى أن يتوفر التطبيق على Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "على Android، ثبّت النسخة التجريبية أو استخدم تطبيق الويب إلى أن يتوفر التطبيق على Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "أسعار التسجيل المبكر تسري على التسجيلات حتى {date}. بعد ذلك يدفع المشتركون الجدد الأسعار العادية.",
+ "Regular price: {price}": "السعر العادي: {price}",
+ "From {price} per van": "ابتداءً من {price} لكل فان",
+ "Early bird: {n} % off every plan": "التسجيل المبكر: خصم {n}% على كل باقة",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "ابتداءً من {price} لكل فان شهريًا. سجّل حتى {date} واحتفظ بهذا السعر ما دامت باقتك سارية.",
+ "Time left": "الوقت المتبقي",
+ "days": "أيام",
+ "hours": "ساعات",
+ "minutes": "دقائق",
+ "seconds": "ثوانٍ",
+ "{n} % off": "خصم {n}%"
 }

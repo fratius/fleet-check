@@ -1,5 +1,6 @@
 // Sets up payments in Stripe for Fratius, from the keys in GitHub (run by the Deploy workflow; safe to run again):
-//   products and prices (by lookup key, from PRICE_CENTS in src/billing.ts), the yearly launch coupon, tax (Stripe Tax
+//   products and prices (by lookup key, from PRICE_CENTS and the early-bird EARLY_CENTS in src/billing.ts), the yearly
+//   launch coupon, tax (Stripe Tax
 //   if it's on, else 19 % German VAT), the customer portal, the web app's domains (Google Pay, Apple Pay), and the
 //   webhook that tells the functions about subscriptions and invoices.
 // What it made goes to platform/stripe in Firestore (no secrets), and the mode and publishable key to config/payments
@@ -15,8 +16,8 @@ const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const Stripe = require('stripe');
 
-const { PLAN_IDS, PLAN_VANS, ADDON_VANS, PRICE_CENTS, YEARLY_LAUNCH_OFF } = require('../lib/billing');
-const { STRIPE_API, LAUNCH_COUPON, priceKey } = require('../lib/payments');
+const { ALL_PLANS, PLAN_IDS, PLAN_VANS, ADDON_VANS, PRICE_CENTS, EARLY_CENTS, EARLY_BIRD_END, YEARLY_LAUNCH_OFF } = require('../lib/billing');
+const { STRIPE_API, LAUNCH_COUPON, priceKey, hasEarly } = require('../lib/payments');
 
 const project = process.env.PROJECT || process.env.GCLOUD_PROJECT;
 const key = String(process.env.STRIPE_SECRET_KEY || '').trim();
@@ -30,10 +31,13 @@ const idOf = (x) => (typeof x === 'string' ? x : x && x.id) || '';
 const missing = (e) => e && (e.code === 'resource_missing' || e.statusCode === 404);
 const euro = (c) => `€${(c / 100).toFixed(2).replace(/\.00$/, '')}`;
 
-const NAMES = { basic: 'Fratius Basic', pro: 'Fratius Pro', premium: 'Fratius Premium', addon: 'Fratius add-on: 15 more vans' };
+// Premium isn't offered any more (billing.ts): its product and prices stay for the companies and sign-up links on it.
+const NAMES = { basic: 'Fratius Basic', pro: 'Fratius Pro', business: 'Fratius Business', ultimate: 'Fratius Ultimate', premium: 'Fratius Premium', addon: 'Fratius add-on: 15 more vans' };
 const DESCRIPTION = {
   basic: `Up to ${PLAN_VANS.basic} vans, unlimited drivers and stations`,
   pro: `Up to ${PLAN_VANS.pro} vans, unlimited drivers and stations`,
+  business: `Up to ${PLAN_VANS.business} vans, unlimited drivers and stations`,
+  ultimate: `Up to ${PLAN_VANS.ultimate} vans, unlimited drivers and stations`,
   premium: 'Unlimited vans, drivers and stations',
   addon: `${ADDON_VANS} more vans on Basic or Pro`,
 };
@@ -81,9 +85,12 @@ const EVENTS = [
   }
 
   // 1. Products and prices. A price that changed in the code gets a new Stripe price with the same lookup key;
-  //    companies already paying keep the price they signed up with.
-  const items = [...PLAN_IDS, 'addon'];
-  const keys = items.flatMap((i) => ['month', 'year'].map((iv) => priceKey(i, iv)));
+  //    companies already paying keep the price they signed up with. Each plan on offer has two prices per interval:
+  //    the regular one and the early-bird one (lookup key ..._early), which the functions use for subscriptions
+  //    started before EARLY_BIRD_END.
+  const items = [...ALL_PLANS, 'addon'];
+  const tiers = (i) => (hasEarly(i) ? [false, true] : [false]);
+  const keys = items.flatMap((i) => ['month', 'year'].flatMap((iv) => tiers(i).map((early) => priceKey(i, iv, early))));
   const have = (await stripe.prices.list({ lookup_keys: keys, active: true, limit: 100 })).data;
   const prices = {};
   const made = [];
@@ -99,15 +106,15 @@ const EVENTS = [
     } else if (!product.active || product.name !== want.name || product.description !== want.description) {
       await stripe.products.update(productId, { ...want, active: true });
     }
-    for (const interval of ['month', 'year']) {
-      const lk = priceKey(item, interval);
-      const cents = PRICE_CENTS[item][interval];
+    for (const interval of ['month', 'year']) for (const early of tiers(item)) {
+      const lk = priceKey(item, interval, early);
+      const cents = early ? EARLY_CENTS[item][interval] : PRICE_CENTS[item][interval];
       const p = have.find((x) => x.lookup_key === lk);
       if (p && p.unit_amount === cents && p.currency === 'eur' && p.recurring && p.recurring.interval === interval
         && p.tax_behavior === 'exclusive' && idOf(p.product) === productId) { prices[lk] = p.id; continue; }
       const np = await stripe.prices.create({
         product: productId, currency: 'eur', unit_amount: cents, recurring: { interval }, tax_behavior: 'exclusive',
-        lookup_key: lk, transfer_lookup_key: true, nickname: `${NAMES[item]}, ${interval === 'year' ? 'yearly' : 'monthly'}`, metadata: { fratius: '1' },
+        lookup_key: lk, transfer_lookup_key: true, nickname: `${NAMES[item]}, ${interval === 'year' ? 'yearly' : 'monthly'}${early ? ', early bird' : ''}`, metadata: { fratius: '1', ...(early ? { early: '1' } : {}) },
       });
       if (p) await stripe.prices.update(p.id, { active: false }).catch(() => {});
       prices[lk] = np.id;
@@ -121,7 +128,7 @@ const EVENTS = [
     // On the plan only, not on the add-on (AGB, price list).
     await stripe.coupons.create({
       id: LAUNCH_COUPON, percent_off: YEARLY_LAUNCH_OFF, duration: 'once', name: `Launch offer: ${YEARLY_LAUNCH_OFF} % off the first year`,
-      applies_to: { products: PLAN_IDS.map((p) => `fratius_${p}`) },
+      applies_to: { products: ALL_PLANS.map((p) => `fratius_${p}`) },
     });
     made.push(`coupon ${LAUNCH_COUPON}`);
   }
@@ -210,8 +217,10 @@ const EVENTS = [
     `### Payments (${mode === 'live' ? 'live' : 'test mode'})`,
     `Stripe account: ${name}. Tax: ${tax.mode === 'automatic' ? 'Stripe Tax' : '19 % German VAT'}. Yearly plans: ${yearly ? 'on' : 'off'}. Webhook: ${url}`,
     '',
-    '| Plan | Monthly | Yearly |', '|---|---|---|',
-    ...items.map((i) => `| ${NAMES[i]} | ${euro(PRICE_CENTS[i].month)} | ${euro(PRICE_CENTS[i].year)} |`),
+    `Early-bird prices for sign-ups ${now < EARLY_BIRD_END ? 'until' : 'ended'} ${new Date(EARLY_BIRD_END - 1).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' })}.`,
+    '',
+    '| Plan | Monthly | Yearly | Early bird, monthly | Early bird, yearly |', '|---|---|---|---|---|',
+    ...items.map((i) => `| ${NAMES[i]}${PLAN_IDS.includes(i) || i === 'addon' ? '' : ' (not offered any more)'} | ${euro(PRICE_CENTS[i].month)} | ${euro(PRICE_CENTS[i].year)} | ${hasEarly(i) ? euro(EARLY_CENTS[i].month) : ''} | ${hasEarly(i) ? euro(EARLY_CENTS[i].year) : ''} |`),
   ]);
 })().catch((e) => {
   // Stripe refused or didn't answer: what was set up before stays as it was, and the rest of Deploy goes on.

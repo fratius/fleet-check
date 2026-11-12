@@ -5,7 +5,7 @@ import { CardForm, cardFormSupported, type CardApi } from '@/components/cardform
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, F, Field, Notice, Segmented, T, hs, useColors } from '@/components/ui';
 import {
-  PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, euro, netCents, signupDone, standing, type Interval, type PlanId,
+  PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, euro, netCents, offered, planCents, signupDone, standing, type Interval, type PlanId,
 } from '@/lib/billing';
 import { fb } from '@/lib/firebase';
 import { loc, t, tp } from '@/lib/i18n';
@@ -41,7 +41,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [plan, setPlan] = useState<PlanId>(PLAN_IDS.find((p) => p === wantPlan) || 'basic');
+  const [plan, setPlan] = useState<PlanId>(offered(wantPlan) || 'basic');
   const [interval, setInterval] = useState<Interval>(wantInterval === 'year' ? 'year' : 'month');
   const [vatId, setVatId] = useState('');
   const [vatOpen, setVatOpen] = useState(false);
@@ -93,8 +93,10 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
     if (st && (st.standing === 'trial' || st.standing === 'trial_over')) trialEnd = (st.trialEnd || 0) > now + 3600_000 ? st.trialEnd : null;
     else trialEnd = now + (cfg?.trialDays || TRIAL_DAYS) * DAY;
   }
-  const net = netCents(p, iv, withAddon);
-  const launch = !offer && iv === 'year' && !!cfg?.launchOffer;
+  // The early-bird price of a plan started now (the server decides: billingConfig); no yearly launch offer on top.
+  const early = !!cfg?.earlyBird;
+  const net = netCents(p, iv, withAddon, early);
+  const launch = !offer && !early && iv === 'year' && !!cfg?.launchOffer;
   const discount = offer?.percentOff ? Math.round((net * offer.percentOff) / 100) : offer?.amountOff ? Math.min(net, offer.amountOff) : launch ? Math.round((PRICE_CENTS[p].year * (cfg?.yearlyOff || 30)) / 100) : 0;
   const first = Math.max(0, net - discount);
   const kind: 'setup' | 'payment' = trialEnd || first === 0 ? 'setup' : 'payment';
@@ -183,7 +185,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   if (!cfg.mode || !cfg.publishableKey && cfg.mode !== 'fake') return <Notice text={t('Payments aren\'t set up yet. Write to info@fratius.com.')} />;
 
   const priceLine = (id: PlanId) => {
-    const full = PRICE_CENTS[id][iv];
+    const full = planCents(id, iv, early);
     if (iv === 'year' && launch) return t('{price} the first year, then {full} a year', { price: euro(Math.round(full * (1 - (cfg.yearlyOff || 30) / 100)), L), full: euro(full, L) });
     return iv === 'year' ? t('{price} a year', { price: euro(full, L) }) : t('{price} a month', { price: euro(full, L) });
   };
@@ -229,10 +231,14 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
                 <Text style={{ fontFamily: F.cond, fontSize: hs(22), color: c.ink }}>{PLAN_NAME[id]}</Text>
                 <T v="hint">{vansLine(id)} · {t('unlimited drivers and stations')}</T>
               </View>
-              <T v="medium">{priceLine(id)}</T>
+              <View style={{ alignItems: 'flex-end' }}>
+                {early && offered(id) ? <Text style={{ fontFamily: F.body, fontSize: 14, color: c.ink2, textDecorationLine: 'line-through' }}>{euro(PRICE_CENTS[id][iv], L)}</Text> : null}
+                <T v="medium">{priceLine(id)}</T>
+              </View>
             </Pressable>
           );
         })}
+        {early && offered(p) ? <T v="hint">{t('Early-bird price: {n} % off for sign-ups until {date}. It stays yours for as long as your plan runs.', { n: cfg.earlyBirdOff, date: new Date(cfg.earlyBirdEnd - 1).toLocaleDateString(L, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }) })}</T> : null}
         <T v="small">{t('Prices plus VAT.')}</T>
       </Card>
 

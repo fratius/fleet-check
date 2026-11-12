@@ -18,31 +18,69 @@ import { N_ } from './i18n';
  */
 export const TRIAL_DAYS = 30;
 export const SIGNUP_START = Date.UTC(2026, 10, 1); // 1 November 2026
-export const PLAN_IDS = ['basic', 'pro', 'premium'] as const;
-export type PlanId = (typeof PLAN_IDS)[number];
+/** The plans a company can choose (product owner, 2026-11-12). */
+export const PLAN_IDS = ['basic', 'pro', 'business', 'ultimate'] as const;
+/**
+ * Every plan a company can be on: the ones offered, and Premium (unlimited vans, EUR 200 a month), sold until
+ * 12 November 2026. A company on it keeps it at its price until it changes plan; nobody can choose it any more.
+ */
+export const ALL_PLANS = [...PLAN_IDS, 'premium'] as const;
+export type PlanId = (typeof ALL_PLANS)[number];
+export type OfferedPlan = (typeof PLAN_IDS)[number];
+export const offered = (p: unknown): OfferedPlan | undefined => PLAN_IDS.find((x) => x === p);
 export type Interval = 'month' | 'year';
 /** Plans go by vans only; drivers and stations are unlimited (product owner, 2026-11-05). null: unlimited. */
-export const PLAN_VANS: Record<PlanId, number | null> = { basic: 50, pro: 150, premium: null };
+export const PLAN_VANS: Record<PlanId, number | null> = { basic: 50, pro: 150, business: 400, ultimate: 1000, premium: null };
 /** The add-on: 15 more vans for EUR 10 a month, once, on Basic and Pro; beyond that, the next plan. */
 export const ADDON_VANS = 15;
+export const ADDON_PLANS: readonly PlanId[] = ['basic', 'pro'];
+export const addonOn = (plan: PlanId, addon: boolean) => addon && ADDON_PLANS.includes(plan);
 /**
- * Net prices in euro cents (VAT comes on top). A year is 12 months; the launch offer takes YEARLY_LAUNCH_OFF % off the
- * first year, with no free trial, while the app creator leaves it on (platform/billing.launchOffer). Change a price
+ * Regular net prices in euro cents (VAT comes on top): EUR 2 a van on a full plan. A year is 12 months. Change a price
  * here and Deploy makes the new one in Stripe (functions/scripts/stripe-setup.cjs); companies already paying keep theirs.
  */
 export const PRICE_CENTS: Record<PlanId | 'addon', Record<Interval, number>> = {
-  basic: { month: 4000, year: 48000 },
-  pro: { month: 9000, year: 108000 },
+  basic: { month: 10000, year: 120000 },
+  pro: { month: 30000, year: 360000 },
+  business: { month: 80000, year: 960000 },
+  ultimate: { month: 200000, year: 2400000 },
   premium: { month: 20000, year: 240000 },
   addon: { month: 1000, year: 12000 },
 };
+/**
+ * The early-bird price (product owner, 2026-11-12): 60 % off the regular price of every plan, EUR 0.80 a van on a
+ * full plan, for every company that signs up before EARLY_BIRD_END. It is the plan's price for as long as that
+ * subscription runs, also after a change of plan; a company that cancels and comes back later pays the regular price.
+ * Its own prices in Stripe (lookup key ..._early), not a coupon: a sign-up link's discount comes off this price.
+ * Not on the add-on. The website counts down to the same moment (CONFIG.earlyBird in website/index.html) and the
+ * price list in the terms names it (website/agb.html, terms.html): change all of them together.
+ */
+export const EARLY_BIRD_END = Date.UTC(2027, 2, 31, 22, 0, 0); // 1 April 2027, 00:00 in Germany
+export const EARLY_BIRD_OFF = 60;
+export const EARLY_CENTS: Record<OfferedPlan, Record<Interval, number>> = {
+  basic: { month: 4000, year: 48000 },
+  pro: { month: 12000, year: 144000 },
+  business: { month: 32000, year: 384000 },
+  ultimate: { month: 80000, year: 960000 },
+};
+/** Does a subscription that started at `started` have the early-bird price? */
+export const earlyBird = (started: number) => started < EARLY_BIRD_END;
+/** A plan's net price per invoice (without the add-on), at the early-bird price or the regular one. */
+export function planCents(plan: PlanId, interval: Interval, early: boolean): number {
+  const o = offered(plan);
+  return early && o ? EARLY_CENTS[o][interval] : PRICE_CENTS[plan][interval];
+}
+/**
+ * The yearly launch offer (30 % off the first year) is not given on top of the early-bird price; after the early
+ * bird it is the app creator's switch again (platform/billing.launchOffer).
+ */
 export const YEARLY_LAUNCH_OFF = 30;
 /** How many vans a plan allows (null: unlimited). */
 export function allowedVans(plan: string | null | undefined, addon: boolean): number | null {
-  const p = PLAN_IDS.find((x) => x === plan);
+  const p = ALL_PLANS.find((x) => x === plan);
   if (!p) return null;
   const n = PLAN_VANS[p];
-  return n == null ? null : n + (addon ? ADDON_VANS : 0);
+  return n == null ? null : n + (addonOn(p, addon) ? ADDON_VANS : 0);
 }
 /** How much AI a trial or demo company gets per day (German time): damage checks, and other photo readings. */
 export const AI_DAY = { checks: 20, reads: 100 } as const;
@@ -57,7 +95,7 @@ export const MAX_COMPANIES = 3;
  * The version of the terms (AGB) and data processing agreement (AVV) people accept when they create a company; null
  * until they are published. Set it together with TERMS_VERSION in src/lib/billing.ts.
  */
-export const TERMS_VERSION: string | null = '2026-11-08';
+export const TERMS_VERSION: string | null = '2026-11-12';
 
 export type BillingStatus = 'incomplete' | 'trialing' | 'active' | 'past_due' | 'unpaid' | 'paused' | 'canceled' | 'comped';
 export interface Billing {
@@ -82,6 +120,10 @@ export interface Billing {
   cancelAt?: number | null;
   /** The sign-up link (offer) used, if any. */
   offer?: string | null;
+  /** On the early-bird price (the subscription started before EARLY_BIRD_END). */
+  early?: boolean;
+  /** What Stripe charges per invoice for the plan and the add-on, in cents before VAT and discounts (the prices the company signed up at). */
+  net?: number | null;
   /** Made with Stripe's test keys: no real money. */
   testMode?: boolean;
   updatedAt?: number;

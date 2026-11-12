@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 
-import { PLAN_IDS, PLAN_VANS, PRICE_CENTS, allowedVans, type Billing, type BillingStatus, type Interval, type PlanId } from './billing';
+import { ALL_PLANS, PLAN_VANS, PRICE_CENTS, addonOn, allowedVans, earlyBird, planCents, type Billing, type BillingStatus, type Interval, type PlanId } from './billing';
 import { N_, tr } from './i18n';
 
 /**
@@ -17,6 +17,8 @@ import { N_, tr } from './i18n';
  *   yearly    no trial, paid at sign-up (the first invoice's PaymentIntent); the launch offer takes 30 % off the first
  *             year while the app creator leaves it on.
  *   offers    sign-up links the app creator makes for one DSP (offers/{code}): trial days, a discount, a fixed plan.
+ *   early     the early-bird price (billing.ts): every subscription started before EARLY_BIRD_END is on the plans'
+ *             early prices (their own Stripe prices), also after a change of plan. No yearly launch offer on top.
  *
  * Stripe is the source of truth: after every step and every webhook the server reads the subscription back and
  * writes orgs/{org}.billing from it (billingOf below). The Stripe ids sit in payments/{org}, server only.
@@ -28,13 +30,17 @@ import { N_, tr } from './i18n';
  */
 
 export const STRIPE_API = '2026-10-28.endive' as const;
-export const LAUNCH_COUPON = 'fratius_yearly_launch_30';
+// _v2: for every plan on offer since 12 November 2026 (a coupon's products can't be changed once it's made).
+export const LAUNCH_COUPON = 'fratius_yearly_launch_30_v2';
 export type Item = PlanId | 'addon';
-export const priceKey = (item: Item, interval: Interval) => `fratius_${item === 'addon' ? 'addon15' : item}_${interval}`;
-export function readKey(key: string | null | undefined): { item: Item; interval: Interval } | null {
-  const m = /^fratius_(basic|pro|premium|addon15)_(month|year)$/.exec(String(key || ''));
+/** Plans that have an early-bird price in Stripe (not Premium, not the add-on). */
+export const hasEarly = (item: Item) => item !== 'addon' && item !== 'premium';
+/** A price's lookup key; `early`: the plan's early-bird price (the regular one where there is none). */
+export const priceKey = (item: Item, interval: Interval, early = false) => `fratius_${item === 'addon' ? 'addon15' : item}_${interval}${early && hasEarly(item) ? '_early' : ''}`;
+export function readKey(key: string | null | undefined): { item: Item; interval: Interval; early: boolean } | null {
+  const m = /^fratius_(basic|pro|business|ultimate|premium|addon15)_(month|year)(_early)?$/.exec(String(key || ''));
   if (!m) return null;
-  return { item: m[1] === 'addon15' ? 'addon' : (m[1] as PlanId), interval: m[2] as Interval };
+  return { item: m[1] === 'addon15' ? 'addon' : (m[1] as PlanId), interval: m[2] as Interval, early: !!m[3] };
 }
 export const TEST_KEY = 'not-used-in-tests';
 
@@ -91,7 +97,8 @@ export interface Sub {
   periodEnd: number | null;
   cancelAt: number | null;
   card: boolean;
-  items: { id: string; key: string | null; price: string }[];
+  /** cents: the price's amount per invoice, before VAT. */
+  items: { id: string; key: string | null; price: string; cents?: number | null }[];
   metadata: Record<string, string>;
   coupons: string[];
   /** What the browser confirms with Stripe.js: the card for a trial (setup), or a payment. */
@@ -155,7 +162,7 @@ function fromStripe(s: Stripe.Subscription): Sub {
     // still on the old one must keep their plan.
     items: s.items.data.map((i) => {
       const product = idOf(i.price.product as string);
-      return { id: i.id, key: product.startsWith('fratius_') && i.price.recurring ? `${product}_${i.price.recurring.interval}` : i.price.lookup_key, price: i.price.id };
+      return { id: i.id, key: product.startsWith('fratius_') && i.price.recurring ? `${product}_${i.price.recurring.interval}` : i.price.lookup_key, price: i.price.id, cents: i.price.unit_amount };
     }),
     metadata: { ...(s.metadata || {}) },
     coupons: (s.discounts || []).map((d) => (typeof d === 'object' ? idOf(d.source?.coupon) : '')).filter(Boolean),
@@ -263,6 +270,9 @@ function eventOf(e: Stripe.Event): PayEvent {
   return { id: e.id, type: e.type, live: e.livemode, subscription, customer };
 }
 
+/** The fake Stripe's prices are the lookup keys: what one costs. */
+const fakeCents = (k: string) => { const r = readKey(k); return !r ? 0 : r.item === 'addon' ? PRICE_CENTS.addon[r.interval] : planCents(r.item, r.interval, r.early); };
+
 /**
  * Stripe for the emulator tests: the same answers, kept in Firestore (fakeStripe/{id}). The test stands in for the
  * browser by setting `confirmed` on a subscription (the card was entered and accepted).
@@ -287,7 +297,7 @@ class FakePay implements Pay {
     const had = await this.read(id);
     if (had) return this.view(id);
     const keys = x.prices; // fake prices are the lookup keys
-    const cents = (k: string) => { const r = readKey(k); return r ? PRICE_CENTS[r.item][r.interval] : 0; };
+    const cents = fakeCents;
     const full = keys.reduce((n, k) => n + cents(k), 0);
     const launch = x.coupon === LAUNCH_COUPON;
     const off = launch ? 30 : Number((await this.read(`coupon_${x.coupon}`))?.amount || 0);
@@ -299,7 +309,7 @@ class FakePay implements Pay {
     const s: Sub & { amount: number } = {
       id, status: trial || !amount ? 'trialing' : 'incomplete', live: false, customer: x.customer, created: now,
       trialStart: trial ? now : null, trialEnd: x.trialEnd, periodEnd: trial ? x.trialEnd : now + 30 * 86400_000, cancelAt: null, card: false,
-      items: keys.map((k, i) => ({ id: `si_fake_${id}_${i}`, key: k, price: k })), metadata: x.metadata, coupons: x.coupon ? [x.coupon] : [],
+      items: keys.map((k, i) => ({ id: `si_fake_${id}_${i}`, key: k, price: k, cents: cents(k) })), metadata: x.metadata, coupons: x.coupon ? [x.coupon] : [],
       next: trial || !amount ? { kind: 'setup', clientSecret: `seti_fake_${id}_secret_x`, amount: 0 } : { kind: 'payment', clientSecret: `pi_fake_${id}_secret_x`, amount },
       amount,
     };
@@ -324,8 +334,8 @@ class FakePay implements Pay {
     let list = s.items.slice();
     for (const it of items) {
       if (it.deleted) list = list.filter((x) => x.id !== it.id);
-      else if (it.id) list = list.map((x) => (x.id === it.id ? { ...x, key: it.price || x.key, price: it.price || x.price } : x));
-      else if (it.price) list.push({ id: this.newId('si'), key: it.price, price: it.price });
+      else if (it.id) list = list.map((x) => (x.id === it.id ? { ...x, key: it.price || x.key, price: it.price || x.price, cents: it.price ? fakeCents(it.price) : x.cents } : x));
+      else if (it.price) list.push({ id: this.newId('si'), key: it.price, price: it.price, cents: fakeCents(it.price) });
     }
     await this.put(id, { items: list, ...(o.coupon ? { coupons: [o.coupon] } : {}), lastChange: { charge: o.charge, at: Date.now() } });
     return this.view(id);
@@ -397,7 +407,7 @@ export function billingOf(s: Sub, prev: Partial<Billing> | undefined, now = Date
   else if (s.status === 'incomplete') status = 'incomplete';
   else if (['past_due', 'unpaid', 'paused', 'canceled'].includes(s.status)) status = s.status as BillingStatus;
   else status = 'canceled'; // incomplete_expired, or a status Stripe adds later
-  const p = plan || (PLAN_IDS.find((x) => x === prev?.plan) ?? null);
+  const p = plan || (ALL_PLANS.find((x) => x === prev?.plan) ?? null);
   return {
     status,
     trialStart: s.trialStart ?? Number(prev?.trialStart || s.created),
@@ -412,6 +422,8 @@ export function billingOf(s: Sub, prev: Partial<Billing> | undefined, now = Date
     periodEnd: s.periodEnd,
     cancelAt: s.cancelAt,
     offer: s.metadata.offer || prev?.offer || null,
+    early: earlyBird(s.created),
+    net: s.items.some((i) => readKey(i.key)) && s.items.every((i) => typeof i.cents === 'number') ? s.items.reduce((n, i) => n + (i.cents || 0), 0) : null,
     testMode: !s.live,
     updatedAt: now,
   };
@@ -504,6 +516,7 @@ export function orderMail(o: { lang: string; name: string; company: string; b: B
   const { lang, b } = o;
   const plan = b.plan ? b.plan[0].toUpperCase() + b.plan.slice(1) : '';
   const base = PLAN_VANS[(b.plan || '') as PlanId];
+  const early = !!b.early && !!b.plan && hasEarly(b.plan as PlanId);
   const vans = base == null ? tr(lang, 'unlimited vans') : tr(lang, 'up to {n} vans', { n: base });
   const per = b.interval === 'year' ? tr(lang, '{price} a year, plus VAT', { price: euro(o.netCents, lang) }) : tr(lang, '{price} a month, plus VAT', { price: euro(o.netCents, lang) });
   const subject = tr(lang, 'Your Fratius plan for {company}', { company: o.company });
@@ -513,6 +526,7 @@ export function orderMail(o: { lang: string; name: string; company: string; b: B
     tr(lang, 'Plan: {plan}, {vans}, unlimited drivers and stations', { plan, vans }),
     ...(b.addon && b.vans ? [tr(lang, 'Add-on: 15 more vans ({n} in all)', { n: b.vans })] : []),
     tr(lang, 'Price: {price}', { price: per }),
+    ...(early ? [tr(lang, 'This is the early-bird price. It stays yours for as long as your plan runs.')] : []),
     ...(b.status === 'trialing'
       ? [tr(lang, 'Free until {date}. Nothing is charged before then; cancel any time before.', { date: day(b.trialEnd, lang) })]
       : [tr(lang, 'Paid today: {price}, plus VAT', { price: euro(o.firstCents, lang) })]),
@@ -555,7 +569,10 @@ export function orderMail(o: { lang: string; name: string; company: string; b: B
   return { subject, text, html };
 }
 
-/** What a plan costs before VAT, per invoice, without discounts (the add-on is EUR 10 a month or EUR 120 a year). */
-export function netCents(plan: PlanId, interval: Interval, addon: boolean): number {
-  return PRICE_CENTS[plan][interval] + (addon && plan !== 'premium' ? PRICE_CENTS.addon[interval] : 0);
+/**
+ * What a plan costs before VAT, per invoice, without discounts (the add-on is EUR 10 a month or EUR 120 a year).
+ * `early`: at the early-bird price.
+ */
+export function netCents(plan: PlanId, interval: Interval, addon: boolean, early: boolean): number {
+  return planCents(plan, interval, early) + (addonOn(plan, addon) ? PRICE_CENTS.addon[interval] : 0);
 }

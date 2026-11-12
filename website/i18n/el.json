@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Κατεβάστε τη δοκιμαστική έκδοση του Fratius για Android και δείτε πώς να την εγκαταστήσετε.",
  "Version {version} · {size} MB · {date}": "Έκδοση {version} · {size} MB · {date}",
  "Test version": "Δοκιμαστική έκδοση",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Στο Android, εγκαταστήστε τη δοκιμαστική έκδοση ή χρησιμοποιήστε την εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο Google Play."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Στο Android, εγκαταστήστε τη δοκιμαστική έκδοση ή χρησιμοποιήστε την εφαρμογή web μέχρι να κυκλοφορήσει η εφαρμογή στο Google Play.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Οι τιμές early bird ισχύουν για εγγραφές έως {date}. Μετά, οι νέοι πελάτες πληρώνουν τις κανονικές τιμές.",
+ "Regular price: {price}": "Κανονική τιμή: {price}",
+ "From {price} per van": "Από {price} ανά βαν",
+ "Early bird: {n} % off every plan": "Early bird: {n}% έκπτωση σε κάθε πακέτο",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Από {price} ανά βαν τον μήνα. Εγγραφείτε έως {date} και κρατήστε αυτή την τιμή όσο ισχύει το πακέτο σας.",
+ "Time left": "Χρόνος που απομένει",
+ "days": "ημέρες",
+ "hours": "ώρες",
+ "minutes": "λεπτά",
+ "seconds": "δευτερόλεπτα",
+ "{n} % off": "{n}% έκπτωση"
 }

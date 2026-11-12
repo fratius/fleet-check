@@ -386,5 +386,16 @@
  "Download the Fratius test version for Android and how to install it.": "Fratius'un Android test sürümünü indirin ve nasıl kurulacağını öğrenin.",
  "Version {version} · {size} MB · {date}": "Sürüm {version} · {size} MB · {date}",
  "Test version": "Test sürümü",
- "On Android, install the test version, or use the web app until the Google Play app is out.": "Android'de, uygulama Google Play'de yayınlanana kadar test sürümünü yükleyin ya da web uygulamasını kullanın."
+ "On Android, install the test version, or use the web app until the Google Play app is out.": "Android'de, uygulama Google Play'de yayınlanana kadar test sürümünü yükleyin ya da web uygulamasını kullanın.",
+ "Early-bird prices are for sign-ups until {date}. After that, new sign-ups pay the regular prices.": "Erken kayıt fiyatları {date} tarihine kadar yapılan kayıtlar için geçerlidir. Sonrasında yeni müşteriler normal fiyatları öder.",
+ "Regular price: {price}": "Normal fiyat: {price}",
+ "From {price} per van": "Panelvan başına {price} ve üzeri",
+ "Early bird: {n} % off every plan": "Erken kayıt: her planda %{n} indirim",
+ "From {price} per van a month. Sign up by {date} and keep that price for as long as your plan runs.": "Panelvan başına aylık {price} ve üzeri. {date} tarihine kadar kaydolun, planınız sürdüğü sürece bu fiyat sizde kalsın.",
+ "Time left": "Kalan süre",
+ "days": "gün",
+ "hours": "saat",
+ "minutes": "dakika",
+ "seconds": "saniye",
+ "{n} % off": "%{n} indirim"
 }
