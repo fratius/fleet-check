@@ -7,6 +7,7 @@
  * runs the same in Expo Go and on the web.
  */
 import { CA, CK, OVERLAY_FILL, buildFrames, fitBox, frameBox, type Frame, type Spec } from './frames';
+import { frameCam, inside, ray, solid } from './outline';
 import { N_ } from './i18n';
 
 export type V3 = [number, number, number];
@@ -77,6 +78,7 @@ function onEnd(sp: Spec, pts: P2[], front: boolean, y: number, z: number): Pos {
  * photo position maps back to the drawing and from there to the body. (u, v) is 0..1 across and down the photo.
  */
 export function locateInFrame(sp: Spec, f: Frame, u: number, v: number): Pos {
+  if (sp.ver === 2) return locateSeen(sp, f, u, v);
   const pts = profile(sp);
   const vb = fitBox(frameBox(sp, f), 3 / 4, OVERLAY_FILL);
   let X = vb[0] + u * vb[2];
@@ -98,6 +100,50 @@ export function locateInFrame(sp: Spec, f: Frame, u: number, v: number): Pos {
   const xf = (X + CA * Wh) / CA, y = Y - CK * CA * xf + CK * CA * Wh;
   // xf runs across the end face; +Wh is the edge next to the flank shown.
   return onEnd(sp, pts, front, -y / 100, (left ? 1 : -1) * (xf / 100));
+}
+
+/**
+ * The second outlines (Spec.ver 2) are the van seen through the camera standing where the frame puts the driver
+ * (lib/outline.ts). The point of the photo is where that camera's ray through it first meets the body, or a wheel.
+ */
+function locateSeen(sp: Spec, f: Frame, u: number, v: number): Pos {
+  const c = frameCam(sp, f), d = ray(c, u, v), S = solid(sp), pts = profile(sp), b = sp.b;
+  const at = (t: number): V3 => add(c.eye, mul(d, t));
+  const wheel = (p: V3) => Math.abs(p[2]) <= sp.W / 2 && Math.abs(p[2]) >= sp.W / 2 - 0.25
+    && b.wheels.some((x) => Math.hypot(p[0] - x, p[1] - b.r) <= b.r);
+  for (let t = 0.3; t < 30; t += 0.02) {
+    const p = at(t);
+    if (!inside(S, p, 0) && !wheel(p)) continue;
+    let lo = t - 0.02, hi = t;
+    for (let k = 0; k < 12; k++) { const m = (lo + hi) / 2, q = at(m); if (inside(S, q, 0) || wheel(q)) hi = m; else lo = m; }
+    const q = at(hi);
+    if (wheel(q) || S.hw(q[1]) - Math.abs(q[2]) < 0.03) return onSide(sp, pts, q[0], q[1], q[2] > 0);
+    return { p: q, n: surfaceNormal(pts, q[0], q[1]), approx: false };
+  }
+  // The box is on the background, off the van: the nearest place on the side or end the frame is of.
+  const plane = (axis: 0 | 2, val: number) => { const t = (val - c.eye[axis]) / (d[axis] || 1e-9); return t > 0 ? at(t) : null; };
+  const front = f.kind === 'front' || f.corner === 'fl' || f.corner === 'fr';
+  const left = f.side === 'left' || f.corner === 'fl' || f.corner === 'rl';
+  const sideHit = f.kind === 'side' || f.kind === 'corner' ? plane(2, (left ? 1 : -1) * sp.W / 2) : null;
+  const endHit = f.kind !== 'side' ? plane(0, front ? 0 : sp.L) : null;
+  if (endHit && (!sideHit || Math.abs(endHit[2]) <= sp.W / 2)) return onEnd(sp, pts, front, endHit[1], endHit[2]);
+  if (sideHit) return onSide(sp, pts, sideHit[0], sideHit[1], left);
+  return onEnd(sp, pts, front, sp.H / 2, 0);
+}
+/** Outward normal of the body's profile nearest to (x, y), for a point on the front, roof or rear. */
+function surfaceNormal(pts: P2[], x: number, y: number): V3 {
+  const n = pts.length;
+  const area = pts.reduce((s, p, i) => { const q = pts[(i + 1) % n]; return s + (p[0] * q[1] - q[0] * p[1]); }, 0);
+  const sign = area > 0 ? 1 : -1;
+  let best = 0, bestD = Infinity;
+  for (let i = 0; i < n; i++) {
+    const p = pts[i], q = pts[(i + 1) % n], ex = q[0] - p[0], ey = q[1] - p[1], l2 = ex * ex + ey * ey || 1;
+    const t = clamp(((x - p[0]) * ex + (y - p[1]) * ey) / l2, 0, 1);
+    const dd = Math.hypot(p[0] + t * ex - x, p[1] + t * ey - y);
+    if (dd < bestD) { bestD = dd; best = i; }
+  }
+  const p = pts[best], q = pts[(best + 1) % n];
+  return norm([sign * (q[1] - p[1]), -sign * (q[0] - p[0]), 0]);
 }
 
 /** Rough placement from the panel name, for damage a manager added without a photo position. */

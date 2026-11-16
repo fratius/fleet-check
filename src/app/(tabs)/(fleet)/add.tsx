@@ -127,7 +127,7 @@ export default function AddVehicle() {
     finally { setSaving(false); }
   };
 
-  const sp = cls ? makeSpec(cls, attrs) : null;
+  const sp = cls ? makeSpec(cls, { ...attrs, make: res?.scan.vMake, model: res?.scan.vModel }) : null;
   const sc = res?.scan;
   // The plan's vans are all in use (firestore.rules refuses another): the add-on of 15, or the next plan.
   const maxVans = s.org?.billing?.vans;

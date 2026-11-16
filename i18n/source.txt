@@ -444,6 +444,7 @@ ee732d19	Checked by {name}: {note}
 c65e5123	checked with close-ups	[log.tsx]
 ce3c5359	Checking the card…	[buy/[id].tsx, components/plansetup.tsx]
 3e5748ab	Checking the close-ups, spot {i} of {n}
+574f9222	Checking the photo…	[app/scan/[id].tsx]
 425365c7	Checking the terms…	[components/plansetup.tsx]
 abb464b5	Checking the video…	[components/uploads.tsx]
 226deaae	Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.
@@ -1311,6 +1312,7 @@ d0941e68	other	[check/[id].tsx]
 89202c7f	Other document	[components/docscan.tsx]
 e5d49baf	Our terms (AGB) and the data processing agreement (AVV) you accepted:
 bce7ca67	out for {time}	[review.tsx]
+1d47dfde	Outline: {model}	[lib/frames.ts]
 f839c1e1	Own name	[data.tsx]
 0cd93fe4	Own name or fleet number
 b62ff5cc	Owned	[lib/fleet.ts]
@@ -1690,6 +1692,7 @@ f1d2deed	Stopped {time} ago. Allow it if you know why (another van's card, a rep
 8689d10c	Straight on	[check/[id].tsx]
 687bb45a	Straight on, damage boxed
 e4d08ce9	Stripe couldn't charge the card for Fratius. Check the card under Account, then Plan and billing.
+2e5d8d12	Strong glare on the van. Step a little to the side and take it again.
 12cf9117	Student job	[lib/fleet.ts]
 861edba0	Suggestions	[components/routines.tsx]
 cdde64d7	SUV or crossover	[lib/frames.ts]
@@ -1846,6 +1849,7 @@ cf2abed0	The parts	[buy/[id].tsx]
 503dcb8f	The payment form is still loading. Try again in a moment.
 8a4c03a1	The payment is still on its way. Your company opens as soon as Stripe confirms it.
 14216d56	The photo didn't upload. Take it again.
+a2c1f08f	The photo is blurred. Hold the phone still and take it again.
 4615b331	The photo was read and deleted; it isn't kept with the record.
 43aecc03	The photo was read and deleted; it isn't kept with the van.
 0e91970e	The photos are saved as a walk-around.
@@ -1979,6 +1983,8 @@ d1cf730a	Today when you change the odometer
 6d0bd7b3	Today: {price}, VAT included.
 1ec1d529	Today: {price}.	[components/plansetup.tsx]
 2dac81d6	tomorrow	[lib/fleet.ts]
+736cfe84	Too bright. Step aside so the sun or a lamp doesn't shine into the camera.
+f54c4fbd	Too dark to see damage. Turn on the light, or take it where it's brighter.
 db97c592	Too many AI checks at once. Wait a minute and try again.
 427660e9	Too many AI checks in a short time, or the Anthropic credit has run out.
 a0961786	Too many attempts. Wait a minute, then try again.
@@ -2058,6 +2064,7 @@ e5409578	Uploading the photo…	[buy/[id].tsx, components/dash.tsx, components/u
 d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx]
 70ac1886	Usable capacity, for the energy used on each tour
 48a644ab	Use another account	[app/join/[token].tsx]
+a3240fd9	Use anyway	[app/scan/[id].tsx]
 c6188994	Use at least 6 characters for the password.
 a75e1e28	Use photo	[app/scan/[id].tsx]
 ece6901e	Use Safari: other browsers on iPhone can't add apps to the home screen.

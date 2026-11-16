@@ -52,6 +52,15 @@ export interface Damage {
   to: number;
 }
 
+/**
+ * The shapes a walk-around's photos were lined up with: the outlines in perspective (`overlay` 2), or the first,
+ * flat outlines for the photos taken before them, so their damage stays where it was placed.
+ */
+function specsFor(v: Vehicle, current: Spec) {
+  let first: Spec | null = null;
+  return (w: Walkaround | null): Spec => (w?.overlay === 2 || !w ? current : (first ??= makeSpec(v.cls, v, 1)));
+}
+
 const usable = (w: Walkaround) => (w.photos || []).filter((p) => p.path || p.uri);
 
 /** The frame photo that shows a position best, for damage without a box (added by the manager). */
@@ -83,6 +92,7 @@ function sameFrame(w: Walkaround | null, photo: Photo | null, ref: Walkaround | 
  */
 export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): Damage[] {
   const sp = makeSpec(v.cls, v);
+  const specOf = specsFor(v, sp);
   const reviewed = checks.filter((k) => k.vehicleId === v.id && k.status === 'reviewed' && k.review)
     .sort((a, b) => a.createdAt - b.createdAt);
   const walkById = new Map(walks.map((w) => [w.id, w]));
@@ -106,9 +116,10 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
     let afterPhoto: Photo | null = null;
     if (p) {
       afterPhoto = afterWalk ? usable(afterWalk)[p.photo] || null : null;
-      const frame = frameOfPhoto(sp, afterPhoto || { n: p.photo + 1, label: p.photoLabel }, afterWalk ? afterWalk.frames : -1);
+      const wsp = specOf(afterWalk);
+      const frame = frameOfPhoto(wsp, afterPhoto || { n: p.photo + 1, label: p.photoLabel }, afterWalk ? afterWalk.frames : -1);
       pos = frame && afterWalk?.source !== 'library'
-        ? locateInFrame(sp, frame, (p.box[0] + p.box[2]) / 2, (p.box[1] + p.box[3]) / 2)
+        ? locateInFrame(wsp, frame, (p.box[0] + p.box[2]) / 2, (p.box[1] + p.box[3]) / 2)
         : locateByPanel(sp, panel);
     } else {
       pos = locateByPanel(sp, panel);
@@ -174,7 +185,7 @@ export function likelySame(pos: Pos, damages: Damage[], excludeCheck: string): D
 
 /** Where a spot of a check is on the van (used by the review screen to suggest a known damage). */
 export function spotPos(v: Vehicle, k: Check, spot: number, walk: Walkaround | null): Pos {
-  const sp = makeSpec(v.cls, v);
+  const sp = specsFor(v, makeSpec(v.cls, v))(walk);
   const p = k.spots[spot];
   const photo = walk ? usable(walk)[p.photo] : undefined;
   const frame = frameOfPhoto(sp, photo || { n: p.photo + 1, label: p.photoLabel }, walk ? walk.frames : -1);

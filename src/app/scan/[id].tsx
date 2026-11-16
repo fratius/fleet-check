@@ -13,6 +13,8 @@ import { flash } from '@/lib/flash';
 import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
+import { ISSUE_TEXT, checkPhoto } from '@/lib/quality';
+import type { PhotoQuality } from '@/lib/types';
 import { loc, t, tp, lang } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
 
@@ -67,6 +69,9 @@ export default function ScanScreen() {
   const [i, setI] = useState(0);
   const [slots, setSlots] = useState<Slot[]>(() => frames.map(() => null));
   const [pending, setPending] = useState<{ uri: string; w: number; h: number } | null>(null);
+  // The photo check of the photo under review (lib/quality.ts): 'checking' until it's measured, null if it couldn't be.
+  const [quality, setQuality] = useState<PhotoQuality | null | 'checking'>(null);
+  const checkSeq = useRef(0);
   const [phase, setPhase] = useState<'aim' | 'review' | 'summary' | 'saving'>('aim');
   const [torch, setTorch] = useState(false);
   const [retakes, setRetakes] = useState(0);
@@ -114,6 +119,7 @@ export default function ScanScreen() {
   };
   const goTo = (k: number, summary?: boolean) => {
     if (walkId) return; // saved and on its way
+    checkSeq.current++; setQuality(null);
     setPending(null); setI(k); setPhase('aim'); ft0.current = Date.now();
     if (summary !== undefined) setFromSummary(summary);
   };
@@ -131,7 +137,12 @@ export default function ScanScreen() {
     setBusyShot(true);
     try {
       const p = await cam.current.takePictureAsync({ quality: 0.9 });
-      if (p?.uri) { setPending({ uri: p.uri, w: p.width, h: p.height }); setPhase('review'); }
+      if (p?.uri) {
+        setPending({ uri: p.uri, w: p.width, h: p.height }); setPhase('review');
+        const seq = ++checkSeq.current;
+        setQuality('checking');
+        checkPhoto(p.uri).then((q) => { if (seq === checkSeq.current) setQuality(q); });
+      }
     } catch { setCamErr(t('Couldn\'t take the photo. Try again.')); }
     finally { setBusyShot(false); }
   };
@@ -139,12 +150,13 @@ export default function ScanScreen() {
     if (!pending) return;
     const prev = slots[i];
     const shot: LocalShot = { n: f.n, label: f.label, uri: pending.uri, w: pending.w, h: pending.h, takenAt: Date.now(),
-      retakes: prev && prev !== 'skip' ? (prev.retakes || 0) + 1 : 0 };
+      retakes: prev && prev !== 'skip' ? (prev.retakes || 0) + 1 : 0, q: quality && quality !== 'checking' ? quality : null };
+    checkSeq.current++; setQuality(null);
     if (prev && prev !== 'skip') setRetakes((r) => r + 1);
     const next = slots.slice(); next[i] = shot; setSlots(next); setPending(null);
     advance(next);
   };
-  const retake = () => { setPending(null); setRetakes((r) => r + 1); setPhase('aim'); };
+  const retake = () => { checkSeq.current++; setQuality(null); setPending(null); setRetakes((r) => r + 1); setPhase('aim'); };
   const skip = () => { const next = slots.slice(); next[i] = 'skip'; setSlots(next); advance(next); };
   const save = async () => {
     const shots = slots.filter((x): x is LocalShot => !!x && x !== 'skip');
@@ -152,7 +164,8 @@ export default function ScanScreen() {
     if (ho && shots.length < frames.length) return;
     if (job) { outbox.retry(job.id); return; }
     setPhase('saving'); setSaveErr(null);
-    const meta = { source: 'camera' as const, frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current };
+    const meta = { source: 'camera' as const, frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
+      ...(sp.ver === 2 ? { overlay: 2 as const } : {}) };
     if (s.mode !== 'firebase') {
       // Test mode: the photos stay on this phone as they are.
       setProgress(t('Saving'));
@@ -228,6 +241,9 @@ export default function ScanScreen() {
                   <View style={{ aspectRatio: 3 / 4, borderRadius: 3, overflow: 'hidden', backgroundColor: '#16181C', borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
                     {sl && sl !== 'skip' ? <Image source={{ uri: sl.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Text style={st.note}>{sl === 'skip' ? t('Skipped') : t('No photo')}</Text>}
                     <View style={st.badge}><Text style={st.badgeT}>{fr.n}</Text></View>
+                    {sl && sl !== 'skip' && sl.q?.issues.length ? (
+                      <View accessibilityLabel={sl.q.issues.map((k) => t(ISSUE_TEXT[k])).join(' ')} style={[st.badge, { left: undefined, right: 4, backgroundColor: '#FFB74D' }]}><Text style={st.badgeT}>!</Text></View>
+                    ) : null}
                   </View>
                   <Text style={st.thumbL} numberOfLines={2}>{t(fr.label)}</Text>
                 </Pressable>
@@ -266,6 +282,7 @@ export default function ScanScreen() {
   }
 
   const xml = boxW > 0 ? overlaySVG(sp, f, 3 / 4, boxW) : '';
+  const warned = quality && quality !== 'checking' && quality.issues.length ? quality.issues : null;
   return (
     <Shell>
       {header}
@@ -281,13 +298,29 @@ export default function ScanScreen() {
       </View>
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: 196 }}>
         {camErr ? <Text style={[st.hint, { color: '#FF8A80' }]}>{camErr}</Text> : null}
-        <Text style={st.hint}>
-          {phase === 'review' ? t('Does the vehicle line up with the outline?') : <><Text style={{ color: MARKER, fontFamily: F.semi }}>{t('Fit the vehicle to the outline.')} </Text>{t('About {m} m away.', { m: f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 }) })} {t(f.hint)}</>}
-        </Text>
+        {phase === 'review' && warned ? (
+          <View accessibilityLiveRegion="polite" style={{ gap: 4 }}>
+            {warned.map((k) => <Text key={k} style={[st.hint, { color: '#FFB74D', fontFamily: F.semi }]}>{t(ISSUE_TEXT[k])}</Text>)}
+          </View>
+        ) : (
+          <Text style={st.hint}>
+            {phase === 'review' ? (quality === 'checking' ? t('Checking the photo…') : t('Does the vehicle line up with the outline?'))
+              : <><Text style={{ color: MARKER, fontFamily: F.semi }}>{t('Fit the vehicle to the outline.')} </Text>{t('About {m} m away.', { m: f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 }) })} {t(f.hint)}</>}
+          </Text>
+        )}
         {phase === 'review' ? (
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
-            <Btn title={t('Retake')} onPress={retake} />
-            <Btn title={t('Use photo')} kind="marker" onPress={use} />
+            {warned ? (
+              <>
+                <Btn title={t('Use anyway')} kind="ghost" onPress={use} />
+                <Btn title={t('Retake')} kind="marker" onPress={retake} />
+              </>
+            ) : (
+              <>
+                <Btn title={t('Retake')} onPress={retake} />
+                <Btn title={t('Use photo')} kind="marker" onPress={use} />
+              </>
+            )}
           </View>
         ) : (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

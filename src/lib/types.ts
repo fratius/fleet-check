@@ -449,7 +449,10 @@ export interface Photo {
   w: number;
   h: number;
   takenAt: number;
+  /** The photo check on the phone (lib/quality.ts): what it warned about (the driver used it anyway) and its measures. */
+  q?: PhotoQuality | null;
 }
+export interface PhotoQuality { issues: ('dark' | 'bright' | 'blur' | 'glare')[]; light: number; sharp: number; glare: number }
 
 export interface Walkaround {
   id: string;
@@ -466,6 +469,8 @@ export interface Walkaround {
   skipped: number;
   retakes: number;
   photos: Photo[];
+  /** The outlines the photos were lined up with: 2 = in perspective from the van's model (lib/outline.ts); missing = the first ones. */
+  overlay?: 1 | 2;
   /** Set by the server when these photos were taken to pick up or drop off the van. */
   /** The photos of a pick-up or drop-off (set by the server); late: added after the handover, not by the driver at pick-up. */
   handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string; late?: boolean };

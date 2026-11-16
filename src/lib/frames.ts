@@ -10,6 +10,8 @@
  * attrPills() come back already translated (they're only shown).
  */
 import { N_, t, tp } from '@/lib/i18n';
+import { frameCam, outlinePaths, OVERLAY_PAINT, THUMB_PAINT } from '@/lib/outline';
+import { shapeFamily, type Fam, type LampStyle } from '@/lib/shape';
 
 export type BodyKind = 'car' | 'suv' | 'pickup' | 'compact' | 'mid' | 'large' | 'step' | 'box';
 export type RearKind = 'barn' | 'tailgate' | 'roller' | 'open_bed';
@@ -68,13 +70,37 @@ export const REAR_PILL: Record<RearKind, string> = {
 export const defaultAttrs = (): VehicleAttrs => ({ roof: 'unknown', slideL: 'unknown', slideR: 'unknown', rear: 'unknown' });
 
 type Pt = [number, number];
-interface Face { belt: number; glassTop: number; top: number; rearKind: 'greenhouse' | 'pickup' | 'box' | 'luton'; mirrors: boolean; cabH?: number; cabW?: number; box?: [number, number]; }
-interface Body {
+export interface Face { belt: number; glassTop: number; top: number; rearKind: 'greenhouse' | 'pickup' | 'box' | 'luton'; mirrors: boolean; cabH?: number; cabW?: number; box?: [number, number]; }
+/**
+ * Details of the second outlines (Spec.ver 2, lib/outline.ts). Side points are (x, y); front and rear points are
+ * (z across from the middle, y), the left lamp only (the right one is its mirror image).
+ */
+export interface Extra {
+  arch: number;
+  bumperTop: number;
+  rearBumperTop: number;
+  /** Door cut lines on the side, as polylines. */
+  seams: Pt[][];
+  /** The cab door handle. */
+  handle: Pt | null;
+  /** Lower trim line between the wheel arches, and the sliding door's rail. */
+  trim: number | null;
+  rail: number | null;
+  mirror: { x0: number; x1: number; y0: number; y1: number; out: number } | null;
+  /** The headlight where it wraps onto the side. */
+  lampSide: Pt[] | null;
+  front: { lamp: Pt[]; grille: Pt[]; intake: Pt[] | null; plate: number; screen: [number, number] };
+  /** Tail lights (bottom, top, width), the rear doors or shutter (bottom, top), the number plate's middle. */
+  rear: { tail: [number, number, number]; doors: [number, number]; plate: number };
+}
+export interface Body {
   sill: number; hood: number; r: number; wheels: number[];
   slide: { x: number; w: number; top: number } | null;
   pts: Pt[]; glass: Pt[]; doors: Pt[]; face: Face;
+  x?: Extra;
 }
 
+/** The first outlines' shapes (Spec.ver 1): photos taken with them are placed on the van with these. */
 const BODY: Record<BodyKind, (L: number, H: number) => Body> = {
   car: (L, H) => ({ sill: 0.3, hood: 1.2, r: 0.32, wheels: [0.85, 3.55], slide: null,
     pts: [[0.02, 0.3], [0, 0.5], [0.12, 0.7], [1.2, 0.84], [1.9, 1.42], [3.25, H], [4.15, 1.0], [4.4, 0.9], [4.4, 0.45], [4.36, 0.3]],
@@ -121,17 +147,150 @@ const BODY: Record<BodyKind, (L: number, H: number) => Body> = {
 export interface Spec {
   id: string; name: string; body: BodyKind; L: number; W: number; H: number; rear: RearKind;
   slide: { left: Tri; right: Tri }; b: Body;
+  /**
+   * 1: the first outlines (one drawing per body class, flat corner views). 2: outlines in perspective from the
+   * van's model (lib/shape.ts, lib/outline.ts). Walk-arounds say which one they were taken with (`overlay`), so a
+   * position in an older photo is read with the shapes it was lined up with.
+   */
+  ver: 1 | 2;
+  /** The model the outlines follow (ver 2), or null for the class's own shape. */
+  fam: { id: string; name: string } | null;
 }
 
-export function makeSpec(cls: string, attrs?: Partial<VehicleAttrs> | null): Spec {
+/** What the shape is made from: the class and body details, and the make and model when known. */
+export type ShapeAttrs = Partial<VehicleAttrs> & { make?: string | null; model?: string | null };
+
+export function makeSpec(cls: string, attrs?: ShapeAttrs | null, ver: 1 | 2 = 2): Spec {
   const c = CLS[cls] || CLS.large_van;
   const a = { ...defaultAttrs(), ...(attrs || {}) };
+  const rear = a.rear !== 'unknown' && REAR_LABEL[a.rear as RearKind] ? (a.rear as RearKind) : c.rear;
+  const slide = { left: a.slideL || 'unknown', right: a.slideR || 'unknown' };
+  const fam = ver === 2 ? shapeFamily(c, a.make, a.model) : null;
+  if (fam) {
+    const [L, f0, f1] = (c.id === 'large_van_long' && fam.long) || fam.std;
+    const H = a.roof === 'high' ? fam.roofHigh : a.roof === 'low' ? fam.roofLow : fam.roofDef === 'high' ? fam.roofHigh : fam.roofLow;
+    return { id: c.id, name: c.name, body: c.body, L, W: fam.W, H, rear, slide, b: famBody(fam, L, [f0, f1], H),
+      ver: 2, fam: fam.name ? { id: fam.id, name: fam.name } : null };
+  }
   let H = c.H;
   if (c.body === 'large' && a.roof === 'low') H = 2.35;
   if (c.body === 'mid' && a.roof === 'high') H = 2.3;
-  const rear = a.rear !== 'unknown' && REAR_LABEL[a.rear as RearKind] ? (a.rear as RearKind) : c.rear;
-  return { id: c.id, name: c.name, body: c.body, L: c.L, W: c.W, H, rear,
-    slide: { left: a.slideL || 'unknown', right: a.slideR || 'unknown' }, b: BODY[c.body](c.L, H) };
+  const b = BODY[c.body](c.L, H);
+  return { id: c.id, name: c.name, body: c.body, L: c.L, W: c.W, H, rear, slide, b: ver === 2 ? withDetails(b, c.body, c.W, H) : b, ver, fam: null };
+}
+
+/* ---------- shapes for the second outlines ---------- */
+const lerpAt = (pts: Pt[], y: number) => {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    if ((y0 - y) * (y1 - y) <= 0 && y0 !== y1) return x0 + ((y - y0) / (y1 - y0)) * (x1 - x0);
+  }
+  return y <= pts[0][1] ? pts[0][0] : pts[pts.length - 1][0];
+};
+/** The arch over a wheel, from its rear end at the sill to its front end (for a profile drawn front, top, rear, bottom). */
+function archPts(x: number, r: number, ra: number, sill: number): Pt[] {
+  const a0 = Math.asin(Math.max(-1, Math.min(1, (sill - r) / ra)));
+  const out: Pt[] = [];
+  for (let k = 0; k <= 10; k++) { const th = a0 + ((Math.PI - 2 * a0) * k) / 10; out.push([x + ra * Math.cos(th), r + ra * Math.sin(th)]); }
+  return out;
+}
+const archEnds = (x: number, r: number, ra: number, sill: number) => { const d = Math.sqrt(Math.max(0, ra * ra - (sill - r) * (sill - r))); return [x - d, x + d]; };
+
+function lampShape(style: LampStyle, hw: number, y0: number, y1: number, zIn: number): Pt[] {
+  switch (style) {
+    case 'band': return [[hw - 0.04, y0], [hw - 0.04, y1], [zIn, y1], [zIn, y0]];
+    case 'high': return [[hw - 0.03, y0 + 0.02], [hw - 0.05, y1], [zIn + 0.05, y1], [zIn, y0]];
+    case 'tall': return [[hw - 0.03, y0], [hw - 0.04, y1], [zIn + 0.1, y1], [zIn, y0 + 0.12]];
+    default: return [[hw - 0.03, y0 + 0.03], [hw - 0.06, y1], [zIn + 0.08, y1 - 0.02], [zIn, y0 + (y1 - y0) * 0.45], [zIn + 0.1, y0]];
+  }
+}
+
+/** A van of a known family (or the class's average van) at the given length, axles and roof height. */
+function famBody(f: Fam, L: number, wheels: [number, number], H: number): Body {
+  const r = f.r, ra = r + 0.07, sill = f.sill, W = f.W, hw = W / 2;
+  const nose = f.nose;
+  const [xs, ys] = nose[nose.length - 1], [xb, yb] = nose[nose.length - 2];
+  const pts: Pt[] = nose.map((p) => [p[0], p[1]] as Pt);
+  // The roof: from the top of the windscreen up to its full height, a curve that rises and then flattens.
+  const roofAt = Math.max(xs + 0.25, f.roofAt);
+  if (H > ys + 0.02) {
+    const cx = xs + 0.18 * (roofAt - xs);
+    for (let k = 1; k <= 5; k++) {
+      const t = k / 5, u = 1 - t;
+      pts.push([u * u * xs + 2 * u * t * cx + t * t * roofAt, u * u * ys + 2 * u * t * H + t * t * H]);
+    }
+  } else pts.push([roofAt, H]);
+  const rbt = f.rearBumperTop;
+  pts.push([L - 0.12, H], [L - 0.04, H - 0.04], [L - 0.03, H - 0.14], [L - 0.03, rbt + 0.02], [L, rbt], [L, sill + 0.02], [L - 0.05, sill - 0.04]);
+  // The bottom edge from the rear to the front, round both wheel arches.
+  pts.push(...archPts(wheels[1], r, ra, sill), ...archPts(wheels[0], r, ra, sill));
+  // The side window follows the windscreen's slope a little behind it (the A-pillar).
+  const slope = (xs - xb) / (ys - yb);
+  const xa = (y: number) => xb + (y - yb) * slope + 0.14;
+  const belt = f.belt, gt = f.glassTop, bp = f.bPillar;
+  const glass: Pt[] = [[xa(belt) + 0.05, belt], [xa(gt) + 0.02, gt], [bp - 0.07, gt + 0.01], [bp - 0.07, belt + 0.02]];
+  const [, fEnd] = archEnds(wheels[0], r, ra, sill);
+  const fx = fEnd + 0.03, top = Math.min(H - 0.06, gt + 0.07);
+  const seams: Pt[][] = [[[fx, sill + 0.05], [fx, belt - 0.24], [xa(belt) - 0.02, belt - 0.02], [xa(top) - 0.02, top], [bp, top], [bp, sill + 0.05]]];
+  const slideTop = Math.min(H - 0.16, Math.max(gt + 0.05, H - 0.6));
+  const big = f.body === 'large';
+  const fxAt = (y: number) => lerpAt(nose, y);
+  const lamp = f.lamp, depth = big ? 0.32 : 0.28;
+  const plateMid = (nose[0][1] + f.bumperTop) / 2;
+  const lowB = nose[0][1] + 0.1, highB = f.bumperTop - 0.14;
+  return {
+    sill, hood: xb, r, wheels: [...wheels], pts, glass,
+    doors: [[fx, belt], [bp, top]],
+    slide: { x: f.slide[0], w: f.slide[1], top: slideTop },
+    face: { belt, glassTop: gt, top: f.tumble, rearKind: 'box', mirrors: true },
+    x: {
+      arch: ra, bumperTop: f.bumperTop, rearBumperTop: rbt, seams,
+      handle: [bp - 0.24, belt - 0.12], trim: f.trim, rail: (sill + slideTop) / 2 + 0.12,
+      mirror: { x0: xa(belt) - 0.1, x1: xa(belt) + 0.06, y0: belt + 0.02, y1: belt + (big ? 0.42 : 0.2), out: big ? 0.26 : 0.17 },
+      lampSide: [[fxAt(lamp.y0) + 0.02, lamp.y0], [fxAt(lamp.y0) + depth, lamp.y0 + 0.03], [fxAt(lamp.y1) + depth * 0.7, lamp.y1], [fxAt(lamp.y1) + 0.02, lamp.y1]],
+      front: {
+        lamp: lampShape(lamp.style, hw, lamp.y0, lamp.y1, lamp.zIn),
+        grille: [[-f.grille.wTop / 2, f.grille.y1], [f.grille.wTop / 2, f.grille.y1], [f.grille.wBot / 2, f.grille.y0], [-f.grille.wBot / 2, f.grille.y0]],
+        intake: highB - lowB > 0.1 ? [[-0.52, lowB], [0.52, lowB], [0.56, highB], [-0.56, highB]] : null,
+        plate: plateMid, screen: [yb, ys],
+      },
+      rear: { tail: f.tail, doors: [rbt + 0.04, H - 0.1], plate: rbt - 0.14 },
+    },
+  };
+}
+
+/** The class drawings with wheel arches and the details of the second outlines added (cars, pickups, walk-in and box vans). */
+function withDetails(b: Body, kind: BodyKind, W: number, H: number): Body {
+  const f = b.face, r = b.r, ra = r + 0.06, sill = b.sill;
+  // Wheel arches go into the bottom edge (from the rear-most bottom point back to the first one), where it runs at the sill.
+  const pts = b.pts.slice();
+  const last = pts[pts.length - 1], first = pts[0];
+  const under = b.wheels.filter((x) => x > first[0] + ra && x < last[0] - ra && Math.abs(last[1] - sill) < 0.02 && Math.abs(first[1] - sill) < 0.02);
+  under.sort((p, q) => q - p).forEach((x) => pts.push(...archPts(x, r, ra, sill)));
+  const bt = Math.min(f.belt - 0.3, sill + 0.35);
+  const ly0 = f.belt - 0.28, ly1 = f.belt - 0.1;
+  const g = b.glass, cabW = f.cabW || W;
+  const greenhouse = f.rearKind === 'greenhouse';
+  return {
+    ...b, pts,
+    x: {
+      arch: ra, bumperTop: bt, rearBumperTop: bt, seams: b.doors.map(([x, y]) => [[x, sill + 0.04], [x, y]] as Pt[]), handle: null,
+      trim: null, rail: null,
+      mirror: f.mirrors ? { x0: g[0][0] - 0.12, x1: g[0][0] + 0.02, y0: f.belt + 0.03, y1: f.belt + (H > 2.2 ? 0.38 : 0.17), out: H > 2.2 ? 0.24 : 0.16 } : null,
+      lampSide: null,
+      front: {
+        lamp: lampShape('band', cabW / 2, ly0, ly1, cabW * 0.28),
+        grille: [[-cabW * 0.21, f.belt - 0.08], [cabW * 0.21, f.belt - 0.08], [cabW * 0.21, Math.max(bt + 0.04, f.belt - 0.42)], [-cabW * 0.21, Math.max(bt + 0.04, f.belt - 0.42)]],
+        intake: null, plate: (sill + bt) / 2 + 0.02,
+        screen: [f.belt + 0.04, f.glassTop],
+      },
+      rear: {
+        tail: greenhouse ? [f.belt - 0.26, f.belt - 0.1, 0.3] : kind === 'pickup' ? [0.8, 1.12, 0.1] : [sill + 0.3, sill + 0.95, 0.13],
+        doors: greenhouse ? [bt + 0.04, f.belt - 0.02] : kind === 'pickup' ? [bt + 0.04, 1.1] : [bt + 0.04, H - 0.1],
+        plate: greenhouse ? bt + 0.12 : bt - 0.12,
+      },
+    },
+  };
 }
 
 /* ---------- frames ---------- */
@@ -182,6 +341,7 @@ const HFOV = (67 * Math.PI) / 180, VFOV = (53 * Math.PI) / 180;
 export const CA = 0.6, CK = 0.16, CL = 2.4;
 /** The scanner is portrait-only, so every frame is framed upright. */
 function measure(sp: Spec, f: Omit<Frame, 'orient' | 'dist' | 'hint'>) {
+  if (sp.ver === 2) return { orient: 'portrait' as const, dist: Math.max(1, Math.round(frameCam(sp, f).dist * 2) / 2) };
   let w: number, h: number;
   if (f.kind === 'front') { w = sp.W + 0.4; h = sp.H; }
   else if (f.kind === 'rear') { w = sp.W; h = sp.H; }
@@ -402,6 +562,12 @@ function unitsFor(bb: readonly number[], aspect: number, fill: number, px: numbe
 
 /** Thumbnail with a dark viewfinder background, corner brackets and ground line. */
 export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
+  if (sp.ver === 2) {
+    const u = 300 / (px * 0.75);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#16181C"/>`
+      + outlinePaths(sp, f, px * 0.75, THUMB_PAINT)
+      + `<path d="M18 60 V18 H60 M240 18 H282 V60 M282 340 V382 H240 M60 382 H18 V340" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="${r3(1.5 * u)}"/></svg>`;
+  }
   const aspect = 3 / 4;
   const probe = frameGeom(sp, f, styler(PAINT.thumb, 1));
   const { vb, u } = unitsFor(probe.bbox, aspect, 0.86, px * aspect);
@@ -419,6 +585,7 @@ export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
 export const OVERLAY_FILL = 0.82;
 /** Live camera overlay: the outline drawn twice (dark halo, yellow line) for a preview `pxW` wide with the given aspect. */
 export function overlaySVG(sp: Spec, f: Frame, aspect: number, pxW: number): string {
+  if (sp.ver === 2) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" preserveAspectRatio="none">${outlinePaths(sp, f, pxW, OVERLAY_PAINT)}</svg>`;
   const probe = frameGeom(sp, f, styler(PAINT.overlay, 1));
   const { vb, u } = unitsFor(probe.bbox, aspect, OVERLAY_FILL, pxW);
   const halo = frameGeom(sp, f, styler(PAINT.halo, u));
@@ -479,6 +646,7 @@ export function attrPills(sp: Spec, attrs: Partial<VehicleAttrs> | null, nFrames
     p.push(r === 'yes' ? t('Right: sliding door') : r === 'no' ? t('Right: no sliding door') : t('Right: not seen'));
   }
   p.push(t(REAR_PILL[sp.rear]));
+  if (sp.fam) p.push(t('Outline: {model}', { model: sp.fam.name }));
   if (nFrames) p.push(tp(nFrames, '{n} frame', '{n} frames'));
   return p;
 }
