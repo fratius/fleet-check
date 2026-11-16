@@ -163,6 +163,15 @@ How far to trust it (also on the screen):
   other drivers on the same van model, over the same kilometres, from 4 tours on. It shows who to talk to; it
   proves nothing.
 
+### Walk-around photos: outline and photo check
+
+Each walk-around (`orgs/{org}/walkarounds/{id}`) says which outlines its photos were lined up with (`overlay: 2`:
+in perspective from the van's model; missing on older ones), so a damage spot in an older photo is still placed on
+the van with the shapes of its time. Each photo can carry `q`: what the photo check on the phone warned about (too
+dark, too bright, glare, blurred) and its three measures (brightness, edge strength, share of pure white). It's kept
+when the driver used the photo anyway, and so the limits in `src/lib/quality.ts` can be set from real photos.
+Nothing about the person is in it.
+
 ### The damage log
 
 `orgs/{org}/damageLog/{checkId}`, written by the server from every reviewed check (`logReview`; the Data tab fills

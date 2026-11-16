@@ -419,7 +419,7 @@
   "key": "{n} frames",
   "one": "{n} frame",
   "where": [
-   "src/lib/frames.ts:482"
+   "src/lib/frames.ts:650"
   ]
  },
  {
@@ -1328,7 +1328,7 @@
   "id": "3958e474",
   "key": "{van}, frame {n} of {total}",
   "where": [
-   "src/app/scan/[id].tsx:180"
+   "src/app/scan/[id].tsx:193"
   ]
  },
  {
@@ -1801,7 +1801,7 @@
   "id": "193742ba",
   "key": "About {m} m away.",
   "where": [
-   "src/app/scan/[id].tsx:285"
+   "src/app/scan/[id].tsx:308"
   ]
  },
  {
@@ -2207,7 +2207,7 @@
   "key": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:221"
+   "src/app/scan/[id].tsx:234"
   ]
  },
  {
@@ -2215,7 +2215,7 @@
   "key": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:220"
+   "src/app/scan/[id].tsx:233"
   ]
  },
  {
@@ -2273,7 +2273,7 @@
   "id": "1dfb1b87",
   "key": "Allow camera",
   "where": [
-   "src/app/scan/[id].tsx:202"
+   "src/app/scan/[id].tsx:215"
   ]
  },
  {
@@ -2584,7 +2584,7 @@
   "key": "Back",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:186",
-   "src/app/scan/[id].tsx:295",
+   "src/app/scan/[id].tsx:328",
    "src/app/start.tsx:37",
    "src/components/viewas.tsx:108"
   ]
@@ -2738,14 +2738,14 @@
   "id": "c2abb664",
   "key": "Both doors, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:204"
+   "src/lib/frames.ts:364"
   ]
  },
  {
   "id": "60781137",
   "key": "Both doors, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:204"
+   "src/lib/frames.ts:364"
   ]
  },
  {
@@ -2759,14 +2759,14 @@
   "id": "8b587162",
   "key": "box van or Luton",
   "where": [
-   "src/lib/frames.ts:55"
+   "src/lib/frames.ts:57"
   ]
  },
  {
   "id": "627a5c65",
   "key": "Box van or Luton",
   "where": [
-   "src/lib/frames.ts:55"
+   "src/lib/frames.ts:57"
   ]
  },
  {
@@ -2881,7 +2881,7 @@
   "id": "3bddb099",
   "key": "Camera access",
   "where": [
-   "src/app/scan/[id].tsx:200"
+   "src/app/scan/[id].tsx:213"
   ]
  },
  {
@@ -2896,7 +2896,7 @@
    "src/app/(tabs)/(people)/people.tsx:116",
    "src/app/(tabs)/(people)/people.tsx:351",
    "src/app/(tabs)/(people)/people.tsx:92",
-   "src/app/scan/[id].tsx:295",
+   "src/app/scan/[id].tsx:328",
    "src/components/dash.tsx:187",
    "src/components/deleteaccount.tsx:62",
    "src/components/docscan.tsx:256",
@@ -3016,14 +3016,14 @@
   "id": "9e32521d",
   "key": "car",
   "where": [
-   "src/lib/frames.ts:39"
+   "src/lib/frames.ts:41"
   ]
  },
  {
   "id": "bc47a3dc",
   "key": "Car",
   "where": [
-   "src/lib/frames.ts:39"
+   "src/lib/frames.ts:41"
   ]
  },
  {
@@ -3358,6 +3358,13 @@
   ]
  },
  {
+  "id": "574f9222",
+  "key": "Checking the photo…",
+  "where": [
+   "src/app/scan/[id].tsx:307"
+  ]
+ },
+ {
   "id": "425365c7",
   "key": "Checking the terms…",
   "where": [
@@ -3511,10 +3518,10 @@
   "key": "Close",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:135",
-   "src/app/scan/[id].tsx:101",
-   "src/app/scan/[id].tsx:178",
-   "src/app/scan/[id].tsx:203",
-   "src/app/scan/[id].tsx:247",
+   "src/app/scan/[id].tsx:106",
+   "src/app/scan/[id].tsx:191",
+   "src/app/scan/[id].tsx:216",
+   "src/app/scan/[id].tsx:263",
    "src/components/damage.tsx:114",
    "src/components/language.tsx:35",
    "src/components/ui.tsx:269"
@@ -3626,14 +3633,14 @@
   "id": "606db1bd",
   "key": "compact van",
   "where": [
-   "src/lib/frames.ts:45"
+   "src/lib/frames.ts:47"
   ]
  },
  {
   "id": "fe58ea6a",
   "key": "Compact van",
   "where": [
-   "src/lib/frames.ts:45"
+   "src/lib/frames.ts:47"
   ]
  },
  {
@@ -3973,14 +3980,14 @@
   "id": "4a6273cd",
   "key": "Couldn't save the photos on this phone. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:172"
+   "src/app/scan/[id].tsx:185"
   ]
  },
  {
   "id": "5df8d986",
   "key": "Couldn't save the photos.",
   "where": [
-   "src/app/scan/[id].tsx:162"
+   "src/app/scan/[id].tsx:175"
   ]
  },
  {
@@ -4008,7 +4015,7 @@
   "id": "2df44d47",
   "key": "Couldn't take the photo. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:135"
+   "src/app/scan/[id].tsx:146"
   ]
  },
  {
@@ -4098,7 +4105,7 @@
   "key": "damage",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:24",
-   "src/lib/damage.ts:119"
+   "src/lib/damage.ts:130"
   ]
  },
  {
@@ -4471,7 +4478,7 @@
   "id": "36fff63c",
   "key": "Discard",
   "where": [
-   "src/app/scan/[id].tsx:257"
+   "src/app/scan/[id].tsx:273"
   ]
  },
  {
@@ -4485,7 +4492,7 @@
   "id": "f6d8d9f6",
   "key": "Does the vehicle line up with the outline?",
   "where": [
-   "src/app/scan/[id].tsx:285"
+   "src/app/scan/[id].tsx:307"
   ]
  },
  {
@@ -4506,7 +4513,7 @@
   "id": "e9b450d1",
   "key": "Done",
   "where": [
-   "src/app/scan/[id].tsx:178",
+   "src/app/scan/[id].tsx:191",
    "src/components/buy.tsx:44",
    "src/components/offers.tsx:151"
   ]
@@ -4730,7 +4737,7 @@
   "id": "def13277",
   "key": "Drop off {van}",
   "where": [
-   "src/app/scan/[id].tsx:255"
+   "src/app/scan/[id].tsx:271"
   ]
  },
  {
@@ -4762,7 +4769,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
-   "src/app/scan/[id].tsx:181",
+   "src/app/scan/[id].tsx:194",
    "src/components/history.tsx:108"
   ]
  },
@@ -5363,7 +5370,7 @@
   "id": "0345ce0e",
   "key": "extra-long large van",
   "where": [
-   "src/lib/frames.ts:51"
+   "src/lib/frames.ts:53"
   ]
  },
  {
@@ -5512,7 +5519,7 @@
   "id": "67f297b4",
   "key": "Firebase isn't connected yet, so photos stay on this phone.",
   "where": [
-   "src/app/scan/[id].tsx:262"
+   "src/app/scan/[id].tsx:278"
   ]
  },
  {
@@ -5572,7 +5579,7 @@
   "id": "d7819728",
   "key": "Fit the vehicle to the outline.",
   "where": [
-   "src/app/scan/[id].tsx:285"
+   "src/app/scan/[id].tsx:308"
   ]
  },
  {
@@ -5866,7 +5873,7 @@
   "id": "8b485903",
   "key": "Frame {n}, {label}",
   "where": [
-   "src/app/scan/[id].tsx:188"
+   "src/app/scan/[id].tsx:201"
   ]
  },
  {
@@ -6009,22 +6016,22 @@
   "id": "dd19f988",
   "key": "Front",
   "where": [
-   "src/lib/frames.ts:168",
-   "src/lib/van3d.ts:300"
+   "src/lib/frames.ts:327",
+   "src/lib/van3d.ts:346"
   ]
  },
  {
   "id": "2ec943d6",
   "key": "Front left corner",
   "where": [
-   "src/lib/frames.ts:168"
+   "src/lib/frames.ts:327"
   ]
  },
  {
   "id": "794829ba",
   "key": "Front right corner",
   "where": [
-   "src/lib/frames.ts:168"
+   "src/lib/frames.ts:327"
   ]
  },
  {
@@ -6983,21 +6990,21 @@
   "id": "160a2928",
   "key": "large van",
   "where": [
-   "src/lib/frames.ts:49"
+   "src/lib/frames.ts:51"
   ]
  },
  {
   "id": "2c219ec5",
   "key": "Large van",
   "where": [
-   "src/lib/frames.ts:49"
+   "src/lib/frames.ts:51"
   ]
  },
  {
   "id": "05d079b8",
   "key": "Large van, extra long",
   "where": [
-   "src/lib/frames.ts:51"
+   "src/lib/frames.ts:53"
   ]
  },
  {
@@ -7166,98 +7173,98 @@
   "id": "8ae1c34b",
   "key": "Left",
   "where": [
-   "src/lib/van3d.ts:301"
+   "src/lib/van3d.ts:347"
   ]
  },
  {
   "id": "6fe8d725",
   "key": "Left box side, front half",
   "where": [
-   "src/lib/frames.ts:173"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "20c6f611",
   "key": "Left box side, rear half",
   "where": [
-   "src/lib/frames.ts:173"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "715cb160",
   "key": "Left cab door and front corner",
   "where": [
-   "src/lib/frames.ts:172"
+   "src/lib/frames.ts:331"
   ]
  },
  {
   "id": "2865c11f",
   "key": "Left cab door and wing",
   "where": [
-   "src/lib/frames.ts:170"
+   "src/lib/frames.ts:329"
   ]
  },
  {
   "id": "61369bbb",
   "key": "Left cab doors and wing",
   "where": [
-   "src/lib/frames.ts:169"
+   "src/lib/frames.ts:328"
   ]
  },
  {
   "id": "105fcc1c",
   "key": "Left cargo side panel",
   "where": [
-   "src/lib/frames.ts:171"
+   "src/lib/frames.ts:330"
   ]
  },
  {
   "id": "8c1865a1",
   "key": "Left cargo side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:170"
+   "src/lib/frames.ts:329"
   ]
  },
  {
   "id": "e4064f9f",
   "key": "Left cargo side, front half",
   "where": [
-   "src/lib/frames.ts:173"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "751c667d",
   "key": "Left cargo side, rear half",
   "where": [
-   "src/lib/frames.ts:172"
+   "src/lib/frames.ts:331"
   ]
  },
  {
   "id": "a75bfc94",
   "key": "Left front door and wing",
   "where": [
-   "src/lib/frames.ts:169"
+   "src/lib/frames.ts:328"
   ]
  },
  {
   "id": "8c0867d2",
   "key": "Left load bed side",
   "where": [
-   "src/lib/frames.ts:169"
+   "src/lib/frames.ts:328"
   ]
  },
  {
   "id": "f9c5a320",
   "key": "Left rear door and quarter",
   "where": [
-   "src/lib/frames.ts:169"
+   "src/lib/frames.ts:328"
   ]
  },
  {
   "id": "7ca1d80b",
   "key": "Left rear quarter",
   "where": [
-   "src/lib/frames.ts:172"
+   "src/lib/frames.ts:331"
   ]
  },
  {
@@ -7271,28 +7278,28 @@
   "id": "472f3e1a",
   "key": "Left sliding door",
   "where": [
-   "src/lib/frames.ts:171"
+   "src/lib/frames.ts:330"
   ]
  },
  {
   "id": "de6bb9b3",
   "key": "Left sliding door and rear quarter",
   "where": [
-   "src/lib/frames.ts:170"
+   "src/lib/frames.ts:329"
   ]
  },
  {
   "id": "39aed7a9",
   "key": "Left sliding door or side panel",
   "where": [
-   "src/lib/frames.ts:172"
+   "src/lib/frames.ts:331"
   ]
  },
  {
   "id": "8f24d5d1",
   "key": "Left sliding door or side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:171"
+   "src/lib/frames.ts:330"
   ]
  },
  {
@@ -7306,21 +7313,21 @@
   "id": "a2e420de",
   "key": "Left: no sliding door",
   "where": [
-   "src/lib/frames.ts:478"
+   "src/lib/frames.ts:645"
   ]
  },
  {
   "id": "8df12a33",
   "key": "Left: not seen",
   "where": [
-   "src/lib/frames.ts:478"
+   "src/lib/frames.ts:645"
   ]
  },
  {
   "id": "fd4b1d03",
   "key": "Left: sliding door",
   "where": [
-   "src/lib/frames.ts:478"
+   "src/lib/frames.ts:645"
   ]
  },
  {
@@ -7406,7 +7413,7 @@
   "id": "a36ef8ab",
   "key": "Light",
   "where": [
-   "src/app/scan/[id].tsx:183"
+   "src/app/scan/[id].tsx:196"
   ]
  },
  {
@@ -7811,14 +7818,14 @@
   "id": "57948bf4",
   "key": "mid-size van",
   "where": [
-   "src/lib/frames.ts:47"
+   "src/lib/frames.ts:49"
   ]
  },
  {
   "id": "9bc11ee5",
   "key": "Mid-size van",
   "where": [
-   "src/lib/frames.ts:47"
+   "src/lib/frames.ts:49"
   ]
  },
  {
@@ -8496,7 +8503,7 @@
   "id": "b7caebb3",
   "key": "No photo",
   "where": [
-   "src/app/scan/[id].tsx:229",
+   "src/app/scan/[id].tsx:242",
    "src/components/damage.tsx:59"
   ]
  },
@@ -9628,7 +9635,7 @@
   "id": "52e60e67",
   "key": "Open load bed",
   "where": [
-   "src/lib/frames.ts:65"
+   "src/lib/frames.ts:67"
   ]
  },
  {
@@ -9656,7 +9663,7 @@
   "id": "85d84762",
   "key": "Open Settings to allow the camera",
   "where": [
-   "src/app/scan/[id].tsx:202"
+   "src/app/scan/[id].tsx:215"
   ]
  },
  {
@@ -9764,6 +9771,13 @@
   "key": "out for {time}",
   "where": [
    "src/app/(tabs)/(review)/review.tsx:271"
+  ]
+ },
+ {
+  "id": "1d47dfde",
+  "key": "Outline: {model}",
+  "where": [
+   "src/lib/frames.ts:649"
   ]
  },
  {
@@ -10154,7 +10168,7 @@
   "key": "photos",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
-   "src/app/scan/[id].tsx:216"
+   "src/app/scan/[id].tsx:229"
   ]
  },
  {
@@ -10206,7 +10220,7 @@
   "id": "7940a0da",
   "key": "Photos upload to your company's storage, so the walk-around is kept as evidence.",
   "where": [
-   "src/app/scan/[id].tsx:262"
+   "src/app/scan/[id].tsx:278"
   ]
  },
  {
@@ -10215,7 +10229,7 @@
   "one": "photos, {n} skipped",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
-   "src/app/scan/[id].tsx:216"
+   "src/app/scan/[id].tsx:229"
   ]
  },
  {
@@ -10266,7 +10280,7 @@
   "id": "9055f977",
   "key": "Pick up {van}",
   "where": [
-   "src/app/scan/[id].tsx:255"
+   "src/app/scan/[id].tsx:271"
   ]
  },
  {
@@ -10313,7 +10327,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:36",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:39",
-   "src/app/scan/[id].tsx:181",
+   "src/app/scan/[id].tsx:194",
    "src/components/history.tsx:106"
   ]
  },
@@ -10378,14 +10392,14 @@
   "id": "4fe6a7df",
   "key": "pickup",
   "where": [
-   "src/lib/frames.ts:43"
+   "src/lib/frames.ts:45"
   ]
  },
  {
   "id": "a51122c1",
   "key": "Pickup",
   "where": [
-   "src/lib/frames.ts:43"
+   "src/lib/frames.ts:45"
   ]
  },
  {
@@ -10595,7 +10609,7 @@
   "id": "5177429b",
   "key": "Raised roof",
   "where": [
-   "src/lib/frames.ts:475"
+   "src/lib/frames.ts:642"
   ]
  },
  {
@@ -10677,35 +10691,35 @@
   "key": "Rear",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:405",
-   "src/lib/van3d.ts:302"
+   "src/lib/van3d.ts:348"
   ]
  },
  {
   "id": "23499a0d",
   "key": "Rear doors",
   "where": [
-   "src/lib/frames.ts:62"
+   "src/lib/frames.ts:64"
   ]
  },
  {
   "id": "95c78766",
   "key": "Rear left corner",
   "where": [
-   "src/lib/frames.ts:168"
+   "src/lib/frames.ts:327"
   ]
  },
  {
   "id": "cb7adecf",
   "key": "Rear right corner",
   "where": [
-   "src/lib/frames.ts:168"
+   "src/lib/frames.ts:327"
   ]
  },
  {
   "id": "9eb8ff8f",
   "key": "Rear shutter and bumper",
   "where": [
-   "src/lib/frames.ts:62"
+   "src/lib/frames.ts:64"
   ]
  },
  {
@@ -11080,7 +11094,8 @@
   "key": "Retake",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:178",
-   "src/app/scan/[id].tsx:289"
+   "src/app/scan/[id].tsx:316",
+   "src/app/scan/[id].tsx:320"
   ]
  },
  {
@@ -11088,7 +11103,7 @@
   "key": "retakes",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:48",
-   "src/app/scan/[id].tsx:217"
+   "src/app/scan/[id].tsx:230"
   ]
  },
  {
@@ -11201,98 +11216,98 @@
   "id": "954daa8b",
   "key": "Right",
   "where": [
-   "src/lib/van3d.ts:303"
+   "src/lib/van3d.ts:349"
   ]
  },
  {
   "id": "98864b88",
   "key": "Right box side, front half",
   "where": [
-   "src/lib/frames.ts:178"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "6a662739",
   "key": "Right box side, rear half",
   "where": [
-   "src/lib/frames.ts:178"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "609a9399",
   "key": "Right cab door and front corner",
   "where": [
-   "src/lib/frames.ts:177"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "bd8d715b",
   "key": "Right cab door and wing",
   "where": [
-   "src/lib/frames.ts:175"
+   "src/lib/frames.ts:334"
   ]
  },
  {
   "id": "7030b8e5",
   "key": "Right cab doors and wing",
   "where": [
-   "src/lib/frames.ts:174"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "1efc5b90",
   "key": "Right cargo side panel",
   "where": [
-   "src/lib/frames.ts:176"
+   "src/lib/frames.ts:335"
   ]
  },
  {
   "id": "c85a71db",
   "key": "Right cargo side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:175"
+   "src/lib/frames.ts:334"
   ]
  },
  {
   "id": "dcfc3280",
   "key": "Right cargo side, front half",
   "where": [
-   "src/lib/frames.ts:178"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "2debf30a",
   "key": "Right cargo side, rear half",
   "where": [
-   "src/lib/frames.ts:177"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "abcda8fd",
   "key": "Right front door and wing",
   "where": [
-   "src/lib/frames.ts:174"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "de9f3f1c",
   "key": "Right load bed side",
   "where": [
-   "src/lib/frames.ts:174"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "b5b9fafa",
   "key": "Right rear door and quarter",
   "where": [
-   "src/lib/frames.ts:174"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "7685d6a2",
   "key": "Right rear quarter",
   "where": [
-   "src/lib/frames.ts:177"
+   "src/lib/frames.ts:336"
   ]
  },
  {
@@ -11306,28 +11321,28 @@
   "id": "a0c0591b",
   "key": "Right sliding door",
   "where": [
-   "src/lib/frames.ts:176"
+   "src/lib/frames.ts:335"
   ]
  },
  {
   "id": "b82fab32",
   "key": "Right sliding door and rear quarter",
   "where": [
-   "src/lib/frames.ts:175"
+   "src/lib/frames.ts:334"
   ]
  },
  {
   "id": "13091385",
   "key": "Right sliding door or side panel",
   "where": [
-   "src/lib/frames.ts:177"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "1e79097a",
   "key": "Right sliding door or side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:176"
+   "src/lib/frames.ts:335"
   ]
  },
  {
@@ -11350,21 +11365,21 @@
   "id": "c2d95f81",
   "key": "Right: no sliding door",
   "where": [
-   "src/lib/frames.ts:479"
+   "src/lib/frames.ts:646"
   ]
  },
  {
   "id": "96773df5",
   "key": "Right: not seen",
   "where": [
-   "src/lib/frames.ts:479"
+   "src/lib/frames.ts:646"
   ]
  },
  {
   "id": "6d7ddbdb",
   "key": "Right: sliding door",
   "where": [
-   "src/lib/frames.ts:479"
+   "src/lib/frames.ts:646"
   ]
  },
  {
@@ -11385,7 +11400,7 @@
   "id": "5d93b8c6",
   "key": "Roller shutter",
   "where": [
-   "src/lib/frames.ts:65"
+   "src/lib/frames.ts:67"
   ]
  },
  {
@@ -11468,7 +11483,7 @@
   "key": "Save {n} photos",
   "one": "Save {n} photo",
   "where": [
-   "src/app/scan/[id].tsx:256"
+   "src/app/scan/[id].tsx:272"
   ]
  },
  {
@@ -11525,7 +11540,7 @@
   "id": "0f673564",
   "key": "Save the pick-up photos",
   "where": [
-   "src/app/scan/[id].tsx:255"
+   "src/app/scan/[id].tsx:271"
   ]
  },
  {
@@ -11606,21 +11621,21 @@
   "id": "369c534d",
   "key": "Saving",
   "where": [
-   "src/app/scan/[id].tsx:158"
+   "src/app/scan/[id].tsx:171"
   ]
  },
  {
   "id": "e16cdd31",
   "key": "Saving {done} of {total} on this phone",
   "where": [
-   "src/app/scan/[id].tsx:169"
+   "src/app/scan/[id].tsx:182"
   ]
  },
  {
   "id": "5da14777",
   "key": "Saving the photos on this phone…",
   "where": [
-   "src/app/scan/[id].tsx:166"
+   "src/app/scan/[id].tsx:179"
   ]
  },
  {
@@ -12011,14 +12026,14 @@
   "id": "49234967",
   "key": "Shutter, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:202"
+   "src/lib/frames.ts:362"
   ]
  },
  {
   "id": "f2c394b1",
   "key": "Shutter, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:202"
+   "src/lib/frames.ts:362"
   ]
  },
  {
@@ -12106,14 +12121,14 @@
   "id": "710365b5",
   "key": "Sill to roof edge in frame. Keep the whole wheel arch in view.",
   "where": [
-   "src/lib/frames.ts:210"
+   "src/lib/frames.ts:370"
   ]
  },
  {
   "id": "7dae5bb7",
   "key": "Sill to roof edge in frame. Overlap the next frame a little.",
   "where": [
-   "src/lib/frames.ts:210"
+   "src/lib/frames.ts:370"
   ]
  },
  {
@@ -12149,7 +12164,7 @@
   "id": "3da47453",
   "key": "Skip",
   "where": [
-   "src/app/scan/[id].tsx:299"
+   "src/app/scan/[id].tsx:332"
   ]
  },
  {
@@ -12171,7 +12186,7 @@
   "key": "Skipped",
   "where": [
    "src/app/(tabs)/(log)/log.tsx:180",
-   "src/app/scan/[id].tsx:229"
+   "src/app/scan/[id].tsx:242"
   ]
  },
  {
@@ -12248,7 +12263,7 @@
   "key": "Something went wrong. Try again.",
   "where": [
    "src/components/uploads.tsx:27",
-   "src/lib/outbox.ts:331",
+   "src/lib/outbox.ts:332",
    "src/lib/session.tsx:151",
    "src/lib/store.ts:265",
    "src/lib/store.ts:286"
@@ -12301,14 +12316,14 @@
   "id": "5d79415d",
   "key": "Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.",
   "where": [
-   "src/lib/frames.ts:207"
+   "src/lib/frames.ts:367"
   ]
  },
  {
   "id": "0ca28021",
   "key": "Standard roof",
   "where": [
-   "src/lib/frames.ts:475"
+   "src/lib/frames.ts:642"
   ]
  },
  {
@@ -12596,6 +12611,13 @@
   ]
  },
  {
+  "id": "2e5d8d12",
+  "key": "Strong glare on the van. Step a little to the side and take it again.",
+  "where": [
+   "src/lib/quality.ts:102"
+  ]
+ },
+ {
   "id": "12cf9117",
   "key": "Student job",
   "where": [
@@ -12613,7 +12635,7 @@
   "id": "cdde64d7",
   "key": "SUV or crossover",
   "where": [
-   "src/lib/frames.ts:41"
+   "src/lib/frames.ts:43"
   ]
  },
  {
@@ -12641,49 +12663,49 @@
   "id": "559a84f6",
   "key": "Tailgate",
   "where": [
-   "src/lib/frames.ts:65"
+   "src/lib/frames.ts:67"
   ]
  },
  {
   "id": "c96c9c05",
   "key": "Tailgate and load bed",
   "where": [
-   "src/lib/frames.ts:62"
+   "src/lib/frames.ts:64"
   ]
  },
  {
   "id": "f88d800e",
   "key": "Tailgate and rear bumper",
   "where": [
-   "src/lib/frames.ts:62"
+   "src/lib/frames.ts:64"
   ]
  },
  {
   "id": "581d5026",
   "key": "Tailgate, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:203"
+   "src/lib/frames.ts:363"
   ]
  },
  {
   "id": "8ad23ab6",
   "key": "Tailgate, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:203"
+   "src/lib/frames.ts:363"
   ]
  },
  {
   "id": "280edab5",
   "key": "Tailgate, rear window, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:201"
+   "src/lib/frames.ts:361"
   ]
  },
  {
   "id": "fb909170",
   "key": "Tailgate, rear window, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:201"
+   "src/lib/frames.ts:361"
   ]
  },
  {
@@ -12779,7 +12801,7 @@
   "id": "c108c747",
   "key": "Take photo {n}",
   "where": [
-   "src/app/scan/[id].tsx:297"
+   "src/app/scan/[id].tsx:330"
   ]
  },
  {
@@ -12889,7 +12911,7 @@
   "id": "a364f3b8",
   "key": "Tap a photo to retake it.",
   "where": [
-   "src/app/scan/[id].tsx:222"
+   "src/app/scan/[id].tsx:235"
   ]
  },
  {
@@ -12955,7 +12977,7 @@
   "id": "80da9307",
   "key": "Tap again to stop",
   "where": [
-   "src/app/scan/[id].tsx:178"
+   "src/app/scan/[id].tsx:191"
   ]
  },
  {
@@ -13286,7 +13308,7 @@
   "id": "3e5c42fa",
   "key": "The camera couldn't start.",
   "where": [
-   "src/app/scan/[id].tsx:276",
+   "src/app/scan/[id].tsx:293",
    "src/components/recorder.tsx:55",
    "src/components/recorder.tsx:73"
   ]
@@ -13743,6 +13765,13 @@
   ]
  },
  {
+  "id": "a2c1f08f",
+  "key": "The photo is blurred. Hold the phone still and take it again.",
+  "where": [
+   "src/lib/quality.ts:103"
+  ]
+ },
+ {
   "id": "4615b331",
   "key": "The photo was read and deleted; it isn't kept with the record.",
   "where": [
@@ -13760,7 +13789,7 @@
   "id": "0e91970e",
   "key": "The photos are saved as a walk-around.",
   "where": [
-   "src/app/scan/[id].tsx:244",
+   "src/app/scan/[id].tsx:260",
    "src/components/uploads.tsx:65"
   ]
  },
@@ -13768,7 +13797,7 @@
   "id": "080d6247",
   "key": "The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.",
   "where": [
-   "src/app/scan/[id].tsx:219"
+   "src/app/scan/[id].tsx:232"
   ]
  },
  {
@@ -13789,14 +13818,14 @@
   "id": "f19fa04d",
   "key": "The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:261"
+   "src/app/scan/[id].tsx:277"
   ]
  },
  {
   "id": "077e462b",
   "key": "The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:260"
+   "src/app/scan/[id].tsx:276"
   ]
  },
  {
@@ -14027,7 +14056,7 @@
   "id": "53bc068c",
   "key": "The walk-around uses the camera with an outline to fit the vehicle into.",
   "where": [
-   "src/app/scan/[id].tsx:201"
+   "src/app/scan/[id].tsx:214"
   ]
  },
  {
@@ -14571,7 +14600,7 @@
   "key": "This vehicle isn't in the fleet any more.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:75",
-   "src/app/scan/[id].tsx:101"
+   "src/app/scan/[id].tsx:106"
   ]
  },
  {
@@ -14756,6 +14785,20 @@
   ]
  },
  {
+  "id": "736cfe84",
+  "key": "Too bright. Step aside so the sun or a lamp doesn't shine into the camera.",
+  "where": [
+   "src/lib/quality.ts:101"
+  ]
+ },
+ {
+  "id": "f54c4fbd",
+  "key": "Too dark to see damage. Turn on the light, or take it where it's brighter.",
+  "where": [
+   "src/lib/quality.ts:100"
+  ]
+ },
+ {
   "id": "db97c592",
   "key": "Too many AI checks at once. Wait a minute and try again.",
   "server": true,
@@ -14781,7 +14824,7 @@
   "id": "cae0435c",
   "key": "Top",
   "where": [
-   "src/lib/van3d.ts:304"
+   "src/lib/van3d.ts:350"
   ]
  },
  {
@@ -14812,7 +14855,7 @@
   "key": "total time",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:46",
-   "src/app/scan/[id].tsx:215"
+   "src/app/scan/[id].tsx:228"
   ]
  },
  {
@@ -14919,7 +14962,7 @@
   "key": "Try again",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:62",
-   "src/app/scan/[id].tsx:246",
+   "src/app/scan/[id].tsx:262",
    "src/components/uploads.tsx:68"
   ]
  },
@@ -14956,7 +14999,7 @@
   "id": "80c5d665",
   "key": "Twin rear doors",
   "where": [
-   "src/lib/frames.ts:65"
+   "src/lib/frames.ts:67"
   ]
  },
  {
@@ -15399,6 +15442,13 @@
   ]
  },
  {
+  "id": "a3240fd9",
+  "key": "Use anyway",
+  "where": [
+   "src/app/scan/[id].tsx:315"
+  ]
+ },
+ {
   "id": "c6188994",
   "key": "Use at least 6 characters for the password.",
   "where": [
@@ -15412,7 +15462,7 @@
   "id": "a75e1e28",
   "key": "Use photo",
   "where": [
-   "src/app/scan/[id].tsx:290"
+   "src/app/scan/[id].tsx:321"
   ]
  },
  {
@@ -15730,7 +15780,7 @@
   "id": "3871fb25",
   "key": "Walk-around done",
   "where": [
-   "src/app/scan/[id].tsx:181"
+   "src/app/scan/[id].tsx:194"
   ]
  },
  {
@@ -15787,14 +15837,14 @@
   "id": "ba7d869d",
   "key": "walk-in delivery van",
   "where": [
-   "src/lib/frames.ts:53"
+   "src/lib/frames.ts:55"
   ]
  },
  {
   "id": "ddd0e819",
   "key": "Walk-in delivery van",
   "where": [
-   "src/lib/frames.ts:53"
+   "src/lib/frames.ts:55"
   ]
  },
  {
@@ -16133,14 +16183,14 @@
   "id": "0f532b4e",
   "key": "Whole front in frame: bumper, grille, lights and windscreen, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:198"
+   "src/lib/frames.ts:358"
   ]
  },
  {
   "id": "e3ca5663",
   "key": "Whole front in frame: bumper, grille, lights and windscreen.",
   "where": [
-   "src/lib/frames.ts:198"
+   "src/lib/frames.ts:358"
   ]
  },
  {

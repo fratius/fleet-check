@@ -121,6 +121,8 @@ jobs:
       - run: npm run typecheck
       - name: Uploads that wait on the phone (the outbox's logic, src/lib/outboxcore.ts)
         run: node --test tests/outbox.test.mjs
+      - name: Walk-around outlines, where a photo's point lands on the van, and the photo check
+        run: node --import ./tests/alias.mjs --test tests/outline.test.mjs
       - name: Every list the app asks for has its index (firestore.indexes.json)
         run: node --test tests/indexes.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)

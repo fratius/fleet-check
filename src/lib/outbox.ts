@@ -188,7 +188,7 @@ const thenFor = (what: 'pickup' | 'dropoff' | 'walkaround', assignmentId: string
  */
 export async function queueWalk(o: {
   orgId: string; uid: string; v: Vehicle; shots: LocalShot[]; what: 'pickup' | 'dropoff' | 'walkaround'; assignmentId?: string | null;
-  meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null };
+  meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 };
 }, onPrep?: (done: number, total: number) => void): Promise<string> {
   await ready();
   const id = newId();
@@ -202,7 +202,7 @@ export async function queueWalk(o: {
       const key = await keepFile(id, name, { uri: p.uri, move: true });
       const path = `orgs/${o.orgId}/walkarounds/${id}/${name}`;
       files.push({ key, path, mime: 'image/jpeg', size: await keptSize(key) });
-      photos.push({ n: s.n, label: s.label, w: p.w, h: p.h, takenAt: s.takenAt, path });
+      photos.push({ n: s.n, label: s.label, w: p.w, h: p.h, takenAt: s.takenAt, path, ...(s.q ? { q: s.q } : {}) });
       onPrep?.(i + 1, o.shots.length);
     }
   } catch (e) {
@@ -216,6 +216,7 @@ export async function queueWalk(o: {
     walk: {
       vehicleId: v.id, vehicleName: v.name, cls: v.cls, stationId: v.stationId, source: o.meta.source, createdAt: now, createdBy: o.uid,
       totalMs: o.meta.totalMs, frames: o.meta.frames, taken: o.shots.length, skipped: o.meta.skipped, retakes: o.meta.retakes, photos,
+      ...(o.meta.overlay ? { overlay: o.meta.overlay } : {}),
     },
   });
   return id;

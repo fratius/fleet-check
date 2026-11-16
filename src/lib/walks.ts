@@ -3,10 +3,10 @@ import { doc, setDoc } from 'firebase/firestore';
 import { fb } from './firebase';
 import { newId, prepare, upload } from './images';
 import { LOCAL_STATION, type Store } from './store';
-import type { Photo, Vehicle, Walkaround } from './types';
+import type { Photo, PhotoQuality, Vehicle, Walkaround } from './types';
 import { vanName } from '@/lib/vans';
 
-export interface LocalShot { n: number; label: string; uri: string; w: number; h: number; takenAt: number; retakes?: number }
+export interface LocalShot { n: number; label: string; uri: string; w: number; h: number; takenAt: number; retakes?: number; q?: PhotoQuality | null }
 
 async function pool<T>(items: T[], n: number, fn: (t: T, i: number) => Promise<void>) {
   let next = 0;
@@ -21,10 +21,10 @@ async function pool<T>(items: T[], n: number, fn: (t: T, i: number) => Promise<v
  * setup the local file uris are kept as they are.
  */
 export async function saveWalk(store: Store, v: Vehicle, uid: string | null, shots: LocalShot[], meta: {
-  source: Walkaround['source']; frames: number; skipped: number; retakes: number; totalMs: number | null;
+  source: Walkaround['source']; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2;
 }, onProgress?: (done: number, total: number) => void): Promise<string> {
   const id = newId();
-  const photos: Photo[] = shots.map((s) => ({ n: s.n, label: s.label, w: s.w, h: s.h, takenAt: s.takenAt }));
+  const photos: Photo[] = shots.map((s) => ({ n: s.n, label: s.label, w: s.w, h: s.h, takenAt: s.takenAt, ...(s.q ? { q: s.q } : {}) }));
   if (store.mode === 'firebase') {
     let done = 0;
     onProgress?.(0, shots.length);
@@ -41,6 +41,7 @@ export async function saveWalk(store: Store, v: Vehicle, uid: string | null, sho
     vehicleId: v.id, vehicleName: vanName(v), cls: v.cls, stationId: v.stationId || (store.mode === 'local' ? LOCAL_STATION : undefined),
     source: meta.source, createdAt: Date.now(), createdBy: uid,
     totalMs: meta.totalMs, frames: meta.frames, taken: shots.length, skipped: meta.skipped, retakes: meta.retakes, photos,
+    ...(meta.overlay ? { overlay: meta.overlay } : {}),
   };
   // With Firebase straight to the server (waiting for the connection if needed): the damage check opened next needs it there.
   if (store.mode === 'firebase') await setDoc(doc(fb()!.db, 'orgs', store.orgId, 'walkarounds', id), JSON.parse(JSON.stringify(rec)));
