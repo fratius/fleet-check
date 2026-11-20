@@ -144,3 +144,14 @@ test('an Excel file written another way: inline strings, deflated, no shared str
   assert.equal(sniff(b), 'xlsx');
   assert.deepEqual(readTables(b, 'xlsx'), [{ name: 'Vans', rows: [['Plate', '', 'Make'], ['B-AB 1', '', 'Ford']] }]);
 });
+
+// Blind QA F01 (PR #30): an owner's fleet list with a monthly rate and no "owned/leased" column saved the rate to the
+// van's costs, but the van's Costs section hid it: the rate only showed for a van said not to be owned. Like the
+// purchase price, it now shows while it isn't said how the van is held.
+test('a monthly rate read without the ownership is shown on the van', async () => {
+  const { notOwned } = await import('../src/lib/fleet.ts');
+  assert.equal(notOwned({ monthly: 705.5 }), true, 'ownership not said: the contract and rate fields show');
+  assert.equal(notOwned({ ownership: null }), true);
+  assert.equal(notOwned({ ownership: 'leased' }), true);
+  assert.equal(notOwned({ ownership: 'owned' }), false);
+});

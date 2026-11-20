@@ -113,14 +113,14 @@
   "id": "4d088bbf",
   "key": "{field}: enter a date like {example}.",
   "where": [
-   "src/components/vanfacts.tsx:172"
+   "src/components/vanfacts.tsx:171"
   ]
  },
  {
   "id": "3e0fe956",
   "key": "{field}: enter a number.",
   "where": [
-   "src/components/vanfacts.tsx:169"
+   "src/components/vanfacts.tsx:168"
   ]
  },
  {
@@ -177,7 +177,7 @@
   "id": "88d529c3",
   "key": "{km} a year under the allowance.",
   "where": [
-   "src/components/vanfacts.tsx:301"
+   "src/components/vanfacts.tsx:300"
   ]
  },
  {
@@ -192,7 +192,7 @@
   "id": "4600f02d",
   "key": "{km} over",
   "where": [
-   "src/lib/fleet.ts:80"
+   "src/lib/fleet.ts:86"
   ]
  },
  {
@@ -387,7 +387,7 @@
   "key": "{n} days overdue",
   "one": "{n} day overdue",
   "where": [
-   "src/lib/fleet.ts:87"
+   "src/lib/fleet.ts:93"
   ]
  },
  {
@@ -1593,7 +1593,7 @@
   "id": "95ce3ea1",
   "key": "17 characters, on the registration document",
   "where": [
-   "src/components/vanfacts.tsx:28"
+   "src/components/vanfacts.tsx:27"
   ]
  },
  {
@@ -1931,14 +1931,14 @@
   "id": "2c2fcbf7",
   "key": "About {km} a year over the allowance, roughly {eur} a year extra.",
   "where": [
-   "src/components/vanfacts.tsx:300"
+   "src/components/vanfacts.tsx:299"
   ]
  },
  {
   "id": "4bfce59f",
   "key": "About {km} a year over the allowance.",
   "where": [
-   "src/components/vanfacts.tsx:300"
+   "src/components/vanfacts.tsx:299"
   ]
  },
  {
@@ -1992,7 +1992,7 @@
   "id": "e8c98820",
   "key": "Accident claims",
   "where": [
-   "src/components/vanfacts.tsx:51"
+   "src/components/vanfacts.tsx:50"
   ]
  },
  {
@@ -2043,7 +2043,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:400",
    "src/app/join/[token].tsx:307",
-   "src/components/vanfacts.tsx:130"
+   "src/components/vanfacts.tsx:129"
   ]
  },
  {
@@ -2188,7 +2188,7 @@
   "id": "037d55e4",
   "key": "Add the breakdown number and the insurer, so drivers have them at the van.",
   "where": [
-   "src/components/vanfacts.tsx:283"
+   "src/components/vanfacts.tsx:282"
   ]
  },
  {
@@ -2216,7 +2216,7 @@
   "id": "0c82d98a",
   "key": "Add the odometer reading to follow the mileage.",
   "where": [
-   "src/components/vanfacts.tsx:293"
+   "src/components/vanfacts.tsx:292"
   ]
  },
  {
@@ -2596,7 +2596,7 @@
   "id": "c18a1a2a",
   "key": "Amazon livery",
   "where": [
-   "src/components/vanfacts.tsx:38"
+   "src/components/vanfacts.tsx:37"
   ]
  },
  {
@@ -2633,7 +2633,7 @@
   "key": "and {n} more",
   "one": "and {n} more",
   "where": [
-   "src/components/vanfacts.tsx:335"
+   "src/components/vanfacts.tsx:334"
   ]
  },
  {
@@ -2796,7 +2796,7 @@
   "id": "5321048f",
   "key": "At this pace: {km} a year",
   "where": [
-   "src/components/vanfacts.tsx:296"
+   "src/components/vanfacts.tsx:295"
   ]
  },
  {
@@ -2858,7 +2858,7 @@
   "key": "Battery",
   "where": [
    "src/components/dash.tsx:313",
-   "src/components/vanfacts.tsx:33"
+   "src/components/vanfacts.tsx:32"
   ]
  },
  {
@@ -3040,14 +3040,14 @@
   "id": "2010e29f",
   "key": "Breakdown cover",
   "where": [
-   "src/lib/fleet.ts:51"
+   "src/lib/fleet.ts:57"
   ]
  },
  {
   "id": "0f671a41",
   "key": "Breakdown help",
   "where": [
-   "src/components/vanfacts.tsx:50"
+   "src/components/vanfacts.tsx:49"
   ]
  },
  {
@@ -3097,7 +3097,7 @@
   "id": "d6663dda",
   "key": "Business",
   "where": [
-   "src/components/vanfacts.tsx:289"
+   "src/components/vanfacts.tsx:288"
   ]
  },
  {
@@ -3174,7 +3174,7 @@
    "src/components/service.tsx:175",
    "src/components/service.tsx:279",
    "src/components/uploads.tsx:71",
-   "src/components/vanfacts.tsx:236"
+   "src/components/vanfacts.tsx:235"
   ]
  },
  {
@@ -3349,7 +3349,7 @@
   "id": "354e8c1f",
   "key": "Cargo space",
   "where": [
-   "src/components/vanfacts.tsx:46"
+   "src/components/vanfacts.tsx:45"
   ]
  },
  {
@@ -3500,7 +3500,7 @@
   "id": "36be92d5",
   "key": "Check it before car parks and garages",
   "where": [
-   "src/components/vanfacts.tsx:42"
+   "src/components/vanfacts.tsx:41"
   ]
  },
  {
@@ -3893,7 +3893,7 @@
   "id": "f28563a4",
   "key": "Colour",
   "where": [
-   "src/components/vanfacts.tsx:37"
+   "src/components/vanfacts.tsx:36"
   ]
  },
  {
@@ -3901,7 +3901,7 @@
   "key": "Coming up",
   "where": [
    "src/components/driverrec.tsx:69",
-   "src/components/vanfacts.tsx:346"
+   "src/components/vanfacts.tsx:345"
   ]
  },
  {
@@ -3980,7 +3980,7 @@
   "id": "b37456c4",
   "key": "Contact",
   "where": [
-   "src/components/vanfacts.tsx:76"
+   "src/components/vanfacts.tsx:75"
   ]
  },
  {
@@ -3997,14 +3997,14 @@
   "where": [
    "src/components/docscan.tsx:56",
    "src/components/driverrec.tsx:27",
-   "src/components/vanfacts.tsx:307"
+   "src/components/vanfacts.tsx:306"
   ]
  },
  {
   "id": "e5c0324a",
   "key": "Contract number",
   "where": [
-   "src/components/vanfacts.tsx:70"
+   "src/components/vanfacts.tsx:69"
   ]
  },
  {
@@ -4123,7 +4123,7 @@
   "key": "Costs",
   "where": [
    "src/components/docscan.tsx:58",
-   "src/components/vanfacts.tsx:310"
+   "src/components/vanfacts.tsx:309"
   ]
  },
  {
@@ -4369,14 +4369,14 @@
   "id": "8b656a5d",
   "key": "Cover",
   "where": [
-   "src/components/vanfacts.tsx:80"
+   "src/components/vanfacts.tsx:79"
   ]
  },
  {
   "id": "35e3dee8",
   "key": "Cover and renewal date.",
   "where": [
-   "src/components/vanfacts.tsx:308"
+   "src/components/vanfacts.tsx:307"
   ]
  },
  {
@@ -4692,7 +4692,7 @@
    "src/components/service.tsx:256",
    "src/components/service.tsx:272",
    "src/components/service.tsx:276",
-   "src/components/vanfacts.tsx:232"
+   "src/components/vanfacts.tsx:231"
   ]
  },
  {
@@ -4700,7 +4700,7 @@
   "key": "Deadlines",
   "where": [
    "src/components/docscan.tsx:59",
-   "src/components/vanfacts.tsx:313"
+   "src/components/vanfacts.tsx:312"
   ]
  },
  {
@@ -4941,7 +4941,7 @@
    "src/app/(tabs)/(people)/people.tsx:410",
    "src/app/(tabs)/(table)/data.tsx:217",
    "src/app/(tabs)/(table)/data.tsx:252",
-   "src/lib/fleet.ts:172",
+   "src/lib/fleet.ts:178",
    "src/lib/types.ts:483"
   ]
  },
@@ -5067,7 +5067,7 @@
   "id": "3ba0bc59",
   "key": "Driving licence runs out",
   "where": [
-   "src/lib/fleet.ts:155"
+   "src/lib/fleet.ts:161"
   ]
  },
  {
@@ -5179,7 +5179,7 @@
   "id": "006c1a05",
   "key": "Due dates show on the van, in the fleet list and in Review.",
   "where": [
-   "src/components/vanfacts.tsx:313"
+   "src/components/vanfacts.tsx:312"
   ]
  },
  {
@@ -5215,7 +5215,7 @@
   "id": "3e96504e",
   "key": "Each kilometre over the allowance",
   "where": [
-   "src/components/vanfacts.tsx:87"
+   "src/components/vanfacts.tsx:86"
   ]
  },
  {
@@ -5251,7 +5251,7 @@
   "key": "Edit",
   "where": [
    "src/components/driverrec.tsx:169",
-   "src/components/vanfacts.tsx:130"
+   "src/components/vanfacts.tsx:129"
   ]
  },
  {
@@ -5367,7 +5367,7 @@
   "where": [
    "src/app/(tabs)/(table)/data.tsx:255",
    "src/components/offers.tsx:107",
-   "src/components/vanfacts.tsx:72"
+   "src/components/vanfacts.tsx:71"
   ]
  },
  {
@@ -5662,7 +5662,7 @@
   "id": "6bba21ab",
   "key": "Every dashboard photo updates the odometer.",
   "where": [
-   "src/components/vanfacts.tsx:293"
+   "src/components/vanfacts.tsx:292"
   ]
  },
  {
@@ -5872,7 +5872,7 @@
   "id": "aa92ed54",
   "key": "Financed",
   "where": [
-   "src/lib/fleet.ts:49"
+   "src/lib/fleet.ts:55"
   ]
  },
  {
@@ -5886,7 +5886,7 @@
   "id": "ce0fefa1",
   "key": "Financing ends",
   "where": [
-   "src/lib/fleet.ts:75"
+   "src/lib/fleet.ts:81"
   ]
  },
  {
@@ -5994,7 +5994,7 @@
   "id": "617ef619",
   "key": "First registration",
   "where": [
-   "src/components/vanfacts.tsx:29"
+   "src/components/vanfacts.tsx:28"
   ]
  },
  {
@@ -6252,7 +6252,7 @@
   "id": "9b5de981",
   "key": "For the fuel used on each tour",
   "where": [
-   "src/components/vanfacts.tsx:32"
+   "src/components/vanfacts.tsx:31"
   ]
  },
  {
@@ -6527,7 +6527,7 @@
   "where": [
    "src/app/(tabs)/(table)/data.tsx:279",
    "src/components/dash.tsx:313",
-   "src/components/vanfacts.tsx:31"
+   "src/components/vanfacts.tsx:30"
   ]
  },
  {
@@ -6550,7 +6550,7 @@
   "key": "Fuel card and notes",
   "where": [
    "src/components/docscan.tsx:60",
-   "src/components/vanfacts.tsx:315"
+   "src/components/vanfacts.tsx:314"
   ]
  },
  {
@@ -6622,14 +6622,14 @@
   "key": "Fuel or charging card",
   "where": [
    "src/components/docscan.tsx:43",
-   "src/components/vanfacts.tsx:92"
+   "src/components/vanfacts.tsx:91"
   ]
  },
  {
   "id": "762ff41d",
   "key": "Fuel tank",
   "where": [
-   "src/components/vanfacts.tsx:32"
+   "src/components/vanfacts.tsx:31"
   ]
  },
  {
@@ -6668,14 +6668,14 @@
   "id": "8fe7954f",
   "key": "Full cover",
   "where": [
-   "src/lib/fleet.ts:50"
+   "src/lib/fleet.ts:56"
   ]
  },
  {
   "id": "6ae7a749",
   "key": "Full-time",
   "where": [
-   "src/lib/fleet.ts:125"
+   "src/lib/fleet.ts:131"
   ]
  },
  {
@@ -6705,7 +6705,7 @@
   "id": "b1ba8f0c",
   "key": "Gearbox",
   "where": [
-   "src/components/vanfacts.tsx:36"
+   "src/components/vanfacts.tsx:35"
   ]
  },
  {
@@ -6871,7 +6871,7 @@
   "id": "1b9810c3",
   "key": "Gross weight",
   "where": [
-   "src/components/vanfacts.tsx:44"
+   "src/components/vanfacts.tsx:43"
   ]
  },
  {
@@ -6976,14 +6976,14 @@
   "id": "3f608b49",
   "key": "Height",
   "where": [
-   "src/components/vanfacts.tsx:42"
+   "src/components/vanfacts.tsx:41"
   ]
  },
  {
   "id": "aa279bfd",
   "key": "Height, weight, payload and cargo space.",
   "where": [
-   "src/components/vanfacts.tsx:281"
+   "src/components/vanfacts.tsx:280"
   ]
  },
  {
@@ -7129,7 +7129,7 @@
   "key": "If something happens",
   "where": [
    "src/components/docscan.tsx:54",
-   "src/components/vanfacts.tsx:282"
+   "src/components/vanfacts.tsx:281"
   ]
  },
  {
@@ -7164,7 +7164,7 @@
   "id": "23ca0de7",
   "key": "in {km}",
   "where": [
-   "src/lib/fleet.ts:80"
+   "src/lib/fleet.ts:86"
   ]
  },
  {
@@ -7172,7 +7172,7 @@
   "key": "in {n} days",
   "one": "in {n} day",
   "where": [
-   "src/lib/fleet.ts:89"
+   "src/lib/fleet.ts:95"
   ]
  },
  {
@@ -7180,7 +7180,7 @@
   "key": "in {n} months",
   "one": "in {n} month",
   "where": [
-   "src/lib/fleet.ts:90"
+   "src/lib/fleet.ts:96"
   ]
  },
  {
@@ -7223,7 +7223,7 @@
   "id": "3e2c5704",
   "key": "Included",
   "where": [
-   "src/components/vanfacts.tsx:75"
+   "src/components/vanfacts.tsx:74"
   ]
  },
  {
@@ -7267,15 +7267,15 @@
   "key": "Insurance",
   "where": [
    "src/components/docscan.tsx:57",
-   "src/components/vanfacts.tsx:308",
-   "src/lib/fleet.ts:51"
+   "src/components/vanfacts.tsx:307",
+   "src/lib/fleet.ts:57"
   ]
  },
  {
   "id": "a0395986",
   "key": "Insurance deductible",
   "where": [
-   "src/components/vanfacts.tsx:89"
+   "src/components/vanfacts.tsx:88"
   ]
  },
  {
@@ -7289,21 +7289,21 @@
   "id": "0063e689",
   "key": "Insurance premium a year",
   "where": [
-   "src/components/vanfacts.tsx:88"
+   "src/components/vanfacts.tsx:87"
   ]
  },
  {
   "id": "936170b2",
   "key": "Insurance renewal",
   "where": [
-   "src/lib/fleet.ts:74"
+   "src/lib/fleet.ts:80"
   ]
  },
  {
   "id": "31bc8a94",
   "key": "Insurer",
   "where": [
-   "src/components/vanfacts.tsx:52"
+   "src/components/vanfacts.tsx:51"
   ]
  },
  {
@@ -7428,14 +7428,14 @@
   "id": "e5651c68",
   "key": "Keys",
   "where": [
-   "src/components/vanfacts.tsx:39"
+   "src/components/vanfacts.tsx:38"
   ]
  },
  {
   "id": "9b9e64fc",
   "key": "Kilometres allowed a year",
   "where": [
-   "src/components/vanfacts.tsx:73"
+   "src/components/vanfacts.tsx:72"
   ]
  },
  {
@@ -7535,14 +7535,14 @@
   "id": "ec27cd9e",
   "key": "Last changed {date} by {name}.",
   "where": [
-   "src/components/vanfacts.tsx:317"
+   "src/components/vanfacts.tsx:316"
   ]
  },
  {
   "id": "36aca274",
   "key": "Last changed {date}.",
   "where": [
-   "src/components/vanfacts.tsx:318"
+   "src/components/vanfacts.tsx:317"
   ]
  },
  {
@@ -7704,21 +7704,21 @@
   "id": "45714837",
   "key": "Lease ends",
   "where": [
-   "src/lib/fleet.ts:75"
+   "src/lib/fleet.ts:81"
   ]
  },
  {
   "id": "092b4f45",
   "key": "Leased",
   "where": [
-   "src/lib/fleet.ts:49"
+   "src/lib/fleet.ts:55"
   ]
  },
  {
   "id": "9eb20771",
   "key": "Leasing company, landlord or seller",
   "where": [
-   "src/components/vanfacts.tsx:69"
+   "src/components/vanfacts.tsx:68"
   ]
  },
  {
@@ -7886,7 +7886,7 @@
   "id": "3bade34e",
   "key": "Length",
   "where": [
-   "src/components/vanfacts.tsx:43"
+   "src/components/vanfacts.tsx:42"
   ]
  },
  {
@@ -7900,22 +7900,22 @@
   "id": "336581ca",
   "key": "Liability only",
   "where": [
-   "src/lib/fleet.ts:50"
+   "src/lib/fleet.ts:56"
   ]
  },
  {
   "id": "ffee583b",
   "key": "Licence check",
   "where": [
-   "src/lib/fleet.ts:157",
-   "src/lib/fleet.ts:158"
+   "src/lib/fleet.ts:163",
+   "src/lib/fleet.ts:164"
   ]
  },
  {
   "id": "915ad8f0",
   "key": "Licence check found a problem",
   "where": [
-   "src/lib/fleet.ts:159"
+   "src/lib/fleet.ts:165"
   ]
  },
  {
@@ -8061,7 +8061,7 @@
   "id": "df9fff10",
   "key": "Livery",
   "where": [
-   "src/components/vanfacts.tsx:38"
+   "src/components/vanfacts.tsx:37"
   ]
  },
  {
@@ -8176,14 +8176,14 @@
   "id": "e25bd3d3",
   "key": "Main inspection sticker: {date}",
   "where": [
-   "src/components/vanfacts.tsx:376"
+   "src/components/vanfacts.tsx:375"
   ]
  },
  {
   "id": "a2f416b9",
   "key": "Main inspection, safety check, service, tyres and tax.",
   "where": [
-   "src/components/vanfacts.tsx:314"
+   "src/components/vanfacts.tsx:313"
   ]
  },
  {
@@ -8197,7 +8197,7 @@
   "id": "94de303b",
   "key": "Maintenance",
   "where": [
-   "src/lib/fleet.ts:51"
+   "src/lib/fleet.ts:57"
   ]
  },
  {
@@ -8408,14 +8408,14 @@
   "key": "Mileage",
   "where": [
    "src/components/docscan.tsx:55",
-   "src/components/vanfacts.tsx:293"
+   "src/components/vanfacts.tsx:292"
   ]
  },
  {
   "id": "68fb9d14",
   "key": "Mini-job",
   "where": [
-   "src/lib/fleet.ts:125"
+   "src/lib/fleet.ts:131"
   ]
  },
  {
@@ -8439,7 +8439,7 @@
   "where": [
    "src/components/service.tsx:146",
    "src/components/service.tsx:262",
-   "src/components/vanfacts.tsx:232"
+   "src/components/vanfacts.tsx:231"
   ]
  },
  {
@@ -8472,7 +8472,7 @@
   "id": "9ae36e6b",
   "key": "Model year",
   "where": [
-   "src/components/vanfacts.tsx:30"
+   "src/components/vanfacts.tsx:29"
   ]
  },
  {
@@ -8511,7 +8511,7 @@
   "id": "5d205f26",
   "key": "Monthly rate or purchase price, the price per extra kilometre, the insurance premium and deductible.",
   "where": [
-   "src/components/vanfacts.tsx:311"
+   "src/components/vanfacts.tsx:310"
   ]
  },
  {
@@ -8561,7 +8561,7 @@
   "id": "bdc95e60",
   "key": "Name, phone or email",
   "where": [
-   "src/components/vanfacts.tsx:76"
+   "src/components/vanfacts.tsx:75"
   ]
  },
  {
@@ -8612,7 +8612,7 @@
   "key": "never recorded",
   "where": [
    "src/app/(tabs)/(table)/data.tsx:115",
-   "src/lib/fleet.ts:158"
+   "src/lib/fleet.ts:164"
   ]
  },
  {
@@ -8843,7 +8843,7 @@
   "key": "No",
   "where": [
    "src/components/dash.tsx:228",
-   "src/components/vanfacts.tsx:208"
+   "src/components/vanfacts.tsx:207"
   ]
  },
  {
@@ -9729,7 +9729,7 @@
    "src/components/driverrec.tsx:78",
    "src/components/service.tsx:268",
    "src/components/service.tsx:295",
-   "src/components/vanfacts.tsx:93"
+   "src/components/vanfacts.tsx:92"
   ]
  },
  {
@@ -9900,7 +9900,7 @@
    "src/app/(tabs)/(table)/data.tsx:327",
    "src/components/dash.tsx:312",
    "src/components/service.tsx:26",
-   "src/components/vanfacts.tsx:64"
+   "src/components/vanfacts.tsx:63"
   ]
  },
  {
@@ -9922,7 +9922,7 @@
   "id": "93b98a5c",
   "key": "Odometer at the start",
   "where": [
-   "src/components/vanfacts.tsx:74"
+   "src/components/vanfacts.tsx:73"
   ]
  },
  {
@@ -10210,14 +10210,14 @@
   "id": "014b98f7",
   "key": "Only owners and this station's fleet managers see this part; the costs only owners.",
   "where": [
-   "src/components/vanfacts.tsx:290"
+   "src/components/vanfacts.tsx:289"
   ]
  },
  {
   "id": "18780e20",
   "key": "Only owners and this station's fleet managers see this part.",
   "where": [
-   "src/components/vanfacts.tsx:290"
+   "src/components/vanfacts.tsx:289"
   ]
  },
  {
@@ -10231,7 +10231,7 @@
   "id": "8707964e",
   "key": "Only owners see what the van costs.",
   "where": [
-   "src/components/vanfacts.tsx:310"
+   "src/components/vanfacts.tsx:309"
   ]
  },
  {
@@ -10584,8 +10584,8 @@
   "where": [
    "src/components/driverrec.tsx:42",
    "src/components/driverrec.tsx:43",
-   "src/lib/fleet.ts:125",
-   "src/lib/fleet.ts:49",
+   "src/lib/fleet.ts:131",
+   "src/lib/fleet.ts:55",
    "src/lib/service.ts:16"
   ]
  },
@@ -10639,14 +10639,14 @@
   "id": "b62ff5cc",
   "key": "Owned",
   "where": [
-   "src/lib/fleet.ts:49"
+   "src/lib/fleet.ts:55"
   ]
  },
  {
   "id": "886c9199",
   "key": "Owned, leased, rented or financed: who with, how long, the mileage allowance.",
   "where": [
-   "src/components/vanfacts.tsx:307"
+   "src/components/vanfacts.tsx:306"
   ]
  },
  {
@@ -10704,14 +10704,14 @@
   "id": "b670954b",
   "key": "Part-time",
   "where": [
-   "src/lib/fleet.ts:125"
+   "src/lib/fleet.ts:131"
   ]
  },
  {
   "id": "f8df3331",
   "key": "Partial cover",
   "where": [
-   "src/lib/fleet.ts:50"
+   "src/lib/fleet.ts:56"
   ]
  },
  {
@@ -10840,7 +10840,7 @@
   "id": "c30415ea",
   "key": "Payload",
   "where": [
-   "src/components/vanfacts.tsx:45"
+   "src/components/vanfacts.tsx:44"
   ]
  },
  {
@@ -10898,7 +10898,7 @@
   "id": "2094117d",
   "key": "Per month, without VAT",
   "where": [
-   "src/components/vanfacts.tsx:85"
+   "src/components/vanfacts.tsx:84"
   ]
  },
  {
@@ -11315,7 +11315,7 @@
   "id": "34118050",
   "key": "Plain",
   "where": [
-   "src/components/vanfacts.tsx:38"
+   "src/components/vanfacts.tsx:37"
   ]
  },
  {
@@ -11413,7 +11413,7 @@
   "id": "9e79750a",
   "key": "Policy number",
   "where": [
-   "src/components/vanfacts.tsx:53"
+   "src/components/vanfacts.tsx:52"
   ]
  },
  {
@@ -11427,7 +11427,7 @@
   "id": "7548ab52",
   "key": "Power",
   "where": [
-   "src/components/vanfacts.tsx:35"
+   "src/components/vanfacts.tsx:34"
   ]
  },
  {
@@ -11482,7 +11482,7 @@
   "id": "fad43131",
   "key": "Provider and the last digits, never the full number or PIN",
   "where": [
-   "src/components/vanfacts.tsx:92"
+   "src/components/vanfacts.tsx:91"
   ]
  },
  {
@@ -11496,7 +11496,7 @@
   "id": "b21bc692",
   "key": "Purchase price",
   "where": [
-   "src/components/vanfacts.tsx:86"
+   "src/components/vanfacts.tsx:85"
   ]
  },
  {
@@ -11527,7 +11527,7 @@
   "key": "Range",
   "where": [
    "src/components/dash.tsx:314",
-   "src/components/vanfacts.tsx:34"
+   "src/components/vanfacts.tsx:33"
   ]
  },
  {
@@ -11569,7 +11569,7 @@
   "id": "1de9b5aa",
   "key": "Read on",
   "where": [
-   "src/components/vanfacts.tsx:65"
+   "src/components/vanfacts.tsx:64"
   ]
  },
  {
@@ -11976,7 +11976,7 @@
   "id": "578e19a8",
   "key": "Renewal",
   "where": [
-   "src/components/vanfacts.tsx:81"
+   "src/components/vanfacts.tsx:80"
   ]
  },
  {
@@ -12012,14 +12012,14 @@
   "id": "c06bbcc2",
   "key": "Rental ends",
   "where": [
-   "src/lib/fleet.ts:75"
+   "src/lib/fleet.ts:81"
   ]
  },
  {
   "id": "12361a1b",
   "key": "Rented",
   "where": [
-   "src/lib/fleet.ts:49"
+   "src/lib/fleet.ts:55"
   ]
  },
  {
@@ -12035,7 +12035,7 @@
   "id": "30ad98ef",
   "key": "Replacement van",
   "where": [
-   "src/lib/fleet.ts:51"
+   "src/lib/fleet.ts:57"
   ]
  },
  {
@@ -12393,7 +12393,7 @@
   "id": "7a19bb09",
   "key": "Safety briefing (yearly)",
   "where": [
-   "src/lib/fleet.ts:160"
+   "src/lib/fleet.ts:166"
   ]
  },
  {
@@ -12401,8 +12401,8 @@
   "key": "Safety check (UVV)",
   "where": [
    "src/components/docscan.tsx:41",
-   "src/components/vanfacts.tsx:57",
-   "src/lib/fleet.ts:70"
+   "src/components/vanfacts.tsx:56",
+   "src/lib/fleet.ts:76"
   ]
  },
  {
@@ -12441,7 +12441,7 @@
    "src/app/(tabs)/(people)/people.tsx:115",
    "src/components/service.tsx:149",
    "src/components/service.tsx:279",
-   "src/components/vanfacts.tsx:236"
+   "src/components/vanfacts.tsx:235"
   ]
  },
  {
@@ -12798,7 +12798,7 @@
   "id": "31e4ead3",
   "key": "See all deadlines",
   "where": [
-   "src/components/vanfacts.tsx:336"
+   "src/components/vanfacts.tsx:335"
   ]
  },
  {
@@ -12820,7 +12820,7 @@
   "id": "ab17ded1",
   "key": "see the record",
   "where": [
-   "src/lib/fleet.ts:159"
+   "src/lib/fleet.ts:165"
   ]
  },
  {
@@ -12957,14 +12957,14 @@
    "src/app/(tabs)/(table)/data.tsx:165",
    "src/app/(tabs)/(table)/data.tsx:167",
    "src/components/service.tsx:73",
-   "src/lib/fleet.ts:71"
+   "src/lib/fleet.ts:77"
   ]
  },
  {
   "id": "1d1501e3",
   "key": "Service (distance)",
   "where": [
-   "src/lib/fleet.ts:79"
+   "src/lib/fleet.ts:85"
   ]
  },
  {
@@ -12980,14 +12980,14 @@
   "id": "6ba95446",
   "key": "Service at",
   "where": [
-   "src/components/vanfacts.tsx:59"
+   "src/components/vanfacts.tsx:58"
   ]
  },
  {
   "id": "355d43c0",
   "key": "Service by date",
   "where": [
-   "src/components/vanfacts.tsx:58"
+   "src/components/vanfacts.tsx:57"
   ]
  },
  {
@@ -13222,7 +13222,7 @@
   "key": "Size and load",
   "where": [
    "src/components/docscan.tsx:53",
-   "src/components/vanfacts.tsx:281"
+   "src/components/vanfacts.tsx:280"
   ]
  },
  {
@@ -13410,7 +13410,7 @@
   "key": "Start",
   "where": [
    "src/app/(tabs)/(table)/data.tsx:253",
-   "src/components/vanfacts.tsx:71"
+   "src/components/vanfacts.tsx:70"
   ]
  },
  {
@@ -13717,7 +13717,7 @@
   "id": "12cf9117",
   "key": "Student job",
   "where": [
-   "src/lib/fleet.ts:125"
+   "src/lib/fleet.ts:131"
   ]
  },
  {
@@ -14868,14 +14868,14 @@
   "id": "c8eced06",
   "key": "The month on the sticker, like 03/2027",
   "where": [
-   "src/components/vanfacts.tsx:56"
+   "src/components/vanfacts.tsx:55"
   ]
  },
  {
   "id": "d520c3b2",
   "key": "The monthly rate works out at {eur} per kilometre (without fuel and repairs).",
   "where": [
-   "src/components/vanfacts.tsx:304"
+   "src/components/vanfacts.tsx:303"
   ]
  },
  {
@@ -15236,7 +15236,7 @@
   "id": "d94be526",
   "key": "The van is",
   "where": [
-   "src/components/vanfacts.tsx:68"
+   "src/components/vanfacts.tsx:67"
   ]
  },
  {
@@ -15264,7 +15264,7 @@
   "id": "195d8453",
   "key": "The van's fuel or charging card and anything else to remember.",
   "where": [
-   "src/components/vanfacts.tsx:315"
+   "src/components/vanfacts.tsx:314"
   ]
  },
  {
@@ -15330,7 +15330,7 @@
   "id": "7837d4d1",
   "key": "The VIN has 17 characters.",
   "where": [
-   "src/components/vanfacts.tsx:176"
+   "src/components/vanfacts.tsx:175"
   ]
  },
  {
@@ -16123,14 +16123,14 @@
   "id": "2dd2bed7",
   "key": "today",
   "where": [
-   "src/lib/fleet.ts:86"
+   "src/lib/fleet.ts:92"
   ]
  },
  {
   "id": "d1cf730a",
   "key": "Today when you change the odometer",
   "where": [
-   "src/components/vanfacts.tsx:65"
+   "src/components/vanfacts.tsx:64"
   ]
  },
  {
@@ -16166,7 +16166,7 @@
   "id": "2dac81d6",
   "key": "tomorrow",
   "where": [
-   "src/lib/fleet.ts:88"
+   "src/lib/fleet.ts:94"
   ]
  },
  {
@@ -16394,8 +16394,8 @@
   "where": [
    "functions/src/service.ts:22",
    "src/components/service.tsx:135",
-   "src/components/vanfacts.tsx:56",
-   "src/lib/fleet.ts:69",
+   "src/components/vanfacts.tsx:55",
+   "src/lib/fleet.ts:75",
    "src/lib/service.ts:16"
   ]
  },
@@ -16489,8 +16489,8 @@
   "id": "32dc89fc",
   "key": "Tyre change",
   "where": [
-   "src/components/vanfacts.tsx:60",
-   "src/lib/fleet.ts:72"
+   "src/components/vanfacts.tsx:59",
+   "src/lib/fleet.ts:78"
   ]
  },
  {
@@ -16512,7 +16512,7 @@
   "id": "0b946e28",
   "key": "Tyre size",
   "where": [
-   "src/components/vanfacts.tsx:47"
+   "src/components/vanfacts.tsx:46"
   ]
  },
  {
@@ -16523,7 +16523,7 @@
    "functions/src/routines.ts:23",
    "functions/src/service.ts:22",
    "src/components/routines.tsx:30",
-   "src/lib/fleet.ts:51",
+   "src/lib/fleet.ts:57",
    "src/lib/service.ts:16"
   ]
  },
@@ -16928,7 +16928,7 @@
   "id": "70ac1886",
   "key": "Usable capacity, for the energy used on each tour",
   "where": [
-   "src/components/vanfacts.tsx:33"
+   "src/components/vanfacts.tsx:32"
   ]
  },
  {
@@ -17109,15 +17109,15 @@
   "key": "Vehicle",
   "where": [
    "src/components/docscan.tsx:52",
-   "src/components/vanfacts.tsx:279"
+   "src/components/vanfacts.tsx:278"
   ]
  },
  {
   "id": "d8ce9a24",
   "key": "Vehicle tax",
   "where": [
-   "src/components/vanfacts.tsx:61",
-   "src/lib/fleet.ts:73"
+   "src/components/vanfacts.tsx:60",
+   "src/lib/fleet.ts:79"
   ]
  },
  {
@@ -17183,14 +17183,14 @@
   "id": "12033717",
   "key": "VIN",
   "where": [
-   "src/components/vanfacts.tsx:28"
+   "src/components/vanfacts.tsx:27"
   ]
  },
  {
   "id": "b3ba54c5",
   "key": "VIN, first registration, fuel and gearbox. Add them from the registration document.",
   "where": [
-   "src/components/vanfacts.tsx:280"
+   "src/components/vanfacts.tsx:279"
   ]
  },
  {
@@ -17619,7 +17619,7 @@
   "id": "9932ab3e",
   "key": "When it goes back",
   "where": [
-   "src/components/vanfacts.tsx:77"
+   "src/components/vanfacts.tsx:76"
   ]
  },
  {
@@ -17685,7 +17685,7 @@
   "id": "6d8d2b90",
   "key": "Who drivers call after a breakdown or an accident.",
   "where": [
-   "src/components/vanfacts.tsx:282"
+   "src/components/vanfacts.tsx:281"
   ]
  },
  {
@@ -17831,7 +17831,7 @@
   "id": "252b1a27",
   "key": "Yearly check for company vehicles",
   "where": [
-   "src/components/vanfacts.tsx:57"
+   "src/components/vanfacts.tsx:56"
   ]
  },
  {
@@ -17882,7 +17882,7 @@
   "key": "Yes",
   "where": [
    "src/components/dash.tsx:229",
-   "src/components/vanfacts.tsx:208"
+   "src/components/vanfacts.tsx:207"
   ]
  },
  {

@@ -46,6 +46,12 @@ export const today = () => { const d0 = new Date(); return `${d0.getFullYear()}-
 
 export const FUEL: Record<string, string> = { diesel: N_('Diesel'), electric: N_('Electric'), petrol: N_('Petrol'), hybrid: N_('Hybrid'), cng: N_('Gas (CNG)') };
 export const GEARBOX: Record<string, string> = { manual: N_('Manual'), automatic: N_('Automatic') };
+/**
+ * The contract fields that only fit a van that isn't owned (end date, mileage allowance, monthly rate, price per
+ * extra km). They also show while it isn't said how the van is held, like the purchase price does: otherwise a
+ * monthly rate from a fleet list without an "owned/leased" column is saved but never shown (blind QA, PR #30).
+ */
+export const notOwned = (v: Record<string, unknown>) => v.ownership !== 'owned';
 export const OWNERSHIP: Record<string, string> = { owned: N_('Owned'), leased: N_('Leased'), rented: N_('Rented'), financed: N_('Financed'), other: N_('Other') };
 export const COVERAGE: Record<string, string> = { liability: N_('Liability only'), partial: N_('Partial cover'), full: N_('Full cover') };
 export const INCLUDED: Record<string, string> = { maintenance: N_('Maintenance'), tyres: N_('Tyres'), insurance: N_('Insurance'), breakdown: N_('Breakdown cover'), replacement: N_('Replacement van') };
