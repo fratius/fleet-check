@@ -1263,6 +1263,7 @@ a5c80c01	No drop-off video or photos: {driver} didn't drop it off, the next driv
 c413355c	No drop-off video or photos.
 8f7a2830	no earlier photo	[lib/compare.ts]
 0fd48eb4	No earlier photos of this van
+fd5ea6be	No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.
 26678443	No earlier photos, so it can't be narrowed down.
 e0663bad	no end photo	[components/dash.tsx]
 26e07556	no end photo (estimated)
@@ -2032,7 +2033,6 @@ e7eb9141	The file is deleted straight after reading. Vans aren't given to driver
 e18165f7	The file is too big. Upload the list on its own, as .xlsx or CSV.
 099e21ed	The file lists {n} vans. Upload at most {max} at a time.
 a819aa5a	The file seems to be damaged. Save it again and upload it.
-b7251ed2	The first walk-around of this van: nothing to compare with yet. The next one is compared with these photos.
 4dee9456	the fleet manager	[check/[id].tsx, components/damage.tsx]
 caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.

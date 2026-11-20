@@ -1117,6 +1117,7 @@
  "No drop-off video or photos: {driver} didn't drop it off, the next driver took it over.": "Fără videoclip sau fotografii de predare: {driver} nu a predat-o, a preluat-o următorul șofer.",
  "No drop-off video or photos: {driver} didn't drop it off, {next} took it over.": "Fără videoclip sau fotografii de predare: {driver} nu a predat-o, a preluat-o {next}.",
  "No earlier photos of this van": "Nu există fotografii mai vechi ale acestei dube",
+ "No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.": "Încă nu există fotografii anterioare ale acestei dube cu care să fie comparată. Următoarea inspecție va fi comparată cu aceste fotografii.",
  "No earlier photos, so it can't be narrowed down.": "Nu există fotografii mai vechi, așa că intervalul nu poate fi restrâns.",
  "No end-of-tour photo": "Fără fotografie de final de tură",
  "No fleet manager at {station} yet.": "Încă nu există un manager de flotă la {station}.",

@@ -1091,6 +1091,7 @@
  "No drop-off video or photos: {driver} didn't drop it off, the next driver took it over.": "Kein Abgabevideo und keine Fotos: {driver} hat ihn nicht abgegeben, der nächste Fahrer hat ihn übernommen.",
  "No drop-off video or photos: {driver} didn't drop it off, {next} took it over.": "Kein Abgabevideo und keine Fotos: {driver} hat ihn nicht abgegeben, {next} hat ihn übernommen.",
  "No earlier photos of this van": "Keine früheren Fotos von diesem Transporter",
+ "No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.": "Noch keine früheren Fotos dieses Transporters zum Vergleichen. Der nächste Rundgang wird mit diesen Fotos verglichen.",
  "No earlier photos, so it can't be narrowed down.": "Keine früheren Fotos, daher lässt es sich nicht eingrenzen.",
  "No end-of-tour photo": "Kein Foto zum Tourende",
  "No fleet manager at {station} yet.": "Noch kein Flottenmanager bei {station}.",

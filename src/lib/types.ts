@@ -524,6 +524,8 @@ export interface Walkaround {
   mediaDeletedAt?: number | null;
   /** The automatic comparison with the van's earlier photos (set by the server). */
   cmp?: CmpSummary | null;
+  /** A made-up walk-around of a demo company (drawings): never compared. */
+  demo?: boolean;
 }
 
 /** An owner or fleet manager marked photos or a video as damage (markDamage): kept 90 days. */

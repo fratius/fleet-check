@@ -23,7 +23,9 @@ export function CompareCard({ w }: { w: Walkaround }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [mine, setMine] = useState<CmpSummary | null>(null);
-  if (s.mode !== 'firebase' || !s.staff || !s.runs(w.stationId) || w.source !== 'camera' || s.org?.demo) return null;
+  // Demo companies are compared too (the blind tester found the card hidden there); only their made-up walk-arounds
+  // (drawings, w.demo) aren't.
+  if (s.mode !== 'firebase' || !s.staff || !s.runs(w.stationId) || w.source !== 'camera' || w.demo) return null;
   const cmp = mine && (!w.cmp || w.cmp.at < mine.at) ? mine : w.cmp || null;
   const stuck = cmpStuck(cmp);
   // Not compared: taken before comparisons started, or the comparison is off. Offered once the start had its time.
@@ -48,7 +50,7 @@ export function CompareCard({ w }: { w: Walkaround }) {
         : stuck ? <T v="hint">{t('The comparison with the van\'s earlier photos didn\'t finish.')}</T>
           : cmp.status === 'running' ? (
             <Row><ActivityIndicator color={c.ink} /><T v="hint" style={{ flex: 1 }}>{t('Comparing every photo with the van\'s earlier photos. This takes about a minute.')}</T></Row>
-          ) : cmp.status === 'first' ? <T v="hint">{t('The first walk-around of this van: nothing to compare with yet. The next one is compared with these photos.')}</T>
+          ) : cmp.status === 'first' ? <T v="hint">{t('No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.')}</T>
             : cmp.status === 'limit' ? <T v="hint">{tp(2, 'Not compared: during the free trial each van gets {n} comparison a day.', 'Not compared: during the free trial each van gets {n} comparisons a day.')}</T>
               : (
                 <View style={{ gap: 4 }}>

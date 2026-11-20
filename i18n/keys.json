@@ -643,7 +643,7 @@
   "key": "{n} photos compared with the van's earlier photos.",
   "one": "{n} photo compared with the van's earlier photos.",
   "where": [
-   "src/components/compare.tsx:58"
+   "src/components/compare.tsx:60"
   ]
  },
  {
@@ -651,7 +651,7 @@
   "key": "{n} photos compared with the van's photos from {when}.",
   "one": "{n} photo compared with the van's photos from {when}.",
   "where": [
-   "src/components/compare.tsx:57"
+   "src/components/compare.tsx:59"
   ]
  },
  {
@@ -715,7 +715,7 @@
   "key": "{n} possible new damages",
   "one": "{n} possible new damage",
   "where": [
-   "src/components/compare.tsx:44"
+   "src/components/compare.tsx:46"
   ]
  },
  {
@@ -2442,7 +2442,7 @@
   "id": "4220f5cf",
   "key": "AI comparison",
   "where": [
-   "src/components/compare.tsx:43"
+   "src/components/compare.tsx:45"
   ]
  },
  {
@@ -4181,14 +4181,14 @@
   "id": "34c2c5ac",
   "key": "Compare with the photos before",
   "where": [
-   "src/components/compare.tsx:63"
+   "src/components/compare.tsx:65"
   ]
  },
  {
   "id": "1f47edf4",
   "key": "Comparing every photo with the van's earlier photos. This takes about a minute.",
   "where": [
-   "src/components/compare.tsx:50"
+   "src/components/compare.tsx:52"
   ]
  },
  {
@@ -9443,6 +9443,13 @@
   ]
  },
  {
+  "id": "fd5ea6be",
+  "key": "No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.",
+  "where": [
+   "src/components/compare.tsx:53"
+  ]
+ },
+ {
   "id": "26678443",
   "key": "No earlier photos, so it can't be narrowed down.",
   "where": [
@@ -9550,7 +9557,7 @@
   "key": "No new damage",
   "where": [
    "src/app/(tabs)/(log)/log.tsx:194",
-   "src/components/compare.tsx:45"
+   "src/components/compare.tsx:47"
   ]
  },
  {
@@ -9903,7 +9910,7 @@
   "key": "Not compared: {list}.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:364",
-   "src/components/compare.tsx:59"
+   "src/components/compare.tsx:61"
   ]
  },
  {
@@ -9911,7 +9918,7 @@
   "key": "Not compared: during the free trial each van gets {n} comparisons a day.",
   "one": "Not compared: during the free trial each van gets {n} comparison a day.",
   "where": [
-   "src/components/compare.tsx:52"
+   "src/components/compare.tsx:54"
   ]
  },
  {
@@ -10019,7 +10026,7 @@
   "key": "Not sure",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:415",
-   "src/components/compare.tsx:45"
+   "src/components/compare.tsx:47"
   ]
  },
  {
@@ -12583,7 +12590,7 @@
   "id": "85e54188",
   "key": "Review the spots",
   "where": [
-   "src/components/compare.tsx:62"
+   "src/components/compare.tsx:64"
   ]
  },
  {
@@ -14772,7 +14779,7 @@
   "id": "775827b5",
   "key": "The AI found no new damage. It can miss small damage.",
   "where": [
-   "src/components/compare.tsx:56"
+   "src/components/compare.tsx:58"
   ]
  },
  {
@@ -14802,7 +14809,7 @@
   "key": "The AI marked {n} spots that may be new. Review them: your decision goes on the van's record.",
   "one": "The AI marked {n} spot that may be new. Review it: your decision goes on the van's record.",
   "where": [
-   "src/components/compare.tsx:55"
+   "src/components/compare.tsx:57"
   ]
  },
  {
@@ -15029,7 +15036,7 @@
   "id": "23fc4e2f",
   "key": "The comparison with the van's earlier photos didn't finish.",
   "where": [
-   "src/components/compare.tsx:48"
+   "src/components/compare.tsx:50"
   ]
  },
  {
@@ -15200,13 +15207,6 @@
   "server": true,
   "where": [
    "functions/src/index.ts:2189"
-  ]
- },
- {
-  "id": "b7251ed2",
-  "key": "The first walk-around of this van: nothing to compare with yet. The next one is compared with these photos.",
-  "where": [
-   "src/components/compare.tsx:51"
   ]
  },
  {
@@ -15988,7 +15988,7 @@
   "id": "9c571c0a",
   "key": "These photos weren't compared with the van's earlier photos.",
   "where": [
-   "src/components/compare.tsx:47"
+   "src/components/compare.tsx:49"
   ]
  },
  {
