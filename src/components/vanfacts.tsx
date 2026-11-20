@@ -53,7 +53,7 @@ export const HELP: FieldSpec[] = [
   { key: 'policyNo', label: N_('Policy number'), kind: 'upper' },
 ];
 export const DUE: FieldSpec[] = [
-  { key: 'due.hu', label: N_('Main inspection (HU)'), kind: 'month', hint: N_('The month on the sticker, like 03/2027') },
+  { key: 'due.hu', label: N_('TÜV (main inspection)'), kind: 'month', hint: N_('The month on the sticker, like 03/2027') },
   { key: 'due.uvv', label: N_('Safety check (UVV)'), kind: 'day', hint: N_('Yearly check for company vehicles') },
   { key: 'due.service', label: N_('Service by date'), kind: 'day' },
   { key: 'due.serviceKm', label: N_('Service at'), kind: 'num', unit: 'km' },

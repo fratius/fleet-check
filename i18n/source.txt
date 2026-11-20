@@ -1054,7 +1054,6 @@ bf4e3d94	Low fuel	[prompts.ts]
 1b2f71f8	Made {when}	[components/uploads.tsx]
 518c6aa8	Made by {name}, {when}.
 57bf5f58	made free	[lib/types.ts]
-1625dc46	Main inspection (HU)	[components/vanfacts.tsx, lib/fleet.ts]
 e25bd3d3	Main inspection sticker: {date}
 a2f416b9	Main inspection, safety check, service, tyres and tax.
 11863752	Main station	[lib/session.tsx]
@@ -2099,7 +2098,7 @@ e7e2ff34	Try again with this photo
 dd0c3cd3	Turn off on this phone
 5ab087ec	Turn on notifications	[components/pickup.tsx]
 988aeeba	TÜV	[data.tsx]
-5c77dcec	TÜV (main inspection)	[service.ts, components/service.tsx, lib/service.ts]
+5c77dcec	TÜV (main inspection)	[service.ts, components/service.tsx, components/vanfacts.tsx]
 11175300	TÜV done	[components/service.tsx]
 2833afae	TÜV due: {van}	[index.ts]
 8f9c8a03	TÜV overdue: {van}	[index.ts]

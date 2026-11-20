@@ -1048,6 +1048,19 @@ test('service history and the TÜV: owners and the station\'s managers record it
   // A failed TÜV leaves the date as it is.
   await add(S.mgr, { id: 'svcHuFail', vehicleId: vs, kind: 'hu', day: '2026-11-12', km: 61600, result: 'failed', note: 'Brake lights' });
   assert.equal((await det(vs)).due.hu, '2028-03-31');
+  // The newest service decides the next service, also when it's sooner than what was there (blind QA F01: a
+  // target of 75,000 km typed in by hand stayed after a service said 60,000 km). Without a next date it clears the
+  // old one; an older invoice typed in afterwards changes neither.
+  await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vs), { 'due.serviceKm': 125000 });
+  await add(S.mgr, { id: 'svcOil2', vehicleId: vs, kind: 'service', day: '2026-11-15', km: 61700, next: { serviceKm: 91700 } });
+  d = await det(vs);
+  assert.equal(d.due.serviceKm, 91700);
+  assert.equal(d.due.service ?? null, null);
+  await add(S.mgr, { id: 'svcOil0', vehicleId: vs, kind: 'service', day: '2025-11-02', km: 31000, next: { service: '2026-11-02', serviceKm: 61000 } });
+  d = await det(vs);
+  assert.equal(d.due.serviceKm, 91700);
+  assert.equal(d.due.service ?? null, null);
+  assert.equal(d.lastService.id, 'svcOil2');
   // A correction keeps what was there before and who changed it. Drivers can't; nothing changed is said.
   await fails(S.d1.call('service', { orgId: S.org, action: 'fix', id: 'svcOil1', ...oil, cost: 1 }), 'permission-denied');
   const fx = await S.mgr.call('service', { orgId: S.org, action: 'fix', ...oil, cost: 412.9 });
@@ -1060,7 +1073,7 @@ test('service history and the TÜV: owners and the station\'s managers record it
   assert.equal((await S.mgr.call('service', { orgId: S.org, action: 'fix', ...oil, cost: 412.9 })).unchanged, true);
   // Who reads it: owners and the station's managers (as the van page asks); never drivers. Nobody writes or deletes.
   const mine = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'services'), where('vehicleId', '==', vs), where('stationId', 'in', [S.s1]), orderBy('day', 'desc'), limit(300)));
-  assert.equal(mine.size, 5);
+  assert.equal(mine.size, 7);
   await fails(getDocs(query(collection(S.d1.db, 'orgs', S.org, 'services'), where('vehicleId', '==', vs), where('stationId', 'in', [S.s1]))), 'permission-denied');
   await fails(updateDoc(doc(S.own.db, 'orgs', S.org, 'services', 'svcOil1'), { cost: 1 }), 'permission-denied');
   await fails(deleteDoc(doc(S.own.db, 'orgs', S.org, 'services', 'svcOil1')), 'permission-denied');

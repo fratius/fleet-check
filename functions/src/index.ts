@@ -2464,12 +2464,15 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
     if (det.exists) {
       if (Object.keys(patch).length) tx.update(dref, { ...patch, ...meta });
     } else {
-      // A van without a record yet gets one, with its station (like the app makes it).
-      const due: Record<string, unknown> = {}, top: Record<string, unknown> = {};
-      for (const [k, val] of Object.entries(patch)) { if (k.startsWith('due.')) due[k.slice(4)] = val; else top[k] = val; }
-      tx.set(dref, { ...top, due, stationId: van.stationId || null, createdAt: now, ...meta });
+      // A van without a record yet gets one, with its station (like the app makes it). "due.hu" becomes due: { hu }.
+      const nested: Record<string, Record<string, unknown>> = { due: {} }, top: Record<string, unknown> = {};
+      for (const [k, val] of Object.entries(patch)) {
+        const [a, b] = k.split('.');
+        if (b) (nested[a] ||= {})[b] = val; else top[k] = val;
+      }
+      tx.set(dref, { ...top, ...nested, stationId: van.stationId || null, createdAt: now, ...meta });
     }
-    return { id, again: false, applied: Object.keys(patch).filter((k) => k.startsWith('due.')).map((k) => k.slice(4)) };
+    return { id, again: false, applied: Object.keys(patch).filter((k) => k.startsWith('due.') && patch[k] != null).map((k) => k.slice(4)) };
   });
 });
 

@@ -101,6 +101,8 @@ export interface VehicleDetails {
   due?: { hu?: string | null; uvv?: string | null; service?: string | null; serviceKm?: number | null; tyres?: string | null; tax?: string | null } | null;
   fuelCard?: string | null;
   notes?: string | null;
+  /** The day of the service entry that last set the next service and the next tyre change (kept by the server). */
+  dueFrom?: { service?: string | null; tyres?: string | null } | null;
   /** The newest service recorded in the van's service history (not the TÜV), kept by the server. */
   lastService?: { id: string; day: string; kind: ServiceKind; name: string | null; km: number } | null;
 }

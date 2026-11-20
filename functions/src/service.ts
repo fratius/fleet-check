@@ -5,9 +5,8 @@
  * before and who changed it. Owners and the van's station managers read them; drivers don't (costs are in them).
  *
  * Recording one also keeps the van's record (vehicleDetails) up to date: the odometer (only ever up), the last
- * service, and the next due dates it brings (the new TÜV month, the next service, the next tyre change). Dates only
- * move forward from here, so typing in an old invoice never pulls a later date back; the TÜV date can still be
- * changed by hand on the van.
+ * service, and the next due dates it brings (the new TÜV month, the next service, the next tyre change): the newest
+ * entry decides, so typing in an old invoice never changes them (detailsPatch). They can still be changed by hand.
  *
  * The station's fleet managers (or the owners where a station has none) get a notification once per TÜV date, a
  * month before it runs out (serviceSweep, daily).
@@ -116,24 +115,34 @@ interface DetailsNow {
   odometerKm?: number | null; odometerAt?: string | null;
   due?: { hu?: string | null; service?: string | null; serviceKm?: number | null; tyres?: string | null } | null;
   lastService?: { day: string } | null;
+  /** The day of the entry that last set the next service and the next tyre change (kept by the server). */
+  dueFrom?: { service?: string | null; tyres?: string | null } | null;
 }
 /**
- * What recording this service changes on the van's record: the odometer when the km are higher, the last service
- * when it's the newest, and the next due dates it brings when they're later than what's there (or nothing is).
+ * What recording this service changes on the van's record (keys with a dot are fields inside a map):
+ * - the odometer when the km are higher; the last service when it's the newest (not the TÜV: it has its own card);
+ * - the TÜV date when the new sticker is later than what's there (a new sticker is never earlier; a wrong date is
+ *   changed by hand);
+ * - the next service (date and km together) and the next tyre change when this is the newest entry that set them:
+ *   the newest service decides, also when its target is sooner than the old one (blind QA F01), and an older
+ *   invoice typed in afterwards changes nothing. A date or km set by hand counts as set by no entry.
  */
 export function detailsPatch(now: DetailsNow | undefined, s: ServiceInput, id: string): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (now?.odometerKm == null || s.km > now.odometerKm) { out.odometerKm = s.km; out.odometerAt = s.day; }
-  // The TÜV isn't a service at the garage in the "last service" sense (it's on its own card).
   if (s.kind !== 'hu' && (!now?.lastService?.day || s.day >= now.lastService.day)) {
     out.lastService = { id, day: s.day, kind: s.kind, name: s.name, km: s.km };
   }
   const due = now?.due || {};
-  const later = (a: string | null | undefined, b: string | undefined) => !!b && (!a || b > a);
-  if (later(due.hu, s.next?.hu)) out['due.hu'] = s.next!.hu;
-  if (later(due.service, s.next?.service)) out['due.service'] = s.next!.service;
-  if (s.next?.serviceKm != null && (due.serviceKm == null || s.next.serviceKm > due.serviceKm)) out['due.serviceKm'] = s.next.serviceKm;
-  if (later(due.tyres, s.next?.tyres)) out['due.tyres'] = s.next!.tyres;
+  const from = now?.dueFrom || {};
+  const newest = (k: 'service' | 'tyres') => !from[k] || s.day >= from[k]!;
+  if (s.next?.hu && (!due.hu || s.next.hu > due.hu)) out['due.hu'] = s.next.hu;
+  if ((s.next?.service || s.next?.serviceKm != null) && newest('service')) {
+    out['due.service'] = s.next.service ?? null;
+    out['due.serviceKm'] = s.next.serviceKm ?? null;
+    out['dueFrom.service'] = s.day;
+  }
+  if (s.next?.tyres && newest('tyres')) { out['due.tyres'] = s.next.tyres; out['dueFrom.tyres'] = s.day; }
   return out;
 }
 

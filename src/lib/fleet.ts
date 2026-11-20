@@ -60,7 +60,7 @@ export function deadlines(v: Vehicle, d: VehicleDetails | null | undefined, now 
     out.push({ key, label, day, days, state: days < 0 ? 'overdue' : days <= soon ? 'soon' : 'ok', note: when(days) });
   };
   const due = d.due || {};
-  add('hu', t('Main inspection (HU)'), due.hu);
+  add('hu', t('TÜV (main inspection)'), due.hu);
   add('uvv', t('Safety check (UVV)'), due.uvv);
   add('service', t('Service'), due.service);
   add('tyres', t('Tyre change'), due.tyres, 21);

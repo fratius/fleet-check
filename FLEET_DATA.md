@@ -90,8 +90,9 @@ Each van's **Service** tab, for owners and the managers of the van's station (dr
   the server (`service`), never deleted. A correction (day, km, cost, garage, notes, name, TÜV result) keeps what was
   there before, who changed it and when (`edits`). It moves with the van to another station (`moveVan`).
 - **The van's record follows**: the odometer when the km are higher, the last service (`lastService`, not the TÜV),
-  and the next TÜV, service and tyre dates. Dates only move forward from here, so typing in an old invoice never
-  pulls a later date back.
+  and the next TÜV, service and tyre dates. The newest entry decides the next service (date and km together) and
+  the next tyre change, also when its target is sooner than the old one (`dueFrom` remembers which entry set them);
+  a TÜV date only moves later. Typing in an old invoice afterwards changes none of them.
 - **Data tab, Service**: per van (TÜV, next service, last service and its km, entries and cost in the period) and
   every entry (day, van, what, km, cost, TÜV result, garage, notes, by); both in the Excel file.
 

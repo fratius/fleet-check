@@ -143,7 +143,8 @@ function HuCard({ v, onDone, canRecord }: { v: Vehicle; onDone: () => void; canR
       </View>
       {editing ? (
         <View style={{ gap: 8 }}>
-          <Field label={t('Month on the sticker')} hint={t('like 03/2028')} value={val} onChangeText={setVal} placeholder={t('MM/YYYY')} keyboardType="numbers-and-punctuation" autoFocus />
+          <Field label={t('Month on the sticker')} hint={t('like 03/2028')} value={val} onChangeText={setVal} placeholder={t('MM/YYYY')} keyboardType="numbers-and-punctuation" autoFocus
+            returnKeyType="done" onSubmitEditing={save} />
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
           <Row><Button small v="primary" title={t('Save')} loading={busy} onPress={save} /><Button small v="link" title={t('Cancel')} onPress={() => { setEditing(false); setErr(null); }} /></Row>
         </View>
