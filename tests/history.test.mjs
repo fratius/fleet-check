@@ -118,6 +118,16 @@ async function video(p, opts = {}) {
   return id;
 }
 const vanDoc = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'vehicles', id))).data();
+/** Waits for what a trigger writes (it runs after the write that started it). */
+async function waitFor(get, what, ms = 30_000) {
+  const end = Date.now() + ms;
+  for (;;) {
+    const v = await get();
+    if (v) return v;
+    if (Date.now() > end) throw new Error(`Timed out waiting for ${what}`);
+    await new Promise((r) => setTimeout(r, 300));
+  }
+}
 const history = async (p, filters) => (await getDocs(query(collection(p.db, 'orgs', S.org, 'assignments'), ...filters))).docs.map((d) => ({ id: d.id, ...d.data() }));
 
 test('set up a company: owner, two stations, a manager, three drivers, three vans', async () => {
@@ -244,10 +254,20 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   // Taking over a van someone didn't drop off: their assignment ends with the new driver's photos.
   const take = await photos(S.d2, S.org, v1);
   const t = await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, walkId: take });
-  assert.equal(t.tookOverFrom, 'Dana Driver');
+  // Drivers never see another driver's name: not in the answer, not on the van, not on Dana's ended assignment.
+  assert.equal(t.tookOver, true);
+  assert.equal(t.tookOverFrom, undefined);
   const [dana] = await history(S.d1, [where('driverId', '==', S.d1.uid), where('vehicleId', '==', v1.id), orderBy('start', 'desc'), limit(1)]);
   assert.equal(dana.endReason, 'taken over');
   assert.equal(dana.endWalkId, take);
+  assert.equal(dana.endedBy, S.d2.uid);
+  assert.equal(dana.endedByName, null);
+  assert.ok(!JSON.stringify(dana).includes('Erik Driver'), JSON.stringify(dana));
+  const taken = await vanDoc(S.d1, v1.id);
+  assert.equal(taken.assignedTo.driverId, S.d2.uid);
+  assert.ok(!JSON.stringify(taken).includes('Erik Driver') && !JSON.stringify(taken).includes('driverName'), JSON.stringify(taken.assignedTo));
+  // The manager still sees who: from the company's names.
+  await waitFor(async () => (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'names', S.d2.uid))).data()?.name === 'Erik Driver', 'Erik\'s name in the company\'s names');
   // Switched off again: no more pick-ups or drop-offs by drivers.
   await S.own.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
   await fails(S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v1.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
@@ -673,7 +693,8 @@ test('tours from dashboard photos: start, end, kilometres, fuel, and the van\'s 
   assert.equal(van.dash.km, 60120);
   assert.equal(van.dash.fuelPct, 40);
   assert.deepEqual(van.dash.warnings, []);
-  assert.equal(van.dash.byName, 'Max Manager');
+  assert.equal(van.dash.by, S.mgr.uid);
+  assert.equal(van.dash.byName, undefined, 'drivers read the van: no names on it');
   assert.equal(van.dash.from, 'tour');
   // The driver's km with the van: from their first photo to the latest one (the manager's counts: Dana still has it).
   const mine = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', van.assignedTo.assignmentId))).data();
@@ -880,7 +901,8 @@ test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows
     const vn = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', v2.id))).data();
     assert.equal(vn.dash.km, 60420);
     assert.equal(vn.dash.from, 'parts');
-    assert.equal(vn.dash.byName, 'Max Manager');
+    assert.equal(vn.dash.by, S.mgr.uid);
+    assert.equal(vn.dash.byName, undefined);
     assert.equal(vn.assignedTo.kmEnd, 60420);
     assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', vn.assignedTo.assignmentId))).data().kmEnd, 60420);
     assert.equal(bp.parts.length, 2);
@@ -969,7 +991,8 @@ test('checks for drivers: set by the manager, done by the driver who has the van
   van = await vanOf(S.d1);
   assert.equal(van.routines[cargo].ok, false);
   assert.equal(van.routines[cargo].note, 'Boxes left from yesterday');
-  assert.equal(van.routines[oil].byName, 'Dana Driver');
+  assert.equal(van.routines[oil].by, S.d1.uid);
+  assert.equal(van.routines[oil].byName, undefined, 'everyone at the station reads the van: no names on it');
   // Kept: the manager reads the station's, the driver her own; nobody writes them.
   const done = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'routineDone'), where('stationId', 'in', [S.s1]), orderBy('createdAt', 'desc')));
   assert.equal(done.size, 2);
@@ -1137,6 +1160,110 @@ test('service history and the TÜV: owners and the station\'s managers record it
   } finally {
     await adminDb().doc(`users/${S.mgr.uid}/push/svc`).delete().catch(() => {});
     srv.close();
+  }
+});
+
+test('the company\'s names: owners and managers read them, each person their own, nobody writes them; a name change follows', async () => {
+  const names = async (p) => (await getDocs(collection(p.db, 'orgs', S.org, 'names'))).docs.map((d) => [d.id, d.data().name]);
+  // Filled by the server from the people (a trigger), and kept when someone leaves.
+  const all = await waitFor(async () => { const n = new Map(await names(S.mgr)); return n.size >= 5 ? n : null; }, 'the names of everyone in the company');
+  assert.equal(all.get(S.d1.uid), 'Dana Driver');
+  assert.equal(all.get(S.d3.uid), 'Fay Driver', 'managers list the company\'s people anyway (members), so they read every name');
+  assert.equal(new Map(await names(S.own)).get(S.mgr.uid), 'Max Manager');
+  // A driver: only their own.
+  assert.equal((await getDoc(doc(S.d1.db, 'orgs', S.org, 'names', S.d1.uid))).data().name, 'Dana Driver');
+  await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'names', S.d2.uid)), 'permission-denied');
+  await fails(getDocs(collection(S.d1.db, 'orgs', S.org, 'names')), 'permission-denied');
+  await fails(getDoc(doc(S.d3.db, 'orgs', S.org, 'names', S.d1.uid)), 'permission-denied');
+  // Written only by the server: not by the owner, not by the person.
+  await fails(setDoc(doc(S.own.db, 'orgs', S.org, 'names', S.d1.uid), { name: 'Someone', at: Date.now() }), 'permission-denied');
+  await fails(setDoc(doc(S.d1.db, 'orgs', S.org, 'names', S.d1.uid), { name: 'Someone', at: Date.now() }), 'permission-denied');
+  await fails(deleteDoc(doc(S.own.db, 'orgs', S.org, 'names', S.d1.uid)), 'permission-denied');
+  // A name changed on the person follows (and goes back).
+  const m = adminDb().doc(`orgs/${S.org}/members/${S.d3.uid}`);
+  await m.update({ name: 'Fay Newname' });
+  await waitFor(async () => (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'names', S.d3.uid))).data()?.name === 'Fay Newname', 'the changed name');
+  await m.update({ name: 'Fay Driver' });
+  await waitFor(async () => (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'names', S.d3.uid))).data()?.name === 'Fay Driver', 'the name back');
+});
+
+test('names written before go to the company\'s names and out of what drivers read (Deploy runs this once per company)', async () => {
+  const a = adminDb();
+  const now = Date.now();
+  const van = a.collection(`orgs/${S.org}/vehicles`).doc();
+  const chk = a.collection(`orgs/${S.org}/checks`).doc();
+  const asg = a.collection(`orgs/${S.org}/assignments`).doc();
+  const buyR = a.collection(`orgs/${S.org}/purchases`).doc();
+  const tour = a.collection(`orgs/${S.org}/tours`).doc();
+  const log = a.collection(`orgs/${S.org}/damageLog`).doc(chk.id);
+  // As the server wrote them before 20 Nov 2026, with a name of someone who isn't in the company any more.
+  const gone = 'gone' + run;
+  await van.set({ name: 'Van old', plate: 'OLD1', cls: 'van', stationId: S.s1, createdAt: now, createdBy: S.own.uid, retired: true,
+    assignedTo: { assignmentId: 'old', driverId: S.d2.uid, driverName: 'Erik Driver', since: now - 3600_000 },
+    dash: { km: 1000, fuelPct: 50, batteryPct: null, rangeKm: null, warnings: [], at: now, by: S.d2.uid, byName: 'Erik Driver', from: 'tour' },
+    routines: { oldOil: { at: now, by: gone, byName: 'Lou Left', ok: true, note: null } } });
+  await chk.set({ vehicleId: van.id, vehicleName: 'Van old', stationId: S.s1, createdAt: now, createdBy: S.d2.uid, createdByName: 'Erik Driver', status: 'reviewed', spots: [], photos: 0 });
+  await asg.set({ vehicleId: van.id, vehicleName: 'Van old', plate: 'OLD1', driverId: S.d1.uid, driverName: 'Dana Driver', stationId: S.s1, start: now - 7200_000, end: now - 3600_000,
+    startedBy: S.mgr.uid, startedByName: 'Max Manager', endedBy: S.d2.uid, endedByName: 'Erik Driver', endReason: 'taken over' });
+  await buyR.set({ kind: 'fuel', vehicleId: van.id, vehicleName: 'Van old', plate: 'OLD1', stationId: S.s1, by: S.d1.uid, byName: 'Dana Driver', status: 'done', createdAt: now,
+    vanDriverId: S.d2.uid, vanDriverName: 'Erik Driver', notTheirVan: true,
+    flags: [{ key: 'van', text: 'Erik Driver has this van, not Dana Driver.', t: '{driver} has this van, not {name}.', v: { driver: 'Erik Driver', name: 'Dana Driver' } }] });
+  await tour.set({ driverId: S.d1.uid, driverName: 'Dana Driver', vehicleId: van.id, vehicleName: 'Van old', plate: 'OLD1', stationId: S.s1, startAt: now - 7200_000, createdAt: now, open: false,
+    start: { readingId: 'r0', at: now - 7200_000, km: 900, fuelPct: 60, batteryPct: null, by: S.d1.uid, byName: 'Dana Driver' },
+    end: { readingId: 'r1', at: now - 3600_000, km: 1000, fuelPct: 50, batteryPct: null, by: S.d2.uid, byName: 'Erik Driver' }, endedHow: 'next' });
+  await log.set({ checkId: chk.id, vehicleId: van.id, vehicleName: 'Van old', stationId: S.s1, foundAt: now, from: now - 7200_000, n: 1,
+    drivers: [{ id: S.d1.uid, name: 'Dana Driver' }, { id: gone, name: 'Lou Left' }], driverIds: [S.d1.uid, gone], createdAt: now });
+  try {
+    const split = () => execFileSync(process.execPath, [new URL('../functions/scripts/driver-names.cjs', import.meta.url).pathname],
+      { env: { ...process.env, FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || `${HOST}:8080`, PROJECT: cfg.projectId }, encoding: 'utf8' });
+    assert.match(split(), /took names out of \d+ record/);
+    // Nothing a driver reads says who else: not on the van, the check, Dana's assignment, refuel, tour or damage log line.
+    const v = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', van.id))).data();
+    assert.equal(v.assignedTo.driverId, S.d2.uid);
+    assert.equal(v.dash.by, S.d2.uid);
+    assert.equal(v.routines.oldOil.by, gone);
+    const k = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', chk.id))).data();
+    assert.equal(k.createdBy, S.d2.uid);
+    const x = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', asg.id))).data();
+    assert.equal(x.endedBy, S.d2.uid);
+    assert.equal(x.startedByName, 'Max Manager', 'the managers\' names on a driver\'s own things stay');
+    const b = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'purchases', buyR.id))).data();
+    assert.deepEqual(b.flags.map((f) => [f.t, f.v]), [['{name} doesn\'t have this van.', { name: 'Dana Driver' }]]);
+    const tr = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'tours', tour.id))).data();
+    assert.equal(tr.end.by, S.d2.uid);
+    const l = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'damageLog', log.id))).data();
+    assert.deepEqual(l.drivers, [{ id: S.d1.uid }, { id: gone }]);
+    for (const r of [v, k, x, b, tr, l]) assert.ok(!/Erik Driver|Lou Left/.test(JSON.stringify(r)), JSON.stringify(r));
+    // Owners and managers keep every name, also of people who left.
+    assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'names', gone))).data().name, 'Lou Left');
+    assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'names', S.d2.uid))).data().name, 'Erik Driver');
+    // Each company once.
+    assert.ok((await a.doc(`orgs/${S.org}`).get()).data().namesSplit);
+    assert.match(split(), /No companies to change/);
+  } finally {
+    await Promise.all([van, chk, asg, buyR, tour, log].map((r) => r.delete()));
+  }
+});
+
+test('drivers read no other driver\'s name anywhere they can read; only their own and their managers\'', async () => {
+  const others = ['Erik Driver', 'Fay Driver', 'Lou Left'];
+  const me = S.d1;
+  const q = (name, ...w) => getDocs(query(collection(me.db, 'orgs', S.org, name), ...w));
+  const reads = await Promise.all([
+    q('vehicles', where('stationId', 'in', [S.s1])), q('checks', where('stationId', 'in', [S.s1])), q('walkarounds', where('stationId', 'in', [S.s1])),
+    q('assignments', where('driverId', '==', me.uid)), q('tours', where('driverId', '==', me.uid)), q('readings', where('driverId', '==', me.uid)),
+    q('readings', where('by', '==', me.uid)), q('purchases', where('by', '==', me.uid)), q('routineDone', where('by', '==', me.uid)),
+    q('damageLog', where('driverIds', 'array-contains', me.uid)), q('videos', where('by', '==', me.uid)), q('incidents', where('driverId', '==', me.uid)),
+    q('stations'), q('routines'),
+  ]);
+  const docs = reads.flatMap((r) => r.docs.map((d) => [d.ref.path, d.data()]));
+  docs.push(['org', (await getDoc(doc(me.db, 'orgs', S.org))).data()]);
+  assert.ok(docs.length > 20, `read ${docs.length} records`);
+  // Erik had vans at the same station: his walk-arounds and the van he took over are among them.
+  assert.ok(docs.some(([, d]) => d.createdBy === S.d2.uid || d.assignedTo?.driverId === S.d2.uid || d.endedBy === S.d2.uid), 'something Erik did is in what Dana reads');
+  for (const [path, d] of docs) {
+    const text = JSON.stringify(d);
+    for (const n of others) assert.ok(!text.includes(n), `${path} shows ${n}: ${text.slice(0, 400)}`);
   }
 });
 

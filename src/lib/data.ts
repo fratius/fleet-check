@@ -115,6 +115,9 @@ export function useDriverData(uid: string | undefined) {
     if (!s.staff && !own) return;
     setTours(null); setIncidents(null); setLogs(null);
     const stations = scopeKey === '*' ? null : scopeKey ? scopeKey.split(',') : [];
+    // No stations (yet: a page opened by its address before the company's stations have loaded): nothing to ask.
+    // A query "in" no stations throws, and the page went blank (blind QA, PR #29).
+    if (stations && !stations.length && !own) { setTours([]); setIncidents([]); setLogs([]); return; }
     const base = (name: string) => collection(db(), 'orgs', orgId, name);
     const mine = (field: string, op: '==' | 'array-contains' = '==') => where(field, op, uid);
     const st = stations && !own ? [where('stationId', 'in', stations.slice(0, 30))] : [];

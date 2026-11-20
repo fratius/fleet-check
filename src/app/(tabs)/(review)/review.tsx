@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Card, F, MARKER, Pill, Row, Screen, T, fmtWhen, useColors, hs } from '@/components/ui';
+import { useNameOf } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
@@ -30,6 +31,9 @@ export default function ReviewQueue() {
   const [allDone, setAllDone] = useState(false);
   const [members, setMembers] = useState<Member[] | null>(null);
   const orgId = s.org?.id;
+  // Names by account id: vans and checks keep only who, since drivers read them (lib/names.ts).
+  const nameOf = useNameOf();
+  const byOf = (k: Check) => nameOf(k.createdBy) || k.createdByName || null;
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
     return watchMembers(orgId, setMembers);
@@ -136,7 +140,7 @@ export default function ReviewQueue() {
             ))}
             {todo.map(({ v, x }, i) => (
               <ListRow key={`${v.id}-${x.id}`} first={i === 0 && !problems.length} onPress={() => router.push(`/vehicle/${v.id}`)}
-                title={`${vanName(v)} – ${routineName(x)}`} line={[v.assignedTo?.driverName || '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
+                title={`${vanName(v)} – ${routineName(x)}`} line={[v.assignedTo ? nameOf(v.assignedTo.driverId) || v.assignedTo.driverName || '' : '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={Date.now() - x.since > 3 * 3600_000 ? 'bad' : 'amber'} text={dur(Date.now() - x.since)} />} />
             ))}
           </List>
@@ -177,7 +181,7 @@ export default function ReviewQueue() {
             {!atVan.length ? <T v="hint">{t('No driver is at a van right now.')}</T> : null}
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                title={k.createdByName ? `${k.createdByName} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }), where(k.stationId)].filter(Boolean).join(', ')}
+                title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }), where(k.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="muted" text={tp(k.spots.length, '{done} of {n} spot', '{done} of {n} spots', { done: k.spots.filter((p) => p.verdict).length })} />} />
             ))}
           </List>
@@ -192,7 +196,7 @@ export default function ReviewQueue() {
               const n = approvedDamage(k).length;
               return (
                 <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                  title={k.createdByName ? `${k.createdByName} – ${s.vanName(k)}` : s.vanName(k)}
+                  title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)}
                   line={[k.review?.byName ? t('reviewed by {name}', { name: k.review.byName }) : '', k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(', ')}
                   right={<Pill v={n ? 'bad' : 'good'} text={n ? tp(n, '{n} damage', '{n} damages') : t('No damage')} />} />
               );
@@ -247,9 +251,11 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
   const sent = k.submittedAt || k.createdAt;
   const aiDamage = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
   const long = Date.now() - sent > 2 * 3600_000;
+  const nameOf = useNameOf();
+  const by = nameOf(k.createdBy) || k.createdByName || null;
   return (
-    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={k.createdByName ? t('Review {name}, {van}', { name: k.createdByName, van: van }) : t('Review {van}', { van: van })}>
-      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>{k.createdByName ? `${k.createdByName} – ${van}` : van}</Text>
+    <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={by ? t('Review {name}, {van}', { name: by, van: van }) : t('Review {van}', { van: van })}>
+      <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>{by ? `${by} – ${van}` : van}</Text>
       <Row>
         {alias ? <T v="hint">{alias}</T> : null}
         <Text style={{ fontFamily: F.semi, fontSize: 14, color: long ? c.amber : c.ink }}>{t('Waiting {time}', { time: dur(Date.now() - sent) })}</Text>
@@ -267,13 +273,16 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
 function MissingCard({ m, van, alias, where }: { m: Missing; van: string; alias: string; where: string }) {
   const c = useColors();
   const { a, what } = m;
+  // A takeover keeps no name of who took it over (the driver who had it reads it): from the company's names.
+  const nameOf = useNameOf();
+  const ended = a.endedByName || nameOf(a.endedBy);
   const problem = what === 'no-pickup' ? t('No pick-up video') : what === 'still-out' ? t('Not dropped off') : t('No drop-off video');
   const since = what === 'no-pickup' ? t('{time} since it was given', { time: dur(Date.now() - a.start) }) : what === 'still-out' ? t('out for {time}', { time: dur(Date.now() - a.start) }) : '';
   // The driver it's about comes first; the line below says what happened.
   const detail = what === 'no-pickup' ? t('Given by {name}, {when}', { name: a.startedByName, when: fmtWhen(a.start) })
     : what === 'still-out' ? t('Has had it since {when}', { when: fmtWhen(a.start) })
-      : a.endReason === 'taken over' ? (a.endedByName ? t('Had it until {when}, then {name} took it over', { when: fmtWhen(a.end), name: a.endedByName }) : t('Had it until {when}, then another driver took it over', { when: fmtWhen(a.end) }))
-        : a.endedByName ? t('Had it until {when}, ended by {name}', { when: fmtWhen(a.end), name: a.endedByName }) : t('Had it until {when}', { when: fmtWhen(a.end) });
+      : a.endReason === 'taken over' ? (ended ? t('Had it until {when}, then {name} took it over', { when: fmtWhen(a.end), name: ended }) : t('Had it until {when}, then another driver took it over', { when: fmtWhen(a.end) }))
+        : ended ? t('Had it until {when}, ended by {name}', { when: fmtWhen(a.end), name: ended }) : t('Had it until {when}', { when: fmtWhen(a.end) });
   return (
     <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${van}`}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>

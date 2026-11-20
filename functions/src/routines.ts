@@ -39,11 +39,12 @@ export interface Routine {
   photo: boolean;
   createdAt?: number;
 }
-export interface Last { at: number; by: string; byName: string; ok: boolean; note: string | null }
+/** On the van (drivers read it): who did it by account id only; their name is in the check done (routineDone). */
+export interface Last { at: number; by: string; byName?: string; ok: boolean; note: string | null }
 export interface Todo { id: string; key: string | null; name: string; photo: boolean; since: number; period: string }
 export interface VanForRoutines {
   stationId?: string | null; fuel?: string | null; retired?: boolean;
-  assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number } | null;
+  assignedTo?: { assignmentId: string; driverId: string; since: number } | null;
   routines?: Record<string, Last> | null;
   todo?: Todo[] | null;
 }

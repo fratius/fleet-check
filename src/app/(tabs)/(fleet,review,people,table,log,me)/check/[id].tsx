@@ -14,6 +14,7 @@ import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { day, deleteFrom } from '@/lib/media';
 import { watchCheck } from '@/lib/people';
+import { useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
@@ -75,6 +76,7 @@ type Local = Record<number, (string | null)[]>;
 
 function CheckView({ id }: { id: string }) {
   const s = useSession();
+  const whoDid = useWhoDid();
   const c = useColors();
   const gone = useMediaGone();
   // Older checks (opened from a van's damage record) aren't among the ones the app keeps loaded: watch them.
@@ -238,6 +240,8 @@ function CheckView({ id }: { id: string }) {
       : status === 'submitted' ? (reviewer ? tp(n, 'Review {n} spot', 'Review {n} spots') : t('Sent to the fleet manager'))
         : checked ? (dmg ? tp(dmg, '{n} possible damage', '{n} possible damages') : t('No damage in the close-ups')) : tp(n, '{n} spot to check', '{n} spots to check');
   const reviewerName = k.review?.byName || t('the fleet manager');
+  // Who did the check: drivers see only their own (lib/names.ts).
+  const by = whoDid(k.createdBy, k.createdByName);
   const sub = status === 'reviewed' ? (k.review?.at
     ? t('Reviewed by {name}, {when}. This is the final word on this van\'s damage.', { name: reviewerName, when: fmtWhen(k.review.at) })
     : t('Reviewed by {name}. This is the final word on this van\'s damage.', { name: reviewerName }))
@@ -252,7 +256,7 @@ function CheckView({ id }: { id: string }) {
     <Screen edges={[]}>
       <Stack.Screen options={{ title: t('Check, {van}', { van: s.vanName(k) }) }} />
       <View style={{ gap: 6 }}>
-        <T v="hint">{k.createdByName ? t('Damage check, {van}, by {name}, {when}', { van: s.vanName(k), name: k.createdByName, when: fmtWhen(k.createdAt) })
+        <T v="hint">{by ? t('Damage check, {van}, by {name}, {when}', { van: s.vanName(k), name: by, when: fmtWhen(k.createdAt) })
           : t('Damage check, {van}, {when}', { van: s.vanName(k), when: fmtWhen(k.createdAt) })}</T>
         <T v="h1">{title}</T>
         <T>{sub}</T>
@@ -269,7 +273,7 @@ function CheckView({ id }: { id: string }) {
       {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
       {status === 'checking' && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-      {k.missedNote && status !== 'checking' ? <Notice text={t('Note from {name}: {note}', { name: k.createdByName || t('the driver'), note: k.missedNote })} /> : null}
+      {k.missedNote && status !== 'checking' ? <Notice text={t('Note from {name}: {note}', { name: by || t('the driver'), note: k.missedNote })} /> : null}
       {k.spots.map((p, j) => {
         const v = p.verdict;
         const d = decisions[String(j)];

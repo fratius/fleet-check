@@ -170,7 +170,7 @@ test('no signal in the garage: give a van and rename it offline, reopen the app 
     const v = (await db.doc(`orgs/${ORG}/vehicles/${VAN}`).get()).data();
     return v.name === 'Van One' && v.assignedTo?.driverId === DRIVER.uid ? v : null;
   }, 90_000, 'the van to be renamed and given to the driver on the server');
-  assert.equal(van.assignedTo.driverName, DRIVER.name);
+  assert.equal(van.assignedTo.driverName, undefined, 'drivers read the van: no names on it');
   // Once: one handover, started by the owner.
   const hand = await db.collection(`orgs/${ORG}/assignments`).where('vehicleId', '==', VAN).get();
   assert.equal(hand.size, 1);

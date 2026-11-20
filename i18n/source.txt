@@ -13,7 +13,6 @@ eca8eab2	{company}: you're its fleet owner. Make another person fleet owner firs
 bd23c615	{day}, fine	[components/driverrec.tsx]
 ae4223c9	{day}, problem	[components/driverrec.tsx]
 3b2cab20	{done} of {n} spot || {done} of {n} spots
-d699c733	{driver} has this van, not {name}.
 4d088bbf	{field}: enter a date like {example}.
 3e0fe956	{field}: enter a number.
 b7384514	{from} to {to} km so far: {km} km
@@ -220,6 +219,7 @@ f21a7ec1	A comment on damage
 dc0c4f9e	A company setting	[lib/session.tsx]
 0ea91666	A damage review	[lib/store.ts]
 851e0480	A discount in euros needs a fixed plan.
+7a5d107d	A driver	[lib/names.ts]
 ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
 7fc4ef1f	A manager has already reviewed this check.
 1f6df70e	a month	[plan.tsx, components/plansetup.tsx]
@@ -327,6 +327,7 @@ ec850950	An answer about the vehicle type
 6963af2d	and {n} more || and {n} more	[components/vanfacts.tsx]
 88b9ef5c	Android test version	[account.tsx]
 949fa485	Another company	[account.tsx]
+99af9d0e	Another driver	[lib/names.ts]
 d2335e37	any plan	[components/offers.tsx]
 e33cf6f8	Anything else to remember about working with them.
 c13cfbf3	Anything else: you name it
@@ -824,9 +825,13 @@ ed487f8a	Free until {date}. Then {price} plus VAT {per}.
 9b3f00d9	from library	[vehicle/[id].tsx]
 64544340	From the dashboard photo
 46989fb6	From the dashboard photo {when}, {name}.
+85e9ca1e	From the dashboard photo {when}.
 96509e27	From the dashboard photo at a refuel {when}, {name}.
+f0be3599	From the dashboard photo at a refuel {when}.
 1409f187	From the dashboard photo at a wash {when}, {name}.
+8e403eb2	From the dashboard photo at a wash {when}.
 46383582	From the dashboard photo for parts {when}, {name}.
+23e0db6b	From the dashboard photo for parts {when}.
 0d13fc5b	From the dashboard photos at the start and end of each tour, newest first.
 83918d47	From your refuel during this tour (the receipt). || From your {n} refuels during this tour (the receipts).
 dd19f988	Front	[lib/frames.ts, lib/van3d.ts]
@@ -976,6 +981,8 @@ cbac9a58	Last changed {day} by {name}.
 c4abf2d0	Last changed {day}.	[components/driverrec.tsx]
 61eb32da	Last done {when}, {name}: {note}
 0599710f	Last done {when}, {name}: fine.
+39244148	Last done {when}: {note}
+5c556103	Last done {when}: fine.
 1e860ac7	last known {km}	[components/service.tsx]
 ef6b8eaa	Last known: {km}.	[buy/[id].tsx]
 adec36a8	Last name	[app/join/[token].tsx]
@@ -1324,6 +1331,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 8ac2ccfe	Only fleet managers and owners see other people.
 7255da23	Only fleet managers give vans to drivers. Switch if you assign vans elsewhere, like Amazon's tools.
 49fc35ff	Only if you were told to take this van: {name} didn't drop it off.
+47735ac4	Only if you were told to take this van: the driver who has it didn't drop it off.
 014b98f7	Only owners and this station's fleet managers see this part; the costs only owners.
 18780e20	Only owners and this station's fleet managers see this part.
 669aa41e	only owners see this
@@ -1790,6 +1798,7 @@ ff6d8326	Take more close-ups	[check/[id].tsx]
 c2ec85be	Take off the damage mark
 2c7f5505	Take over	[components/history.tsx]
 27391f71	Take over from {name}
+9f1eac32	Take over this van
 7ebd5d4c	Take photo	[add.tsx, check/[id].tsx]
 c108c747	Take photo {n}	[app/scan/[id].tsx]
 60c4e08d	Take the {n} pick-up photos
@@ -1888,6 +1897,7 @@ ba4260a5	The day can't be in the future.
 c85fa974	the document	[components/docscan.tsx]
 03eb19d3	The dot is placed from the panel name, so its spot on the van is rough.
 7ba5c9b2	the driver	[check/[id].tsx]
+8b04dabc	The driver before you didn't take an end photo: this ends their tour and starts yours.
 915b2337	The driver is still taking close-ups.
 b65a1bf8	The driver takes one as proof, for example of the cargo area.
 561d103c	The driver who has this van does its checks (or the station's fleet manager).
@@ -2009,6 +2019,7 @@ f1cdae10	This company has no stations yet. Ask your fleet manager.
 5e6afe06	This company has used today's {n} AI photo readings of the free trial. More from midnight, or write to info@fratius.com for more.
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
 8d08c342	This ends {name}'s tour.
+9b2f6a9d	This ends another driver's tour.
 6b95e16a	This handover belongs to another station.
 3b291b57	This invite link doesn't exist or was cancelled. Ask for a new one.
 83ae32eb	This invite link has expired. Links work for 24 hours; ask for a new one.
@@ -2288,7 +2299,7 @@ ed87d84e	Yes, don't know how much
 c0182615	Yes, litres from the receipt
 843f90df	Yes, right	[add.tsx]
 8af56de6	you	[lib/names.ts]
-905cb326	You	[person/[uid].tsx, vehicle/[id].tsx, components/damage.tsx]
+905cb326	You	[person/[uid].tsx, components/damage.tsx, lib/names.ts]
 f86f21c8	You approve or reject damage found at your station.
 c8b37064	You aren't managing a station yet.
 79202cb1	You asked to join {company} as a driver at {station}.

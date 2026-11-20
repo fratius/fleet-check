@@ -181,6 +181,18 @@ the product owner's explicit decision first.
   Owners remove anyone, managers remove drivers of their station (`removePerson`).
 - **Who sees it:** owners see all history; managers the history at their stations; drivers only their own
   assignments (the van they have and the vans they had), never other drivers' history.
+- **Drivers never see another driver's name** (product owner, 2026-11-20, after the blind tester found names on a
+  driver's van page). Not on the vans of their station (who has it, who took the last dashboard photo, who did a
+  check for drivers), not on the station's damage checks and walk-arounds, not on their own records where another
+  driver did something (who took over their van, who ended their tour with the next photo, whose van they refuelled,
+  who else had a van in a damage window). Those records keep only the account id; drivers see "You" for their own
+  and "Another driver" (or nothing) for anyone else. The names are kept apart in `orgs/{org}/names/{uid}`, written
+  only by the server (from the people, and kept for people who left), read by owners and managers (who already list
+  the company's people) and by each person for their own name. The names of the station's managers and owners on a
+  driver's own things stay (who gave them the van, who allowed or refused a refuel, who approved a damage).
+  Enforced in the rules (`names`), the functions (nothing a driver reads gets another driver's name; `readDashboard`
+  gives drivers `endsOther`, not the name) and the screens (`src/lib/names.ts`: `useHolder`, `useWhoDid`,
+  `useNameOf`). Data written before was moved once per company by Deploy (`functions/scripts/driver-names.cjs`).
 - **Fleet shows free and assigned vans:** owners and managers see which vans are free, which have a driver and
   who, and the retired ones. Drivers see the van they have.
 

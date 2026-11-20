@@ -136,12 +136,13 @@ export async function damageLogFor(orgId: string, checkId: string): Promise<bool
   const prevDoc = before.docs.find((d) => ((d.data() as { photos?: { path?: string; uri?: string }[] }).photos || []).some((p) => p.path || p.uri));
   const prev = prevDoc?.data() as { createdAt: number } | undefined;
   const from = prev?.createdAt ?? null;
-  const drivers: { id: string; name: string }[] = [];
+  // Ids only: each driver reads the lines they're in, and drivers don't see other drivers' names (names.ts).
+  const drivers: { id: string }[] = [];
   if (from != null) {
     const hist = await org.collection('assignments').where('vehicleId', '==', k.vehicleId).where('start', '<', foundAt).orderBy('start', 'desc').limit(100).get();
     hist.docs.map((d) => d.data() as { driverId: string; driverName: string; start: number; end: number | null })
       .filter((a) => (a.end ?? Infinity) > from).sort((a, b) => a.start - b.start)
-      .forEach((a) => { if (!drivers.some((x) => x.id === a.driverId)) drivers.push({ id: a.driverId, name: a.driverName }); });
+      .forEach((a) => { if (!drivers.some((x) => x.id === a.driverId)) drivers.push({ id: a.driverId }); });
   }
   await lref.set({
     checkId, vehicleId: k.vehicleId, vehicleName: k.vehicleName, stationId: k.stationId || null, foundAt, from, n: newDamageCount(k),

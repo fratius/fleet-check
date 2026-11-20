@@ -11,7 +11,7 @@ import { ScanChoice } from '@/components/scanchoice';
 import { DueChecks, dueOn } from '@/components/routines';
 import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
-import { useWhoDid } from '@/lib/names';
+import { useHolder, useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
@@ -26,6 +26,7 @@ export default function Fleet() {
   // A van a manager gave this driver that still needs its pick-up video or photos.
   const pickup = usePickupRequest(s.myVan);
   const whoDid = useWhoDid();
+  const holder = useHolder();
   const selfOn = (stationId: string | null | undefined) => !!s.stations.find((st) => st.id === stationId)?.selfAssign;
   const canDrop = !!s.myVan && selfOn(s.myVan.stationId) && !s.runs(s.myVan.stationId);
   const showStations = s.myStations.length > 1;
@@ -137,7 +138,7 @@ export default function Fleet() {
               {/* The km on its latest dashboard photo (refuels count too). */}
               <T v="medium" style={{ fontSize: 15 }}>{[v.dash ? kmText(v.dash.km) : t('No km yet'), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
               {tracking && !v.retired ? (
-                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${v.assignedTo.driverName}, ${sinceText(v.assignedTo.since)}` : t('Free')}</T>
+                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${holder(v)}, ${sinceText(v.assignedTo.since)}` : t('Free')}</T>
               ) : null}
               <T v="hint">{last ? (whoDid(last.createdBy) ? t('Last walk-around {when}, by {name}', { when: fmtWhen(last.createdAt), name: whoDid(last.createdBy) }) : t('Last walk-around {when}', { when: fmtWhen(last.createdAt) })) : t('No walk-around yet')}</T>
               <Row gap={6}>

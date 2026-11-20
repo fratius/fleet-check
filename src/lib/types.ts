@@ -30,7 +30,8 @@ export interface Vehicle {
   /** The station (operating area) the van belongs to. Missing on vans saved before stations existed. */
   stationId?: string;
   /** Who drives it now (set by the server, mirrors the open assignment, with their km so far). */
-  assignedTo?: { assignmentId: string; driverId: string; driverName: string; since: number; kmStart?: number | null; kmEnd?: number | null } | null;
+  /** Who has it, by account id (drivers read the van, so the name isn't on it since 2026-11-20; lib/names.ts). */
+  assignedTo?: { assignmentId: string; driverId: string; /** Older records only. */ driverName?: string; since: number; kmStart?: number | null; kmEnd?: number | null } | null;
   /** The latest dashboard photo (set by the server): everyone at the station sees the km, levels and warning lights. */
   dash?: VanDash | null;
   /** Checks for drivers due on this van now, for whoever has it (set by the server). */
@@ -137,6 +138,9 @@ export interface ServiceRecord {
   edits?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceRecord, 'name' | 'day' | 'km' | 'cost' | 'garage' | 'note' | 'result'>> }[];
 }
 
+/** A person's name, for owners and fleet managers (orgs/{org}/names/{uid}, kept by the server; functions/src/names.ts). */
+export interface NameRow { id: string; name: string }
+
 /** What a van costs (orgs/{org}/vehicleCosts/{vehicleId}): only owners read and change it. Euros, without VAT. */
 export interface VehicleCosts {
   id: string;
@@ -233,7 +237,8 @@ export interface Routine {
 }
 /** Due on a van now: since when, and for which day or handover. */
 export interface RoutineTodo { id: string; key: string | null; name: string; photo: boolean; since: number; period: string }
-export interface RoutineLast { at: number; by: string; byName: string; ok: boolean; note: string | null }
+/** On the van: who did it by account id (the name only on older records; lib/names.ts). */
+export interface RoutineLast { at: number; by: string; byName?: string; ok: boolean; note: string | null }
 /** A check done (orgs/{org}/routineDone/{id}), written by the server and kept. */
 export interface RoutineDone {
   id: string; routineId: string; key: string | null; name: string; vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
@@ -247,7 +252,8 @@ export interface RoutineDone {
  */
 export interface VanDash {
   km: number; fuelPct: number | null; batteryPct: number | null; rangeKm: number | null; warnings: string[];
-  at: number; by: string; byName: string; from: 'tour' | 'fuel' | 'wash' | 'parts';
+  /** byName: older records only (drivers read the van; lib/names.ts). */
+  at: number; by: string; byName?: string; from: 'tour' | 'fuel' | 'wash' | 'parts';
 }
 /** What the dashboard photo says (read by the AI, then confirmed or corrected by the person who took it). */
 export interface DashValues { odometerKm: number | null; fuelPct: number | null; batteryPct: number | null; rangeKm: number | null; warnings: string[] }
@@ -329,7 +335,8 @@ export interface Purchase {
   vehicleId: string; vehicleName: string; plate: string | null; stationId: string | null; model?: string | null;
   vanFuel: Vehicle['fuel']; tankL: number | null;
   by: string; byName: string; role: Role;
-  vanDriverId: string | null; vanDriverName: string | null; notTheirVan: boolean;
+  /** Who had the van, by account id (the buyer reads this record; the name only on older ones). */
+  vanDriverId: string | null; vanDriverName?: string | null; notTheirVan: boolean;
   dash: { path: string; at: number; ai: DashValues | null; confidence: number | null; readable: boolean; issue: string | null; done: boolean };
   lastKm: number | null;
   card: {
@@ -360,7 +367,8 @@ export interface DamageLog {
   from: number | null;
   /** New damages (approved, not already on the van). */
   n: number;
-  drivers: { id: string; name: string }[];
+  /** Ids (the name only on older lines: each driver reads the lines they're in; lib/names.ts). */
+  drivers: { id: string; name?: string }[];
   driverIds: string[];
   reviewAt: number | null;
   createdAt: number;

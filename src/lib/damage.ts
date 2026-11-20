@@ -32,6 +32,9 @@ export interface Damage {
   later: Sighting[];
   /** When the photos that show it were taken. */
   foundAt: number;
+  /** Who did the check it was found in: by account id (checks keep no name since 2026-11-20, lib/names.ts). */
+  foundById: string | null;
+  /** Their name on an older check (owners and managers only). */
   foundBy: string;
   approvedBy: string;
   approvedAt: number | null;
@@ -133,7 +136,7 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
       note: (d?.note || m?.note || '').trim(),
       aiReason: p?.verdict?.reason || null,
       first: { key, check: k, spot, manual }, later: [],
-      foundAt, foundBy: k.createdByName || '',
+      foundAt, foundById: k.createdBy || null, foundBy: k.createdByName || '',
       approvedBy: d?.byName || m?.byName || k.review!.byName || '', approvedAt: d?.at || m?.at || k.review!.at || null,
       pos, afterWalk, beforeWalk, afterPhoto,
       beforePhoto: sameFrame(beforeWalk, afterPhoto, afterWalk),

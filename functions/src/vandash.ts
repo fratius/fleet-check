@@ -22,7 +22,8 @@ export interface VanDash {
   warnings: string[];
   at: number;
   by: string;
-  byName: string;
+  /** Older records only: drivers read the van, so the name of who took the photo isn't kept on it (names.ts). */
+  byName?: string;
   /** Where the photo was taken: a tour's start or end, or a refuel (the fuel level is then an estimate after filling up), a wash, parts. */
   from: DashFrom;
 }
@@ -54,7 +55,8 @@ export function afterRefuel(fuelPct: number | null, litres: number | null, tankL
  */
 export function noteDash(tx: Transaction, vref: DocumentReference, van: VanNow, d: VanDash) {
   if (van.dash && van.dash.at > d.at) return;
-  const patch: Record<string, unknown> = { dash: d };
+  const { byName: _n, ...bare } = d;
+  const patch: Record<string, unknown> = { dash: bare };
   const a = van.assignedTo;
   if (a?.assignmentId) {
     const k = nextKm(a, d.km);
@@ -98,7 +100,7 @@ export function pointsFrom(readings: Doc[], purchases: Doc[]): Map<string, Point
     if (km == null || at == null) continue;
     add(r.vehicleId, { at, dash: {
       km, fuelPct: num(r.fuelPct), batteryPct: num(r.batteryPct), rangeKm: num(r.rangeKm), warnings: Array.isArray(r.warnings) ? (r.warnings as string[]) : [],
-      at, by: String(r.by || ''), byName: String(r.byName || ''), from: 'tour',
+      at, by: String(r.by || ''), from: 'tour',
     } });
   }
   for (const p of purchases) {
@@ -109,7 +111,7 @@ export function pointsFrom(readings: Doc[], purchases: Doc[]): Map<string, Point
     add(p.vehicleId, { at, dash: {
       km, fuelPct: kind === 'fuel' ? afterRefuel(num(p.fuelPct), num(p.litres), num(p.tankL)) : num(p.fuelPct),
       batteryPct: num(dash.ai?.batteryPct), rangeKm: kind === 'fuel' ? null : num(dash.ai?.rangeKm), warnings: dash.ai?.warnings || [],
-      at, by: String(p.by || ''), byName: String(p.byName || ''), from: kind,
+      at, by: String(p.by || ''), from: kind,
     } });
   }
   for (const xs of out.values()) xs.sort((a, b) => a.at - b.at);

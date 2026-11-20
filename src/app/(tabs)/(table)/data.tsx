@@ -65,9 +65,9 @@ export default function DataScreen() {
     logs: data.logs.filter((l) => inScope(l.stationId)), incidents: data.incidents.filter((i) => inScope(i.stationId)),
     records: s.records, members: s.mode === 'firebase' ? (members || []).filter((m) => (m.stationIds || []).some((id) => inScope(id))) : null,
     vehicles: s.vehicles.filter((v) => inScope(v.stationId)), details: s.details, costs: s.costs, videos: s.videos, walks: s.walks, stations: s.stations,
-    months: s.org?.licenceCheckMonths || CHECK_MONTHS,
+    months: s.org?.licenceCheckMonths || CHECK_MONTHS, names: s.names,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [from, data, s.records, members, s.vehicles, s.details, s.costs, s.videos, s.walks, s.stations, station, s.mode, s.org?.licenceCheckMonths]);
+  }), [from, data, s.records, members, s.vehicles, s.details, s.costs, s.videos, s.walks, s.stations, station, s.mode, s.org?.licenceCheckMonths, s.names]);
 
   const sum1 = useMemo(() => totals(inputs), [inputs]);
   const drivers = useMemo(() => driverRows(inputs).filter((r) => r.role !== 'manager' || r.tours || r.damage || r.accidents + r.fines + r.complaints), [inputs]);
