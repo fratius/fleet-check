@@ -6,9 +6,10 @@ import { Card, Pill, Row, Screen, Segmented, Stat, Stats, T, cap, fmtWhen, mmss,
 import { CLS } from '@/lib/frames';
 import { t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
-import { TIER_NAME, aiWasRight, type Check, type Scan } from '@/lib/types';
+import { NOT_COMPARED } from '@/lib/compare';
+import { TIER_NAME, aiWasRight, type Check, type Compare, type Scan } from '@/lib/types';
 
-type Tab = 'checks' | 'scans' | 'walks';
+type Tab = 'checks' | 'compares' | 'scans' | 'walks';
 
 const median = (xs: number[]) => { if (!xs.length) return null; const s = xs.slice().sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const sum = (xs: (number | null | undefined)[]) => xs.reduce<number>((a, b) => a + (b || 0), 0);
@@ -25,6 +26,8 @@ function byModel<T extends { model: string }>(rows: T[]) {
 export default function Log() {
   const s = useSession();
   const [tab, setTab] = useState<Tab>('checks');
+  // Checks a driver ran; the automatic comparison's have their own tab.
+  const manual = s.checks.filter((k) => !k.auto);
   // Only for the app creator (the tab is hidden for everyone else; this covers links opened directly).
   if (!s.seesAiStats) return <Screen><T v="h1">{t('Test log')}</T><Card dashed><T v="hint">{t('Only the app creator sees the test log.')}</T></Card></Screen>;
   return (
@@ -35,8 +38,10 @@ export default function Log() {
           : t('How fast, how much and how often the AI was right, from every run in {company}.', { company: s.org?.name || t('this company') })}</T>
       </View>
       <Segmented<Tab> label={t('Show')} value={tab} onChange={setTab}
-        options={[['checks', s.checks.length ? t('Damage checks ({n})', { n: s.checks.length }) : t('Damage checks')], ['scans', s.scans.length ? t('Type scans ({n})', { n: s.scans.length }) : t('Type scans')], ['walks', t('Walk-arounds')]]} />
-      {tab === 'checks' ? <Checks rows={s.checks} /> : tab === 'scans' ? <Scans rows={s.scans} /> : <Walks />}
+        options={[['checks', manual.length ? t('Damage checks ({n})', { n: manual.length }) : t('Damage checks')],
+          ['compares', s.compares.length ? t('Comparisons ({n})', { n: s.compares.length }) : t('Comparisons')],
+          ['scans', s.scans.length ? t('Type scans ({n})', { n: s.scans.length }) : t('Type scans')], ['walks', t('Walk-arounds')]]} />
+      {tab === 'checks' ? <Checks rows={manual} /> : tab === 'compares' ? <Compares rows={s.compares} /> : tab === 'scans' ? <Scans rows={s.scans} /> : <Walks />}
     </Screen>
   );
 }
@@ -113,6 +118,83 @@ function Checks({ rows }: { rows: Check[] }) {
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <T v="h3">{tp(k.spots.length, '{van}: {n} spot, {damage} damage', '{van}: {n} spots, {damage} damage', { van: s.vanName(k), damage: dmg })}</T>
             <T v="hint">{[fmtWhen(k.createdAt), tp(k.photos, '{n} photo', '{n} photos'), t(TIER_NAME[k.tier]), k.pass1 ? secs(k.pass1.ms) : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0))].filter(Boolean).join(', ')}</T>
+          </Pressable>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * The automatic damage comparison: how often the first look (Haiku) marks a frame, what the second look (Opus) makes
+ * of it, what the fleet managers decided, and what it costs. Accuracy is the managers' decisions: spots they rejected
+ * are false alarms, damage they added is what the AI missed.
+ */
+function Compares({ rows }: { rows: Compare[] }) {
+  const s = useSession();
+  const c = useColors();
+  if (!rows.length) return <Card dashed><T v="hint">{t('No comparisons yet. Every walk-around taken with the camera is compared with the van\'s earlier photos.')}</T></Card>;
+  const ran = rows.filter((r) => r.status === 'done');
+  const frames = ran.flatMap((r) => r.frames || []);
+  const compared = frames.filter((f) => !f.why);
+  const marked = compared.filter((f) => f.haiku && (f.haiku.changes.length || f.haiku.unsure));
+  const seconds = marked.filter((f) => f.opus);
+  const verdicts = seconds.flatMap((f) => f.opus!.decisions.map((d) => d.verdict));
+  const count = (v: string) => verdicts.filter((x) => x === v).length;
+  const added = sum(seconds.map((f) => f.opus!.more.length));
+  const checks = s.checks.filter((k) => k.auto === 'compare');
+  const decided = checks.flatMap((k) => k.spots.map((_, i) => k.review?.decisions?.[String(i)]).filter((d): d is NonNullable<typeof d> => !!d));
+  const approved = decided.filter((d) => d.damage).length;
+  const missed = sum(checks.map((k) => k.review?.manual?.length || 0));
+  const haiku = sum(rows.map((r) => r.haiku?.cost)), opus = sum(rows.map((r) => r.opus?.cost));
+  const per = ran.length ? (haiku + opus) / ran.length : null;
+  const gaps = new Map<string, number>();
+  frames.filter((f) => f.why && f.why !== 'first').forEach((f) => gaps.set(f.why!, (gaps.get(f.why!) || 0) + 1));
+  return (
+    <>
+      <Stats>
+        <Stat value={String(ran.length)} label={tp(compared.length, 'walk-arounds, {n} photo compared', 'walk-arounds, {n} photos compared')} />
+        <Stat value={pct(marked.length, compared.length)} label={tp(marked.length, 'marked by the first look ({n} photo)', 'marked by the first look ({n} photos)')} />
+        <Stat value={pct(approved, decided.length)} label={tp(decided.length, 'approved, of {n} spot a manager decided', 'approved, of {n} spots a manager decided')} />
+      </Stats>
+      <Card>
+        <T v="h3">{t('Second look')}</T>
+        <Row>
+          <Pill v="bad" text={tp(count('new'), '{n} new', '{n} new')} />
+          <Pill v="good" text={tp(count('old'), '{n} already there', '{n} already there')} />
+          <Pill v="good" text={tp(count('not_damage'), '{n} not damage', '{n} not damage')} />
+          <Pill v="muted" text={tp(count('unclear'), '{n} unclear', '{n} unclear')} />
+          {added ? <Pill v="amber" text={tp(added, '{n} added', '{n} added')} /> : null}
+        </Row>
+        <T v="hint">{t('Spots the first look marked that the second look calls already there or not damage are the false alarms it removes. Damage the managers added is what both missed.')}</T>
+      </Card>
+      <Card>
+        <T v="h3">{t('Cost')}</T>
+        <Table rows={[
+          [t('First look, per walk-around'), usd(ran.length ? haiku / ran.length : null), secs(median(nums(ran.map((r) => r.haiku?.ms))))],
+          [t('Second look, per photo checked'), usd(seconds.length ? opus / seconds.length : null), tp(seconds.length, '{n} photo', '{n} photos')],
+          [t('All in, per walk-around'), usd(per), usd(haiku + opus)],
+          [t('Per van and month'), usd(per == null ? null : per * 52), t('at 2 walk-arounds a day, 26 days')],
+          [t('Damage the managers added'), String(missed), tp(checks.length, 'in {n} check', 'in {n} checks')],
+        ]} />
+      </Card>
+      {gaps.size ? (
+        <Card>
+          <T v="h3">{t('Not compared')}</T>
+          <Table rows={[...gaps.entries()].sort((a, b) => b[1] - a[1]).map(([why, n]) => [t(NOT_COMPARED[why as keyof typeof NOT_COMPARED]), String(n), pct(n, frames.length)] as [string, string, string])} />
+        </Card>
+      ) : null}
+      <T v="h2">{t('Every comparison')}</T>
+      {rows.slice(0, 50).map((r) => {
+        const sm = r.summary;
+        return (
+          <Pressable key={r.id} onPress={() => router.push(r.checkId ? `/check/${r.checkId}` : `/walk/${r.walkId}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
+            <Row>
+              <T v="h3" style={{ flex: 1 }}>{s.vanName(r)}</T>
+              <Pill v={r.status === 'failed' ? 'bad' : sm?.found ? 'bad' : sm?.unsure ? 'amber' : 'muted'} text={r.status === 'done' ? (sm?.found || sm?.unsure ? tp((sm?.found || 0) + (sm?.unsure || 0), '{n} spot', '{n} spots') : t('No new damage'))
+                : r.status === 'first' ? t('First walk-around') : r.status === 'limit' ? t('Trial limit') : r.status === 'running' ? t('Running') : t('Failed')} />
+            </Row>
+            <T v="hint">{[fmtWhen(r.walkAt), sm ? tp(sm.compared, '{n} photo compared', '{n} photos compared') : '', r.serverMs ? secs(r.serverMs) : '', r.cost != null ? usd(r.cost) : '', r.error || ''].filter(Boolean).join(', ')}</T>
           </Pressable>
         );
       })}

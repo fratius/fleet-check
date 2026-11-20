@@ -82,6 +82,7 @@ beforeEach(async () => {
     await put(`orgs/${O}/damageLog/c1`, { checkId: 'c1', vehicleId: 'v1', stationId: S1, n: 1, drivers: [{ id: 'drv1', name: 'Driver 1' }], driverIds: ['drv1'], foundAt: 1, createdAt: 1 });
     await put(`orgs/${O}/vehicleDetails/v2`, { stationId: S2, createdAt: 2, ownership: 'owned' });
     await put(`orgs/${O}/checkUsage/c1`, { checkId: 'c1', stationId: S1, createdAt: 1, pass1: { ms: 9000, cost: 0.2 }, pass2: null });
+    await put(`orgs/${O}/compares/w1`, { walkId: 'w1', vehicleId: 'v1', stationId: S1, createdAt: 1, status: 'done', cost: 0.02, frames: [] });
     await put('users/drv1/push/p1', { endpoint: 'https://fcm.googleapis.com/fcm/send/abc', keys: { p256dh: 'x', auth: 'y' }, createdAt: 1, device: 'Android phone' });
     const inv = (role, stationId) => ({ orgId: O, orgName: 'DSP One', role, stationId, stationName: 'x', createdBy: 'own', createdAt: 1, expiresAt: Date.now() + 86400000, usedBy: null });
     await put(`invites/DRVLINK1xxxxxxxxxxxxxxxx`, { token: 'DRVLINK1xxxxxxxxxxxxxxxx', ...inv('driver', S1) });
@@ -190,6 +191,9 @@ describe('walk-arounds and checks', () => {
     await assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/walkarounds/w7`), { vehicleId: 'v1', stationId: S1, createdBy: 'mgr1', createdAt: 2, keepMark: { by: 'mgr1' } }));
     await assertFails(updateDoc(doc(as('own'), `orgs/${O}/walkarounds/w1`), { keepUntil: 9e12 }));
     await assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w8`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2, mediaDeletedAt: 3 }));
+    // How the automatic damage comparison went is the server's too.
+    await assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w9`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2, cmp: { status: 'done', found: 0 } }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}/walkarounds/w1`), { cmp: { status: 'done', found: 0 } }));
     await assertFails(updateDoc(doc(as('own'), `orgs/${O}/walkarounds/w1`), { mediaDeletedAt: 3 }));
   });
   test('nobody writes how long a check\'s photos are kept, not even its manager', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), { keepUntil: 9e12 })));
@@ -396,6 +400,12 @@ describe('AI speed and cost: only the app creator', () => {
   test('not the driver', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/checkUsage/c1`))));
   test('not the app creator viewing the app as an owner', () => assertFails(getDoc(doc(as('vown', { creator: true }), `orgs/${O}/checkUsage/c1`))));
   test('nobody writes them from the app, not even the app creator', () => assertFails(setDoc(doc(as('boss', { creator: true }), `orgs/${O}/checkUsage/c9`), { pass1: null })));
+  test('the automatic damage comparisons, frame by frame: the app creator reads them', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/compares`))));
+  test('…not the fleet owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/compares/w1`))));
+  test('…not the station\'s manager', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/compares/w1`))));
+  test('…not the driver', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/compares/w1`))));
+  test('…not the app creator viewing the app as an owner', () => assertFails(getDoc(doc(as('vown', { creator: true }), `orgs/${O}/compares/w1`))));
+  test('…and nobody writes them from the app', () => assertFails(setDoc(doc(as('boss', { creator: true }), `orgs/${O}/compares/w9`), { status: 'done' })));
   test('type scans (they carry cost): the app creator reads them', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/scans`))));
   test('type scans: not the fleet owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/scans/sc1`))));
   test('type scans: not the manager', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/scans`))));
@@ -539,6 +549,12 @@ describe('company settings: dashboard photos and licence checks', () => {
   test('nor in a new company', () => assertFails(setDoc(doc(as('new2'), 'orgs/fresh1'), { name: 'Fresh', createdBy: 'new2', createdAt: Date.now(), aiTier: 'complex' })));
   test('a new company without one is fine', () => assertSucceeds(setDoc(doc(as('new2'), 'orgs/fresh2'), { name: 'Fresh', createdBy: 'new2', createdAt: Date.now() })));
   test('the app creator picks it', () => assertSucceeds(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { aiTier: 'quick' })));
+  test('only the app creator switches the automatic damage comparison: not the owner', () => assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { aiCompare: false })));
+  test('…nor a manager', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}`), { aiCompare: false })));
+  test('…nor in a new company', () => assertFails(setDoc(doc(as('new2'), 'orgs/fresh3'), { name: 'Fresh', createdBy: 'new2', createdAt: Date.now(), aiCompare: false })));
+  test('…the app creator does, on or off', () => assertSucceeds(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { aiCompare: false })));
+  test('…only on or off', () => assertFails(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { aiCompare: 'sometimes' })));
+  test('…and back on', () => assertSucceeds(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { aiCompare: true })));
 });
 
 describe('refuels, washes and parts: every attempt kept, written by the server', () => {

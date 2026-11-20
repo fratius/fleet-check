@@ -1668,6 +1668,10 @@ test('photos and videos: deleted on the 15th for the month before, never while t
   assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dropV))).data().converted, 'repackaged');
   const dash = `orgs/${S.org}/dash/${S.d1.uid}/old.jpg`;
   await uploadBytes(ref(S.d1.st, dash), new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { contentType: 'image/jpeg' });
+  // Each van's newest walk-around keeps its photos until a newer one is taken (product owner, 2026-11-20: the next
+  // walk-around is compared with it). Van K3 gets a newer one, so the one before follows the 15th.
+  await new Promise((res) => setTimeout(res, 1100));
+  const other2 = await photos(S.own, S.org, v3);
 
   // Before the 15th nothing of this month goes. Only the app creator runs the clean-up by hand.
   await fails(S.own.call('cleanMediaNow', { orgId: S.org }), 'permission-denied');
@@ -1685,6 +1689,7 @@ test('photos and videos: deleted on the 15th for the month before, never while t
   assert.equal(await exists(dash), false);
   assert.equal(await exists(`orgs/${S.org}/videos/${S.d1.uid}/${dropV}/play.mp4`), false);
   for (const id of [marked, before, found, held]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} is kept`);
+  assert.equal(await exists(walkFile(other2)), true, 'van K3\'s newest walk-around is kept');
   assert.equal(await exists(closeup), true);
   assert.equal(await exists(kv.playPath), true);
   // The records stay and say when their files went; a deleted walk-around can't be marked as damage any more.
@@ -1693,14 +1698,26 @@ test('photos and videos: deleted on the 15th for the month before, never while t
   assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'videos', dropV))).data().mediaDeletedAt, run1);
   assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', held))).data().mediaDeletedAt, undefined);
   await fails(S.mgr.call('markDamage', { orgId: S.org, kind: 'walk', id: plain }), 'failed-precondition');
-  // Hal gives the van back: from then on its files count from that day, so they go at the run after.
+  // Hal gives the van back: from then on its files count from that day, so they go at the run after, once a newer
+  // walk-around of the van is there.
   await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v4.id, driverId: null });
   await cr.call('cleanMediaNow', { orgId: S.org, now: run1 });
+  assert.equal(await exists(walkFile(held)), true, 'van K4\'s newest walk-around stays');
+  const held2 = await photos(S.mgr, S.org, v4);
+  await cr.call('cleanMediaNow', { orgId: S.org, now: run1 });
   assert.equal(await exists(walkFile(held)), false);
-  // 90 days on, at the next 15th, the damage goes too.
+  assert.equal(await exists(walkFile(held2)), true);
+  // 90 days on, at the next 15th, the damage goes too, except the newest walk-around of each van: newer ones of vans
+  // K1 and K2 are taken first.
+  const plain2 = await photos(S.d1, S.org, v1), found2 = await photos(S.d1, S.org, v2);
   await cr.call('cleanMediaNow', { orgId: S.org, now: deleteOn(T0 + 91 * DAY) + 4 * 3_600_000 });
-  for (const p of [walkFile(marked), walkFile(found), closeup, kv.playPath]) assert.equal(await exists(p), false, p);
+  for (const p of [walkFile(marked), walkFile(found), walkFile(before), closeup, kv.playPath]) assert.equal(await exists(p), false, p);
+  for (const id of [plain2, found2, held2, other2]) assert.equal(await exists(walkFile(id)), true, `walk-around ${id} is its van's newest`);
   assert.ok((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', k.id))).exists());
+  // A retired van needs nothing to compare with: its newest walk-around follows the 15th like the rest.
+  await S.own.call('retireVan', { orgId: S.org, vehicleId: v3.id });
+  await cr.call('cleanMediaNow', { orgId: S.org, now: deleteOn(T0 + 91 * DAY) + 4 * 3_600_000 });
+  assert.equal(await exists(walkFile(other2)), false);
 });
 
 test('the store app gets notifications through Expo\'s push service; a phone without the app is forgotten', async () => {
@@ -1745,7 +1762,7 @@ test('the store app gets notifications through Expo\'s push service; a phone wit
 
 test('sign-up: a new company gets 30 days free from the server; the owner can\'t change it; the trial\'s AI has a daily allowance', async () => {
   const o = await person('Nora Neu');
-  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: '2026-11-12' };
+  const input = { company: '  Neu Logistik GmbH ', station: 'DNX1', mainStation: 'Hauptstation', name: 'Nora Neu', source: 'website', plan: 'pro', terms: '2026-11-20' };
   // The terms (AGB) and the data processing agreement (AVV) are accepted with their version.
   await fails(o.call('createCompany', { ...input, terms: null, rid: `rcc${run}0` }), 'failed-precondition');
   const r = await o.call('createCompany', { ...input, rid: `rcc${run}a` });
@@ -1916,7 +1933,7 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
   // Payments on, with the tests' fake Stripe (payments.ts). Off again at the end, for the other tests.
   await adminDb().doc('platform/stripe').set({ mode: 'fake', publishableKey: 'pk_test_fake', tax: { mode: 'rate', rateId: 'txr_fake' } });
   const address = { name: 'Pay Logistik GmbH', address: { line1: 'Hauptstr. 1', city: 'Berlin', postal_code: '10115', country: 'DE' } };
-  const terms = '2026-11-12';
+  const terms = '2026-11-20';
   // The early-bird price (functions/src/billing.ts): every plan started before 1 April 2027 (German time) is on it.
   // The checks below hold on both sides of that day.
   const early = Date.now() < Date.UTC(2027, 2, 31, 22);
@@ -2222,4 +2239,161 @@ test('the app creator tries both sides from one sign-in: given a van as a driver
   // It hangs on the sign-in claim: without it the same account gets nothing.
   await setCreator(cr, false);
   await fails(cr.call('assignVan', { orgId: org, vehicleId: van.id, driverId: cr.uid }), 'permission-denied');
+});
+
+test('the AI compares every walk-around with the van\'s earlier photos; new damage goes to the station\'s managers to review', async () => {
+  // Product owner, 2026-11-20. The stand-in for the AI (functions/src/claude.ts) marks a spot on the frame "Frame 1"
+  // and calls it new damage, unless the van's plate says QUIET. Earlier tests made this company one set up by hand
+  // (no trial allowance).
+  const cr = await appCreator('Cora Compare');
+  const mkVan = async (name, plate) => {
+    const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(r, { name, plate, cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
+    return { id: r.id, name, stationId: S.s1 };
+  };
+  const v = await mkVan('Van C1', 'CMP 1'), q = await mkVan('Van C2', 'QUIET 2');
+  const walkDoc = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'walkarounds', id))).data();
+  const cmpOf = (id, ...states) => waitFor(async () => {
+    const c = (await walkDoc(S.mgr, id))?.cmp;
+    return c && states.includes(c.status) ? c : null;
+  }, `the comparison of ${id}`, 90_000);
+  // A driver of station 1 who has van C1 for a while (the damage log names who had the van).
+  const inv = await S.mgr.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+  const kim = await person('Kim Compare');
+  await kim.call('acceptInvite', { token: inv.invites[0].token, details: { firstName: 'Kim', lastName: 'Compare', phone: '+49 151 7', transporterId: 'K7' } });
+  // The manager's phone gets notifications (a push service on this computer, as in the tests above).
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (c) => ch.push(c));
+    req.on('end', () => { got.push({ url: req.url, body: Buffer.concat(ch) }); res.statusCode = 201; res.end(); });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+  const auth = crypto.randomBytes(16).toString('base64url');
+  const pushCol = adminDb().collection(`users/${S.mgr.uid}/push`);
+  const before = await pushCol.get();
+  await Promise.all(before.docs.map((d) => d.ref.delete()));
+  await pushCol.doc('cmp').set({ endpoint: `http://${HOST}:${srv.address().port}/push/cmp`,
+    keys: { p256dh: ecdh.getPublicKey().toString('base64url'), auth }, createdAt: Date.now(), device: 'manager phone' });
+  const opened = () => got.filter((g) => g.url === '/push/cmp').map((g) => JSON.parse(fnRequire('http_ece').decrypt(g.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString()));
+  const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+  try {
+    // The van's first walk-around: nothing to compare with. No AI, no check.
+    const w1 = await photos(S.d1, S.org, v, { real: true });
+    const c1 = await cmpOf(w1, 'first');
+    assert.equal(c1.compared, 0);
+    assert.deepEqual(c1.notCompared.map((g) => g.why), ['first', 'first', 'first']);
+    assert.equal((await getDoc(doc(cr.db, 'orgs', S.org, 'compares', w1))).data().status, 'first');
+
+    // Kim has the van; her drop-off photos are compared frame by frame with the ones before.
+    await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v.id, driverId: kim.uid });
+    const w2 = await photos(kim, S.org, v, { real: true });
+    const c2 = await cmpOf(w2, 'done', 'failed');
+    assert.equal(c2.status, 'done', JSON.stringify(c2));
+    assert.equal(c2.compared, 3);
+    assert.deepEqual(c2.notCompared, []);
+    assert.equal(c2.found, 1);
+    assert.equal(c2.unsure, 0);
+    assert.equal(c2.checkId, `cmp-${w2}`);
+    await S.mgr.call('assignVan', { orgId: S.org, vehicleId: v.id, driverId: null });
+
+    // The damage check for the manager: made by nobody, the photos Kim's (by account id: drivers read checks).
+    const kref = doc(S.mgr.db, 'orgs', S.org, 'checks', c2.checkId);
+    const k = (await getDoc(kref)).data();
+    assert.equal(k.auto, 'compare');
+    assert.equal(k.status, 'submitted');
+    assert.equal(k.createdBy, null);
+    assert.equal(k.walkBy, kim.uid);
+    assert.deepEqual(k.refWalkIds, [w1]);
+    assert.equal(k.spots.length, 1);
+    const sp = k.spots[0];
+    assert.equal(sp.photoLabel, 'Frame 1');
+    assert.equal(sp.verdict.verdict, 'damage');
+    assert.equal(sp.beforeWalkId, w1);
+    assert.ok(sp.beforeAt <= k.createdAt && k.refAt === sp.beforeAt);
+    // The same part of both photos, cut from the full-size photos, for the manager to compare.
+    for (const path of [sp.refPath, sp.beforePath]) assert.ok((await getBytes(ref(S.mgr.st, path))).byteLength > 1000, path);
+    // A driver of the station reads the check like any other, without anyone's name.
+    const dk = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', c2.checkId))).data();
+    assert.ok(!/Kim Compare|Dana Driver/.test(JSON.stringify(dk)));
+    // The station's manager got a notification that opens the review; not Kim, who took the photos.
+    const note = await waitFor(async () => opened().find((m) => m.url === `/check/${c2.checkId}`), 'the notification');
+    assert.equal(note.title, 'Possible new damage: CMP 1');
+    assert.match(note.body, /1 possible new damage/);
+    // Time and cost: the app creator's only. The first look at all 3 frames, the second at the one it marked.
+    for (const p of [S.mgr, S.own, kim]) {
+      await fails(getDoc(doc(p.db, 'orgs', S.org, 'compares', w2)), 'permission-denied');
+      await fails(getDoc(doc(p.db, 'orgs', S.org, 'checkUsage', c2.checkId)), 'permission-denied');
+    }
+    const u = (await getDoc(doc(cr.db, 'orgs', S.org, 'checkUsage', c2.checkId))).data();
+    assert.equal(u.pass1.calls, 3);
+    assert.equal(u.pass1.images, 6);
+    assert.equal(u.pass2.calls, 1);
+    assert.equal(u.pass2.images, 4, 'both whole frames and a crop of each');
+    const log = (await getDoc(doc(cr.db, 'orgs', S.org, 'compares', w2))).data();
+    assert.equal(log.status, 'done');
+    assert.equal(log.frames.length, 3);
+    assert.equal(log.frames.filter((f) => f.opus).length, 1);
+    assert.ok(log.cost > 0 && log.haiku.cost > 0 && log.opus.cost > 0);
+
+    // It runs once per walk-around; staff run it again only when it failed, drivers never.
+    await fails(S.mgr.call('compareWalk', { orgId: S.org, walkId: w2 }), 'failed-precondition');
+    await fails(kim.call('compareWalk', { orgId: S.org, walkId: w2 }), 'permission-denied');
+
+    // The manager approves it: on the van's record, and the damage log names who had the van since the photos before.
+    await updateDoc(kref, { review: { decisions: { 0: { damage: true, note: '', by: S.mgr.uid, byName: 'Max Manager', at: Date.now(), known: null } }, manual: [], by: S.mgr.uid, byName: 'Max Manager', at: Date.now() },
+      status: 'reviewed', reviewedAt: Date.now() });
+    await S.mgr.call('logReview', { orgId: S.org, checkId: c2.checkId });
+    const dl = (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'damageLog', c2.checkId))).data();
+    assert.equal(dl.n, 1);
+    assert.equal(dl.from, k.refAt);
+    assert.deepEqual(dl.driverIds, [kim.uid]);
+    // Approved damage keeps both walk-arounds' photos 90 days.
+    for (const id of [w1, w2]) assert.deepEqual((await walkDoc(S.mgr, id)).keepDamage, [c2.checkId]);
+
+    // A van where nothing changed: compared, no check, no notification.
+    await photos(S.d1, S.org, q, { real: true });
+    const w4 = await photos(S.d1, S.org, q, { real: true });
+    const c4 = await cmpOf(w4, 'done', 'failed');
+    assert.equal(c4.found + c4.unsure, 0, JSON.stringify(c4));
+    assert.equal(c4.checkId, null);
+    assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', `cmp-${w4}`))).exists(), false);
+
+    // Photos from the library aren't compared (they may be old).
+    const lib = await photos(S.d1, S.org, v, { real: true, source: 'library' });
+
+    // The switch: only the app creator turns it off; then nothing is compared, and it can't be asked for.
+    await fails(updateDoc(doc(S.own.db, 'orgs', S.org), { aiCompare: false }), 'permission-denied');
+    await updateDoc(doc(cr.db, 'orgs', S.org), { aiCompare: false });
+    const off = await photos(S.d1, S.org, v, { real: true });
+    await new Promise((r) => setTimeout(r, 6000));
+    for (const id of [off, lib]) {
+      assert.equal((await walkDoc(S.mgr, id)).cmp, undefined, `${id} wasn't compared`);
+      assert.equal((await getDoc(doc(cr.db, 'orgs', S.org, 'compares', id))).exists(), false);
+    }
+    await fails(S.mgr.call('compareWalk', { orgId: S.org, walkId: off }), 'failed-precondition');
+    // On again: a walk-around taken while it was off can be compared by staff.
+    await updateDoc(doc(cr.db, 'orgs', S.org), { aiCompare: true });
+    const again = await S.mgr.call('compareWalk', { orgId: S.org, walkId: off });
+    assert.equal(again.cmp.status, 'done');
+    assert.equal(again.cmp.found, 1);
+
+    // During the free trial each van gets 2 comparisons a day; then the walk-around says so.
+    const orgRef = adminDb().doc(`orgs/${S.org}`);
+    const created = (await orgRef.get()).data().createdAt;
+    await orgRef.update({ createdAt: Date.now() });
+    try {
+      await adminDb().doc(`orgs/${S.org}/aiDaily/${day}`).set({ compare: { [v.id]: 2 } }, { merge: true });
+      const lim = await photos(S.d1, S.org, v, { real: true });
+      const cl = await cmpOf(lim, 'limit', 'done', 'failed');
+      assert.equal(cl.status, 'limit');
+      assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', `cmp-${lim}`))).exists(), false);
+    } finally {
+      await orgRef.update({ createdAt: created });
+    }
+  } finally {
+    srv.close();
+    await pushCol.doc('cmp').delete();
+  }
 });

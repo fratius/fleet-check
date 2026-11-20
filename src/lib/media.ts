@@ -3,11 +3,12 @@ import { loc } from './i18n';
 /**
  * When photos and videos are deleted (the same rule as functions/src/media.ts): once a month, on the 15th (German
  * time), the files of the month before, never while the van is still with the driver who had it (then the 15th
- * after it was given back); damage 90 days from when it was taken, then the next 15th. The first run is on
- * 15 December 2026. The records stay. Demo companies keep their (drawn) pictures.
+ * after it was given back); damage 90 days from when it was taken, then the next 15th; never the newest walk-around
+ * of a van that isn't retired, until a newer one is taken (the automatic damage comparison compares the next one
+ * with it). The first run is on 15 December 2026. The records stay. Demo companies keep their (drawn) pictures.
  *
- * The app can't know when a van will be given back, so it shows the earliest date; that the files are gone it
- * takes only from the record (mediaDeletedAt, set by the clean-up).
+ * The app can't know when a van will be given back, or when a newer walk-around will be taken, so it shows the
+ * earliest date; that the files are gone it takes only from the record (mediaDeletedAt, set by the clean-up).
  */
 export const DAMAGE_DAYS = 90;
 const DAY_MS = 86_400_000;

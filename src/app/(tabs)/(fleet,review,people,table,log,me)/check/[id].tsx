@@ -19,6 +19,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
+import { gapList } from '@/lib/compare';
 
 /** What the AI said about a spot: its name, its colour, and the name inside a sentence ("AI: dirt or residue"). */
 const VERDICT: Record<VerdictKind, [string, PillV, string]> = {
@@ -240,8 +241,10 @@ function CheckView({ id }: { id: string }) {
       : status === 'submitted' ? (reviewer ? tp(n, 'Review {n} spot', 'Review {n} spots') : t('Sent to the fleet manager'))
         : checked ? (dmg ? tp(dmg, '{n} possible damage', '{n} possible damages') : t('No damage in the close-ups')) : tp(n, '{n} spot to check', '{n} spots to check');
   const reviewerName = k.review?.byName || t('the fleet manager');
-  // Who did the check: drivers see only their own (lib/names.ts).
-  const by = whoDid(k.createdBy, k.createdByName);
+  // Who did the check: drivers see only their own (lib/names.ts). The automatic comparison: who took the photos.
+  const auto = k.auto === 'compare';
+  const by = auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName);
+  const what = k.walkKind === 'pickup' ? t('Pick-up photos') : k.walkKind === 'dropoff' ? t('Drop-off photos') : t('Walk-around');
   const sub = status === 'reviewed' ? (k.review?.at
     ? t('Reviewed by {name}, {when}. This is the final word on this van\'s damage.', { name: reviewerName, when: fmtWhen(k.review.at) })
     : t('Reviewed by {name}. This is the final word on this van\'s damage.', { name: reviewerName }))
@@ -256,9 +259,12 @@ function CheckView({ id }: { id: string }) {
     <Screen edges={[]}>
       <Stack.Screen options={{ title: t('Check, {van}', { van: s.vanName(k) }) }} />
       <View style={{ gap: 6 }}>
-        <T v="hint">{by ? t('Damage check, {van}, by {name}, {when}', { van: s.vanName(k), name: by, when: fmtWhen(k.createdAt) })
-          : t('Damage check, {van}, {when}', { van: s.vanName(k), when: fmtWhen(k.createdAt) })}</T>
+        <T v="hint">{auto ? (by ? t('{what}, {van}, by {who}', { what, van: s.vanName(k), who: by }) : t('{what}, {van}', { what, van: s.vanName(k) }))
+          : by ? t('Damage check, {van}, by {name}, {when}', { van: s.vanName(k), name: by, when: fmtWhen(k.createdAt) })
+            : t('Damage check, {van}, {when}', { van: s.vanName(k), when: fmtWhen(k.createdAt) })}</T>
         <T v="h1">{title}</T>
+        {auto ? <T>{k.refAt ? t('Found by the AI comparing these photos with the van\'s photos from {when}. It can be wrong: compare the before and after photos.', { when: fmtWhen(k.refAt) })
+          : t('Found by the AI comparing these photos with the van\'s earlier photos. It can be wrong: compare the before and after photos.')}</T> : null}
         <T>{sub}</T>
         <Row>
           <Pill v={status === 'reviewed' ? 'solid' : status === 'submitted' ? 'amber' : 'muted'} text={status === 'reviewed' ? t('Reviewed') : status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
@@ -269,7 +275,7 @@ function CheckView({ id }: { id: string }) {
         ? <Notice text={t('The photos of this check were deleted on {date}. The decisions and the van\'s damage record stay.', { date: day(k.mediaDeletedAt!) })} />
         : <T v="small">{k.keepUntil ? t('Damage was approved: the photos are kept until {date}.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })
           : t('Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })}</T>) : null}
-      {s.seesAiStats ? <CostPanel k={k} /> : null}
+      {s.seesAiStats ? <CostPanel k={k} auto={auto} /> : null}
       {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
       {status === 'checking' && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
@@ -286,7 +292,8 @@ function CheckView({ id }: { id: string }) {
               <T v="h3" style={{ flex: 1 }}>{cap(p.panel)}</T>
             </Row>
             <Row>
-              {v ? <Pill v={VERDICT[v.verdict][1]} text={t('AI: {verdict}', { verdict: t(VERDICT[v.verdict][2]) })} />
+              {v && auto ? <Pill v={v.verdict === 'damage' ? 'bad' : 'muted'} text={v.verdict === 'damage' ? t('AI: new damage') : t('AI: not sure')} />
+                : v ? <Pill v={VERDICT[v.verdict][1]} text={t('AI: {verdict}', { verdict: t(VERDICT[v.verdict][2]) })} />
                 : <Pill v={p.conf >= 0.6 ? 'bad' : 'amber'} text={p.conf >= 0.6 ? t('Likely, {pct}%', { pct: Math.round(p.conf * 100) }) : t('Possible, {pct}%', { pct: Math.round(p.conf * 100) })} />}
               {(() => {
                 const type = cap(t(v?.verdict === 'damage' ? v.type || p.type : p.type));
@@ -297,8 +304,26 @@ function CheckView({ id }: { id: string }) {
               {v?.ms && s.seesAiStats ? <Pill v="muted" text={secs(v.ms)} /> : null}
             </Row>
             {v?.reason ? <T>{v.reason}</T> : !v && p.mightBe ? <T v="hint">{t('Could also be {what}.', { what: p.mightBe })}</T> : null}
+            {/* The automatic comparison: the same part of the earlier photo next to the new one, both boxed. */}
+            {auto ? (
+              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                {([[p.beforePath, p.beforeAt ? t('Before, {when}', { when: fmtWhen(p.beforeAt) }) : t('Before')], [p.refPath, t('After, {when}', { when: fmtWhen(walkOfK?.createdAt || k.createdAt) })]] as const).map(([src, label]) => (
+                  <View key={label} style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                    {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}, ${label}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
+                      : <View style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}><T v="hint">{t('No photo')}</T></View>}
+                    <T v="small" numberOfLines={2}>{label}</T>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {auto && p.beforeWalkId ? (
+              <Row gap={14}>
+                <Button small v="link" title={t('Open the photos before')} onPress={() => router.push(`/walk/${p.beforeWalkId}`)} />
+                <Button small v="link" title={t('Open the photos after')} onPress={() => router.push(`/walk/${k.walkId}`)} />
+              </Row>
+            ) : null}
             {/* Flex 16 : 9 makes the 4:3 crop and the 3:4 close-ups the same height. Tap any photo to see it full screen. */}
-            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+            {auto ? null : <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
               <View style={{ flex: 16, minWidth: 0, gap: 3 }}>
                 <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
                 <T v="small" numberOfLines={2}>{t(p.photoLabel)}</T>
@@ -312,7 +337,7 @@ function CheckView({ id }: { id: string }) {
                   </View>
                 );
               })}
-            </View>
+            </View>}
             {reviewer && status !== 'checking' ? (
               <View style={{ gap: 8, borderTopWidth: 2, borderColor: c.ink, paddingTop: 10 }}>
                 <T v="medium">{t('Your decision')}</T>
@@ -336,6 +361,7 @@ function CheckView({ id }: { id: string }) {
         );
       })}
       {k.notVisible?.length ? <T v="hint">{t('Not visible in these photos: {list}.', { list: k.notVisible.join('; ') })}</T> : null}
+      {k.notCompared?.length ? <T v="hint">{t('Not compared: {list}.', { list: gapList(k.notCompared) })}</T> : null}
 
       {manual.length || (reviewer && status !== 'checking') ? (
         <Card>
@@ -408,11 +434,17 @@ function AddManual({ onAdd }: { onAdd: (m: { panel: string; type: string; note: 
   );
 }
 
-function CostPanel({ k }: { k: Check }) {
+function CostPanel({ k, auto }: { k: Check; auto?: boolean }) {
   const c = useColors();
   const rows: [string, string, Usage][] = [];
-  if (k.pass1) rows.push([t('Find spots'), tp(k.pass1.images, '{n} photo', '{n} photos'), k.pass1]);
-  if (k.pass2) rows.push([t('Check close-ups'), tp(k.pass2.calls, '{n} spot, {images} images', '{n} spots, {images} images', { images: k.pass2.images }), k.pass2]);
+  if (auto) {
+    // The automatic comparison: the first look at every frame, and the second look at the frames it marked.
+    if (k.pass1) rows.push([t('First look'), tp(k.pass1.images, '{n} photo', '{n} photos'), k.pass1]);
+    if (k.pass2?.calls) rows.push([t('Second look'), tp(k.pass2.calls, '{n} frame, {images} images', '{n} frames, {images} images', { images: k.pass2.images }), k.pass2]);
+  } else {
+    if (k.pass1) rows.push([t('Find spots'), tp(k.pass1.images, '{n} photo', '{n} photos'), k.pass1]);
+    if (k.pass2) rows.push([t('Check close-ups'), tp(k.pass2.calls, '{n} spot, {images} images', '{n} spots, {images} images', { images: k.pass2.images }), k.pass2]);
+  }
   if (!rows.length) return null;
   if (rows.length > 1) {
     const a = k.pass1!, b = k.pass2!;
@@ -428,7 +460,8 @@ function CostPanel({ k }: { k: Check }) {
           <View style={{ flex: 1, alignItems: 'flex-end' }}><T v="h3">{usd(u.cost)}</T><T v="small">{t('{value} per image', { value: usd(u.cost / Math.max(1, u.images)) })}</T></View>
         </View>
       ))}
-      <T v="small" style={{ padding: 12, paddingTop: 6 }}>{t('Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.', { model: k.model })}</T>
+      <T v="small" style={{ padding: 12, paddingTop: 6 }}>{auto ? t('Time is measured on the server, per AI call (the frames run side by side). Cost is from the tokens the API reported, at list prices.')
+        : t('Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.', { model: k.model })}</T>
     </View>
   );
 }

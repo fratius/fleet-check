@@ -2,6 +2,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
+import { CompareCard } from '@/components/compare';
 import { KeepCard, useMediaGone } from '@/components/keep';
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
@@ -47,7 +48,10 @@ export default function WalkScreen() {
         <Stat value={`${w.taken}/${w.frames}`} label={w.skipped ? tp(w.skipped, 'photos, {n} skipped', 'photos, {n} skipped') : t('photos')} />
         <Stat value={String(w.retakes)} label={t('retakes')} />
       </Stats>
-      <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt} />
+      <CompareCard w={w} />
+      <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt}
+        newest={w.source === 'camera' && !s.vehicles.find((v) => v.id === w.vehicleId)?.retired
+          && !s.walks.some((x) => x.vehicleId === w.vehicleId && x.source === 'camera' && x.createdAt > w.createdAt && x.id !== w.id)} />
       {s.mode === 'firebase' && gone(w.mediaDeletedAt) ? null : s.mode === 'firebase' ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <Button v="primary" wide title={checks.length ? t('Check for damage again') : t('Check for damage')}
@@ -59,7 +63,8 @@ export default function WalkScreen() {
         const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-            <T v="h3">{tp(k.spots.length, 'Check: {n} spot, {dmg} damage', 'Check: {n} spots, {dmg} damage', { dmg })}</T>
+            <T v="h3">{k.auto ? tp(k.spots.length, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review')
+              : tp(k.spots.length, 'Check: {n} spot, {dmg} damage', 'Check: {n} spots, {dmg} damage', { dmg })}</T>
             <T v="hint">{[s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? t('{cost} est.', { cost: usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) }) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
           </Pressable>
         );

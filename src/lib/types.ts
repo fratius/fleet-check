@@ -522,6 +522,8 @@ export interface Walkaround {
   keepUntil?: number | null;
   /** When the monthly clean-up deleted the photos or video (set by the server; the record stays). */
   mediaDeletedAt?: number | null;
+  /** The automatic comparison with the van's earlier photos (set by the server). */
+  cmp?: CmpSummary | null;
 }
 
 /** An owner or fleet manager marked photos or a video as damage (markDamage): kept 90 days. */
@@ -565,6 +567,13 @@ export interface Spot {
   feedback: 'right' | 'wrong' | null;
   /** The first close-up with the damage boxed, when the AI found damage. */
   markPath?: string | null;
+  /**
+   * Found by the automatic comparison: the same part of the earlier photo it was compared with (boxed), that
+   * walk-around, and when that photo was taken.
+   */
+  beforePath?: string | null;
+  beforeWalkId?: string | null;
+  beforeAt?: number | null;
 }
 
 /** The manager's final word on one spot. */
@@ -639,6 +648,66 @@ export interface Check {
   keepUntil?: number | null;
   /** When the monthly clean-up deleted the photos or video (set by the server; the record stays). */
   mediaDeletedAt?: number | null;
+  /**
+   * Made by the automatic comparison of a walk-around with the van's earlier photos (nobody ran it: createdBy is
+   * null). walkBy: who took the photos (account id only); walkKind: a pick-up, a drop-off or another walk-around;
+   * refWalkIds and refAt: the earlier walk-arounds compared with and the oldest one's time (the damage could have
+   * happened since); notCompared: frames that couldn't be compared and why.
+   */
+  auto?: 'compare';
+  walkBy?: string | null;
+  walkKind?: 'pickup' | 'dropoff' | 'walkaround';
+  refWalkIds?: string[];
+  refAt?: number | null;
+  notCompared?: CmpGap[];
+}
+
+/** A frame the automatic comparison couldn't compare, and why. */
+export interface CmpGap { label: string; why: 'first' | 'missing' | 'unreadable' | 'not comparable' | 'other vehicle' | 'failed' }
+/**
+ * The automatic comparison of a walk-around with the van's earlier photos (written by the server on the walk-around).
+ * first: the van's first walk-around (nothing to compare with); limit: the trial's comparisons for this van today are
+ * used up; failed: it didn't finish (staff can run it again).
+ */
+export interface CmpSummary {
+  status: 'running' | 'done' | 'failed' | 'first' | 'limit';
+  at: number;
+  frames: number;
+  compared: number;
+  notCompared: CmpGap[];
+  /** Spots the AI calls new damage, and spots it couldn't decide (both in the check to review). */
+  found: number;
+  unsure: number;
+  checkId: string | null;
+  /** When the oldest photo it was compared with was taken. */
+  refAt: number | null;
+}
+
+/** The app creator's log of one comparison (orgs/{org}/compares/{walkId}). */
+export interface Compare {
+  id: string;
+  walkId: string;
+  vehicleId: string;
+  vehicleName: string;
+  stationId: string | null;
+  /** When the walk-around was taken (the list's order). */
+  createdAt: number;
+  walkAt: number;
+  walkBy: string | null;
+  startedAt: number;
+  doneAt?: number;
+  status: CmpSummary['status'];
+  summary?: CmpSummary;
+  /** Per frame: the earlier photo, what the first and the second look said. */
+  frames?: { n: number; label: string; ref: { walkId: string; at: number } | null; why: CmpGap['why'] | null;
+    haiku: { changes: unknown[]; unsure: boolean; issue: string | null; ms: number; cost: number } | null;
+    opus: { decisions: { verdict?: string }[]; more: unknown[]; ms: number; cost: number } | null; found: number; failedAt: 'first' | 'second' | null }[];
+  haiku?: Usage;
+  opus?: Usage;
+  cost?: number;
+  checkId?: string | null;
+  serverMs?: number;
+  error?: string;
 }
 
 /** AI speed and cost of one damage check (orgs/{org}/checkUsage/{checkId}): only the app creator reads it. */
@@ -701,6 +770,8 @@ export interface Org {
   stationsReady?: boolean;
   /** AI model for every check in the company, chosen by the owner. */
   aiTier?: Tier;
+  /** The automatic damage comparison after every walk-around: on unless the app creator switched it off (false). */
+  aiCompare?: boolean;
   /** A demo company full of made-up data. */
   demo?: boolean;
   /** Drivers take a photo of the dashboard at the start and end of each tour (the owner turns it on). */

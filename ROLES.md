@@ -88,7 +88,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
     use them, and approving a sign-up gives the same access.)
 - **New companies** are made by the server (`createCompany`): the person becomes its fleet owner, with a first
   station. Only the server writes `billing` and the accepted `terms` (the AGB and AVV version, `TERMS_VERSION` in
-  `functions/src/billing.ts` and `src/lib/billing.ts`, now `2026-11-12`: the price list of 12 November 2026); owners can't change them, nor when the
+  `functions/src/billing.ts` and `src/lib/billing.ts`, now `2026-11-20`: the price list of 12 November 2026 and the photo rules of 20 November 2026); owners can't change them, nor when the
   company was made. One account creates up to 3 companies (demo companies don't count); the app creator is told about
   each new one. Companies made before 1 November 2026 were set up by hand: no trial, no limits.
 - **Payments (Stripe, on the web only; the store apps sell nothing).** Product owner, 2026-11-05: everyone adds a
@@ -166,6 +166,10 @@ the product owner's explicit decision first.
     manager approved damage, the walk-around it was found in and the one before it (`damageLogFor`), and
     walk-around photos or videos an owner or the station's manager marked as damage (`markDamage`, until they're
     deleted; they can take the mark off).
+  - **Each van's newest walk-around keeps its photos** until a newer one is taken (product owner, 2026-11-20), so the
+    automatic damage comparison always has something to compare the next walk-around with, also for a van that
+    stood still over the 15th: the newest photo of every frame, from the van's newest walk-around taken with the
+    camera and any newer ones that skipped frames (`newestWalks` in functions/src/media.ts). Not for retired vans.
   - The job `cleanMediaDaily` runs every night but deletes photos and videos only on the 15th (or the next night if
     that run failed); functions/src/media.ts. Records whose files went get `mediaDeletedAt`, and the app shows
     "deleted on …" only from it. Demo companies keep their drawings. Only the server writes `keepMark`,
@@ -326,6 +330,35 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   driver after an hour, the station's managers (or the owners) after three; a problem goes to them at once.
 - Deadlines (vans and drivers), the Review list of warning lights and tours without their photos show to owners
   and managers only: on the van or person, in the fleet list, and in Review.
+
+## The automatic damage comparison (product owner, 2026-11-20)
+
+- **After every walk-around taken with the camera** (a pick-up, a drop-off or any other), each photo is compared
+  with the newest earlier photo of the same frame of that van: frame 1 of a drop-off with frame 1 of the pick-up
+  before it, frame 1 of a pick-up with frame 1 of the drop-off before it. It runs on the server by itself
+  (`compareOnWalk`, functions/src/compare.ts); nobody starts it. Photos from the library and video handovers aren't
+  compared (a video has no frames: the next photo walk-around is compared with the last photos before it, and the
+  damage log names every driver who had the van in between). The van's first walk-around has nothing to compare
+  with: it is the start.
+- **Haiku looks at every pair, Opus at what Haiku marks or isn't sure about**, with close crops of the spot from the
+  full-size photos. Both are told to look only at the van, not at what is around it. The models are fixed (not the
+  company's model setting).
+- **The AI only suggests; the fleet manager decides** (the rule above). What Opus calls new damage, or can't decide,
+  becomes a damage check (`checks/cmp-{walkId}`, `auto: 'compare'`, status "submitted") with the same part of the
+  photo before and after, which the owners and the station's managers approve or reject like any other. New damage
+  also sends the station's fleet managers a notification (the owners where the station has none), never the person
+  who took the photos. Approved damage goes on the van's record; the damage log names who had the van since the
+  photos it was compared with.
+- **Who sees what:** owners and the station's managers see on each walk-around how the comparison went (`cmp`,
+  written only by the server: running, first, nothing new, spots to review, not compared and why, or didn't finish)
+  and can run it again when it failed, or for a walk-around taken before it started (`compareWalk`). Drivers aren't
+  shown it on their screens: they scan, the manager decides; the check itself is a record of their station like any
+  other (account ids only, no names). What the AI said about every frame, the time and the cost
+  (`orgs/{org}/compares/{walkId}`) are the app creator's only (the test log).
+- **On for every company**; only the app creator switches it off for one (`orgs/{org}.aiCompare = false`, Account
+  tab; AGB § 5 (4): offered before it is sold, so it can be limited or ended). During the free trial and in demo
+  companies each van gets 2 comparisons a day (`aiDaily`, `compare.{vanId}`); a company without an active plan
+  gets none.
 
 ## The damage record of a van
 

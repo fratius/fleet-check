@@ -8,7 +8,7 @@ import { fb } from './firebase';
 import { N_, t } from './i18n';
 import { newId } from './images';
 import { netKind, retrying } from './net';
-import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, CmpSummary, Compare, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   /** `fromCache`: only what this phone has (no connection yet), not confirmed by the server. */
@@ -139,6 +139,8 @@ export interface Store {
   tours: Coll<Tour>;
   /** AI speed and cost of damage checks: the app creator only. */
   usage: Coll<CheckUsage>;
+  /** The automatic damage comparisons, frame by frame, with time and cost: the app creator only. */
+  compares: Coll<Compare>;
   /** Recent van assignments: the station's for owners and managers, their own for drivers. */
   assignments: Coll<Assignment>;
   /** Recent handover videos: the station's for owners and managers, the ones they recorded for drivers. */
@@ -158,7 +160,7 @@ export interface Store {
 export function makeStore(orgId: string | null, scope: string[] | null = null, driverId: string | null = null): Store {
   if (fb() && orgId) {
     return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
-      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), details: fsColl(orgId, 'vehicleDetails', scope),
+      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), compares: fsColl(orgId, 'compares'), details: fsColl(orgId, 'vehicleDetails', scope),
       costs: fsColl(orgId, 'vehicleCosts'), records: fsColl(orgId, 'driverRecords', scope), incidents: fsColl(orgId, 'incidents', scope),
       tours: fsColl(orgId, 'tours', scope, driverId),
       assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by'),
@@ -166,7 +168,7 @@ export function makeStore(orgId: string | null, scope: string[] | null = null, d
       routineDone: fsColl(orgId, 'routineDone', scope, driverId, 'by') };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
-    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), details: localColl('vehicleDetails'),
+    vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), compares: localColl('compares'), details: localColl('vehicleDetails'),
     costs: localColl('vehicleCosts'), records: localColl('driverRecords'), incidents: localColl('incidents'), tours: localColl('tours'),
     assignments: localColl('assignments'), videos: localColl('videos'), purchases: localColl('purchases'), routines: localColl('routines'),
     routineDone: localColl('routineDone') };
@@ -379,6 +381,8 @@ export const ai = {
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
   markDamage: call<{ orgId: string; kind: 'walk' | 'video'; id: string; on: boolean }, { keepUntil: number | null }>('markDamage', 30000),
+  /** Runs the automatic damage comparison of a walk-around again (it failed, or it was taken before comparisons started). */
+  compareWalk: call<{ orgId: string; walkId: string }, { cmp: CmpSummary }>('compareWalk', 560000),
   /** check: what deleting the account would do in each company; without it, deletes it (after a fresh sign-in). */
   accountPlan: call<{ check: true }, { companies: AccountCompany[] }>('deleteAccount', 60000),
   deleteAccount: call<Record<string, never>, { ok: boolean; closed: string[] }>('deleteAccount', 310000),

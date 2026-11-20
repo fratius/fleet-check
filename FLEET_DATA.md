@@ -233,6 +233,16 @@ dark, too bright, glare, blurred) and its three measures (brightness, edge stren
 when the driver used the photo anyway, and so the limits in `src/lib/quality.ts` can be set from real photos.
 Nothing about the person is in it.
 
+### The automatic damage comparison
+
+Each walk-around taken with the camera carries `cmp`, written only by the server: how comparing its photos with the
+van's earlier photos went (running, first, limit, done, failed), how many photos were compared, which weren't and
+why, how many spots it found and the damage check it made. The check (`checks/cmp-{walkId}`) keeps, per spot, the
+same part of the earlier photo (`beforePath`), which walk-around that was (`beforeWalkId`) and when it was taken
+(`beforeAt`), and who took the new photos by account id only (`walkBy`). What the AI answered for every frame, with
+time and cost, is in `orgs/{org}/compares/{walkId}`, read only by the app creator. Nothing about the person is in
+the AI's answers.
+
 ### The damage log
 
 `orgs/{org}/damageLog/{checkId}`, written by the server from every reviewed check (`logReview`; the Data tab fills

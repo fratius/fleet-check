@@ -20,9 +20,11 @@ export function useMediaGone() {
  * How long a walk-around's photos or a video are kept, and for owners and the station's fleet managers the button
  * to mark them as damage (kept 90 days from when they were taken) or to take the mark off.
  */
-export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, keepDamage, mediaDeletedAt }: {
+export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, keepDamage, mediaDeletedAt, newest }: {
   kind: 'walk' | 'video'; id: string; createdAt: number; stationId?: string | null;
   keepUntil?: number | null; keepMark?: KeepMark | null; keepDamage?: string[]; mediaDeletedAt?: number | null;
+  /** The van's newest walk-around: kept until a newer one is taken (functions/src/media.ts, newestWalks). */
+  newest?: boolean;
 }) {
   const s = useSession();
   const c = useColors();
@@ -64,6 +66,7 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
         {demo ? <T v="small">{t('Demo company: photos and videos aren\'t deleted.')}</T>
           : <T v="small">{mark || damage ? t('Damage is kept 90 days: these until {date} at the earliest.', { date: day(deleteFrom(createdAt, until)) })
             : t('Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.', { date: day(deleteFrom(createdAt, until)) })}</T>}
+        {newest && !demo ? <T v="small">{t('The newest walk-around of a van keeps its photos until a newer one is taken, so the next one can be compared with it.')}</T> : null}
         {can && !mark ? <T v="small">{t('If they show damage, mark them to keep them until {date}.', { date: day(damageDeleteFrom(createdAt)) })}</T> : null}
       </View>
       {can ? (mark

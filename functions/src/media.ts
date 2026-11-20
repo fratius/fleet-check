@@ -5,6 +5,12 @@ import { getStorage } from 'firebase-admin/storage';
  * How long photos and videos are kept (decided by the product owner, 2026-10-31). The records themselves (who had
  * which van, walk-arounds, checks, refuels, the damage list) stay for good; only the files go.
  *
+ * - Each van's newest walk-around keeps its photos until a newer one is taken (product owner, 2026-11-20): the
+ *   automatic damage comparison compares every walk-around with the van's earlier photos (compare.ts), so a van that
+ *   stood still over the 15th (workshop, holiday) still has something to compare with. Precisely: the newest photo of
+ *   every frame, from the van's newest walk-around taken with the camera and any newer ones that skipped frames.
+ *   Not for retired vans.
+ *
  * - Once a month, on the 15th (German time), the files of the month before are deleted (and anything older that is
  *   due): a 15-day buffer after the month has ended, so a file is kept 15 to 45 days. The first run is on
  *   15 December 2026.
@@ -183,6 +189,34 @@ export async function heldFiles(orgId: string, cut: number): Promise<{ keys: Set
   return { keys, paths, vans: byVan.size };
 }
 
+/**
+ * The walk-arounds that hold each van's newest photo of every frame (walkarounds/ID): newest first, every walk-around
+ * that has a frame no newer one has, until one that skipped no frame. Vans that aren't retired; camera photos only.
+ */
+export async function newestWalks(orgId: string): Promise<Set<string>> {
+  const org = db().doc(`orgs/${orgId}`);
+  const vans = (await org.collection('vehicles').select('retired').get()).docs.filter((d) => d.data().retired !== true);
+  const out = new Set<string>();
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(8, vans.length) }, async () => {
+    while (next < vans.length) {
+      const van = vans[next++];
+      const walks = await org.collection('walkarounds').where('vehicleId', '==', van.id).orderBy('createdAt', 'desc').limit(10)
+        .select('source', 'photos', 'skipped', 'mediaDeletedAt', 'demo').get();
+      const seen = new Set<string>();
+      for (const d of walks.docs) {
+        const w = d.data() as { source?: string; photos?: { label?: string; path?: string }[]; skipped?: number; mediaDeletedAt?: number | null; demo?: boolean };
+        if (w.source !== 'camera' || w.mediaDeletedAt || w.demo) continue;
+        const labels = (w.photos || []).filter((p) => p.path && p.label).map((p) => p.label!);
+        if (labels.some((l) => !seen.has(l))) out.add(`walkarounds/${d.id}`);
+        labels.forEach((l) => seen.add(l));
+        if (!w.skipped && labels.length) break;
+      }
+    }
+  }));
+  return out;
+}
+
 export interface CleanResult { companies: number; deleted: number; kept: number; held: number; checked: number; reviews: number; cutoff: number | null }
 
 /**
@@ -209,8 +243,10 @@ export async function cleanMedia(now: number, logReview: (orgId: string, checkId
       await logReview(o.id, d.id).catch(() => {});
       res.reviews++;
     }
-    // Read after the reviews are followed, so a review that approved damage counts.
-    const [kept, held] = await Promise.all([keptKeys(o.id, cut), heldFiles(o.id, cut)]);
+    // Read after the reviews are followed, so a review that approved damage counts. Each van's newest walk-around is
+    // held like the files of a van that is out with a driver.
+    const [kept, held, newest] = await Promise.all([keptKeys(o.id, cut), heldFiles(o.id, cut), newestWalks(o.id)]);
+    newest.forEach((k) => held.keys.add(k));
     const gone = new Set<string>();
     let pageToken: string | undefined;
     do {
