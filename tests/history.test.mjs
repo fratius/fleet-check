@@ -766,10 +766,10 @@ test('records from a photo of a document: read, sorted, costs only for owners, t
 
 test('the whole fleet from a file: read, checked, then added; vans already there only filled in; new stations; the plan; who may', async () => {
   // A company of its own, so the vans and the station it adds don't change the other tests.
-  const own = await person('Ines Importer');
+  const own = await person('Imke Importer');
   const org = doc(collection(own.db, 'orgs')).id;
   await setDoc(doc(own.db, 'orgs', org), { name: 'Import DSP', createdBy: own.uid, createdAt: Date.now(), stationsReady: true });
-  await setDoc(doc(own.db, 'orgs', org, 'members', own.uid), { role: 'owner', stationIds: [], email: '', name: 'Ines Importer', joinedAt: Date.now() });
+  await setDoc(doc(own.db, 'orgs', org, 'members', own.uid), { role: 'owner', stationIds: [], email: '', name: 'Imke Importer', joinedAt: Date.now() });
   const st = {};
   for (const name of ['DXX1', 'DXX2']) {
     const r = doc(collection(own.db, 'orgs', org, 'stations'));
