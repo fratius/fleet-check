@@ -158,6 +158,19 @@ a decision about what the app must do, so it goes in a pull request of its own t
   their own. Nobody records a licence check for themselves. Licence numbers, birth dates and home addresses are not
   stored anywhere.
 - MUST 9.5 Incidents (accidents, fines, complaints): managers add and correct them, **nobody deletes them**.
+- MUST 9.6 Each van has a **Service** tab next to Damage, Details and Drivers, for fleet owners and the van's station
+  managers only. Drivers don't see it; a manager doesn't see the service of another station's vans.
+- SHOULD 9.7 "Add service" offers four common ones (Service and oil change, Tyres, Brakes, Repair) and Other, where
+  the person types what was done. The van's km are required; the day, the cost without VAT, the garage and notes go
+  with it.
+- MUST 9.8 **The service history is kept for good**: nothing in it can be deleted. A correction keeps what was there
+  before and who corrected it.
+- SHOULD 9.9 The Service tab shows the van's TÜV with its date (the month on the sticker). "TÜV done" records it with
+  the result and the new sticker's month, which becomes the van's TÜV date; a failed TÜV leaves the date as it is.
+  The date can also be changed by hand.
+- MUST 9.10 A month before a van's TÜV runs out, the fleet managers of its station (the owners where it has none) get a
+  reminder, once per date. The TÜV also shows under "Due soon" in Review from a month before.
+- LIMIT 9.11 Phone notifications don't leave the test system (0.4), so the TÜV reminder itself can't be seen there.
 
 ## 10. Data tab
 
@@ -165,6 +178,8 @@ a decision about what the app must do, so it goes in a pull request of its own t
   per station, sortable, with a totals row, and "Download for Excel".
 - MUST 10.2 A manager's tables hold only their station. Owners alone see € a month and € per km per van.
 - SHOULD 10.3 "Who was driving?": van + day + time gives the driver from the history.
+- SHOULD 10.4 A **Service** table: per van (TÜV, next and last service, entries and cost in the period) and every
+  entry (day, van, what, km, cost, garage, by), sortable, in the Excel file too. A manager's holds only their station.
 
 ## 11. Without a connection
 

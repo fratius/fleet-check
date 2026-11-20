@@ -9,7 +9,8 @@ import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
 import { watchMembers } from '@/lib/people';
 import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
-import type { Member, Purchase, Tour } from '@/lib/types';
+import { HU_RESULT, serviceName, serviceVanRows, type ServiceVanRow } from '@/lib/service';
+import type { Member, Purchase, ServiceRecord, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
 import { N_, loc, t } from '@/lib/i18n';
@@ -21,7 +22,7 @@ import { vanAlias, vanName } from '@/lib/vans';
  */
 
 type Period = '7' | '30' | '90' | 'year';
-type View3 = 'drivers' | 'tours' | 'vans' | 'buys';
+type View3 = 'drivers' | 'tours' | 'vans' | 'buys' | 'service' | 'services';
 /** Labels shown with t(). */
 const PERIODS: [Period, string][] = [['7', N_('7 days')], ['30', N_('30 days')], ['90', N_('90 days')], ['year', N_('This year')]];
 
@@ -39,7 +40,7 @@ export default function DataScreen() {
   const [station, setStation] = useState<string | null>(null);
   const [view, setView] = useState<View3>('drivers');
   const [q, setQ] = useState('');
-  const [sorts, setSorts] = useState<Record<View3, Sort | null>>({ drivers: { key: 'km', dir: -1 }, tours: { key: 'date', dir: -1 }, vans: { key: 'km', dir: -1 }, buys: { key: 'date', dir: -1 } });
+  const [sorts, setSorts] = useState<Record<View3, Sort | null>>({ drivers: { key: 'km', dir: -1 }, tours: { key: 'date', dir: -1 }, vans: { key: 'km', dir: -1 }, buys: { key: 'date', dir: -1 }, service: { key: 'hu', dir: 1 }, services: { key: 'date', dir: -1 } });
   const [members, setMembers] = useState<Member[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -75,6 +76,11 @@ export default function DataScreen() {
   const buys = useMemo(() => data.purchases.filter((p) => inScope(p.stationId)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data.purchases, station, s.mode]);
+  // Service: one line per van (its TÜV, next and last service, what was done and spent in the period), and every entry.
+  const services = useMemo(() => data.services.filter((r) => inScope(r.stationId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.services, station, s.mode]);
+  const svcVans = useMemo(() => serviceVanRows(inputs.vehicles, s.details, services), [inputs.vehicles, s.details, services]);
 
   if (!s.staff) return <Screen><T v="h1">{t('Data')}</T><Card dashed><T v="hint">{t('Fleet managers and owners see the fleet in numbers.')}</T></Card></Screen>;
 
@@ -87,6 +93,11 @@ export default function DataScreen() {
   const vRows = sortRows(vans.filter((v) => match(`${v.name} ${v.plate} ${v.model}`)), vCols, sorts.vans);
   const bCols = buyCols(c, multi && !station, s.stationName, s.vanName);
   const bRows = sortRows(buys.filter((p) => match(`${p.byName} ${s.vanName(p)} ${p.vehicleName} ${p.plate || ''} ${p.merchant || ''}`)), bCols, sorts.buys);
+  const svCols = serviceVanCols(c, multi && !station, s.stationName);
+  const svRows = sortRows(svcVans.filter((v) => match(`${v.name} ${v.plate || ''} ${v.model}`)), svCols, sorts.service);
+  const seCols = serviceCols(multi && !station, s.stationName, s.vanName);
+  const seRows = sortRows(services.filter((r) => match(`${s.vanName(r)} ${r.vehicleName} ${r.plate} ${serviceName(r)} ${r.garage || ''} ${r.byName}`)), seCols, sorts.services);
+  const inService = view === 'service' || view === 'services';
   const setSort = (k: View3) => (x: Sort) => setSorts((p) => ({ ...p, [k]: x }));
 
   const download = async () => {
@@ -108,6 +119,11 @@ export default function DataScreen() {
         }),
         sheet(t('Vans'), vCols, sortRows(vans, vCols, sorts.vans), { vs: (r) => (r.vsModel == null ? null : Math.round(r.vsModel * 1000) / 10) }),
         sheet(t('Fuel, wash, parts'), bCols, sortRows(buys, bCols, sorts.buys), { date: (p) => ({ date: p.createdAt, time: true }) }),
+        sheet(t('Service per van'), svCols, sortRows(svcVans, svCols, sorts.service), {
+          hu: (v) => (v.hu?.day ? { date: Date.parse(v.hu.day + 'T12:00:00') } : null),
+          last: (v) => (v.last ? { date: Date.parse(v.last.day + 'T12:00:00') } : null),
+        }),
+        sheet(t('Service history'), seCols, sortRows(services, seCols, sorts.services), { date: (r) => ({ date: Date.parse(r.day + 'T12:00:00') }) }),
       ]);
     } catch (e) { setErr(e instanceof Error ? e.message : t('Couldn\'t make the file.')); } finally { setSaving(false); }
   };
@@ -146,8 +162,11 @@ export default function DataScreen() {
         <Notice text={owner ? t('Kilometres and fuel come from dashboard photos at the start and end of each tour. Turn them on in the Account tab.') : t('Kilometres and fuel come from dashboard photos on each tour. The owner turns them on.')} />
       ) : null}
 
-      <Tabs value={view} onChange={setView} items={[['drivers', t('Drivers'), drivers.length || null], ['tours', t('Tours'), tours.length || null], ['vans', t('Vans'), vans.length || null], ['buys', t('Fuel, wash'), buys.length || null]]} />
-      <Field label={view === 'drivers' ? t('Find a driver') : view === 'vans' ? t('Find a van') : t('Find a driver or van')} value={q} onChangeText={setQ} placeholder={t('Name or plate')} autoCorrect={false} />
+      <Tabs value={inService ? 'service' : view} onChange={setView} items={[['drivers', t('Drivers'), drivers.length || null], ['tours', t('Tours'), tours.length || null], ['vans', t('Vans'), vans.length || null], ['buys', t('Fuel, wash'), buys.length || null], ['service', t('Service'), services.length || null]]} />
+      {inService ? (
+        <Segmented label={t('Service')} value={view} onChange={setView} options={[['service', t('Per van')], ['services', t('Every entry')]]} />
+      ) : null}
+      <Field label={view === 'drivers' ? t('Find a driver') : view === 'vans' || view === 'service' ? t('Find a van') : t('Find a driver or van')} value={q} onChangeText={setQ} placeholder={t('Name or plate')} autoCorrect={false} />
 
       {view === 'drivers' ? (
         <DataTable key="drivers" rows={dRows} cols={dCols} rowKey={(r) => r.id} sort={sorts.drivers} onSort={setSort('drivers')} totalLabel={t('All {n}', { n: dRows.length })}
@@ -158,6 +177,15 @@ export default function DataScreen() {
       ) : view === 'vans' ? (
         <DataTable key="vans" rows={vRows} cols={vCols} rowKey={(v) => v.id} sort={sorts.vans} onSort={setSort('vans')} totalLabel={t('All {n}', { n: vRows.length })}
           onRow={(v) => router.push(`/vehicle/${v.id}`)} empty={t('No vans here.')} />
+      ) : view === 'service' ? (
+        <>
+          <T v="hint">{t('Every van with its TÜV, next and last service, and what was done and spent on it in this period.')}</T>
+          <DataTable key="service" rows={svRows} cols={svCols} rowKey={(v) => v.id} sort={sorts.service} onSort={setSort('service')} totalLabel={t('All {n}', { n: svRows.length })}
+            onRow={(v) => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'service' } })} empty={t('No vans here.')} />
+        </>
+      ) : view === 'services' ? (
+        <DataTable key="services" rows={seRows} cols={seCols} rowKey={(r) => r.id} sort={sorts.services} onSort={setSort('services')} totalLabel={t('All {n}', { n: seRows.length })}
+          onRow={(r) => router.push({ pathname: '/vehicle/[id]', params: { id: r.vehicleId, tab: 'service' } })} empty={t('No service recorded in this period. Add one on a van\'s Service tab.')} />
       ) : (
         <DataTable key="buys" rows={bRows} cols={bCols} rowKey={(p) => p.id} sort={sorts.buys} onSort={setSort('buys')} totalLabel={t('All {n}', { n: bRows.length })}
           onRow={(p) => router.push(`/buy/${p.id}`)} empty={t('No refuels, washes or parts in this period.')} />
@@ -303,6 +331,42 @@ function buyCols(c: C, station: boolean, stationName: (id: string | null) => str
     { key: 'why', label: t('Why (parts)'), width: 200, align: 'left', get: (p) => p.note || '' },
   ];
   if (station) cols.splice(3, 0, { key: 'station', label: t('Station'), width: 110, align: 'left', get: (p) => stationName(p.stationId) });
+  return cols;
+}
+
+/** One line per van: its TÜV, next service, last service, and the services and their cost in the period. */
+function serviceVanCols(c: C, station: boolean, stationName: (id: string | null) => string): Col<ServiceVanRow>[] {
+  const tone = (x: ServiceVanRow['hu']) => (x?.state === 'overdue' ? c.alert : x?.state === 'soon' ? c.amber : undefined);
+  const cols: Col<ServiceVanRow>[] = [
+    { key: 'name', label: t('Van'), width: 140, align: 'left', get: (v) => vanName(v), text: (v) => (v.retired ? t('{name} (retired)', { name: vanName(v) }) : vanName(v)) },
+    // Sorted by days left; vans without a date last.
+    { key: 'hu', label: t('TÜV'), width: 150, align: 'left', get: (v) => v.hu?.days ?? 99999, text: (v) => (v.hu?.day ? `${fmtDay(v.hu.day, true)}, ${v.hu.note}` : t('no date')), tone: (v) => (v.hu ? tone(v.hu) : c.ink2) },
+    { key: 'next', label: t('Next service'), width: 190, align: 'left', get: (v) => v.next?.days ?? (v.next ? -1 : 99999), text: (v) => (v.next ? `${v.next.label}${v.next.day ? `, ${fmtDay(v.next.day)}` : ''}, ${v.next.note}` : ''), tone: (v) => tone(v.next) },
+    { key: 'last', label: t('Last service'), width: 200, align: 'left', get: (v) => v.last?.day ?? '', text: (v) => (v.last ? `${fmtDay(v.last.day)}, ${serviceName(v.last)}` : '') },
+    { key: 'lastKm', label: t('km then'), width: 84, get: (v) => v.last?.km ?? null, text: (v) => int(v.last?.km) },
+    { key: 'n', label: t('Entries in period'), width: 84, get: (v) => v.n, total: (vs) => int(sum(vs, (v) => v.n)) },
+    { key: 'cost', label: t('Cost in period'), width: 100, get: (v) => v.cost, text: (v) => (v.cost ? eur2(v.cost) : ''), total: (vs) => eur2(sum(vs, (v) => v.cost)) },
+    { key: 'model', label: t('Model'), width: 140, align: 'left', get: (v) => v.model },
+  ];
+  if (station) cols.splice(1, 0, { key: 'station', label: t('Station'), width: 110, align: 'left', get: (v) => stationName(v.stationId) });
+  return cols;
+}
+
+/** Every entry of the service history in the period, with its cost (without VAT). */
+function serviceCols(station: boolean, stationName: (id: string | null) => string, vn: Session['vanName']): Col<ServiceRecord>[] {
+  const s = { vanName: vn };
+  const cols: Col<ServiceRecord>[] = [
+    { key: 'date', label: t('Day'), width: 110, align: 'left', get: (r) => r.day, text: (r) => fmtDay(r.day) },
+    { key: 'van', label: t('Van'), width: 120, align: 'left', get: (r) => s.vanName(r) },
+    { key: 'what', label: t('What'), width: 170, align: 'left', get: (r) => serviceName(r) },
+    { key: 'km', label: 'km', width: 84, get: (r) => r.km, text: (r) => int(r.km) },
+    { key: 'cost', label: t('Cost without VAT'), width: 100, get: (r) => r.cost, text: (r) => eur2(r.cost), total: (rs) => eur2(sum(rs, (r) => r.cost)) },
+    { key: 'result', label: t('TÜV result'), width: 150, align: 'left', get: (r) => (r.result ? t(HU_RESULT[r.result]) : '') },
+    { key: 'garage', label: t('Garage'), width: 150, align: 'left', get: (r) => r.garage || '' },
+    { key: 'note', label: t('Notes'), width: 220, align: 'left', get: (r) => r.note || '' },
+    { key: 'by', label: t('By'), width: 130, align: 'left', get: (r) => r.byName },
+  ];
+  if (station) cols.splice(2, 0, { key: 'station', label: t('Station'), width: 110, align: 'left', get: (r) => stationName(r.stationId) });
   return cols;
 }
 

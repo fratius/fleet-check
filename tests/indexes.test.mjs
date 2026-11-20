@@ -62,6 +62,11 @@ test('the other lists (src/lib/people.ts, src/lib/data.ts) have their indexes', 
     ['incidents', [['driverId', A], ['stationId', A], ['createdAt', D]]],
     ['damageLog', [['stationId', A], ['foundAt', D]]],
     ['damageLog', [['driverIds', C], ['foundAt', D]]],
+    // service.ts watchServices: a van's service history, newest first (owners; managers within their stations)
+    ['services', [['vehicleId', A], ['day', D]]],
+    ['services', [['vehicleId', A], ['stationId', A], ['day', D]]],
+    // data.ts: the Data tab's service list for a period (managers by station)
+    ['services', [['stationId', A], ['day', D]]],
   ];
   assert.deepEqual(needed.filter(([coll, fields]) => !has(coll, fields)).map(([coll, fields]) => name(coll, fields)), [], 'add these to firestore.indexes.json');
 });

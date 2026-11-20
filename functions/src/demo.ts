@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
 import { cardDigits, purchaseFlags, said, type BuyKind, type Receipt } from './purchases';
 import { fillVanDash } from './vandash';
+import { monthEnd } from './service';
 
 /**
  * A demo company to try the app with: two stations, fleet managers, drivers, vans, walk-arounds and
@@ -128,7 +129,7 @@ function demoDetails(n: number, now: number) {
     coverage: 'full', insuranceRenewal: off(n === 5 ? 25 : 120 + n * 9),
     odometerKm: 38000 + n * 4100 + (n === 1 ? 9000 : 0), odometerAt: off(-3),
     due: {
-      hu: off(n === 0 ? -10 : 200 + n * 23), uvv: off(n === 3 ? 20 : 150 + n * 11), service: off(n === 1 ? 12 : 90 + n * 14),
+      hu: monthEnd(off(n === 0 ? -40 : 200 + n * 23)), uvv: off(n === 3 ? 20 : 150 + n * 11), service: off(n === 1 ? 12 : 90 + n * 14),
       serviceKm: 60000 + n * 5000, tyres: off(n === 4 ? 9 : 160), tax: off(240 + n * 7),
     },
     fuelCard: n % 4 === 3 ? 'Shell card ending 4471' : 'DKV card ending 20' + String(10 + n), notes: n === 0 ? 'Rear door seal replaced in spring.' : null,

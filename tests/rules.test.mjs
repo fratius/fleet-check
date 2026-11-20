@@ -68,6 +68,9 @@ beforeEach(async () => {
     await put(`orgs/${O}/purchases/b1`, { kind: 'fuel', status: 'waiting', vehicleId: 'v1', stationId: S1, by: 'drv1', byName: 'Driver 1', createdAt: 1, card: { needed: true, expected: '4471', result: 'mismatch' } });
     await put(`orgs/${O}/purchases/b2`, { kind: 'wash', status: 'done', vehicleId: 'v2', stationId: S2, by: 'drv2', byName: 'Driver 2', createdAt: 2, total: 12.9 });
     await put(`orgs/${O}/buyReads/br1`, { purchaseId: 'b1', step: 'card', by: 'drv1', createdAt: 1 });
+    await put(`orgs/${O}/services/sv1`, { kind: 'service', name: null, day: '2026-11-02', km: 61200, cost: 389.5, garage: 'Autohaus Ost', note: 'Oil and filters', result: null, next: null, vehicleId: 'v1', vehicleName: 'V1', plate: 'V1', stationId: S1, by: 'mgr1', byName: 'Manager 1', createdAt: 1, edits: [] });
+    await put(`orgs/${O}/services/sv2`, { kind: 'hu', name: null, day: '2026-10-12', km: 80400, cost: 139, garage: 'TÜV Süd', note: null, result: 'passed', next: { hu: '2027-10-31' }, vehicleId: 'v2', vehicleName: 'V2', plate: 'V2', stationId: S2, by: 'own', byName: 'Owner', createdAt: 2, edits: [] });
+    await put(`orgs/${O}/serviceNags/hu_v1_2027-03-31`, { kind: 'hu', vehicleId: 'v1', hu: '2027-03-31', at: 1 });
     await put(`orgs/${O}/dashReads/d1`, { by: 'drv1', vehicleId: 'v1', createdAt: 1 });
     await put(`orgs/${O}/docReads/k1`, { by: 'mgr1', target: 'van', kind: 'registration certificate', found: 9, createdAt: 1 });
     await put(`orgs/${O}/damageLog/c1`, { checkId: 'c1', vehicleId: 'v1', stationId: S1, n: 1, drivers: [{ id: 'drv1', name: 'Driver 1' }], driverIds: ['drv1'], foundAt: 1, createdAt: 1 });
@@ -524,6 +527,30 @@ describe('refuels, washes and parts: every attempt kept, written by the server',
   test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/buyReads/br1`))));
   test('the app creator viewing as a driver of S1 doesn\'t see others\' refuels', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/purchases/b1`))));
   test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/purchases/b1`))));
+});
+
+describe('service history and the TÜV: owners and the station\'s managers, written by the server', () => {
+  const svc = (db) => collection(db, `orgs/${O}/services`);
+  const atSt = (db, st) => query(svc(db), where('stationId', 'in', [st]));
+  const ofVan = (db, v, st) => query(svc(db), where('vehicleId', '==', v), ...(st ? [where('stationId', 'in', [st])] : []));
+  test('the owner reads every van\'s', () => assertSucceeds(getDocs(svc(as('own')))));
+  test('a manager reads their station\'s (with the costs)', () => assertSucceeds(getDocs(atSt(as('mgr1'), S1))));
+  test('…and one van\'s, as the van page asks', () => assertSucceeds(getDocs(ofVan(as('mgr1'), 'v1', S1))));
+  test('not another station\'s', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/services/sv2`))));
+  test('…nor by asking for that station', () => assertFails(getDocs(atSt(as('mgr1'), S2))));
+  test('a driver never reads them', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/services/sv1`))));
+  test('…nor their station\'s list', () => assertFails(getDocs(atSt(as('drv1'), S1))));
+  test('…nor their van\'s', () => assertFails(getDocs(ofVan(as('drv1'), 'v1', S1))));
+  test('nobody outside the company', () => assertFails(getDoc(doc(as('own2'), `orgs/${O}/services/sv1`))));
+  test('nobody writes one from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/services/sv9`), { kind: 'tyres', day: '2026-11-03', km: 1, vehicleId: 'v1', stationId: S1, by: 'own', createdAt: 3 })));
+  test('a manager can\'t write one either', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/services/sv9`), { kind: 'tyres', day: '2026-11-03', km: 1, vehicleId: 'v1', stationId: S1, by: 'mgr1', createdAt: 3 })));
+  test('nobody changes one from the app (corrections go through the server)', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/services/sv1`), { cost: 1 })));
+  test('nobody deletes one, not even the owner', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/services/sv1`))));
+  test('the TÜV reminders sent: nobody in the app', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/serviceNags/hu_v1_2027-03-31`))));
+  test('…nor writes one to stop a reminder', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/serviceNags/hu_v1_2027-04-30`), { kind: 'hu', vehicleId: 'v1', hu: '2027-04-30', at: 1 })));
+  test('the app creator viewing as a driver doesn\'t read them', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/services/sv1`))));
+  test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/services/sv1`))));
+  test('the app creator as themselves reads every one', () => assertSucceeds(getDocs(svc(as('boss', { creator: true })))));
 });
 
 describe('requests from the website', () => {

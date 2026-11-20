@@ -24,8 +24,9 @@ name until a plate is added (their page asks for it). Records about a van show i
 `vehicleId`); new records the server writes keep the plate in `vehicleName`. `src/lib/vans.ts` and
 `functions/src/vans.ts` hold the rule.
 
-The van page has three parts under the van's status and actions: **Damage**, **Details**, **Drivers**.
-Details holds the record, in sections that are each edited on their own.
+The van page has four parts under the van's status and actions: **Damage**, **Details**, **Drivers** and, for
+owners and the station's managers, **Service** (below). Details holds the record, in sections that are each edited
+on their own.
 
 ### What everyone at the van's station sees
 
@@ -69,6 +70,35 @@ allowance and what the monthly rate comes to per kilometre.
 - **Mileage against the allowance**: from the contract start, the odometer at the start and the latest reading,
   the yearly pace and how far over or under the allowance it is (the estimated extra cost for owners).
 - The page header shows fuel and height at a glance.
+
+## Service history and the TÜV (built, product owner 2026-11-20)
+
+Each van's **Service** tab, for owners and the managers of the van's station (drivers don't see it: costs are in it).
+
+- **The TÜV** (Hauptuntersuchung, HU) at the top: the sticker drawn in its year's colour, the month it runs out and
+  how far away that is. "TÜV done" records it in the history with the result (passed; passed with minor defects;
+  failed) and the month on the new sticker, which becomes the van's TÜV date (`vehicleDetails.due.hu`). A failed TÜV
+  leaves the date as it is. The date can also be set or changed by hand (the same field as under Details, Deadlines).
+- **A reminder a month before the TÜV runs out**: the van's station managers (the owners where the station has
+  none) get a phone notification, once per TÜV date, also when the date is entered late or has already passed
+  (`serviceSweep`, daily at about 08:00 German time; `serviceNags` remembers what was sent, server only). Retired vans
+  and demo companies get none. The TÜV is in Review's "Due soon" from 30 days before, as before.
+- **Add service**: four common ones (service and oil change; tyres; brakes; repair) and Other, named by the person.
+  The van's km are required; the day (today unless changed), the cost without VAT, the garage and notes go with it.
+  A service can set the next service by date and km, tyres the next tyre change: they become the van's deadlines.
+- **The history** (`orgs/{org}/services`), newest first, with what it cost this year and in total. Written only by
+  the server (`service`), never deleted. A correction (day, km, cost, garage, notes, name, TÜV result) keeps what was
+  there before, who changed it and when (`edits`); the entry shows what it said before. It moves with the van to
+  another station (`moveVan`). A new entry more than 1,000 km below what the van already had on or before its day
+  is refused as a typo (older entries may have fewer km).
+- **The van's record follows**: the odometer when the km are higher, the last service (`lastService`, not the TÜV),
+  and the next TÜV, service and tyre dates. The newest entry decides the next service (date and km together) and
+  the next tyre change, also when its target is sooner than the old one (`dueFrom` remembers which entry set them);
+  a TÜV date only moves later. Typing in an old invoice afterwards changes none of them.
+- **Data tab, Service**: per van (TÜV, next service, last service and its km, entries and cost in the period) and
+  every entry (day, van, what, km, cost, TÜV result, garage, notes, by); both in the Excel file.
+
+Not stored: invoice photos (the cost and the garage are typed in). Costs are euros without VAT.
 
 ## Filling in from a photo of a document
 

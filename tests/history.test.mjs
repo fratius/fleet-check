@@ -991,6 +991,155 @@ test('checks for drivers: set by the manager, done by the driver who has the van
   assert.ok(!(await vanOf(S.d1)).todo.some((x) => x.id === oil));
 });
 
+test('service history and the TÜV: owners and the station\'s managers record it with km and cost, kept for good; a reminder a month before the TÜV', async () => {
+  // Two vans of their own, so the other tests' vans don't matter: one at each station.
+  const mk = async (plate, st) => {
+    const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(r, { name: '', plate, cls: 'van', stationId: S[st], createdAt: Date.now(), createdBy: S.own.uid });
+    return r.id;
+  };
+  const vs = await mk('SV-1', 's1'), vx = await mk('SV-2', 's2');
+  const add = (p, x) => p.call('service', { orgId: S.org, action: 'add', ...x });
+  const det = async (id) => (await getDoc(doc(S.own.db, 'orgs', S.org, 'vehicleDetails', id))).data();
+  const rec = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'services', id))).data();
+  const oil = { id: 'svcOil1', vehicleId: vs, kind: 'service', day: '2026-11-02', km: 61200, cost: 389.5, garage: 'Autohaus Ost', note: 'Oil and filters', next: { service: '2027-11-02', serviceKm: 91200 } };
+  // Drivers don't record services; managers only for their station's vans.
+  await fails(add(S.d1, oil), 'permission-denied');
+  await fails(add(S.mgr, { ...oil, id: 'svcOther', vehicleId: vx }), 'permission-denied');
+  // The km are needed; Other needs a name; the TÜV needs its result and the new sticker; no days in the future.
+  await fails(add(S.mgr, { ...oil, km: null }), 'invalid-argument');
+  await fails(add(S.mgr, { ...oil, kind: 'other', name: '' }), 'invalid-argument');
+  await fails(add(S.mgr, { ...oil, kind: 'hu', next: null }), 'invalid-argument');
+  await fails(add(S.mgr, { ...oil, kind: 'hu', result: 'passed', next: {} }), 'invalid-argument');
+  await fails(add(S.mgr, { ...oil, day: '2099-01-01' }), 'invalid-argument');
+  await fails(add(S.mgr, { ...oil, next: { serviceKm: 1000 } }), 'invalid-argument');
+  // The fleet manager records the service: kept with the plate and the station; the van's record follows.
+  const r1 = await add(S.mgr, oil);
+  assert.equal(r1.id, 'svcOil1');
+  assert.deepEqual(r1.applied.sort(), ['service', 'serviceKm']);
+  const o1 = await rec(S.mgr, 'svcOil1');
+  assert.equal(o1.vehicleName, 'SV-1');
+  assert.equal(o1.stationId, S.s1);
+  assert.equal(o1.byName, 'Max Manager');
+  assert.equal(o1.cost, 389.5);
+  let d = await det(vs);
+  assert.equal(d.stationId, S.s1);
+  assert.equal(d.odometerKm, 61200);
+  assert.equal(d.due.service, '2027-11-02');
+  assert.equal(d.due.serviceKm, 91200);
+  assert.equal(d.lastService.kind, 'service');
+  // Sent again (the phone lost the answer): one record. Someone else can't use that id.
+  assert.equal((await add(S.mgr, oil)).again, true);
+  await fails(add(S.own, { ...oil, kind: 'tyres', next: null }), 'invalid-argument');
+  assert.equal((await getDocs(query(collection(S.own.db, 'orgs', S.org, 'services'), where('vehicleId', '==', vs)))).size, 1);
+  // The owner records the TÜV: the new sticker's month becomes the van's TÜV date (its last day).
+  const hu = await add(S.own, { id: 'svcHu1', vehicleId: vs, kind: 'hu', day: '2026-11-10', km: 61500, cost: 139, garage: 'TÜV Süd', result: 'passed', next: { hu: '2028-03-01' } });
+  assert.deepEqual(hu.applied, ['hu']);
+  d = await det(vs);
+  assert.equal(d.due.hu, '2028-03-31');
+  assert.equal(d.odometerKm, 61500);
+  // Typing in old invoices never pulls a later date back or the odometer down, and isn't the last service.
+  await add(S.own, { id: 'svcHuOld', vehicleId: vs, kind: 'hu', day: '2024-03-10', km: 20000, cost: 120, result: 'passed', next: { hu: '2026-03-01' } });
+  await add(S.mgr, { id: 'svcTyresOld', vehicleId: vs, kind: 'tyres', day: '2025-10-01', km: 40000, cost: 640, next: { tyres: '2026-04-01' } });
+  d = await det(vs);
+  assert.equal(d.due.hu, '2028-03-31');
+  assert.equal(d.odometerKm, 61500);
+  assert.equal(d.lastService.id, 'svcOil1');
+  // A failed TÜV leaves the date as it is.
+  await add(S.mgr, { id: 'svcHuFail', vehicleId: vs, kind: 'hu', day: '2026-11-12', km: 61600, result: 'failed', note: 'Brake lights' });
+  assert.equal((await det(vs)).due.hu, '2028-03-31');
+  // The newest service decides the next service, also when it's sooner than what was there (blind QA F01: a
+  // target of 75,000 km typed in by hand stayed after a service said 60,000 km). Without a next date it clears the
+  // old one; an older invoice typed in afterwards changes neither.
+  await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vs), { 'due.serviceKm': 125000 });
+  await add(S.mgr, { id: 'svcOil2', vehicleId: vs, kind: 'service', day: '2026-11-15', km: 61700, next: { serviceKm: 91700 } });
+  d = await det(vs);
+  assert.equal(d.due.serviceKm, 91700);
+  assert.equal(d.due.service ?? null, null);
+  await add(S.mgr, { id: 'svcOil0', vehicleId: vs, kind: 'service', day: '2025-11-02', km: 31000, next: { service: '2026-11-02', serviceKm: 61000 } });
+  d = await det(vs);
+  assert.equal(d.due.serviceKm, 91700);
+  assert.equal(d.due.service ?? null, null);
+  assert.equal(d.lastService.id, 'svcOil2');
+  // A new entry far below the km the van already had is a typo (blind QA round 2: 100 km on a van at 46,600): refused.
+  // Older entries may have fewer km (svcOil0 above).
+  const low = await fails(add(S.mgr, { id: 'svcLow', vehicleId: vs, kind: 'hu', day: '2026-11-16', km: 100, result: 'passed', next: { hu: '2029-03-01' } }), 'invalid-argument');
+  assert.match(low.message, /61700/);
+  assert.equal((await det(vs)).due.hu, '2028-03-31');
+  // A correction keeps what was there before and who changed it. Drivers can't; nothing changed is said.
+  await fails(S.d1.call('service', { orgId: S.org, action: 'fix', id: 'svcOil1', ...oil, cost: 1 }), 'permission-denied');
+  const fx = await S.mgr.call('service', { orgId: S.org, action: 'fix', ...oil, cost: 412.9 });
+  assert.deepEqual(fx.changed, ['cost']);
+  const o2 = await rec(S.own, 'svcOil1');
+  assert.equal(o2.cost, 412.9);
+  assert.equal(o2.edits.length, 1);
+  assert.equal(o2.edits[0].was.cost, 389.5);
+  assert.equal(o2.edits[0].byName, 'Max Manager');
+  assert.equal((await S.mgr.call('service', { orgId: S.org, action: 'fix', ...oil, cost: 412.9 })).unchanged, true);
+  // Who reads it: owners and the station's managers (as the van page asks); never drivers. Nobody writes or deletes.
+  const mine = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'services'), where('vehicleId', '==', vs), where('stationId', 'in', [S.s1]), orderBy('day', 'desc'), limit(300)));
+  assert.equal(mine.size, 7);
+  await fails(getDocs(query(collection(S.d1.db, 'orgs', S.org, 'services'), where('vehicleId', '==', vs), where('stationId', 'in', [S.s1]))), 'permission-denied');
+  await fails(updateDoc(doc(S.own.db, 'orgs', S.org, 'services', 'svcOil1'), { cost: 1 }), 'permission-denied');
+  await fails(deleteDoc(doc(S.own.db, 'orgs', S.org, 'services', 'svcOil1')), 'permission-denied');
+  // The history goes with the van to another station: its new managers see it, the old ones don't.
+  await S.own.call('moveVan', { orgId: S.org, vehicleId: vs, stationId: S.s2 });
+  assert.equal((await rec(S.own, 'svcOil1')).stationId, S.s2);
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'services', 'svcOil1')), 'permission-denied');
+  await fails(add(S.mgr, { ...oil, id: 'svcAfterMove' }), 'permission-denied');
+
+  // The TÜV reminder: the station's fleet manager gets one notification a month before it runs out, once per date.
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (x) => ch.push(x));
+    req.on('end', () => { got.push(JSON.parse(Buffer.concat(ch).toString() || '{}')); res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ data: { status: 'ok', id: 't' } })); });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  try {
+    await adminDb().doc(`users/${S.mgr.uid}/push/svc`).set({ expo: 'ExponentPushToken[cccccccccccccccccccccc]', platform: 'ios', createdAt: Date.now(), device: 'test', expoUrl: `http://${HOST}:${srv.address().port}/expo/svc` });
+    const vt = await mk('TUV-1', 's1');
+    await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vt), { stationId: S.s1, createdAt: Date.now(), due: { hu: '2027-03-31' } });
+    // A retired van isn't reminded about.
+    const vr = await mk('TUV-OLD', 's1');
+    await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vr), { stationId: S.s1, createdAt: Date.now(), due: { hu: '2027-03-31' } });
+    await adminDb().doc(`orgs/${S.org}/vehicles/${vr}`).update({ retired: true });
+    const cr = await appCreator('Tessa Tuv');
+    await fails(S.own.call('serviceSweepNow', {}), 'permission-denied');
+    const forVan = (id) => got.filter((m) => m.data?.url === `/vehicle/${id}?tab=service`);
+    // Five weeks before: nothing yet.
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 1, 20, 9) });
+    assert.equal(forVan(vt).length, 0);
+    // Four weeks before: the reminder, with the plate.
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 2, 1, 9) });
+    assert.equal(forVan(vt).length, 1);
+    assert.match(forVan(vt)[0].body, /TUV-1/);
+    assert.match(forVan(vt)[0].title, /TÜV/);
+    // Not again for the same date, and not for the retired van.
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 2, 2, 9) });
+    assert.equal(forVan(vt).length, 1);
+    assert.equal(forVan(vr).length, 0);
+    assert.equal((await adminDb().doc(`orgs/${S.org}/serviceNags/hu_${vt}_2027-03-31`).get()).exists, true);
+    // Nobody in the app reads or writes the reminders sent.
+    await fails(getDoc(doc(S.own.db, 'orgs', S.org, 'serviceNags', `hu_${vt}_2027-03-31`)), 'permission-denied');
+    // A new date (the van passed) gets its own reminder in its time.
+    await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vt), { 'due.hu': '2029-03-31' });
+    await cr.call('serviceSweepNow', { now: Date.UTC(2029, 2, 5, 9) });
+    assert.equal(forVan(vt).length, 2);
+    // A TÜV is a month: a date kept as a day in the middle of it (the demo's, or one read from a document) counts as the
+    // month's end, so it's reminded about a month before that, not before the day (blind QA round 3).
+    const vm = await mk('TUV-MID', 's1');
+    await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vm), { stationId: S.s1, createdAt: Date.now(), due: { hu: '2027-03-10' } });
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 1, 20, 9) });
+    assert.equal(forVan(vm).length, 0);
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 2, 1, 9) });
+    assert.equal(forVan(vm).length, 1);
+  } finally {
+    await adminDb().doc(`users/${S.mgr.uid}/push/svc`).delete().catch(() => {});
+    srv.close();
+  }
+});
+
 test('a call sent twice (the phone lost the answer, or sent it again offline) is done once', async () => {
   const R = (p, x) => p.call('routine', { orgId: S.org, ...x });
   const rid = () => `rid${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;

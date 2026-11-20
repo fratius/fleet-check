@@ -154,7 +154,7 @@ export default function ReviewQueue() {
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
             {due.map(({ v, x }, i) => (
-              <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: 'details' } })}
+              <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: ['hu', 'service', 'serviceKm', 'tyres'].includes(x.key) ? 'service' : 'details' } })}
                 title={`${vanName(v)} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
