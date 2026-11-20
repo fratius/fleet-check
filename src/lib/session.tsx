@@ -4,7 +4,7 @@ import {
   EmailAuthProvider, createUserWithEmailAndPassword, onAuthStateChanged, reauthenticateWithCredential, sendPasswordResetEmail, signInWithEmailAndPassword, signOut as fbSignOut,
   updateProfile, type User,
 } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { signupDone, signupIntent } from './billing';
@@ -18,7 +18,7 @@ import { outbox, sendWrite, startOutbox } from './outbox';
 import { loadWebUrl } from './people';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type NameRow, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -30,7 +30,7 @@ export interface ViewAs { org: string; role: Role; st: string | null }
 /** The company and role kept on the phone for an offline start (lib/offline.ts). */
 interface SavedSession { companies: Company[]; org: Org; member: Member; viewAs: ViewAs | null; creator: boolean }
 /** The lists kept on the phone for an offline start (lib/offline.ts). */
-type CacheName = 'stations' | 'vehicles' | 'walks' | 'checks' | 'assignments' | 'videos' | 'tours' | 'purchases' | 'routines' | 'routineDone' | 'details' | 'records' | 'costs';
+type CacheName = 'stations' | 'vehicles' | 'walks' | 'checks' | 'assignments' | 'videos' | 'tours' | 'purchases' | 'routines' | 'routineDone' | 'details' | 'records' | 'costs' | 'names';
 
 function parseViewAs(v: unknown): ViewAs | null {
   const x = v as { org?: unknown; role?: unknown; st?: unknown } | null | undefined;
@@ -100,6 +100,11 @@ export interface Session {
   routineDone: RoutineDone[];
   /** This person's own driver record, if there is one. */
   myRecord: DriverRecord | null;
+  /**
+   * The names of the company's people, also of those who left (orgs/{org}/names; functions/src/names.ts): owners and
+   * managers only. Drivers get none: they don't see other drivers' names (use lib/names.ts to show who did something).
+   */
+  names: NameRow[];
   /** Owners change company settings: dashboard photos on tours, how often licences are checked. */
   setOrgSettings(patch: Partial<Pick<Org, 'dashScans' | 'licenceCheckMonths'>>): Promise<void>;
   /** The van this person drives now, if any. */
@@ -448,6 +453,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [ownRecord, setOwnRecord] = useState<DriverRecord | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
+  const [names, setNames] = useState<NameRow[]>([]);
   const [loaded, setLoaded] = useState({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
   const [dataError, setDataError] = useState<string | null>(null);
   // Shown from this phone's saved copy (no connection yet): when that copy was made (lib/offline.ts).
@@ -457,7 +463,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const liveData = useRef(false);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
-    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null);
+    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null); setNames([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     setOfflineAt(null);
@@ -519,6 +525,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       subs.push(store.details.subscribe(take('details', setDetails), () => {}));
       subs.push(store.records.subscribe(take('records', setRecords), () => {}));
     }
+    // The people's names (also of those who left), to show who had a van or did a check: owners and managers only.
+    if (staff && store.mode === 'firebase') {
+      const got = take<NameRow>('names', setNames);
+      let fromCache: boolean | null = null;
+      subs.push(onSnapshot(collection(fb()!.db, 'orgs', store.orgId, 'names'), { includeMetadataChanges: true }, (snap) => {
+        const same = fromCache === snap.metadata.fromCache && !snap.docChanges().length;
+        fromCache = snap.metadata.fromCache;
+        if (!same) got(snap.docs.map((d) => ({ id: d.id, name: String(d.data().name || '') })), { fromCache });
+      }, (e) => console.warn('The list names was refused:', e)));
+    }
     // What the vans cost: owners only.
     if (role === 'owner') subs.push(store.costs.subscribe(take('costs', setCosts), () => {}));
     // Everyone reads their own driver record (licence checks and briefings are about them).
@@ -549,11 +565,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const cut = <T,>(rows: T[]) => rows.slice(0, 300);
       writeCache(cacheKey, { at: Date.now(), data: {
         stations, vehicles, walks: cut(walks), checks: cut(checks), assignments: cut(assignments), videos: cut(videos), tours: cut(tours),
-        purchases: cut(purchases), routines, routineDone: cut(routineDone), details, records, costs,
+        purchases: cut(purchases), routines, routineDone: cut(routineDone), details, records, costs, names,
       } });
     }, 3000);
     return () => clearTimeout(timer);
-  }, [cacheKey, stations, vehicles, walks, checks, assignments, videos, tours, purchases, routines, routineDone, details, records, costs]);
+  }, [cacheKey, stations, vehicles, walks, checks, assignments, videos, tours, purchases, routines, routineDone, details, records, costs, names]);
   // For the app creator: each check with its AI speed and cost filled in.
   const checksShown = useMemo(() => {
     if (!seesAiStats || !usage.length) return checks;
@@ -607,7 +623,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [vanById]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, tryOut: mode === 'firebase' && creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, names, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

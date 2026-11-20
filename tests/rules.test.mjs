@@ -43,6 +43,10 @@ beforeEach(async () => {
     await put(`orgs/${O}/assignments/a2`, { vehicleId: 'v2', driverId: 'drv2', driverName: 'Driver 2', stationId: S2, start: 1, end: 5, createdAt: 1 });
     await put(`orgs/${O}/videos/vd1`, { vehicleId: 'v1', stationId: S1, by: 'drv1', kind: 'pickup', createdAt: 1 });
     await put(`orgs/${O}/videos/vd2`, { vehicleId: 'v1', stationId: S1, by: 'mgr1', kind: 'dropoff', createdAt: 1 });
+    // The company's names (written by the server; drivers don't see other drivers' names, functions/src/names.ts).
+    await put(`orgs/${O}/names/drv1`, { name: 'Driver 1', at: 1 });
+    await put(`orgs/${O}/names/drv2`, { name: 'Driver 2', at: 1 });
+    await put(`orgs/${O}/names/gone1`, { name: 'Left Driver', at: 1 });
     // The app creator viewing company O as a driver, a manager and an owner (three creator accounts, to test each
     // at once); a creator being themselves; and a driver who wrote a viewAs on their profile (means nothing).
     await put('users/vdrv', { orgId: O, viewAs: { org: O, role: 'driver', st: S1 } });
@@ -433,6 +437,21 @@ describe('what a van costs: owners only', () => {
   test('…viewing as an owner can', () => assertSucceeds(getDoc(cost(as('vown', { creator: true }), 'v1'))));
   test('the app creator as themselves can', () => assertSucceeds(getDoc(cost(as('boss', { creator: true }), 'v1'))));
   test('nobody deletes them', () => assertFails(deleteDoc(cost(as('own'), 'v1'))));
+});
+
+describe('the company\'s names: owners and managers read them, each person their own, nobody writes them', () => {
+  const C = { creator: true };
+  test('owner lists them', () => assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/names`))));
+  test('a manager lists them (they list the people anyway)', () => assertSucceeds(getDocs(collection(as('mgr1'), `orgs/${O}/names`))));
+  test('a manager reads the name of someone who left', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/names/gone1`))));
+  test('a driver reads their own', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/names/drv1`))));
+  test('a driver cannot read another driver\'s name', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/names/drv2`))));
+  test('a driver cannot list them', () => assertFails(getDocs(collection(as('drv1'), `orgs/${O}/names`))));
+  test('the app creator viewing as a driver cannot list them', () => assertFails(getDocs(collection(as('vdrv', C), `orgs/${O}/names`))));
+  test('another company\'s owner cannot read them', () => assertFails(getDoc(doc(as('own2'), `orgs/${O}/names/drv1`))));
+  test('nobody writes one from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/names/drv1`), { name: 'X', at: 2 })));
+  test('a person cannot write their own', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/names/drv1`), { name: 'X', at: 2 })));
+  test('nobody deletes one (people who left keep their name on the history)', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/names/gone1`))));
 });
 
 describe('driver records: owners and the station\'s managers keep them, drivers read their own', () => {

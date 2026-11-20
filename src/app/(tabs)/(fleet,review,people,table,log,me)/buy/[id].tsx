@@ -9,6 +9,7 @@ import { Button, Card, Chip, F, Field, MARKER, Pill, Row, Screen, T, ZoomPhoto, 
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
+import { useNameOf } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { ai, failText, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
@@ -387,6 +388,9 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
 /** The record: what happened, the photos, what to check; and for the station's staff, the answer to a stopped driver. */
 function Summary({ p }: { p: Purchase }) {
   const s = useSession();
+  const nameOf = useNameOf();
+  // Who had the van, when it wasn't the buyer's: owners and managers only (the buyer reads this, lib/names.ts).
+  const had = p.notTheirVan && s.staff ? nameOf(p.vanDriverId) || p.vanDriverName || null : null;
   const c = useColors();
   const st = buyState(p);
   const staffHere = s.runs(p.stationId);
@@ -416,7 +420,7 @@ function Summary({ p }: { p: Purchase }) {
       <View style={{ gap: 6 }}>
         <T v="h1">{buyTitle(p.kind, s.vanName(p))}</T>
         <Row><Pill v={st.v} text={st.text} /></Row>
-        <T v="hint">{p.byName}, {fmtWhen(p.createdAt)}{p.notTheirVan && p.vanDriverName ? `. ${t('{name} had the van.', { name: p.vanDriverName })}` : ''}</T>
+        <T v="hint">{p.byName}, {fmtWhen(p.createdAt)}{had ? `. ${t('{name} had the van.', { name: had })}` : ''}</T>
       </View>
 
       {p.status === 'waiting' && staffHere ? (

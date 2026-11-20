@@ -9,6 +9,7 @@ import { fmtDay } from '@/lib/fleet';
 import { flash } from '@/lib/flash';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
+import { useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, failText, type DashRead } from '@/lib/store';
@@ -232,8 +233,10 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
           {refuel === 'litres' && fromReceipts ? <T v="small">{tp(fromReceipts, 'From your refuel during this tour (the receipt).', 'From your {n} refuels during this tour (the receipts).')}</T> : null}
         </View>
       ) : null}
-      {read.will === 'end' && !read.endsMine && read.tourDriver ? <T v="small">{t('This ends {name}\'s tour.', { name: read.tourDriver })}</T> : null}
-      {read.will === 'end-start' && read.tourDriver ? <T v="small">{t('{name} didn\'t take an end photo: this ends their tour and starts yours.', { name: read.tourDriver })}</T> : null}
+      {/* Whose tour it ends: the name for owners and managers only (drivers don't see other drivers' names). */}
+      {read.will === 'end' && !read.endsMine && (read.tourDriver || read.endsOther) ? <T v="small">{read.tourDriver ? t('This ends {name}\'s tour.', { name: read.tourDriver }) : t('This ends another driver\'s tour.')}</T> : null}
+      {read.will === 'end-start' && (read.tourDriver || read.endsOther) ? <T v="small">{read.tourDriver ? t('{name} didn\'t take an end photo: this ends their tour and starts yours.', { name: read.tourDriver })
+        : t('The driver before you didn\'t take an end photo: this ends their tour and starts yours.')}</T> : null}
       {jump ? (
         <View style={{ gap: 6 }}>
           <T v="small" color={c.alert}>{jump}</T>
@@ -277,6 +280,7 @@ export function gaugeText(pct: number) {
 export function VanNow({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
+  const whoDid = useWhoDid();
   const d = v.dash;
   const det = s.runs(v.stationId) ? s.details.find((x) => x.id === v.id) : undefined;
   const stat = (value: string, label: string) => (
@@ -295,8 +299,13 @@ export function VanNow({ v }: { v: Vehicle }) {
   }
   const ev = v.fuel === 'electric';
   const level = ev ? d.batteryPct : d.fuelPct;
-  const where = { tour: N_('From the dashboard photo {when}, {name}.'), fuel: N_('From the dashboard photo at a refuel {when}, {name}.'),
-    wash: N_('From the dashboard photo at a wash {when}, {name}.'), parts: N_('From the dashboard photo for parts {when}, {name}.') }[d.from] || N_('From the dashboard photo {when}, {name}.');
+  // Who took it: drivers see only their own (lib/names.ts).
+  const by = whoDid(d.by, d.byName);
+  const where = by
+    ? { tour: N_('From the dashboard photo {when}, {name}.'), fuel: N_('From the dashboard photo at a refuel {when}, {name}.'),
+      wash: N_('From the dashboard photo at a wash {when}, {name}.'), parts: N_('From the dashboard photo for parts {when}, {name}.') }[d.from] || N_('From the dashboard photo {when}, {name}.')
+    : { tour: N_('From the dashboard photo {when}.'), fuel: N_('From the dashboard photo at a refuel {when}.'),
+      wash: N_('From the dashboard photo at a wash {when}.'), parts: N_('From the dashboard photo for parts {when}.') }[d.from] || N_('From the dashboard photo {when}.');
   return (
     <View style={{ gap: 8 }}>
       <Row gap={20} style={{ alignItems: 'flex-start' }}>
@@ -310,7 +319,7 @@ export function VanNow({ v }: { v: Vehicle }) {
           <T v="small">{t('Check the van before it goes out again.')}</T>
         </View>
       ) : <T v="small">{t('No warning lights.')}</T>}
-      <T v="small">{t(where, { when: fmtWhen(d.at), name: d.byName })}</T>
+      <T v="small">{t(where, { when: fmtWhen(d.at), name: by || '' })}</T>
     </View>
   );
 }

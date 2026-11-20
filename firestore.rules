@@ -177,6 +177,14 @@ service cloud.firestore {
         allow read: if (signedIn() && uid == me()) || runs(orgId, resource.data.stationId);
       }
 
+      // The names of the company's people, kept by the server (functions/src/names.ts) so owners and fleet managers
+      // see who had a van or did a check, also for people who left. Drivers never see another driver's name: they
+      // read only their own here, and the records they read (vans, damage checks, their own history) keep only
+      // account ids where someone else did something. Nobody writes them from the app.
+      match /names/{uid} {
+        allow read: if staff(orgId) || (member(orgId) && uid == me());
+      }
+
       match /members/{uid} {
         allow get: if (signedIn() && uid == me()) || staff(orgId);
         allow list: if staff(orgId);

@@ -13,7 +13,7 @@ import { TourCard, TourLine, VanNow } from '@/components/dash';
 import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { VanService } from '@/components/service';
-import { useWhoDid } from '@/lib/names';
+import { useHolder, useWhoDid } from '@/lib/names';
 import { HandoverWaiting, PendingChanges } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { ScanChoice } from '@/components/scanchoice';
@@ -39,6 +39,8 @@ export default function VehicleScreen() {
   const done = useFlash(`van:${id}`);
   const pickup = usePickupRequest(v);
   const whoDid = useWhoDid();
+  const holder = useHolder();
+  const takeOver = (x: Vehicle) => (s.staff ? t('Take over from {name}', { name: holder(x) }) : t('Take over this van'));
   // The damage record: every damage on the van with where it is, when it happened and who had the van.
   const recs = useVanRecords(id);
   const damages = useMemo(() => (v ? buildDamages(v, recs.checks, recs.walks) : []), [v, recs.checks, recs.walks]);
@@ -178,7 +180,7 @@ export default function VehicleScreen() {
           <T v="hint">{t('Driver')}</T>
           {v.assignedTo ? (
             <Pressable disabled={!s.staff && v.assignedTo.driverId !== s.user?.uid} onPress={() => router.push(`/person/${v.assignedTo!.driverId}`)}>
-              <T v="h2">{v.assignedTo.driverId === s.user?.uid ? t('You') : v.assignedTo.driverName}{s.staff ? ` ${fwd()}` : ''}</T>
+              <T v="h2">{holder(v)}{s.staff ? ` ${fwd()}` : ''}</T>
               <T v="hint">{sinceText(v.assignedTo.since)}</T>
               {kmLine({ ...v.assignedTo, end: null }) ? <T v="small">{kmLine({ ...v.assignedTo, end: null })}</T> : null}
             </Pressable>
@@ -205,12 +207,13 @@ export default function VehicleScreen() {
               <T v="small">{t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(s.myVan) })}</T>
             ) : v.assignedTo && !takeover ? (
               <>
-                <Button title={t('Take over from {name}', { name: v.assignedTo.driverName })} onPress={() => setTakeover(true)} />
-                <T v="small">{t('Only if you were told to take this van: {name} didn\'t drop it off.', { name: v.assignedTo.driverName })}</T>
+                <Button title={takeOver(v)} onPress={() => setTakeover(true)} />
+                {/* Drivers don't see who has it (lib/names.ts). */}
+                <T v="small">{s.staff ? t('Only if you were told to take this van: {name} didn\'t drop it off.', { name: holder(v) }) : t('Only if you were told to take this van: the driver who has it didn\'t drop it off.')}</T>
               </>
             ) : (
               <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
-                <T v="medium">{v.assignedTo ? t('Take over from {name}', { name: v.assignedTo.driverName }) : t('Pick up')}</T>
+                <T v="medium">{v.assignedTo ? takeOver(v) : t('Pick up')}</T>
                 <VideoHandover v={v} kind="pickup" title={t('Pick up with a video')} primary />
                 <Button title={tp(frames.length, 'Pick up with {n} photo', 'Pick up with {n} photos')} onPress={() => router.push({ pathname: '/scan/[id]', params: { id: v.id, handover: 'pickup' } })} />
                 <T v="small">{t('First a video or the photos, so damage that was already there isn\'t put on you. The pick-up goes on the van\'s history under your name.')} {t(VIDEO_HOW)}</T>
@@ -270,7 +273,7 @@ export default function VehicleScreen() {
                   : tp(k.spots.length, '{n} spot, {dmg} damage by the AI', '{n} spots, {dmg} damage by the AI', { dmg })}</T>
                 <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? t('Reviewed') : k.status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
               </Row>
-              <T v="hint">{[k.createdByName || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+              <T v="hint">{[whoDid(k.createdBy, k.createdByName) || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
             </Pressable>
           );
         })}
@@ -362,6 +365,7 @@ export default function VehicleScreen() {
 }
 
 function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
+  const holder = useHolder();
   const s = useSession();
   const c = useColors();
   const [name, setName] = useState(v.name);
@@ -408,7 +412,7 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       ) : null}
       {s.role === 'owner' && s.stations.length > 1 ? (
         <><T v="medium">{t('Station')}</T><Row>{s.stations.map((st) => <Chip key={st.id} text={st.name} on={st.id === station} onPress={() => setStation(st.id)} />)}</Row>
-          {station !== v.stationId && v.assignedTo ? <T v="hint" color={c.alert}>{t('{name} stays at {station}, so the van becomes free.', { name: v.assignedTo.driverName, station: s.stationName(v.stationId) })}</T> : null}</>
+          {station !== v.stationId && v.assignedTo ? <T v="hint" color={c.alert}>{t('{name} stays at {station}, so the van becomes free.', { name: holder(v), station: s.stationName(v.stationId) })}</T> : null}</>
       ) : null}
       <T v="medium">{t('Rear')}</T>
       <Row>{(Object.keys(REAR_PILL) as RearKind[]).map((k) => <Chip key={k} text={t(REAR_PILL[k])} on={rear === k} onPress={() => setRear(k)} />)}</Row>

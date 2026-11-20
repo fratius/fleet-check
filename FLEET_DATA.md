@@ -38,6 +38,10 @@ Stored on the van itself (`orgs/{org}/vehicles/{id}`). Owners and the station's 
 | Size and load | height (for car parks and garages), length, gross weight, payload, cargo space, tyre size |
 | If something happens | breakdown help number, accident claims number, insurer, policy number (drivers need these at the van) |
 
+The van also says who has it, who took its last dashboard photo and who last did each check for drivers: by
+account id only, never the name, since drivers read the van and don't see other drivers' names (ROLES.md). The
+names are in `orgs/{org}/names/{uid}` (owners and managers read them; each person their own).
+
 ### What only owners and the station's managers see
 
 Stored apart (`orgs/{org}/vehicleDetails/{vehicleId}`), readable and writable only by owners and the managers of
@@ -268,6 +272,11 @@ Recording how employees drive is employee monitoring. Drivers see their own reco
 owner turns dashboard photos on, the app says to tell the drivers what is recorded and why, and to agree it with
 the works council where there is one. A deletion period for the records of people who left is still to be set
 (the van history keeps their name).
+
+Drivers never see another driver's name (product owner, 2026-11-20): the records a driver reads keep only account
+ids where someone else did something, and the names are kept apart for owners and managers (`orgs/{org}/names`,
+ROLES.md). This keeps one driver's activity (who had which van, who refuelled it, who took a photo) out of other
+drivers' phones.
 
 ## The company's plan (payments, built)
 

@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
 import { cardDigits, purchaseFlags, said, type BuyKind, type Receipt } from './purchases';
 import { fillVanDash } from './vandash';
+import { splitNames } from './names';
 import { monthEnd } from './service';
 
 /**
@@ -246,7 +247,7 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
       endReason: a.end ? 'ended' : null, createdAt: a.start, startWalkId: null, endWalkId: null, demo: true,
     });
     if (self) pickups.push({ ref, van: a.van, driver: a.driver, at: a.start });
-    if (!a.end) batch.update(org.collection('vehicles').doc(van.id), { assignedTo: { assignmentId: ref.id, driverId: a.driver.id, driverName: a.driver.name, since: a.start } });
+    if (!a.end) batch.update(org.collection('vehicles').doc(van.id), { assignedTo: { assignmentId: ref.id, driverId: a.driver.id, since: a.start } });
   });
   /** Who had this van at this time (for walk-arounds and checks). */
   const driverAt = (vanIdx: number, t: number) => schedule.find((a) => a.van === vanIdx && a.start <= t && (a.end == null || t < a.end))?.driver
@@ -384,6 +385,9 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
   // Each van's latest dashboard and each driver's km with it, from the photos above (as the functions keep them).
   await fillVanDash(org, () => db().batch());
   await org.update({ vanDash: Date.now() });
+  // The people's names for owners and managers, and none of another driver's on what drivers read (names.ts).
+  await splitNames(org, () => db().batch());
+  await org.update({ namesSplit: Date.now() });
 
   await uref.set({ orgIds: FieldValue.arrayUnion(orgId), orgId, demoOrgId: orgId }, { merge: true });
   return { orgId, existed: false };
@@ -597,14 +601,14 @@ async function demoBuys(org: FirebaseFirestore.DocumentReference, orgId: string,
       why: expected ? why.text : null, whyT: expected ? why.t : null, whyV: expected ? why.v : null, expired: false, at: expected ? cardAt : null };
     const flags = m.status === 'done' ? purchaseFlags({
       kind: m.kind, byName: m.by.name, vanFuel: 'diesel', tankL: m.tank ?? null, fuelPct: m.fuelPct, odometerKm: m.odo, lastKm: null, litres: m.litres, total: m.total, createdAt: m.at,
-      vanDriverName: null, notTheirVan: false, card: card.needed ? { needed: true, expected, result: card.result, expired: false, plate: null } : null, vanPlate: m.van.plate,
+      notTheirVan: false, card: card.needed ? { needed: true, expected, result: card.result, expired: false, plate: null } : null, vanPlate: m.van.plate,
       decision: decision ? { allow: decision.allow, byName: decision.byName } : null, receipt,
     }) : [];
     const doneAt = m.status === 'done' ? m.at + 25 * 60_000 : null;
     w.set(org.collection('purchases').doc(), {
       kind: m.kind, status: m.status, vehicleId: m.van.id, vehicleName: m.van.name, plate: m.van.plate, stationId: m.van.stationId, model: modelOf(m.van),
       vanFuel: m.kind === 'parts' && m.van.model === 'eSprinter' ? 'electric' : 'diesel', tankL: m.tank ?? null, by: m.by.id, byName: m.by.name, role: m.role,
-      vanDriverId: m.role === 'driver' ? m.by.id : null, vanDriverName: m.role === 'driver' ? m.by.name : null, notTheirVan: false,
+      vanDriverId: m.role === 'driver' ? m.by.id : null, notTheirVan: false,
       dash: { path: dieselPath, at: m.at, ai: { odometerKm: m.odo, fuelPct: m.fuelPct, batteryPct: null, rangeKm: null, warnings: [] }, confidence: 0.93, readable: true, issue: null, done: true },
       lastKm: null, card, decision,
       receipt: receipt ? { path: m.kind === 'wash' ? washPath : receiptPath, at: m.receiptAt || m.at + 20 * 60_000, ai: receipt } : null,

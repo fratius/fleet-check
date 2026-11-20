@@ -41,6 +41,7 @@ import {
   LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, switches as paySwitches, yearlyOn, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
   payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
+import { NAMES, nameOf } from './names';
 import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
 import { Bad, FIXABLE, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readService, type ServiceInput } from './service';
 
@@ -364,8 +365,9 @@ export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
   await pool(spots, 4, async (s, i) => { s.refPath = await save(`orgs/${orgId}/checks/${ref.id}/ref${i + 1}.jpg`, await refCrop(originals[s.photo], s.box)); });
 
   const check = {
+    // Who ran it by account id only: drivers of the station read checks (names.ts).
     vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt: Date.now(), createdBy: uid,
-    createdByName: who.name, stationId: w.stationId || null, status: spots.length ? 'checking' : 'submitted',
+    stationId: w.stationId || null, status: spots.length ? 'checking' : 'submitted',
     submittedAt: spots.length ? null : Date.now(), review: null,
     tier, model: MODELS[tier].id, photos: photos.length, spots, notVisible: [...notVisible].slice(0, 6), missedNote: '',
   };
@@ -943,7 +945,8 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
       startWalkId: null, endWalkId: null, startVideoId: null, endVideoId: null, pickupRequested: driverId !== who.uid || tryOut, kmStart, kmEnd: null,
     };
     tx.set(aref, a);
-    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, driverName: person.name, since: now, kmStart, kmEnd: null } });
+    // On the van, which every driver of the station reads: who has it by account id only (names.ts).
+    tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, since: now, kmStart, kmEnd: null } });
     return { assignmentId: aref.id as string | null, vanName: vanName(van), plate: van.plate || '' };
   });
   // The checks due now go with the van to its new driver (section 17).
@@ -1117,7 +1120,7 @@ async function selfService(tx: FirebaseFirestore.Transaction, who: Who, vehicleI
   const vref = org.collection('vehicles').doc(vehicleId);
   const v = await tx.get(vref);
   if (!v.exists) throw fail('not-found', 'Unknown van.');
-  const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string; driverName: string } | null; dash?: VanDash | null };
+  const van = v.data() as { name: string; plate?: string; stationId?: string; retired?: boolean; assignedTo?: { assignmentId: string; driverId: string } | null; dash?: VanDash | null };
   needStation(who, van.stationId);
   const st = await tx.get(org.collection('stations').doc(van.stationId!));
   if (st.data()?.selfAssign !== true) throw fail('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
@@ -1236,7 +1239,7 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
 export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
-  type Out = { assignmentId: string; unchanged?: true; tookOverFrom?: string | null };
+  type Out = { assignmentId: string; unchanged?: true; tookOver?: boolean };
   const again = async (): Promise<Out | null> => { const d = await alreadyDone(who, req.data, 'pickup', vehicleId, { direct: true }); return d ? { assignmentId: d, unchanged: true } : null; };
   return orDone<Out>(again, async () => {
     const m = await checkMedia(who, vehicleId, req.data);
@@ -1248,7 +1251,8 @@ export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: 
       const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
       if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
       const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: vanName(van), stationId: van.stationId });
-      if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, 'taken over', m.media));
+      // The driver it's taken from reads that assignment: not the name of the driver who took it (names.ts).
+      if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), { ...closeWith(who, 'taken over', m.media), endedByName: null });
       const now = Date.now();
       const aref = aCol.doc();
       const kmStart = startKm(van.dash, now);
@@ -1258,9 +1262,9 @@ export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: 
         startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
       };
       tx.set(aref, a);
-      tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, driverName: who.name, since: now, kmStart, kmEnd: null } });
+      tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, since: now, kmStart, kmEnd: null } });
       mark('pickup', aref.id);
-      return { assignmentId: aref.id, tookOverFrom: van.assignedTo?.driverName || null };
+      return { assignmentId: aref.id, tookOver: !!van.assignedTo };
     });
     // The checks due now (section 17), for the driver who just got the van.
     if (!('unchanged' in out)) await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
@@ -1602,7 +1606,7 @@ export const recordLicenceCheck = onCallOnce('recordLicenceCheck', { timeoutSeco
 interface VanDoc {
   name: string; plate?: string; stationId?: string; retired?: boolean; make?: string | null; model?: string | null; cls?: string;
   fuel?: Fuel; tankL?: number | null; batteryKwh?: number | null;
-  assignedTo?: { assignmentId: string; driverId: string; driverName: string; kmStart?: number | null; kmEnd?: number | null } | null;
+  assignedTo?: { assignmentId: string; driverId: string; kmStart?: number | null; kmEnd?: number | null } | null;
   dash?: VanDash | null;
 }
 const READ_MAX_AGE = 2 * 3600_000;
@@ -1633,7 +1637,8 @@ async function readingContext(org: R, who: Who, vehicleId: string, getQ: (q: Q) 
     ? (await getQ(org.collection('tours').where('driverId', '==', who.uid).where('open', '==', true).limit(10))).docs.filter((d) => d.data().vehicleId !== vehicleId)
     : [];
   const l = (await getQ(org.collection('readings').where('vehicleId', '==', vehicleId).orderBy('at', 'desc').limit(1))).docs[0]?.data();
-  const last = l ? { km: Number(l.odometerKm), at: Number(l.at), byName: String(l.byName || '') } : null;
+  // Who took it: owners and the station's managers only (drivers don't see other drivers' names, names.ts).
+  const last = l ? { km: Number(l.odometerKm), at: Number(l.at), byName: staffAt(who, van.stationId) || l.by === who.uid ? String(l.byName || '') : '' } : null;
   return { van, open, plan, elsewhere, last };
 }
 
@@ -1671,8 +1676,10 @@ export const readDashboard = onCallOnce('readDashboard', opts(120), async (req) 
     ai: values, confidence, readable, issue, model: a.model, tier: who.tier, usage: a.usage, used: false,
   });
   return {
-    readId: ref.id, values, confidence, readable, issue, will: ctx.plan.will, tourDriver: ctx.plan.tourDriver, last: ctx.last,
+    readId: ref.id, values, confidence, readable, issue, will: ctx.plan.will, tourDriver: staffAt(who, ctx.van.stationId) ? ctx.plan.tourDriver : null, last: ctx.last,
     endsMine: ctx.plan.ends.some((e) => e.tour.driverId === who.uid && e.how === 'photo'),
+    // It ends another driver's tour: what drivers are told instead of the name (names.ts).
+    endsOther: ctx.plan.ends.some((e) => e.tour.driverId !== who.uid),
     ...(who.creator ? { usage: a.usage } : {}),
   };
 });
@@ -1723,7 +1730,8 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
 
     const now = Date.now();
     const reading = org.collection('readings').doc();
-    const point: TourEnd = { readingId: reading.id, at: now, km: odometerKm, fuelPct, batteryPct, by: who.uid, byName: who.name };
+    // Who took the photo by account id only: it may end another driver's tour, which that driver reads (names.ts).
+    const point: TourEnd = { readingId: reading.id, at: now, km: odometerKm, fuelPct, batteryPct, by: who.uid };
     const facts = { fuel: van.fuel || null, tankL: van.tankL ?? null, batteryKwh: van.batteryKwh ?? null };
     let ended: (TourDoc & { id: string }) | null = null;
     for (const e of plan.ends) {
@@ -1762,7 +1770,7 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     if (!det.exists) tx.set(detRef, { stationId: van.stationId || null, createdAt: now, odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
     else if (Number(det.data()?.odometerKm ?? -1) <= odometerKm) tx.update(detRef, { odometerKm, odometerAt: today });
     // On the van for everyone at the station (km, levels, warning lights), and the km of whoever has it.
-    noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km: odometerKm, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, byName: who.name, from: 'tour' });
+    noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km: odometerKm, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, from: 'tour' });
     return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started };
   });
   return out;
@@ -1875,7 +1883,7 @@ export const readDocument = onCall(opts(180), async (req) => {
 type BuyStatus = 'open' | 'waiting' | 'refused' | 'done' | 'cancelled';
 interface BuyDoc {
   kind: BuyKind; status: BuyStatus; vehicleId: string; vehicleName: string; plate: string | null; stationId: string | null;
-  vanFuel: string | null; tankL: number | null; by: string; byName: string; role: Role; vanDriverName: string | null; notTheirVan: boolean;
+  vanFuel: string | null; tankL: number | null; by: string; byName: string; role: Role; notTheirVan: boolean;
   dash: { path: string; at: number; ai: ReturnType<typeof dashValues> | null; confidence: number | null; readable: boolean; issue: string | null; done: boolean };
   lastKm: number | null;
   card: { needed: boolean; expected: string | null; result: 'match' | 'mismatch' | 'unclear' | 'missing' | null; read: Omit<CardRead, 'confidence' | 'issue' | 'isCard'> | null; tries: number; why: string | null; expired: boolean | null; at: number | null;
@@ -1957,7 +1965,8 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   const doc: BuyDoc & Record<string, unknown> = {
     kind, status: 'open', vehicleId, vehicleName: vanName(van), plate: van.plate || null, stationId: van.stationId || null, model: modelOf(van),
     vanFuel: van.fuel || null, tankL: van.tankL ?? null, by: who.uid, byName: who.name, role: who.role,
-    vanDriverId: van.assignedTo?.driverId || null, vanDriverName: van.assignedTo?.driverName || null,
+    // Who has the van by account id only: the buyer reads this record (names.ts).
+    vanDriverId: van.assignedTo?.driverId || null,
     notTheirVan: who.role === 'driver' && !!van.assignedTo && van.assignedTo.driverId !== who.uid,
     dash, lastKm: typeof det?.odometerKm === 'number' ? det.odometerKm : null,
     card: { needed: !!expected, expected, result: null, read: null, tries: 0, why: null, expired: null, at: null },
@@ -2158,7 +2167,7 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const corrected = (Object.keys(vals) as (keyof typeof vals)[]).filter((k) => (k !== 'fuelPct' || p.kind === 'fuel') && (k !== 'litres' || p.kind === 'fuel') && (ai[k] ?? null) !== vals[k]);
   const flags: Flag[] = purchaseFlags({
     kind: p.kind, byName: p.byName, vanFuel: p.vanFuel, tankL: p.tankL, fuelPct: vals.fuelPct, odometerKm: vals.odometerKm, lastKm: p.lastKm,
-    litres: vals.litres, total: vals.total, createdAt: p.createdAt, vanDriverName: p.vanDriverName, notTheirVan: p.notTheirVan,
+    litres: vals.litres, total: vals.total, createdAt: p.createdAt, notTheirVan: p.notTheirVan,
     card: p.card.needed ? { needed: true, expected: p.card.expected, result: p.card.result, expired: p.card.expired, plate: p.card.read?.plate || null } : null,
     vanPlate: p.plate, decision: p.decision ? { allow: p.decision.allow, byName: p.decision.byName } : null, receipt: p.receipt.ai,
   });
@@ -2178,7 +2187,7 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
     if (van) noteDash(tx, vref, van, {
       km: vals.odometerKm, fuelPct: p.kind === 'fuel' ? afterRefuel(vals.fuelPct, vals.litres, p.tankL) : read?.fuelPct ?? null,
       batteryPct: read?.batteryPct ?? null, rangeKm: p.kind === 'fuel' ? null : read?.rangeKm ?? null, warnings: read?.warnings || [],
-      at: p.dash.at, by: p.by, byName: p.byName, from: p.kind,
+      at: p.dash.at, by: p.by, from: p.kind,
     });
   });
   const bosses = await bossesOf(who.orgId, p.stationId, p.kind, who.uid);
@@ -2317,7 +2326,7 @@ export const routineDone = onCallOnce('routineDone', { timeoutSeconds: 60, secre
       return { id: ref.id, todo: van.todo || [], van: { name: vanName(van), plate: van.plate || null, stationId: van.stationId || null }, again: true };
     }
     if (!applies(r, vehicleId, van)) throw fail('failed-precondition', 'This check isn\'t for this van.');
-    const last: Last = { at: now, by: who.uid, byName: who.name, ok, note: note || null };
+    const last: Last = { at: now, by: who.uid, ok, note: note || null };
     const routines = { ...(van.routines || {}), [routineId]: last };
     const todo = vanTodo(rules, vehicleId, { ...van, routines }, now);
     tx.set(ref, {
@@ -2368,9 +2377,11 @@ export async function sweepRoutines(now = Date.now()) {
           patch.driverAt = now; reminded++;
         }
         if (due.staff && !nag?.staffAt) {
+          // The van keeps who has it by account id only (names.ts): the name for the managers comes from the names.
+          const driverName = (await nameOf(o.ref, a.driverId)) || (a as { driverName?: string }).driverName || '';
           await tell(await bossesOf(o.id, v.stationId, 'wash', a.driverId), (lang) => ({
             title: tr(lang, '{check} not done: {van}', { check: routineName(lang, t), van: vanLabel(v) }),
-            body: tr(lang, '{name} has the van and hasn\'t done it yet.', { name: a.driverName }),
+            body: tr(lang, '{name} has the van and hasn\'t done it yet.', { name: driverName }),
             url: `/vehicle/${v.id}`, tag: `routine-${v.id}-${t.id}`,
           }));
           patch.staffAt = now; told++;
@@ -2809,6 +2820,18 @@ export const countVans = onDocumentWritten({ document: 'orgs/{orgId}/vehicles/{v
   const before = e.data?.before?.data(), after = e.data?.after?.data();
   const was = !!before && before.retired !== true, is = !!after && after.retired !== true;
   if (was !== is) await countFleet(e.params.orgId);
+});
+
+/**
+ * The names owners and fleet managers see on the history (orgs/{org}/names, names.ts), in step with the people: a
+ * new member or a changed name is written there. Never deleted, so people who left keep their name on the history.
+ */
+export const keepNames = onDocumentWritten({ document: 'orgs/{orgId}/members/{uid}', timeoutSeconds: 30, memory: '256MiB' }, async (e) => {
+  const name = e.data?.after?.data()?.name;
+  if (typeof name !== 'string' || !name.trim()) return;
+  const ref = db().doc(`orgs/${e.params.orgId}/${NAMES}/${e.params.uid}`);
+  if ((await ref.get()).data()?.name === name.trim()) return;
+  await ref.set({ name: name.trim(), at: Date.now() }, { merge: true });
 });
 function roomFor(plan: PlanId, addon: boolean, fleet: number) {
   const max = allowedVans(plan, addon);

@@ -215,7 +215,7 @@ export interface Flag { key: string; text: string; t: string; v: Record<string, 
 const flag = (key: string, t: string, v: Vars = {}): Flag => ({ key, ...said(t, v) });
 export interface FlagInput {
   kind: BuyKind; byName: string; vanFuel: string | null; tankL: number | null; fuelPct: number | null; odometerKm: number | null; lastKm: number | null;
-  litres: number | null; total: number | null; createdAt: number; vanDriverName: string | null; notTheirVan: boolean;
+  litres: number | null; total: number | null; createdAt: number; notTheirVan: boolean;
   card: { needed: boolean; expected: string | null; result: string | null; expired: boolean | null; plate: string | null } | null;
   vanPlate: string | null;
   decision: { allow: boolean; byName: string } | null;
@@ -226,7 +226,8 @@ const r0 = (n: number) => Math.round(n);
 
 export function purchaseFlags(p: FlagInput): Flag[] {
   const out: Flag[] = [];
-  if (p.notTheirVan) out.push(p.vanDriverName ? flag('van', '{driver} has this van, not {name}.', { driver: p.vanDriverName, name: p.byName }) : flag('van', '{name} doesn\'t have this van.', { name: p.byName }));
+  // Not who has it: the buyer reads their refuel, and drivers don't see other drivers' names (names.ts).
+  if (p.notTheirVan) out.push(flag('van', '{name} doesn\'t have this van.', { name: p.byName }));
   const c = p.card;
   if (c?.needed && c.result && c.result !== 'match') {
     const by = p.decision?.allow ? p.decision.byName : null;

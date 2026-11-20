@@ -9,6 +9,7 @@ import { UploadRow } from '@/components/uploads';
 import { newId, prepare } from '@/lib/images';
 import { pendingChange, sendCall, useOutbox } from '@/lib/outbox';
 import { N_, t, tp } from '@/lib/i18n';
+import { useHolder, useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import type { Routine, RoutineHow, RoutineTodo, Vehicle } from '@/lib/types';
@@ -69,13 +70,14 @@ function useVansText() {
 export function DueChecks({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
+  const holder = useHolder();
   const todo = dueOn(v);
   const mine = v.assignedTo?.driverId === s.user?.uid;
   if (!todo.length || (!mine && !s.runs(v.stationId)) || s.mode !== 'firebase') return null;
   return (
     <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper, padding: 14, gap: 10 }}>
       <T v="h3">{tp(todo.length, '{n} check to do', '{n} checks to do')}</T>
-      <T v="small">{mine ? t('Set by your fleet manager. Tick each one off when you\'ve checked it.') : t('{name} has the van and does these.', { name: v.assignedTo!.driverName })}</T>
+      <T v="small">{mine ? t('Set by your fleet manager. Tick each one off when you\'ve checked it.') : t('{name} has the van and does these.', { name: holder(v) })}</T>
       {todo.map((x, i) => <DueCheck key={x.id} v={v} x={x} first={i === 0} />)}
     </View>
   );
@@ -159,6 +161,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
 export function VanRoutines({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
+  const whoDid = useWhoDid();
   const rules = s.routines.filter((r) => appliesTo(r, v)).sort((a, b) => routineName(a).localeCompare(routineName(b)));
   if (!rules.length && !s.runs(v.stationId)) return null;
   return (
@@ -168,6 +171,8 @@ export function VanRoutines({ v }: { v: Vehicle }) {
         <Card style={{ gap: 0, paddingVertical: 6 }}>
           {rules.map((r, i) => {
             const last = v.routines?.[r.id];
+            // Who did it: drivers see only their own (lib/names.ts).
+            const by = last ? whoDid(last.by, last.byName) : null;
             const due = dueOn(v).some((x) => x.id === r.id);
             return (
               <View key={r.id} style={{ paddingVertical: 8, gap: 2, borderTopWidth: i ? 1 : 0, borderColor: c.rule }}>
@@ -177,7 +182,8 @@ export function VanRoutines({ v }: { v: Vehicle }) {
                 </Row>
                 <T v="small">{howText(r)}</T>
                 <T v="small" color={last && !last.ok ? c.alert : undefined}>{last
-                  ? (last.ok ? t('Last done {when}, {name}: fine.', { when: fmtWhen(last.at), name: last.byName }) : t('Last done {when}, {name}: {note}', { when: fmtWhen(last.at), name: last.byName, note: last.note || '' }))
+                  ? (by ? (last.ok ? t('Last done {when}, {name}: fine.', { when: fmtWhen(last.at), name: by }) : t('Last done {when}, {name}: {note}', { when: fmtWhen(last.at), name: by, note: last.note || '' }))
+                    : last.ok ? t('Last done {when}: fine.', { when: fmtWhen(last.at) }) : t('Last done {when}: {note}', { when: fmtWhen(last.at), note: last.note || '' }))
                   : t('Not done yet.')}</T>
               </View>
             );

@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 import { Button, F, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { watchHistory, watchMembers } from '@/lib/people';
 import { useSession } from '@/lib/session';
+import { useHolder, useNameOf } from '@/lib/names';
 import { QUEUED, sendCall } from '@/lib/outbox';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
@@ -69,6 +70,7 @@ export function useHistory(by: { vehicleId?: string; driverId?: string }) {
 /** One line of history: who had the van (or which van the person had), from when to when, and why it ended. */
 export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' | 'van'; first: boolean }) {
   const s = useSession();
+  const nameOf = useNameOf();
   const c = useColors();
   const open = a.end == null;
   const end = a.end ?? Date.now();
@@ -85,6 +87,9 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
   const noPickup = needsPickup(a, s.videos, s.walks);
   const out = stillOut(a, s.stations);
   const van = s.vehicles.find((x) => x.id === a.vehicleId);
+  // Who ended it: kept on the record, except a takeover by another driver, which the driver who had it reads
+  // (lib/names.ts): owners and managers see that name from the company's names.
+  const endedName = a.endedByName || (s.staff ? nameOf(a.endedBy) : null);
   return (
     <Pressable disabled={!canOpen} accessibilityRole={canOpen ? 'button' : undefined}
       onPress={() => router.push(show === 'driver' ? `/person/${a.driverId}` : `/vehicle/${a.vehicleId}`)}
@@ -98,7 +103,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       {kmLine(a) ? <T v="small" style={{ fontFamily: F.semi }} color={c.ink}>{kmLine(a)}</T> : null}
       <T v="small">
         {[a.startedBy === a.driverId && !a.pickupRequested ? t('Picked up by the driver') : t('Given by {name}', { name: a.startedByName }),
-          !open && a.endReason ? (a.endedByName ? t('{reason} by {name}', { reason: t(END_REASON[a.endReason] || a.endReason), name: a.endedByName }) : t(END_REASON[a.endReason] || a.endReason)) : '',
+          !open && a.endReason ? (endedName ? t('{reason} by {name}', { reason: t(END_REASON[a.endReason] || a.endReason), name: endedName }) : t(END_REASON[a.endReason] || a.endReason)) : '',
           s.stations.length > 1 && s.staff ? s.stationName(a.stationId) : ''].filter(Boolean).join('. ')}
       </T>
       {m.start.walkId || m.end.walkId || m.start.videoId || m.end.videoId ? (
@@ -110,7 +115,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
         </Row>
       ) : null}
       {missing ? <T v="small" color={c.alert}>{a.endReason === 'taken over'
-        ? (a.endedByName ? t('No drop-off video or photos: {driver} didn\'t drop it off, {next} took it over.', { driver: a.driverName, next: a.endedByName })
+        ? (endedName ? t('No drop-off video or photos: {driver} didn\'t drop it off, {next} took it over.', { driver: a.driverName, next: endedName })
           : t('No drop-off video or photos: {driver} didn\'t drop it off, the next driver took it over.', { driver: a.driverName }))
         : t('No drop-off video or photos.')}</T> : null}
       {out ? <T v="small" color={c.alert}>{t('Not dropped off after {time}.', { time: dur(Date.now() - a.start) })}</T> : null}
@@ -205,6 +210,7 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
 /** The other direction: owners and managers give a person a van of their station. */
 export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
   const s = useSession();
+  const holder = useHolder();
   const c = useColors();
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -233,7 +239,7 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== v.id ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <T v="medium" numberOfLines={1}>{vanName(v)}{vanAlias(v) ? `, ${vanAlias(v)}` : ''}</T>
-              <T v="small" numberOfLines={1}>{current ? t('{name} has it now', { name: m.name }) : v.assignedTo ? t('{name} has it now', { name: v.assignedTo.driverName }) : t('Free')}</T>
+              <T v="small" numberOfLines={1}>{current ? t('{name} has it now', { name: m.name }) : v.assignedTo ? t('{name} has it now', { name: holder(v) }) : t('Free')}</T>
             </View>
             {busy === v.id ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={v.assignedTo ? 'amber' : 'good'} text={v.assignedTo ? t('Take over') : t('Free')} /> : null}
           </Pressable>

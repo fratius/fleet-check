@@ -308,6 +308,10 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/haiku-default.cjs
+      - name: Take other drivers' names out of what drivers read, keep them for owners and managers (once per company)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/driver-names.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

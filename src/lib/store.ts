@@ -181,7 +181,10 @@ export interface DashRead {
   issue: string | null;
   /** What saving it will do: start a tour, end one (whose), or just record the odometer. */
   will: 'start' | 'end' | 'end-start' | 'none';
+  /** Whose tour it ends: owners and the station's managers only. */
   tourDriver: string | null;
+  /** It ends another driver's tour (drivers get this, not the name). Missing from servers before 2026-11-20. */
+  endsOther?: boolean;
   /** It ends the person's own tour with this photo (so the refuelling question applies). */
   endsMine: boolean;
   last: { km: number; at: number; byName: string } | null;
@@ -316,7 +319,7 @@ export const ai = {
   moveVan: call<{ orgId: string; vehicleId: string; stationId: string }, { ok: boolean }>('moveVan', 30000),
   removePerson: call<{ orgId: string; uid: string }, { ok: boolean }>('removePerson', 30000),
   setSelfAssign: call<{ orgId: string; stationId: string; on: boolean }, { ok: boolean }>('setSelfAssign', 30000),
-  pickUpVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { assignmentId: string; unchanged?: boolean; tookOverFrom?: string | null }>('pickUpVan', 130000),
+  pickUpVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { assignmentId: string; unchanged?: boolean; tookOver?: boolean }>('pickUpVan', 130000),
   dropOffVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { ok: boolean }>('dropOffVan', 130000),
   addHandoverVideo: call<{ orgId: string; assignmentId: string; kind: 'pickup' | 'dropoff'; videoId: string }, { ok: boolean }>('addHandoverVideo', 130000),
   addHandoverPhotos: call<{ orgId: string; assignmentId: string; kind: 'pickup' | 'dropoff'; walkId: string }, { ok: boolean }>('addHandoverPhotos', 70000),

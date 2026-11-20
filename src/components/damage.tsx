@@ -9,6 +9,7 @@ import { cropRegion, likelySame, whoHadIt, type Damage } from '@/lib/damage';
 import { fwd, loc, t, tp } from '@/lib/i18n';
 import { photoUrl } from '@/lib/images';
 import { addDamageNote, watchVanRecords } from '@/lib/people';
+import { useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import type { Assignment, Check, DamageNote, Photo, Walkaround } from '@/lib/types';
@@ -145,6 +146,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
 }) {
   const c = useColors();
   const s = useSession();
+  const whoDid = useWhoDid();
   const who = useWho(d, history, vehicleId);
   const [w, setW] = useState(0);
   return (
@@ -198,7 +200,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
       </Section>
 
       <Section label={t('Found and approved')}>
-        <T v="small">{d.foundBy ? t('Found {when} in a check by {name}.', { when: fmtWhen(d.foundAt), name: d.foundBy }) : t('Found {when}.', { when: fmtWhen(d.foundAt) })}{' '}
+        <T v="small">{whoDid(d.foundById, d.foundBy) ? t('Found {when} in a check by {name}.', { when: fmtWhen(d.foundAt), name: whoDid(d.foundById, d.foundBy)! }) : t('Found {when}.', { when: fmtWhen(d.foundAt) })}{' '}
           {d.approvedAt ? t('Approved by {name}, {when}.', { name: d.approvedBy || t('the fleet manager'), when: fmtWhen(d.approvedAt) }) : t('Approved by {name}.', { name: d.approvedBy || t('the fleet manager') })}</T>
         {d.note ? <T v="small">{t('Manager\'s note: {note}', { note: d.note })}</T> : null}
         {d.aiReason ? <T v="small">{t('AI: {reason}', { reason: d.aiReason })}</T> : null}

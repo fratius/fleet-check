@@ -225,3 +225,8 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 14.4 Tapping a button twice, or in two tabs at once, does the thing once.
 - SHOULD 14.5 Everything works on a phone-sized screen (390 × 844) without sideways scrolling, and on a desktop.
 - SHOULD 14.6 Every action that takes a while shows that it's working, and the result.
+- MUST 14.7 **Drivers never see another driver's name**, anywhere: not on the vans of their station (who has it, who
+  took the last dashboard photo, who did a check), not on damage checks, walk-arounds or damage, not when taking over
+  a van or ending someone's tour, not on their own history or refuels. They see "You" for their own and "Another
+  driver" (or no name) for anyone else. Owners and the station's managers still see every name, also of people who
+  left. Managers' and owners' names on a driver's own things (who gave the van, who refused a refuel) are fine.

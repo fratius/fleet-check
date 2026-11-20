@@ -11,7 +11,7 @@
  *   That is who had the van, not proof of who caused it.
  */
 import { CHECK_MONTHS, addMonths, deadlines, hasLeft, lastCheck, daysTo, type Deadline, type DueState } from './fleet';
-import type { Assignment, DamageLog, DriverRecord, Incident, Member, Station, Tour, Vehicle, VehicleCosts, VehicleDetails, Video, Walkaround } from './types';
+import type { Assignment, DamageLog, DriverRecord, Incident, Member, NameRow, Station, Tour, Vehicle, VehicleCosts, VehicleDetails, Video, Walkaround } from './types';
 import { roleOf } from './types';
 import { needsPickup, noDropoff } from './videos';
 
@@ -37,6 +37,8 @@ export interface Inputs {
   walks: Walkaround[];
   stations: Station[];
   months?: number;
+  /** The company's names (session `names`): damage lines keep only who had the van, not their name. */
+  names?: NameRow[];
 }
 
 /** What falls in the period: tours started in it, van history overlapping it, damage found and incidents in it. */
@@ -135,8 +137,9 @@ export function driverRows(x: Inputs): DriverRow[] {
     const r = roleOf(m);
     if (r === 'driver' || r === 'manager') rows.set(m.uid, blank(m.uid, m.name, m.stationIds?.[0] || null, r));
   }
-  const ensure = (id: string, name: string, stationId: string | null) => {
-    if (!rows.has(id)) rows.set(id, blank(id, name, stationId, x.members ? 'former' : 'driver'));
+  const known = new Map((x.names || []).map((n) => [n.id, n.name]));
+  const ensure = (id: string, name: string | undefined, stationId: string | null) => {
+    if (!rows.has(id)) rows.set(id, blank(id, known.get(id) || name || '', stationId, x.members ? 'former' : 'driver'));
     return rows.get(id)!;
   };
   const days = new Map<string, Set<string>>(), vans = new Map<string, Set<string>>(), hours = new Map<string, number>(), hourTours = new Map<string, number>();
