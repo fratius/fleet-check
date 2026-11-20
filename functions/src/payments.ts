@@ -397,8 +397,20 @@ export function planOf(s: Pick<Sub, 'items'>): { plan: PlanId | null; interval: 
   return { plan, interval, addon };
 }
 
+/**
+ * When the company's plan started, for the early-bird price: the subscription's creation, or the sign-up of a trial
+ * without a card that came before it (metadata.since, set by billingStart), whichever is earlier.
+ */
+export function startOf(s: Pick<Sub, 'created' | 'metadata'>): number {
+  const since = Number(s.metadata?.since);
+  return Number.isFinite(since) && since > 0 ? Math.min(since, s.created) : s.created;
+}
+
 /** orgs/{org}.billing from Stripe's subscription (prev: what was there, for the sign-up source). */
 export function billingOf(s: Sub, prev: Partial<Billing> | undefined, now = Date.now()): Billing {
+  // A trial without a card (a sign-up link that asked for none) stays that trial until the card is on file: a card
+  // form left half-way, or its subscription expiring unpaid, must not stop the company before its free days end.
+  if (prev?.cardLater && typeof prev.status === 'string' && !s.card) return { ...(prev as Billing), updatedAt: now };
   const { plan, interval, addon } = planOf(s);
   // A trial without a card is not a trial yet: the owner still has to add one (or Stripe ends it at the trial's end).
   let status: BillingStatus;
@@ -422,7 +434,7 @@ export function billingOf(s: Sub, prev: Partial<Billing> | undefined, now = Date
     periodEnd: s.periodEnd,
     cancelAt: s.cancelAt,
     offer: s.metadata.offer || prev?.offer || null,
-    early: earlyBird(s.created),
+    early: earlyBird(startOf(s)),
     net: s.items.some((i) => readKey(i.key)) && s.items.every((i) => typeof i.cents === 'number') ? s.items.reduce((n, i) => n + (i.cents || 0), 0) : null,
     testMode: !s.live,
     updatedAt: now,
@@ -440,6 +452,12 @@ export interface Offer {
   interval: Interval | null;
   /** Free days before the first payment (0: pay at sign-up). */
   trialDays: number;
+  /**
+   * A card at sign-up (true, and for links made before this existed). false: they start the free days without a card
+   * (billingTrial in index.ts), are reminded to add one, and the company stops when the days end without one
+   * (product owner, 2026-11-20). Needs free days.
+   */
+  requireCard?: boolean;
   /** A discount, in percent or in euro cents per invoice; for how many months (null: for as long as they stay). */
   percentOff: number | null;
   amountOff: number | null;
@@ -467,16 +485,24 @@ export function offerCoupon(o: Pick<Offer, 'code' | 'percentOff' | 'amountOff' |
   const h = createHash('sha256').update(JSON.stringify([o.percentOff, o.amountOff, months])).digest('hex').slice(0, 8);
   return { id: `fratius_offer_${o.code.toLowerCase()}_${h}`, months };
 }
-/** Why a sign-up link can't be used (null: it can). `held`: this company already took one of its uses. */
-export function offerUsable(o: Offer | undefined, now = Date.now(), held = false): string | null {
+/**
+ * Why a sign-up link can't be used (null: it can). `held`: this company already took one of its uses. `kept`: the
+ * company started its free days without a card with this link, so the link's terms stay its own when it adds the
+ * card, also after the link ended.
+ */
+export function offerUsable(o: Offer | undefined, now = Date.now(), held = false, kept = false): string | null {
   if (!o) return N_('This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
+  if (kept) return null;
   if (o.ended || (o.validUntil && now > o.validUntil)) return N_('This sign-up link has ended. Write to info@fratius.com for a new one.');
   if (!held && o.uses >= o.maxUses) return N_('This sign-up link has already been used. Write to info@fratius.com for a new one.');
   return null;
 }
 /** What the sign-up page may show about an offer (not the note, not who made it). */
 export function offerPublic(o: Offer) {
-  return { code: o.code, plan: o.plan, interval: o.interval, trialDays: o.trialDays, percentOff: o.percentOff, amountOff: o.amountOff, months: o.months, validUntil: o.validUntil };
+  return {
+    code: o.code, plan: o.plan, interval: o.interval, trialDays: o.trialDays, percentOff: o.percentOff, amountOff: o.amountOff, months: o.months, validUntil: o.validUntil,
+    requireCard: o.requireCard !== false,
+  };
 }
 
 /** VAT ID types Stripe knows for the countries DSPs are in; others are left out. */
@@ -512,6 +538,29 @@ export function day(t: number, lang: string) {
   try { return new Date(t).toLocaleDateString(loc(lang), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }); } catch { return new Date(t).toISOString().slice(0, 10); }
 }
 
+const rtlOf = (lang: string) => lang === 'ar' || lang === 'fa';
+const termsHtml = (terms: string, links: string[][], version: string | null) => `<p style="margin:0 0 6px">${esc(terms)}</p>
+<p style="margin:0 0 20px">${links.map(([u, l]) => `<a href="${esc(u)}" style="color:#000">${esc(l)}</a>`).join(' · ')}${version ? ` <span style="color:#565C66">(${esc(version)})</span>` : ''}</p>`;
+/** The frame of Fratius' emails: the yellow header, the text, the footer with the Impressum. */
+function frame(lang: string, subject: string, inner: string): string {
+  const font = "font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',Arial,sans-serif";
+  const tagline = tr(lang, 'Fleet management for delivery partners');
+  return `<!doctype html><html lang="${esc(lang)}" dir="${rtlOf(lang) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:24px 12px;background:#ECEEF1;color:#000;${font}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:2px solid #000;border-radius:4px">
+<tr><td style="background:#E2FF1C;border-bottom:2px solid #000;padding:16px 24px;font-size:24px;font-weight:700;letter-spacing:.01em" translate="no">Fratius</td></tr>
+<tr><td style="padding:24px;font-size:16px;line-height:1.55">
+${inner}
+</td></tr>
+<tr><td style="border-top:2px solid #000;padding:14px 24px;font-size:13px;line-height:1.5;color:#565C66">
+<span translate="no">Fratius</span> · ${esc(tagline)}<br><a href="https://fratius.com" style="color:#000">fratius.com</a> · <a href="mailto:info@fratius.com" style="color:#000">info@fratius.com</a> · <a href="https://fratius.com/impressum" style="color:#000">Impressum</a>
+</td></tr></table>
+</td></tr></table>
+</body></html>`;
+}
+const footerText = (lang: string) => ['--', `Fratius · ${tr(lang, 'Fleet management for delivery partners')}`, 'https://fratius.com · info@fratius.com · https://fratius.com/impressum'];
+
 export function orderMail(o: { lang: string; name: string; company: string; b: Billing; netCents: number; firstCents: number; appUrl: string; termsVersion: string | null }) {
   const { lang, b } = o;
   const plan = b.plan ? b.plan[0].toUpperCase() + b.plan.slice(1) : '';
@@ -537,35 +586,70 @@ export function orderMail(o: { lang: string; name: string; company: string; b: B
   const links = [['https://fratius.com/agb', 'AGB'], ['https://fratius.com/avv', 'AVV'], ['https://fratius.com/datenschutz', tr(lang, 'Privacy policy')]];
   const invoices = tr(lang, 'Invoices come from Stripe, our payment provider, by email.');
   const questions = tr(lang, 'Questions? Just reply to this email.');
-  const tagline = tr(lang, 'Fleet management for delivery partners');
   const text = [
     hello, '', intro, '', ...rows.map((r) => `- ${r}`), '', manage, `${o.appUrl}`, '', terms,
-    ...links.map(([u, l]) => `${l}: ${u}`), ...(o.termsVersion ? [`(${o.termsVersion})`] : []), '', invoices, questions, '', '--',
-    `Fratius · ${tagline}`, 'https://fratius.com · info@fratius.com · https://fratius.com/impressum',
+    ...links.map(([u, l]) => `${l}: ${u}`), ...(o.termsVersion ? [`(${o.termsVersion})`] : []), '', invoices, questions, '', ...footerText(lang),
   ].join('\n');
-  const rtl = lang === 'ar' || lang === 'fa';
-  const font = "font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',Arial,sans-serif";
-  const html = `<!doctype html><html lang="${esc(lang)}" dir="${rtl ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:24px 12px;background:#ECEEF1;color:#000;${font}">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:2px solid #000;border-radius:4px">
-<tr><td style="background:#E2FF1C;border-bottom:2px solid #000;padding:16px 24px;font-size:24px;font-weight:700;letter-spacing:.01em" translate="no">Fratius</td></tr>
-<tr><td style="padding:24px;font-size:16px;line-height:1.55">
-<p style="margin:0 0 12px">${esc(hello)}</p>
+  const html = frame(lang, subject, `<p style="margin:0 0 12px">${esc(hello)}</p>
 <p style="margin:0 0 12px">${esc(intro)}</p>
-<ul style="margin:0 0 20px;padding-${rtl ? 'right' : 'left'}:20px">${rows.map((x) => `<li style="margin:0 0 4px">${esc(x)}</li>`).join('')}</ul>
+<ul style="margin:0 0 20px;padding-${rtlOf(lang) ? 'right' : 'left'}:20px">${rows.map((x) => `<li style="margin:0 0 4px">${esc(x)}</li>`).join('')}</ul>
 <p style="margin:0 0 6px">${esc(manage)}</p>
 <p style="margin:0 0 20px"><a href="${esc(o.appUrl)}" style="color:#000;font-weight:600">${esc(o.appUrl.replace(/^https:\/\//, ''))}</a></p>
-<p style="margin:0 0 6px">${esc(terms)}</p>
-<p style="margin:0 0 20px">${links.map(([u, l]) => `<a href="${esc(u)}" style="color:#000">${esc(l)}</a>`).join(' · ')}${o.termsVersion ? ` <span style="color:#565C66">(${esc(o.termsVersion)})</span>` : ''}</p>
+${termsHtml(terms, links, o.termsVersion)}
 <p style="margin:0 0 6px">${esc(invoices)}</p>
-<p style="margin:0">${esc(questions)}</p>
-</td></tr>
-<tr><td style="border-top:2px solid #000;padding:14px 24px;font-size:13px;line-height:1.5;color:#565C66">
-<span translate="no">Fratius</span> · ${esc(tagline)}<br><a href="https://fratius.com" style="color:#000">fratius.com</a> · <a href="mailto:info@fratius.com" style="color:#000">info@fratius.com</a> · <a href="https://fratius.com/impressum" style="color:#000">Impressum</a>
-</td></tr></table>
-</td></tr></table>
-</body></html>`;
+<p style="margin:0">${esc(questions)}</p>`);
+  return { subject, text, html };
+}
+
+/**
+ * The owner of a company in its free days without a card (Billing.cardLater): at sign-up, what they signed up for and
+ * that a card keeps it going after; `soon`, 7 days and 1 day before the end; `ended`, when the days are over and the
+ * company stopped. The add-card step is on the plan page of the web app (`planUrl`).
+ */
+export function trialMail(o: { lang: string; name: string; company: string; b: Billing; kind: 'start' | 'soon' | 'ended'; netCents: number; planUrl: string; termsVersion: string | null }) {
+  const { lang, b } = o;
+  const date = day(b.trialEnd, lang);
+  const hello = tr(lang, 'Hi {name},', { name: o.name });
+  const questions = tr(lang, 'Questions? Just reply to this email.');
+  let subject: string, lines: string[], rows: string[] = [];
+  let links: string[][] = [];
+  const terms = tr(lang, 'Our terms (AGB) and the data processing agreement (AVV) you accepted:');
+  if (o.kind === 'start') {
+    const plan = b.plan ? b.plan[0].toUpperCase() + b.plan.slice(1) : '';
+    const base = PLAN_VANS[(b.plan || '') as PlanId];
+    const vans = base == null ? tr(lang, 'unlimited vans') : tr(lang, 'up to {n} vans', { n: base });
+    const per = b.interval === 'year' ? tr(lang, '{price} a year, plus VAT', { price: euro(o.netCents, lang) }) : tr(lang, '{price} a month, plus VAT', { price: euro(o.netCents, lang) });
+    subject = tr(lang, 'Your free Fratius trial for {company}', { company: o.company });
+    rows = [
+      tr(lang, 'Plan: {plan}, {vans}, unlimited drivers and stations', { plan, vans }),
+      tr(lang, 'Price: {price}', { price: per }),
+      ...(b.early && b.plan && hasEarly(b.plan as PlanId) ? [tr(lang, 'This is the early-bird price. It stays yours for as long as your plan runs.')] : []),
+      tr(lang, 'Free until {date}, with no card. Nothing is charged without a card.', { date }),
+    ];
+    lines = [tr(lang, 'Thanks for signing up {company}. This is your free trial:', { company: o.company })];
+    links = [['https://fratius.com/agb', 'AGB'], ['https://fratius.com/avv', 'AVV'], ['https://fratius.com/datenschutz', tr(lang, 'Privacy policy')]];
+  } else if (o.kind === 'soon') {
+    subject = tr(lang, 'Your free trial ends soon');
+    lines = [tr(lang, 'The free trial of {company} ends on {date}. Add a card before then to keep working with your vans, drivers and history.', { company: o.company, date })];
+  } else {
+    subject = tr(lang, 'The free trial has ended');
+    lines = [tr(lang, 'The free trial of {company} ended on {date}.', { company: o.company, date }), tr(lang, 'Your vans, drivers and history are kept. Choose a plan to go on working with them.')];
+  }
+  const how = o.kind === 'start'
+    ? tr(lang, 'To keep going after {date}, add a card before then: Account, then Plan and billing, in the web app.', { date })
+    : tr(lang, 'Add the card here, or in the web app: Account, then Plan and billing.');
+  const text = [
+    hello, '', ...lines, ...(rows.length ? ['', ...rows.map((r) => `- ${r}`)] : []), '', how, o.planUrl, '',
+    ...(links.length ? [terms, ...links.map(([u, l]) => `${l}: ${u}`), ...(o.termsVersion ? [`(${o.termsVersion})`] : []), ''] : []),
+    questions, '', ...footerText(lang),
+  ].join('\n');
+  const html = frame(lang, subject, `<p style="margin:0 0 12px">${esc(hello)}</p>
+${lines.map((x) => `<p style="margin:0 0 12px">${esc(x)}</p>`).join('\n')}
+${rows.length ? `<ul style="margin:0 0 20px;padding-${rtlOf(lang) ? 'right' : 'left'}:20px">${rows.map((x) => `<li style="margin:0 0 4px">${esc(x)}</li>`).join('')}</ul>` : ''}
+<p style="margin:0 0 6px">${esc(how)}</p>
+<p style="margin:0 0 20px"><a href="${esc(o.planUrl)}" style="color:#000;font-weight:600">${esc(o.planUrl.replace(/^https:\/\//, ''))}</a></p>
+${links.length ? termsHtml(terms, links, o.termsVersion) : ''}
+<p style="margin:0">${esc(questions)}</p>`);
   return { subject, text, html };
 }
 

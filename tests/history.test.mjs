@@ -2122,6 +2122,134 @@ test('payments: a card at sign-up (trial, yearly, a custom link), plan changes, 
   }
 });
 
+test('a sign-up link without a card: free days with no card, reminders, the card later on the link\'s terms, or the company stops', async () => {
+  // Product owner, 2026-11-20: "Require credit card" off on a sign-up link. Payments on with the fake Stripe.
+  await adminDb().doc('platform/stripe').set({ mode: 'fake', publishableKey: 'pk_test_fake', tax: { mode: 'rate', rateId: 'txr_fake' } });
+  const address = { name: 'Kara Kurier GmbH', address: { line1: 'Ringstr. 2', city: 'München', postal_code: '80331', country: 'DE' } };
+  const terms = '2026-11-12';
+  const early = Date.now() < Date.UTC(2027, 2, 31, 22);
+  const pd = async (orgId) => (await adminDb().doc(`payments/${orgId}`).get()).data() || {};
+  const billing = async (orgId) => (await adminDb().doc(`orgs/${orgId}`).get()).data().billing;
+  try {
+    const cr = await appCreator('Nora Nocard');
+    // Only the app creator makes links; a link without a card needs free days; a card unless it's unticked.
+    await fails(S.own.call('saveOffer', { note: 'x', trialDays: 14, requireCard: false }), 'permission-denied');
+    assert.match((await fails(cr.call('saveOffer', { note: 'x', trialDays: 0, requireCard: false }), 'invalid-argument')).message, /needs free days/);
+    const off = await cr.call('saveOffer', { note: 'Kara Kurier, 40 vans', plan: 'pro', interval: 'month', trialDays: 14, percentOff: 20, months: 6, maxUses: 2, requireCard: false, rid: `rnc${run}a` });
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().requireCard, false);
+    const withCard = await cr.call('saveOffer', { note: 'with a card', plan: 'basic', trialDays: 30, maxUses: 1, rid: `rnc${run}b` });
+    assert.equal((await adminDb().doc(`offers/${withCard.code}`).get()).data().requireCard, true, 'a card at sign-up unless unticked');
+    const other = await cr.call('saveOffer', { note: 'another one', trialDays: 30, maxUses: 1, requireCard: false, rid: `rnc${run}c` });
+    const kara = await person('Kara Kurier');
+    assert.equal((await kara.call('billingConfig', { offer: off.code })).offer.requireCard, false, 'the sign-up page knows');
+    assert.equal((await kara.call('billingConfig', { offer: withCard.code })).offer.requireCard, true);
+
+    // 1. Sign-up: the account and the company, then the free days without a card. Nothing in Stripe yet.
+    const k = await kara.call('createCompany', { company: 'Kara Kurier GmbH', station: 'DKK1', name: 'Kara Kurier', source: 'website', plan: 'basic', terms, payments: true });
+    assert.equal((await billing(k.orgId)).status, 'incomplete');
+    // A link that asks for a card doesn't start without one; only the owner starts.
+    assert.match((await fails(kara.call('billingTrial', { orgId: k.orgId, offer: withCard.code, plan: 'basic', interval: 'month' }), 'failed-precondition')).message, /starts with a card/);
+    assert.equal((await adminDb().doc(`offers/${withCard.code}`).get()).data().uses, 0);
+    await fails(S.mgr.call('billingTrial', { orgId: S.org, offer: off.code, plan: 'basic', interval: 'month' }), 'permission-denied');
+    const kt = await kara.call('billingTrial', { orgId: k.orgId, offer: off.code, plan: 'basic', interval: 'month', rid: `rnc${run}k` });
+    assert.equal(kt.billing.status, 'trialing');
+    assert.equal(kt.billing.cardLater, true);
+    assert.equal(kt.billing.card, false);
+    assert.equal(kt.billing.plan, 'pro', 'the link\'s plan, not the one picked');
+    assert.equal(kt.billing.vans, 150);
+    assert.equal(kt.billing.offer, off.code);
+    assert.ok(Math.abs(kt.trialEnd - (Date.now() + 14 * 86400_000)) < 3_700_000, 'the link\'s 14 free days');
+    assert.equal((await kara.call('setupStations', { orgId: k.orgId })).done, false, 'the company works without a card');
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 1);
+    assert.equal((await pd(k.orgId)).subscriptionId ?? null, null, 'nothing in Stripe');
+    // Asked again: the same free days. Another link: no second round of free days.
+    assert.equal((await kara.call('billingTrial', { orgId: k.orgId, offer: off.code, plan: 'basic', interval: 'month' })).trialEnd, kt.trialEnd);
+    assert.match((await fails(kara.call('billingTrial', { orgId: k.orgId, offer: other.code, plan: 'basic', interval: 'month' }), 'failed-precondition')).message, /started already/);
+    assert.equal((await adminDb().doc(`offers/${other.code}`).get()).data().uses, 0);
+    // The owner can't write the billing.
+    await fails(updateDoc(doc(kara.db, 'orgs', k.orgId), { 'billing.trialEnd': Date.now() + 365 * 86400_000 }), 'permission-denied');
+
+    // 2. Reminders to add a card: 7 days before, the day before, each once (only the app creator runs it by hand).
+    await fails(kara.call('cardLaterSweepNow', { now: Date.now() }), 'permission-denied');
+    await cr.call('cardLaterSweepNow', { now: kt.trialEnd - 8 * 86400_000 });
+    assert.equal((await pd(k.orgId)).cardNotes, undefined, 'nothing yet a week and more before');
+    await cr.call('cardLaterSweepNow', { now: kt.trialEnd - 6.5 * 86400_000 });
+    const d7 = (await pd(k.orgId)).cardNotes.d7;
+    assert.ok(d7);
+    await cr.call('cardLaterSweepNow', { now: kt.trialEnd - 6 * 86400_000 });
+    assert.equal((await pd(k.orgId)).cardNotes.d7, d7, 'once');
+    await cr.call('cardLaterSweepNow', { now: kt.trialEnd - 20 * 3600_000 });
+    assert.ok((await pd(k.orgId)).cardNotes.d1);
+    assert.equal((await pd(k.orgId)).cardNotes.ended, undefined);
+
+    // 3. Kara adds the card during the free days: for what is left of them (not 14 new ones), on the link's terms.
+    const ks = await kara.call('billingStart', { orgId: k.orgId, plan: 'basic', interval: 'month', offer: off.code, address });
+    assert.equal(ks.kind, 'setup');
+    assert.equal(ks.trialEnd, kt.trialEnd);
+    assert.equal(ks.firstNet, early ? 9600 : 24000, 'Pro with 20 % off');
+    const kpd = await pd(k.orgId);
+    const ksub = (await adminDb().doc(`fakeStripe/${kpd.subscriptionId}`).get()).data();
+    assert.equal(ksub.metadata.since, String(kt.billing.trialStart), 'the plan counts from the sign-up, for the early-bird price');
+    // Left half-way (or Stripe tells about the subscription without a card): still the free days, still working.
+    await stripeEvent('customer.subscription.updated', { object: 'subscription', id: kpd.subscriptionId, status: 'trialing' });
+    let kb = await billing(k.orgId);
+    assert.equal(kb.status, 'trialing');
+    assert.equal(kb.cardLater, true);
+    assert.equal((await kara.call('setupStations', { orgId: k.orgId })).done, false);
+    await adminDb().doc(`fakeStripe/${kpd.subscriptionId}`).update({ confirmed: true });
+    const kc = await kara.call('billingConfirm', { orgId: k.orgId, setupIntent: ks.clientSecret.split('_secret_')[0] });
+    assert.equal(kc.billing.status, 'trialing');
+    assert.equal(kc.billing.card, true);
+    assert.equal(kc.billing.cardLater, undefined, 'a card on file: an ordinary trial now');
+    assert.equal(kc.billing.trialEnd, kt.trialEnd);
+    assert.equal(kc.billing.offer, off.code);
+    assert.ok((await pd(k.orgId)).confirmedAt);
+
+    // 4. Lou signs up with the link's second use and lets the free days run out.
+    const lou = await person('Lou Later');
+    const l = await lou.call('createCompany', { company: 'Lou Later GmbH', station: 'DLL1', name: 'Lou Later', source: 'website', plan: 'basic', terms, payments: true });
+    const lt = await lou.call('billingTrial', { orgId: l.orgId, offer: off.code, plan: 'basic', interval: 'month' });
+    assert.equal(lt.billing.cardLater, true);
+    assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 2);
+    // A third company can't: the link is used up.
+    const max = await person('Max Third');
+    const m = await max.call('createCompany', { company: 'Third GmbH', station: 'DTH1', name: 'Max Third', source: 'website', plan: 'basic', terms, payments: true });
+    assert.match((await fails(max.call('billingTrial', { orgId: m.orgId, offer: off.code, plan: 'basic', interval: 'month' }), 'failed-precondition')).message, /already been used/);
+    // The app creator ends the link: Lou keeps its terms anyway.
+    await cr.call('saveOffer', { code: off.code, ended: true });
+    await adminDb().doc(`orgs/${l.orgId}`).update({ 'billing.trialEnd': Date.now() - 3600_000 });
+    // Over without a card: the company stops (its data stays) and the owner and the app creator are told, once.
+    assert.match((await fails(lou.call('setupStations', { orgId: l.orgId }), 'failed-precondition')).message, /no active plan/);
+    assert.equal((await adminDb().doc(`orgs/${l.orgId}`).get()).data().name, 'Lou Later GmbH');
+    await cr.call('cardLaterSweepNow', { now: Date.now() });
+    const ended = (await pd(l.orgId)).cardNotes.ended;
+    assert.ok(ended);
+    await cr.call('cardLaterSweepNow', { now: Date.now() + 3600_000 });
+    assert.equal((await pd(l.orgId)).cardNotes.ended, ended, 'once');
+    assert.equal((await pd(k.orgId)).cardNotes.ended, undefined, 'Kara has a card: no end message');
+    // Adding the card now pays now (no new free days), with the ended link's 20 % off.
+    assert.equal((await lou.call('billingConfig', { offer: off.code, orgId: l.orgId })).offer.percentOff, 20);
+    assert.match((await max.call('billingConfig', { offer: off.code })).offerError.t, /ended/, 'for everybody else the link has ended');
+    const ls = await lou.call('billingStart', { orgId: l.orgId, plan: 'basic', interval: 'month', offer: off.code, address });
+    assert.equal(ls.kind, 'payment');
+    assert.equal(ls.trialEnd, null, 'no new free days');
+    assert.equal(ls.firstNet, early ? 9600 : 24000);
+    // Until the payment is through the company stays stopped, and no "Card added" yet.
+    assert.equal((await billing(l.orgId)).cardLater, true);
+    await fails(lou.call('setupStations', { orgId: l.orgId }), 'failed-precondition');
+    assert.equal((await pd(l.orgId)).confirmedAt ?? null, null);
+    const lpd = await pd(l.orgId);
+    await adminDb().doc(`fakeStripe/${lpd.subscriptionId}`).update({ confirmed: true });
+    const lc = await lou.call('billingConfirm', { orgId: l.orgId });
+    assert.equal(lc.billing.status, 'active');
+    assert.equal(lc.billing.card, true);
+    assert.equal(lc.billing.cardLater, undefined);
+    assert.equal((await lou.call('setupStations', { orgId: l.orgId })).done, false, 'works again');
+  } finally {
+    await adminDb().doc('platform/stripe').delete();
+  }
+});
+
 test('the app creator tries both sides from one sign-in: given a van as a driver, allows their own refuel as a manager; nobody else can', async () => {
   // A company of its own, so nothing above is counted differently: an owner, one station, a manager, a van with a fuel card.
   const own = await person('Tara Owner');

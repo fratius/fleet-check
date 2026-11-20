@@ -243,16 +243,16 @@
   "id": "960a2b42",
   "key": "{n} % off",
   "where": [
-   "src/components/offers.tsx:85",
-   "src/components/plansetup.tsx:202"
+   "src/components/offers.tsx:87",
+   "src/components/plansetup.tsx:235"
   ]
  },
  {
   "id": "260d0ee9",
   "key": "{n} % off for {m} months",
   "where": [
-   "src/components/offers.tsx:85",
-   "src/components/plansetup.tsx:202"
+   "src/components/offers.tsx:87",
+   "src/components/plansetup.tsx:235"
   ]
  },
  {
@@ -369,8 +369,8 @@
   "key": "{n} days free",
   "one": "{n} day free",
   "where": [
-   "src/components/offers.tsx:83",
-   "src/components/plansetup.tsx:201"
+   "src/components/offers.tsx:85",
+   "src/components/plansetup.tsx:234"
   ]
  },
  {
@@ -489,7 +489,7 @@
   "key": "{n} months",
   "one": "{n} month",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:310"
+   "src/app/(tabs)/(me)/account.tsx:311"
   ]
  },
  {
@@ -504,7 +504,7 @@
   "id": "c9607d94",
   "key": "{n} more vans for {price} {per}",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:152"
+   "src/app/(tabs)/(me)/plan.tsx:154"
   ]
  },
  {
@@ -543,7 +543,7 @@
   "id": "4311d112",
   "key": "{n} of {max} used",
   "where": [
-   "src/components/offers.tsx:99"
+   "src/components/offers.tsx:102"
   ]
  },
  {
@@ -1270,8 +1270,8 @@
   "id": "960ee3e1",
   "key": "{price} a month",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:143",
-   "src/components/plansetup.tsx:190"
+   "src/app/(tabs)/(me)/plan.tsx:145",
+   "src/components/plansetup.tsx:223"
   ]
  },
  {
@@ -1279,15 +1279,16 @@
   "key": "{price} a month, plus VAT",
   "server": true,
   "where": [
-   "functions/src/payments.ts:521"
+   "functions/src/payments.ts:570",
+   "functions/src/payments.ts:621"
   ]
  },
  {
   "id": "4a21654d",
   "key": "{price} a year",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:143",
-   "src/components/plansetup.tsx:190"
+   "src/app/(tabs)/(me)/plan.tsx:145",
+   "src/components/plansetup.tsx:223"
   ]
  },
  {
@@ -1295,30 +1296,31 @@
   "key": "{price} a year, plus VAT",
   "server": true,
   "where": [
-   "functions/src/payments.ts:521"
+   "functions/src/payments.ts:570",
+   "functions/src/payments.ts:621"
   ]
  },
  {
   "id": "127da481",
   "key": "{price} off each invoice",
   "where": [
-   "src/components/offers.tsx:86",
-   "src/components/plansetup.tsx:203"
+   "src/components/offers.tsx:88",
+   "src/components/plansetup.tsx:236"
   ]
  },
  {
   "id": "116bf7f5",
   "key": "{price} off each invoice for {m} months",
   "where": [
-   "src/components/offers.tsx:86",
-   "src/components/plansetup.tsx:203"
+   "src/components/offers.tsx:88",
+   "src/components/plansetup.tsx:236"
   ]
  },
  {
   "id": "12ac959b",
   "key": "{price} the first year, then {full} a year",
   "where": [
-   "src/components/plansetup.tsx:189"
+   "src/components/plansetup.tsx:222"
   ]
  },
  {
@@ -1406,21 +1408,21 @@
   "id": "aeb045b9",
   "key": "{used} of {max} vans in use",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:161"
+   "src/app/(tabs)/(me)/account.tsx:162"
   ]
  },
  {
   "id": "e64dc063",
   "key": "{used} of {max} vans in use.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:77"
+   "src/app/(tabs)/(me)/plan.tsx:79"
   ]
  },
  {
   "id": "953754b7",
   "key": "{used} vans in use, unlimited on this plan.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:77"
+   "src/app/(tabs)/(me)/plan.tsx:79"
   ]
  },
  {
@@ -1480,14 +1482,14 @@
   "id": "83d78021",
   "key": "{version} ({build}), {where}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:328"
+   "src/app/(tabs)/(me)/account.tsx:329"
   ]
  },
  {
   "id": "1756a552",
   "key": "{version}, {where}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:328"
+   "src/app/(tabs)/(me)/account.tsx:329"
   ]
  },
  {
@@ -1551,7 +1553,7 @@
   "id": "681f295c",
   "key": "0: they pay at sign-up",
   "where": [
-   "src/components/offers.tsx:161"
+   "src/components/offers.tsx:166"
   ]
  },
  {
@@ -1700,7 +1702,7 @@
   "id": "ff2b7c2c",
   "key": "A bigger plan is charged now for the rest of the period; a smaller one is credited on the next invoice.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:164"
+   "src/app/(tabs)/(me)/plan.tsx:166"
   ]
  },
  {
@@ -1786,8 +1788,8 @@
   "key": "A discount in euros needs a fixed plan.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3519",
-   "src/components/offers.tsx:130"
+   "functions/src/index.ts:3683",
+   "src/components/offers.tsx:134"
   ]
  },
  {
@@ -1803,6 +1805,15 @@
   "where": [
    "src/app/join/[token].tsx:234",
    "src/app/sign-in.tsx:169"
+  ]
+ },
+ {
+  "id": "315e8229",
+  "key": "A link without a card needs free days.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:3684",
+   "src/components/offers.tsx:135"
   ]
  },
  {
@@ -1825,9 +1836,9 @@
   "id": "1f6df70e",
   "key": "a month",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:113",
-   "src/app/(tabs)/(me)/plan.tsx:59",
-   "src/components/plansetup.tsx:104"
+   "src/app/(tabs)/(me)/plan.tsx:115",
+   "src/app/(tabs)/(me)/plan.tsx:61",
+   "src/components/plansetup.tsx:115"
   ]
  },
  {
@@ -1914,9 +1925,9 @@
   "id": "fbe0b376",
   "key": "a year",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:113",
-   "src/app/(tabs)/(me)/plan.tsx:59",
-   "src/components/plansetup.tsx:104"
+   "src/app/(tabs)/(me)/plan.tsx:115",
+   "src/app/(tabs)/(me)/plan.tsx:61",
+   "src/components/plansetup.tsx:115"
   ]
  },
  {
@@ -1924,7 +1935,7 @@
   "key": "A yearly plan can't switch to monthly in the app. Write to info@fratius.com.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3435"
+   "functions/src/index.ts:3597"
   ]
  },
  {
@@ -1976,9 +1987,9 @@
   "server": true,
   "where": [
    "functions/src/index.ts:804",
-   "src/app/(tabs)/(me)/account.tsx:206",
+   "src/app/(tabs)/(me)/account.tsx:207",
    "src/app/sign-in.tsx:74",
-   "src/components/plansetup.tsx:152"
+   "src/components/plansetup.tsx:164"
   ]
  },
  {
@@ -2026,7 +2037,7 @@
   "id": "14157a46",
   "key": "Active.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:63"
+   "src/app/(tabs)/(me)/plan.tsx:65"
   ]
  },
  {
@@ -2060,6 +2071,14 @@
   "one": "Add {n} van from a file",
   "where": [
    "src/app/(tabs)/(fleet)/bulk.tsx:249"
+  ]
+ },
+ {
+  "id": "a0271f3a",
+  "key": "Add a card before {date} to keep working with Fratius.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:3547"
   ]
  },
  {
@@ -2108,7 +2127,7 @@
   "id": "d4e7a9f1",
   "key": "Add a VAT ID (optional)",
   "where": [
-   "src/components/plansetup.tsx:252"
+   "src/components/plansetup.tsx:293"
   ]
  },
  {
@@ -2195,7 +2214,23 @@
   "id": "73463517",
   "key": "Add the card and start",
   "where": [
-   "src/components/plansetup.tsx:292"
+   "src/components/plansetup.tsx:341"
+  ]
+ },
+ {
+  "id": "15f3cf2e",
+  "key": "Add the card here, or in the web app: Account, then Plan and billing.",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:640"
+  ]
+ },
+ {
+  "id": "9ce694b9",
+  "key": "Add the card, paid from {date}",
+  "where": [
+   "src/components/plansetup.tsx:341",
+   "src/components/plansetup.tsx:346"
   ]
  },
  {
@@ -2270,7 +2305,7 @@
   "key": "Add-on: 15 more vans ({n} in all)",
   "server": true,
   "where": [
-   "functions/src/payments.ts:527"
+   "functions/src/payments.ts:576"
   ]
  },
  {
@@ -2306,7 +2341,7 @@
   "id": "2278f838",
   "key": "Adding the card…",
   "where": [
-   "src/components/plansetup.tsx:117"
+   "src/components/plansetup.tsx:128"
   ]
  },
  {
@@ -2537,8 +2572,9 @@
   "id": "e95f7cf7",
   "key": "Almost done…",
   "where": [
-   "src/components/plansetup.tsx:122",
-   "src/components/plansetup.tsx:64"
+   "src/components/plansetup.tsx:133",
+   "src/components/plansetup.tsx:175",
+   "src/components/plansetup.tsx:69"
   ]
  },
  {
@@ -2574,7 +2610,7 @@
   "key": "Already working on it. Wait a moment, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3291"
+   "functions/src/index.ts:3302"
   ]
  },
  {
@@ -2648,15 +2684,15 @@
   "id": "88b9ef5c",
   "key": "Android test version",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:326"
+   "src/app/(tabs)/(me)/account.tsx:327"
   ]
  },
  {
   "id": "949fa485",
   "key": "Another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:190",
-   "src/app/(tabs)/(me)/account.tsx:191"
+   "src/app/(tabs)/(me)/account.tsx:191",
+   "src/app/(tabs)/(me)/account.tsx:192"
   ]
  },
  {
@@ -2670,7 +2706,7 @@
   "id": "d2335e37",
   "key": "any plan",
   "where": [
-   "src/components/offers.tsx:81"
+   "src/components/offers.tsx:83"
   ]
  },
  {
@@ -2773,7 +2809,7 @@
   "where": [
    "src/app/join/[token].tsx:141",
    "src/app/join/[token].tsx:282",
-   "src/components/plansetup.tsx:212"
+   "src/components/plansetup.tsx:245"
   ]
  },
  {
@@ -2929,7 +2965,7 @@
   "id": "4ab0f1ad",
   "key": "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:306"
+   "src/app/(tabs)/(me)/account.tsx:307"
   ]
  },
  {
@@ -2965,8 +3001,8 @@
   "id": "763fe55e",
   "key": "Billed",
   "where": [
-   "src/components/offers.tsx:160",
-   "src/components/plansetup.tsx:219"
+   "src/components/offers.tsx:165",
+   "src/components/plansetup.tsx:252"
   ]
  },
  {
@@ -3152,7 +3188,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:405",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:220",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:420",
-   "src/app/(tabs)/(me)/account.tsx:212",
+   "src/app/(tabs)/(me)/account.tsx:213",
    "src/app/(tabs)/(people)/people.tsx:116",
    "src/app/(tabs)/(people)/people.tsx:351",
    "src/app/(tabs)/(people)/people.tsx:92",
@@ -3164,7 +3200,7 @@
    "src/components/driverrec.tsx:238",
    "src/components/history.tsx:205",
    "src/components/history.tsx:249",
-   "src/components/offers.tsx:173",
+   "src/components/offers.tsx:180",
    "src/components/recorder.tsx:65",
    "src/components/recorder.tsx:84",
    "src/components/routines.tsx:145",
@@ -3188,14 +3224,14 @@
   "id": "e577b7bf",
   "key": "Cancel before {date} and you pay nothing.",
   "where": [
-   "src/components/plansetup.tsx:266"
+   "src/components/plansetup.tsx:315"
   ]
  },
  {
   "id": "9fe73f01",
   "key": "Cancel before {date} and you pay nothing. Stripe reminds you by email 7 days before.",
   "where": [
-   "src/components/plansetup.tsx:265"
+   "src/components/plansetup.tsx:314"
   ]
  },
  {
@@ -3258,14 +3294,14 @@
   "id": "9ac12815",
   "key": "Cancelled: the plan ends on {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:155"
+   "src/app/(tabs)/(me)/account.tsx:156"
   ]
  },
  {
   "id": "70c3d56e",
   "key": "Cancelled: the plan ends on {date}. Nothing more is charged.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:62"
+   "src/app/(tabs)/(me)/plan.tsx:64"
   ]
  },
  {
@@ -3333,7 +3369,7 @@
   "id": "9877e94a",
   "key": "Card, billing address and invoices",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:84"
+   "src/app/(tabs)/(me)/plan.tsx:86"
   ]
  },
  {
@@ -3385,14 +3421,14 @@
   "id": "5dccc310",
   "key": "Change plan",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:165"
+   "src/app/(tabs)/(me)/plan.tsx:167"
   ]
  },
  {
   "id": "4498dc66",
   "key": "Change the plan",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:128"
+   "src/app/(tabs)/(me)/plan.tsx:130"
   ]
  },
  {
@@ -3421,14 +3457,14 @@
   "key": "Change your plan, card or billing address, see your invoices or cancel: Account, then Plan and billing, in the web app.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:535"
+   "functions/src/payments.ts:584"
   ]
  },
  {
   "id": "59853957",
   "key": "Changed by {name}, {day}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:304"
+   "src/app/(tabs)/(me)/account.tsx:305"
   ]
  },
  {
@@ -3442,7 +3478,7 @@
   "id": "2f9607e7",
   "key": "Changed by {name}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:304"
+   "src/app/(tabs)/(me)/account.tsx:305"
   ]
  },
  {
@@ -3471,7 +3507,7 @@
   "id": "be27a37d",
   "key": "Check drivers' licences every",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:309"
+   "src/app/(tabs)/(me)/account.tsx:310"
   ]
  },
  {
@@ -3551,7 +3587,7 @@
   "key": "Check the VAT ID {id}: it should start with the country code, like DE123456789.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3320"
+   "functions/src/index.ts:3331"
   ]
  },
  {
@@ -3618,7 +3654,7 @@
   "key": "Checking the card…",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/buy/[id].tsx:226",
-   "src/components/plansetup.tsx:157"
+   "src/components/plansetup.tsx:190"
   ]
  },
  {
@@ -3639,7 +3675,7 @@
   "id": "425365c7",
   "key": "Checking the terms…",
   "where": [
-   "src/components/plansetup.tsx:167"
+   "src/components/plansetup.tsx:200"
   ]
  },
  {
@@ -3707,10 +3743,10 @@
   "key": "Choose a plan first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3394",
-   "functions/src/index.ts:3397",
-   "functions/src/index.ts:3414",
-   "functions/src/index.ts:3430"
+   "functions/src/index.ts:3408",
+   "functions/src/index.ts:3411",
+   "functions/src/index.ts:3576",
+   "functions/src/index.ts:3592"
   ]
  },
  {
@@ -3718,7 +3754,8 @@
   "key": "Choose a plan.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3278"
+   "functions/src/index.ts:3289",
+   "functions/src/index.ts:3447"
   ]
  },
  {
@@ -3751,7 +3788,7 @@
   "id": "00b5675f",
   "key": "Choose the plan and add the card to start.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:44",
+   "src/app/(tabs)/(me)/plan.tsx:46",
    "src/app/start.tsx:57"
   ]
  },
@@ -3951,15 +3988,16 @@
   "id": "e5117c34",
   "key": "Company and card",
   "where": [
-   "src/components/plansetup.tsx:246"
+   "src/components/plansetup.tsx:287"
   ]
  },
  {
   "id": "1e5f7dc4",
   "key": "Company name",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:201",
-   "src/app/sign-in.tsx:65"
+   "src/app/(tabs)/(me)/account.tsx:202",
+   "src/app/sign-in.tsx:65",
+   "src/components/plansetup.tsx:282"
   ]
  },
  {
@@ -3987,7 +4025,7 @@
   "id": "2e026239",
   "key": "Continue",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:197",
+   "src/app/(tabs)/(me)/account.tsx:198",
    "src/app/sign-in.tsx:81"
   ]
  },
@@ -4035,15 +4073,15 @@
   "id": "8e3df45a",
   "key": "Copied",
   "where": [
-   "src/components/offers.tsx:106"
+   "src/components/offers.tsx:109"
   ]
  },
  {
   "id": "2f84eea5",
   "key": "Copy link",
   "where": [
-   "src/components/offers.tsx:106",
-   "src/components/offers.tsx:150"
+   "src/components/offers.tsx:109",
+   "src/components/offers.tsx:155"
   ]
  },
  {
@@ -4201,7 +4239,7 @@
   "id": "91dd700f",
   "key": "Couldn't load the payment form. Check the connection and try again.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:120",
+   "src/app/(tabs)/(me)/plan.tsx:122",
    "src/components/cardform.web.tsx:122"
   ]
  },
@@ -4390,7 +4428,7 @@
   "id": "c8170422",
   "key": "Create a company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:191",
+   "src/app/(tabs)/(me)/account.tsx:192",
    "src/app/sign-in.tsx:55"
   ]
  },
@@ -4406,8 +4444,8 @@
   "id": "77af29dd",
   "key": "Create company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:193",
-   "src/app/(tabs)/(me)/account.tsx:204",
+   "src/app/(tabs)/(me)/account.tsx:194",
+   "src/app/(tabs)/(me)/account.tsx:205",
    "src/app/sign-in.tsx:61",
    "src/app/sign-in.tsx:71"
   ]
@@ -4423,14 +4461,16 @@
   "id": "0a1d899a",
   "key": "Creating your account…",
   "where": [
-   "src/components/plansetup.tsx:162"
+   "src/components/plansetup.tsx:170",
+   "src/components/plansetup.tsx:195"
   ]
  },
  {
   "id": "636fee27",
   "key": "Creating your company…",
   "where": [
-   "src/components/plansetup.tsx:163"
+   "src/components/plansetup.tsx:171",
+   "src/components/plansetup.tsx:196"
   ]
  },
  {
@@ -4611,7 +4651,7 @@
   "id": "b353847f",
   "key": "Dashboard photos",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:300"
+   "src/app/(tabs)/(me)/account.tsx:301"
   ]
  },
  {
@@ -4626,7 +4666,7 @@
   "id": "a2e230ae",
   "key": "Dashboard photos on every tour",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:299"
+   "src/app/(tabs)/(me)/account.tsx:300"
   ]
  },
  {
@@ -4750,14 +4790,14 @@
   "id": "1189c74f",
   "key": "Demo account",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:235"
+   "src/app/(tabs)/(me)/account.tsx:236"
   ]
  },
  {
   "id": "c747cec0",
   "key": "Demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:242"
+   "src/app/(tabs)/(me)/account.tsx:243"
   ]
  },
  {
@@ -4836,7 +4876,7 @@
   "id": "b524936d",
   "key": "Discount",
   "where": [
-   "src/components/offers.tsx:162"
+   "src/components/offers.tsx:169"
   ]
  },
  {
@@ -4866,7 +4906,7 @@
   "where": [
    "src/app/scan/[id].tsx:191",
    "src/components/buy.tsx:44",
-   "src/components/offers.tsx:151"
+   "src/components/offers.tsx:156"
   ]
  },
  {
@@ -4970,7 +5010,7 @@
   "id": "639a2c19",
   "key": "Driver: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:252"
+   "src/app/(tabs)/(me)/account.tsx:253"
   ]
  },
  {
@@ -5009,7 +5049,7 @@
   "id": "075aaa9e",
   "key": "Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:302"
+   "src/app/(tabs)/(me)/account.tsx:303"
   ]
  },
  {
@@ -5236,14 +5276,14 @@
   "id": "b322b353",
   "key": "Early-bird price: {n} % off for sign-ups until {date}. It stays yours for as long as your plan runs.",
   "where": [
-   "src/components/plansetup.tsx:241"
+   "src/components/plansetup.tsx:274"
   ]
  },
  {
   "id": "a98de641",
   "key": "Early-bird price: {n} % off, for as long as your plan runs.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:79"
+   "src/app/(tabs)/(me)/plan.tsx:81"
   ]
  },
  {
@@ -5293,7 +5333,7 @@
    "src/app/join/[token].tsx:140",
    "src/app/join/[token].tsx:281",
    "src/app/sign-in.tsx:108",
-   "src/components/plansetup.tsx:211"
+   "src/components/plansetup.tsx:244"
   ]
  },
  {
@@ -5351,14 +5391,14 @@
   "id": "84e0f8be",
   "key": "empty: for as long as they stay",
   "where": [
-   "src/components/offers.tsx:166"
+   "src/components/offers.tsx:173"
   ]
  },
  {
   "id": "65c90f56",
   "key": "empty: no end date",
   "where": [
-   "src/components/offers.tsx:170"
+   "src/components/offers.tsx:177"
   ]
  },
  {
@@ -5366,7 +5406,7 @@
   "key": "End",
   "where": [
    "src/app/(tabs)/(table)/data.tsx:255",
-   "src/components/offers.tsx:107",
+   "src/components/offers.tsx:110",
    "src/components/vanfacts.tsx:71"
   ]
  },
@@ -5402,14 +5442,14 @@
   "id": "90303d8d",
   "key": "Ended",
   "where": [
-   "src/components/offers.tsx:99"
+   "src/components/offers.tsx:102"
   ]
  },
  {
   "id": "d1f552c3",
   "key": "Enter the company name.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:205"
+   "src/app/(tabs)/(me)/account.tsx:206"
   ]
  },
  {
@@ -5417,7 +5457,7 @@
   "key": "Enter the company's billing address.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3284",
+   "functions/src/index.ts:3295",
    "src/components/cardform.web.tsx:83"
   ]
  },
@@ -5523,7 +5563,8 @@
   "server": true,
   "where": [
    "functions/src/index.ts:800",
-   "src/app/sign-in.tsx:73"
+   "src/app/sign-in.tsx:73",
+   "src/components/plansetup.tsx:163"
   ]
  },
  {
@@ -5540,7 +5581,7 @@
    "src/app/join/[token].tsx:192",
    "src/app/join/[token].tsx:54",
    "src/app/sign-in.tsx:113",
-   "src/components/plansetup.tsx:149"
+   "src/components/plansetup.tsx:160"
   ]
  },
  {
@@ -5558,7 +5599,7 @@
   "id": "dacddcd9",
   "key": "Enter your name.",
   "where": [
-   "src/components/plansetup.tsx:148"
+   "src/components/plansetup.tsx:159"
   ]
  },
  {
@@ -5603,7 +5644,7 @@
   "id": "e7169f74",
   "key": "Euros off each invoice",
   "where": [
-   "src/components/offers.tsx:165"
+   "src/components/offers.tsx:172"
   ]
  },
  {
@@ -5691,7 +5732,7 @@
   "key": "every month",
   "server": true,
   "where": [
-   "functions/src/payments.ts:533"
+   "functions/src/payments.ts:582"
   ]
  },
  {
@@ -5771,7 +5812,7 @@
   "key": "every year",
   "server": true,
   "where": [
-   "functions/src/payments.ts:533"
+   "functions/src/payments.ts:582"
   ]
  },
  {
@@ -5828,7 +5869,7 @@
   "id": "d6fc00bb",
   "key": "fewer than the vans in use",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:141"
+   "src/app/(tabs)/(me)/plan.tsx:143"
   ]
  },
  {
@@ -6001,7 +6042,7 @@
   "id": "c6b3590a",
   "key": "First station",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:202",
+   "src/app/(tabs)/(me)/account.tsx:203",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -6040,7 +6081,8 @@
   "key": "Fleet management for delivery partners",
   "server": true,
   "where": [
-   "functions/src/payments.ts:540",
+   "functions/src/payments.ts:547",
+   "functions/src/payments.ts:562",
    "functions/src/website.ts:117"
   ]
  },
@@ -6057,7 +6099,7 @@
   "id": "7aeaaa6f",
   "key": "Fleet manager: {name}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:252"
+   "src/app/(tabs)/(me)/account.tsx:253"
   ]
  },
  {
@@ -6167,7 +6209,7 @@
   "id": "a3af3156",
   "key": "For example: DXX1 Berlin",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:202",
+   "src/app/(tabs)/(me)/account.tsx:203",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -6182,7 +6224,7 @@
   "id": "92a9fcc1",
   "key": "For example: Hart Logistics, 80 vans",
   "where": [
-   "src/components/offers.tsx:158"
+   "src/components/offers.tsx:163"
   ]
  },
  {
@@ -6238,7 +6280,7 @@
   "id": "83f9e343",
   "key": "For how many months",
   "where": [
-   "src/components/offers.tsx:166"
+   "src/components/offers.tsx:173"
   ]
  },
  {
@@ -6259,14 +6301,14 @@
   "id": "a20a8c3c",
   "key": "For this company the terms are different from what was shown above:",
   "where": [
-   "src/components/plansetup.tsx:281"
+   "src/components/plansetup.tsx:330"
   ]
  },
  {
   "id": "c1ce9404",
   "key": "For whom",
   "where": [
-   "src/components/offers.tsx:158"
+   "src/components/offers.tsx:163"
   ]
  },
  {
@@ -6371,7 +6413,7 @@
   "id": "53893f24",
   "key": "Free days",
   "where": [
-   "src/components/offers.tsx:161"
+   "src/components/offers.tsx:166"
   ]
  },
  {
@@ -6379,15 +6421,26 @@
   "key": "Free trial",
   "where": [
    "src/app/(tabs)/(me)/account.tsx:138",
-   "src/app/(tabs)/(me)/plan.tsx:75",
+   "src/app/(tabs)/(me)/plan.tsx:77",
    "src/components/companies.tsx:59"
+  ]
+ },
+ {
+  "id": "1fbbe185",
+  "key": "Free until {date}, with no card. Nothing is charged without a card.",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:627",
+   "src/app/(tabs)/(me)/plan.tsx:46",
+   "src/components/plansetup.tsx:303"
   ]
  },
  {
   "id": "e0312576",
   "key": "Free until {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:154"
+   "src/app/(tabs)/(me)/account.tsx:153",
+   "src/app/(tabs)/(me)/account.tsx:155"
   ]
  },
  {
@@ -6395,14 +6448,14 @@
   "key": "Free until {date}. Nothing is charged before then; cancel any time before.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:531"
+   "functions/src/payments.ts:580"
   ]
  },
  {
   "id": "ed487f8a",
   "key": "Free until {date}. Then {price} plus VAT {per}.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:61"
+   "src/app/(tabs)/(me)/plan.tsx:63"
   ]
  },
  {
@@ -6991,7 +7044,8 @@
   "key": "Hi {name},",
   "server": true,
   "where": [
-   "functions/src/payments.ts:523",
+   "functions/src/payments.ts:572",
+   "functions/src/payments.ts:612",
    "functions/src/website.ts:100"
   ]
  },
@@ -7049,7 +7103,7 @@
   "id": "353953c3",
   "key": "How many sign-ups",
   "where": [
-   "src/components/offers.tsx:169"
+   "src/components/offers.tsx:176"
   ]
  },
  {
@@ -7324,8 +7378,8 @@
   "id": "601e9d6c",
   "key": "Invite link",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:191",
-   "src/app/(tabs)/(me)/account.tsx:196",
+   "src/app/(tabs)/(me)/account.tsx:192",
+   "src/app/(tabs)/(me)/account.tsx:197",
    "src/app/join/[token].tsx:74",
    "src/app/sign-in.tsx:80"
   ]
@@ -7335,7 +7389,7 @@
   "key": "Invoices come from Stripe, our payment provider, by email.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:538"
+   "functions/src/payments.ts:587"
   ]
  },
  {
@@ -7393,7 +7447,7 @@
   "id": "c30cc528",
   "key": "Join or create another company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:185"
+   "src/app/(tabs)/(me)/account.tsx:186"
   ]
  },
  {
@@ -7683,14 +7737,14 @@
   "id": "76869386",
   "key": "Launch offer: {n} % off the plan in the first year.",
   "where": [
-   "src/components/plansetup.tsx:275"
+   "src/components/plansetup.tsx:324"
   ]
  },
  {
   "id": "c6e0e600",
   "key": "Launch offer: 30 % off the first year on yearly plans",
   "where": [
-   "src/components/offers.tsx:49"
+   "src/components/offers.tsx:51"
   ]
  },
  {
@@ -7922,7 +7976,7 @@
   "id": "9be05fd2",
   "key": "Licence check interval",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:310"
+   "src/app/(tabs)/(me)/account.tsx:311"
   ]
  },
  {
@@ -8089,7 +8143,7 @@
    "src/components/driverrec.tsx:161",
    "src/components/history.tsx:138",
    "src/components/history.tsx:189",
-   "src/components/plansetup.tsx:184",
+   "src/components/plansetup.tsx:217",
    "src/components/service.tsx:100"
   ]
  },
@@ -8270,7 +8324,7 @@
   "id": "92904133",
   "key": "Make the link",
   "where": [
-   "src/components/offers.tsx:172"
+   "src/components/offers.tsx:179"
   ]
  },
  {
@@ -8487,24 +8541,24 @@
   "id": "745d1918",
   "key": "monthly",
   "where": [
-   "src/components/offers.tsx:82"
+   "src/components/offers.tsx:84"
   ]
  },
  {
   "id": "d31edb7b",
   "key": "Monthly",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:161",
-   "src/app/(tabs)/(me)/plan.tsx:73",
-   "src/components/offers.tsx:160",
-   "src/components/plansetup.tsx:220"
+   "src/app/(tabs)/(me)/account.tsx:162",
+   "src/app/(tabs)/(me)/plan.tsx:75",
+   "src/components/offers.tsx:165",
+   "src/components/plansetup.tsx:253"
   ]
  },
  {
   "id": "94e48559",
   "key": "monthly or yearly",
   "where": [
-   "src/components/offers.tsx:82"
+   "src/components/offers.tsx:84"
   ]
  },
  {
@@ -8679,14 +8733,14 @@
   "id": "da557f05",
   "key": "New price: {price} plus VAT {per}.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:163"
+   "src/app/(tabs)/(me)/plan.tsx:165"
   ]
  },
  {
   "id": "4974bd7f",
   "key": "New sign-up link",
   "where": [
-   "src/components/offers.tsx:52"
+   "src/components/offers.tsx:54"
   ]
  },
  {
@@ -8854,6 +8908,13 @@
   ]
  },
  {
+  "id": "dd7d4ff9",
+  "key": "no card at sign-up",
+  "where": [
+   "src/components/offers.tsx:89"
+  ]
+ },
+ {
   "id": "78b226e3",
   "key": "No card in the photo.",
   "server": true,
@@ -8865,7 +8926,8 @@
   "id": "ba3b7ff3",
   "key": "No card yet.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:153"
+   "src/app/(tabs)/(me)/account.tsx:153",
+   "src/app/(tabs)/(me)/account.tsx:154"
   ]
  },
  {
@@ -9143,7 +9205,7 @@
   "id": "1fe651fa",
   "key": "no free days",
   "where": [
-   "src/components/offers.tsx:83"
+   "src/components/offers.tsx:85"
   ]
  },
  {
@@ -9269,7 +9331,7 @@
   "id": "f1ff1fcc",
   "key": "No sign-up links yet.",
   "where": [
-   "src/components/offers.tsx:54"
+   "src/components/offers.tsx:56"
   ]
  },
  {
@@ -9485,7 +9547,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:411",
    "src/app/(tabs)/(table)/data.tsx:250",
    "src/components/driverrec.tsx:229",
-   "src/components/offers.tsx:162"
+   "src/components/offers.tsx:169"
   ]
  },
  {
@@ -9764,7 +9826,7 @@
   "id": "4bdbae3f",
   "key": "Nothing is charged during the free trial.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:164"
+   "src/app/(tabs)/(me)/plan.tsx:166"
   ]
  },
  {
@@ -9966,7 +10028,14 @@
   "id": "e3de5ab0",
   "key": "Off",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:300"
+   "src/app/(tabs)/(me)/account.tsx:301"
+  ]
+ },
+ {
+  "id": "3bc072e8",
+  "key": "Off: they start the free days without a card and are reminded to add one. Without a card the company stops when the free days end; everything in it is kept.",
+  "where": [
+   "src/components/offers.tsx:168"
   ]
  },
  {
@@ -10004,23 +10073,23 @@
   "id": "e0049a66",
   "key": "On",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:300"
+   "src/app/(tabs)/(me)/account.tsx:301"
   ]
  },
  {
   "id": "acd6408e",
   "key": "On {date} we charge {price} plus VAT, then every month, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:263",
-   "src/components/plansetup.tsx:288"
+   "src/components/plansetup.tsx:312",
+   "src/components/plansetup.tsx:337"
   ]
  },
  {
   "id": "3ae1c464",
   "key": "On {date} we charge {price} plus VAT, then every year, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:262",
-   "src/components/plansetup.tsx:287"
+   "src/components/plansetup.tsx:311",
+   "src/components/plansetup.tsx:336"
   ]
  },
  {
@@ -10048,7 +10117,7 @@
   "id": "280c3690",
   "key": "On Stripe's page: change the card, the billing address or the VAT ID, download invoices, or cancel to the end of the period paid for.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:85"
+   "src/app/(tabs)/(me)/plan.tsx:87"
   ]
  },
  {
@@ -10249,8 +10318,9 @@
    "functions/src/index.ts:2696",
    "functions/src/index.ts:2846",
    "functions/src/index.ts:3051",
-   "functions/src/index.ts:3479",
-   "functions/src/index.ts:3494"
+   "functions/src/index.ts:3565",
+   "functions/src/index.ts:3641",
+   "functions/src/index.ts:3656"
   ]
  },
  {
@@ -10281,7 +10351,7 @@
   "key": "Only the fleet owner can change the plan and the card.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3103",
+   "functions/src/index.ts:3107",
    "src/app/(tabs)/(me)/plan.tsx:36"
   ]
  },
@@ -10383,14 +10453,14 @@
   "id": "ba6e4fc9",
   "key": "only you see it",
   "where": [
-   "src/components/offers.tsx:158"
+   "src/components/offers.tsx:163"
   ]
  },
  {
-  "id": "50bb3990",
-  "key": "Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.",
+  "id": "ee09ccb5",
+  "key": "Only you see this. A link sets the free days, a discount, the plan and whether a card is asked at sign-up, for one DSP.",
   "where": [
-   "src/components/offers.tsx:43"
+   "src/components/offers.tsx:45"
   ]
  },
  {
@@ -10445,7 +10515,7 @@
   "id": "b0dd203e",
   "key": "Open payment details",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:86"
+   "src/app/(tabs)/(me)/plan.tsx:88"
   ]
  },
  {
@@ -10480,7 +10550,7 @@
   "id": "bdd5e48d",
   "key": "Open the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:271"
+   "src/app/(tabs)/(me)/account.tsx:272"
   ]
  },
  {
@@ -10532,7 +10602,7 @@
   "id": "5fa2951a",
   "key": "optional, for example DE123456789",
   "where": [
-   "src/components/plansetup.tsx:251"
+   "src/components/plansetup.tsx:292"
   ]
  },
  {
@@ -10601,7 +10671,8 @@
   "key": "Our terms (AGB) and the data processing agreement (AVV) you accepted:",
   "server": true,
   "where": [
-   "functions/src/payments.ts:536"
+   "functions/src/payments.ts:585",
+   "functions/src/payments.ts:616"
   ]
  },
  {
@@ -10690,7 +10761,7 @@
   "key": "Paid today: {price}, plus VAT",
   "server": true,
   "where": [
-   "functions/src/payments.ts:532"
+   "functions/src/payments.ts:581"
   ]
  },
  {
@@ -10783,21 +10854,21 @@
    "src/app/join/[token].tsx:282",
    "src/app/sign-in.tsx:109",
    "src/components/deleteaccount.tsx:57",
-   "src/components/plansetup.tsx:212"
+   "src/components/plansetup.tsx:245"
   ]
  },
  {
   "id": "f9078931",
   "key": "Password: {password}",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:254"
+   "src/app/(tabs)/(me)/account.tsx:255"
   ]
  },
  {
   "id": "44e3cbda",
   "key": "Paste the whole link you were sent.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:197",
+   "src/app/(tabs)/(me)/account.tsx:198",
    "src/app/sign-in.tsx:82"
   ]
  },
@@ -10805,14 +10876,14 @@
   "id": "f7cb926a",
   "key": "Pay {price} and start",
   "where": [
-   "src/components/plansetup.tsx:291"
+   "src/components/plansetup.tsx:340"
   ]
  },
  {
   "id": "2f457bbc",
   "key": "Pay {price} plus VAT and start",
   "where": [
-   "src/components/plansetup.tsx:296"
+   "src/components/plansetup.tsx:347"
   ]
  },
  {
@@ -10826,14 +10897,14 @@
   "id": "6f891554",
   "key": "Pay yearly",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:160"
+   "src/app/(tabs)/(me)/plan.tsx:162"
   ]
  },
  {
   "id": "9d8e2f03",
   "key": "Paying…",
   "where": [
-   "src/components/plansetup.tsx:117"
+   "src/components/plansetup.tsx:128"
   ]
  },
  {
@@ -10848,7 +10919,7 @@
   "key": "Payment didn't go through",
   "server": true,
   "where": [
-   "functions/src/index.ts:3579"
+   "functions/src/index.ts:3744"
   ]
  },
  {
@@ -10858,7 +10929,7 @@
   "where": [
    "functions/src/index.ts:3062",
    "src/app/(tabs)/(me)/plan.tsx:38",
-   "src/components/plansetup.tsx:185"
+   "src/components/plansetup.tsx:218"
   ]
  },
  {
@@ -10919,7 +10990,7 @@
   "id": "23f77d15",
   "key": "Percent off",
   "where": [
-   "src/components/offers.tsx:165"
+   "src/components/offers.tsx:172"
   ]
  },
  {
@@ -10963,7 +11034,7 @@
   "id": "e48322d5",
   "key": "phone app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:326"
+   "src/app/(tabs)/(me)/account.tsx:327"
   ]
  },
  {
@@ -11322,8 +11393,8 @@
   "id": "ae2f98a0",
   "key": "Plan",
   "where": [
-   "src/components/offers.tsx:159",
-   "src/components/plansetup.tsx:217"
+   "src/components/offers.tsx:164",
+   "src/components/plansetup.tsx:250"
   ]
  },
  {
@@ -11332,10 +11403,10 @@
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:159",
    "src/app/(tabs)/(fleet)/bulk.tsx:385",
-   "src/app/(tabs)/(me)/account.tsx:160",
-   "src/app/(tabs)/(me)/account.tsx:163",
+   "src/app/(tabs)/(me)/account.tsx:161",
+   "src/app/(tabs)/(me)/account.tsx:164",
    "src/app/(tabs)/(me)/plan.tsx:31",
-   "src/components/billinggate.tsx:87"
+   "src/components/billinggate.tsx:93"
   ]
  },
  {
@@ -11343,7 +11414,8 @@
   "key": "Plan: {plan}, {vans}, unlimited drivers and stations",
   "server": true,
   "where": [
-   "functions/src/payments.ts:526"
+   "functions/src/payments.ts:575",
+   "functions/src/payments.ts:624"
   ]
  },
  {
@@ -11376,7 +11448,7 @@
    "src/app/(tabs)/(me)/plan.tsx:35",
    "src/app/start.tsx:36",
    "src/components/billinggate.tsx:61",
-   "src/components/plansetup.tsx:181"
+   "src/components/plansetup.tsx:214"
   ]
  },
  {
@@ -11397,7 +11469,7 @@
   "id": "0d92d311",
   "key": "Please check before you go on",
   "where": [
-   "src/components/plansetup.tsx:280"
+   "src/components/plansetup.tsx:329"
   ]
  },
  {
@@ -11435,14 +11507,15 @@
   "key": "Price: {price}",
   "server": true,
   "where": [
-   "functions/src/payments.ts:528"
+   "functions/src/payments.ts:577",
+   "functions/src/payments.ts:625"
   ]
  },
  {
   "id": "4f04ad2a",
   "key": "Prices plus VAT.",
   "where": [
-   "src/components/plansetup.tsx:242"
+   "src/components/plansetup.tsx:275"
   ]
  },
  {
@@ -11450,7 +11523,8 @@
   "key": "Privacy policy",
   "server": true,
   "where": [
-   "functions/src/payments.ts:537",
+   "functions/src/payments.ts:586",
+   "functions/src/payments.ts:630",
    "src/components/legal.tsx:13"
   ]
  },
@@ -11511,7 +11585,8 @@
   "key": "Questions? Just reply to this email.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:539",
+   "functions/src/payments.ts:588",
+   "functions/src/payments.ts:613",
    "functions/src/website.ts:115"
   ]
  },
@@ -11955,7 +12030,7 @@
   "id": "80453614",
   "key": "Remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:263"
+   "src/app/(tabs)/(me)/account.tsx:264"
   ]
  },
  {
@@ -11984,21 +12059,21 @@
   "key": "Renews {when} until you cancel. You can cancel any time to the end of the period paid for.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:533"
+   "functions/src/payments.ts:582"
   ]
  },
  {
   "id": "fedaa260",
   "key": "Renews on {date}: {price} plus VAT.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:63"
+   "src/app/(tabs)/(me)/plan.tsx:65"
   ]
  },
  {
   "id": "fe34fc11",
   "key": "Renews on {date}.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:157"
+   "src/app/(tabs)/(me)/account.tsx:158"
   ]
  },
  {
@@ -12051,6 +12126,13 @@
   "key": "Request sent",
   "where": [
    "src/app/join/[token].tsx:211"
+  ]
+ },
+ {
+  "id": "7f448f69",
+  "key": "Require a credit card at sign-up",
+  "where": [
+   "src/components/offers.tsx:167"
   ]
  },
  {
@@ -13170,7 +13252,7 @@
   "id": "bb8712d7",
   "key": "Sign-up links and offers",
   "where": [
-   "src/components/offers.tsx:42"
+   "src/components/offers.tsx:44"
   ]
  },
  {
@@ -13414,11 +13496,18 @@
   ]
  },
  {
+  "id": "1db43d15",
+  "key": "Start free until {date}",
+  "where": [
+   "src/components/plansetup.tsx:345"
+  ]
+ },
+ {
   "id": "3b0f6d1e",
   "key": "Start free, paid from {date}",
   "where": [
-   "src/components/plansetup.tsx:292",
-   "src/components/plansetup.tsx:296"
+   "src/components/plansetup.tsx:341",
+   "src/components/plansetup.tsx:346"
   ]
  },
  {
@@ -13446,7 +13535,7 @@
   "id": "c83920dd",
   "key": "Start the demo over",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:259"
+   "src/app/(tabs)/(me)/account.tsx:260"
   ]
  },
  {
@@ -13703,7 +13792,7 @@
   "key": "Stripe couldn't charge the card for Fratius. Check the card under Account, then Plan and billing.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3580"
+   "functions/src/index.ts:3745"
   ]
  },
  {
@@ -14059,7 +14148,7 @@
   "id": "3afaa47c",
   "key": "Tap again to remove the demo company",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:263"
+   "src/app/(tabs)/(me)/account.tsx:264"
   ]
  },
  {
@@ -14087,7 +14176,7 @@
   "id": "256d0bed",
   "key": "Tap again: everything in the demo is made new",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:259"
+   "src/app/(tabs)/(me)/account.tsx:260"
   ]
  },
  {
@@ -14160,7 +14249,7 @@
   "id": "43782b37",
   "key": "Test mode",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:74",
+   "src/app/(tabs)/(me)/plan.tsx:76",
    "src/components/viewas.tsx:47"
   ]
  },
@@ -14189,7 +14278,7 @@
   "id": "969acbc9",
   "key": "Test mode: no real money is charged. Use the card 4242 4242 4242 4242, any future date and any CVC.",
   "where": [
-   "src/components/plansetup.tsx:196"
+   "src/components/plansetup.tsx:229"
   ]
  },
  {
@@ -14197,7 +14286,15 @@
   "key": "Thanks for signing up {company}. This is what you ordered:",
   "server": true,
   "where": [
-   "functions/src/payments.ts:524"
+   "functions/src/payments.ts:573"
+  ]
+ },
+ {
+  "id": "7066fbf6",
+  "key": "Thanks for signing up {company}. This is your free trial:",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:629"
   ]
  },
  {
@@ -14404,7 +14501,7 @@
   "key": "The bank didn't accept the payment for the change. Check the card under payment details, then try again.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3462"
+   "functions/src/index.ts:3624"
   ]
  },
  {
@@ -14516,7 +14613,7 @@
   "id": "e7537c03",
   "key": "The company's name and billing address go on your invoices.",
   "where": [
-   "src/components/plansetup.tsx:247"
+   "src/components/plansetup.tsx:288"
   ]
  },
  {
@@ -14721,7 +14818,7 @@
   "id": "ed26b746",
   "key": "The fleet owner changes these.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:313"
+   "src/app/(tabs)/(me)/account.tsx:314"
   ]
  },
  {
@@ -14733,10 +14830,36 @@
   ]
  },
  {
+  "id": "a3b5b685",
+  "key": "The free trial ends on {date}. Add a card to keep going.",
+  "where": [
+   "src/components/billinggate.tsx:86"
+  ]
+ },
+ {
   "id": "c5a067d8",
   "key": "The free trial has ended",
+  "server": true,
   "where": [
+   "functions/src/index.ts:3546",
+   "functions/src/payments.ts:635",
    "src/components/billinggate.tsx:51"
+  ]
+ },
+ {
+  "id": "db602eed",
+  "key": "The free trial of {company} ended on {date}.",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:636"
+  ]
+ },
+ {
+  "id": "eb378a21",
+  "key": "The free trial of {company} ends on {date}. Add a card before then to keep working with your vans, drivers and history.",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:633"
   ]
  },
  {
@@ -14810,15 +14933,15 @@
   "id": "5e298156",
   "key": "The last payment didn't go through. Check the card.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:156",
-   "src/components/billinggate.tsx:81"
+   "src/app/(tabs)/(me)/account.tsx:157",
+   "src/components/billinggate.tsx:84"
   ]
  },
  {
   "id": "425742cd",
   "key": "The last payment didn't go through. Stripe tries the card again; check it below.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:64"
+   "src/app/(tabs)/(me)/plan.tsx:66"
   ]
  },
  {
@@ -14839,7 +14962,7 @@
   "id": "fde4fddf",
   "key": "The link is ready:",
   "where": [
-   "src/components/offers.tsx:147"
+   "src/components/offers.tsx:152"
   ]
  },
  {
@@ -14904,7 +15027,7 @@
   "id": "6d2117d8",
   "key": "The next check shows on each driver's record and in Review. Every 6 months is common practice.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:311"
+   "src/app/(tabs)/(me)/account.tsx:312"
   ]
  },
  {
@@ -14950,7 +15073,7 @@
   "id": "6f97d1e7",
   "key": "The offer's discount is for {m} months; then the plan costs {price} plus VAT {per}.",
   "where": [
-   "src/components/plansetup.tsx:274"
+   "src/components/plansetup.tsx:323"
   ]
  },
  {
@@ -14971,14 +15094,14 @@
   "id": "503dcb8f",
   "key": "The payment form is still loading. Try again in a moment.",
   "where": [
-   "src/components/plansetup.tsx:154"
+   "src/components/plansetup.tsx:187"
   ]
  },
  {
   "id": "8a4c03a1",
   "key": "The payment is still on its way. Your company opens as soon as Stripe confirms it.",
   "where": [
-   "src/components/plansetup.tsx:127"
+   "src/components/plansetup.tsx:138"
   ]
  },
  {
@@ -15078,7 +15201,7 @@
   "id": "e9b9251d",
   "key": "The plan has ended. You can look at and export the data until {date}.",
   "where": [
-   "src/components/billinggate.tsx:82"
+   "src/components/billinggate.tsx:88"
   ]
  },
  {
@@ -15102,14 +15225,14 @@
   "id": "14ea5dbc",
   "key": "The plan is changed.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:123"
+   "src/app/(tabs)/(me)/plan.tsx:125"
   ]
  },
  {
   "id": "9d5660b8",
   "key": "The plan isn't paid. Pay the open invoice or change the card below.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:65"
+   "src/app/(tabs)/(me)/plan.tsx:67"
   ]
  },
  {
@@ -15372,16 +15495,16 @@
   "id": "7e789a05",
   "key": "Then {price} plus VAT every month, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:271",
-   "src/components/plansetup.tsx:289"
+   "src/components/plansetup.tsx:320",
+   "src/components/plansetup.tsx:338"
   ]
  },
  {
   "id": "a25106e6",
   "key": "Then {price} plus VAT every year, until you cancel.",
   "where": [
-   "src/components/plansetup.tsx:271",
-   "src/components/plansetup.tsx:289"
+   "src/components/plansetup.tsx:320",
+   "src/components/plansetup.tsx:338"
   ]
  },
  {
@@ -15464,8 +15587,8 @@
   "id": "4cfa97a7",
   "key": "They choose",
   "where": [
-   "src/components/offers.tsx:159",
-   "src/components/offers.tsx:160"
+   "src/components/offers.tsx:164",
+   "src/components/offers.tsx:165"
   ]
  },
  {
@@ -15558,7 +15681,7 @@
   "key": "This company already has a plan. Change it under Account, then Plan and billing.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3299"
+   "functions/src/index.ts:3310"
   ]
  },
  {
@@ -15566,7 +15689,7 @@
   "key": "This company has {n} vans; {plan} is for up to {max}. Choose a bigger plan or retire vans first.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3134"
+   "functions/src/index.ts:3138"
   ]
  },
  {
@@ -15585,11 +15708,19 @@
   ]
  },
  {
+  "id": "b506c3f0",
+  "key": "This company has started already. A sign-up link without a card is for a new company.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:3491"
+  ]
+ },
+ {
   "id": "8f11deba",
   "key": "This company has used today's {n} AI damage checks of the free trial. More from midnight, or write to info@fratius.com for more.",
   "server": true,
   "where": [
-   "functions/src/billing.ts:89"
+   "functions/src/billing.ts:90"
   ]
  },
  {
@@ -15597,14 +15728,14 @@
   "key": "This company has used today's {n} AI photo readings of the free trial. More from midnight, or write to info@fratius.com for more.",
   "server": true,
   "where": [
-   "functions/src/billing.ts:90"
+   "functions/src/billing.ts:91"
   ]
  },
  {
   "id": "cbac1194",
   "key": "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:258"
+   "src/app/(tabs)/(me)/account.tsx:259"
   ]
  },
  {
@@ -15674,7 +15805,7 @@
   "id": "12fadf41",
   "key": "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:236"
+   "src/app/(tabs)/(me)/account.tsx:237"
   ]
  },
  {
@@ -15705,7 +15836,8 @@
   "key": "This is the early-bird price. It stays yours for as long as your plan runs.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:529"
+   "functions/src/payments.ts:578",
+   "functions/src/payments.ts:626"
   ]
  },
  {
@@ -15760,7 +15892,7 @@
   "key": "This link was used already, so its terms stay. Make a new link instead.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3504"
+   "functions/src/index.ts:3666"
   ]
  },
  {
@@ -15835,8 +15967,8 @@
   "key": "This plan can't be changed in the app. Write to info@fratius.com.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3432",
-   "functions/src/index.ts:3445"
+   "functions/src/index.ts:3594",
+   "functions/src/index.ts:3607"
   ]
  },
  {
@@ -15885,8 +16017,9 @@
   "key": "This sign-up link doesn't exist. Check the link, or write to info@fratius.com.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3500",
-   "functions/src/payments.ts:472"
+   "functions/src/index.ts:3442",
+   "functions/src/index.ts:3662",
+   "functions/src/payments.ts:494"
   ]
  },
  {
@@ -15894,7 +16027,7 @@
   "key": "This sign-up link has already been used. Write to info@fratius.com for a new one.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:474"
+   "functions/src/payments.ts:497"
   ]
  },
  {
@@ -15902,7 +16035,15 @@
   "key": "This sign-up link has ended. Write to info@fratius.com for a new one.",
   "server": true,
   "where": [
-   "functions/src/payments.ts:473"
+   "functions/src/payments.ts:496"
+  ]
+ },
+ {
+  "id": "f47ae513",
+  "key": "This sign-up link starts with a card. Add one below to start.",
+  "server": true,
+  "where": [
+   "functions/src/index.ts:3490"
   ]
  },
  {
@@ -16112,6 +16253,15 @@
   ]
  },
  {
+  "id": "ac1f2811",
+  "key": "To keep going after {date}, add a card before then: Account, then Plan and billing, in the web app.",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:639",
+   "src/components/plansetup.tsx:305"
+  ]
+ },
+ {
   "id": "066f77ce",
   "key": "To review",
   "where": [
@@ -16137,29 +16287,30 @@
   "id": "37087aec",
   "key": "Today: {price} plus VAT for the first month.",
   "where": [
-   "src/components/plansetup.tsx:270"
+   "src/components/plansetup.tsx:319"
   ]
  },
  {
   "id": "55b5b84f",
   "key": "Today: {price} plus VAT for the first year.",
   "where": [
-   "src/components/plansetup.tsx:270"
+   "src/components/plansetup.tsx:319"
   ]
  },
  {
   "id": "6d0bd7b3",
   "key": "Today: {price}, VAT included.",
   "where": [
-   "src/components/plansetup.tsx:283"
+   "src/components/plansetup.tsx:332"
   ]
  },
  {
   "id": "1ec1d529",
   "key": "Today: {price}.",
   "where": [
-   "src/components/plansetup.tsx:260",
-   "src/components/plansetup.tsx:284"
+   "src/components/plansetup.tsx:302",
+   "src/components/plansetup.tsx:309",
+   "src/components/plansetup.tsx:333"
   ]
  },
  {
@@ -16310,7 +16461,7 @@
   "id": "c5f48842",
   "key": "Tours and driver records",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:297"
+   "src/app/(tabs)/(me)/account.tsx:298"
   ]
  },
  {
@@ -16362,7 +16513,7 @@
   "id": "63b84bd9",
   "key": "Try it as someone else",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:248"
+   "src/app/(tabs)/(me)/account.tsx:249"
   ]
  },
  {
@@ -16440,14 +16591,14 @@
   "id": "89341260",
   "key": "Two of the made-up people have real logins. Sign out and sign in with one, or use a private browser window so you stay signed in here.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:249"
+   "src/app/(tabs)/(me)/account.tsx:250"
   ]
  },
  {
   "id": "e8edc31d",
   "key": "Two stations, two fleet managers, eight drivers, twelve vans with drivers and history, damage checks in every state, a month of tours with fuel figures, refuels, driver records and incidents, to try things without touching your real fleet. Comes with a driver and a fleet manager login.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:270"
+   "src/app/(tabs)/(me)/account.tsx:271"
   ]
  },
  {
@@ -16752,14 +16903,14 @@
   "id": "7274bf49",
   "key": "unlimited drivers and stations",
   "where": [
-   "src/components/plansetup.tsx:232"
+   "src/components/plansetup.tsx:265"
   ]
  },
  {
   "id": "50c24973",
   "key": "Unlimited drivers and stations. Prices plus VAT.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:80"
+   "src/app/(tabs)/(me)/plan.tsx:82"
   ]
  },
  {
@@ -16767,16 +16918,17 @@
   "key": "unlimited vans",
   "server": true,
   "where": [
-   "functions/src/payments.ts:520",
-   "src/app/(tabs)/(me)/account.tsx:161"
+   "functions/src/payments.ts:569",
+   "functions/src/payments.ts:620",
+   "src/app/(tabs)/(me)/account.tsx:162"
   ]
  },
  {
   "id": "14c4ef6b",
   "key": "Unlimited vans",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:141",
-   "src/components/plansetup.tsx:192"
+   "src/app/(tabs)/(me)/plan.tsx:143",
+   "src/components/plansetup.tsx:225"
   ]
  },
  {
@@ -16790,7 +16942,7 @@
   "id": "b798a191",
   "key": "until {date}",
   "where": [
-   "src/components/offers.tsx:102"
+   "src/components/offers.tsx:105"
   ]
  },
  {
@@ -16805,15 +16957,16 @@
   "key": "up to {n} vans",
   "server": true,
   "where": [
-   "functions/src/payments.ts:520"
+   "functions/src/payments.ts:569",
+   "functions/src/payments.ts:620"
   ]
  },
  {
   "id": "68798ac9",
   "key": "Up to {n} vans",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:141",
-   "src/components/plansetup.tsx:192"
+   "src/app/(tabs)/(me)/plan.tsx:143",
+   "src/components/plansetup.tsx:225"
   ]
  },
  {
@@ -16952,7 +17105,7 @@
   "where": [
    "src/app/join/[token].tsx:193",
    "src/app/join/[token].tsx:55",
-   "src/components/plansetup.tsx:150",
+   "src/components/plansetup.tsx:161",
    "src/lib/session.tsx:148"
   ]
  },
@@ -16995,7 +17148,7 @@
   "id": "6dbb74cc",
   "key": "Valid for days",
   "where": [
-   "src/components/offers.tsx:170"
+   "src/components/offers.tsx:177"
   ]
  },
  {
@@ -17101,7 +17254,7 @@
   "id": "e132c7a6",
   "key": "VAT ID",
   "where": [
-   "src/components/plansetup.tsx:251"
+   "src/components/plansetup.tsx:292"
   ]
  },
  {
@@ -17458,7 +17611,7 @@
   "id": "471404a0",
   "key": "We ask for a card to verify your company and keep out fake accounts. Nothing is charged before {date}; cancel any time before then.",
   "where": [
-   "src/components/plansetup.tsx:253"
+   "src/components/plansetup.tsx:294"
   ]
  },
  {
@@ -17473,7 +17626,7 @@
   "id": "5a9649da",
   "key": "web app",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:326"
+   "src/app/(tabs)/(me)/account.tsx:327"
   ]
  },
  {
@@ -17583,7 +17736,7 @@
   "id": "74647abe",
   "key": "What you pay",
   "where": [
-   "src/components/plansetup.tsx:257"
+   "src/components/plansetup.tsx:299"
   ]
  },
  {
@@ -17633,7 +17786,7 @@
   "id": "7a714c4a",
   "key": "When on, drivers photograph the dashboard at the start and end of each tour, for kilometres, fuel and warning lights per tour and per driver.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:303"
+   "src/app/(tabs)/(me)/account.tsx:304"
   ]
  },
  {
@@ -17762,6 +17915,13 @@
   ]
  },
  {
+  "id": "4da67d5e",
+  "key": "With a card, the plan costs {price} plus VAT {per} from {date}.",
+  "where": [
+   "src/components/plansetup.tsx:304"
+  ]
+ },
+ {
   "id": "0a81e4d4",
   "key": "With a driver ({n})",
   "where": [
@@ -17772,7 +17932,7 @@
   "id": "40217b3f",
   "key": "With the add-on of {n} more vans.",
   "where": [
-   "src/app/(tabs)/(me)/plan.tsx:77"
+   "src/app/(tabs)/(me)/plan.tsx:79"
   ]
  },
  {
@@ -17814,17 +17974,17 @@
   "id": "cafcb25c",
   "key": "yearly",
   "where": [
-   "src/components/offers.tsx:82"
+   "src/components/offers.tsx:84"
   ]
  },
  {
   "id": "7622eb5a",
   "key": "Yearly",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:161",
-   "src/app/(tabs)/(me)/plan.tsx:73",
-   "src/components/offers.tsx:160",
-   "src/components/plansetup.tsx:220"
+   "src/app/(tabs)/(me)/account.tsx:162",
+   "src/app/(tabs)/(me)/plan.tsx:75",
+   "src/components/offers.tsx:165",
+   "src/components/plansetup.tsx:253"
   ]
  },
  {
@@ -17838,7 +17998,7 @@
   "id": "6f397e95",
   "key": "Yearly plans are paid at sign-up, with an invoice. Off: everyone signs up monthly, with the free days.",
   "where": [
-   "src/components/offers.tsx:45"
+   "src/components/offers.tsx:47"
   ]
  },
  {
@@ -17846,21 +18006,21 @@
   "key": "Yearly plans aren't offered yet. Choose monthly, or write to info@fratius.com.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3472"
+   "functions/src/index.ts:3634"
   ]
  },
  {
   "id": "12d2a3e9",
   "key": "Yearly plans at sign-up and on the website",
   "where": [
-   "src/components/offers.tsx:45"
+   "src/components/offers.tsx:47"
   ]
  },
  {
   "id": "69422c8f",
   "key": "Yearly, {n} % off the first year",
   "where": [
-   "src/components/plansetup.tsx:220"
+   "src/components/plansetup.tsx:253"
   ]
  },
  {
@@ -17963,7 +18123,7 @@
   "id": "8a5390b3",
   "key": "you can add more later",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:202",
+   "src/app/(tabs)/(me)/account.tsx:203",
    "src/app/sign-in.tsx:66"
   ]
  },
@@ -17971,7 +18131,7 @@
   "id": "cf86156a",
   "key": "You can cancel any time to the end of the period paid for: Account, then Plan and billing.",
   "where": [
-   "src/components/plansetup.tsx:276"
+   "src/components/plansetup.tsx:325"
   ]
  },
  {
@@ -18211,7 +18371,7 @@
   "id": "20767b9b",
   "key": "You're in the demo company. The photos are drawings and no AI was used. Removing it deletes everything in it, including the demo logins.",
   "where": [
-   "src/app/(tabs)/(me)/account.tsx:245"
+   "src/app/(tabs)/(me)/account.tsx:246"
   ]
  },
  {
@@ -18262,7 +18422,7 @@
   "id": "4ab29102",
   "key": "Your account",
   "where": [
-   "src/components/plansetup.tsx:209"
+   "src/components/plansetup.tsx:242"
   ]
  },
  {
@@ -18292,7 +18452,8 @@
   "id": "3f7a84ea",
   "key": "Your company",
   "where": [
-   "src/app/sign-in.tsx:50"
+   "src/app/sign-in.tsx:50",
+   "src/components/plansetup.tsx:281"
   ]
  },
  {
@@ -18377,7 +18538,15 @@
   "key": "Your Fratius plan for {company}",
   "server": true,
   "where": [
-   "functions/src/payments.ts:522"
+   "functions/src/payments.ts:571"
+  ]
+ },
+ {
+  "id": "207d7077",
+  "key": "Your free Fratius trial for {company}",
+  "server": true,
+  "where": [
+   "functions/src/payments.ts:622"
   ]
  },
  {
@@ -18385,7 +18554,9 @@
   "key": "Your free trial ends soon",
   "server": true,
   "where": [
-   "functions/src/index.ts:3585"
+   "functions/src/index.ts:3547",
+   "functions/src/index.ts:3750",
+   "functions/src/payments.ts:632"
   ]
  },
  {
@@ -18407,7 +18578,7 @@
   "key": "Your name",
   "where": [
    "src/app/sign-in.tsx:107",
-   "src/components/plansetup.tsx:210"
+   "src/components/plansetup.tsx:243"
   ]
  },
  {
@@ -18421,7 +18592,7 @@
   "id": "b3a2c273",
   "key": "Your offer",
   "where": [
-   "src/components/plansetup.tsx:200"
+   "src/components/plansetup.tsx:233"
   ]
  },
  {
@@ -18459,7 +18630,7 @@
   "key": "Your plan starts on {date} and the card is charged then. Change or cancel it under Account, then Plan and billing.",
   "server": true,
   "where": [
-   "functions/src/index.ts:3586"
+   "functions/src/index.ts:3751"
   ]
  },
  {
@@ -18518,7 +18689,10 @@
  {
   "id": "029be4d4",
   "key": "Your vans, drivers and history are kept. Choose a plan to go on working with them.",
+  "server": true,
   "where": [
+   "functions/src/index.ts:3546",
+   "functions/src/payments.ts:636",
    "src/components/billinggate.tsx:58"
   ]
  },

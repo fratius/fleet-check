@@ -38,11 +38,13 @@ export default function PlanScreen() {
   if (!mode) return <Screen>{head}<Notice text={t('Payments aren\'t set up yet. Write to info@fratius.com.')} /></Screen>;
   const paying = !!b && b.via === 'stripe' && !!b.card && ['trialing', 'active', 'past_due', 'unpaid', 'paused'].includes(b.status);
   if (!org || !paying) {
+    // Free days without a card (a sign-up link that asked for none): the card is added here, on the link's terms.
+    const later = !!b?.cardLater && b.status === 'trialing' && (b.trialEnd || 0) > Date.now();
     return (
       <Screen>
         {head}
-        <T>{t('Choose the plan and add the card to start.')}</T>
-        {org ? <PlanSetup org={org} plan={b?.plan} interval={b?.interval} onDone={(id) => s.switchOrg(id)} /> : null}
+        <T>{later ? t('Free until {date}, with no card. Nothing is charged without a card.', { date: day(b!.trialEnd!) }) : t('Choose the plan and add the card to start.')}</T>
+        {org ? <PlanSetup org={org} plan={b?.plan} interval={b?.interval} offer={b?.cardLater ? b.offer : null} onDone={(id) => s.switchOrg(id)} /> : null}
       </Screen>
     );
   }

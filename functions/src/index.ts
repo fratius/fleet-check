@@ -43,7 +43,7 @@ import {
 } from './billing';
 import {
   LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, switches as paySwitches, yearlyOn, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
-  payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
+  payConfig, payWith, planOf, priceKey, readKey, reverseCharge, startOf, trialMail, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
 import { NAMES, nameOf } from './names';
 import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
@@ -3087,7 +3087,11 @@ interface PayDoc {
   /** A billingStart running now (another tab waits), and when Stripe was last read for billing. */
   starting?: number | null;
   syncedAt?: number;
+  /** Free days without a card (billingTrial): when they started, and the reminders sent (sweepCardLater). */
+  trialAt?: number;
+  cardNotes?: Partial<Record<CardNote, number>>;
 }
+type CardNote = 'd7' | 'd1' | 'ended';
 const payDoc = (orgId: string) => db().doc(`payments/${orgId}`);
 /**
  * The company's Stripe ids in the mode payments run in now. After switching from test keys to live ones the test
@@ -3159,7 +3163,8 @@ async function saveBilling(orgId: string, sub: Sub, readAt: number): Promise<Bil
  * (billingConfirm or the webhook).
  */
 async function confirmedOnce(orgId: string, b: Billing) {
-  if (b.status !== 'trialing' && b.status !== 'active') return;
+  // A trial without a card (cardLater) isn't confirmed yet: that is the card.
+  if ((b.status !== 'trialing' && b.status !== 'active') || !b.card) return;
   const pd = payDoc(orgId);
   const first = await db().runTransaction(async (tx) => {
     const p = (await tx.get(pd)).data() as PayDoc | undefined;
@@ -3212,7 +3217,9 @@ async function offerFor(code: string, orgId: string | null): Promise<{ offer: Of
   if (!code) return { offer: null, why: null };
   const o = OFFER_CODE.test(code) ? ((await db().doc(`offers/${code}`).get()).data() as Offer | undefined) : undefined;
   const held = !!o && !!orgId && ID.test(orgId) && (await db().doc(`offers/${code}/uses/${orgId}`).get()).exists;
-  const why = offerUsable(o, Date.now(), held);
+  // Started its free days without a card with this link: its terms stay the company's, also after the link ended.
+  const b = held ? ((await db().doc(`orgs/${orgId}`).get()).data()?.billing as Partial<Billing> | undefined) : undefined;
+  const why = offerUsable(o, Date.now(), held, !!b?.cardLater && b.offer === code);
   return { offer: why ? null : o!, why };
 }
 
@@ -3245,11 +3252,15 @@ function readAddress(v: unknown): Address | null {
 }
 
 /**
- * The free days of a new subscription, as the sign-up page shows them (components/plansetup.tsx): a sign-up link's;
+ * The free days of a new subscription, as the sign-up page shows them (components/plansetup.tsx): what is left of free
+ * days without a card; a sign-up link's;
  * for a monthly plan 30 from now when the company never had a card (in this mode), what is left of a trial from
  * before payments; yearly none.
  */
 function trialFor(offer: Offer | null, interval: Interval, org: Record<string, unknown>, p: PayDoc, now: number): number | null {
+  // In free days without a card: what is left of them (nothing once they are over), never new ones.
+  const cl = org.billing as Partial<Billing> | undefined;
+  if (cl?.cardLater) return Number(cl.trialEnd || 0) > now + 3600_000 ? Number(cl.trialEnd) : null;
   if (offer) return offer.trialDays > 0 ? now + offer.trialDays * DAY_MS : null;
   if (interval !== 'month' || p.confirmedAt) return null;
   const b = org.billing as Partial<Billing> | undefined;
@@ -3324,7 +3335,10 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
     // The price: the early-bird one for every subscription made before EARLY_BIRD_END (billing.ts). The discount: the
     // sign-up link's (off that price), or after the early bird the launch offer on a yearly plan (on the plan only,
     // not on the add-on).
-    const early = earlyBird(now);
+    // Free days without a card first: the plan counts from that sign-up (startOf in payments.ts).
+    const ob = org.billing as Partial<Billing> | undefined;
+    const since = ob?.cardLater && Number(ob.trialStart) > 0 ? Number(ob.trialStart) : null;
+    const early = earlyBird(since ?? now);
     let coupon: string | null = null;
     const net = netCents(plan, interval, addon, early);
     let discount = 0;
@@ -3368,7 +3382,7 @@ export const billingStart = onCallOnce('billingStart', { timeoutSeconds: 60, sec
     const input = {
       customer,
       prices: [priceId(cfg, priceKey(plan, interval, early)), ...(addon ? [priceId(cfg, priceKey('addon', interval))] : [])],
-      trialEnd, coupon, tax: cfg.tax, reverse: !!reverse, metadata: { orgId: who.orgId, terms, ...(offer ? { offer: offer.code } : {}) },
+      trialEnd, coupon, tax: cfg.tax, reverse: !!reverse, metadata: { orgId: who.orgId, terms, ...(offer ? { offer: offer.code } : {}), ...(since ? { since: String(since) } : {}) },
     };
     const madeAt = Date.now();
     const sub = await pay.createSubscription(input, `sub-${who.orgId}-${attempt}-${keyOf(input)}`);
@@ -3405,6 +3419,154 @@ export const billingConfirm = onCall({ timeoutSeconds: 60, secrets: [STRIPE_SECR
   return { billing: b, next: sub.next };
 });
 
+/**
+ * Free days without a card (product owner, 2026-11-20): a sign-up link the app creator made with "Require a credit
+ * card" off. Called right after createCompany (payments: true) instead of billingStart: the company works for the
+ * link's free days with no card and nothing in Stripe (billing.cardLater, with the plan it will have). The owner is
+ * reminded to add a card (sweepCardLater); billingStart adds it, for what is left of the free days and on the link's
+ * terms. Without a card the company stops when the days end (standing: trial_over), with everything kept.
+ * Only for a company that waits for its first card: never a second round of free days.
+ */
+export const billingTrial = onCallOnce('billingTrial', { timeoutSeconds: 30, secrets: [STRIPE_SECRET_KEY, SMTP_URL, WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req, { unpaid: true });
+  needOwner(who);
+  const { pay, cfg } = await payOrFail();
+  const orgRef = db().doc(`orgs/${who.orgId}`);
+  const org = (await orgRef.get()).data() || {};
+  const ob = org.billing as Partial<Billing> | undefined;
+  const code = String(req.data?.offer || '').trim().toUpperCase();
+  // Asked again (a reload, another tab): as it is.
+  if (ob?.cardLater && ob.offer === code) return { billing: ob as Billing, trialEnd: Number(ob.trialEnd) };
+  const { offer, why } = await offerFor(code, who.orgId);
+  if (why) throw fail('failed-precondition', why);
+  if (!offer) throw fail('invalid-argument', 'This sign-up link doesn\'t exist. Check the link, or write to info@fratius.com.');
+  if (offer.requireCard !== false || !(offer.trialDays > 0)) throw fail('failed-precondition', NEEDS_CARD);
+  const p = await payState(who.orgId, cfg.mode);
+  if (ob?.via !== 'stripe' || ob.status !== 'incomplete' || p.confirmedAt) throw fail('failed-precondition', STARTED_ALREADY);
+  const plan = offer.plan || PLAN_IDS.find((x) => x === req.data?.plan);
+  if (!plan) throw fail('invalid-argument', 'Choose a plan.');
+  const interval: Interval = offer.interval || (req.data?.interval === 'year' ? 'year' : 'month');
+  if (interval === 'year' && !offer.interval && !(await yearlyOn())) throw fail('failed-precondition', YEARLY_CLOSED);
+  roomFor(plan, false, await countFleet(who.orgId));
+
+  const now = Date.now();
+  const early = earlyBird(now);
+  const billing: Billing = {
+    status: 'trialing', trialStart: now, trialEnd: Math.floor((now + offer.trialDays * DAY_MS) / 3600_000) * 3600_000,
+    source: ob.source === 'website' ? 'website' : 'app', plan, via: 'stripe', interval, addon: false, vans: allowedVans(plan, false),
+    card: false, cardLater: true, periodEnd: null, cancelAt: null, offer: offer.code, early, net: netCents(plan, interval, false, early),
+    testMode: cfg.mode !== 'live', updatedAt: now,
+  };
+  // The link's use is taken with the free days, in one step: two companies can't both get its last use.
+  await db().runTransaction(async (tx) => {
+    const oref = db().doc(`offers/${offer.code}`), uref = oref.collection('uses').doc(who.orgId);
+    const [o, u, cur] = await Promise.all([tx.get(oref), tx.get(uref), tx.get(orgRef)]);
+    if ((cur.data()?.billing as Partial<Billing> | undefined)?.status !== 'incomplete') throw fail('failed-precondition', STARTED_ALREADY);
+    if (!u.exists) {
+      const no = offerUsable(o.data() as Offer | undefined);
+      if (no) throw fail('failed-precondition', no);
+      tx.set(uref, { at: now, by: who.uid, noCard: true });
+      tx.update(oref, { uses: FieldValue.increment(1) });
+    }
+    tx.update(orgRef, { billing });
+    tx.set(payDoc(who.orgId), { offer: offer.code, trialAt: now, startedBy: who.uid }, { merge: true });
+  });
+  // A card form started before and left: its subscription goes, so Stripe doesn't remind or charge on it later.
+  if (p.subscriptionId) {
+    await pay.getSubscription(p.subscriptionId)
+      .then((x) => (x && !['canceled', 'incomplete_expired'].includes(x.status) ? pay.cancelNow(x.id) : undefined))
+      .catch((e) => logger.warn('Left card form not cancelled', { orgId: who.orgId, message: String((e as Error)?.message || e) }));
+  }
+  logger.info('Free days without a card', { orgId: who.orgId, offer: offer.code, plan, interval, trialEnd: billing.trialEnd });
+  const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
+  const until = new Date(billing.trialEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' });
+  await Promise.all(creators.filter((c) => c !== who.uid).map((c) => notify(c, {
+    title: `No card yet: ${org.name}`, body: `${planName(plan)} ${interval === 'year' ? 'yearly' : 'monthly'} · link ${offer.code} · free until ${until}${billing.testMode ? ' · TEST' : ''}`,
+    url: '/', tag: `pay-${who.orgId}`,
+  }).catch(() => 0)));
+  await trialMailTo(who.orgId, { ...org, billing }, 'start', true);
+  return { billing, trialEnd: billing.trialEnd };
+});
+const NEEDS_CARD = N_('This sign-up link starts with a card. Add one below to start.');
+const STARTED_ALREADY = N_('This company has started already. A sign-up link without a card is for a new company.');
+
+/** Emails the owner who made the company (or the first owner) about its free days without a card (trialMail). */
+async function trialMailTo(orgId: string, org: Record<string, unknown>, kind: 'start' | 'soon' | 'ended', bcc = false): Promise<boolean> {
+  const smtp = (SMTP_URL.value() || '').trim();
+  if (!smtp || smtp === 'none') return false;
+  const owners = (await db().collection(`orgs/${orgId}/members`).where('role', 'in', ['owner', 'admin']).get()).docs;
+  const owner = owners.find((d) => d.id === org.createdBy) || owners[0];
+  const email = String(owner?.data()?.email || '');
+  if (!owner || !email) return false;
+  const b = org.billing as Billing;
+  const lang = await langOf(owner.id);
+  const net = b.plan && ALL_PLANS.includes(b.plan as PlanId) ? netCents(b.plan as PlanId, b.interval || 'month', false, !!b.early) : 0;
+  const mail = trialMail({
+    lang, name: String(owner.data().name || '').split(' ')[0] || email.split('@')[0], company: String(org.name || ''), b, kind,
+    netCents: net, planUrl: `${await appUrl()}/plan`, termsVersion: TERMS_VERSION,
+  });
+  const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
+  return nodemailer.createTransport(smtp).sendMail({ from: `Fratius <${from}>`, to: email, replyTo: SIGNUP_TO, ...(bcc ? { bcc: SIGNUP_TO } : {}), subject: mail.subject, text: mail.text, html: mail.html })
+    .then(() => true, (e) => { logger.error('Trial email not sent', { orgId, kind, message: String((e as Error)?.message || e) }); return false; });
+}
+
+/** The hour in Germany (0-23). */
+const berlinHour = (now: number) => Number(new Date(now).toLocaleString('en-GB', { timeZone: 'Europe/Berlin', hour: 'numeric', hourCycle: 'h23' }));
+
+/**
+ * Free days without a card (billing.cardLater): the owners are reminded to add a card 7 days before the end (when
+ * the free days are 10 or more) and the day before, and told when the days are over and the company stopped; the app
+ * creator hears of the end too. On their phones and by email, each once (payments/{org}.cardNotes). `quiet`: only
+ * between 8:00 and 20:00 German time (the schedule; a reminder due at night waits for the morning).
+ */
+async function sweepCardLater(now = Date.now(), quiet = true): Promise<{ soon: number; ended: number }> {
+  const r = { soon: 0, ended: 0 };
+  if (quiet && (berlinHour(now) < 8 || berlinHour(now) >= 20)) return r;
+  const q = await db().collection('orgs').where('billing.cardLater', '==', true).get();
+  for (const d of q.docs) {
+    const org = d.data();
+    const b = org.billing as Billing;
+    if (b.status !== 'trialing' || b.card || now - b.trialEnd > 7 * DAY_MS) continue;
+    const left = b.trialEnd - now;
+    const note: CardNote | null = left <= 0 ? 'ended' : left <= 30 * 3600_000 ? 'd1'
+      : left <= 7 * DAY_MS && b.trialEnd - b.trialStart >= 10 * DAY_MS ? 'd7' : null;
+    if (!note) continue;
+    // Claimed before anything is sent, so a second run (or a retry) never sends it twice.
+    const claimed = await db().runTransaction(async (tx) => {
+      const pd = (await tx.get(payDoc(d.id))).data() as PayDoc | undefined;
+      const sent = pd?.cardNotes || {};
+      if (sent[note] || (note === 'd7' && sent.d1)) return false;
+      tx.set(payDoc(d.id), { cardNotes: { [note]: now } }, { merge: true });
+      return true;
+    });
+    if (!claimed) continue;
+    const owners = (await db().collection(`orgs/${d.id}/members`).where('role', 'in', ['owner', 'admin']).get()).docs.map((m) => m.id);
+    const date = (lang: string) => new Date(b.trialEnd).toLocaleDateString(payLoc(lang), { day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' });
+    await Promise.all(owners.map((uid) => notify(uid, (lang) => (note === 'ended'
+      ? { title: tr(lang, 'The free trial has ended'), body: tr(lang, 'Your vans, drivers and history are kept. Choose a plan to go on working with them.'), url: '/plan', tag: `pay-${d.id}` }
+      : { title: tr(lang, 'Your free trial ends soon'), body: tr(lang, 'Add a card before {date} to keep working with Fratius.', { date: date(lang) }), url: '/plan', tag: `pay-${d.id}` })).catch(() => 0)));
+    await trialMailTo(d.id, org, note === 'ended' ? 'ended' : 'soon');
+    if (note === 'ended') {
+      const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
+      await Promise.all(creators.map((c) => notify(c, { title: `Trial over, no card: ${org.name}`, body: `${planName(b.plan)} · link ${b.offer || '-'}`, url: '/', tag: `pay-${d.id}` }).catch(() => 0)));
+      r.ended++;
+    } else r.soon++;
+  }
+  return r;
+}
+
+export const cardLaterSweep = onSchedule({ schedule: '5 * * * *', timeZone: 'Europe/Berlin', secrets: [WEBPUSH_KEYS, SMTP_URL], timeoutSeconds: 300, retryCount: 1 }, async () => {
+  const r = await sweepCardLater();
+  if (r.soon || r.ended) logger.info('Free days without a card: reminders', r);
+});
+
+/** The same, now and at any hour (the app creator; the emulator tests pass a time). */
+export const cardLaterSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_KEYS, SMTP_URL] }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const at = process.env.FUNCTIONS_EMULATOR === 'true' && typeof req.data?.now === 'number' ? req.data.now : Date.now();
+  return sweepCardLater(at, false);
+});
+
 /** Stripe's page for the card, billing address, VAT ID, invoices and cancelling. */
 export const billingPortal = onCall({ timeoutSeconds: 30, secrets: [STRIPE_SECRET_KEY] }, async (req) => {
   const who = await guard(req, { unpaid: true });
@@ -3437,7 +3599,7 @@ export const changePlan = onCallOnce('changePlan', { timeoutSeconds: 60, secrets
   const addon = addonOn(plan, req.data?.addon === undefined ? cur.addon : req.data.addon === true);
   if (plan === cur.plan && interval === cur.interval && addon === cur.addon) return { billing: await saveBilling(who.orgId, sub, readAt), next: null };
   // A subscription from before EARLY_BIRD_END keeps the early-bird price on every plan it moves to (billing.ts).
-  const early = earlyBird(sub.created);
+  const early = earlyBird(startOf(sub));
   roomFor(plan, addon, await countFleet(who.orgId));
 
   const main = sub.items.find((i) => { const r = readKey(i.key); return r && r.item !== 'addon'; });
@@ -3514,11 +3676,14 @@ export const saveOffer = onCallOnce('saveOffer', { timeoutSeconds: 15 }, async (
     trialDays: num(d.trialDays, 0, 365) ?? TRIAL_DAYS,
     percentOff, amountOff, months: percentOff || amountOff ? num(d.months, 1, 60) : null,
     validUntil: num(d.validUntil, Date.now(), Date.now() + 730 * DAY_MS), maxUses: num(d.maxUses, 1, 1000) ?? 1, uses: 0, ended: false,
+    // A card at sign-up unless the app creator unticked it (product owner, 2026-11-20).
+    requireCard: d.requireCard !== false,
     createdAt: Date.now(), createdBy: uid,
   };
   if (amountOff && !plan) throw fail('invalid-argument', 'A discount in euros needs a fixed plan.');
+  if (!o.requireCard && o.trialDays < 1) throw fail('invalid-argument', 'A link without a card needs free days.');
   await ref().set(o);
-  logger.info('Offer saved', { code, plan, interval, trialDays: o.trialDays, percentOff, amountOff });
+  logger.info('Offer saved', { code, plan, interval, trialDays: o.trialDays, percentOff, amountOff, requireCard: o.requireCard });
   return { code, url: `${await appUrl()}/start?offer=${code}` };
 });
 
@@ -3580,7 +3745,7 @@ async function tellOwners(orgId: string, type: string, b: Billing) {
       body: tr(lang, 'Stripe couldn\'t charge the card for Fratius. Check the card under Account, then Plan and billing.'),
       url: '/plan', tag: `pay-${orgId}`,
     })).catch(() => 0)));
-  } else if (type === 'customer.subscription.trial_will_end' && b.status === 'trialing') {
+  } else if (type === 'customer.subscription.trial_will_end' && b.status === 'trialing' && b.card) {
     await Promise.all(owners.map((uid) => notify(uid, (lang) => ({
       title: tr(lang, 'Your free trial ends soon'),
       body: tr(lang, 'Your plan starts on {date} and the card is charged then. Change or cancel it under Account, then Plan and billing.', { date: new Date(b.trialEnd).toLocaleDateString(payLoc(lang), { day: 'numeric', month: 'long', timeZone: 'Europe/Berlin' }) }),

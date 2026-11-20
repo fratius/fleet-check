@@ -15,7 +15,9 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(',', '.'))
 /**
  * The app creator's sign-up links (product owner, 2026-11-05: "links that DSPs register with, where I set up their
  * free trial, prices and other details"), yearly plans on or off, and the yearly launch offer. Each link is
- * <web app>/start?offer=CODE; the DSP still adds a card. Web only, like everything about prices.
+ * <web app>/start?offer=CODE; the DSP adds a card at sign-up, unless the link says not to (product owner, 2026-11-20:
+ * "Require credit card" off: the free days start without one and the owner is reminded to add it). Web only, like
+ * everything about prices.
  */
 export function OffersCard() {
   const s = useSession();
@@ -40,7 +42,7 @@ export function OffersCard() {
   return (
     <Card>
       <T v="h3">{t('Sign-up links and offers')}</T>
-      <T v="hint">{t('Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.')}</T>
+      <T v="hint">{t('Only you see this. A link sets the free days, a discount, the plan and whether a card is asked at sign-up, for one DSP.')}</T>
       {yearly != null ? (
         <Switch on={yearly} label={t('Yearly plans at sign-up and on the website')} hint={t('Yearly plans are paid at sign-up, with an invoice. Off: everyone signs up monthly, with the free days.')}
           onPress={async () => { try { const r = await ai.setLaunchOffer({ yearly: !yearly }); setYearly(r.yearly); setLaunch(r.launchOffer); } catch (e) { setErr(authMessage(e)); } }} />
@@ -75,7 +77,7 @@ function Switch({ on, label, hint, onPress }: { on: boolean; label: string; hint
 function linkOf(code: string) {
   return `${typeof window !== 'undefined' ? window.location.origin : 'https://app.fratius.com'}/start?offer=${code}`;
 }
-function terms(o: Pick<Offer, 'plan' | 'interval' | 'trialDays' | 'percentOff' | 'amountOff' | 'months'>) {
+function terms(o: Pick<Offer, 'plan' | 'interval' | 'trialDays' | 'percentOff' | 'amountOff' | 'months' | 'requireCard'>) {
   const L = loc();
   const bits = [
     o.plan ? PLAN_NAME[o.plan] : t('any plan'),
@@ -84,6 +86,7 @@ function terms(o: Pick<Offer, 'plan' | 'interval' | 'trialDays' | 'percentOff' |
   ];
   if (o.percentOff) bits.push(o.months ? t('{n} % off for {m} months', { n: o.percentOff, m: o.months }) : t('{n} % off', { n: o.percentOff }));
   if (o.amountOff) bits.push(o.months ? t('{price} off each invoice for {m} months', { price: euro(o.amountOff, L), m: o.months }) : t('{price} off each invoice', { price: euro(o.amountOff, L) }));
+  if (o.requireCard === false) bits.push(t('no card at sign-up'));
   return bits.join(' · ');
 }
 
@@ -122,12 +125,14 @@ function NewOffer({ onDone, onCancel }: { onDone(): void; onCancel(): void }) {
   const [months, setMonths] = useState('');
   const [uses, setUses] = useState('1');
   const [days, setDays] = useState('30');
+  const [card, setCard] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [made, setMade] = useState<string | null>(null);
   const save = async () => {
     setErr(null);
     if (kind === 'euro' && plan === 'any') return setErr(t('A discount in euros needs a fixed plan.'));
+    if (!card && !(Math.round(num(trial) ?? 0) > 0)) return setErr(t('A link without a card needs free days.'));
     setBusy(true);
     try {
       const valid = num(days);
@@ -136,7 +141,7 @@ function NewOffer({ onDone, onCancel }: { onDone(): void; onCancel(): void }) {
         trialDays: Math.max(0, Math.round(num(trial) ?? 0)),
         percentOff: kind === 'percent' ? num(off) : null, amountOff: kind === 'euro' && num(off) != null ? Math.round(num(off)! * 100) : null,
         months: kind === 'none' ? null : num(months), maxUses: Math.max(1, Math.round(num(uses) ?? 1)),
-        validUntil: valid ? Date.now() + valid * 86400_000 : null,
+        validUntil: valid ? Date.now() + valid * 86400_000 : null, requireCard: card,
       });
       setMade(r.url);
     } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
@@ -159,6 +164,8 @@ function NewOffer({ onDone, onCancel }: { onDone(): void; onCancel(): void }) {
       <Segmented label={t('Plan')} value={plan} onChange={setPlan} options={[['any', t('They choose')], ...PLAN_IDS.map((id): [OfferedPlan, string] => [id, PLAN_NAME[id]])]} />
       <Segmented label={t('Billed')} value={interval} onChange={setInterval} options={[['month', t('Monthly')], ['year', t('Yearly')], ['any', t('They choose')]]} />
       <Field label={t('Free days')} hint={t('0: they pay at sign-up')} value={trial} onChangeText={setTrial} keyboardType="number-pad" />
+      <Switch on={card} label={t('Require a credit card at sign-up')} onPress={() => setCard(!card)}
+        hint={t('Off: they start the free days without a card and are reminded to add one. Without a card the company stops when the free days end; everything in it is kept.')} />
       <Segmented label={t('Discount')} value={kind} onChange={setKind} options={[['none', t('None')], ['percent', '%'], ['euro', '€']]} />
       {kind !== 'none' ? (
         <>
