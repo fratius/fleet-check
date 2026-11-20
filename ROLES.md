@@ -351,10 +351,10 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   photos it was compared with.
 - **Who sees what:** owners and the station's managers see on each walk-around how the comparison went (`cmp`,
   written only by the server: running, first, nothing new, spots to review, not compared and why, or didn't finish)
-  and can run it again when it failed, or for a walk-around taken before it started (`compareWalk`). Drivers aren't
-  shown it on their screens: they scan, the manager decides; the check itself is a record of their station like any
-  other (account ids only, no names). What the AI said about every frame, the time and the cost
-  (`orgs/{org}/compares/{walkId}`) are the app creator's only (the test log).
+  and can run it again when it failed, or for a walk-around taken before it started (`compareWalk`). That card isn't
+  shown to drivers (they scan, the manager decides); the damage checks the comparison makes are records of their
+  station like any other, which drivers see as before (account ids only, no names). What the AI said about every
+  frame, the time and the cost (`orgs/{org}/compares/{walkId}`) are the app creator's only (the test log).
 - **On for every company**; only the app creator switches it off for one (`orgs/{org}.aiCompare = false`, Account
   tab; AGB § 5 (4): offered before it is sold, so it can be limited or ended). During the free trial and in demo
   companies each van gets 2 comparisons a day (`aiDaily`, `compare.{vanId}`); a company without an active plan
