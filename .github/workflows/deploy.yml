@@ -319,6 +319,30 @@ jobs:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/set-web-url.cjs
 
+  # Does the live app work for a real member of a company? Every test runs on the emulators, which need no IAM role,
+  # no index and no real AI key, so a broken live project passes them all (11 Nov 2026: every upload refused in
+  # production, all tests green). As the demo company's fleet manager: upload a photo, read it back, list the vans,
+  # ask the AI (scripts/live-check.mjs). It can't undo the deploy; a red job here means the live app is broken now.
+  live-check:
+    name: The live app works for a real member
+    needs: backend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        id: auth
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install the functions' packages
+        run: bash scripts/ci-functions.sh
+      - name: Sign in, upload, read back, list the vans and ask the AI, as the demo company's fleet manager
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node scripts/live-check.mjs
+
   web:
     name: Web app
     # The app goes live only after the tests passed and the rules and functions it calls are deployed.
