@@ -2358,7 +2358,8 @@ test('the AI compares every walk-around with the van\'s earlier photos; new dama
     const c4 = await cmpOf(w4, 'done', 'failed');
     assert.equal(c4.found + c4.unsure, 0, JSON.stringify(c4));
     assert.equal(c4.checkId, null);
-    assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', `cmp-${w4}`))).exists(), false);
+    // (Read as the app creator: the rules refuse a manager a check that isn't there, as for any record of a station.)
+    assert.equal((await getDoc(doc(cr.db, 'orgs', S.org, 'checks', `cmp-${w4}`))).exists(), false);
 
     // Photos from the library aren't compared (they may be old).
     const lib = await photos(S.d1, S.org, v, { real: true, source: 'library' });
@@ -2388,7 +2389,7 @@ test('the AI compares every walk-around with the van\'s earlier photos; new dama
       const lim = await photos(S.d1, S.org, v, { real: true });
       const cl = await cmpOf(lim, 'limit', 'done', 'failed');
       assert.equal(cl.status, 'limit');
-      assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', `cmp-${lim}`))).exists(), false);
+      assert.equal((await getDoc(doc(cr.db, 'orgs', S.org, 'checks', `cmp-${lim}`))).exists(), false);
     } finally {
       await orgRef.update({ createdAt: created });
     }
