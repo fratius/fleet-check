@@ -24,7 +24,7 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
 4. Address the reader the way modern apps in your language do (e.g. German "du", French "vous"), and stay
    consistent across the whole file.
 5. Don't translate: Fratius, Amazon, Expo Go, Excel, Firebase, Claude, Haiku, Sonnet, Opus, GitHub, Anthropic,
-   DKV, Shell, Aral, units (km, l, kWh, €, %, km/h, l/100 km, kWh/100 km), HU, UVV, AU, VIN, AdBlue, Euro 6,
+   DKV, Shell, Aral, units (km, l, kWh, €, %, km/h, l/100 km, kWh/100 km), HU, TÜV, UVV, AU, VIN, AdBlue, Euro 6,
    "Transporter ID" (Amazon's term; you may add your language's word only if drivers would otherwise not
    understand), plates and example names (Dana, Berlin Spandau, DBE1).
 6. Some keys are just a placeholder like `{issue}` or `{name}`: return them unchanged.
@@ -32,7 +32,7 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
    (e.g. "03/2027": keep it).
 8. Translate meaning, not words. If an English sentence is awkward in your language, rephrase it naturally.
 9. The companies are mostly in Germany, so German words in the English (Betriebsrat, Fahrzeugschein, Minijob, HU,
-   UVV) name German things: translate the meaning and keep the German word as the English does. Never swap in your
+   TÜV, UVV) name German things: translate the meaning and keep the German word as the English does. Never swap in your
    own country's equivalent (a German company has a Betriebsrat, not a works council of your country's kind).
 
 ## Terms (keep each term the same everywhere)

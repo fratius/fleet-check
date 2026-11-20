@@ -39,7 +39,7 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    and vans between stations; can review damage at any station. Turns dashboard photos on or
    off and sets how often licences are checked. **The only role that sees what vans cost** (lease, purchase price,
    insurance); running costs on receipts (fuel, washes, parts) are seen by the station's managers too, since they
-   allow or refuse them.
+   allow or refuse them, and so are the costs in a van's service history (product owner, 2026-11-20).
 3. **Fleet manager** (role `manager`). Same powers as the owner, limited to their station (operating area) and
    its drivers: adds, edits and removes vans there, approves (or rejects) drivers who signed up for it with the
    company's driver link, and removes drivers there. Cannot add stations or
@@ -226,7 +226,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   Expo Go. Each person turns them on per phone in the Account tab (`users/{uid}/push/{id}`, only theirs, only real
   push services or an Expo push token). The web key pair is the `WEBPUSH_KEYS` secret, made once by the Deploy
   workflow; the public half is in `config/push`. The store app's keys (Apple, Firebase Cloud Messaging) are kept on
-  expo.dev. Sent: a van given to a driver, fuel card and receipt questions to the station's managers, website
+  expo.dev. Sent: a van given to a driver, fuel card and receipt questions to the station's managers, TÜV reminders, website
   requests to the app creator.
 - **Managers are told when handover proof is missing:** the Review tab lists (and its badge counts) vans given to
   a driver more than 2 hours ago without the pick-up video or photos; and at pick-up-yourself stations, handovers
@@ -243,7 +243,8 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 - `tests/history.test.mjs`: the whole flow on the emulators (sign-in, rules, functions, storage): assigning,
   reading history per role, pick-up and drop-off with photos, takeover, retiring, moving and removing, driver
   records and licence checks, tours from dashboard photos, the damage log, refuels with the card check and the
-  manager's answer, moving costs, and the demo logins. Deploy stops if either fails.
+  manager's answer, the service history and the TÜV reminder, moving costs, and the demo logins. Deploy stops if
+  either fails.
 
 ## Van and driver records (FLEET_DATA.md)
 
@@ -257,6 +258,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | Tours `tours`, readings `readings` | read | read | their own | the server only |
 | Damage log `damageLog` | read | read | the ones they're in | the server only |
 | Refuels, washes, parts `purchases` | read | read | their own | the server only; never deleted |
+| Service history and the TÜV `services` | read, add, correct | read, add, correct | no | the server only (`service`); never deleted |
 | Checks for drivers `routines` | read, set (any station or all) | read, set (own station) | read | the server only (`routine`) |
 | Checks done `routineDone` | read | read | their own | the server only (`routineDone`); never deleted |
 | What the AI read from dashboard, card and receipt `buyReads` | no | no | no | the server; app creator reads |
@@ -289,6 +291,12 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   notification with the details and what looks wrong (flags: more litres than the tank had room for, another card
   on the receipt, an old receipt, the wrong fuel, numbers typed over the receipt). Flags never block. Parts need a
   note saying why, and the owners get the notification.
+- **Service history and the TÜV** (the `service` function; `orgs/{org}/services`; FLEET_DATA.md): owners (any
+  station) and the van's station managers add a service, tyres, brakes, a repair, something else or a TÜV with the
+  van's km, the cost and the garage, and correct one; the server keeps what it was before and who changed it, and
+  nothing is deleted. Drivers neither see nor add them. The records move with the van (`moveVan`). A month before a
+  van's TÜV runs out, its station's managers (or the owners where there is none) get one notification per TÜV date
+  (`serviceSweep`; what was sent is in `serviceNags`, server only).
 - **The van's latest dashboard** (`vehicles/{id}.dash`: km, fuel or battery, range, warning lights, when and by
   whom) is written only by the server, from tour photos and from the dashboard photo of a finished refuel, wash or
   parts purchase. Everyone at the station sees it on the van and the km in the fleet list (drivers too: they need

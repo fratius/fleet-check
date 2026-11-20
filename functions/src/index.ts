@@ -41,7 +41,8 @@ import {
   LAUNCH_COUPON, OFFER_CODE, billingOf, loc as payLoc, launchOfferOn, localesFor, switches as paySwitches, yearlyOn, netCents, newOfferCode, offerCoupon, offerPublic, offerUsable, orderMail,
   payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
-import { HOWS, SUGGESTIONS, applies, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
+import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
+import { Bad, FIXABLE, detailsPatch, huQueryUpTo, huRemindNow, readService, type ServiceInput } from './service';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -1013,6 +1014,13 @@ export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req)
     // Its contract, costs and deadlines go with it, so the new station's managers see them (and the old one's don't).
     if (details.exists) tx.update(dref, { stationId });
   });
+  // Its service history too (service.ts): it belongs to the van, whoever runs it now.
+  const svc = await org.collection('services').where('vehicleId', '==', vehicleId).get();
+  for (let i = 0; i < svc.docs.length; i += 400) {
+    const b = db().batch();
+    svc.docs.slice(i, i + 400).forEach((x) => { if (x.data().stationId !== stationId) b.update(x.ref, { stationId }); });
+    await b.commit();
+  }
   return { ok: true };
 });
 
@@ -2384,6 +2392,146 @@ export const routineSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_K
   if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
   const at = process.env.FUNCTIONS_EMULATOR === 'true' && typeof req.data?.now === 'number' ? req.data.now : Date.now();
   return sweepRoutines(at);
+});
+
+/* ---------- 17a. Service history and the TÜV (service.ts) ---------- */
+// Owners and the station's fleet managers record each service, tyre change, brake job, repair or TÜV of a van with
+// its km and cost (product owner, 2026-11-20). Kept for good: never deleted, a correction keeps what was there before.
+// The van's record follows: odometer, last service, the next TÜV, service and tyre dates. A month before the TÜV
+// runs out the station's fleet managers (or the owners) get a notification, once per date (serviceSweep).
+
+type ServiceDoc = ServiceInput & {
+  vehicleId: string; vehicleName: string; plate: string; stationId: string | null; by: string; byName: string; createdAt: number;
+  updatedAt?: number; edits?: { at: number; by: string; byName: string; was: Record<string, unknown> }[];
+};
+const MAX_EDITS = 30;
+
+export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const d = (req.data || {}) as Record<string, unknown>;
+  const org = db().doc(`orgs/${who.orgId}`);
+  const id = String(d.id || '');
+  if (!ID.test(id)) throw fail('invalid-argument', 'Unknown service.');
+  const today = dayOf(Date.now());
+  const read = (x: Record<string, unknown>, fix: boolean) => {
+    try { return readService(x, today, { fix }); } catch (e) { if (e instanceof Bad) throw fail('invalid-argument', e.t, e.v); throw e; }
+  };
+  const ref = org.collection('services').doc(id);
+  const now = Date.now();
+
+  if (d.action === 'fix') {
+    return db().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw fail('not-found', 'This service isn\'t there any more.');
+      const old = snap.data() as ServiceDoc;
+      needStation(who, old.stationId);
+      const x = read({ ...d, kind: old.kind }, true);
+      const was: Record<string, unknown> = {}, set: Record<string, unknown> = {};
+      for (const k of FIXABLE) {
+        if (JSON.stringify(old[k] ?? null) !== JSON.stringify(x[k] ?? null)) { was[k] = old[k] ?? null; set[k] = x[k] ?? null; }
+      }
+      if (!Object.keys(set).length) return { id, unchanged: true };
+      if ((old.edits || []).length >= MAX_EDITS) throw fail('resource-exhausted', 'This service was corrected many times already. Add a new one instead.');
+      tx.update(ref, { ...set, updatedAt: now, updatedBy: who.uid, updatedByName: who.name, edits: FieldValue.arrayUnion({ at: now, by: who.uid, byName: who.name, was }) });
+      return { id, changed: Object.keys(set) };
+    });
+  }
+  if (d.action !== 'add') throw fail('invalid-argument', 'Unknown step.');
+  const vehicleId = String(d.vehicleId || '');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
+  const x = read(d, false);
+  const vref = org.collection('vehicles').doc(vehicleId);
+  const dref = org.collection('vehicleDetails').doc(vehicleId);
+  return db().runTransaction(async (tx) => {
+    const [v, before, det] = await Promise.all([tx.get(vref), tx.get(ref), tx.get(dref)]);
+    if (!v.exists) throw fail('not-found', 'This van was removed.');
+    const van = v.data() as { name: string; plate?: string; stationId?: string | null };
+    needStation(who, van.stationId);
+    // Recorded already (the phone sent it again): the same answer. Someone else's id: not theirs to use.
+    if (before.exists) {
+      const b = before.data() as ServiceDoc;
+      if (b.by !== who.uid || b.vehicleId !== vehicleId) throw fail('invalid-argument', 'Unknown service.');
+      return { id, again: true, applied: [] as string[] };
+    }
+    const doc: ServiceDoc = {
+      ...x, vehicleId, vehicleName: vanName(van), plate: van.plate || '', stationId: van.stationId || null,
+      by: who.uid, byName: who.name, createdAt: now, edits: [],
+    };
+    tx.set(ref, doc);
+    const patch = detailsPatch(det.exists ? det.data() : undefined, x, id);
+    const meta = { updatedAt: now, updatedByName: who.name };
+    if (det.exists) {
+      if (Object.keys(patch).length) tx.update(dref, { ...patch, ...meta });
+    } else {
+      // A van without a record yet gets one, with its station (like the app makes it).
+      const due: Record<string, unknown> = {}, top: Record<string, unknown> = {};
+      for (const [k, val] of Object.entries(patch)) { if (k.startsWith('due.')) due[k.slice(4)] = val; else top[k] = val; }
+      tx.set(dref, { ...top, due, stationId: van.stationId || null, createdAt: now, ...meta });
+    }
+    return { id, again: false, applied: Object.keys(patch).filter((k) => k.startsWith('due.')).map((k) => k.slice(4)) };
+  });
+});
+
+/** "März 2027": the sticker's month in the reader's language. */
+function monthName(lang: string, day: string) {
+  const [y, m] = day.split('-').map(Number);
+  const at = Date.UTC(y, m - 1, 15);
+  try { return new Intl.DateTimeFormat(lang, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(at); }
+  catch { return new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(at); }
+}
+
+/**
+ * The TÜV reminders: every van whose TÜV runs out within a month (or already has) and wasn't reminded about for
+ * that date. Its station's fleet managers get it (the owners where the station has none). Retired vans and demo
+ * companies are left out. Claimed in a transaction first, so two runs never send it twice.
+ */
+export async function sweepService(now = Date.now()) {
+  const today = dayOf(now);
+  const upTo = huQueryUpTo(today);
+  let vans = 0, told = 0;
+  for (const o of (await db().collection('orgs').get()).docs) {
+    if (o.data().demo === true) continue;
+    const due = await o.ref.collection('vehicleDetails').where('due.hu', '<=', upTo).get();
+    for (const dd of due.docs) {
+      const hu = String((dd.data().due as { hu?: unknown } | undefined)?.hu || '');
+      if (!huRemindNow(hu, today)) continue;
+      const van = (await o.ref.collection('vehicles').doc(dd.id).get()).data() as { name?: string; plate?: string; stationId?: string | null; retired?: boolean } | undefined;
+      if (!van || van.retired) continue;
+      const nref = o.ref.collection('serviceNags').doc(`hu_${dd.id}_${hu}`);
+      const mine = await db().runTransaction(async (tx) => {
+        if ((await tx.get(nref)).exists) return false;
+        tx.create(nref, { kind: 'hu', vehicleId: dd.id, hu, at: now });
+        return true;
+      });
+      if (!mine) continue;
+      const name = vanName({ name: van.name || '', plate: van.plate });
+      const over = hu < today;
+      const bosses = await bossesOf(o.id, van.stationId || null, 'wash', '');
+      const n = await tell(bosses, (lang) => ({
+        title: over ? tr(lang, 'TÜV overdue: {van}', { van: name }) : tr(lang, 'TÜV due: {van}', { van: name }),
+        body: over
+          ? tr(lang, 'The TÜV of {van} ran out at the end of {month}. Book the inspection now.', { van: name, month: monthName(lang, hu) })
+          : tr(lang, 'The TÜV of {van} runs out at the end of {month}. Book the inspection now.', { van: name, month: monthName(lang, hu) }),
+        url: `/vehicle/${dd.id}?tab=service`, tag: `hu-${dd.id}`,
+      }));
+      await nref.update({ people: bosses.length, told: n });
+      vans++; told += n;
+    }
+  }
+  return { vans, told };
+}
+
+export const serviceSweep = onSchedule({ schedule: '7 8 * * *', timeZone: 'Europe/Berlin', secrets: [WEBPUSH_KEYS], timeoutSeconds: 300, retryCount: 1 }, async () => {
+  const r = await sweepService();
+  logger.info('TÜV reminders', r);
+});
+
+/** The same, now (the app creator; the emulator tests pass a time). */
+export const serviceSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const at = process.env.FUNCTIONS_EMULATOR === 'true' && typeof req.data?.now === 'number' ? req.data.now : Date.now();
+  return sweepService(at);
 });
 
 /* ---------- Website: the request form on fratius.com ---------- */

@@ -295,6 +295,13 @@ service cloud.firestore {
       match /routineDone/{id} {
         allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.by == me());
       }
+      // The service history of each van (services, tyres, brakes, repairs, the TÜV) with km and costs: written only
+      // by the server (the service function), never deleted; a correction keeps what was there before. Owners and
+      // the van's station managers read it (it moves with the van); drivers don't. The TÜV reminders already sent
+      // (serviceNags) are the server's only: no rule lets anyone in.
+      match /services/{id} {
+        allow read: if runs(orgId, resource.data.stationId);
+      }
       // What the AI read from the dashboard, the card and the receipt, with its speed and cost: the app creator only.
       match /buyReads/{id} {
         allow read: if creator();

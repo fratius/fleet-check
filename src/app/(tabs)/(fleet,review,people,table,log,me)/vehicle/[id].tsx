@@ -12,6 +12,7 @@ import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, TourLine, VanNow } from '@/components/dash';
 import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
+import { VanService } from '@/components/service';
 import { useWhoDid } from '@/lib/names';
 import { HandoverWaiting, PendingChanges } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
@@ -54,8 +55,9 @@ export default function VehicleScreen() {
   // Where the model, the damage section, the list inside it and each damage are, to scroll between them.
   const spots = useRef({ model: 0, list: 0, inner: 0, items: new Map<string, number>() });
   const [editing, setEditing] = useState(false);
-  // The page in three parts below the van's status and actions: its damage, its record, its drivers.
-  const [tab, setTab] = useState<'damage' | 'details' | 'history'>(openTab === 'details' || openTab === 'history' ? openTab : 'damage');
+  // The page in parts below the van's status and actions: its damage, its record, its drivers, and (owners and the
+  // station's fleet managers) its service history and TÜV.
+  const [tab, setTab] = useState<'damage' | 'details' | 'history' | 'service'>(openTab === 'details' || openTab === 'history' || openTab === 'service' ? openTab : 'damage');
   const tabTop = useRef(0);
   const [picking, setPicking] = useState(false);
   const [takeover, setTakeover] = useState(false);
@@ -106,6 +108,8 @@ export default function VehicleScreen() {
     };
     if (tab !== 'damage') { setTab('damage'); setTimeout(go, 120); } else go();
   };
+  // A van of another station (or a driver) has no Service tab: a link to it shows Damage.
+  const view = tab === 'service' && !s.runs(v.stationId) ? 'damage' : tab;
   const openDetails = () => { setTab('details'); setTimeout(() => scroller.current?.scrollTo({ y: Math.max(0, tabTop.current - 8), animated: true }), 80); };
 
   const checkLibrary = async () => {
@@ -231,10 +235,11 @@ export default function VehicleScreen() {
       ) : null}
 
       <View onLayout={(e) => { tabTop.current = e.nativeEvent.layout.y; }}>
-        <Tabs value={tab} onChange={setTab} items={[['damage', t('Damage'), damages.length], ['details', t('Details'), null], ['history', t('Drivers'), null]]} />
+        <Tabs value={view} onChange={setTab} items={[['damage', t('Damage'), damages.length], ['details', t('Details'), null], ['history', t('Drivers'), null],
+          ...(s.runs(v.stationId) ? [['service', t('Service'), null] as ['service', string, null]] : [])]} />
       </View>
 
-      {tab === 'damage' ? (<>
+      {view === 'damage' ? (<>
       <View style={{ gap: 8 }} onLayout={(e) => { spots.current.list = e.nativeEvent.layout.y; }}>
         <T v="h2">{damages.length ? t('Damage ({n})', { n: damages.length }) : t('Damage')}</T>
         {damages.length ? <T v="hint">{t('Newest first. The numbers match the dots on the van.')}</T> : null}
@@ -291,7 +296,7 @@ export default function VehicleScreen() {
       </View>
       </>) : null}
 
-      {tab === 'history' && vanTours.length ? (
+      {view === 'history' && vanTours.length ? (
         <View style={{ gap: 8 }}>
           <T v="h2">{t('Tours')}</T>
           <T v="hint">{s.role === 'driver' ? t('Your tours with this van, from the dashboard photos.') : t('From the dashboard photos at the start and end of each tour, newest first.')}</T>
@@ -302,14 +307,14 @@ export default function VehicleScreen() {
           </Card>
         </View>
       ) : null}
-      {tab === 'history' && vanBuys.length ? (
+      {view === 'history' && vanBuys.length ? (
         <View style={{ gap: 8 }}>
           <T v="h2">{t('Fuel, wash and parts')}</T>
           <T v="hint">{s.role === 'driver' ? t('Yours for this van.') : t('Every refuel, wash and parts purchase, with the ones refused or given up. Kept for good.')}</T>
           <Card style={{ paddingVertical: 6 }}>{vanBuys.slice(0, 15).map((p, i) => <BuyRow key={p.id} p={p} show="driver" first={i === 0} />)}</Card>
         </View>
       ) : null}
-      {tab === 'history' ? (s.mode === 'firebase' ? (
+      {view === 'history' ? (s.mode === 'firebase' ? (
         <View style={{ gap: 8 }}>
           <T v="h2">{t('Drivers of this van')}</T>
           <T v="hint">{s.role === 'driver' ? t('The times you had this van.') : t('Everyone who had this van, newest first. This history is kept for good.')}</T>
@@ -317,9 +322,12 @@ export default function VehicleScreen() {
         </View>
       ) : <Card dashed><T v="hint">{t('The drivers of each van need the Firebase backend.')}</T></Card>) : null}
 
-      {tab === 'details' && s.mode === 'firebase' ? <VanRoutines v={v} /> : null}
-      {tab === 'details' ? <VanRecord v={v} /> : null}
-      {tab === 'details' && s.runs(v.stationId) ? (
+      {/* Service history and the TÜV: owners and this station's fleet managers only (costs are in it). */}
+      {view === 'service' && s.runs(v.stationId) ? <VanService v={v} /> : null}
+
+      {view === 'details' && s.mode === 'firebase' ? <VanRoutines v={v} /> : null}
+      {view === 'details' ? <VanRecord v={v} /> : null}
+      {view === 'details' && s.runs(v.stationId) ? (
         <View style={{ gap: 6 }}>
           <T v="h3">{t('Body')}</T>
           <Row gap={6}>{attrPills(sp, v, undefined).map((p) => <Pill key={p} text={t(p)} />)}</Row>
@@ -327,7 +335,7 @@ export default function VehicleScreen() {
         </View>
       ) : null}
 
-      {tab !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
+      {view !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
           {!v.retired ? <Button title={t('Plate, name and type')} onPress={() => setEditing(true)} /> : null}
           {s.mode === 'local' ? (
@@ -345,7 +353,7 @@ export default function VehicleScreen() {
           )}
         </Row>
       )}
-      {tab === 'details' && s.runs(v.stationId) && s.mode === 'firebase' && !v.retired && !editing ? (
+      {view === 'details' && s.runs(v.stationId) && s.mode === 'firebase' && !v.retired && !editing ? (
         <T v="small">{t('Retiring takes a van out of the fleet (sold, returned, written off). Vans are never deleted: their checks and driver history stay.')}</T>
       ) : null}
       {s.mode === 'local' ? <Notice text={t('Saved on this phone only until Firebase is connected.')} /> : null}

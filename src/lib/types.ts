@@ -101,6 +101,38 @@ export interface VehicleDetails {
   due?: { hu?: string | null; uvv?: string | null; service?: string | null; serviceKm?: number | null; tyres?: string | null; tax?: string | null } | null;
   fuelCard?: string | null;
   notes?: string | null;
+  /** The newest service recorded in the van's service history (not the TÜV), kept by the server. */
+  lastService?: { id: string; day: string; kind: ServiceKind; name: string | null; km: number } | null;
+}
+
+/**
+ * One entry of a van's service history (orgs/{org}/services/{id}): a service, tyres, brakes, a repair, something
+ * else, or the TÜV. Written only by the server (functions/src/service.ts), never deleted; owners and the van's
+ * station managers read it. Euros without VAT.
+ */
+export type ServiceKind = 'service' | 'tyres' | 'brakes' | 'repair' | 'other' | 'hu';
+export type HuResult = 'passed' | 'defects' | 'failed';
+export interface ServiceRecord {
+  id: string;
+  kind: ServiceKind;
+  /** What was done, as typed (Other only). */
+  name: string | null;
+  /** The day it was done, "YYYY-MM-DD". */
+  day: string;
+  /** The van's odometer then. */
+  km: number;
+  cost: number | null;
+  garage: string | null;
+  note: string | null;
+  /** The TÜV only: how it went. */
+  result: HuResult | null;
+  /** The dates it brought (the new TÜV month end, the next service, the next tyre change). */
+  next: { hu?: string; service?: string; serviceKm?: number; tyres?: string } | null;
+  vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
+  by: string; byName: string; createdAt: number;
+  updatedAt?: number; updatedByName?: string;
+  /** Corrections: when, by whom, and what the fields were before. */
+  edits?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceRecord, 'name' | 'day' | 'km' | 'cost' | 'garage' | 'note' | 'result'>> }[];
 }
 
 /** What a van costs (orgs/{org}/vehicleCosts/{vehicleId}): only owners read and change it. Euros, without VAT. */
