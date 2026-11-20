@@ -63,8 +63,8 @@ Damage stays at the same place on the panel in both photos, with edges, depth or
 Something that is in both photos is not new, even if the light makes it look different.`;
 
 /* ---------- First look (Haiku): one frame, before and now ---------- */
-export function comparePrompt(vehicle: string, cls: string, label: string, beforeAt: number, nowAt: number) {
-  return `You are the first look of a fleet app's damage comparison. Two photos show the same delivery van, ${vehicle} (${className(cls).toLowerCase()}), taken from the same spot for the walk-around frame "${label}":
+export function comparePrompt(vehicle: string, cls: string, label: string, n: number, beforeAt: number, nowAt: number) {
+  return `You are the first look of a fleet app's damage comparison. Two photos show the same delivery van, ${vehicle} (${className(cls).toLowerCase()}), taken from the same spot for the walk-around frame "${label}" (photo ${n}):
 Image 1 (BEFORE): taken ${when(beforeAt)}.
 Image 2 (NOW): taken ${when(nowAt)}.
 

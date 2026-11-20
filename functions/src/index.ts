@@ -583,7 +583,7 @@ async function runCompare(orgId: string, walkId: string, o: { again?: boolean } 
       const nowAt = typeof p.takenAt === 'number' ? p.takenAt : w.createdAt;
       try {
         const a = await ask<Record<string, unknown>>(key, 'quick', [{ label: 'Image 1 (BEFORE)', image: imgs[0] }, { label: 'Image 2 (NOW)', image: imgs[1] }],
-          comparePrompt(van, w.cls, p.label, ref.at, nowAt), compareSchema, 1500);
+          comparePrompt(van, w.cls, p.label, p.n, ref.at, nowAt), compareSchema, 1500);
         fr.usage1 = a.usage;
         const changes = ((Array.isArray(a.obj.changes) ? a.obj.changes : []) as Record<string, unknown>[])
           .map((c) => ({ box: cleanBox(c.box), beforeBox: cleanBox(c.beforeBox), panel: str(c.panel, 60) || 'Body panel', type: DAMAGE_TYPES.includes(c.type as string) ? (c.type as string) : 'other',

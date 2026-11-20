@@ -2242,7 +2242,7 @@ test('the app creator tries both sides from one sign-in: given a van as a driver
 });
 
 test('the AI compares every walk-around with the van\'s earlier photos; new damage goes to the station\'s managers to review', async () => {
-  // Product owner, 2026-11-20. The stand-in for the AI (functions/src/claude.ts) marks a spot on the frame "Frame 1"
+  // Product owner, 2026-11-20. The stand-in for the AI (functions/src/claude.ts) marks a spot on the first photo ("Frame 1")
   // and calls it new damage, unless the van's plate says QUIET. Earlier tests made this company one set up by hand
   // (no trial allowance).
   const cr = await appCreator('Cora Compare');

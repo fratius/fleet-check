@@ -125,9 +125,9 @@ const mapKeys = (props: Record<string, unknown>) =>
   (props.tables as { items?: { properties?: { columns?: { items?: { properties?: { key?: { enum?: string[] } } } } } } })?.items?.properties?.columns?.items?.properties?.key?.enum || [];
 function testAnswer<T>(tier: Tier, parts: Part[], schema: object, prompt = ''): Answer<T> {
   const props = (schema as { properties?: Record<string, unknown> }).properties || {};
-  // The damage comparison (compare.ts): the first look marks a spot on the frame named "Frame 1" (the tests' walk-arounds
-  // name their frames Frame 1, Frame 2...), unless the van's name says [quiet]; the second look calls it new damage.
-  const marks = /frame "Frame 1"/.test(prompt) && !prompt.includes('[quiet]');
+  // The damage comparison (compare.ts): the first look marks a spot on the first photo of a walk-around (the front),
+  // unless the van's plate or name says QUIET; the second look calls it new damage.
+  const marks = /\(photo 1\):/.test(prompt) && !/quiet/i.test(prompt);
   const obj = 'comparable' in props
     ? { sameVan: true, comparable: true, issue: null, unsure: false,
       changes: marks ? [{ box: [0.3, 0.35, 0.5, 0.5], beforeBox: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.7, why: 'Test answer.' }] : [] }
