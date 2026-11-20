@@ -117,3 +117,22 @@ test('a key that works in several workspaces: Deploy passes the workspace to the
   run('');
   assert.equal(readFileSync(file, 'utf8'), 'OTHER=1\n');
 });
+
+test('after the backend goes out, Deploy checks the live app as a real member: upload, read back, list, AI', () => {
+  // The emulators need no IAM role, no index and no real AI key, so the live project can be broken with every test
+  // green (11 Nov 2026). scripts/live-check.mjs signs in as the demo company's fleet manager and does what the app
+  // does first; qa/run.sh runs the same script on the emulators before the blind tester.
+  const deploy = read('../.github/workflows/deploy.yml');
+  const at = deploy.indexOf('\n  live-check:\n');
+  assert.ok(at > 0, 'Deploy has the live-check job');
+  const job = deploy.slice(at, deploy.indexOf('\n  web:\n'));
+  assert.match(job, /needs: backend/);
+  assert.match(job, /run: node scripts\/live-check\.mjs\n/);
+  const script = read('../scripts/live-check.mjs');
+  for (const what of ['signInWithCustomToken', `x-goog-upload-protocol': 'multipart'`, '?alt=media', ':runQuery', '/identifyVehicle', '.delete()']) {
+    assert.ok(script.includes(what), `live-check.mjs does ${what}`);
+  }
+  // No sign-in of its own in the live project: the demo company's manager login (AGENTS.md, "View as").
+  assert.match(script, /demoLogins/);
+  assert.doesNotMatch(script, /createUser\(/);
+});

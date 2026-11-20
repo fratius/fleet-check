@@ -108,6 +108,21 @@ jobs:
           grep -m1 -E -A 40 "^\s*not ok" offline.log | grep -vE "^\s*$|duration_ms|^\s*---|^\s*\.\.\." | head -10 | while read -r l; do echo "::warning title=First failure::$l"; done || true
           grep -E "Error|error:" offline.log | grep -v "not ok" | head -10 | while read -r l; do echo "::error title=Offline log::$l"; done || true
 
+  # The blind tester's brief and setup can't change in the same branch as the app, and the map of what the app must
+  # do (qa/FEATURES.md) may only gain lines there (qa/guard.mjs; the Claude Code team's rule that checks can't edit
+  # themselves).
+  tester-rules:
+    name: The tester's rules aren't changed with the app
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: node qa/guard.mjs
+
   types:
     name: Type checks
     runs-on: ubuntu-24.04
@@ -127,6 +142,8 @@ jobs:
         run: node --test tests/indexes.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)
         run: node --test tests/deploy.test.mjs
+      - name: The blind tester stays blind, and its rules can't change with the app (qa/)
+        run: node --test tests/qa.test.mjs
       - name: Translations (no lost or invented placeholders)
         run: node scripts/i18n.mjs --strict
       - name: Website translations (every text, no lost or invented placeholders)

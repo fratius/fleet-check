@@ -1,0 +1,146 @@
+# Blind QA: an AI tester that has never seen the code tries to break the app through a browser, the way an outside
+# QA person would (qa/TESTER.md). It gets the app's address, one sign-in per role, the map of what the app must do
+# (qa/FEATURES.md) and, optionally, what changed in plain words. It has no files, no shell and no code on its side:
+# only a phone-sized Chrome that reaches the web app and the emulators (qa/run.sh). Its report (findings with steps,
+# the map line they break, screenshots, and what it covered) lands in the run summary, as a comment on the pull
+# request, and with the screenshots in the artifact "blind-qa".
+#
+# Start it: Actions > Blind QA > Run workflow (pick the branch, say what changed), or add the label "blind-qa" to a
+# pull request (its "## For the tester" section is the focus; the label is taken off afterwards so it can be added
+# again). It doesn't run by itself on every push: each run costs money (about $3 to $10 with Sonnet, more with Opus;
+# capped by the budget below).
+#
+# It reports and never blocks a merge (observe mode, as the Claude Code team starts every new gate). Make it a
+# required check only once its findings have been right for a few weeks.
+#
+# Key: the secret QA_ANTHROPIC_API_KEY (a key of its own, so the tester's spend shows apart from the app's AI in the
+# Anthropic console), else ANTHROPIC_API_KEY.
+name: Blind QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      focus:
+        description: What changed, in plain words, as you'd tell a tester (empty = the whole app)
+        required: false
+        default: ''
+      model:
+        description: The tester's model
+        type: choice
+        options: [claude-sonnet-5-5, claude-opus-5-5]
+        default: claude-sonnet-5-5
+      budget:
+        description: Most the run may spend, in US dollars
+        required: false
+        default: '8'
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: blind-qa-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  FIREBASE_TOOLS: firebase-tools@15.33.0
+
+jobs:
+  blind:
+    name: A tester who has never seen the code
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'blind-qa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check the key is there
+        env:
+          KEY: ${{ secrets.QA_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+        run: |
+          [ -n "$KEY" ] || { echo "::error title=Missing secret::Add QA_ANTHROPIC_API_KEY (or ANTHROPIC_API_KEY) under Settings > Secrets and variables > Actions."; exit 1; }
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      # The version under test can't soften the tester's brief: it comes from main (qa/guard.mjs also stops a pull
+      # request that changes the app from changing it). The map (qa/FEATURES.md) is the branch's: it may only gain
+      # lines for what the branch adds.
+      - name: The tester's brief comes from main
+        run: |
+          git fetch --depth=1 origin main
+          if git cat-file -e origin/main:qa/TESTER.md 2> /dev/null; then
+            git show origin/main:qa/TESTER.md > qa/TESTER.md
+          else
+            echo "::notice title=Blind QA::main has no qa/TESTER.md yet; using this branch's."
+          fi
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install and build the functions
+        run: npm ci && bash scripts/ci-functions.sh && npm --prefix functions run build
+      - name: The web app for the emulators
+        run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-qa
+      - name: The tester (Claude Code) and its browser (Playwright MCP, the runner's Chrome)
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude --version
+          npx -y @playwright/mcp@0.0.86 --version
+          google-chrome --version
+      - name: What changed, in plain words
+        env:
+          INPUT: ${{ inputs.focus }}
+        run: |
+          node qa/focus.mjs > "$RUNNER_TEMP/focus.txt"
+          echo "### Focus" >> "$GITHUB_STEP_SUMMARY"
+          { echo '```'; cat "$RUNNER_TEMP/focus.txt"; echo; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The blind run, on the emulators
+        id: run
+        shell: bash
+        env:
+          QA_ANTHROPIC_KEY: ${{ secrets.QA_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          WORKSPACE: ${{ vars.QA_ANTHROPIC_WORKSPACE_ID || vars.ANTHROPIC_WORKSPACE_ID }}
+          QA_MODEL: ${{ inputs.model || 'claude-sonnet-5-5' }}
+          QA_BUDGET_USD: ${{ inputs.budget || '8' }}
+        run: |
+          # The functions answer with made-up AI results (their key is "not-used-in-tests"), as in the other tests.
+          echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
+          echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
+          if [ -n "$WORKSPACE" ]; then export ANTHROPIC_CUSTOM_HEADERS="anthropic-workspace-id: $WORKSPACE"; fi
+          export QA_DIR="$RUNNER_TEMP/qa" APP_DIR="$PWD/dist-qa" QA_FOCUS="$(cat "$RUNNER_TEMP/focus.txt")"
+          npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "bash qa/run.sh" 2>&1 | tee "$RUNNER_TEMP/emulators.log"
+      - name: Keep the report, screenshots and transcript
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: blind-qa
+          path: |
+            ${{ runner.temp }}/qa/report.md
+            ${{ runner.temp }}/qa/accounts.md
+            ${{ runner.temp }}/qa/transcript.jsonl
+            ${{ runner.temp }}/qa/claude.log
+            ${{ runner.temp }}/qa/*.png
+            ${{ runner.temp }}/qa/shots/
+            ${{ runner.temp }}/emulators.log
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Report on the pull request
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -f "$RUNNER_TEMP/qa/report.md" ] || exit 0
+          PR="${PR:-$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' 2> /dev/null || true)}"
+          [ -n "$PR" ] || exit 0
+          { head -c 60000 "$RUNNER_TEMP/qa/report.md"; echo; echo "Screenshots and transcript: [the run]($RUN_URL), artifact \"blind-qa\"."; } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"
+          if [ "${{ github.event_name }}" = pull_request ]; then gh pr edit "$PR" --remove-label blind-qa || true; fi
