@@ -168,7 +168,7 @@ function KindPicker({ onPick, onCancel }: { onPick: (k: ServiceKind) => void; on
         <Pressable key={k} accessibilityRole="button" onPress={() => onPick(k)}
           style={({ pressed }) => ({ borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingHorizontal: 14, paddingVertical: 10, gap: 1, backgroundColor: c.paper, opacity: pressed ? 0.75 : 1 })}>
           <T v="h3">{t(SERVICE_NAME[k])}</T>
-          <T v="small">{t(SERVICE_HINT[k])}</T>
+          <T v="small">{t(SERVICE_HINT[k] || '')}</T>
         </Pressable>
       ))}
       <Button small v="link" title={t('Cancel')} onPress={onCancel} />

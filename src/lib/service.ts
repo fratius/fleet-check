@@ -15,9 +15,9 @@ export const ADD_KINDS: ServiceKind[] = ['service', 'tyres', 'brakes', 'repair',
 export const SERVICE_NAME: Record<ServiceKind, string> = {
   service: N_('Service and oil change'), tyres: N_('Tyres'), brakes: N_('Brakes'), repair: N_('Repair'), other: N_('Other'), hu: N_('TÜV (main inspection)'),
 };
-export const SERVICE_HINT: Record<ServiceKind, string> = {
+export const SERVICE_HINT: Partial<Record<ServiceKind, string>> = {
   service: N_('Oil, filters, the maker\'s service plan'), tyres: N_('New tyres or the seasonal change'), brakes: N_('Pads, discs, brake fluid'),
-  repair: N_('Something fixed at the garage'), other: N_('Anything else: you name it'), hu: N_('The periodic inspection, with the new sticker'),
+  repair: N_('Something fixed at the garage'), other: N_('Anything else: you name it'),
 };
 export const HU_RESULT: Record<HuResult, string> = { passed: N_('Passed'), defects: N_('Passed, minor defects to fix'), failed: N_('Failed, has to go again') };
 

@@ -223,6 +223,7 @@ dc0c4f9e	A company setting	[lib/session.tsx]
 ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
 7fc4ef1f	A manager has already reviewed this check.
 1f6df70e	a month	[plan.tsx, components/plansetup.tsx]
+70933f9b	A month before it runs out, the station's fleet managers get a notification (with notifications turned on in Account) and it shows in Review.
 eacc9bf9	A new version of the app is ready ({version}).
 56599b1b	A notification on this phone, so you know before you get to the station.
 54173bc8	A photo is missing from storage. Upload it again.
@@ -1029,7 +1030,6 @@ b25a0a52	Licence is fine	[components/driverrec.tsx]
 8ae0e7c8	Licence valid until	[data.tsx]
 a36ef8ab	Light	[app/scan/[id].tsx]
 646a059a	Lights	[routines.ts, components/routines.tsx]
-c5e9cbf6	like 03/2027	[components/service.tsx]
 ddb61dcd	like 03/2028	[components/service.tsx]
 b7b97d43	Like the oil level or the cargo area: drivers tick them off on their van and get a reminder when one is due.
 8c06f60c	Likely, {pct}%	[check/[id].tsx]
@@ -1095,7 +1095,6 @@ e367e50b	Missed damage is also how we measure what the AI misses.
 4a0a8d28	Mobile: {phone}	[website.ts]
 68c2cc7f	Model	[data.tsx, components/docscan.tsx]
 9ae36e6b	Model year	[components/vanfacts.tsx]
-8e724eab	Month on the new sticker
 a3205d6e	Month on the sticker
 745d1918	monthly	[components/offers.tsx]
 d31edb7b	Monthly	[account.tsx, plan.tsx, components/offers.tsx]
@@ -1717,7 +1716,6 @@ ca29f290	someone	[people.tsx]
 1b12b5f4	Someone already added photos or a video for this.
 f5785ccf	Someone else has to allow your own.
 06afd560	Someone else has to check your own licence.
-48f88ac3	Something else	[components/service.tsx]
 0f62d698	Something fixed at the garage
 3c1bf34f	Something went wrong on the server. Try again.
 4244e822	Something went wrong. Try again.
@@ -1931,7 +1929,6 @@ a258fcb9	The odometer ({km} km) is lower than the van's last reading ({last} km)
 cf2abed0	The parts	[buy/[id].tsx]
 503dcb8f	The payment form is still loading. Try again in a moment.
 8a4c03a1	The payment is still on its way. Your company opens as soon as Stripe confirms it.
-a366a955	The periodic inspection, with the new sticker
 14216d56	The photo didn't upload. Take it again.
 a2c1f08f	The photo is blurred. Hold the phone still and take it again.
 4615b331	The photo was read and deleted; it isn't kept with the record.
@@ -1955,7 +1952,6 @@ aebdea71	The receipt couldn't be read. Type the numbers from it.
 0da98e11	The receipt is dated {date}.
 9e522813	The receipt shows a card ending {last4}; this van's card ends {expected}.
 de1018b5	The service history needs the Firebase backend.
-6f7b3366	The station's fleet managers get a notification a month before it runs out.
 a511a830	The times you had this van.
 0c5fe82b	The TÜV date stays as it is. Record it again when the van passes.
 5daed61d	The TÜV of {van} ran out at the end of {month}. Book the inspection now.
