@@ -1175,6 +1175,11 @@
  "Not checked": "Neverificat",
  "Not clear yet": "Încă neclar",
  "Not compared": "Necomparate",
+ "Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.": {
+  "one": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} comparație pe zi.",
+  "few": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} comparații pe zi.",
+  "other": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} de comparații pe zi."
+ },
  "Not compared: during the free trial each van gets {n} comparisons a day.": {
   "one": "Necomparată: în perioada de probă gratuită fiecare dubă are {n} comparație pe zi.",
   "few": "Necomparată: în perioada de probă gratuită fiecare dubă are {n} comparații pe zi.",

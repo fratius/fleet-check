@@ -1149,6 +1149,10 @@
  "Not checked": "Nicht geprüft",
  "Not clear yet": "Noch unklar",
  "Not compared": "Nicht verglichen",
+ "Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.": {
+  "one": "Nicht verglichen: In der kostenlosen Testphase und in Demo-Firmen bekommt jeder Transporter {n} Vergleich am Tag.",
+  "other": "Nicht verglichen: In der kostenlosen Testphase und in Demo-Firmen bekommt jeder Transporter {n} Vergleiche am Tag."
+ },
  "Not compared: during the free trial each van gets {n} comparisons a day.": {
   "one": "Nicht verglichen: In der kostenlosen Testphase bekommt jeder Transporter {n} Vergleich am Tag.",
   "other": "Nicht verglichen: In der kostenlosen Testphase bekommt jeder Transporter {n} Vergleiche am Tag."

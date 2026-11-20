@@ -1328,7 +1328,7 @@ fff37784	not checked	[check/[id].tsx]
 53453a87	Not clear yet	[components/driverrec.tsx]
 470feb54	Not compared	[log.tsx]
 ad0cfbc3	Not compared: {list}.	[check/[id].tsx, components/compare.tsx]
-b34da8a8	Not compared: during the free trial each van gets {n} comparison a day. || Not compared: during the free trial each van gets {n} comparisons a day.
+4759a47e	Not compared: during the free trial and in demo companies each van gets {n} comparison a day. || Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.
 2cbd2224	Not connected to Firebase yet: vehicles are saved on this phone only.
 254c376b	Not damage	[check/[id].tsx]
 d44ffdad	Not done yet.	[components/routines.tsx]

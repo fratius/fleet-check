@@ -51,7 +51,7 @@ export function CompareCard({ w }: { w: Walkaround }) {
           : cmp.status === 'running' ? (
             <Row><ActivityIndicator color={c.ink} /><T v="hint" style={{ flex: 1 }}>{t('Comparing every photo with the van\'s earlier photos. This takes about a minute.')}</T></Row>
           ) : cmp.status === 'first' ? <T v="hint">{t('No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.')}</T>
-            : cmp.status === 'limit' ? <T v="hint">{tp(2, 'Not compared: during the free trial each van gets {n} comparison a day.', 'Not compared: during the free trial each van gets {n} comparisons a day.')}</T>
+            : cmp.status === 'limit' ? <T v="hint">{tp(2, 'Not compared: during the free trial and in demo companies each van gets {n} comparison a day.', 'Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.')}</T>
               : (
                 <View style={{ gap: 4 }}>
                   <T>{n ? tp(n, 'The AI marked {n} spot that may be new. Review it: your decision goes on the van\'s record.', 'The AI marked {n} spots that may be new. Review them: your decision goes on the van\'s record.')

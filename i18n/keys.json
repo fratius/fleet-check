@@ -9914,9 +9914,9 @@
   ]
  },
  {
-  "id": "b34da8a8",
-  "key": "Not compared: during the free trial each van gets {n} comparisons a day.",
-  "one": "Not compared: during the free trial each van gets {n} comparison a day.",
+  "id": "4759a47e",
+  "key": "Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.",
+  "one": "Not compared: during the free trial and in demo companies each van gets {n} comparison a day.",
   "where": [
    "src/components/compare.tsx:54"
   ]
