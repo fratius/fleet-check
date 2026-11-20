@@ -397,5 +397,6 @@
  "hours": "ur",
  "minutes": "minut",
  "seconds": "sekund",
- "{n} % off": "{n} % popusta"
+ "{n} % off": "{n} % popusta",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Najnovejši obhod vsakega kombija ostane shranjen, dokler ni narejen novejši: aplikacija vsak obhod primerja s prejšnjimi fotografijami kombija, da najde nove poškodbe."
 }

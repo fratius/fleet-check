@@ -397,5 +397,6 @@
  "hours": "giờ",
  "minutes": "phút",
  "seconds": "giây",
- "{n} % off": "giảm {n}%"
+ "{n} % off": "giảm {n}%",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Lần chụp quanh xe mới nhất của mỗi xe van được giữ lại cho đến khi có lần mới hơn: ứng dụng so sánh mỗi lần chụp quanh xe với ảnh trước đó của xe van để tìm hư hỏng mới."
 }

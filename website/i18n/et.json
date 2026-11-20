@@ -397,5 +397,6 @@
  "hours": "tundi",
  "minutes": "minutit",
  "seconds": "sekundit",
- "{n} % off": "{n}% allahindlust"
+ "{n} % off": "{n}% allahindlust",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Iga kaubiku uusim ringkontroll jääb alles, kuni tehakse uuem: rakendus võrdleb iga ringkontrolli kaubiku varasemate fotodega, et leida uusi kahjustusi."
 }

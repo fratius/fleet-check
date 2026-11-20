@@ -397,5 +397,6 @@
  "hours": "ساعات",
  "minutes": "دقائق",
  "seconds": "ثوانٍ",
- "{n} % off": "خصم {n}%"
+ "{n} % off": "خصم {n}%",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "تبقى أحدث جولة تصوير لكل فان محفوظة حتى تُلتقط جولة أحدث: يقارن التطبيق كل جولة تصوير بصور الفان السابقة لاكتشاف الأضرار الجديدة."
 }
