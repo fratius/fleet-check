@@ -2245,7 +2245,7 @@ test('the AI compares every walk-around with the van\'s earlier photos; new dama
   // Product owner, 2026-11-20. The stand-in for the AI (functions/src/claude.ts) marks a spot on the first photo ("Frame 1")
   // and calls it new damage, unless the van's plate says QUIET. Earlier tests made this company one set up by hand
   // (no trial allowance).
-  const cr = await appCreator('Quinn Compare');
+  const cr = await appCreator('Zora Compare');
   const mkVan = async (name, plate) => {
     const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
     await setDoc(r, { name, plate, cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
