@@ -720,6 +720,8 @@ export interface Org {
     periodEnd?: number | null; cancelAt?: number | null; offer?: string | null; testMode?: boolean;
     /** On the early-bird price (the plan started before its end), and what Stripe charges per invoice before VAT and discounts. */
     early?: boolean; net?: number | null;
+    /** The free days of a sign-up link that asked for no card: no card yet, the company stops at trialEnd without one. */
+    cardLater?: boolean;
   };
   /** Vans in use (not retired), counted by the server for the plan's limit. */
   fleetSize?: number;
@@ -878,10 +880,14 @@ export interface BillingStarted {
 export interface OfferPublic {
   code: string; plan: PlanName | null; interval: 'month' | 'year' | null; trialDays: number;
   percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null;
+  /** false: the free days start without a card (billingTrial). */
+  requireCard: boolean;
 }
 /** A sign-up link the app creator makes (offers/{code}; saveOffer). */
 export interface OfferInput {
   note: string; plan: PlanName | null; interval: 'month' | 'year' | null; trialDays: number;
   percentOff: number | null; amountOff: number | null; months: number | null; validUntil: number | null; maxUses: number;
+  /** A card at sign-up; false: the free days start without one (missing on links made before: true). */
+  requireCard?: boolean;
 }
 export interface Offer extends OfferInput { code: string; uses: number; ended: boolean; createdAt: number; createdBy: string }

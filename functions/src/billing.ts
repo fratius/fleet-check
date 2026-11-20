@@ -7,7 +7,8 @@ import { N_ } from './i18n';
  *
  *   incomplete  signed up with payments on, but no card yet (payments.ts): the app asks the owner for one first.
  *   trialing    30 days from sign-up (trialStart, trialEnd), with a card that is charged only after; the AI has a
- *               daily allowance (AI_DAY).
+ *               daily allowance (AI_DAY). With a sign-up link that asked for no card (cardLater), the link's free
+ *               days without a card: the owner adds one before they end, or the company stops then.
  *   later       Stripe's status: active, past_due, unpaid, paused, canceled; comped for pilot companies that don't
  *               pay for a while. The names are Stripe's (payments.ts writes them from its webhook).
  *
@@ -115,6 +116,12 @@ export interface Billing {
   vans?: number | null;
   /** A card is on file. */
   card?: boolean;
+  /**
+   * The free days of a sign-up link that asked for no card (payments.ts, Offer.requireCard): status trialing until
+   * trialEnd, no card and nothing in Stripe yet. The owner is reminded to add a card; without one the company stops
+   * when the trial ends (standing: trial_over). Gone once the card is on file.
+   */
+  cardLater?: boolean;
   /** End of the period paid for, and when the plan ends if it was cancelled. */
   periodEnd?: number | null;
   cancelAt?: number | null;

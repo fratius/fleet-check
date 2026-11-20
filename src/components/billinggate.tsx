@@ -60,7 +60,7 @@ export function BillingGate() {
       {!owner ? <Notice text={t('The company\'s owner adds the plan and the card. Ask them, then open Fratius again.')} />
         : Platform.OS !== 'web' ? <Notice text={t('Plans and the card are set up in the web app, in a browser on a computer or phone.')} />
           : card ? <PortalButton orgId={org.id} title={t('Pay or change the card')} primary />
-            : <PlanSetup org={org} plan={org.billing?.plan} interval={org.billing?.interval} onDone={(id) => s.switchOrg(id)} />}
+            : <PlanSetup org={org} plan={org.billing?.plan} interval={org.billing?.interval} offer={org.billing?.cardLater ? org.billing.offer : null} onDone={(id) => s.switchOrg(id)} />}
       <MyCompanies />
       <Button v="link" title={t('Sign out')} onPress={() => s.signOut()} />
       <DeleteAccount />
@@ -69,7 +69,10 @@ export function BillingGate() {
   );
 }
 
-/** Above the tab bar: a payment that didn't go through (owners), or a plan that ended and the days left to export. */
+/**
+ * Above the tab bar: a payment that didn't go through (owners), free days without a card that end within a week
+ * (owners, web: the card is added there), or a plan that ended and the days left to export.
+ */
 export function BillingStrip() {
   const s = useSession();
   const mode = usePayMode();
@@ -79,6 +82,9 @@ export function BillingStrip() {
   const owner = s.role === 'owner';
   let text: string | null = null;
   if (b.status === 'past_due' && owner) text = t('The last payment didn\'t go through. Check the card.');
+  else if (b.cardLater && owner && Platform.OS === 'web' && standing(s.org).standing === 'trial' && (b.trialEnd || 0) - Date.now() < 7 * 86400_000) {
+    text = t('The free trial ends on {date}. Add a card to keep going.', { date: day(b.trialEnd || Date.now()) });
+  }
   else if (end && blocked(s.org, mode, s.creator)) text = t('The plan has ended. You can look at and export the data until {date}.', { date: day(end + GRACE_DAYS * 86400_000) });
   if (!text) return null;
   return (

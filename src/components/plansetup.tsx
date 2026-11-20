@@ -5,7 +5,7 @@ import { CardForm, cardFormSupported, type CardApi } from '@/components/cardform
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, F, Field, Notice, Segmented, T, hs, useColors } from '@/components/ui';
 import {
-  PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, euro, netCents, offered, planCents, signupDone, standing, type Interval, type PlanId,
+  PLAN_IDS, PLAN_NAME, PLAN_VANS, PRICE_CENTS, TERMS_VERSION, TRIAL_DAYS, earlyBird, euro, netCents, offered, planCents, signupDone, standing, type Interval, type PlanId,
 } from '@/lib/billing';
 import { fb } from '@/lib/firebase';
 import { loc, t, tp } from '@/lib/i18n';
@@ -26,6 +26,10 @@ const day = (ms: number) => new Date(ms).toLocaleDateString(loc(), { day: 'numer
  * subscription (billingStart), then Stripe confirms the card or the payment in the browser, then billingConfirm.
  * A company that already exists (made before, or its card didn't go through) gets only the plan and the card.
  * The AGB (§ 2) want the price, the date of the first charge and what the button does said before the button.
+ *
+ * A sign-up link that asks for no card (product owner, 2026-11-20; Offer.requireCard false): the account, the company
+ * and the plan, no card form; the free days start without one (billingTrial). Later, during those days or after them,
+ * the same page adds the card for what is left of the free days (or pays now when they are over), on the link's terms.
  */
 export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: offerCode, onDone }: {
   org?: Org | null;
@@ -39,6 +43,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   const [cfg, setCfg] = useState<BillingConfig | null>(null);
   const [cfgErr, setCfgErr] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [plan, setPlan] = useState<PlanId>(offered(wantPlan) || 'basic');
@@ -63,7 +68,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
     const si = q.get('setup_intent');
     setBusy(true); setStep(t('Almost done…'));
     ai.billingConfirm({ orgId: org.id, setupIntent: si }).then((r) => {
-      if (r.billing && (r.billing.status === 'trialing' || r.billing.status === 'active')) { signupDone(); onDone(org.id); }
+      if (r.billing && (r.billing.status === 'trialing' || r.billing.status === 'active') && r.billing.card) { signupDone(); onDone(org.id); }
     }, (e) => setErr(authMessage(e))).finally(() => { setBusy(false); setStep(null); });
   }, [org?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -86,15 +91,21 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
   // has the last word: if its terms differ, the page shows them and asks again before the card is used.
   const prev = org?.billing;
   const hadCard = prev?.via === 'stripe' && !!prev.card && !(cfg?.mode === 'live' && prev.testMode);
+  // In free days without a card: the card is added now, for what is left of them (none once they are over).
+  const later = !!prev?.cardLater;
+  // A sign-up link that asks for no card: the free days start without one, for a company still waiting for its first.
+  const noCard = !!offer && offer.requireCard === false && offer.trialDays > 0 && !later && !hadCard;
   let trialEnd: number | null = null;
-  if (offer) trialEnd = offer.trialDays > 0 ? now + offer.trialDays * DAY : null;
+  if (later) trialEnd = (prev?.trialEnd || 0) > now + 3600_000 ? prev!.trialEnd! : null;
+  else if (offer) trialEnd = offer.trialDays > 0 ? now + offer.trialDays * DAY : null;
   else if (iv === 'month' && !hadCard) {
     const st = org && prev?.via !== 'stripe' ? standing(org) : null;
     if (st && (st.standing === 'trial' || st.standing === 'trial_over')) trialEnd = (st.trialEnd || 0) > now + 3600_000 ? st.trialEnd : null;
     else trialEnd = now + (cfg?.trialDays || TRIAL_DAYS) * DAY;
   }
-  // The early-bird price of a plan started now (the server decides: billingConfig); no yearly launch offer on top.
-  const early = !!cfg?.earlyBird;
+  // The early-bird price of a plan started now (the server decides: billingConfig), or when the free days without a
+  // card started; no yearly launch offer on top.
+  const early = later && prev?.trialStart ? earlyBird(prev.trialStart) : !!cfg?.earlyBird;
   const net = netCents(p, iv, withAddon, early);
   const launch = !offer && !early && iv === 'year' && !!cfg?.launchOffer;
   const discount = offer?.percentOff ? Math.round((net * offer.percentOff) / 100) : offer?.amountOff ? Math.min(net, offer.amountOff) : launch ? Math.round((PRICE_CENTS[p].year * (cfg?.yearlyOff || 30)) / 100) : 0;
@@ -123,7 +134,7 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
     // A payment can take a few seconds at Stripe; the webhook writes it too.
     for (let i = 0; ; i++) {
       const r = await ai.billingConfirm({ orgId: id, setupIntent });
-      if (r.billing && (r.billing.status === 'trialing' || r.billing.status === 'active')) break;
+      if (r.billing && (r.billing.status === 'trialing' || r.billing.status === 'active') && r.billing.card) break;
       if (i >= 6) throw new Error(t('The payment is still on its way. Your company opens as soon as Stripe confirms it.'));
       await new Promise((ok) => setTimeout(ok, 2500));
     }
@@ -149,7 +160,29 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
       if (!email.trim()) return setErr(t('Enter your email address.'));
       if (password.length < 6) return setErr(t('Use at least 6 characters for the password.'));
     }
+    if (noCard && !orgId && !company.trim()) return setErr(t('Enter your company name.'));
     if (TERMS_VERSION && !accepted) return setErr(t('Accept the terms and the data processing agreement to create the company.'));
+    if (noCard && offer) {
+      setBusy(true);
+      try {
+        let id = orgId;
+        if (!id) {
+          if (!fb()?.auth.currentUser) { setStep(t('Creating your account…')); await s.signUp(email, password, name); }
+          setStep(t('Creating your company…'));
+          id = await s.createOrg(company.trim(), '', TERMS_VERSION, { payments: true, plan: p, interval: iv, name: name.trim() || undefined, open: false });
+          setOrgId(id);
+        }
+        setStep(t('Almost done…'));
+        await ai.billingTrial({ orgId: id, offer: offer.code, plan: p, interval: iv });
+        signupDone();
+        onDone(id);
+      } catch (e) {
+        setErr(authMessage(e));
+      } finally {
+        setBusy(false); setStep(null);
+      }
+      return;
+    }
     const api = card.current;
     if (!api) return setErr(t('The payment form is still loading. Try again in a moment.'));
     setBusy(true);
@@ -193,12 +226,12 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
 
   return (
     <View style={{ gap: 14 }}>
-      {cfg.mode !== 'live' ? <Notice text={t('Test mode: no real money is charged. Use the card 4242 4242 4242 4242, any future date and any CVC.')} /> : null}
+      {cfg.mode !== 'live' && !noCard ? <Notice text={t('Test mode: no real money is charged. Use the card 4242 4242 4242 4242, any future date and any CVC.')} /> : null}
       {cfg.offerError ? <Notice tone="bad" text={t(cfg.offerError.t)} /> : null}
       {offer ? (
         <Card>
           <T v="h3">{t('Your offer')}</T>
-          {offer.trialDays > 0 ? <T>{tp(offer.trialDays, '{n} day free', '{n} days free')}</T> : null}
+          {offer.trialDays > 0 && !later ? <T>{tp(offer.trialDays, '{n} day free', '{n} days free')}</T> : null}
           {offer.percentOff ? <T>{offer.months ? t('{n} % off for {m} months', { n: offer.percentOff, m: offer.months }) : t('{n} % off', { n: offer.percentOff })}</T> : null}
           {offer.amountOff ? <T>{offer.months ? t('{price} off each invoice for {m} months', { price: euro(offer.amountOff, L), m: offer.months }) : t('{price} off each invoice', { price: euro(offer.amountOff, L) })}</T> : null}
         </Card>
@@ -242,20 +275,36 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
         <T v="small">{t('Prices plus VAT.')}</T>
       </Card>
 
-      <Card>
-        <T v="h3">{t('Company and card')}</T>
-        <T v="hint">{t('The company\'s name and billing address go on your invoices.')}</T>
-        <CardForm publishableKey={cfg.publishableKey || 'pk_test_fake'} kind={kind} amount={Math.round(first * 1.19)} company={org?.name || ''}
-          onApi={(a) => { card.current = a; setCardReady(!!a); }} />
-        {vatOpen || vatId
-          ? <Field label={t('VAT ID')} hint={t('optional, for example DE123456789')} value={vatId} onChangeText={setVatId} autoCapitalize="characters" autoCorrect={false} />
-          : <Button v="link" small title={t('Add a VAT ID (optional)')} onPress={() => setVatOpen(true)} />}
-        {trialEnd ? <T v="hint">{t('We ask for a card to verify your company and keep out fake accounts. Nothing is charged before {date}; cancel any time before then.', { date: day(trialEnd) })}</T> : null}
-      </Card>
+      {noCard ? (
+        !org ? (
+          <Card>
+            <T v="h3">{t('Your company')}</T>
+            <Field label={t('Company name')} value={company} onChangeText={setCompany} autoCapitalize="words" textContentType="organizationName" />
+          </Card>
+        ) : null
+      ) : (
+        <Card>
+          <T v="h3">{t('Company and card')}</T>
+          <T v="hint">{t('The company\'s name and billing address go on your invoices.')}</T>
+          <CardForm publishableKey={cfg.publishableKey || 'pk_test_fake'} kind={kind} amount={Math.round(first * 1.19)} company={org?.name || ''}
+            onApi={(a) => { card.current = a; setCardReady(!!a); }} />
+          {vatOpen || vatId
+            ? <Field label={t('VAT ID')} hint={t('optional, for example DE123456789')} value={vatId} onChangeText={setVatId} autoCapitalize="characters" autoCorrect={false} />
+            : <Button v="link" small title={t('Add a VAT ID (optional)')} onPress={() => setVatOpen(true)} />}
+          {trialEnd ? <T v="hint">{t('We ask for a card to verify your company and keep out fake accounts. Nothing is charged before {date}; cancel any time before then.', { date: day(trialEnd) })}</T> : null}
+        </Card>
+      )}
 
       <Card style={{ borderColor: c.ink }}>
         <T v="h3">{t('What you pay')}</T>
-        {trialEnd ? (
+        {noCard && trialEnd ? (
+          <>
+            <T>{t('Today: {price}.', { price: euro(0, L) })}</T>
+            <T>{t('Free until {date}, with no card. Nothing is charged without a card.', { date: day(trialEnd) })}</T>
+            <T>{t('With a card, the plan costs {price} plus VAT {per} from {date}.', { price: euro(first, L), per, date: day(trialEnd) })}</T>
+            <T v="hint">{t('To keep going after {date}, add a card before then: Account, then Plan and billing, in the web app.', { date: day(trialEnd) })}</T>
+          </>
+        ) : trialEnd ? (
           <>
             <T>{t('Today: {price}.', { price: euro(0, L) })}</T>
             <T>{iv === 'year'
@@ -289,11 +338,13 @@ export function PlanSetup({ org, plan: wantPlan, interval: wantInterval, offer: 
               : <T>{iv === 'year' ? t('Then {price} plus VAT every year, until you cancel.', { price: euro(net, L) }) : t('Then {price} plus VAT every month, until you cancel.', { price: euro(net, L) })}</T>}
             <Button v="primary" wide loading={busy} onPress={confirmReview}
               title={review.st.kind === 'payment' ? t('Pay {price} and start', { price: euro(review.st.amount, L) })
-                : review.st.trialEnd ? t('Start free, paid from {date}', { date: day(review.st.trialEnd) }) : t('Add the card and start')} />
+                : review.st.trialEnd ? (later ? t('Add the card, paid from {date}', { date: day(review.st.trialEnd) }) : t('Start free, paid from {date}', { date: day(review.st.trialEnd) })) : t('Add the card and start')} />
           </View>
         ) : (
-          <Button v="primary" wide disabled={!cardReady} loading={busy} onPress={go}
-            title={trialEnd ? t('Start free, paid from {date}', { date: day(trialEnd) }) : t('Pay {price} plus VAT and start', { price: euro(first, L) })} />
+          <Button v="primary" wide disabled={!cardReady && !noCard} loading={busy} onPress={go}
+            title={noCard && trialEnd ? t('Start free until {date}', { date: day(trialEnd) })
+              : trialEnd ? (later ? t('Add the card, paid from {date}', { date: day(trialEnd) }) : t('Start free, paid from {date}', { date: day(trialEnd) }))
+                : t('Pay {price} plus VAT and start', { price: euro(first, L) })} />
         )}
         {step ? <T v="hint">{step}</T> : null}
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}

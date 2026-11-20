@@ -227,6 +227,11 @@ a decision about what the app must do, so it goes in a pull request of its own t
   they do while viewing is real. The app creator's own sign-in (and nobody else's) can be given a van and allow
   their own stopped refuel as a fleet manager, to try both sides.
 - SHOULD 13.4 Signing out with changes still waiting on the phone says so first.
+- MUST 13.5 A sign-up link the app creator made with **"Require a credit card" off** lets a new company start its
+  free days without a card (web sign-up page: no card fields). Its owner is reminded to add a card before the free
+  days end (Account, then Plan and billing; a strip in the last week). Without a card the company stops when they
+  end: everyone sees that the owner adds a card, and nothing in it is deleted. A card added later keeps the link's
+  terms and gives no new free days. Links with the switch on (the default) still ask for a card at sign-up.
 
 ## 14. Everywhere
 
