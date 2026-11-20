@@ -25,10 +25,10 @@ service firebase.storage {
           || (!viewing() && firestore.get(memberPath(orgId)).data.role in ['owner', 'admin', 'manager']));
     }
 
-    // Photos: any member of the company sees and adds them (and the app creator).
+    // Photos: any member of the company sees and adds them (and the app creator). Not videos or fleet files (below).
     match /orgs/{orgId}/{rest=**} {
-      allow read: if (creator() || member(orgId)) && rest[0] != 'videos';
-      allow create: if (creator() || member(orgId)) && rest[0] != 'videos'
+      allow read: if (creator() || member(orgId)) && !(rest[0] in ['videos', 'imports']);
+      allow create: if (creator() || member(orgId)) && !(rest[0] in ['videos', 'imports'])
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
     }
@@ -41,6 +41,18 @@ service firebase.storage {
         && file.matches('original[.][A-Za-z0-9]{2,5}')
         && request.resource.contentType.matches('video/.*')
         && request.resource.size < 500 * 1024 * 1024;
+    }
+
+    // A fleet list to add the whole fleet at once (readFleetFile): owners and fleet managers upload it to their own
+    // folder; the server reads it and deletes it straight away. Nobody else reads it from the app (it may hold costs);
+    // the uploader may, so an upload tried again can see it's already there.
+    match /orgs/{orgId}/imports/{uid}/{file} {
+      allow read: if (creator() || staff(orgId)) && request.auth.uid == uid;
+      allow create: if (creator() || staff(orgId)) && request.auth.uid == uid
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType in [
+          'application/pdf', 'text/csv', 'text/plain', 'text/tab-separated-values', 'application/csv', 'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/octet-stream'])
+        && request.resource.size < 15 * 1024 * 1024;
     }
   }
 }

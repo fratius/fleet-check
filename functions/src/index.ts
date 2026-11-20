@@ -15,15 +15,19 @@ import { defineSecret } from 'firebase-functions/params';
 import nodemailer from 'nodemailer';
 import webpush from 'web-push';
 
-import { ask } from './claude';
+import { ask, type Part } from './claude';
 import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, plateCrop, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
-import { CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, platePrompt, plateSchema, spotPrompt, spotSchema } from './prompts';
+import { CLASSES, CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, platePrompt, plateSchema, spotPrompt, spotSchema } from './prompts';
 import { FIRST_RUN, cleanMedia, keepUntil, thisMonthsRun } from './media';
 import { vanName } from './vans';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
 import { DRIVER_FIELDS, VAN_FIELDS, cleanFields, docPrompt, docSchema } from './documents';
+import {
+  FileProblem, buildRows, classPrompt, classSchema, cleanMapping, descKey, fieldsFor, mapPrompt, mapSchema, plateKey, readTables, sniff, splitValues, tidyPlate,
+  transcribePrompt, transcribeSchema, type Problem, type Table,
+} from './fleetfile';
 import { makePlayback, playsAsIs, probe } from './video';
 import { N_, fail, langOf, tr } from './i18n';
 import { cleanRequests, onCallOnce } from './once';
@@ -1869,6 +1873,295 @@ export const readDocument = onCall(opts(180), async (req) => {
   }
 });
 
+/* ---------- 15b. The whole fleet from a file ---------- */
+// Owners and fleet managers add every van of their fleet list at once (product owner, 2026-11-20): Excel, CSV, a
+// PDF or photos of a printed list. readFleetFile reads it (fleetfile.ts) and answers with the vans for the person to
+// check; the file is deleted straight after reading. What was read is kept on the server for a day
+// (orgs/{org}/imports, server only), so addVans saves exactly that: the phone only sends which vans to add, their type
+// and station, and a plate or name the person corrected. Product owner's decisions: a van already in the fleet (same
+// plate) only gets the details it doesn't have yet, nothing is overwritten; vans aren't given to drivers from a file;
+// a station the file names that doesn't exist yet is created by an owner; more vans than the plan has room for are
+// shown before saving, and the person unticks some or takes a bigger plan. Money only for owners, as everywhere.
+
+const IMPORT_TTL = 86_400_000;
+const IMPORT_CHUNK = 200;
+const MAX_IMPORT = 2000;
+const importFiles = (w: Who) => `orgs/${w.orgId}/imports/${w.uid}/`;
+interface KeptRow { plate: string; name: string | null; station: string | null; desc: string | null; make: string | null; model: string | null; cls: string | null; roof: string; values: Record<string, unknown> }
+
+/** A reading of a fleet file and its rows (in parts of 200, so a list of 2,000 vans fits Firestore's size limit). */
+async function dropImport(ref: R) {
+  const d = (await ref.get()).data() as { chunks?: number } | undefined;
+  if (!d) return;
+  const b = db().batch();
+  for (let i = 0; i < (d.chunks || 0); i++) b.delete(ref.collection('rows').doc(String(i)));
+  b.delete(ref);
+  await b.commit();
+}
+/** The daily clean-up: readings nobody saved. */
+async function cleanImports(now = Date.now()) {
+  const old = await db().collectionGroup('imports').where('until', '<', now).limit(200).get();
+  await pool(old.docs, 5, (d) => dropImport(d.ref));
+  return old.size;
+}
+const FILE_PROBLEM: Record<Problem, string> = {
+  xls: N_('This is an old Excel file (.xls). Open it in Excel, save it as .xlsx or CSV, and upload that.'),
+  ods: N_('Save the list as an Excel file (.xlsx) or CSV, and upload that.'),
+  docx: N_('This is a Word file. Save it as a PDF and upload that.'),
+  unknown: N_('This file can\'t be read. Upload an Excel file (.xlsx), a CSV, a PDF or photos of the list.'),
+  empty: N_('There\'s nothing in this file.'),
+  broken: N_('The file seems to be damaged. Save it again and upload it.'),
+  'too-big': N_('The file is too big. Upload the list on its own, as .xlsx or CSV.'),
+};
+/** Stations by their name or code, as a file writes them ("Berlin Spandau", "dbe3"). */
+const stationKey = (t: string | null | undefined) => (t || '').toLowerCase().replace(/[^a-z0-9äöüß]+/g, '');
+
+export const readFleetFile = onCall(opts(300), async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const raw = Array.isArray(req.data?.paths) ? req.data.paths : [];
+  if (!raw.length || raw.length > 6) throw fail('invalid-argument', 'Send the fleet list as one file, or 1 to 6 photos of it.');
+  const paths: string[] = raw.map((p: unknown) => checkPath(p, importFiles(who)));
+  const fileName = str(req.data?.name, 120);
+  const org = db().doc(`orgs/${who.orgId}`);
+  const owner = who.role === 'owner';
+  try {
+    const bufs = await pool(paths, 3, download);
+    const kinds = bufs.map(sniff);
+    const kind = kinds.length > 1 ? (kinds.every((k) => k === 'image') ? 'image' : 'unknown') : kinds[0];
+    if (!['xlsx', 'csv', 'pdf', 'image'].includes(kind)) throw fail('invalid-argument', FILE_PROBLEM[(kind in FILE_PROBLEM ? kind : 'unknown') as Problem]);
+    // Inside the try: a refused reading still deletes the file.
+    await useAi(who, 'reads');
+    let usage = noUsage();
+    let model = MODELS[who.tier].id;
+    let tables: Table[];
+    let more = false;
+    const notes: string[] = [];
+    if (kind === 'xlsx' || kind === 'csv') {
+      try { tables = readTables(bufs[0], kind, fileName || 'CSV'); } catch (e) {
+        if (e instanceof FileProblem) throw fail('invalid-argument', FILE_PROBLEM[e.problem]);
+        throw e;
+      }
+    } else {
+      // A PDF or photos: the AI copies the list into a table first.
+      const parts: Part[] = kind === 'pdf' ? [{ pdf: bufs[0] }]
+        : await pool(bufs, 3, async (b, i) => ({ label: bufs.length > 1 ? `Page ${i + 1}` : undefined, image: await fit(b) }));
+      const a = await ask<{ readable?: boolean; rows?: unknown; more?: boolean; notes?: unknown }>(ANTHROPIC_API_KEY.value(), who.tier, parts,
+        transcribePrompt(bufs.length, kind === 'pdf'), transcribeSchema, 32000);
+      usage = addUsage(usage, a.usage); model = a.model;
+      const rows = (Array.isArray(a.obj.rows) ? a.obj.rows : []).slice(0, 400)
+        .map((r) => (Array.isArray(r) ? r.slice(0, 60).map((c) => String(c ?? '').replace(/\s+/g, ' ').trim().slice(0, 200)) : []));
+      if (a.obj.readable === false || rows.length < 2) throw fail('failed-precondition', 'No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.');
+      tables = [{ name: fileName || (kind === 'pdf' ? 'PDF' : 'Photos'), rows }];
+      more = a.obj.more === true;
+      const n = str(a.obj.notes, 200);
+      if (n) notes.push(n);
+    }
+    if (!tables.length) throw fail('invalid-argument', FILE_PROBLEM.empty);
+    // Managers don't see costs: they aren't even asked for.
+    const fields = fieldsFor(owner);
+    const m = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), who.tier, [], mapPrompt(tables, fields), mapSchema(fields, Math.min(tables.length, 8)), 6000);
+    usage = addUsage(usage, m.usage);
+    const map = cleanMapping(m.obj, fields, Math.min(tables.length, 8));
+    if (map.notes) notes.push(map.notes);
+    const built = buildRows(tables, map, fields);
+    if (!built.rows.length) throw fail('failed-precondition', 'No number plates were found in this file. Check that it lists the vans with their plates, one van per line.');
+    if (built.rows.length > MAX_IMPORT) throw fail('invalid-argument', 'The file lists {n} vans. Upload at most {max} at a time.', { n: built.rows.length, max: MAX_IMPORT });
+
+    // The van type of each model in the list: one question per model, not per van.
+    const descs = [...new Map(built.rows.filter((r) => r.desc).map((r) => [descKey(r.desc), r.desc!])).entries()].slice(0, 150);
+    const types = new Map<string, { make: string | null; model: string | null; cls: string | null; roof: string }>();
+    if (descs.length) {
+      const c = await ask<{ types?: unknown }>(ANTHROPIC_API_KEY.value(), who.tier, [], classPrompt(descs.map((d) => d[1]), CLASSES), classSchema(CLASS_IDS), 8000);
+      usage = addUsage(usage, c.usage);
+      for (const x of (Array.isArray(c.obj.types) ? c.obj.types : []) as { n?: unknown; make?: unknown; model?: unknown; cls?: unknown; roof?: unknown }[]) {
+        const d = descs[Number(x?.n) - 1];
+        if (!d) continue;
+        types.set(d[0], { make: str(x.make, 40), model: str(x.model, 40), cls: CLASS_IDS.includes(String(x.cls)) ? String(x.cls) : null, roof: x.roof === 'high' || x.roof === 'low' ? x.roof : 'unknown' });
+      }
+    }
+
+    // What's already in the company, and its stations.
+    const [vanSnap, stSnap] = await Promise.all([org.collection('vehicles').select('plate', 'stationId', 'retired').get(), org.collection('stations').get()]);
+    const have = new Map<string, { id: string; stationId: string | null; retired: boolean }>();
+    for (const d of vanSnap.docs) {
+      const k = plateKey(d.get('plate'));
+      if (k && !have.has(k)) have.set(k, { id: d.id, stationId: d.get('stationId') || null, retired: d.get('retired') === true });
+    }
+    const stations = new Map<string, string>();
+    for (const d of stSnap.docs) for (const t of [d.get('name'), d.get('code')]) if (stationKey(t) && !stations.has(stationKey(t))) stations.set(stationKey(t), d.id);
+
+    const kept: KeptRow[] = built.rows.map((r) => {
+      const ty = types.get(descKey(r.desc));
+      return { plate: r.plate, name: r.name, station: r.station, desc: r.desc, make: ty?.make || r.make, model: ty?.model || r.model, cls: ty?.cls || null, roof: ty?.roof || 'unknown', values: r.values };
+    });
+    // Earlier readings by this person go: only the newest can be saved.
+    const mine = await org.collection('imports').where('by', '==', who.uid).get();
+    await Promise.all(mine.docs.map((d) => dropImport(d.ref)));
+    const ref = org.collection('imports').doc();
+    const chunks = Math.ceil(kept.length / IMPORT_CHUNK);
+    const b = db().batch();
+    for (let i = 0; i < chunks; i++) b.set(ref.collection('rows').doc(String(i)), { rows: kept.slice(i * IMPORT_CHUNK, (i + 1) * IMPORT_CHUNK) });
+    b.set(ref, { by: who.uid, owner, fileName, kind, count: kept.length, chunks, createdAt: Date.now(), until: Date.now() + IMPORT_TTL });
+    await b.commit();
+    // What it cost, for the app creator (no values).
+    await org.collection('docReads').add({ by: who.uid, byName: who.name, target: 'fleet', kind: `fleet list (${kind})`, pages: bufs.length, found: kept.length,
+      model, tier: who.tier, usage, createdAt: Date.now() });
+
+    return {
+      importId: ref.id, kind, more, notes, noPlate: built.noPlate, twice: built.twice, drivers: built.drivers, columns: built.columns,
+      rows: kept.map((r, i) => {
+        const h = have.get(plateKey(r.plate));
+        // A van at a station this person doesn't run: only that it's there, nothing about it.
+        const elsewhere = !!h && who.role !== 'owner' && !(h.stationId && who.stationIds.includes(h.stationId));
+        return { i, at: built.rows[i].at, plate: r.plate, name: r.name, station: r.station, stationId: stations.get(stationKey(r.station)) || null, desc: r.desc, make: r.make, model: r.model,
+          cls: r.cls, values: r.values, have: h && !elsewhere ? h.id : null, retired: !!h && !elsewhere && h.retired, elsewhere };
+      }),
+      ...(who.creator ? { usage } : {}),
+    };
+  } finally {
+    // No copy of the file is kept.
+    await Promise.all(paths.map((p) => bucket().file(p).delete().catch(() => {})));
+  }
+});
+
+const filled = (x: unknown) => x != null && x !== '' && !(Array.isArray(x) && !x.length);
+
+export const addVans = onCallOnce('addVans', { timeoutSeconds: 300, memory: '1GiB' }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const org = db().doc(`orgs/${who.orgId}`);
+  const importId = String(req.data?.importId || '');
+  const ref = ID.test(importId) ? org.collection('imports').doc(importId) : null;
+  const meta = ref ? (await ref.get()).data() as { by?: string; until?: number; chunks?: number } | undefined : undefined;
+  if (!ref || !meta || meta.by !== who.uid || (meta.until || 0) < Date.now()) throw fail('not-found', 'This reading of the file has run out. Upload the file again.');
+  const rows: KeptRow[] = [];
+  for (let i = 0; i < (meta.chunks || 0); i++) rows.push(...(((await ref.collection('rows').doc(String(i)).get()).data()?.rows || []) as KeptRow[]));
+  const picks = (Array.isArray(req.data?.vans) ? req.data.vans : []) as { i?: unknown; cls?: unknown; stationId?: unknown; newStation?: unknown; plate?: unknown; name?: unknown }[];
+  if (!picks.length || picks.length > MAX_IMPORT) throw fail('invalid-argument', 'Tick the vans to add first.');
+  const owner = who.role === 'owner';
+
+  const [vanSnap, stSnap, orgDoc] = await Promise.all([org.collection('vehicles').get(), org.collection('stations').get(), org.get()]);
+  const stationIds = new Set(stSnap.docs.map((d) => d.id));
+  const byName = new Map<string, string>();
+  for (const d of stSnap.docs) for (const t of [d.get('name'), d.get('code')]) if (stationKey(t) && !byName.has(stationKey(t))) byName.set(stationKey(t), d.id);
+  const vans = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  for (const d of vanSnap.docs) { const k = plateKey(d.get('plate')); if (k && !vans.has(k)) vans.set(k, d); }
+
+  // Each van checked before anything is written: one wrong van stops them all, with its plate.
+  const newStations = new Map<string, string>();
+  const seen = new Set<string>();
+  const todo = picks.map((p) => {
+    const row = rows[Number(p?.i)];
+    if (!Number.isInteger(Number(p?.i)) || !row) throw fail('invalid-argument', 'This reading of the file has run out. Upload the file again.');
+    const plate = tidyPlate(typeof p.plate === 'string' && p.plate.trim() ? p.plate : row.plate);
+    if (!plate) throw fail('invalid-argument', 'This number plate isn\'t right: {plate}.', { plate: String(p.plate || row.plate).slice(0, 20) });
+    const k = plateKey(plate);
+    if (seen.has(k)) throw fail('invalid-argument', '{plate} is in the list twice.', { plate });
+    seen.add(k);
+    const name = typeof p.name === 'string' ? p.name.trim().slice(0, 60) || null : row.name;
+    const there = vans.get(k);
+    if (there) return { row, plate, name, there, cls: null as string | null, stationId: null as string | null, station: null as string | null };
+    const cls = String(p.cls || '');
+    if (!CLASS_IDS.includes(cls)) throw fail('invalid-argument', 'Pick the type of {plate}.', { plate });
+    // A station there is, or one the file names (by name or code); a station that doesn't exist yet only by an owner.
+    let stationId = typeof p.stationId === 'string' && stationIds.has(p.stationId) ? p.stationId : null;
+    const nm = stationId ? null : str(p.newStation, 40);
+    if (!stationId && !nm) throw fail('invalid-argument', 'Pick the station of {plate}.', { plate });
+    if (nm) stationId = byName.get(stationKey(nm)) || null;
+    if (stationId) needStation(who, stationId, N_('You can only add vans to your own station.'));
+    else if (!owner) throw fail('permission-denied', 'Only the fleet owner adds stations.');
+    else if (!newStations.has(stationKey(nm))) newStations.set(stationKey(nm), nm!);
+    return { row, plate, name, there: null, cls, stationId, station: stationId ? null : nm };
+  });
+
+  // Room on the plan for the new vans (the app shows it before saving; firestore.rules hold the same limit).
+  const fresh = todo.filter((x) => !x.there);
+  const max = (orgDoc.data()?.billing as { vans?: number | null } | undefined)?.vans;
+  if (max != null && !who.creator && fresh.length) {
+    const room = Math.max(0, max - (await countFleet(who.orgId)));
+    if (fresh.length > room) throw fail('resource-exhausted', 'The plan has room for {n} more vans. Untick some, or choose a bigger plan.', { n: room });
+  }
+
+  const now = Date.now();
+  const writes: { ref: R; data: Record<string, unknown>; update?: boolean }[] = [];
+  // New stations first (owners only, checked above).
+  const madeStations: string[] = [];
+  for (const [k, nm] of newStations) {
+    const st = org.collection('stations').doc();
+    byName.set(k, st.id);
+    madeStations.push(nm);
+    writes.push({ ref: st, data: { name: nm, code: '', createdAt: now } });
+  }
+  let added = 0, filledVans = 0, unchanged = 0, elsewhere = 0;
+  const detailsOf = new Map<string, Record<string, unknown>>(), costsOf = new Map<string, Record<string, unknown>>();
+  const theirs = todo.filter((x) => x.there).map((x) => x.there!.id);
+  for (let i = 0; i < theirs.length; i += 300) {
+    const part = theirs.slice(i, i + 300);
+    const [ds, cs] = await Promise.all([
+      db().getAll(...part.map((id) => org.collection('vehicleDetails').doc(id))),
+      owner ? db().getAll(...part.map((id) => org.collection('vehicleCosts').doc(id))) : Promise.resolve([]),
+    ]);
+    ds.forEach((d) => { if (d.exists) detailsOf.set(d.id, d.data()!); });
+    cs.forEach((d) => { if (d.exists) costsOf.set(d.id, d.data()!); });
+  }
+  for (const x of todo) {
+    const { facts, details, costs } = splitValues(x.row.values, owner);
+    const due = Object.fromEntries(Object.entries(details).filter(([k]) => k.startsWith('due.')).map(([k, v]) => [k.slice(4), v]));
+    const top = Object.fromEntries(Object.entries(details).filter(([k]) => !k.startsWith('due.')));
+    if (x.there) {
+      const van = x.there.data();
+      if (!owner && !(van.stationId && who.stationIds.includes(van.stationId))) { elsewhere++; continue; }
+      // Only what the van doesn't have yet: nothing is overwritten (product owner, 2026-11-20).
+      const vPatch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(facts)) if (!filled(van[k])) vPatch[k] = v;
+      if (!filled(van.name) && x.name) vPatch.name = x.name;
+      if (!filled(van.make) && x.row.make) vPatch.make = x.row.make;
+      if (!filled(van.model) && x.row.model) vPatch.model = x.row.model;
+      const cur = detailsOf.get(x.there.id);
+      const dPatch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(top)) if (!filled(cur?.[k])) dPatch[k] = v;
+      for (const [k, v] of Object.entries(due)) if (!filled((cur?.due as Record<string, unknown> | undefined)?.[k])) dPatch[`due.${k}`] = v;
+      const curC = costsOf.get(x.there.id);
+      const cPatch: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(costs)) if (!filled(curC?.[k])) cPatch[k] = v;
+      if (!Object.keys(vPatch).length && !Object.keys(dPatch).length && !Object.keys(cPatch).length) { unchanged++; continue; }
+      filledVans++;
+      const vid = x.there.id;
+      if (Object.keys(vPatch).length) writes.push({ ref: x.there.ref, data: vPatch, update: true });
+      if (Object.keys(dPatch).length) {
+        if (cur) writes.push({ ref: org.collection('vehicleDetails').doc(vid), data: { ...dPatch, updatedAt: now, updatedByName: who.name }, update: true });
+        else writes.push({ ref: org.collection('vehicleDetails').doc(vid), data: { ...top, due, stationId: van.stationId ?? null, createdAt: now, updatedAt: now, updatedByName: who.name } });
+      }
+      if (Object.keys(cPatch).length) {
+        if (curC) writes.push({ ref: org.collection('vehicleCosts').doc(vid), data: { ...cPatch, updatedAt: now, updatedByName: who.name }, update: true });
+        else writes.push({ ref: org.collection('vehicleCosts').doc(vid), data: { ...costs, createdAt: now, updatedAt: now, updatedByName: who.name } });
+      }
+      continue;
+    }
+    const stationId = x.stationId || byName.get(stationKey(x.station))!;
+    const van = org.collection('vehicles').doc();
+    added++;
+    writes.push({ ref: van, data: {
+      name: x.name || '', plate: x.plate, cls: x.cls, roof: x.row.roof === 'high' || x.row.roof === 'low' ? x.row.roof : 'unknown', slideL: 'unknown', slideR: 'unknown', rear: 'unknown',
+      make: x.row.make || null, model: x.row.model || null, scanId: null, stationId, createdAt: now, createdBy: who.uid, ...facts,
+    } });
+    if (Object.keys(top).length || Object.keys(due).length) {
+      writes.push({ ref: org.collection('vehicleDetails').doc(van.id), data: { ...top, due, stationId, createdAt: now, updatedAt: now, updatedByName: who.name } });
+    }
+    if (Object.keys(costs).length) writes.push({ ref: org.collection('vehicleCosts').doc(van.id), data: { ...costs, createdAt: now, updatedAt: now, updatedByName: who.name } });
+  }
+  for (let i = 0; i < writes.length; i += 400) {
+    const b = db().batch();
+    for (const w of writes.slice(i, i + 400)) { if (w.update) b.update(w.ref, w.data); else b.set(w.ref, w.data); }
+    await b.commit();
+  }
+  if (added) await countFleet(who.orgId);
+  await dropImport(ref).catch(() => {});
+  logger.info('Vans added from a file', { orgId: who.orgId, by: who.uid, added, filled: filledVans, unchanged, elsewhere, stations: madeStations.length });
+  return { added, filled: filledVans, unchanged, elsewhere, stations: madeStations };
+});
+
 /* ---------- 16. Refuel, wash and parts ---------- */
 // Refuelling and washing (anyone who works at the van's station) and buying parts (owners and the station's
 // managers). Each attempt is a record in orgs/{org}/purchases, written only here and never deleted, whether it
@@ -2746,6 +3039,8 @@ export const cleanMediaDaily = onSchedule({ schedule: '30 3 * * *', timeZone: 'E
   logger.info('Old join requests expired', { n: await expireJoinRequests(now).catch((e) => { logger.warn('Join requests not expired', e as Error); return -1; }) });
   // Kept answers of calls that may be sent twice (once.ts), after a week.
   logger.info('Old call answers deleted', { n: await cleanRequests().catch((e) => { logger.warn('Call answers not cleaned', e as Error); return -1; }) });
+  // Fleet files read but never saved (addVans), after a day.
+  logger.info('Old fleet file readings deleted', { n: await cleanImports(now).catch((e) => { logger.warn('Fleet file readings not cleaned', e as Error); return -1; }) });
   // Stripe events are kept 30 days, so one sent twice is handled once.
   const events = await db().collection('stripeEvents').where('until', '<', now).limit(400).get().catch(() => null);
   if (events?.size) { const b = db().batch(); events.docs.forEach((d) => b.delete(d.ref)); await b.commit(); }

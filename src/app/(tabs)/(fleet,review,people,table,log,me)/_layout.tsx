@@ -43,6 +43,7 @@ export default function TabStack({ segment }: { segment: string }) {
       {/* The first page of the tab has its own big title. */}
       <Stack.Screen name={root.name} options={{ headerShown: false, title: t(root.title) }} />
       {segment === '(fleet)' ? <Stack.Screen name="add" options={{ title: t('Add vehicle') }} /> : null}
+      {segment === '(fleet)' ? <Stack.Screen name="bulk" options={{ title: t('Add the whole fleet') }} /> : null}
       <Stack.Screen name="vehicle/[id]" options={{ title: t('Van') }} />
       <Stack.Screen name="walk/[id]" options={{ title: t('Walk-around') }} />
       <Stack.Screen name="check/[id]" options={{ title: t('Damage check') }} />

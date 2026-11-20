@@ -764,6 +764,126 @@ test('records from a photo of a document: read, sorted, costs only for owners, t
   assert.ok(rd.fields.every((f) => ['licenceClasses', 'licenceValid', 'employment', 'employedFrom', 'employedTo', 'vanBriefing', 'safetyBriefing'].includes(f.key)));
 });
 
+test('the whole fleet from a file: read, checked, then added; vans already there only filled in; new stations; the plan; who may', async () => {
+  // A company of its own, so the vans and the station it adds don't change the other tests.
+  const own = await person('Ines Importer');
+  const org = doc(collection(own.db, 'orgs')).id;
+  await setDoc(doc(own.db, 'orgs', org), { name: 'Import DSP', createdBy: own.uid, createdAt: Date.now(), stationsReady: true });
+  await setDoc(doc(own.db, 'orgs', org, 'members', own.uid), { role: 'owner', stationIds: [], email: '', name: 'Ines Importer', joinedAt: Date.now() });
+  const st = {};
+  for (const name of ['DXX1', 'DXX2']) {
+    const r = doc(collection(own.db, 'orgs', org, 'stations'));
+    await setDoc(r, { name, code: name, createdAt: Date.now() });
+    st[name] = r.id;
+  }
+  const join = async (name, role) => {
+    const { invites } = await own.call('createInvite', { orgId: org, role, stationId: st.DXX1, count: 1 });
+    const p = await person(name);
+    await p.call('acceptInvite', { token: invites[0].token, details: { firstName: name.split(' ')[0], lastName: name.split(' ')[1], phone: '+49 151 2', transporterId: '' } });
+    return p;
+  };
+  const mgr = await join('Mira Importmanager', 'manager');
+  const drv = await join('Paul Importdriver', 'driver');
+  // A van already in the fleet, with its TÜV month already set.
+  const v1 = doc(collection(own.db, 'orgs', org, 'vehicles')).id;
+  await setDoc(doc(own.db, 'orgs', org, 'vehicles', v1), { name: 'Old one', plate: 'V1', cls: 'large_van', stationId: st.DXX1, createdAt: Date.now(), createdBy: own.uid });
+  await setDoc(doc(own.db, 'orgs', org, 'vehicleDetails', v1), { stationId: st.DXX1, createdAt: Date.now(), due: { hu: '2026-01-31' } });
+
+  const csv = [
+    'Kennzeichen;Fzg-Nr.;Standort;Fahrzeug;FIN;HU;Leasingrate;Kraftstoff;Fahrer',
+    'B-NEW 1;N1;DXX1;Mercedes-Benz Sprinter;WDB9066331S000001;03/2027;705,50;Diesel;Max',
+    'B-NEW 2;N2;Hamburg;Mercedes-Benz Sprinter;;;;Elektro;',
+    'V1;;dxx1;Ford Transit;WF0XXXTTGXKA00001;05/2028;800;;',
+    'B-NEW 3;;DXX2;Unknown Thing;;;;;',
+    'Summe;;;;;;1505,5;;',
+  ].join('\r\n');
+  const put = async (p, body, type, ext) => {
+    const path = `orgs/${org}/imports/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.${ext}`;
+    await uploadBytes(ref(p.st, path), typeof body === 'string' ? new TextEncoder().encode(body) : body, { contentType: type });
+    return path;
+  };
+  const vanBy = async (plate) => {
+    const q = await adminDb().collection(`orgs/${org}/vehicles`).where('plate', '==', plate).get();
+    return q.docs[0] ? { id: q.docs[0].id, ...q.docs[0].data() } : null;
+  };
+  const extra = async (coll, id) => (await adminDb().doc(`orgs/${org}/${coll}/${id}`).get()).data();
+
+  // The owner reads the list: every van with its details, its type from the model, its station by name or code.
+  const path = await put(own, csv, 'text/csv', 'csv');
+  const r = await own.call('readFleetFile', { orgId: org, paths: [path], name: 'Fuhrpark.csv' });
+  assert.deepEqual(r.rows.map((x) => x.plate), ['B-NEW 1', 'B-NEW 2', 'V1', 'B-NEW 3']);
+  assert.equal(r.noPlate, 1, 'the totals line');
+  assert.equal(r.drivers, true);
+  const [a, b, c, d] = r.rows;
+  assert.deepEqual([a.name, a.stationId, a.cls, a.make, a.model], ['N1', st.DXX1, 'large_van', 'Mercedes-Benz', 'Sprinter']);
+  assert.deepEqual(a.values, { vin: 'WDB9066331S000001', 'due.hu': '2027-03-31', monthly: 705.5, fuel: 'diesel' });
+  assert.deepEqual([b.station, b.stationId, b.values.fuel], ['Hamburg', null, 'electric']);
+  assert.deepEqual([c.have, c.stationId, c.elsewhere], [v1, st.DXX1, false]);
+  assert.deepEqual([d.stationId, d.cls], [st.DXX2, null], 'a model the AI couldn\'t place: the person picks the type');
+  assert.equal(r.usage, undefined);
+  // The file isn't kept, and what was read is the server's only.
+  await fails(getBytes(ref(own.st, path)));
+  await fails(getDocs(collection(own.db, 'orgs', org, 'imports')), 'permission-denied');
+
+  // More new vans than the plan has room for: nothing is added.
+  await adminDb().doc(`orgs/${org}`).update({ 'billing.vans': 3 });
+  const picks = [
+    { i: 0, cls: 'large_van', stationId: st.DXX1 }, { i: 1, cls: 'large_van', newStation: 'Hamburg' }, { i: 2 },
+    { i: 3, cls: 'compact_van', stationId: st.DXX2, plate: 'b-new 33' },
+  ];
+  await fails(own.call('addVans', { orgId: org, importId: r.importId, vans: picks }), 'resource-exhausted');
+  assert.equal(await vanBy('B-NEW 1'), null);
+  await adminDb().doc(`orgs/${org}`).update({ billing: fnRequire('firebase-admin/firestore').FieldValue.delete() });
+  // A van without a type, and a plate twice, are refused before anything is written.
+  await fails(own.call('addVans', { orgId: org, importId: r.importId, vans: [{ i: 3, stationId: st.DXX2 }] }), 'invalid-argument');
+  await fails(own.call('addVans', { orgId: org, importId: r.importId, vans: [{ i: 0, cls: 'large_van', stationId: st.DXX1 }, { i: 3, cls: 'large_van', stationId: st.DXX2, plate: 'B-NEW 1' }] }), 'invalid-argument');
+  // Another person can't save the owner's reading.
+  await fails(mgr.call('addVans', { orgId: org, importId: r.importId, vans: [{ i: 0, cls: 'large_van', stationId: st.DXX1 }] }), 'not-found');
+
+  const res = await own.call('addVans', { orgId: org, importId: r.importId, vans: picks });
+  assert.deepEqual(res, { added: 3, filled: 1, unchanged: 0, elsewhere: 0, stations: ['Hamburg'] });
+  const n1 = await vanBy('B-NEW 1');
+  assert.deepEqual([n1.name, n1.stationId, n1.cls, n1.roof, n1.make, n1.model, n1.vin, n1.fuel, n1.createdBy], ['N1', st.DXX1, 'large_van', 'high', 'Mercedes-Benz', 'Sprinter', 'WDB9066331S000001', 'diesel', own.uid]);
+  assert.equal(n1.assignedTo, undefined, 'vans aren\'t given to drivers from a file');
+  assert.deepEqual([(await extra('vehicleDetails', n1.id)).due.hu, (await extra('vehicleDetails', n1.id)).stationId], ['2027-03-31', st.DXX1]);
+  assert.equal((await extra('vehicleCosts', n1.id)).monthly, 705.5);
+  const hamburg = (await adminDb().collection(`orgs/${org}/stations`).where('name', '==', 'Hamburg').get()).docs;
+  assert.equal(hamburg.length, 1);
+  assert.equal((await vanBy('B-NEW 2')).stationId, hamburg[0].id);
+  assert.deepEqual([(await vanBy('B-NEW 33')).stationId, (await vanBy('B-NEW 33')).cls], [st.DXX2, 'compact_van'], 'the plate as the person corrected it');
+  // The van that was there: only what it didn't have. Its name and its TÜV month stay.
+  const old = await vanBy('V1');
+  assert.deepEqual([old.name, old.vin, old.make, old.model], ['Old one', 'WF0XXXTTGXKA00001', 'Ford', 'Transit']);
+  assert.equal((await extra('vehicleDetails', v1)).due.hu, '2026-01-31');
+  assert.equal((await extra('vehicleCosts', v1)).monthly, 800);
+  await waitFor(async () => (await adminDb().doc(`orgs/${org}`).get()).data().fleetSize === 4, 'the fleet size');
+  // The reading is used up.
+  await fails(own.call('addVans', { orgId: org, importId: r.importId, vans: picks }), 'not-found');
+
+  // The station's manager: no costs (not even asked for); a van at another station is only "elsewhere".
+  const rm = await mgr.call('readFleetFile', { orgId: org, paths: [await put(mgr, csv, 'text/csv', 'csv')], name: null });
+  assert.ok(rm.rows.every((x) => x.values.monthly === undefined));
+  // (B-NEW 3 was saved as B-NEW 33, so it's new again: at DXX2, which the app doesn't let this manager add to.)
+  assert.deepEqual(rm.rows.map((x) => [x.plate, !!x.have, x.elsewhere]), [['B-NEW 1', true, false], ['B-NEW 2', false, true], ['V1', true, false], ['B-NEW 3', false, false]]);
+  assert.deepEqual(await mgr.call('addVans', { orgId: org, importId: rm.importId, vans: [{ i: 1 }] }), { added: 0, filled: 0, unchanged: 0, elsewhere: 1, stations: [] });
+  const two = ['Kennzeichen;Fzg-Nr.;Standort;Fahrzeug', 'B-MGR 1;;Bremen;Mercedes-Benz Sprinter', 'B-MGR 2;;;Mercedes-Benz Sprinter'].join('\n');
+  const rm2 = await mgr.call('readFleetFile', { orgId: org, paths: [await put(mgr, two, 'text/csv', 'csv')], name: 'two.csv' });
+  await fails(mgr.call('addVans', { orgId: org, importId: rm2.importId, vans: [{ i: 0, cls: 'large_van', newStation: 'Bremen' }] }), 'permission-denied');
+  await fails(mgr.call('addVans', { orgId: org, importId: rm2.importId, vans: [{ i: 1, cls: 'large_van', stationId: st.DXX2 }] }), 'permission-denied');
+  assert.deepEqual(await mgr.call('addVans', { orgId: org, importId: rm2.importId, vans: [{ i: 1, cls: 'large_van', stationId: st.DXX1 }] }), { added: 1, filled: 0, unchanged: 0, elsewhere: 0, stations: [] });
+  assert.equal((await vanBy('B-MGR 2')).stationId, st.DXX1);
+
+  // A PDF goes to the AI to be copied into a table first.
+  const pdf = await own.call('readFleetFile', { orgId: org, paths: [await put(own, '%PDF-1.4\n%fleet\n', 'application/pdf', 'pdf')], name: 'Liste.pdf' });
+  assert.deepEqual(pdf.rows.map((x) => x.plate), ['B-PDF 1', 'B-PDF 2']);
+  // Drivers can't upload or read a fleet list; nobody reads someone else's file; an old Excel file is explained.
+  await fails(put(drv, csv, 'text/csv', 'csv'));
+  await fails(drv.call('readFleetFile', { orgId: org, paths: [`orgs/${org}/imports/${drv.uid}/x.csv`], name: null }), 'permission-denied');
+  await fails(mgr.call('readFleetFile', { orgId: org, paths: [path], name: null }), 'invalid-argument');
+  const xls = await fails(own.call('readFleetFile', { orgId: org, paths: [await put(own, new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0]), 'application/vnd.ms-excel', 'xls')], name: 'alt.xls' }), 'invalid-argument');
+  assert.match(xls.message, /old Excel file/);
+});
+
 test('refuel, wash and parts: dashboard, the fuel card checked, a manager allows a wrong one, the receipt, every attempt kept', async () => {
   const { v2 } = S.vans;
   const shot = async (p) => {

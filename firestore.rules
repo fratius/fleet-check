@@ -235,6 +235,12 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['createdAt', 'updatedAt', 'updatedByName', 'monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible']);
       }
 
+      // A fleet file read for adding the whole fleet at once (readFleetFile, addVans): the vans as read, with their
+      // costs where an owner read it. Server only, kept a day; the app gets the reading in the call's answer.
+      match /imports/{rest=**} {
+        allow read, write: if false;
+      }
+
       // A driver's record (doc id = their account): licence, employment, briefings, emergency contact, notes.
       // Owners and the managers of the driver's station keep it; the driver reads their own. Its station is the
       // driver's (the server moves it with them). Licence checks are added only by the server and never changed.

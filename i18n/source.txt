@@ -33,8 +33,10 @@ ff4d79e4	{label} {when}	[index.tsx]
 02cc62b2	{m} m high	[vehicle/[id].tsx]
 960a2b42	{n} % off	[components/offers.tsx, components/plansetup.tsx]
 260d0ee9	{n} % off for {m} months
+7ada1c5f	{n} already in the fleet || {n} already in the fleet
 0bf63986	{n} already on the van || {n} already on the van
 ed74a81e	{n} approved damage || {n} approved damages	[index.tsx, person/[uid].tsx, components/history.tsx]
+91dba275	{n} at another station || {n} at another station
 ac0562dc	{n} check || {n} checks	[log.tsx, components/history.tsx]
 40d5476c	{n} check drivers do on their van. || {n} checks drivers do on their van.
 fb4e042a	{n} check to do || {n} checks to do
@@ -47,6 +49,7 @@ c752c6de	{n} day || {n} days	[components/history.tsx]
 977dac7c	{n} day free || {n} days free	[components/offers.tsx, components/plansetup.tsx]
 df7783ac	{n} day left, until {day}. || {n} days left, until {day}.
 6bfc9f92	{n} day overdue || {n} days overdue	[lib/fleet.ts]
+35be6d91	{n} detail || {n} details	[bulk.tsx]
 dba2406a	{n} dirt || {n} dirt	[log.tsx]
 343db4d4	{n} driver || {n} drivers	[people.tsx]
 0841864d	{n} driver had the van: {names}. || {n} drivers had the van: {names}.
@@ -56,11 +59,14 @@ ccdffcb8	{n} frame || {n} frames	[lib/frames.ts]
 3025ccd4	{n} h	[components/history.tsx]
 feac26b7	{n} image || {n} images	[log.tsx]
 62a9f408	{n} item stopped. Tap to see why. || {n} items stopped. Tap to see why.
+e3ef98c0	{n} line without a number plate was left out (totals, headings, a van without a plate). || {n} lines without a number plate were left out (totals, headings, a van without a plate).
 37e737d9	{n} min	[components/history.tsx]
 e5b37d7c	{n} month || {n} months	[account.tsx]
 99e95cf0	{n} more due || {n} more due	[index.tsx]
 c9607d94	{n} more vans for {price} {per}
+e9f6b85a	{n} new || {n} new	[bulk.tsx]
 9c34a894	{n} new damage || {n} new damages	[vehicle/[id].tsx]
+aa959e4f	{n} new van is ticked: untick some, or choose a bigger plan. || {n} new vans are ticked: untick some, or choose a bigger plan.
 562f15dc	{n} no damage || {n} no damage	[log.tsx]
 4311d112	{n} of {max} used
 40e10ce6	{n} open link || {n} open links	[people.tsx]
@@ -73,6 +79,7 @@ fe1c91a0	{n} person || {n} people	[people.tsx]
 2a439f66	{n} photo for this {cls}. || {n} photos for this {cls}.
 3b1cfcba	{n} photo, about {min} min. || {n} photos, about {min} min.
 a4d3239d	{n} photo. || {n} photos.	[components/scanchoice.tsx]
+d22b8ea0	{n} plate was in the list twice: its lines were joined. || {n} plates were in the list twice: their lines were joined.
 49d8e47d	{n} possible damage || {n} possible damages	[check/[id].tsx]
 e1c562ce	{n} reflection || {n} reflections	[log.tsx]
 e464ea3d	{n} retake || {n} retakes	[vehicle/[id].tsx, log.tsx]
@@ -90,7 +97,13 @@ d838d14e	{n} thing made on this phone isn't sent yet. If you sign out, it waits 
 38be6e91	{n} to check || {n} to check	[components/buy.tsx]
 a8f99025	{n} unclear || {n} unclear	[log.tsx]
 188d6dc3	{n} upload stopped. Tap to see why. || {n} uploads stopped. Tap to see why.
-3c32e1d0	{n} van || {n} vans	[index.tsx, people.tsx, components/routines.tsx]
+3c32e1d0	{n} van || {n} vans	[bulk.tsx, index.tsx, people.tsx]
+0e10c10e	{n} van added || {n} vans added	[bulk.tsx]
+5a10ad5f	{n} van already in the fleet got the details it didn't have yet. || {n} vans already in the fleet got the details they didn't have yet.
+0b6769e3	{n} van already in the fleet had everything already. || {n} vans already in the fleet had everything already.
+6c669603	{n} van is at another station and was left as it is. || {n} vans are at another station and were left as they are.
+13014f49	{n} van filled in || {n} vans filled in
+e3f01f8c	{n} van in the list || {n} vans in the list
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
@@ -147,6 +160,7 @@ b1ebb975	{person} has {van} now. Their phone doesn't have notifications on, so t
 c429ab68	{person} has {van} now. Their phone got a notification asking for the pick-up video or photos.
 50ea8aec	{person} has {van}.	[components/history.tsx]
 e79490c2	{plate} is already in your fleet.
+89146bb0	{plate} is in the list twice.
 960ee3e1	{price} a month	[plan.tsx, components/plansetup.tsx]
 bb92c150	{price} a month, plus VAT
 4a21654d	{price} a year	[plan.tsx, components/plansetup.tsx]
@@ -221,6 +235,7 @@ dc0c4f9e	A company setting	[lib/session.tsx]
 851e0480	A discount in euros needs a fixed plan.
 7a5d107d	A driver	[lib/names.ts]
 ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
+9eecff97	A long list takes a minute or two. Keep this page open.
 7fc4ef1f	A manager has already reviewed this check.
 1f6df70e	a month	[plan.tsx, components/plansetup.tsx]
 70933f9b	A month before it runs out, the station's fleet managers get a notification (with notifications turned on in Account) and it shows in Review.
@@ -251,6 +266,8 @@ e8c98820	Accident claims	[components/vanfacts.tsx]
 14157a46	Active.	[plan.tsx]
 9904becd	AdBlue	[prompts.ts]
 61cc55aa	Add	[check/[id].tsx, app/join/[token].tsx, components/vanfacts.tsx]
+d44c6977	Add {n} van || Add {n} vans	[bulk.tsx]
+3f0109f9	Add {n} van from a file || Add {n} vans from a file
 f1dc255f	Add a card to start
 3e183615	Add a comment	[components/damage.tsx]
 d7e0bea3	Add a page	[components/docscan.tsx]
@@ -274,6 +291,8 @@ c68a2faf	Add the drop-off video
 ac6932e5	Add the incident	[components/driverrec.tsx]
 0c82d98a	Add the odometer reading to follow the mileage.
 89186158	Add the station {name}
+ffa68cdd	Add the whole fleet
+96a27385	Add the whole fleet at once
 b59a5f15	Add to Home screen
 7bd938bc	Add to Home Screen
 12a934c1	Add vehicle	[add.tsx, index.tsx, _layout.tsx]
@@ -315,6 +334,8 @@ f55038f9	Allow it	[buy/[id].tsx]
 9a746b65	Allowing…	[buy/[id].tsx]
 e95f7cf7	Almost done…	[components/plansetup.tsx]
 6603c2f3	Already have an account? Sign in
+c888cb44	Already in the fleet
+189f4c39	Already in the fleet, retired
 992a3106	Already on the van: {damage}, found {when}. It stays one damage, seen again.
 64b424ef	Already working on it. Wait a moment, then try again.
 05417857	Also close: {types}.	[add.tsx]
@@ -325,6 +346,7 @@ ec850950	An answer about the vehicle type
 76f1059b	An incident	[lib/store.ts]
 163702d3	and {n} earlier || and {n} earlier	[components/driverrec.tsx]
 6963af2d	and {n} more || and {n} more	[components/vanfacts.tsx]
+6afb972b	And {n} van already in the fleet gets the details it doesn't have yet. || And {n} vans already in the fleet get the details they don't have yet.
 88b9ef5c	Android test version	[account.tsx]
 949fa485	Another company	[account.tsx]
 99af9d0e	Another driver	[lib/names.ts]
@@ -341,6 +363,7 @@ b998824b	Approved damage	[check/[id].tsx]
 e69d9cf2	Ask {name} for a new one.
 bc8d8211	Ask your fleet manager for a new one.
 be993c39	asked {when}	[people.tsx]
+54c0b0e8	At another station	[bulk.tsx]
 22d63fb4	at least 6 characters
 c5545171	At the pump	[review.tsx]
 fd338057	At the van	[review.tsx]
@@ -368,7 +391,7 @@ b2376bef	Before: {panel}, {when}	[components/damage.tsx]
 77003d07	Best	[lib/types.ts]
 cf741b61	Between {from} and {to}
 763fe55e	Billed	[components/offers.tsx, components/plansetup.tsx]
-718a7e8a	Body	[vehicle/[id].tsx]
+718a7e8a	Body	[bulk.tsx, vehicle/[id].tsx]
 c832844d	Bodyshop repair	[check/[id].tsx]
 c2abb664	Both doors, bumper and lights in frame, up to the roof edge.
 60781137	Both doors, bumper and lights in frame.
@@ -417,7 +440,7 @@ ec411840	Card ending {last4}.	[demo.ts, purchases.ts]
 9877e94a	Card, billing address and invoices
 ce4cfe4a	Cargo area clean and empty
 354e8c1f	Cargo space	[components/vanfacts.tsx]
-64fbd995	Change	[add.tsx]
+64fbd995	Change	[add.tsx, bulk.tsx]
 cedff071	Change check	[components/routines.tsx]
 861bb73f	Change date	[components/service.tsx]
 789b14df	Change language	[components/language.tsx]
@@ -464,11 +487,12 @@ abb464b5	Checking the video…	[components/uploads.tsx]
 443d299a	Checks for drivers	[_layout.tsx, review.tsx, components/routines.tsx]
 503399d7	Checks for drivers need the Firebase backend.
 c6b6df0a	chip	[check/[id].tsx]
+74b1d89d	Choose a file	[bulk.tsx]
 2cff9c9c	Choose a plan first.
 38ad0ae5	Choose a plan.	[index.ts]
 a60c6721	Choose how often.	[index.ts]
 82cc8033	Choose how the TÜV went.
-0df966e4	Choose photos	[add.tsx, components/docscan.tsx]
+0df966e4	Choose photos	[add.tsx, bulk.tsx, components/docscan.tsx]
 00b5675f	Choose the plan and add the card to start.
 6010a752	Choose the plan, add the company's billing address and the card, and you're in. Nothing is charged during the free trial.
 7190b327	Choose the vans.	[index.ts, components/routines.tsx]
@@ -628,7 +652,7 @@ a479c9c3	Download	[components/apkstrip.tsx]
 67f7e737	Download the video	[video/[id].tsx]
 fbfcd4fd	Drag to turn.	[components/van3d.tsx]
 4ac6e79e	Drag to turn. Tap a dot.
-b5c7d8b5	Driver	[vehicle/[id].tsx, people.tsx, data.tsx]
+b5c7d8b5	Driver	[bulk.tsx, vehicle/[id].tsx, people.tsx]
 22bd4395	Driver at fault	[components/driverrec.tsx]
 0b88689d	driver deleted their account
 9002c10a	Driver sign-up link	[people.tsx]
@@ -682,6 +706,7 @@ aa0f98d0	Email sign-in isn't turned on in Firebase yet.
 a6f12fd7	Employment	[components/docscan.tsx, components/driverrec.tsx]
 d9e2d893	Employment contract	[components/docscan.tsx]
 3159fe42	Empty	[buy/[id].tsx, components/dash.tsx]
+2e79177e	Empty weight	[bulk.tsx]
 84e0f8be	empty: for as long as they stay
 65c90f56	empty: no end date
 a2bb9d34	End	[data.tsx, components/offers.tsx, components/vanfacts.tsx]
@@ -738,12 +763,14 @@ b02c659d	Every van has a driver.
 d29638af	Every van with its TÜV, next and last service, and what was done and spent on it in this period.
 b0012929	every year	[payments.ts]
 aa57e3ce	Everyone who had this van, newest first. This history is kept for good.
+28d9eb70	Excel (.xlsx), CSV or PDF: a fleet list, a leasing or insurance list, an export from another system. One van per line, with its number plate. Anything else the file has is read too: VIN, first registration, TÜV, contract, insurance, fuel card, station.
 0345ce0e	extra-long large van	[lib/frames.ts]
 86cf0f90	Failed, has to go again
 8db6a2f1	Fast	[lib/types.ts]
 9d5daffa	Fault	[components/driverrec.tsx]
 180ec416	Fewer links	[people.tsx]
 d6fc00bb	fewer than the vans in use
+776c2ef8	Fill in {n} van || Fill in {n} vans
 e68fa2ad	Fill in from a document
 2d310f4a	Fill up now	[buy/[id].tsx]
 51b692c2	Fill up, then the receipt
@@ -872,6 +899,7 @@ f4275fe4	Give {van} to {name}
 6f1d6671	Give a van	[person/[uid].tsx]
 5365df41	Give the check a name.
 97224fdc	Give the station a name.
+b184fe35	Give the vans to drivers as usual, from the van or from the person: each handover gets its pick-up photos.
 efcce3bd	Give them one below or from a van's page.
 6a8ee4e0	Give to a driver
 7da11b7c	Give to someone else
@@ -1041,6 +1069,7 @@ a36ef8ab	Light	[app/scan/[id].tsx]
 ddb61dcd	like 03/2028	[components/service.tsx]
 b7b97d43	Like the oil level or the cargo area: drivers tick them off on their van and get a reminder when one is due.
 8c06f60c	Likely, {pct}%	[check/[id].tsx]
+e56d9b30	Line {row} of {table}
 b332e7a7	Link works until {when}
 497b33e6	Lit on a van's latest dashboard photo, in the last 3 days. Check the van before it goes out again.
 d27272ec	litres	[buy/[id].tsx]
@@ -1066,13 +1095,14 @@ e25bd3d3	Main inspection sticker: {date}
 a2f416b9	Main inspection, safety check, service, tyres and tax.
 11863752	Main station	[lib/session.tsx]
 94de303b	Maintenance	[lib/fleet.ts]
-a94431ee	Make	[components/docscan.tsx]
+a94431ee	Make	[bulk.tsx, components/docscan.tsx]
 3a8de50d	Make a driver link || Make {n} driver links
 08c17cca	Make a fleet manager link || Make {n} fleet manager links
 7af3ec28	Make {name} {role}	[components/person.tsx]
 4e98e6f2	Make {van} free	[vehicle/[id].tsx]
 5bddccfd	Make a correction	[components/service.tsx]
 fd44711f	Make a new link
+94638da9	Make and model	[bulk.tsx]
 fa08ab45	Make the driver link
 92904133	Make the link	[components/offers.tsx]
 7e3746c7	Make the van free
@@ -1100,7 +1130,7 @@ e367e50b	Missed damage is also how we measure what the AI misses.
 9770d438	MM/YYYY	[components/service.tsx, components/vanfacts.tsx]
 8e5c12de	Mobile number	[app/join/[token].tsx]
 4a0a8d28	Mobile: {phone}	[website.ts]
-68c2cc7f	Model	[data.tsx, components/docscan.tsx]
+68c2cc7f	Model	[bulk.tsx, data.tsx, components/docscan.tsx]
 9ae36e6b	Model year	[components/vanfacts.tsx]
 a3205d6e	Month on the sticker
 745d1918	monthly	[components/offers.tsx]
@@ -1131,6 +1161,8 @@ b5c14c5a	new damage while they had the van
 1d3f8130	New incident	[components/driverrec.tsx]
 da557f05	New price: {price} plus VAT {per}.
 4974bd7f	New sign-up link	[components/offers.tsx]
+e3c59755	New station: {name}	[bulk.tsx]
+2604da46	New station: {names} || New stations: {names}	[bulk.tsx]
 021c2737	New tyres or the seasonal change
 179f46ef	Newest first, with the ones refused or given up.
 d2e54170	Newest first. Kept for good.
@@ -1199,7 +1231,10 @@ bd4d9336	No fleet manager at {station} yet.
 67af012e	No fuel for this van on the receipt.
 791b6a4b	No history for this van around then.
 e2d281e8	No km yet	[index.tsx]
+6bd6ba58	No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.
+3299dba7	No make or model in the list
 ed222d6a	No number plate yet. Add it under Details: the plate is how this van is shown everywhere.
+04b2fca8	No number plates were found in this file. Check that it lists the vans with their plates, one van per line.
 b7caebb3	No photo	[app/scan/[id].tsx, components/damage.tsx]
 b1e0aaf7	No pick-up video	[review.tsx]
 a7f6c6c2	No pick-up video or photos yet.
@@ -1209,6 +1244,7 @@ d52a9fe0	No refuels, washes or parts in the last 7 days.
 f1ff1fcc	No sign-up links yet.
 7552f8e2	No start-of-tour photo	[review.tsx]
 b675b026	No station	[lib/session.tsx]
+041d2138	No station in the list
 7a7074dd	No tours in this period yet.
 0b267507	No tours yet.	[person/[uid].tsx]
 4483622b	No tours: dashboard photos are off.
@@ -1268,12 +1304,13 @@ f5e0e809	Not found. It may belong to another station.
 b7e514e5	Note from {name}: {note}
 d698ea8a	Note from the driver
 725ef82c	Note to the driver
-70440046	Notes	[data.tsx, components/driverrec.tsx, components/service.tsx]
+70440046	Notes	[bulk.tsx, data.tsx, components/driverrec.tsx]
 632fb89b	Nothing changed.	[components/service.tsx]
 2dcc751a	Nothing due in the next weeks.
 7f420221	Nothing here.	[index.tsx]
 0538d409	Nothing in these photos looked like damage. Small chips and dents can still be there.
 4bdbae3f	Nothing is charged during the free trial.
+763863a0	Nothing new to add
 a1e7a4b8	Nothing on it that the record keeps.
 93e752af	Nothing recorded yet. Add the last service from its invoice to start.
 a270067a	Nothing recorded.	[components/driverrec.tsx]
@@ -1288,7 +1325,7 @@ b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settin
 c9bc849a	now	[components/damage.tsx]
 e3b82040	Now	[components/history.tsx]
 29df038b	Now: {value}	[components/docscan.tsx]
-445a0f2c	Number plate	[add.tsx, vehicle/[id].tsx, components/docscan.tsx]
+445a0f2c	Number plate	[add.tsx, bulk.tsx, vehicle/[id].tsx]
 c70bba01	odometer	[buy/[id].tsx]
 8ca2cb92	Odometer	[buy/[id].tsx, data.tsx, components/dash.tsx]
 6a1f9fb7	Odometer (km)	[buy/[id].tsx, components/dash.tsx]
@@ -1340,6 +1377,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 44a30114	Only the app creator can do this.
 e252761d	Only the app creator can open a demo company.
 994b6999	Only the app creator sees the test log.
+1a935b78	Only the fleet owner adds stations.
 a5d81727	Only the fleet owner can change the plan and the card.
 e9ccc77a	Only the fleet owner can do this.
 101e86fb	Only the fleet owner can invite fleet managers.
@@ -1357,6 +1395,7 @@ ba6e4fc9	only you see it
 50bb3990	Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.
 cf9b7706	Open	[components/companies.tsx]
 7bac7999	Open {name}	[buy/[id].tsx, video/[id].tsx, components/pickup.tsx]
+8c82c310	Open {plate}	[bulk.tsx]
 a868af6a	Open a person to put them at a station. Until then they see nothing.
 716df23e	Open Fratius	[app/join/[token].tsx]
 52e60e67	Open load bed	[lib/frames.ts]
@@ -1366,11 +1405,14 @@ b0dd203e	Open payment details	[plan.tsx]
 85d84762	Open Settings to allow the camera
 b6adb792	Open the check	[components/damage.tsx]
 bdd5e48d	Open the demo company
+f8bea1ad	Open the fleet	[bulk.tsx]
 bfcea4db	Open this page on your phone to install the app there, or keep using it in this browser.
-48a7b888	optional	[add.tsx, buy/[id].tsx, check/[id].tsx]
+48a7b888	optional	[add.tsx, bulk.tsx, buy/[id].tsx]
 213006e9	optional, add it later if the invoice hasn't come yet
 5fa2951a	optional, for example DE123456789
 0ec1fd2c	or in percent	[buy/[id].tsx, components/dash.tsx]
+532448a7	Or one van: scan it
+904d97d2	Or photos of a printed list
 89f6bf5c	Or pick the type yourself
 9a51fa8a	original {size}	[video/[id].tsx]
 d0941e68	other	[check/[id].tsx]
@@ -1386,7 +1428,7 @@ b62ff5cc	Owned	[lib/fleet.ts]
 4eaec4bc	Owners	[people.tsx]
 d09fa5ce	Owners and the station's fleet managers buy parts.
 2dcb2ba5	Pads, discs, brake fluid
-10e4725d	Page {n}	[components/docscan.tsx]
+10e4725d	Page {n}	[bulk.tsx, components/docscan.tsx]
 6b660e42	paid in cash	[buy/[id].tsx]
 01706bbd	Paid today: {price}, plus VAT
 aef05c28	Parking	[components/driverrec.tsx]
@@ -1447,7 +1489,12 @@ c7e2cd6c	Photos at takeover	[components/history.tsx]
 445756eb	Pick a role and a station.
 135f742a	Pick a station.	[lib/session.tsx]
 1b1c8219	Pick a van.	[data.tsx]
-79a561e0	Pick the type	[add.tsx]
+9206019f	Pick the station	[bulk.tsx]
+e23e4f39	Pick the station of {n} van above. || Pick the station of {n} vans above.
+19c26cb1	Pick the station of {plate}.
+79a561e0	Pick the type	[add.tsx, bulk.tsx]
+f12eb452	Pick the type of {n} van above. || Pick the type of {n} vans above.
+33688995	Pick the type of {plate}.
 f236d05d	Pick up	[vehicle/[id].tsx]
 9055f977	Pick up {van}	[app/scan/[id].tsx]
 41b66719	Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.
@@ -1468,7 +1515,7 @@ e9490191	Pick-up photos of {van}
 a51122c1	Pickup	[lib/frames.ts]
 34118050	Plain	[components/vanfacts.tsx]
 ae2f98a0	Plan	[components/offers.tsx, components/plansetup.tsx]
-9940ff96	Plan and billing	[add.tsx, account.tsx, plan.tsx]
+9940ff96	Plan and billing	[add.tsx, bulk.tsx, account.tsx]
 6b76cd85	Plan: {plan}, {vans}, unlimited drivers and stations
 96e416d7	Plan: {plan}, unlimited vans
 64394014	Plan: {plan}, up to {n} vans
@@ -1495,13 +1542,19 @@ b21bc692	Purchase price	[components/vanfacts.tsx]
 5177429b	Raised roof	[lib/frames.ts]
 a16c5bbe	Range	[components/dash.tsx, components/vanfacts.tsx]
 a203eca4	Range shown (km)	[components/dash.tsx]
+1d7ab882	Read from {file}. Check them, then add them.
 77b4c4b0	Read from the photo, but not clearly. Check each character against the van.
 bc743540	Read from the photo. Check it against the van.
+562a5a7a	Read from your photos. Check them, then add them.
 1de9b5aa	Read on	[components/vanfacts.tsx]
 1e43e14b	Read the document	[components/docscan.tsx]
 c3e106ea	Read the document ({n} page) || Read the document ({n} pages)
+6b692bd8	Read the list ({n} page) || Read the list ({n} pages)
+8abc6ec0	Read: {columns}	[bulk.tsx]
+6c3424e8	Reading a fleet list needs the Firebase backend. Until it's connected, add vans one by one.
 ce17c290	Reading the dashboard…	[buy/[id].tsx, components/dash.tsx]
 bd5fbb44	Reading the document…	[components/docscan.tsx]
+b94b6bf6	Reading the list…	[bulk.tsx]
 1016f7d4	Reading the receipt…	[buy/[id].tsx]
 cba2f717	Rear	[vehicle/[id].tsx, lib/van3d.ts]
 23499a0d	Rear doors	[lib/frames.ts]
@@ -1543,7 +1596,7 @@ e963907d	Remove	[check/[id].tsx, people.tsx, components/routines.tsx]
 3a6d7a70	Remove a station	[lib/people.ts]
 dcaa9667	Remove from {company}	[components/person.tsx]
 822c5468	Remove from fleet	[vehicle/[id].tsx]
-91f23418	Remove photo {n}	[add.tsx]
+91f23418	Remove photo {n}	[add.tsx, bulk.tsx]
 d7eb1c4f	Remove the check "{name}"
 80453614	Remove the demo company
 e95b647c	removed from the company
@@ -1622,6 +1675,7 @@ ed70459b	Save and end the tour
 b087ec19	Save the check "{name}"
 4c7df601	Save the correction	[components/driverrec.tsx, components/service.tsx]
 2ed8be24	Save the licence check
+27f8340e	Save the list as an Excel file (.xlsx) or CSV, and upload that.
 0f673564	Save the pick-up photos
 ffe4bca0	Save the reading	[components/dash.tsx]
 9a6f9ec7	Save to the fleet
@@ -1640,6 +1694,7 @@ abda9b97	Saved on this phone. It goes through after the one before it.
 e16cdd31	Saving {done} of {total} on this phone
 5da14777	Saving the photos on this phone…
 c493a9ee	Saving the pick-up photos
+a97cc10e	Saving the vans	[bulk.tsx]
 89c6f332	Saving the video…	[components/video.tsx]
 d1944261	Saving the walk-around…	[components/uploads.tsx]
 56a2285c	Saving…	[buy/[id].tsx, components/dash.tsx, components/docscan.tsx]
@@ -1670,6 +1725,7 @@ c5bced94	Seen again: {dates}.	[components/damage.tsx]
 184ae2f2	Send it to the fleet manager when you're done.
 a89d6417	Send request	[app/join/[token].tsx]
 d438aeb1	Send the damage check of {van} to the fleet manager
+32b6958d	Send the fleet list as one file, or 1 to 6 photos of it.
 3c02d865	Send the problem	[components/routines.tsx]
 a8486942	Send to the fleet manager
 dbc6eb8c	Sending {n} item… || Sending {n} items…	[components/uploads.tsx]
@@ -1694,6 +1750,7 @@ e6dbeca8	Sharing isn't available on this phone.
 d97d1ee3	Show	[log.tsx]
 62b01e8b	Show all {n}	[person/[uid].tsx, review.tsx]
 05da90b2	Show all {n} row || Show all {n} rows
+db8c1b38	Show all {n} vans || Show all {n} vans
 9d3e93dd	Show on the van
 49234967	Shutter, bumper and lights in frame, up to the roof edge.
 f2c394b1	Shutter, bumper and lights in frame.
@@ -1751,11 +1808,13 @@ d8fd5c7c	Started {when} at {km}. When you're back: a photo of the dashboard with
 c6876364	Started {when}, no end photo yet
 00bb6481	Started another one	[index.ts]
 e5f58095	Starting…	[buy/[id].tsx]
-4cb8d854	Station	[add.tsx, vehicle/[id].tsx, data.tsx]
+4cb8d854	Station	[add.tsx, bulk.tsx, vehicle/[id].tsx]
+1724f351	Station {name} isn't yours
 85689aee	Station code	[people.tsx]
 e31d31e2	Station name	[people.tsx]
 48c27acb	Station: {station}	[add.tsx]
 a84e5ec6	Station: {stations}.	[account.tsx]
+bb42c5a7	Stations	[bulk.tsx]
 bdae1223	Stations: {n}	[website.ts]
 bae7d5be	Status	[data.tsx]
 584b188e	Steering	[prompts.ts]
@@ -1799,7 +1858,7 @@ c2ec85be	Take off the damage mark
 2c7f5505	Take over	[components/history.tsx]
 27391f71	Take over from {name}
 9f1eac32	Take over this van
-7ebd5d4c	Take photo	[add.tsx, check/[id].tsx]
+7ebd5d4c	Take photo	[add.tsx, bulk.tsx, check/[id].tsx]
 c108c747	Take photo {n}	[app/scan/[id].tsx]
 60c4e08d	Take the {n} pick-up photos
 caf49f3e	Take the damage mark off
@@ -1903,6 +1962,11 @@ b65a1bf8	The driver takes one as proof, for example of the cargo area.
 561d103c	The driver who has this van does its checks (or the station's fleet manager).
 53dcacda	The drivers of each van need the Firebase backend.
 5cbc0bc7	The drop-off photos of {van} are saved with its history.
+f0748a33	The file is bigger than {n} MB. Upload the list on its own, as .xlsx or CSV.
+e7eb9141	The file is deleted straight after reading. Vans aren't given to drivers from a file.
+e18165f7	The file is too big. Upload the list on its own, as .xlsx or CSV.
+099e21ed	The file lists {n} vans. Upload at most {max} at a time.
+a819aa5a	The file seems to be damaged. Save it again and upload it.
 4dee9456	the fleet manager	[check/[id].tsx, components/damage.tsx]
 caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.
@@ -1922,6 +1986,8 @@ cbb6fd8f	The last 7 days. The ones with something to check come first: the recei
 89678a34	The latest ones in the app for your station.
 d75ec7ff	The latest ones in the app.
 fde4fddf	The link is ready:
+7e034e03	The list has more than 300 vans: only the first 300 were read. Upload it as an Excel file or CSV to read them all.
+2b3708f0	The list names drivers. Vans aren't given to drivers from a file: give them out as usual, so each handover gets its pick-up photos.
 e752ea72	The marked photo for this spot is missing.
 c8eced06	The month on the sticker, like 03/2027
 d520c3b2	The monthly rate works out at {eur} per kilometre (without fuel and repairs).
@@ -1953,6 +2019,8 @@ f19fa04d	The photos show the van's state when you brought it back, so damage tha
 702a5b9e	The pick-up video of {van} is saved with its history.
 acd77d7c	The plan has ended
 e9b9251d	The plan has ended. You can look at and export the data until {date}.
+6858fea5	The plan has room for {n} more van. || The plan has room for {n} more vans.
+35831416	The plan has room for {n} more vans. Untick some, or choose a bigger plan.
 14ea5dbc	The plan is changed.
 9d5660b8	The plan isn't paid. Pay the open invoice or change the card below.
 81abdba7	The plate couldn't be read from the photos. Type it in.
@@ -1966,6 +2034,7 @@ a511a830	The times you had this van.
 0c5fe82b	The TÜV date stays as it is. Record it again when the van passes.
 5daed61d	The TÜV of {van} ran out at the end of {month}. Book the inspection now.
 f13f4782	The TÜV of {van} runs out at the end of {month}. Book the inspection now.
+213b5071	The type decides the photo frames drivers get on a walk-around.
 7d77c988	The upload was refused. Check that you still belong to this company, then try again.
 89bb8cdd	The van already had {km} km on {date}. Check the km, or correct the odometer under Details.
 94a4b241	The van hasn't been dropped off yet. Drop it off with the photos instead.
@@ -1993,6 +2062,8 @@ f72c7e3b	Their van becomes free; their history, walk-arounds and checks stay.
 a25106e6	Then {price} plus VAT every year, until you cancel.
 4d4bd5f6	Then take a photo of the whole receipt: the litres, the total and the card number on it.
 89a3bc81	There's a problem	[components/routines.tsx]
+d9c37a80	There's no connection. The vans are saved by themselves when it's back; the strip at the bottom shows it.
+16656a60	There's nothing in this file.
 469dbdc0	These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.
 dcb6e009	These photos aren't yours or aren't of this van.
 de5fd80c	These photos belong to another station.
@@ -2020,12 +2091,15 @@ f1cdae10	This company has no stations yet. Ask your fleet manager.
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
 8d08c342	This ends {name}'s tour.
 9b2f6a9d	This ends another driver's tour.
+accf3aff	This file can't be read. Upload an Excel file (.xlsx), a CSV, a PDF or photos of the list.
 6b95e16a	This handover belongs to another station.
 3b291b57	This invite link doesn't exist or was cancelled. Ask for a new one.
 83ae32eb	This invite link has expired. Links work for 24 hours; ask for a new one.
 ae75b618	This invite link isn't complete. Ask for a new one.
 6e46dd06	This invite link was already used. Each link works for one person; ask for a new one.
 12fadf41	This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.
+a76cd862	This is a Word file. Save it as a PDF and upload that.
+325e2283	This is an old Excel file (.xls). Open it in Excel, save it as .xlsx or CSV, and upload that.
 9afd8934	This is information about how employees work. Drivers see their own numbers on their page. Tell them what is recorded and why; with a works council, agree it with them.
 1b4bca38	This is the early-bird price. It stays yours for as long as your plan runs.
 52916641	This link doesn't exist or was cancelled.
@@ -2036,6 +2110,7 @@ c67002d5	This link was already used. Each link works for one person.
 76386172	This link was replaced by a new one. Ask your fleet manager for the new link.
 af229b44	This link was used already, so its terms stay. Make a new link instead.
 38fd41f8	This looks like	[components/docscan.tsx]
+770bedff	This number plate isn't right: {plate}.
 d0626d34	This one is closed.
 cca3e72f	This person isn't in the company any more.
 a42b9371	This person works at another station.
@@ -2043,6 +2118,7 @@ da28f1e8	This phone gets a notification when someone gives you a van.
 8c027c14	This photo is already saved.
 6cfcdbb0	This photo is more than two hours old. Take a new one.
 1bfe0110	This plan can't be changed in the app. Write to info@fratius.com.
+23f61872	This reading of the file has run out. Upload the file again.
 a341520d	This request is older than {n} days. Ask the driver to sign up with the link again.
 bb14822c	This request was already decided.
 7799e678	This service isn't there any more.
@@ -2069,6 +2145,8 @@ a67535de	This video belongs to another station.
 451d9787	This walk-around isn't available.
 2db8c940	This walk-around was deleted.
 094c097f	This year	[data.tsx]
+862551ca	Tick all	[bulk.tsx]
+8cd6c44d	Tick the vans to add first.
 6c82e6dd	Time	[data.tsx, components/driverrec.tsx]
 a31e2a60	Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.
 d130cd05	Time per scan	[log.tsx]
@@ -2156,15 +2234,22 @@ b0a93e80	Unknown van or station.
 50c24973	Unlimited drivers and stations. Prices plus VAT.
 8b04c3bc	unlimited vans	[payments.ts, account.tsx]
 14c4ef6b	Unlimited vans	[plan.tsx, components/plansetup.tsx]
+3acc9aaf	Untick all	[bulk.tsx]
 b798a191	until {date}	[components/offers.tsx]
 38e41287	Until {when}	[people.tsx]
 2f83a74f	up to {n} vans
 68798ac9	Up to {n} vans
+bab2f389	Up to 6 pages, each straight on and sharp.
+def58183	Upload another list	[bulk.tsx]
+f8e57714	Upload the fleet list you already have. The AI reads every van in it with its details, and you check them all before anything is saved.
+2b424361	Upload your fleet list
+c660b923	Upload your fleet list: Excel, CSV, PDF or photos of a printed list. Every van in it is added with its details. You check them all first.
 17d2b73d	Uploaded {when}	[video/[id].tsx]
 2ffa5c81	Uploading {done} of {total}
 9fa8f32e	Uploading {n} item… || Uploading {n} items…	[components/uploads.tsx]
 7d00b873	Uploading {pct}% of {size}
-756570c4	Uploading photos	[add.tsx]
+756570c4	Uploading photos	[add.tsx, bulk.tsx]
+345c564b	Uploading the file…	[bulk.tsx]
 e5409578	Uploading the photo…	[buy/[id].tsx, components/dash.tsx, components/uploads.tsx]
 2c185f91	Uploading the receipt…	[buy/[id].tsx]
 d921a79a	Uploading…	[buy/[id].tsx, components/docscan.tsx]
@@ -2183,7 +2268,9 @@ c8214d35	Valid until	[components/driverrec.tsx]
 1a7987b0	van moved to another station
 0abeda33	Van now	[person/[uid].tsx]
 c1ee6d8c	van retired	[lib/types.ts]
-7495ab2e	Vans	[index.tsx, person/[uid].tsx, data.tsx]
+b849c97d	Van types	[bulk.tsx]
+7495ab2e	Vans	[bulk.tsx, index.tsx, person/[uid].tsx]
+4bc0f7f0	Vans already in the fleet keep everything they have: they only get the details they don't have yet.
 92b9b034	Vans go to drivers or fleet managers.
 210e13b4	Vans they had	[person/[uid].tsx]
 ad579fe8	Vans you had	[person/[uid].tsx]
@@ -2307,6 +2394,7 @@ e394bd20	You become the fleet owner. You add stations, fleet managers and driver
 8a5390b3	you can add more later
 cf86156a	You can cancel any time to the end of the period paid for: Account, then Plan and billing.
 6137cc65	You can install the app on your phone in the next step.
+d88a78ed	You can only add vans to your own station.
 361cb63e	You can only decide about drivers of your own station.
 63483336	You can only invite drivers to your own station.
 245a641b	You can't change your own role or station.
@@ -2351,6 +2439,7 @@ f3658985	Your account, your company and the card, in one step. Drivers and stati
 73141892	Your company starts with {n} days free.
 a2bb6af7	Your decision	[check/[id].tsx]
 0a9501e3	Your drivers, tours and vans in numbers.
+6aaa7a68	Your fleet list	[bulk.tsx]
 9a45a27c	Your fleet manager gets it straight away.
 c6b6f706	Your fleet manager gets the details.
 4c26a8b2	Your fleet manager gives out the vans at this station.

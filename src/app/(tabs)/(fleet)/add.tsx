@@ -1,12 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { FramesPanel } from '@/components/frames';
-import { Button, Card, Chip, Field, Notice, Photo, Pill, Row, Screen, Segmented, T, secs, useColors } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Notice, Photo, Pill, Row, Screen, Segmented, T, hs, secs, useColors } from '@/components/ui';
 import { CLASSES, CLS, attrPills, defaultAttrs, makeSpec, type VehicleAttrs } from '@/lib/frames';
-import { t } from '@/lib/i18n';
+import { fwd, t } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
@@ -145,6 +145,14 @@ export default function AddVehicle() {
         <T v="h1">{t('Add vehicle')}</T>
         <T v="hint">{t('Scan it and the app picks its type, or pick the type yourself.')}</T>
       </View>
+      {/* The whole fleet at once, from the list the company already has (bulk.tsx). */}
+      {aiOn ? (
+        <Pressable accessibilityRole="button" onPress={() => router.push('/bulk')}
+          style={({ pressed }) => ({ backgroundColor: MARKER, borderRadius: 4, borderWidth: 2, borderColor: '#000', padding: 14, gap: 6, opacity: pressed ? 0.8 : 1 })}>
+          <Text style={{ fontFamily: F.condBold, fontSize: hs(24), lineHeight: hs(27), color: '#000' }}>{t('Add the whole fleet at once')} {fwd()}</Text>
+          <T v="small" color="#000">{t('Upload your fleet list: Excel, CSV, PDF or photos of a printed list. Every van in it is added with its details. You check them all first.')}</T>
+        </Pressable>
+      ) : null}
       {full ? (
         <Card>
           <Notice tone="bad" text={fullText} />
@@ -153,7 +161,7 @@ export default function AddVehicle() {
       ) : null}
 
       <Card>
-        <T v="h2">{t('Scan it')}</T>
+        <T v="h2">{aiOn ? t('Or one van: scan it') : t('Scan it')}</T>
         {aiOn ? (
           <>
             <T v="hint">{t('One photo from a front corner, with the number plate in view, works best. Add the side or the rear to pick up door details.')}</T>

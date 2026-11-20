@@ -203,6 +203,47 @@ export interface DocRead {
   usage?: Usage;
 }
 
+/**
+ * A fleet list read for adding the whole fleet at once (functions/src/fleetfile.ts, readFleetFile). Nothing is saved
+ * yet: addVans saves the vans the person ticks. Values are by field key, as on the van's record (documents.ts).
+ */
+export interface FleetRow {
+  /** The row's number in the reading (what addVans gets back), and where it is in the file. */
+  i: number;
+  at?: { table: string; row: number };
+  plate: string;
+  name: string | null;
+  /** The station as the file writes it, and the station it matches (by name or code), if any. */
+  station: string | null;
+  stationId: string | null;
+  /** Make, model and body as the file writes them; the type the AI gave that model (null: the person picks). */
+  desc: string | null;
+  make: string | null;
+  model: string | null;
+  cls: string | null;
+  values: Record<string, unknown>;
+  /** The van with this plate already in the fleet (it only gets the details it doesn't have yet). */
+  have: string | null;
+  retired: boolean;
+  /** A van with this plate is at a station this person doesn't run: left out. */
+  elsewhere: boolean;
+}
+export interface FleetRead {
+  importId: string;
+  kind: 'xlsx' | 'csv' | 'pdf' | 'image';
+  rows: FleetRow[];
+  /** The file's headings that were used, by field key. */
+  columns: { key: string; heading: string }[];
+  noPlate: number;
+  twice: number;
+  drivers: boolean;
+  /** A PDF or photos with more than 300 vans: only the first 300 were read. */
+  more: boolean;
+  notes: string[];
+  usage?: Usage;
+}
+export interface FleetAdded { added: number; filled: number; unchanged: number; elsewhere: number; stations: string[] }
+
 /** Who to call about a refuel: the station's fleet managers (or the owners). */
 export interface Contact { name: string; phone: string | null }
 /** `why` in English; whyT and whyV to show it in the person's language: t(whyT, whyV). */
@@ -334,6 +375,7 @@ export const ai = {
     { readingId: string; tourId: string | null; role: 'start' | 'end' | 'none'; tour: Tour | null }>('saveReading', 40000),
   recordLicenceCheck: call<{ orgId: string; uid: string; ok: boolean; note: string; day: string }, { ok: boolean }>('recordLicenceCheck', 30000),
   readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
+  readFleetFile: call<{ orgId: string; paths: string[]; name: string | null }, FleetRead>('readFleetFile', 310000),
   logReview: call<{ orgId: string; checkId: string }, { ok: boolean }>('logReview', 40000),
   syncDamageLog: call<{ orgId: string; since: number }, { updated: number }>('syncDamageLog', 130000),
   markDamage: call<{ orgId: string; kind: 'walk' | 'video'; id: string; on: boolean }, { keepUntil: number | null }>('markDamage', 30000),

@@ -40,6 +40,7 @@
  "A discount in euros needs a fixed plan.": "Ein Rabatt in Euro braucht einen festen Tarif.",
  "A driver": "Ein Fahrer",
  "A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.": "Ein Flottenmanager deiner Station oder der Inhaber bestätigt deine Anfrage. Du bekommst eine Benachrichtigung, und Fratius öffnet deine Station, sobald du dabei bist.",
+ "A long list takes a minute or two. Keep this page open.": "Eine lange Liste dauert ein bis zwei Minuten. Lass diese Seite offen.",
  "A manager has already reviewed this check.": "Ein Manager hat diese Prüfung schon bewertet.",
  "A month before it runs out, the station's fleet managers get a notification (with notifications turned on in Account) and it shows in Review.": "Einen Monat vor Ablauf bekommen die Flottenmanager der Station eine Benachrichtigung (wenn Benachrichtigungen im Konto eingeschaltet sind), und er erscheint unter „Bewertung“.",
  "A new version of the app is ready ({version}).": "Eine neue Version der App ist da ({version}).",
@@ -104,9 +105,19 @@
  "Add the incident": "Vorfall hinzufügen",
  "Add the odometer reading to follow the mileage.": "Trag den Kilometerstand ein, um die Laufleistung zu verfolgen.",
  "Add the station {name}": "Station {name} hinzufügen",
+ "Add the whole fleet": "Ganze Flotte hinzufügen",
+ "Add the whole fleet at once": "Die ganze Flotte auf einmal hinzufügen",
  "Add to Home Screen": "Zum Home-Bildschirm",
  "Add to Home screen": "Zum Startbildschirm hinzufügen",
  "Add vehicle": "Fahrzeug hinzufügen",
+ "Add {n} vans": {
+  "one": "{n} Transporter hinzufügen",
+  "other": "{n} Transporter hinzufügen"
+ },
+ "Add {n} vans from a file": {
+  "one": "{n} Transporter aus einer Datei hinzufügen",
+  "other": "{n} Transporter aus einer Datei hinzufügen"
+ },
  "Add-on: 15 more vans ({n} in all)": "Zusatzpaket: 15 weitere Transporter (insgesamt {n})",
  "Added after the handover": "Nach der Übergabe hinzugefügt",
  "Added by the manager": "Vom Manager hinzugefügt",
@@ -144,6 +155,8 @@
  "Allowing…": "Wird erlaubt…",
  "Almost done…": "Fast geschafft…",
  "Already have an account? Sign in": "Schon ein Konto? Anmelden",
+ "Already in the fleet": "Schon in der Flotte",
+ "Already in the fleet, retired": "Schon in der Flotte, ausgemustert",
  "Already on the van: {damage}, found {when}. It stays one damage, seen again.": "Schon am Transporter: {damage}, gefunden {when}. Es bleibt ein Schaden, nur erneut gesehen.",
  "Already working on it. Wait a moment, then try again.": "Wird schon bearbeitet. Warte einen Moment und versuch es dann noch mal.",
  "Also close: {types}.": "Auch ähnlich: {types}.",
@@ -152,6 +165,10 @@
  "An account with this email already exists. Sign in instead.": "Es gibt schon ein Konto mit dieser E-Mail. Melde dich stattdessen an.",
  "An answer about the vehicle type": "Eine Antwort zum Fahrzeugtyp",
  "An incident": "Ein Vorfall",
+ "And {n} vans already in the fleet get the details they don't have yet.": {
+  "one": "Und {n} Transporter in der Flotte bekommt die Angaben, die ihm noch fehlen.",
+  "other": "Und {n} Transporter in der Flotte bekommen die Angaben, die ihnen noch fehlen."
+ },
  "Android test version": "Android-Testversion",
  "Another company": "Andere Firma",
  "Another driver": "Ein anderer Fahrer",
@@ -165,6 +182,7 @@
  "Approved damage": "Bestätigter Schaden",
  "Ask your fleet manager for a new one.": "Frag deinen Flottenmanager nach einem neuen.",
  "Ask {name} for a new one.": "Frag {name} nach einem neuen.",
+ "At another station": "An einer anderen Station",
  "At the pump": "An der Zapfsäule",
  "At the van": "Am Transporter",
  "At this pace: {km} a year": "Bei diesem Tempo: {km} pro Jahr",
@@ -284,6 +302,7 @@
  "Checks drivers sent. Oldest first.": "Von Fahrern gesendete Prüfungen. Älteste zuerst.",
  "Checks for drivers": "Kontrollen für Fahrer",
  "Checks for drivers need the Firebase backend.": "Kontrollen für Fahrer brauchen das Firebase-Backend.",
+ "Choose a file": "Datei auswählen",
  "Choose a plan first.": "Wähle zuerst einen Tarif.",
  "Choose a plan.": "Wähle einen Tarif.",
  "Choose how often.": "Wähle, wie oft.",
@@ -523,6 +542,7 @@
  "Employment": "Anstellung",
  "Employment contract": "Arbeitsvertrag",
  "Empty": "Leer",
+ "Empty weight": "Leergewicht",
  "End": "Ende",
  "End photo": "Endfoto",
  "End the tour with a dashboard photo": "Tour mit Tachofoto beenden",
@@ -578,11 +598,16 @@
   "other": "Alle {n} Monate sieht sich jemand den Original-Führerschein an. Die Kontrolltermine sind der Nachweis der Firma."
  },
  "Everyone who had this van, newest first. This history is kept for good.": "Alle, die diesen Transporter hatten, neueste zuerst. Dieser Verlauf wird dauerhaft aufbewahrt.",
+ "Excel (.xlsx), CSV or PDF: a fleet list, a leasing or insurance list, an export from another system. One van per line, with its number plate. Anything else the file has is read too: VIN, first registration, TÜV, contract, insurance, fuel card, station.": "Excel (.xlsx), CSV oder PDF: eine Fuhrparkliste, eine Leasing- oder Versicherungsliste, ein Export aus einem anderen System. Ein Transporter pro Zeile, mit Kennzeichen. Alles andere in der Datei wird mitgelesen: VIN, Erstzulassung, TÜV, Vertrag, Versicherung, Tankkarte, Station.",
  "Failed, has to go again": "Nicht bestanden, muss erneut hin",
  "Fast": "Schnell",
  "Fault": "Schuld",
  "Fewer links": "Weniger Links",
  "Fill in from a document": "Aus Dokument ausfüllen",
+ "Fill in {n} vans": {
+  "one": "{n} Transporter ergänzen",
+  "other": "{n} Transporter ergänzen"
+ },
  "Fill up now": "Jetzt tanken",
  "Fill up, then the receipt": "Tanken, dann der Beleg",
  "Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.": "Filme einmal rund um den Transporter: Starte vorne, geh langsam herum, die ganze Seite im Bild, und ende vorne. 20 bis 60 Sekunden.",
@@ -713,6 +738,7 @@
  "Give a van": "Transporter übergeben",
  "Give the check a name.": "Gib der Kontrolle einen Namen.",
  "Give the station a name.": "Gib der Station einen Namen.",
+ "Give the vans to drivers as usual, from the van or from the person: each handover gets its pick-up photos.": "Gib die Transporter wie gewohnt an Fahrer aus, über den Transporter oder die Person: Jede Übergabe bekommt ihre Abholfotos.",
  "Give the vehicle a name, for example its model or fleet number.": "Gib dem Fahrzeug einen Namen, zum Beispiel das Modell oder die Flottennummer.",
  "Give the vehicle a name.": "Gib dem Fahrzeug einen Namen.",
  "Give them one below or from a van's page.": "Übergib unten oder auf der Seite eines Transporters einen.",
@@ -875,6 +901,7 @@
  "Lights": "Beleuchtung",
  "Like the oil level or the cargo area: drivers tick them off on their van and get a reminder when one is due.": "Etwa Ölstand oder Laderaum: Fahrer haken sie an ihrem Transporter ab und bekommen eine Erinnerung, wenn eine fällig ist.",
  "Likely, {pct}%": "Wahrscheinlich, {pct}%",
+ "Line {row} of {table}": "Zeile {row} in {table}",
  "Link works until {when}": "Link gilt bis {when}",
  "Lit on a van's latest dashboard photo, in the last 3 days. Check the van before it goes out again.": "Leuchtet auf dem letzten Tachofoto eines Transporters, in den letzten 3 Tagen. Prüf den Transporter, bevor er wieder rausfährt.",
  "Litres": "Liter",
@@ -906,6 +933,7 @@
  "Make": "Marke",
  "Make a correction": "Korrigieren",
  "Make a new link": "Neuen Link erstellen",
+ "Make and model": "Marke und Modell",
  "Make the driver link": "Fahrerlink erstellen",
  "Make the link": "Link erstellen",
  "Make the van free": "Transporter freigeben",
@@ -963,6 +991,11 @@
  "New incident": "Neuer Vorfall",
  "New price: {price} plus VAT {per}.": "Neuer Preis: {price} {per} zzgl. MwSt.",
  "New sign-up link": "Neuer Registrierungslink",
+ "New station: {name}": "Neue Station: {name}",
+ "New stations: {names}": {
+  "one": "Neue Station: {names}",
+  "other": "Neue Stationen: {names}"
+ },
  "New tyres or the seasonal change": "Neue Reifen oder der saisonale Wechsel",
  "Newest first, with the ones refused or given up.": "Neueste zuerst, auch abgelehnte oder abgebrochene.",
  "Newest first. Kept for good.": "Neueste zuerst. Wird dauerhaft aufbewahrt.",
@@ -1029,7 +1062,10 @@
  "No fuel for this van on the receipt.": "Kein Kraftstoff für diesen Transporter auf dem Beleg.",
  "No history for this van around then.": "Kein Verlauf für diesen Transporter um diese Zeit.",
  "No km yet": "Noch kein Kilometerstand",
+ "No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.": "Daraus ließ sich keine Liste von Transportern lesen. Lade die Liste als Excel-Datei oder CSV hoch, oder ein schärferes Foto.",
+ "No make or model in the list": "Keine Marke und kein Modell in der Liste",
  "No number plate yet. Add it under Details: the plate is how this van is shown everywhere.": "Noch kein Kennzeichen. Trag es unter Details ein: Am Kennzeichen erkennt man den Transporter überall.",
+ "No number plates were found in this file. Check that it lists the vans with their plates, one van per line.": "In dieser Datei wurden keine Kennzeichen gefunden. Prüfe, ob sie die Transporter mit Kennzeichen auflistet, einen pro Zeile.",
  "No photo": "Kein Foto",
  "No pick-up video": "Kein Abholvideo",
  "No pick-up video or photos yet.": "Noch kein Abholvideo und keine Fotos.",
@@ -1039,6 +1075,7 @@
  "No sign-up links yet.": "Noch keine Registrierungslinks.",
  "No start-of-tour photo": "Kein Foto zum Tourstart",
  "No station": "Keine Station",
+ "No station in the list": "Keine Station in der Liste",
  "No tours in this period yet.": "Noch keine Touren in diesem Zeitraum.",
  "No tours yet.": "Noch keine Touren.",
  "No tours: dashboard photos are off.": "Keine Touren: Tachofotos sind aus.",
@@ -1098,6 +1135,7 @@
  "Nothing here.": "Hier ist nichts.",
  "Nothing in these photos looked like damage. Small chips and dents can still be there.": "Nichts auf diesen Fotos sah nach Schaden aus. Kleine Abplatzer und Dellen können trotzdem da sein.",
  "Nothing is charged during the free trial.": "In der kostenlosen Testphase wird nichts berechnet.",
+ "Nothing new to add": "Nichts Neues hinzuzufügen",
  "Nothing on it that the record keeps.": "Darauf steht nichts, was in der Akte gespeichert wird.",
  "Nothing recorded yet. Add the last service from its invoice to start.": "Noch nichts erfasst. Trag zum Start den letzten Service von seiner Rechnung ein.",
  "Nothing recorded.": "Nichts erfasst.",
@@ -1160,6 +1198,7 @@
  "Only the app creator can do this.": "Nur der App-Ersteller kann das.",
  "Only the app creator can open a demo company.": "Nur der App-Ersteller kann eine Demofirma öffnen.",
  "Only the app creator sees the test log.": "Nur der App-Ersteller sieht das Testprotokoll.",
+ "Only the fleet owner adds stations.": "Nur der Flotteninhaber legt Stationen an.",
  "Only the fleet owner can change the plan and the card.": "Nur der Flotteninhaber kann den Tarif und die Karte ändern.",
  "Only the fleet owner can do this.": "Nur der Flotteninhaber kann das.",
  "Only the fleet owner can invite fleet managers.": "Nur der Flotteninhaber kann Flottenmanager einladen.",
@@ -1186,8 +1225,12 @@
  "Open photo: {caption}": "Foto öffnen: {caption}",
  "Open the check": "Prüfung öffnen",
  "Open the demo company": "Demofirma öffnen",
+ "Open the fleet": "Zur Flotte",
  "Open this page on your phone to install the app there, or keep using it in this browser.": "Öffne diese Seite auf deinem Handy, um die App dort zu installieren, oder nutze sie weiter in diesem Browser.",
  "Open {name}": "{name} öffnen",
+ "Open {plate}": "{plate} öffnen",
+ "Or one van: scan it": "Oder ein einzelner Transporter: scannen",
+ "Or photos of a printed list": "Oder Fotos einer gedruckten Liste",
  "Or pick the type yourself": "Oder wähle den Typ selbst",
  "Other": "Sonstiges",
  "Other document": "Anderes Dokument",
@@ -1256,7 +1299,18 @@
  "Pick a role and a station.": "Wähle eine Rolle und eine Station.",
  "Pick a station.": "Wähle eine Station.",
  "Pick a van.": "Wähle einen Transporter.",
+ "Pick the station": "Station wählen",
+ "Pick the station of {n} vans above.": {
+  "one": "Wähle oben die Station für {n} Transporter.",
+  "other": "Wähle oben die Station für {n} Transporter."
+ },
+ "Pick the station of {plate}.": "Wähle die Station für {plate}.",
  "Pick the type": "Typ wählen",
+ "Pick the type of {n} vans above.": {
+  "one": "Wähle oben den Typ für {n} Transporter.",
+  "other": "Wähle oben den Typ für {n} Transporter."
+ },
+ "Pick the type of {plate}.": "Wähle den Typ für {plate}.",
  "Pick up": "Abholen",
  "Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.": "Hol den Transporter ab, den du nehmen sollst: Öffne ihn unten und nimm ein Video auf, während du um ihn herumgehst (oder mach seine Fotos). Wenn du ihn zurückbringst, gib ihn genauso ab.",
  "Pick up with a video": "Mit Video abholen",
@@ -1308,14 +1362,23 @@
  "Range shown (km)": "Angezeigte Reichweite (km)",
  "Read from the photo, but not clearly. Check each character against the van.": "Vom Foto gelesen, aber nicht deutlich. Vergleich jedes Zeichen mit dem Transporter.",
  "Read from the photo. Check it against the van.": "Vom Foto gelesen. Vergleich es mit dem Transporter.",
+ "Read from your photos. Check them, then add them.": "Aus deinen Fotos gelesen. Prüfe sie, dann füge sie hinzu.",
+ "Read from {file}. Check them, then add them.": "Aus {file} gelesen. Prüfe sie, dann füge sie hinzu.",
  "Read on": "Abgelesen am",
  "Read the document": "Dokument auslesen",
  "Read the document ({n} pages)": {
   "one": "Dokument auslesen ({n} Seite)",
   "other": "Dokument auslesen ({n} Seiten)"
  },
+ "Read the list ({n} pages)": {
+  "one": "Liste auslesen ({n} Seite)",
+  "other": "Liste auslesen ({n} Seiten)"
+ },
+ "Read: {columns}": "Gelesen: {columns}",
+ "Reading a fleet list needs the Firebase backend. Until it's connected, add vans one by one.": "Zum Lesen einer Fuhrparkliste braucht es das Firebase-Backend. Bis es verbunden ist, füge Transporter einzeln hinzu.",
  "Reading the dashboard…": "Tacho wird gelesen…",
  "Reading the document…": "Dokument wird gelesen…",
+ "Reading the list…": "Liste wird gelesen…",
  "Reading the receipt…": "Beleg wird gelesen…",
  "Rear": "Heck",
  "Rear doors": "Hecktüren",
@@ -1429,6 +1492,7 @@
  "Save the check \"{name}\"": "Kontrolle „{name}“ speichern",
  "Save the correction": "Korrektur speichern",
  "Save the licence check": "Führerscheinkontrolle speichern",
+ "Save the list as an Excel file (.xlsx) or CSV, and upload that.": "Speichere die Liste als Excel-Datei (.xlsx) oder CSV und lade diese hoch.",
  "Save the pick-up photos": "Abholfotos speichern",
  "Save the reading": "Werte speichern",
  "Save to the fleet": "Zur Flotte hinzufügen",
@@ -1461,6 +1525,7 @@
  "Saving": "Wird gespeichert",
  "Saving the photos on this phone…": "Fotos werden auf diesem Handy gespeichert…",
  "Saving the pick-up photos": "Abholfotos werden gespeichert",
+ "Saving the vans": "Transporter werden gespeichert",
  "Saving the video…": "Video wird gespeichert…",
  "Saving the walk-around…": "Rundgang wird gespeichert…",
  "Saving {done} of {total} on this phone": "Speichern auf diesem Handy: {done} von {total}",
@@ -1491,6 +1556,7 @@
  "Send it to the fleet manager when you're done.": "Sende es an den Flottenmanager, wenn du fertig bist.",
  "Send request": "Anfrage senden",
  "Send the damage check of {van} to the fleet manager": "Schadensprüfung von {van} an den Flottenmanager senden",
+ "Send the fleet list as one file, or 1 to 6 photos of it.": "Sende die Fuhrparkliste als eine Datei oder als 1 bis 6 Fotos.",
  "Send the problem": "Problem senden",
  "Send to the fleet manager": "An den Flottenmanager senden",
  "Sending {n} items…": {
@@ -1522,6 +1588,10 @@
  "Show all {n} rows": {
   "one": "Alle {n} anzeigen",
   "other": "Alle {n} anzeigen"
+ },
+ "Show all {n} vans": {
+  "one": "Alle {n} Transporter zeigen",
+  "other": "Alle {n} Transporter zeigen"
  },
  "Show on the van": "Am Transporter zeigen",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Rolltor, Stoßfänger und Leuchten im Bild, bis zur Dachkante.",
@@ -1578,8 +1648,10 @@
  "Station": "Station",
  "Station code": "Stationskürzel",
  "Station name": "Stationsname",
+ "Station {name} isn't yours": "Station {name} ist nicht deine",
  "Station: {stations}.": "Station: {stations}.",
  "Station: {station}": "Station: {station}",
+ "Stations": "Stationen",
  "Stations: {n}": "Stationen: {n}",
  "Status": "Status",
  "Steering": "Lenkung",
@@ -1728,6 +1800,11 @@
  "The driver who has this van does its checks (or the station's fleet manager).": "Die Kontrollen macht der Fahrer, der diesen Transporter hat (oder der Flottenmanager der Station).",
  "The drivers of each van need the Firebase backend.": "Die Fahrer pro Transporter brauchen das Firebase-Backend.",
  "The drop-off photos of {van} are saved with its history.": "Die Abgabefotos von {van} sind in seinem Verlauf gespeichert.",
+ "The file is bigger than {n} MB. Upload the list on its own, as .xlsx or CSV.": "Die Datei ist größer als {n} MB. Lade nur die Liste hoch, als .xlsx oder CSV.",
+ "The file is deleted straight after reading. Vans aren't given to drivers from a file.": "Die Datei wird direkt nach dem Lesen gelöscht. Aus einer Datei werden keine Transporter an Fahrer vergeben.",
+ "The file is too big. Upload the list on its own, as .xlsx or CSV.": "Die Datei ist zu groß. Lade nur die Liste hoch, als .xlsx oder CSV.",
+ "The file lists {n} vans. Upload at most {max} at a time.": "Die Datei enthält {n} Transporter. Lade höchstens {max} auf einmal hoch.",
+ "The file seems to be damaged. Save it again and upload it.": "Die Datei scheint beschädigt zu sein. Speichere sie neu und lade sie hoch.",
  "The fleet managers and drivers of your station.": "Die Flottenmanager und Fahrer deiner Station.",
  "The fleet owner changes these.": "Der Flotteninhaber ändert diese Einstellungen.",
  "The free trial ended on {day}.": "Die kostenlose Testphase ist am {day} abgelaufen.",
@@ -1746,6 +1823,8 @@
  "The latest ones in the app for your station.": "Die neuesten in der App für deine Station.",
  "The latest ones in the app.": "Die neuesten in der App.",
  "The link is ready:": "Der Link ist fertig:",
+ "The list has more than 300 vans: only the first 300 were read. Upload it as an Excel file or CSV to read them all.": "Die Liste hat mehr als 300 Transporter: Nur die ersten 300 wurden gelesen. Lade sie als Excel-Datei oder CSV hoch, um alle zu lesen.",
+ "The list names drivers. Vans aren't given to drivers from a file: give them out as usual, so each handover gets its pick-up photos.": "Die Liste nennt Fahrer. Aus einer Datei werden keine Transporter an Fahrer vergeben: Gib sie wie gewohnt aus, damit jede Übergabe ihre Abholfotos bekommt.",
  "The marked photo for this spot is missing.": "Das markierte Foto für diese Stelle fehlt.",
  "The month on the sticker, like 03/2027": "Der Monat auf der Plakette, z. B. 03/2027",
  "The monthly rate works out at {eur} per kilometre (without fuel and repairs).": "Die Monatsrate entspricht {eur} pro Kilometer (ohne Kraftstoff und Reparaturen).",
@@ -1779,6 +1858,11 @@
  "The pick-up video of {van} is saved with its history.": "Das Abholvideo von {van} ist in seinem Verlauf gespeichert.",
  "The plan has ended": "Der Tarif ist beendet",
  "The plan has ended. You can look at and export the data until {date}.": "Der Tarif ist beendet. Bis zum {date} kannst du die Daten noch ansehen und exportieren.",
+ "The plan has room for {n} more vans.": {
+  "one": "Der Tarif hat noch Platz für {n} Transporter.",
+  "other": "Der Tarif hat noch Platz für {n} Transporter."
+ },
+ "The plan has room for {n} more vans. Untick some, or choose a bigger plan.": "Der Tarif hat noch Platz für {n} Transporter. Entferne bei einigen den Haken oder wähle einen größeren Tarif.",
  "The plan is changed.": "Der Tarif ist geändert.",
  "The plan isn't paid. Pay the open invoice or change the card below.": "Der Tarif ist nicht bezahlt. Bezahl die offene Rechnung oder ändere unten die Karte.",
  "The plate couldn't be read from the photos. Type it in.": "Das Kennzeichen war auf den Fotos nicht lesbar. Tipp es ein.",
@@ -1789,6 +1873,7 @@
  "The receipt shows a card ending {last4}; this van's card ends {expected}.": "Der Beleg zeigt eine Karte mit Endziffern {last4}; die Karte dieses Transporters endet auf {expected}.",
  "The service history needs the Firebase backend.": "Die Servicehistorie braucht das Firebase-Backend.",
  "The times you had this van.": "Die Zeiten, in denen du diesen Transporter hattest.",
+ "The type decides the photo frames drivers get on a walk-around.": "Der Typ bestimmt die Aufnahmen, die Fahrer beim Rundgang bekommen.",
  "The upload was refused. Check that you still belong to this company, then try again.": "Der Upload wurde abgelehnt. Prüf, ob du noch zu dieser Firma gehörst, und versuch es dann noch mal.",
  "The van already had {km} km on {date}. Check the km, or correct the odometer under Details.": "Der Transporter hatte am {date} schon {km} km. Prüf die km oder korrigier den Kilometerstand unter Details.",
  "The van hasn't been dropped off yet. Drop it off with the photos instead.": "Der Transporter wurde noch nicht abgegeben. Gib ihn stattdessen mit den Fotos ab.",
@@ -1815,6 +1900,8 @@
  "Then {price} plus VAT every month, until you cancel.": "Danach {price} zzgl. MwSt. jeden Monat, bis du kündigst.",
  "Then {price} plus VAT every year, until you cancel.": "Danach {price} zzgl. MwSt. jedes Jahr, bis du kündigst.",
  "There's a problem": "Es gibt ein Problem",
+ "There's no connection. The vans are saved by themselves when it's back; the strip at the bottom shows it.": "Keine Verbindung. Die Transporter werden von selbst gespeichert, sobald sie wieder da ist; die Leiste unten zeigt es.",
+ "There's nothing in this file.": "In dieser Datei steht nichts.",
  "These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.": "Das könnten Schäden, Schmutz oder Spiegelungen sein. Mach Nahaufnahmen jeder Stelle und sende es dann an den Flottenmanager.",
  "These photos aren't yours or aren't of this van.": "Diese Fotos sind nicht deine oder nicht von diesem Transporter.",
  "These photos belong to another station.": "Diese Fotos gehören zu einer anderen Station.",
@@ -1841,12 +1928,15 @@
  "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.": "Diese Demo wurde erstellt, bevor es Demo-Logins gab. Starte sie neu, um einen Fahrer und einen Flottenmanager zu bekommen, mit denen du dich anmelden kannst.",
  "This ends another driver's tour.": "Damit endet die Tour eines anderen Fahrers.",
  "This ends {name}'s tour.": "Damit endet die Tour von {name}.",
+ "This file can't be read. Upload an Excel file (.xlsx), a CSV, a PDF or photos of the list.": "Diese Datei lässt sich nicht lesen. Lade eine Excel-Datei (.xlsx), eine CSV, ein PDF oder Fotos der Liste hoch.",
  "This handover belongs to another station.": "Diese Übergabe gehört zu einer anderen Station.",
  "This invite link doesn't exist or was cancelled. Ask for a new one.": "Diesen Einladungslink gibt es nicht, oder er wurde widerrufen. Frag nach einem neuen.",
  "This invite link has expired. Links work for 24 hours; ask for a new one.": "Dieser Einladungslink ist abgelaufen. Links gelten 24 Stunden; frag nach einem neuen.",
  "This invite link isn't complete. Ask for a new one.": "Dieser Einladungslink ist unvollständig. Frag nach einem neuen.",
  "This invite link was already used. Each link works for one person; ask for a new one.": "Dieser Einladungslink wurde schon benutzt. Jeder Link gilt für eine Person; frag nach einem neuen.",
+ "This is a Word file. Save it as a PDF and upload that.": "Das ist eine Word-Datei. Speichere sie als PDF und lade das hoch.",
  "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.": "Das ist ein Demo-Login in einer Firma mit erfundenen Daten. Wer die Demo erstellt hat, kann sie neu starten oder entfernen.",
+ "This is an old Excel file (.xls). Open it in Excel, save it as .xlsx or CSV, and upload that.": "Das ist eine alte Excel-Datei (.xls). Öffne sie in Excel, speichere sie als .xlsx oder CSV und lade diese hoch.",
  "This is information about how employees work. Drivers see their own numbers on their page. Tell them what is recorded and why; with a works council, agree it with them.": "Das sind Informationen darüber, wie Mitarbeitende arbeiten. Fahrer sehen ihre eigenen Zahlen auf ihrer Seite. Sag ihnen, was aufgezeichnet wird und warum; gibt es einen Betriebsrat, stimm es mit ihm ab.",
  "This is the early-bird price. It stays yours for as long as your plan runs.": "Das ist der Frühbucherpreis. Er bleibt, solange dein Tarif läuft.",
  "This link doesn't exist or was cancelled.": "Diesen Link gibt es nicht, oder er wurde widerrufen.",
@@ -1857,6 +1947,7 @@
  "This link was replaced by a new one. Ask your fleet manager for the new link.": "Dieser Link wurde durch einen neuen ersetzt. Frag deinen Flottenmanager nach dem neuen Link.",
  "This link was used already, so its terms stay. Make a new link instead.": "Dieser Link wurde schon genutzt, deshalb bleiben seine Bedingungen. Erstelle stattdessen einen neuen Link.",
  "This looks like": "Erkannt als",
+ "This number plate isn't right: {plate}.": "Dieses Kennzeichen stimmt nicht: {plate}.",
  "This one is closed.": "Dieser Vorgang ist schon abgeschlossen.",
  "This person isn't in the company any more.": "Diese Person ist nicht mehr in der Firma.",
  "This person works at another station.": "Diese Person arbeitet an einer anderen Station.",
@@ -1864,6 +1955,7 @@
  "This photo is already saved.": "Dieses Foto ist schon gespeichert.",
  "This photo is more than two hours old. Take a new one.": "Dieses Foto ist älter als zwei Stunden. Mach ein neues.",
  "This plan can't be changed in the app. Write to info@fratius.com.": "Dieser Tarif lässt sich nicht in der App ändern. Schreib an info@fratius.com.",
+ "This reading of the file has run out. Upload the file again.": "Diese Auslesung der Datei ist abgelaufen. Lade die Datei noch einmal hoch.",
  "This request is older than {n} days. Ask the driver to sign up with the link again.": "Diese Anfrage ist älter als {n} Tage. Bitte den Fahrer, sich noch mal mit dem Link zu registrieren.",
  "This request was already decided.": "Über diese Anfrage wurde schon entschieden.",
  "This service isn't there any more.": "Diesen Service gibt es nicht mehr.",
@@ -1890,6 +1982,8 @@
  "This walk-around isn't available.": "Dieser Rundgang ist nicht verfügbar.",
  "This walk-around was deleted.": "Dieser Rundgang wurde gelöscht.",
  "This year": "Dieses Jahr",
+ "Tick all": "Alle anhaken",
+ "Tick the vans to add first.": "Hake zuerst die Transporter an, die hinzukommen sollen.",
  "Time": "Uhrzeit",
  "Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.": "Die Zeit wird auf dem Server gemessen, pro KI-Aufruf. Die Kosten ergeben sich aus den Tokens, die die API für {model} gemeldet hat, zu Listenpreisen.",
  "Time per scan": "Zeit pro Scan",
@@ -1969,10 +2063,17 @@
  "Unknown walk-around.": "Unbekannter Rundgang.",
  "Unlimited drivers and stations. Prices plus VAT.": "Unbegrenzt viele Fahrer und Stationen. Preise zzgl. MwSt.",
  "Unlimited vans": "Unbegrenzt viele Transporter",
+ "Untick all": "Alle Haken entfernen",
  "Until {when}": "Bis {when}",
+ "Up to 6 pages, each straight on and sharp.": "Bis zu 6 Seiten, jede gerade von vorn und scharf.",
  "Up to {n} vans": "Bis zu {n} Transporter",
+ "Upload another list": "Andere Liste hochladen",
+ "Upload the fleet list you already have. The AI reads every van in it with its details, and you check them all before anything is saved.": "Lade die Fuhrparkliste hoch, die du schon hast. Die KI liest jeden Transporter darin mit seinen Angaben, und du prüfst alle, bevor etwas gespeichert wird.",
+ "Upload your fleet list": "Fuhrparkliste hochladen",
+ "Upload your fleet list: Excel, CSV, PDF or photos of a printed list. Every van in it is added with its details. You check them all first.": "Lade deine Fuhrparkliste hoch: Excel, CSV, PDF oder Fotos einer gedruckten Liste. Jeder Transporter darin wird mit seinen Angaben hinzugefügt. Du prüfst vorher alle.",
  "Uploaded {when}": "Hochgeladen {when}",
  "Uploading photos": "Fotos werden hochgeladen",
+ "Uploading the file…": "Datei wird hochgeladen…",
  "Uploading the photo…": "Foto wird hochgeladen…",
  "Uploading the receipt…": "Beleg wird hochgeladen…",
  "Uploading {done} of {total}": "Hochladen: {done} von {total}",
@@ -1998,7 +2099,9 @@
  "Valid until": "Gültig bis",
  "Van": "Transporter",
  "Van now": "Aktueller Transporter",
+ "Van types": "Transportertypen",
  "Vans": "Transporter",
+ "Vans already in the fleet keep everything they have: they only get the details they don't have yet.": "Transporter, die schon in der Flotte sind, behalten alles: Sie bekommen nur die Angaben, die ihnen noch fehlen.",
  "Vans go to drivers or fleet managers.": "Transporter gehen an Fahrer oder Flottenmanager.",
  "Vans they had": "Bisherige Transporter",
  "Vans you had": "Deine bisherigen Transporter",
@@ -2108,6 +2211,7 @@
  "You become the fleet owner. You add stations, fleet managers and drivers under People.": "Du wirst Flotteninhaber. Stationen, Flottenmanager und Fahrer fügst du unter „Personen“ hinzu.",
  "You can cancel any time to the end of the period paid for: Account, then Plan and billing.": "Du kannst jederzeit zum Ende des bezahlten Zeitraums kündigen: „Konto“, dann „Tarif und Abrechnung“.",
  "You can install the app on your phone in the next step.": "Im nächsten Schritt kannst du die App auf deinem Handy installieren.",
+ "You can only add vans to your own station.": "Du kannst Transporter nur deiner eigenen Station hinzufügen.",
  "You can only decide about drivers of your own station.": "Du kannst nur über Fahrer deiner eigenen Station entscheiden.",
  "You can only invite drivers to your own station.": "Du kannst Fahrer nur zu deiner eigenen Station einladen.",
  "You can't change your own role or station.": "Du kannst deine eigene Rolle oder Station nicht ändern.",
@@ -2157,6 +2261,7 @@
  "Your company starts with {n} days free.": "Deine Firma startet mit {n} kostenlosen Tagen.",
  "Your decision": "Deine Entscheidung",
  "Your drivers, tours and vans in numbers.": "Deine Fahrer, Touren und Transporter in Zahlen.",
+ "Your fleet list": "Deine Fuhrparkliste",
  "Your fleet manager gets it straight away.": "Dein Flottenmanager bekommt es sofort.",
  "Your fleet manager gets the details.": "Dein Flottenmanager bekommt die Details.",
  "Your fleet manager gives out the vans at this station.": "Dein Flottenmanager gibt an dieser Station die Transporter aus.",
@@ -2458,6 +2563,10 @@
  "{name}: {note}": "{name}: {note}",
  "{n} % off": "{n} % Rabatt",
  "{n} % off for {m} months": "{n} % Rabatt für {m} Monate",
+ "{n} already in the fleet": {
+  "one": "{n} schon in der Flotte",
+  "other": "{n} schon in der Flotte"
+ },
  "{n} already on the van": {
   "one": "{n} schon am Transporter",
   "other": "{n} schon am Transporter"
@@ -2465,6 +2574,10 @@
  "{n} approved damages": {
   "one": "{n} bestätigter Schaden",
   "other": "{n} bestätigte Schäden"
+ },
+ "{n} at another station": {
+  "one": "{n} an einer anderen Station",
+  "other": "{n} an anderen Stationen"
  },
  "{n} checks": {
   "one": "{n} Prüfung",
@@ -2514,6 +2627,10 @@
   "one": "{n} Tag überfällig",
   "other": "{n} Tage überfällig"
  },
+ "{n} details": {
+  "one": "{n} Angabe",
+  "other": "{n} Angaben"
+ },
  "{n} dirt": {
   "one": "{n}× Schmutz",
   "other": "{n}× Schmutz"
@@ -2547,6 +2664,10 @@
   "one": "{n} Eintrag gestoppt. Tippe, um zu sehen, warum.",
   "other": "{n} Einträge gestoppt. Tippe, um zu sehen, warum."
  },
+ "{n} lines without a number plate were left out (totals, headings, a van without a plate).": {
+  "one": "{n} Zeile ohne Kennzeichen wurde ausgelassen (Summen, Überschriften, ein Transporter ohne Kennzeichen).",
+  "other": "{n} Zeilen ohne Kennzeichen wurden ausgelassen (Summen, Überschriften, ein Transporter ohne Kennzeichen)."
+ },
  "{n} min": "{n} Min.",
  "{n} months": {
   "one": "{n} Monat",
@@ -2557,9 +2678,17 @@
   "other": "{n} weitere fällig"
  },
  "{n} more vans for {price} {per}": "{n} weitere Transporter für {price} {per}",
+ "{n} new": {
+  "one": "{n} neu",
+  "other": "{n} neu"
+ },
  "{n} new damages": {
   "one": "{n} neuer Schaden",
   "other": "{n} neue Schäden"
+ },
+ "{n} new vans are ticked: untick some, or choose a bigger plan.": {
+  "one": "{n} neuer Transporter ist angehakt: Entferne bei einigen den Haken oder wähle einen größeren Tarif.",
+  "other": "{n} neue Transporter sind angehakt: Entferne bei einigen den Haken oder wähle einen größeren Tarif."
  },
  "{n} no damage": {
   "one": "{n}× kein Schaden",
@@ -2602,6 +2731,10 @@
  "{n} photos.": {
   "one": "{n} Foto.",
   "other": "{n} Fotos."
+ },
+ "{n} plates were in the list twice: their lines were joined.": {
+  "one": "{n} Kennzeichen stand doppelt in der Liste: Die Zeilen wurden zusammengeführt.",
+  "other": "{n} Kennzeichen standen doppelt in der Liste: Die Zeilen wurden zusammengeführt."
  },
  "{n} possible damages": {
   "one": "{n} möglicher Schaden",
@@ -2675,6 +2808,30 @@
   "one": "{n} Transporter",
   "other": "{n} Transporter"
  },
+ "{n} vans added": {
+  "one": "{n} Transporter hinzugefügt",
+  "other": "{n} Transporter hinzugefügt"
+ },
+ "{n} vans already in the fleet got the details they didn't have yet.": {
+  "one": "{n} Transporter, der schon in der Flotte war, hat die fehlenden Angaben bekommen.",
+  "other": "{n} Transporter, die schon in der Flotte waren, haben die fehlenden Angaben bekommen."
+ },
+ "{n} vans already in the fleet had everything already.": {
+  "one": "{n} Transporter in der Flotte hatte schon alle Angaben.",
+  "other": "{n} Transporter in der Flotte hatten schon alle Angaben."
+ },
+ "{n} vans are at another station and were left as they are.": {
+  "one": "{n} Transporter ist an einer anderen Station und blieb unverändert.",
+  "other": "{n} Transporter sind an einer anderen Station und blieben unverändert."
+ },
+ "{n} vans filled in": {
+  "one": "{n} Transporter ergänzt",
+  "other": "{n} Transporter ergänzt"
+ },
+ "{n} vans in the list": {
+  "one": "{n} Transporter in der Liste",
+  "other": "{n} Transporter in der Liste"
+ },
  "{n} walk-arounds": {
   "one": "{n} Rundgang",
   "other": "{n} Rundgänge"
@@ -2689,6 +2846,7 @@
  "{person} has {van} now. Their phone got a notification asking for the pick-up video or photos.": "{person} hat jetzt {van}. Das Handy hat eine Benachrichtigung mit der Bitte um das Abholvideo oder die Abholfotos bekommen.",
  "{person} has {van}.": "{person} hat {van}.",
  "{plate} is already in your fleet.": "{plate} ist schon in deiner Flotte.",
+ "{plate} is in the list twice.": "{plate} steht doppelt in der Liste.",
  "{price} a month": "{price} pro Monat",
  "{price} a month, plus VAT": "{price} pro Monat zzgl. MwSt.",
  "{price} a year": "{price} pro Jahr",
