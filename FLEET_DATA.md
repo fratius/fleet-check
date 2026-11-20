@@ -128,6 +128,33 @@ Limits on purpose:
 - The photos are deleted on the server straight after reading; no copy of a licence or contract is kept.
   `docReads` keeps only what kind of document it was, how many details, and the AI's speed and cost (app creator).
 
+## Adding the whole fleet from a file (built, product owner 2026-11-20)
+
+On Add vehicle, "Add the whole fleet at once": owners and fleet managers upload the fleet list they already have,
+an Excel file (.xlsx), a CSV, a PDF, or up to 6 photos of a printed list (`readFleetFile`, functions/src/fleetfile.ts).
+
+- Excel and CSV are opened on the server in code, so a list of 1,000 vans is read whole and exactly: the AI only
+  sees the first rows and a few values of each column and says which column holds what (plate, own name or fleet
+  number, station, make and model, and every field of the van's record). A PDF or photos go to the AI first, which
+  copies the list into a table (up to 300 vans per file; longer lists as Excel or CSV).
+- The van type (the walk-around frames) comes from the make and model: one AI question per model in the list.
+  A model it can't place is left for the person to pick.
+- Everything comes back for checking before anything is saved: each van with a tick, its plate and name (both can
+  be corrected), the type per model, the station per station name in the file (matched by name or code). Then
+  "Add N vans" (`addVans`).
+- Product owner's decisions: a van already in the fleet (same plate) only gets the details it doesn't have yet,
+  nothing is overwritten; vans aren't given to drivers from a file (a driver column is noted and left out); a
+  station the file names that doesn't exist yet is created when an owner keeps "New station: …", a manager's vans
+  go to their own station; more new vans than the plan has room for are shown before saving, and the person
+  unticks some or takes a bigger plan (the server refuses the whole save otherwise).
+- Same limits as a document photo: costs are only read for owners (a manager isn't even asked for them); a fuel
+  card number is cut to its last 4 digits; PINs, bank details, drivers' birth dates and addresses aren't read.
+- The file is deleted straight after reading. What was read is kept on the server for a day (`imports`, nobody
+  reads it from the app), so the save takes exactly that: the phone only sends which vans, their type, station,
+  and a corrected plate or name. The reading goes when it's saved, when the same person reads another file, or
+  after a day (the nightly clean-up). `docReads` keeps the kind of file, how many vans and the AI's cost.
+- Not read: old Excel files (.xls), LibreOffice (.ods) and Word files: the app says to save them as .xlsx, CSV or PDF.
+
 ## Drivers (built)
 
 Each person's page has three parts under their details and the van they have now: **Record**, **Tours**, **Vans**.

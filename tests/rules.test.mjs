@@ -59,6 +59,8 @@ beforeEach(async () => {
     await put('siteLimits/day-2026-10-26', { n: 3, day: '2026-10-26', at: 1 });
     await put(`orgs/${O}/vehicleDetails/v1`, { stationId: S1, createdAt: 1, ownership: 'leased', due: { hu: '2027-03-31' } });
     await put(`orgs/${O}/vehicleCosts/v1`, { createdAt: 1, monthly: 700, excessPerKm: 0.08 });
+    await put(`orgs/${O}/imports/imp1`, { by: 'own', owner: true, count: 1, chunks: 1, createdAt: 1, until: 2 });
+    await put(`orgs/${O}/imports/imp1/rows/0`, { rows: [{ plate: 'B-X 1', values: { monthly: 700 } }] });
     await put(`orgs/${O}/members/mgr2`, { role: 'manager', stationIds: [S2], name: 'Manager 2', email: 'm2@x' });
     await put(`orgs/${O}/driverRecords/drv1`, { stationId: S1, createdAt: 1, licenceClasses: ['B'], licenceValid: '2031-05-31', checks: [{ day: '2026-09-01', at: 1, by: 'mgr1', byName: 'Manager 1', ok: true, note: '' }] });
     await put(`orgs/${O}/driverRecords/drv2`, { stationId: S2, createdAt: 2, emergencyName: 'Ana', emergencyPhone: '+40 1' });
@@ -437,6 +439,16 @@ describe('what a van costs: owners only', () => {
   test('…viewing as an owner can', () => assertSucceeds(getDoc(cost(as('vown', { creator: true }), 'v1'))));
   test('the app creator as themselves can', () => assertSucceeds(getDoc(cost(as('boss', { creator: true }), 'v1'))));
   test('nobody deletes them', () => assertFails(deleteDoc(cost(as('own'), 'v1'))));
+});
+
+describe('a fleet file read for adding the whole fleet: the server\'s only', () => {
+  const imp = (db) => doc(db, `orgs/${O}/imports/imp1`);
+  test('the owner who read it can\'t read it from the app', () => assertFails(getDoc(imp(as('own')))));
+  test('…nor its rows (they may hold costs)', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/imports/imp1/rows/0`))));
+  test('a manager can\'t list them', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/imports`))));
+  test('nobody writes one', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/imports/imp2`), { by: 'own', until: 9e12 })));
+  test('nobody deletes one', () => assertFails(deleteDoc(imp(as('own')))));
+  test('not even the app creator', () => assertFails(getDoc(imp(as('boss', { creator: true })))));
 });
 
 describe('the company\'s names: owners and managers read them, each person their own, nobody writes them', () => {

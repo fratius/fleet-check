@@ -24,7 +24,8 @@ function getClient(key: string) {
   return client;
 }
 
-export interface Part { label?: string; image: Sent }
+/** What goes with the prompt: a photo, a PDF (a fleet list), or text (the start of a spreadsheet). */
+export type Part = { label?: string; image: Sent } | { label?: string; pdf: Buffer } | { label?: string; text: string };
 export interface Answer<T> { obj: T; usage: Usage; model: string }
 
 /**
@@ -38,7 +39,9 @@ export async function ask<T>(key: string, tier: Tier, parts: Part[], prompt: str
   const content: Anthropic.ContentBlockParam[] = [];
   for (const p of parts) {
     if (p.label) content.push({ type: 'text', text: p.label });
-    content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: p.image.data } });
+    if ('image' in p) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: p.image.data } });
+    else if ('pdf' in p) content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: p.pdf.toString('base64') } });
+    else content.push({ type: 'text', text: p.text });
   }
   const t0 = Date.now();
   const send = (structured: boolean) => c.messages.create({
@@ -64,7 +67,7 @@ export async function ask<T>(key: string, tier: Tier, parts: Part[], prompt: str
   const u = res.usage;
   const inTok = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
   const outTok = u.output_tokens || 0;
-  const usage: Usage = { ms, calls: 1, images: parts.length, inTok, outTok, cost: round(costOf(tier, inTok, outTok)) };
+  const usage: Usage = { ms, calls: 1, images: parts.filter((p) => !('text' in p)).length, inTok, outTok, cost: round(costOf(tier, inTok, outTok)) };
   const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
   if (res.stop_reason === 'refusal') throw fail('aborted', 'The AI declined to answer for these photos. Try other photos.');
   let obj: T;
@@ -117,9 +120,29 @@ function toHttps(e: unknown): HttpsError {
  * The emulator tests run without the Claude API (their key is "not-used-in-tests"): a fixed answer that fits the
  * schema, with made-up usage, so the checks can be tested end to end. Never used outside the emulator.
  */
+/** The column keys a fleet-list mapping may use (fleetfile.ts: mapSchema), so a manager's answer has no money in it. */
+const mapKeys = (props: Record<string, unknown>) =>
+  (props.tables as { items?: { properties?: { columns?: { items?: { properties?: { key?: { enum?: string[] } } } } } } })?.items?.properties?.columns?.items?.properties?.key?.enum || [];
 function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
   const props = (schema as { properties?: Record<string, unknown> }).properties || {};
-  const obj = 'documentType' in props
+  const obj = 'more' in props
+    // A PDF or photos of a printed fleet list, copied into a table (fleetfile.ts).
+    ? { readable: true, more: false, notes: null, rows: [
+      ['Kennzeichen', 'Fzg-Nr.', 'Standort', 'Fahrzeug', 'FIN', 'HU', 'Leasingrate', 'Kraftstoff', 'Fahrer'],
+      ['B-PDF 1', 'P1', 'DXX1', 'Mercedes-Benz Sprinter', 'WDB9066331S000001', '03/2027', '705,50', 'Diesel', 'Max'],
+      ['B-PDF 2', 'P2', 'DXX1', 'Mercedes-Benz Sprinter', '', '', '', 'Elektro', ''],
+    ] }
+    : 'dates' in props
+    // Which column holds what. The emulator tests upload fleet lists laid out like the table above.
+    ? { dates: 'day-first', notes: null, values: [{ key: 'fuel', from: 'Elektro', to: 'electric' }],
+      tables: [{ table: 1, use: true, headerRow: 1, firstRow: 2, lastRow: null, station: null, columns: [
+        { col: 'A', key: 'plate' }, { col: 'B', key: 'name' }, { col: 'C', key: 'station' }, { col: 'D', key: 'vehicle' }, { col: 'E', key: 'vin' },
+        { col: 'F', key: 'due.hu' }, { col: 'G', key: 'monthly' }, { col: 'H', key: 'fuel' }, { col: 'I', key: 'driver' },
+      ].filter((c) => mapKeys(props).includes(c.key)) }] }
+    : 'types' in props
+    // The van type of each model in a fleet list: the first two are large vans, any others aren't known.
+    ? { types: [{ n: 1, make: 'Mercedes-Benz', model: 'Sprinter', cls: 'large_van', roof: 'high' }, { n: 2, make: 'Ford', model: 'Transit', cls: 'large_van', roof: 'unknown' }] }
+    : 'documentType' in props
     ? { documentType: 'registration certificate', title: 'Zulassungsbescheinigung Teil I', readable: true, sameName: 'not shown', notes: null,
       fields: [
         { key: 'vin', value: 'WF0XXXTTGXKA12345', confidence: 0.95, evidence: 'E WF0XXXTTGXKA12345' },

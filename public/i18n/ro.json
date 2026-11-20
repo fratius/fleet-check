@@ -41,6 +41,7 @@
  "A discount in euros needs a fixed plan.": "O reducere în euro necesită un plan fix.",
  "A driver": "Un șofer",
  "A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.": "Un manager de flotă al stației tale sau proprietarul te aprobă. Primești o notificare, iar Fratius îți deschide stația imediat ce faci parte din echipă.",
+ "A long list takes a minute or two. Keep this page open.": "O listă lungă durează un minut sau două. Ține pagina deschisă.",
  "A manager has already reviewed this check.": "Un manager a evaluat deja această verificare.",
  "A month before it runs out, the station's fleet managers get a notification (with notifications turned on in Account) and it shows in Review.": "Cu o lună înainte de expirare, managerii de flotă ai stației primesc o notificare (dacă au notificările activate în Cont), iar termenul apare în Evaluare.",
  "A new version of the app is ready ({version}).": "E gata o versiune nouă a aplicației ({version}).",
@@ -107,9 +108,21 @@
  "Add the incident": "Adaugă incidentul",
  "Add the odometer reading to follow the mileage.": "Adaugă citirea kilometrajului ca să urmărești kilometrii parcurși.",
  "Add the station {name}": "Adaugă stația {name}",
+ "Add the whole fleet": "Adaugă toată flota",
+ "Add the whole fleet at once": "Adaugă toată flota deodată",
  "Add to Home Screen": "Adaugă pe ecranul principal",
  "Add to Home screen": "Adaugă pe ecranul de pornire",
  "Add vehicle": "Adaugă vehicul",
+ "Add {n} vans": {
+  "one": "Adaugă {n} dubă",
+  "few": "Adaugă {n} dube",
+  "other": "Adaugă {n} de dube"
+ },
+ "Add {n} vans from a file": {
+  "one": "Adaugă {n} dubă dintr-un fișier",
+  "few": "Adaugă {n} dube dintr-un fișier",
+  "other": "Adaugă {n} de dube dintr-un fișier"
+ },
  "Add-on: 15 more vans ({n} in all)": "Supliment: încă 15 dube ({n} în total)",
  "Added after the handover": "Adăugat după predare-primire",
  "Added by the manager": "Adăugată de manager",
@@ -149,6 +162,8 @@
  "Allowing…": "Se aprobă…",
  "Almost done…": "Aproape gata…",
  "Already have an account? Sign in": "Ai deja cont? Conectează-te",
+ "Already in the fleet": "Deja în flotă",
+ "Already in the fleet, retired": "Deja în flotă, retrasă",
  "Already on the van: {damage}, found {when}. It stays one damage, seen again.": "Deja pe dubă: {damage}, găsită pe {when}. Rămâne o singură avarie, văzută din nou.",
  "Already working on it. Wait a moment, then try again.": "Se procesează deja. Așteaptă puțin, apoi încearcă din nou.",
  "Also close: {types}.": "Seamănă și cu: {types}.",
@@ -157,6 +172,11 @@
  "An account with this email already exists. Sign in instead.": "Există deja un cont cu acest e-mail. Conectează-te.",
  "An answer about the vehicle type": "Răspuns despre tipul vehiculului",
  "An incident": "Incident",
+ "And {n} vans already in the fleet get the details they don't have yet.": {
+  "one": "Și {n} dubă deja în flotă primește detaliile care îi lipsesc.",
+  "few": "Și {n} dube deja în flotă primesc detaliile care le lipsesc.",
+  "other": "Și {n} de dube deja în flotă primesc detaliile care le lipsesc."
+ },
  "Android test version": "Versiunea de test pentru Android",
  "Another company": "Altă companie",
  "Another driver": "Alt șofer",
@@ -170,6 +190,7 @@
  "Approved damage": "Avarie aprobată",
  "Ask your fleet manager for a new one.": "Cere unul nou de la managerul de flotă.",
  "Ask {name} for a new one.": "Cere unul nou de la {name}.",
+ "At another station": "La altă stație",
  "At the pump": "La pompă",
  "At the van": "La dubă",
  "At this pace: {km} a year": "În ritmul acesta: {km} pe an",
@@ -290,6 +311,7 @@
  "Checks drivers sent. Oldest first.": "Verificări trimise de șoferi. Cele mai vechi primele.",
  "Checks for drivers": "Verificări pentru șoferi",
  "Checks for drivers need the Firebase backend.": "Verificările pentru șoferi au nevoie de backendul Firebase.",
+ "Choose a file": "Alege un fișier",
  "Choose a plan first.": "Alege mai întâi un plan.",
  "Choose a plan.": "Alege un plan.",
  "Choose how often.": "Alege cât de des.",
@@ -532,6 +554,7 @@
  "Employment": "Angajare",
  "Employment contract": "Contract de muncă",
  "Empty": "Gol",
+ "Empty weight": "Masa proprie",
  "End": "Sfârșit",
  "End photo": "Fotografie de final",
  "End the tour with a dashboard photo": "Încheie tura cu o fotografie a bordului",
@@ -588,11 +611,17 @@
   "other": "La fiecare {n} de luni cineva verifică permisul original. Datele sunt dovada companiei."
  },
  "Everyone who had this van, newest first. This history is kept for good.": "Toți cei care au avut această dubă, cei mai recenți primii. Istoricul se păstrează definitiv.",
+ "Excel (.xlsx), CSV or PDF: a fleet list, a leasing or insurance list, an export from another system. One van per line, with its number plate. Anything else the file has is read too: VIN, first registration, TÜV, contract, insurance, fuel card, station.": "Excel (.xlsx), CSV sau PDF: o listă a flotei, o listă de leasing sau de asigurare, un export din alt sistem. O dubă pe rând, cu numărul de înmatriculare. Se citește și tot restul din fișier: VIN, prima înmatriculare, TÜV, contract, asigurare, card de combustibil, stație.",
  "Failed, has to go again": "Respins, trebuie să meargă din nou",
  "Fast": "Rapid",
  "Fault": "Vină",
  "Fewer links": "Mai puține linkuri",
  "Fill in from a document": "Completează dintr-un document",
+ "Fill in {n} vans": {
+  "one": "Completează {n} dubă",
+  "few": "Completează {n} dube",
+  "other": "Completează {n} de dube"
+ },
  "Fill up now": "Alimentează acum",
  "Fill up, then the receipt": "Alimentează, apoi bonul",
  "Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.": "Filmează o dată în jurul dubei: începe din față, mergi încet de jur împrejur cu toată latura în cadru și termină în față. 20–60 de secunde.",
@@ -726,6 +755,7 @@
  "Give a van": "Dă o dubă",
  "Give the check a name.": "Dă un nume verificării.",
  "Give the station a name.": "Dă un nume stației.",
+ "Give the vans to drivers as usual, from the van or from the person: each handover gets its pick-up photos.": "Dă dubele șoferilor ca de obicei, din pagina dubei sau a persoanei: fiecare predare-primire are fotografiile de preluare.",
  "Give the vehicle a name, for example its model or fleet number.": "Dă un nume vehiculului, de exemplu modelul sau numărul din flotă.",
  "Give the vehicle a name.": "Dă un nume vehiculului.",
  "Give them one below or from a van's page.": "Dă-i una mai jos sau din pagina unei dube.",
@@ -888,6 +918,7 @@
  "Lights": "Lumini",
  "Like the oil level or the cargo area: drivers tick them off on their van and get a reminder when one is due.": "Cum ar fi nivelul uleiului sau spațiul de încărcare: șoferii le bifează la duba lor și primesc un memento când una e de făcut.",
  "Likely, {pct}%": "Probabil, {pct}%",
+ "Line {row} of {table}": "Rândul {row} din {table}",
  "Link works until {when}": "Linkul e valabil până pe {when}",
  "Lit on a van's latest dashboard photo, in the last 3 days. Check the van before it goes out again.": "Aprinși pe cea mai recentă fotografie a bordului unei dube, în ultimele 3 zile. Verifică duba înainte să plece din nou.",
  "Litres": "Litri",
@@ -920,6 +951,7 @@
  "Make": "Marcă",
  "Make a correction": "Corectează",
  "Make a new link": "Creează un link nou",
+ "Make and model": "Marcă și model",
  "Make the driver link": "Creează linkul pentru șoferi",
  "Make the link": "Creează linkul",
  "Make the van free": "Eliberează duba",
@@ -979,6 +1011,12 @@
  "New incident": "Incident nou",
  "New price: {price} plus VAT {per}.": "Preț nou: {price} + TVA {per}.",
  "New sign-up link": "Link de înscriere nou",
+ "New station: {name}": "Stație nouă: {name}",
+ "New stations: {names}": {
+  "one": "Stație nouă: {names}",
+  "few": "Stații noi: {names}",
+  "other": "Stații noi: {names}"
+ },
  "New tyres or the seasonal change": "Anvelope noi sau schimbul de sezon",
  "Newest first, with the ones refused or given up.": "Cele mai noi primele, inclusiv cele refuzate sau abandonate.",
  "Newest first. Kept for good.": "Cele mai noi primele. Se păstrează definitiv.",
@@ -1047,7 +1085,10 @@
  "No fuel for this van on the receipt.": "Pe bon nu e combustibil pentru această dubă.",
  "No history for this van around then.": "Niciun istoric pentru această dubă în acea perioadă.",
  "No km yet": "Încă fără kilometraj",
+ "No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.": "Nu s-a putut citi o listă de dube de aici. Încarcă lista ca fișier Excel sau CSV, sau o fotografie mai clară.",
+ "No make or model in the list": "Fără marcă sau model în listă",
  "No number plate yet. Add it under Details: the plate is how this van is shown everywhere.": "Încă nu are număr de înmatriculare. Adaugă-l la Detalii: după număr apare această dubă peste tot.",
+ "No number plates were found in this file. Check that it lists the vans with their plates, one van per line.": "Nu s-a găsit niciun număr de înmatriculare în acest fișier. Verifică dacă listează dubele cu numerele lor, câte o dubă pe rând.",
  "No photo": "Nicio fotografie",
  "No pick-up video": "Fără videoclip de preluare",
  "No pick-up video or photos yet.": "Încă nu există videoclip sau fotografii de preluare.",
@@ -1057,6 +1098,7 @@
  "No sign-up links yet.": "Încă niciun link de înscriere.",
  "No start-of-tour photo": "Fără fotografie de început de tură",
  "No station": "Fără stație",
+ "No station in the list": "Fără stație în listă",
  "No tours in this period yet.": "Încă nicio tură în această perioadă.",
  "No tours yet.": "Încă nicio tură.",
  "No tours: dashboard photos are off.": "Nicio tură: fotografiile bordului sunt dezactivate.",
@@ -1116,6 +1158,7 @@
  "Nothing here.": "Nimic aici.",
  "Nothing in these photos looked like damage. Small chips and dents can still be there.": "Nimic din aceste fotografii nu pare a fi avarie. Pot exista totuși ciobituri și înfundături mici.",
  "Nothing is charged during the free trial.": "Nu se taxează nimic în perioada de probă gratuită.",
+ "Nothing new to add": "Nimic nou de adăugat",
  "Nothing on it that the record keeps.": "Nimic din ce se păstrează în fișă.",
  "Nothing recorded yet. Add the last service from its invoice to start.": "Nimic înregistrat încă. Pentru început, adaugă ultimul service de pe factura lui.",
  "Nothing recorded.": "Nimic înregistrat.",
@@ -1178,6 +1221,7 @@
  "Only the app creator can do this.": "Doar creatorul aplicației poate face asta.",
  "Only the app creator can open a demo company.": "Doar creatorul aplicației poate deschide o companie demo.",
  "Only the app creator sees the test log.": "Doar creatorul aplicației vede jurnalul de teste.",
+ "Only the fleet owner adds stations.": "Doar proprietarul flotei adaugă stații.",
  "Only the fleet owner can change the plan and the card.": "Doar proprietarul flotei poate schimba planul și cardul.",
  "Only the fleet owner can do this.": "Doar proprietarul flotei poate face asta.",
  "Only the fleet owner can invite fleet managers.": "Doar proprietarul flotei poate invita manageri de flotă.",
@@ -1204,8 +1248,12 @@
  "Open photo: {caption}": "Deschide fotografia: {caption}",
  "Open the check": "Deschide verificarea",
  "Open the demo company": "Deschide compania demo",
+ "Open the fleet": "Deschide flota",
  "Open this page on your phone to install the app there, or keep using it in this browser.": "Deschide această pagină pe telefon ca să instalezi aplicația acolo sau folosește-o în continuare în acest browser.",
  "Open {name}": "Deschide {name}",
+ "Open {plate}": "Deschide {plate}",
+ "Or one van: scan it": "Sau o singură dubă: scaneaz-o",
+ "Or photos of a printed list": "Sau fotografii ale unei liste tipărite",
  "Or pick the type yourself": "Sau alege tu tipul",
  "Other": "Altele",
  "Other document": "Alt document",
@@ -1274,7 +1322,20 @@
  "Pick a role and a station.": "Alege un rol și o stație.",
  "Pick a station.": "Alege o stație.",
  "Pick a van.": "Alege o dubă.",
+ "Pick the station": "Alege stația",
+ "Pick the station of {n} vans above.": {
+  "one": "Alege mai sus stația pentru {n} dubă.",
+  "few": "Alege mai sus stația pentru {n} dube.",
+  "other": "Alege mai sus stația pentru {n} de dube."
+ },
+ "Pick the station of {plate}.": "Alege stația pentru {plate}.",
  "Pick the type": "Alege tipul",
+ "Pick the type of {n} vans above.": {
+  "one": "Alege mai sus tipul pentru {n} dubă.",
+  "few": "Alege mai sus tipul pentru {n} dube.",
+  "other": "Alege mai sus tipul pentru {n} de dube."
+ },
+ "Pick the type of {plate}.": "Alege tipul pentru {plate}.",
  "Pick up": "Preia",
  "Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.": "Preia duba care ți-a fost indicată: deschide-o mai jos și înregistrează un videoclip mergând în jurul ei (sau fă-i fotografiile). Când o aduci înapoi, predă-o la fel.",
  "Pick up with a video": "Preia cu un videoclip",
@@ -1327,6 +1388,8 @@
  "Range shown (km)": "Autonomie afișată (km)",
  "Read from the photo, but not clearly. Check each character against the van.": "Citit din fotografie, dar nu clar. Compară fiecare caracter cu duba.",
  "Read from the photo. Check it against the van.": "Citit din fotografie. Compară-l cu duba.",
+ "Read from your photos. Check them, then add them.": "Citite din fotografiile tale. Verifică-le, apoi adaugă-le.",
+ "Read from {file}. Check them, then add them.": "Citite din {file}. Verifică-le, apoi adaugă-le.",
  "Read on": "Data citirii",
  "Read the document": "Citește documentul",
  "Read the document ({n} pages)": {
@@ -1334,8 +1397,16 @@
   "few": "Citește documentul ({n} pagini)",
   "other": "Citește documentul ({n} de pagini)"
  },
+ "Read the list ({n} pages)": {
+  "one": "Citește lista ({n} pagină)",
+  "few": "Citește lista ({n} pagini)",
+  "other": "Citește lista ({n} de pagini)"
+ },
+ "Read: {columns}": "Citit: {columns}",
+ "Reading a fleet list needs the Firebase backend. Until it's connected, add vans one by one.": "Citirea unei liste a flotei are nevoie de backendul Firebase. Până e conectat, adaugă dubele una câte una.",
  "Reading the dashboard…": "Se citește bordul…",
  "Reading the document…": "Se citește documentul…",
+ "Reading the list…": "Se citește lista…",
  "Reading the receipt…": "Se citește bonul…",
  "Rear": "Spate",
  "Rear doors": "Ușile din spate",
@@ -1450,6 +1521,7 @@
  "Save the check \"{name}\"": "Salvează verificarea „{name}”",
  "Save the correction": "Salvează corectura",
  "Save the licence check": "Salvează verificarea permisului",
+ "Save the list as an Excel file (.xlsx) or CSV, and upload that.": "Salvează lista ca fișier Excel (.xlsx) sau CSV și încarcă-l pe acela.",
  "Save the pick-up photos": "Salvează fotografiile de preluare",
  "Save the reading": "Salvează citirea",
  "Save to the fleet": "Salvează în flotă",
@@ -1486,6 +1558,7 @@
  "Saving": "Se salvează",
  "Saving the photos on this phone…": "Se salvează fotografiile pe acest telefon…",
  "Saving the pick-up photos": "Se salvează fotografiile de preluare",
+ "Saving the vans": "Se salvează dubele",
  "Saving the video…": "Se salvează videoclipul…",
  "Saving the walk-around…": "Se salvează inspecția…",
  "Saving {done} of {total} on this phone": "Se salvează {done} din {total} pe acest telefon",
@@ -1517,6 +1590,7 @@
  "Send it to the fleet manager when you're done.": "Trimite-o managerului de flotă când ai terminat.",
  "Send request": "Trimite cererea",
  "Send the damage check of {van} to the fleet manager": "Trimite verificarea de avarii a dubei {van} managerului de flotă",
+ "Send the fleet list as one file, or 1 to 6 photos of it.": "Trimite lista flotei ca un singur fișier sau ca 1 până la 6 fotografii.",
  "Send the problem": "Trimite problema",
  "Send to the fleet manager": "Trimite managerului de flotă",
  "Sending {n} items…": {
@@ -1550,6 +1624,11 @@
   "one": "Arată toate ({n})",
   "few": "Arată toate ({n})",
   "other": "Arată toate ({n})"
+ },
+ "Show all {n} vans": {
+  "one": "Arată toate cele {n} dube",
+  "few": "Arată toate cele {n} dube",
+  "other": "Arată toate cele {n} de dube"
  },
  "Show on the van": "Arată pe dubă",
  "Shutter, bumper and lights in frame, up to the roof edge.": "Ușa rulou, bara și lămpile în cadru, până la marginea plafonului.",
@@ -1606,8 +1685,10 @@
  "Station": "Stație",
  "Station code": "Codul stației",
  "Station name": "Numele stației",
+ "Station {name} isn't yours": "Stația {name} nu e a ta",
  "Station: {stations}.": "Stație: {stations}.",
  "Station: {station}": "Stație: {station}",
+ "Stations": "Stații",
  "Stations: {n}": "Stații: {n}",
  "Status": "Stare",
  "Steering": "Direcție",
@@ -1757,6 +1838,11 @@
  "The driver who has this van does its checks (or the station's fleet manager).": "Verificările acestei dube le face șoferul care o are (sau managerul de flotă al stației).",
  "The drivers of each van need the Firebase backend.": "Șoferii fiecărei dube au nevoie de backendul Firebase.",
  "The drop-off photos of {van} are saved with its history.": "Fotografiile de predare ale dubei {van} sunt salvate în istoricul ei.",
+ "The file is bigger than {n} MB. Upload the list on its own, as .xlsx or CSV.": "Fișierul are peste {n} MB. Încarcă doar lista, ca .xlsx sau CSV.",
+ "The file is deleted straight after reading. Vans aren't given to drivers from a file.": "Fișierul se șterge imediat după citire. Dintr-un fișier nu se dau dube șoferilor.",
+ "The file is too big. Upload the list on its own, as .xlsx or CSV.": "Fișierul e prea mare. Încarcă doar lista, ca .xlsx sau CSV.",
+ "The file lists {n} vans. Upload at most {max} at a time.": "Fișierul conține {n} dube. Încarcă cel mult {max} odată.",
+ "The file seems to be damaged. Save it again and upload it.": "Fișierul pare deteriorat. Salvează-l din nou și încarcă-l.",
  "The fleet managers and drivers of your station.": "Managerii de flotă și șoferii stației tale.",
  "The fleet owner changes these.": "Proprietarul flotei le modifică.",
  "The free trial ended on {day}.": "Perioada de probă gratuită s-a încheiat pe {day}.",
@@ -1775,6 +1861,8 @@
  "The latest ones in the app for your station.": "Cele mai recente din aplicație pentru stația ta.",
  "The latest ones in the app.": "Cele mai recente din aplicație.",
  "The link is ready:": "Linkul e gata:",
+ "The list has more than 300 vans: only the first 300 were read. Upload it as an Excel file or CSV to read them all.": "Lista are peste 300 de dube: s-au citit doar primele 300. Încarc-o ca fișier Excel sau CSV ca să fie citite toate.",
+ "The list names drivers. Vans aren't given to drivers from a file: give them out as usual, so each handover gets its pick-up photos.": "Lista conține șoferi. Dintr-un fișier nu se dau dube șoferilor: dă-le ca de obicei, ca fiecare predare-primire să aibă fotografiile de preluare.",
  "The marked photo for this spot is missing.": "Lipsește fotografia marcată pentru această zonă.",
  "The month on the sticker, like 03/2027": "Luna de pe ecuson, de exemplu 03/2027",
  "The monthly rate works out at {eur} per kilometre (without fuel and repairs).": "Rata lunară înseamnă {eur} pe kilometru (fără combustibil și reparații).",
@@ -1808,6 +1896,12 @@
  "The pick-up video of {van} is saved with its history.": "Videoclipul de preluare al dubei {van} e salvat în istoricul ei.",
  "The plan has ended": "Planul s-a încheiat",
  "The plan has ended. You can look at and export the data until {date}.": "Planul s-a încheiat. Poți vedea și exporta datele până pe {date}.",
+ "The plan has room for {n} more vans.": {
+  "one": "Planul mai are loc pentru {n} dubă.",
+  "few": "Planul mai are loc pentru {n} dube.",
+  "other": "Planul mai are loc pentru {n} de dube."
+ },
+ "The plan has room for {n} more vans. Untick some, or choose a bigger plan.": "Planul mai are loc pentru {n} dube. Debifează câteva sau alege un plan mai mare.",
  "The plan is changed.": "Planul a fost schimbat.",
  "The plan isn't paid. Pay the open invoice or change the card below.": "Planul nu este plătit. Plătește factura restantă sau schimbă cardul mai jos.",
  "The plate couldn't be read from the photos. Type it in.": "Numărul de înmatriculare nu a putut fi citit din fotografii. Introdu-l.",
@@ -1818,6 +1912,7 @@
  "The receipt shows a card ending {last4}; this van's card ends {expected}.": "Pe bon apare un card terminat în {last4}; cardul acestei dube se termină în {expected}.",
  "The service history needs the Firebase backend.": "Istoricul de service are nevoie de backendul Firebase.",
  "The times you had this van.": "Perioadele în care ai avut această dubă.",
+ "The type decides the photo frames drivers get on a walk-around.": "Tipul stabilește cadrele foto pe care le primesc șoferii la inspecție.",
  "The upload was refused. Check that you still belong to this company, then try again.": "Încărcarea a fost refuzată. Verifică dacă mai faci parte din această companie, apoi încearcă din nou.",
  "The van already had {km} km on {date}. Check the km, or correct the odometer under Details.": "Duba avea deja {km} km pe {date}. Verifică kilometrii sau corectează kilometrajul la Detalii.",
  "The van hasn't been dropped off yet. Drop it off with the photos instead.": "Duba nu a fost încă predată. Predă-o în schimb cu fotografiile.",
@@ -1844,6 +1939,8 @@
  "Then {price} plus VAT every month, until you cancel.": "Apoi {price} + TVA în fiecare lună, până anulezi.",
  "Then {price} plus VAT every year, until you cancel.": "Apoi {price} + TVA în fiecare an, până anulezi.",
  "There's a problem": "E o problemă",
+ "There's no connection. The vans are saved by themselves when it's back; the strip at the bottom shows it.": "Nu există conexiune. Dubele se salvează singure când revine; bara de jos arată asta.",
+ "There's nothing in this file.": "Fișierul acesta e gol.",
  "These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.": "Pot fi avarii, murdărie sau reflexii. Fă prim-planuri la fiecare zonă, apoi trimite verificarea managerului de flotă.",
  "These photos aren't yours or aren't of this van.": "Aceste fotografii nu sunt ale tale sau nu sunt ale acestei dube.",
  "These photos belong to another station.": "Aceste fotografii aparțin altei stații.",
@@ -1870,12 +1967,15 @@
  "This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.": "Acest demo a fost creat înainte să existe conturile demo. Reia-l de la capăt ca să ai un șofer și un manager de flotă cu care te poți conecta.",
  "This ends another driver's tour.": "Astfel se încheie tura altui șofer.",
  "This ends {name}'s tour.": "Astfel se încheie tura începută de {name}.",
+ "This file can't be read. Upload an Excel file (.xlsx), a CSV, a PDF or photos of the list.": "Fișierul acesta nu poate fi citit. Încarcă un fișier Excel (.xlsx), un CSV, un PDF sau fotografii ale listei.",
  "This handover belongs to another station.": "Această predare-primire aparține altei stații.",
  "This invite link doesn't exist or was cancelled. Ask for a new one.": "Acest link de invitație nu există sau a fost anulat. Cere unul nou.",
  "This invite link has expired. Links work for 24 hours; ask for a new one.": "Acest link de invitație a expirat. Linkurile sunt valabile 24 de ore; cere unul nou.",
  "This invite link isn't complete. Ask for a new one.": "Acest link de invitație nu e complet. Cere unul nou.",
  "This invite link was already used. Each link works for one person; ask for a new one.": "Acest link de invitație a fost deja folosit. Fiecare link e valabil pentru o singură persoană; cere unul nou.",
+ "This is a Word file. Save it as a PDF and upload that.": "Acesta e un fișier Word. Salvează-l ca PDF și încarcă-l pe acela.",
  "This is a demo login in a company with made-up data. Whoever made the demo can start it over or remove it.": "Acesta e un cont demo într-o companie cu date inventate. Cine a creat demo-ul îl poate reporni sau elimina.",
+ "This is an old Excel file (.xls). Open it in Excel, save it as .xlsx or CSV, and upload that.": "Acesta e un fișier Excel vechi (.xls). Deschide-l în Excel, salvează-l ca .xlsx sau CSV și încarcă-l pe acela.",
  "This is information about how employees work. Drivers see their own numbers on their page. Tell them what is recorded and why; with a works council, agree it with them.": "Acestea sunt informații despre modul în care lucrează angajații. Șoferii își văd propriile cifre pe pagina lor. Spune-le ce se înregistrează și de ce; dacă există un consiliu al angajaților, stabilește asta cu el.",
  "This is the early-bird price. It stays yours for as long as your plan runs.": "Acesta este prețul early bird. Îl păstrezi cât timp planul tău e activ.",
  "This link doesn't exist or was cancelled.": "Acest link nu există sau a fost anulat.",
@@ -1886,6 +1986,7 @@
  "This link was replaced by a new one. Ask your fleet manager for the new link.": "Acest link a fost înlocuit cu unul nou. Cere linkul nou de la managerul de flotă.",
  "This link was used already, so its terms stay. Make a new link instead.": "Acest link a fost deja folosit, deci condițiile lui rămân. Creează în schimb un link nou.",
  "This looks like": "Pare a fi",
+ "This number plate isn't right: {plate}.": "Numărul de înmatriculare nu e corect: {plate}.",
  "This one is closed.": "Aceasta e deja închisă.",
  "This person isn't in the company any more.": "Această persoană nu mai face parte din companie.",
  "This person works at another station.": "Această persoană lucrează la altă stație.",
@@ -1893,6 +1994,7 @@
  "This photo is already saved.": "Această fotografie e deja salvată.",
  "This photo is more than two hours old. Take a new one.": "Această fotografie are mai mult de două ore. Fă una nouă.",
  "This plan can't be changed in the app. Write to info@fratius.com.": "Acest plan nu poate fi schimbat în aplicație. Scrie la info@fratius.com.",
+ "This reading of the file has run out. Upload the file again.": "Citirea fișierului a expirat. Încarcă din nou fișierul.",
  "This request is older than {n} days. Ask the driver to sign up with the link again.": "Cererea e mai veche de {n} zile. Roagă șoferul să se înscrie din nou cu linkul.",
  "This request was already decided.": "S-a decis deja asupra acestei cereri.",
  "This service isn't there any more.": "Acest service nu mai există.",
@@ -1919,6 +2021,8 @@
  "This walk-around isn't available.": "Această inspecție nu e disponibilă.",
  "This walk-around was deleted.": "Această inspecție a fost ștearsă.",
  "This year": "Anul acesta",
+ "Tick all": "Bifează tot",
+ "Tick the vans to add first.": "Bifează mai întâi dubele de adăugat.",
  "Time": "Ora",
  "Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.": "Timpul se măsoară pe server, pentru fiecare apel AI. Costul provine din tokenii raportați de API pentru {model}, la prețurile de listă.",
  "Time per scan": "Timp pe scanare",
@@ -1998,10 +2102,17 @@
  "Unknown walk-around.": "Inspecție necunoscută.",
  "Unlimited drivers and stations. Prices plus VAT.": "Șoferi și stații nelimitate. Prețuri fără TVA.",
  "Unlimited vans": "Dube nelimitate",
+ "Untick all": "Debifează tot",
  "Until {when}": "Până pe {when}",
+ "Up to 6 pages, each straight on and sharp.": "Până la 6 pagini, fiecare din față și clară.",
  "Up to {n} vans": "Până la {n} de dube",
+ "Upload another list": "Încarcă altă listă",
+ "Upload the fleet list you already have. The AI reads every van in it with its details, and you check them all before anything is saved.": "Încarcă lista flotei pe care o ai deja. AI citește fiecare dubă din ea cu detaliile ei, iar tu le verifici pe toate înainte să se salveze ceva.",
+ "Upload your fleet list": "Încarcă lista flotei",
+ "Upload your fleet list: Excel, CSV, PDF or photos of a printed list. Every van in it is added with its details. You check them all first.": "Încarcă lista flotei: Excel, CSV, PDF sau fotografii ale unei liste tipărite. Fiecare dubă din ea se adaugă cu detaliile ei. Le verifici pe toate înainte.",
  "Uploaded {when}": "Încărcat pe {when}",
  "Uploading photos": "Se încarcă fotografiile",
+ "Uploading the file…": "Se încarcă fișierul…",
  "Uploading the photo…": "Se încarcă fotografia…",
  "Uploading the receipt…": "Se încarcă bonul…",
  "Uploading {done} of {total}": "Se încarcă {done} din {total}",
@@ -2028,7 +2139,9 @@
  "Valid until": "Valabil până la",
  "Van": "Dubă",
  "Van now": "Duba actuală",
+ "Van types": "Tipuri de dube",
  "Vans": "Dube",
+ "Vans already in the fleet keep everything they have: they only get the details they don't have yet.": "Dubele deja în flotă își păstrează tot ce au: primesc doar detaliile care le lipsesc.",
  "Vans go to drivers or fleet managers.": "Dubele se dau șoferilor sau managerilor de flotă.",
  "Vans they had": "Dubele avute",
  "Vans you had": "Dubele pe care le-ai avut",
@@ -2139,6 +2252,7 @@
  "You become the fleet owner. You add stations, fleet managers and drivers under People.": "Devii proprietarul flotei. Adaugi stații, manageri de flotă și șoferi în Persoane.",
  "You can cancel any time to the end of the period paid for: Account, then Plan and billing.": "Poți anula oricând cu efect la sfârșitul perioadei plătite: Cont, apoi Plan și facturare.",
  "You can install the app on your phone in the next step.": "Poți instala aplicația pe telefon la pasul următor.",
+ "You can only add vans to your own station.": "Poți adăuga dube doar la stația ta.",
  "You can only decide about drivers of your own station.": "Poți decide doar pentru șoferii stației tale.",
  "You can only invite drivers to your own station.": "Poți invita șoferi doar la propria stație.",
  "You can't change your own role or station.": "Nu-ți poți schimba propriul rol sau propria stație.",
@@ -2189,6 +2303,7 @@
  "Your company starts with {n} days free.": "Compania ta începe cu {n} de zile gratuite.",
  "Your decision": "Decizia ta",
  "Your drivers, tours and vans in numbers.": "Șoferii, turele și dubele tale în cifre.",
+ "Your fleet list": "Lista flotei tale",
  "Your fleet manager gets it straight away.": "Managerul tău de flotă o primește imediat.",
  "Your fleet manager gets the details.": "Managerul de flotă primește detaliile.",
  "Your fleet manager gives out the vans at this station.": "La această stație, managerul de flotă împarte dubele.",
@@ -2502,6 +2617,11 @@
  "{name}: {note}": "{name}: {note}",
  "{n} % off": "{n}% reducere",
  "{n} % off for {m} months": "{n}% reducere timp de {m} luni",
+ "{n} already in the fleet": {
+  "one": "{n} deja în flotă",
+  "few": "{n} deja în flotă",
+  "other": "{n} deja în flotă"
+ },
  "{n} already on the van": {
   "one": "{n} deja pe dubă",
   "few": "{n} deja pe dubă",
@@ -2511,6 +2631,11 @@
   "one": "{n} avarie aprobată",
   "few": "{n} avarii aprobate",
   "other": "{n} de avarii aprobate"
+ },
+ "{n} at another station": {
+  "one": "{n} la altă stație",
+  "few": "{n} la altă stație",
+  "other": "{n} la altă stație"
  },
  "{n} checks": {
   "one": "{n} verificare",
@@ -2572,6 +2697,11 @@
   "few": "{n} zile întârziere",
   "other": "{n} de zile întârziere"
  },
+ "{n} details": {
+  "one": "{n} detaliu",
+  "few": "{n} detalii",
+  "other": "{n} de detalii"
+ },
  "{n} dirt": {
   "one": "murdărie: {n}",
   "few": "murdărie: {n}",
@@ -2613,6 +2743,11 @@
   "few": "{n} elemente s-au oprit. Atinge ca să vezi de ce.",
   "other": "{n} de elemente s-au oprit. Atinge ca să vezi de ce."
  },
+ "{n} lines without a number plate were left out (totals, headings, a van without a plate).": {
+  "one": "{n} rând fără număr de înmatriculare a fost omis (totaluri, titluri, o dubă fără număr).",
+  "few": "{n} rânduri fără număr de înmatriculare au fost omise (totaluri, titluri, o dubă fără număr).",
+  "other": "{n} de rânduri fără număr de înmatriculare au fost omise (totaluri, titluri, o dubă fără număr)."
+ },
  "{n} min": "{n} min",
  "{n} months": {
   "one": "{n} lună",
@@ -2625,10 +2760,20 @@
   "other": "încă {n} de termene"
  },
  "{n} more vans for {price} {per}": "Încă {n} dube pentru {price} {per}",
+ "{n} new": {
+  "one": "{n} nouă",
+  "few": "{n} noi",
+  "other": "{n} noi"
+ },
  "{n} new damages": {
   "one": "{n} avarie nouă",
   "few": "{n} avarii noi",
   "other": "{n} de avarii noi"
+ },
+ "{n} new vans are ticked: untick some, or choose a bigger plan.": {
+  "one": "{n} dubă nouă este bifată: debifează câteva sau alege un plan mai mare.",
+  "few": "{n} dube noi sunt bifate: debifează câteva sau alege un plan mai mare.",
+  "other": "{n} de dube noi sunt bifate: debifează câteva sau alege un plan mai mare."
  },
  "{n} no damage": {
   "one": "fără avarie: {n}",
@@ -2681,6 +2826,11 @@
   "one": "{n} fotografie.",
   "few": "{n} fotografii.",
   "other": "{n} de fotografii."
+ },
+ "{n} plates were in the list twice: their lines were joined.": {
+  "one": "{n} număr apărea de două ori în listă: rândurile au fost unite.",
+  "few": "{n} numere apăreau de două ori în listă: rândurile au fost unite.",
+  "other": "{n} de numere apăreau de două ori în listă: rândurile au fost unite."
  },
  "{n} possible damages": {
   "one": "{n} posibilă avarie",
@@ -2772,6 +2922,36 @@
   "few": "{n} dube",
   "other": "{n} de dube"
  },
+ "{n} vans added": {
+  "one": "{n} dubă adăugată",
+  "few": "{n} dube adăugate",
+  "other": "{n} de dube adăugate"
+ },
+ "{n} vans already in the fleet got the details they didn't have yet.": {
+  "one": "{n} dubă deja în flotă a primit detaliile care îi lipseau.",
+  "few": "{n} dube deja în flotă au primit detaliile care le lipseau.",
+  "other": "{n} de dube deja în flotă au primit detaliile care le lipseau."
+ },
+ "{n} vans already in the fleet had everything already.": {
+  "one": "{n} dubă din flotă avea deja totul.",
+  "few": "{n} dube din flotă aveau deja totul.",
+  "other": "{n} de dube din flotă aveau deja totul."
+ },
+ "{n} vans are at another station and were left as they are.": {
+  "one": "{n} dubă este la altă stație și a rămas neschimbată.",
+  "few": "{n} dube sunt la altă stație și au rămas neschimbate.",
+  "other": "{n} de dube sunt la altă stație și au rămas neschimbate."
+ },
+ "{n} vans filled in": {
+  "one": "{n} dubă completată",
+  "few": "{n} dube completate",
+  "other": "{n} de dube completate"
+ },
+ "{n} vans in the list": {
+  "one": "{n} dubă în listă",
+  "few": "{n} dube în listă",
+  "other": "{n} de dube în listă"
+ },
  "{n} walk-arounds": {
   "one": "{n} inspecție",
   "few": "{n} inspecții",
@@ -2788,6 +2968,7 @@
  "{person} has {van} now. Their phone got a notification asking for the pick-up video or photos.": "{person} are acum {van}. A primit pe telefon o notificare care cere videoclipul sau fotografiile de preluare.",
  "{person} has {van}.": "{person} are {van}.",
  "{plate} is already in your fleet.": "{plate} este deja în flota ta.",
+ "{plate} is in the list twice.": "{plate} apare de două ori în listă.",
  "{price} a month": "{price} pe lună",
  "{price} a month, plus VAT": "{price} pe lună + TVA",
  "{price} a year": "{price} pe an",

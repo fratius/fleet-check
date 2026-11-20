@@ -3,7 +3,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
-import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, parseDay, today, type Deadline } from '@/lib/fleet';
+import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, notOwned, parseDay, today, type Deadline } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
@@ -23,7 +23,6 @@ export type Vals = Record<string, unknown>;
 export interface FieldSpec { key: string; label: string; kind: Kind; unit?: string; options?: Record<string, string>; hint?: string; show?: (v: Vals) => boolean; digits?: number; plain?: boolean }
 
 const ev = (v: Vals) => v.fuel === 'electric' || v.fuel === 'hybrid';
-const notOwned = (v: Vals) => !!v.ownership && v.ownership !== 'owned';
 export const VEHICLE: FieldSpec[] = [
   { key: 'vin', label: N_('VIN'), kind: 'upper', hint: N_('17 characters, on the registration document') },
   { key: 'firstReg', label: N_('First registration'), kind: 'day' },

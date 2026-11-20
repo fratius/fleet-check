@@ -112,7 +112,10 @@ export default function Fleet() {
           {canAdd ? (
             <>
               <T v="hint">{t('No vans here yet. Add one by scanning it or picking its type. Each van keeps its own photo frames, walk-arounds and damage record.')}</T>
-              <Button v="primary" title={t('Add vehicle')} onPress={() => router.push('/add')} />
+              <Row>
+                <Button v="primary" title={t('Add vehicle')} onPress={() => router.push('/add')} />
+                {s.mode === 'firebase' ? <Button title={t('Upload your fleet list')} onPress={() => router.push('/bulk')} /> : null}
+              </Row>
             </>
           ) : (
             <T v="hint">{s.myStations.length ? t('No vans at {stations} yet. Your fleet manager adds them.', { stations: s.myStations.map((st) => st.name).join(', ') })

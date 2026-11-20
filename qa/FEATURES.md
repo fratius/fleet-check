@@ -89,6 +89,20 @@ a decision about what the app must do, so it goes in a pull request of its own t
   their **number plate**, never only by their model.
 - SHOULD 3.9 The van page shows the km, fuel or battery and range from the latest dashboard photo, warning lights in
   a red box or "No warning lights"; "No km yet" in the fleet list without a photo.
+- SHOULD 3.10 Add vehicle offers "Add the whole fleet at once": an owner or fleet manager uploads the fleet list they
+  already have (Excel .xlsx, CSV, PDF, or photos of a printed list) and every van in it comes back to be checked
+  before anything is saved: a tick per van, its plate and own name (both can be corrected), its type (per model in
+  the list) and its station (by the name or code in the file). Nothing is in the fleet until "Add N vans".
+- MUST 3.11 Adding from a file never overwrites: a van already in the fleet (same plate) only gets the details it
+  doesn't have yet. Vans from a file go to no driver, even when the file names drivers.
+- MUST 3.12 From a file, a fleet manager adds vans only to their own station, never with costs, and can't create a
+  station; a van with that plate at another station is left alone. An owner can create a station the file names
+  ("New station: …"). Drivers can't add vans from a file at all.
+- MUST 3.13 More new vans than the plan has room for: the app says so before saving and nothing is added until the
+  person unticks some or takes a bigger plan.
+- LIMIT 3.14 On the test system the AI's reading of a file is made up (0.2): any CSV or Excel file gets the same
+  column layout (A plate, B own name, C station, D make and model, E VIN, F TÜV, G monthly rate, H fuel, I driver),
+  and a PDF or photo gets the same two vans. Judge the flow around it.
 
 ## 4. Drivers pick up and drop off vans themselves
 

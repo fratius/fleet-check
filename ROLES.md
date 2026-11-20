@@ -40,8 +40,11 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    off and sets how often licences are checked. **The only role that sees what vans cost** (lease, purchase price,
    insurance); running costs on receipts (fuel, washes, parts) are seen by the station's managers too, since they
    allow or refuse them, and so are the costs in a van's service history (product owner, 2026-11-20).
+   **Adds the whole fleet from a file** (product owner, 2026-11-20; FLEET_DATA.md): to any station, with costs, and
+   creates a station the file names that doesn't exist yet.
 3. **Fleet manager** (role `manager`). Same powers as the owner, limited to their station (operating area) and
-   its drivers: adds, edits and removes vans there, approves (or rejects) drivers who signed up for it with the
+   its drivers: adds, edits and removes vans there (also the whole fleet from a file, to their own station, without
+   costs and without new stations), approves (or rejects) drivers who signed up for it with the
    company's driver link, and removes drivers there. Cannot add stations or
    managers. **Has the final word on damage**: approves or rejects every spot the AI found, adds damage it
    missed, finishes the review. Approved damage goes on the van's damage record. **Allows or refuses a refuel or
@@ -276,6 +279,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | What the AI read from dashboard, card and receipt `buyReads` | no | no | no | the server; app creator reads |
 | What the AI read first `dashReads` | no | no | no | the server; app creator reads |
 | Documents read from a photo `docReads` (kind, count, cost; no values) | no | no | no | the server; app creator reads |
+| Fleet file readings `imports` (the vans as read, a day; to add the whole fleet) | no | no | no | the server only (`readFleetFile`, `addVans`) |
 
 - **The van's facts** (VIN, registration, fuel, tank, size, breakdown and accident numbers) are on the van:
   everyone at its station reads them; owners and the station's managers change them.
