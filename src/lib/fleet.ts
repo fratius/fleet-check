@@ -37,6 +37,11 @@ export function daysTo(day: string, now = Date.now()): number {
   const n0 = new Date(now);
   return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(n0.getFullYear(), n0.getMonth(), n0.getDate())) / 86400_000);
 }
+/** The last day of that day's month (a TÜV sticker shows a month). */
+export function monthEnd(day: string): string {
+  const [y, m] = day.split('-').map(Number);
+  return `${y}-${String(m).padStart(2, '0')}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`;
+}
 export const today = () => { const d0 = new Date(); return `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, '0')}-${String(d0.getDate()).padStart(2, '0')}`; };
 
 export const FUEL: Record<string, string> = { diesel: N_('Diesel'), electric: N_('Electric'), petrol: N_('Petrol'), hybrid: N_('Hybrid'), cng: N_('Gas (CNG)') };
@@ -60,7 +65,8 @@ export function deadlines(v: Vehicle, d: VehicleDetails | null | undefined, now 
     out.push({ key, label, day, days, state: days < 0 ? 'overdue' : days <= soon ? 'soon' : 'ok', note: when(days) });
   };
   const due = d.due || {};
-  add('hu', t('TÜV (main inspection)'), due.hu);
+  // A TÜV runs to the end of the sticker's month, also when the date is kept as a day inside it.
+  add('hu', t('TÜV (main inspection)'), due.hu ? monthEnd(due.hu) : null);
   add('uvv', t('Safety check (UVV)'), due.uvv);
   add('service', t('Service'), due.service);
   add('tyres', t('Tyre change'), due.tyres, 21);

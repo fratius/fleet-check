@@ -147,9 +147,10 @@ export function detailsPatch(now: DetailsNow | undefined, s: ServiceInput, id: s
 }
 
 /**
- * Is it time to remind about this TÜV date? From one month before it runs out (the sticker's month end), and once it
- * has run out too, so a date typed in late still gets its one reminder. `today` in German time.
+ * Is it time to remind about this TÜV date? From one month before it runs out (the end of the sticker's month, also
+ * when the date is kept as a day inside it), and once it has run out too, so a date typed in late still gets its one
+ * reminder. `today` in German time.
  */
-export const huRemindNow = (hu: string, today: string) => isDay(hu) && addMonths(hu, -1) <= today;
+export const huRemindNow = (hu: string, today: string) => isDay(hu) && addMonths(monthEnd(hu), -1) <= today;
 /** The latest TÜV date the sweep asks for (a month and a day ahead, filtered exactly by huRemindNow). */
 export const huQueryUpTo = (today: string) => addMonths(addDays(today, 1), 1);

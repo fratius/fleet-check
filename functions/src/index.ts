@@ -42,7 +42,7 @@ import {
   payConfig, payWith, planOf, priceKey, readKey, reverseCharge, vatType, type Address, type Offer, type Pay, type Sub,
 } from './payments';
 import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
-import { Bad, FIXABLE, detailsPatch, huQueryUpTo, huRemindNow, readService, type ServiceInput } from './service';
+import { Bad, FIXABLE, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readService, type ServiceInput } from './service';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -2516,7 +2516,7 @@ export async function sweepService(now = Date.now()) {
       });
       if (!mine) continue;
       const name = vanName({ name: van.name || '', plate: van.plate });
-      const over = hu < today;
+      const over = monthEnd(hu) < today;
       const bosses = await bossesOf(o.id, van.stationId || null, 'wash', '');
       const n = await tell(bosses, (lang) => ({
         title: over ? tr(lang, 'TÜV overdue: {van}', { van: name }) : tr(lang, 'TÜV due: {van}', { van: name }),

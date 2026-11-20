@@ -1126,6 +1126,14 @@ test('service history and the TÜV: owners and the station\'s managers record it
     await updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vt), { 'due.hu': '2029-03-31' });
     await cr.call('serviceSweepNow', { now: Date.UTC(2029, 2, 5, 9) });
     assert.equal(forVan(vt).length, 2);
+    // A TÜV is a month: a date kept as a day in the middle of it (the demo's, or one read from a document) counts as the
+    // month's end, so it's reminded about a month before that, not before the day (blind QA round 3).
+    const vm = await mk('TUV-MID', 's1');
+    await setDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicleDetails', vm), { stationId: S.s1, createdAt: Date.now(), due: { hu: '2027-03-10' } });
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 1, 20, 9) });
+    assert.equal(forVan(vm).length, 0);
+    await cr.call('serviceSweepNow', { now: Date.UTC(2027, 2, 1, 9) });
+    assert.equal(forVan(vm).length, 1);
   } finally {
     await adminDb().doc(`users/${S.mgr.uid}/push/svc`).delete().catch(() => {});
     srv.close();

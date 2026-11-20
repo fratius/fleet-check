@@ -235,7 +235,7 @@ export default function VehicleScreen() {
       ) : null}
 
       <View onLayout={(e) => { tabTop.current = e.nativeEvent.layout.y; }}>
-        <Tabs value={view} onChange={setTab} items={[['damage', t('Damage'), damages.length], ['details', t('Details'), null], ['history', t('Drivers'), null],
+        <Tabs value={view} onChange={(k) => { setTab(k); router.setParams({ tab: k }); }} items={[['damage', t('Damage'), damages.length], ['details', t('Details'), null], ['history', t('Drivers'), null],
           ...(s.runs(v.stationId) ? [['service', t('Service'), null] as ['service', string, null]] : [])]} />
       </View>
 
