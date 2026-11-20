@@ -2131,7 +2131,7 @@ test('a sign-up link without a card: free days with no card, reminders, the card
   const pd = async (orgId) => (await adminDb().doc(`payments/${orgId}`).get()).data() || {};
   const billing = async (orgId) => (await adminDb().doc(`orgs/${orgId}`).get()).data().billing;
   try {
-    const cr = await appCreator('Nora Nocard');
+    const cr = await appCreator('Nadja Nocard');
     // Only the app creator makes links; a link without a card needs free days; a card unless it's unticked.
     await fails(S.own.call('saveOffer', { note: 'x', trialDays: 14, requireCard: false }), 'permission-denied');
     assert.match((await fails(cr.call('saveOffer', { note: 'x', trialDays: 0, requireCard: false }), 'invalid-argument')).message, /needs free days/);
@@ -2140,7 +2140,7 @@ test('a sign-up link without a card: free days with no card, reminders, the card
     const withCard = await cr.call('saveOffer', { note: 'with a card', plan: 'basic', trialDays: 30, maxUses: 1, rid: `rnc${run}b` });
     assert.equal((await adminDb().doc(`offers/${withCard.code}`).get()).data().requireCard, true, 'a card at sign-up unless unticked');
     const other = await cr.call('saveOffer', { note: 'another one', trialDays: 30, maxUses: 1, requireCard: false, rid: `rnc${run}c` });
-    const kara = await person('Kara Kurier');
+    const kara = await person('Kemal Kurier');
     assert.equal((await kara.call('billingConfig', { offer: off.code })).offer.requireCard, false, 'the sign-up page knows');
     assert.equal((await kara.call('billingConfig', { offer: withCard.code })).offer.requireCard, true);
 
@@ -2206,13 +2206,13 @@ test('a sign-up link without a card: free days with no card, reminders, the card
     assert.ok((await pd(k.orgId)).confirmedAt);
 
     // 4. Lou signs up with the link's second use and lets the free days run out.
-    const lou = await person('Lou Later');
+    const lou = await person('Lorin Later');
     const l = await lou.call('createCompany', { company: 'Lou Later GmbH', station: 'DLL1', name: 'Lou Later', source: 'website', plan: 'basic', terms, payments: true });
     const lt = await lou.call('billingTrial', { orgId: l.orgId, offer: off.code, plan: 'basic', interval: 'month' });
     assert.equal(lt.billing.cardLater, true);
     assert.equal((await adminDb().doc(`offers/${off.code}`).get()).data().uses, 2);
     // A third company can't: the link is used up.
-    const max = await person('Max Third');
+    const max = await person('Mats Third');
     const m = await max.call('createCompany', { company: 'Third GmbH', station: 'DTH1', name: 'Max Third', source: 'website', plan: 'basic', terms, payments: true });
     assert.match((await fails(max.call('billingTrial', { orgId: m.orgId, offer: off.code, plan: 'basic', interval: 'month' }), 'failed-precondition')).message, /already been used/);
     // The app creator ends the link: Lou keeps its terms anyway.
