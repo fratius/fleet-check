@@ -5,7 +5,7 @@ import { UploadRow } from '@/components/uploads';
 import { Button, Card, Chip, F, Field, Notice, Pill, Row, T, useColors } from '@/components/ui';
 import { DueLine, HuSticker, fromInput, saveDetails, toInput, type FieldSpec } from '@/components/vanfacts';
 import { eur, fmtDay, km, today } from '@/lib/fleet';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { N_, t, tp } from '@/lib/i18n';
 import { newId } from '@/lib/images';
 import { QUEUED, sendCall, useOutbox } from '@/lib/outbox';
 import { ADD_KINDS, HU_RESULT, SERVICE_HINT, SERVICE_NAME, huDue, serviceDue, serviceName, watchServices } from '@/lib/service';
@@ -210,6 +210,11 @@ function ServiceForm({ v, kind, rec, onDone, onCancel }: { v: Vehicle; kind: Ser
     if (!dayV) { setErr(t('Enter the day it was done, like 31.03.2027.')); return; }
     if (kmV == null) { setErr(t('Enter the van\'s km.')); return; }
     if (kind === 'hu' && !result) { setErr(t('Choose how the TÜV went.')); return; }
+    // Far fewer km than the van already had on or before that day is a typo (the server refuses it too).
+    if (!fix && d?.odometerKm != null && d.odometerAt && dayV >= d.odometerAt && kmV < d.odometerKm - 1000) {
+      setErr(t('The van already had {km} km on {date}. Check the km, or correct the odometer under Details.', { km: d.odometerKm, date: d.odometerAt.split('-').reverse().join('.') }));
+      return;
+    }
     const next: Record<string, unknown> = {};
     if (!fix) {
       const add = (f: FieldSpec, raw: string): boolean => {
@@ -249,7 +254,7 @@ function ServiceForm({ v, kind, rec, onDone, onCancel }: { v: Vehicle; kind: Ser
       {fix ? <T v="small">{t('What it was before is kept with the record, with your name.')}</T> : null}
       {kind === 'other' ? <Field label={t('What was done')} value={name} onChangeText={setName} maxLength={60} placeholder={t('For example: windscreen, battery, air conditioning')} /> : null}
       <Field label={t(F_DAY.label)} value={day} onChangeText={setDay} placeholder={t('DD.MM.YYYY')} keyboardType="numbers-and-punctuation" />
-      <Field label={`${t(F_KM.label)} (km)`} hint={known ? t('last known {km}', { km: km(known) }) : t('needed')} value={kmText} onChangeText={setKm} keyboardType="decimal-pad" placeholder={known ? String(known) : undefined} />
+      <Field label={`${t(F_KM.label)} (km)`} hint={known ? t('last known {km}', { km: km(known) }) : t('needed')} value={kmText} onChangeText={setKm} keyboardType="decimal-pad" />
       {kind === 'hu' ? (
         <View style={{ gap: 6 }}>
           <T v="medium">{t('Result')}</T>
@@ -276,6 +281,21 @@ function ServiceForm({ v, kind, rec, onDone, onCancel }: { v: Vehicle; kind: Ser
   );
 }
 
+/** The calendar day of a moment, on this phone ("YYYY-MM-DD"). */
+const dayOf = (ms: number) => { const x = new Date(ms); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+/** What an entry said before a correction: each changed field with its old value. */
+function wasText(was: NonNullable<ServiceRecord['edits']>[number]['was']) {
+  const parts: string[] = [];
+  if ('day' in was) parts.push(`${t(F_DAY.label)} ${was.day ? fmtDay(was.day) : '–'}`);
+  if ('km' in was) parts.push(was.km != null ? km(was.km) : `km –`);
+  if ('cost' in was) parts.push(`${t(F_COST.label)} ${was.cost != null ? eur2(was.cost) : '–'}`);
+  if ('name' in was) parts.push(`${t('What was done')} ${was.name || '–'}`);
+  if ('result' in was) parts.push(`${t('Result')} ${was.result ? t(HU_RESULT[was.result]) : '–'}`);
+  if ('garage' in was) parts.push(`${t('Garage')} ${was.garage || '–'}`);
+  if ('note' in was) parts.push(`${t('Notes')} ${was.note || '–'}`);
+  return parts.join('; ');
+}
+
 /** One entry of the history. */
 function ServiceRow({ r, first, onFix }: { r: ServiceRecord; first: boolean; onFix?: () => void }) {
   const c = useColors();
@@ -299,9 +319,10 @@ function ServiceRow({ r, first, onFix }: { r: ServiceRecord; first: boolean; onF
       ) : null}
       {r.kind === 'tyres' && r.next?.tyres ? <T v="small">{t('Next tyre change: {date}', { date: fmtDay(r.next.tyres) })}</T> : null}
       {r.note ? <T v="body">{r.note}</T> : null}
+      {last ? <T v="small">{t('Before the correction: {what}', { what: wasText(last.was) })}</T> : null}
       <Row gap={6}>
         <T v="small" style={{ flex: 1 }}>{last
-          ? t('{name}. Corrected {date} by {who}.', { name: r.byName, date: new Date(last.at).toLocaleDateString(loc()), who: last.byName })
+          ? t('{name}. Corrected {date} by {who}.', { name: r.byName, date: fmtDay(dayOf(last.at)), who: last.byName })
           : r.byName}</T>
         {onFix ? <Button small v="link" title={t('Make a correction')} onPress={onFix} /> : null}
       </Row>

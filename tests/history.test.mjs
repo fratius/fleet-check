@@ -1061,6 +1061,11 @@ test('service history and the TÜV: owners and the station\'s managers record it
   assert.equal(d.due.serviceKm, 91700);
   assert.equal(d.due.service ?? null, null);
   assert.equal(d.lastService.id, 'svcOil2');
+  // A new entry far below the km the van already had is a typo (blind QA round 2: 100 km on a van at 46,600): refused.
+  // Older entries may have fewer km (svcOil0 above).
+  const low = await fails(add(S.mgr, { id: 'svcLow', vehicleId: vs, kind: 'hu', day: '2026-11-16', km: 100, result: 'passed', next: { hu: '2029-03-01' } }), 'invalid-argument');
+  assert.match(low.message, /61700/);
+  assert.equal((await det(vs)).due.hu, '2028-03-31');
   // A correction keeps what was there before and who changed it. Drivers can't; nothing changed is said.
   await fails(S.d1.call('service', { orgId: S.org, action: 'fix', id: 'svcOil1', ...oil, cost: 1 }), 'permission-denied');
   const fx = await S.mgr.call('service', { orgId: S.org, action: 'fix', ...oil, cost: 412.9 });

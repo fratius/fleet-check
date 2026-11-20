@@ -88,7 +88,9 @@ Each van's **Service** tab, for owners and the managers of the van's station (dr
   A service can set the next service by date and km, tyres the next tyre change: they become the van's deadlines.
 - **The history** (`orgs/{org}/services`), newest first, with what it cost this year and in total. Written only by
   the server (`service`), never deleted. A correction (day, km, cost, garage, notes, name, TÜV result) keeps what was
-  there before, who changed it and when (`edits`). It moves with the van to another station (`moveVan`).
+  there before, who changed it and when (`edits`); the entry shows what it said before. It moves with the van to
+  another station (`moveVan`). A new entry more than 1,000 km below what the van already had on or before its day
+  is refused as a typo (older entries may have fewer km).
 - **The van's record follows**: the odometer when the km are higher, the last service (`lastService`, not the TÜV),
   and the next TÜV, service and tyre dates. The newest entry decides the next service (date and km together) and
   the next tyre change, also when its target is sooner than the old one (`dueFrom` remembers which entry set them);

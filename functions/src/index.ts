@@ -2405,6 +2405,8 @@ type ServiceDoc = ServiceInput & {
   updatedAt?: number; edits?: { at: number; by: string; byName: string; was: Record<string, unknown> }[];
 };
 const MAX_EDITS = 30;
+/** How far below the van's last known odometer a new entry may be (the garage read it before the last photo). */
+const LOW_KM = 1000;
 
 export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
@@ -2453,6 +2455,11 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
       const b = before.data() as ServiceDoc;
       if (b.by !== who.uid || b.vehicleId !== vehicleId) throw fail('invalid-argument', 'Unknown service.');
       return { id, again: true, applied: [] as string[] };
+    }
+    // Far fewer km than the van already had on or before that day is a typo (an older entry may have fewer).
+    const odo = det.data()?.odometerKm, odoAt = det.data()?.odometerAt;
+    if (typeof odo === 'number' && typeof odoAt === 'string' && x.day >= odoAt && x.km < odo - LOW_KM) {
+      throw fail('invalid-argument', 'The van already had {km} km on {date}. Check the km, or correct the odometer under Details.', { km: odo, date: odoAt.split('-').reverse().join('.') });
     }
     const doc: ServiceDoc = {
       ...x, vehicleId, vehicleName: vanName(van), plate: van.plate || '', stationId: van.stationId || null,

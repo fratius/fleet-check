@@ -356,6 +356,7 @@ b52b36b7	Back	[check/[id].tsx, app/scan/[id].tsx, app/start.tsx]
 fe1c2af1	Battery charge	[prompts.ts]
 74f39697	Before	[components/damage.tsx]
 1576dbbd	Before {when}. There are no earlier photos of this van.
+0f905b3a	Before the correction: {what}
 5443584b	Before you drive off: a photo of the dashboard with the ignition on, so the kilometres and the fuel are on record.
 82b8bfb3	Before you start the pump
 8017eb64	Before you start the pump: a photo of the dashboard. Then the fuel card and the receipt.
@@ -1956,6 +1957,7 @@ a511a830	The times you had this van.
 5daed61d	The TÜV of {van} ran out at the end of {month}. Book the inspection now.
 f13f4782	The TÜV of {van} runs out at the end of {month}. Book the inspection now.
 7d77c988	The upload was refused. Check that you still belong to this company, then try again.
+89bb8cdd	The van already had {km} km on {date}. Check the km, or correct the odometer under Details.
 94a4b241	The van hasn't been dropped off yet. Drop it off with the photos instead.
 eb9c4666	The van hasn't been dropped off yet. Drop it off with the video instead.
 d94be526	The van is	[components/vanfacts.tsx]
