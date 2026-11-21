@@ -351,6 +351,7 @@ export const ai = {
   createCompany: call<{ company: string; station: string; mainStation: string; name: string; source: 'website' | 'app'; plan: string | null; terms: string | null; payments?: boolean; interval?: 'month' | 'year' }, { orgId: string; trialEnd: number; needsCard?: boolean }>('createCompany', 40000),
   /** Payments (functions/src/payments.ts), on the web only. */
   billingConfig: call<{ offer?: string | null; orgId?: string | null }, BillingConfig>('billingConfig', 20000),
+  billingTrial: call<{ orgId: string; offer: string; plan: string; interval: 'month' | 'year' }, { billing: NonNullable<Org['billing']>; trialEnd: number }>('billingTrial', 40000),
   billingStart: call<{ orgId: string; plan: string; interval: 'month' | 'year'; addon: boolean; offer: string | null; address: unknown; vatId: string }, BillingStarted>('billingStart', 70000),
   billingConfirm: call<{ orgId: string; setupIntent?: string | null }, { billing: Org['billing'] | null; next: { kind: 'setup' | 'payment'; clientSecret: string; amount: number } | null }>('billingConfirm', 70000),
   billingPortal: call<{ orgId: string }, { url: string }>('billingPortal', 40000),

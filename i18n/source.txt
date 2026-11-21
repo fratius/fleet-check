@@ -244,6 +244,7 @@ dc0c4f9e	A company setting	[lib/session.tsx]
 851e0480	A discount in euros needs a fixed plan.
 7a5d107d	A driver	[lib/names.ts]
 ef2dd2c6	A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you're in.
+315e8229	A link without a card needs free days.
 9eecff97	A long list takes a minute or two. Keep this page open.
 7fc4ef1f	A manager has already reviewed this check.
 1f6df70e	a month	[plan.tsx, components/plansetup.tsx]
@@ -279,6 +280,7 @@ e8c98820	Accident claims	[components/vanfacts.tsx]
 61cc55aa	Add	[check/[id].tsx, app/join/[token].tsx, components/vanfacts.tsx]
 d44c6977	Add {n} van || Add {n} vans	[bulk.tsx]
 3f0109f9	Add {n} van from a file || Add {n} vans from a file
+a0271f3a	Add a card before {date} to keep working with Fratius.
 f1dc255f	Add a card to start
 3e183615	Add a comment	[components/damage.tsx]
 d7e0bea3	Add a page	[components/docscan.tsx]
@@ -298,6 +300,8 @@ e273d235	Add check	[components/routines.tsx]
 a82690ab	Add station	[people.tsx]
 037d55e4	Add the breakdown number and the insurer, so drivers have them at the van.
 73463517	Add the card and start
+15f3cf2e	Add the card here, or in the web app: Account, then Plan and billing.
+9ce694b9	Add the card, paid from {date}
 c68a2faf	Add the drop-off video
 ac6932e5	Add the incident	[components/driverrec.tsx]
 0c82d98a	Add the odometer reading to follow the mileage.
@@ -546,7 +550,7 @@ fce06e20	Comments	[components/damage.tsx]
 fe58ea6a	Compact van	[lib/frames.ts]
 7a199499	Company	[account.tsx, app/sign-in.tsx]
 e5117c34	Company and card	[components/plansetup.tsx]
-1e5f7dc4	Company name	[account.tsx, app/sign-in.tsx]
+1e5f7dc4	Company name	[account.tsx, app/sign-in.tsx, components/plansetup.tsx]
 70ef29d4	Compare with the dashboard and correct anything that's wrong.
 34c2c5ac	Compare with the photos before
 1f47edf4	Comparing every photo with the van's earlier photos. This takes about a minute.
@@ -885,6 +889,7 @@ b48fd125	Fratius {company} {period} to {date}
 e12e759b	Free ({n})	[index.tsx]
 53893f24	Free days	[components/offers.tsx]
 22357ca6	Free trial	[account.tsx, plan.tsx, components/companies.tsx]
+1fbbe185	Free until {date}, with no card. Nothing is charged without a card.
 e0312576	Free until {date}.	[account.tsx]
 c901a478	Free until {date}. Nothing is charged before then; cancel any time before.
 ed487f8a	Free until {date}. Then {price} plus VAT {per}.
@@ -1226,6 +1231,7 @@ cf449280	Next tyre change: {date}
 fd128635	no	[data.tsx]
 816c52fd	No	[components/dash.tsx, components/vanfacts.tsx]
 904d31c6	no card	[data.tsx]
+dd7d4ff9	no card at sign-up
 78b226e3	No card in the photo.
 ba3b7ff3	No card yet.	[account.tsx]
 a58f7462	no card, allowed	[data.tsx]
@@ -1386,6 +1392,7 @@ bfb5e333	Odometer on {day}, from the van's record
 601e502d	of {n} frame || of {n} frames	[log.tsx]
 7f0cfd38	of {n} rated || of {n} rated	[log.tsx]
 e3de5ab0	Off	[account.tsx]
+3bc072e8	Off: they start the free days without a card and are reminded to add one. Without a card the company stops when the free days end; everything in it is kept.
 0d488f42	Oil level	[routines.ts, components/routines.tsx]
 9d536a9e	Oil pressure	[prompts.ts]
 8b743360	Oil, filters, the maker's service plan
@@ -1442,7 +1449,7 @@ d2bf12cc	Only the fleet owner moves vans between stations.
 cc6b13f1	Only walk-arounds taken with the camera are compared.
 64fe846a	Only you	[components/viewas.tsx]
 ba6e4fc9	only you see it
-50bb3990	Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.
+ee09ccb5	Only you see this. A link sets the free days, a discount, the plan and whether a card is asked at sign-up, for one DSP.
 cf9b7706	Open	[components/companies.tsx]
 7bac7999	Open {name}	[buy/[id].tsx, video/[id].tsx, components/pickup.tsx]
 8c82c310	Open {plate}	[bulk.tsx]
@@ -1668,6 +1675,7 @@ c06bbcc2	Rental ends	[lib/fleet.ts]
 30ad98ef	Replacement van	[lib/fleet.ts]
 fc73fea4	Request not approved	[index.ts]
 168996e3	Request sent	[app/join/[token].tsx]
+7f448f69	Require a credit card at sign-up
 5faa59d4	Result	[components/service.tsx]
 16457335	Retake	[check/[id].tsx, app/scan/[id].tsx]
 9f01f832	retakes	[walk/[id].tsx, app/scan/[id].tsx]
@@ -1854,6 +1862,7 @@ a0065a65	Spots per check	[log.tsx]
 5d79415d	Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.
 0ca28021	Standard roof	[lib/frames.ts]
 952f3754	Start	[data.tsx, components/vanfacts.tsx]
+1db43d15	Start free until {date}
 3b0f6d1e	Start free, paid from {date}
 51dd91dc	Start over	[components/docscan.tsx]
 e92d02d3	Start recording	[components/recorder.tsx]
@@ -1961,6 +1970,7 @@ ea9239c7	Test mode, saved on this phone
 f02a9817	Test mode: everything stays on this phone and AI checks are off. Fleet, frames and the camera work.
 969acbc9	Test mode: no real money is charged. Use the card 4242 4242 4242 4242, any future date and any CVC.
 d6dd7411	Thanks for signing up {company}. This is what you ordered:
+7066fbf6	Thanks for signing up {company}. This is your free trial:
 0d0881f3	Thanks for your request for {company}. Welcome to Fratius!
 43372c78	That email address doesn't look right.
 ef9365df	That file isn't a video.
@@ -2037,7 +2047,10 @@ a819aa5a	The file seems to be damaged. Save it again and upload it.
 caadb3f7	The fleet managers and drivers of your station.
 ed26b746	The fleet owner changes these.
 506537f0	The free trial ended on {day}.
+a3b5b685	The free trial ends on {date}. Add a card to keep going.
 c5a067d8	The free trial has ended
+db602eed	The free trial of {company} ended on {date}.
+eb378a21	The free trial of {company} ends on {date}. Add a card before then to keep working with your vans, drivers and history.
 0419c065	The fuel card	[buy/[id].tsx]
 cba2237f	The fuel card has expired.
 b7cb29de	The fuel card is for {cardPlate}; this van is {plate}.
@@ -2155,6 +2168,7 @@ a319f8d7	this company	[log.tsx, components/viewas.tsx]
 67eb18ef	This company has {n} vans; {plan} is for up to {max}. Choose a bigger plan or retire vans first.
 337cc9ba	This company has no active plan. The owner adds a card or a plan in the web app: Account, then Plan and billing.
 f1cdae10	This company has no stations yet. Ask your fleet manager.
+b506c3f0	This company has started already. A sign-up link without a card is for a new company.
 8f11deba	This company has used today's {n} AI damage checks of the free trial. More from midnight, or write to info@fratius.com for more.
 5e6afe06	This company has used today's {n} AI photo readings of the free trial. More from midnight, or write to info@fratius.com for more.
 cbac1194	This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.
@@ -2195,6 +2209,7 @@ bb14822c	This request was already decided.
 d0c536fe	This sign-up link doesn't exist. Check the link, or write to info@fratius.com.
 50582058	This sign-up link has already been used. Write to info@fratius.com for a new one.
 f6b7896e	This sign-up link has ended. Write to info@fratius.com for a new one.
+f47ae513	This sign-up link starts with a card. Add one below to start.
 1277ca07	This station was removed. Reject the request and ask the driver to pick another station.
 4271e4f1	This van belongs to another station.
 84a17eb5	This van has no station yet.
@@ -2223,6 +2238,7 @@ a31e2a60	Time is measured on the server, per AI call. Cost is from the tokens th
 d130cd05	Time per scan	[log.tsx]
 368487ef	To check	[buy/[id].tsx, data.tsx]
 16fc847f	To have a van as a driver, view as a fleet owner or fleet manager first, open a van, tap "{button}" and pick yourself. As a fleet manager you can also allow or refuse your own refuel or wash. Only your sign-in can do these two things.
+ac1f2811	To keep going after {date}, add a card before then: Account, then Plan and billing, in the web app.
 066f77ce	To review	[review.tsx]
 2dd2bed7	today	[lib/fleet.ts]
 d1cf730a	Today when you change the odometer
@@ -2437,6 +2453,7 @@ e3ca5663	Whole front in frame: bumper, grille, lights and windscreen.
 c0054b76	Why (parts)	[data.tsx]
 0150efe2	Why were they needed?
 3e0e8b49	Why: {note}	[purchases.ts, buy/[id].tsx]
+4da67d5e	With a card, the plan costs {price} plus VAT {per} from {date}.
 0a81e4d4	With a driver ({n})
 40217b3f	With the add-on of {n} more vans.
 346a2f5c	Wrong	[log.tsx]
@@ -2508,7 +2525,7 @@ f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. O
 01384ed0	Your account isn't a member of this company.
 f3658985	Your account, your company and the card, in one step. Drivers and stations are unlimited on every plan.
 411d3ee3	Your companies	[components/companies.tsx]
-3f7a84ea	Your company	[app/sign-in.tsx]
+3f7a84ea	Your company	[app/sign-in.tsx, components/plansetup.tsx]
 73141892	Your company starts with {n} days free.
 a2bb6af7	Your decision	[check/[id].tsx]
 0a9501e3	Your drivers, tours and vans in numbers.
@@ -2521,6 +2538,7 @@ c6b6f706	Your fleet manager gets the details.
 cc5527b7	Your fleet manager refused it. Cancel it.
 98820f29	Your fleet manager sets the checks.
 8c6a40e8	Your Fratius plan for {company}
+207d7077	Your free Fratius trial for {company}
 5921e8ef	Your free trial ends soon
 b3e23e5e	Your last tour on {van} had no end photo. This photo ends it and starts today's.
 d5855a7c	Your login and your profile (name, mobile number, Transporter ID) are deleted, and your phones stop getting notifications. The companies you worked for keep their records with your name: which vans you had and when, walk-arounds, damage checks, refuels and your driver record. Their photos and videos are deleted on the 15th of the month after, or after 90 days when marked as damage.

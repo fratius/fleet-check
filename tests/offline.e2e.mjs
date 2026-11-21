@@ -5,6 +5,8 @@
 // and the app doesn't say "No connection" when the server has answered with nothing new.
 // And an incident written without signal that reaches the server much later (the rules want its time near the
 // server's) is sent once more as made now, instead of stopping as "refused".
+// And a sign-up link without a card: the sign-up page asks for no card and the company opens with its free days.
+// And the AI comparison of a walk-around shows for its owner, also in a demo company.
 // Run: emulators:exec --only auth,firestore,functions,storage "node --test tests/offline.e2e.mjs" (APP_DIR = the web build).
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -319,4 +321,52 @@ test('the AI comparison of a walk-around shows for the owner, also in a demo com
   await visible(page, '1 possible new damage').waitFor({ timeout: 10_000 });
   await visible(page, '12 photos compared with the van\'s photos from').waitFor({ timeout: 10_000 });
   await page.context().close();
+});
+
+test('a sign-up link without a card: the page asks for no card, and the company opens with its free days', async () => {
+  // Payments on with the tests' fake Stripe (functions/src/payments.ts), and a link the app creator made with
+  // "Require a credit card" off (product owner, 2026-11-20). Nothing from js.stripe.com is needed on this path.
+  await db.doc('platform/stripe').set({ mode: 'fake', publishableKey: 'pk_test_fake', tax: { mode: 'rate', rateId: 'txr_fake' } });
+  const CODE = 'NOCARDE2E';
+  await db.doc(`offers/${CODE}`).set({
+    code: CODE, note: 'e2e', plan: 'pro', interval: 'month', trialDays: 21, percentOff: null, amountOff: null, months: null, validUntil: null,
+    maxUses: 1, uses: 0, ended: false, requireCard: false, createdAt: Date.now(), createdBy: 'e2e',
+  });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  // A text field by the label above it (components/ui.tsx, Field).
+  const field = (label) => page.locator(`xpath=//*[normalize-space(.)="${label}"]/following-sibling::input[1] >> visible=true`).first();
+  try {
+    await page.goto(`${URL0}/start?offer=${CODE}`);
+    const start = page.locator('[role=button] >> text=/^Start free until / >> visible=true').first();
+    await start.waitFor({ timeout: 60_000 });
+    // No card form: no Stripe fields, no "Company and card".
+    assert.equal(await page.locator('text="Company and card" >> visible=true').count(), 0);
+    assert.equal(await page.locator('iframe[name^="__privateStripeFrame"]').count(), 0);
+    await visible(page, 'Free until').waitFor({ timeout: 10_000 });
+    await field('Your name').fill('Nina Nocard');
+    await page.locator('input[type=email] >> visible=true').first().fill('nina.nocard@example.com');
+    await page.locator('input[type=password] >> visible=true').first().fill('nocard-pass-1');
+    await field('Company name').fill('Nocard Logistik');
+    await page.locator('[role=checkbox] >> text=/I accept the terms/ >> visible=true').first().click();
+    await start.click();
+    // The company opens: the owner's fleet, with no card asked for.
+    await button(page, 'Add vehicle').waitFor({ timeout: 90_000 });
+    const u = await auth.getUserByEmail('nina.nocard@example.com');
+    const orgs = await db.collection('orgs').where('createdBy', '==', u.uid).get();
+    assert.equal(orgs.size, 1);
+    const b = orgs.docs[0].data().billing;
+    assert.equal(b.status, 'trialing');
+    assert.equal(b.cardLater, true);
+    assert.equal(b.card, false);
+    assert.equal(b.plan, 'pro');
+    assert.ok(Math.abs(b.trialEnd - (Date.now() + 21 * 86400_000)) < 3_700_000, 'the link\'s 21 free days');
+    assert.equal((await db.doc(`offers/${CODE}`).get()).data().uses, 1);
+    assert.deepEqual(errors, []);
+  } finally {
+    await ctx.close();
+    await db.doc('platform/stripe').delete();
+  }
 });

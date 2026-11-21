@@ -178,7 +178,8 @@ function PlanCard() {
   const plan: PlanId | undefined = ALL_PLANS.find((x) => x === b?.plan);
   const day = (ms: number) => new Date(ms).toLocaleDateString(loc(), { day: 'numeric', month: 'long', year: 'numeric' });
   const st = standing(s.org).standing;
-  const line = !b?.card ? t('No card yet.')
+  const line = b?.cardLater && !b.card && st === 'trial' ? `${t('Free until {date}.', { date: day(b.trialEnd || Date.now()) })} ${t('No card yet.')}`
+    : !b?.card ? t('No card yet.')
     : st === 'trial' ? t('Free until {date}.', { date: day(b.trialEnd || Date.now()) })
       : b.cancelAt ? t('Cancelled: the plan ends on {date}.', { date: day(b.cancelAt) })
         : b.status === 'past_due' ? t('The last payment didn\'t go through. Check the card.')
