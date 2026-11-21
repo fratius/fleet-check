@@ -113,7 +113,9 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
     const d = spot != null ? k.review!.decisions[String(spot)] : null;
     const afterWalk = walkById.get(k.walkId) || null;
     const foundAt = afterWalk?.createdAt ?? k.createdAt;
-    const beforeWalk = [...byTime].reverse().find((w) => w.id !== k.walkId && w.createdAt < foundAt - 1000 && usable(w).length) || null;
+    // The automatic comparison says which walk-around a spot was compared with; otherwise the van's one before.
+    const compared = p?.beforeWalkId ? walkById.get(p.beforeWalkId) || null : null;
+    const beforeWalk = compared || [...byTime].reverse().find((w) => w.id !== k.walkId && w.createdAt < foundAt - 1000 && usable(w).length) || null;
     const panel = p?.panel || m?.panel || '';
     let pos: Pos;
     let afterPhoto: Photo | null = null;
@@ -141,7 +143,7 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
       pos, afterWalk, beforeWalk, afterPhoto,
       beforePhoto: sameFrame(beforeWalk, afterPhoto, afterWalk),
       box: p ? p.box : null, refPath: p?.refPath || null, markPath: p?.markPath || null, closeups: p?.closeups || [],
-      from: beforeWalk?.createdAt ?? null, to: foundAt,
+      from: p?.beforeAt ?? k.refAt ?? beforeWalk?.createdAt ?? null, to: foundAt,
     });
   };
 

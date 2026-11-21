@@ -96,6 +96,10 @@ export default function Account() {
         </Card>
       ) : null}
 
+      {/* The automatic damage comparison after every walk-around: on for every company, only the app creator switches
+          it (product owner, 2026-11-20; AGB § 5 (4): offered before it is sold, so it can be limited or ended). */}
+      {s.seesAiStats && s.mode === 'firebase' ? <CompareSwitch /> : null}
+
       {/* The version this phone or browser runs, and whether it's the web app or the phone app (product owner,
           2026-11-02: no server names here). */}
       <Card>
@@ -116,6 +120,30 @@ export default function Account() {
       {s.viewAs ? null : <DeleteAccount />}
       <LegalLinks />
     </Screen>
+  );
+}
+
+/** The app creator switches the automatic damage comparison on or off for the open company. */
+function CompareSwitch() {
+  const s = useSession();
+  const c = useColors();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const set = async (on: boolean) => {
+    setBusy(true); setErr(null);
+    try { await s.setAiCompare(on); } catch (e) { setErr(failText(e, 'Switching the automatic damage comparison')); } finally { setBusy(false); }
+  };
+  // Haiku at about 4,800 image tokens a photo, both photos of every frame of a 12-frame walk-around; Opus on a marked frame.
+  const first = (12 * 2 * 4900 * TIER_MODEL.quick.inPerM + 12 * 300 * TIER_MODEL.quick.outPerM) / 1e6;
+  const second = (7000 * TIER_MODEL.complex.inPerM + 500 * TIER_MODEL.complex.outPerM) / 1e6;
+  return (
+    <Card>
+      <T v="h3">{t('Automatic damage comparison')}</T>
+      <T v="hint">{t('After every walk-around taken with the camera, each photo is compared with the van\'s earlier photo of the same frame. {quick} looks at every pair; {best} takes a second look at what it marks. New damage goes to the station\'s fleet managers to review, and they get a notification.', { quick: TIER_MODEL.quick.name, best: TIER_MODEL.complex.name })}</T>
+      <Segmented label={t('Automatic damage comparison')} value={s.aiCompare ? 'on' : 'off'} onChange={(k) => (busy ? null : set(k === 'on'))} options={[['off', t('Off')], ['on', t('On')]]} />
+      <T v="small">{t('About {first} per 12-photo walk-around, plus about {second} for each photo the second look checks. The test log shows the real cost.', { first: usd(first), second: usd(second) })}</T>
+      {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+    </Card>
   );
 }
 

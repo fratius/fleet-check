@@ -140,6 +140,8 @@ jobs:
         run: node --import ./tests/alias.mjs --test tests/outline.test.mjs
       - name: Fleet lists (Excel, CSV) read into vans, before the AI's part (functions/src/fleetfile.ts)
         run: node --import ./tests/alias.mjs --test tests/fleetfile.test.mjs
+      - name: The automatic damage comparison, before and after the AI's part (functions/src/compare.ts)
+        run: node --import ./tests/alias.mjs --test tests/compare.test.mjs
       - name: Every list the app asks for has its index (firestore.indexes.json)
         run: node --test tests/indexes.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)

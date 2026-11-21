@@ -397,5 +397,6 @@
  "hours": "stundas",
  "minutes": "minūtes",
  "seconds": "sekundes",
- "{n} % off": "{n}% atlaide"
+ "{n} % off": "{n}% atlaide",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Katra furgona jaunākā apskate tiek glabāta, līdz tiek veikta jaunāka: lietotne katru apskati salīdzina ar furgona iepriekšējiem foto, lai atrastu jaunus bojājumus."
 }

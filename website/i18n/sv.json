@@ -397,5 +397,6 @@
  "hours": "timmar",
  "minutes": "minuter",
  "seconds": "sekunder",
- "{n} % off": "{n} % rabatt"
+ "{n} % off": "{n} % rabatt",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Den senaste rundgången för varje skåpbil sparas tills en nyare görs: appen jämför varje rundgång med skåpbilens tidigare foton för att hitta nya skador."
 }

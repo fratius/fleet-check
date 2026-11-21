@@ -101,6 +101,8 @@ export const modelOf = (v: { make?: string | null; model?: string | null }) => [
 
 interface CheckDoc {
   vehicleId: string; vehicleName: string; stationId?: string | null; walkId?: string; createdAt: number; status?: string;
+  /** A check from the automatic comparison: the earlier walk-arounds its photos were compared with, and the oldest one's time. */
+  refWalkIds?: string[]; refAt?: number | null;
   spots?: unknown[]; review?: { decisions?: Record<string, { damage?: boolean; known?: string | null }>; manual?: { known?: string | null }[]; at?: number | null } | null;
 }
 /** New damages of a reviewed check: approved and not already on the van (same as newDamage in the app). */
@@ -131,11 +133,19 @@ export async function damageLogFor(orgId: string, checkId: string): Promise<bool
   }
   const walk = k.walkId ? (await org.collection('walkarounds').doc(k.walkId).get()).data() as { createdAt?: number } | undefined : undefined;
   const foundAt = walk?.createdAt ?? k.createdAt;
-  const before = await org.collection('walkarounds').where('vehicleId', '==', k.vehicleId).where('createdAt', '<', foundAt - 1000)
-    .orderBy('createdAt', 'desc').limit(5).get();
-  const prevDoc = before.docs.find((d) => ((d.data() as { photos?: { path?: string; uri?: string }[] }).photos || []).some((p) => p.path || p.uri));
-  const prev = prevDoc?.data() as { createdAt: number } | undefined;
-  const from = prev?.createdAt ?? null;
+  // The automatic comparison knows which photos it compared with: from the oldest of them. A check of one walk-around
+  // counts from the van's walk-around before it.
+  let from: number | null, prevIds: string[];
+  if (typeof k.refAt === 'number' && Array.isArray(k.refWalkIds)) {
+    from = k.refAt;
+    prevIds = k.refWalkIds;
+  } else {
+    const before = await org.collection('walkarounds').where('vehicleId', '==', k.vehicleId).where('createdAt', '<', foundAt - 1000)
+      .orderBy('createdAt', 'desc').limit(5).get();
+    const prevDoc = before.docs.find((d) => ((d.data() as { photos?: { path?: string; uri?: string }[] }).photos || []).some((p) => p.path || p.uri));
+    from = (prevDoc?.data() as { createdAt: number } | undefined)?.createdAt ?? null;
+    prevIds = prevDoc ? [prevDoc.id] : [];
+  }
   // Ids only: each driver reads the lines they're in, and drivers don't see other drivers' names (names.ts).
   const drivers: { id: string }[] = [];
   if (from != null) {
@@ -150,6 +160,6 @@ export async function damageLogFor(orgId: string, checkId: string): Promise<bool
   });
   // Approved damage keeps its photos 90 days: the check's close-ups, the walk-around it was found in and the one
   // before it (media.ts).
-  await keepForCheck(orgId, checkId, k.createdAt, approvedDamage(k), [k.walkId, prevDoc?.id]);
+  await keepForCheck(orgId, checkId, k.createdAt, approvedDamage(k), [k.walkId, ...prevIds]);
   return true;
 }

@@ -397,5 +397,6 @@
  "hours": "hodín",
  "minutes": "minút",
  "seconds": "sekúnd",
- "{n} % off": "Zľava {n} %"
+ "{n} % off": "Zľava {n} %",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Najnovšia obhliadka každej dodávky zostáva uložená, kým sa neurobí novšia: aplikácia porovná každú obhliadku so staršími fotkami dodávky a nájde nové poškodenia."
 }

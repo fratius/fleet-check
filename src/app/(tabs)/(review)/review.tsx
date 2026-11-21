@@ -106,8 +106,8 @@ export default function ReviewQueue() {
       ) : null}
 
       {show('review') ? (
-        <Section color={MARKER} title={t('To review')} count={waiting.length} note={t('Checks drivers sent. Oldest first.')}>
-          {!waiting.length ? <Empty text={t('Nothing to decide right now. Checks appear here when a driver sends one.')} /> : null}
+        <Section color={MARKER} title={t('To review')} count={waiting.length} note={t('Checks drivers sent, and new damage the AI found by comparing walk-arounds. Oldest first.')}>
+          {!waiting.length ? <Empty text={t('Nothing to decide right now. Checks appear here when a driver sends one or the AI finds new damage.')} /> : null}
           {waiting.map((k) => <ToReview key={k.id} k={k} van={s.vanName(k)} alias={alias(k.vehicleId)} where={where(k.stationId)} />)}
         </Section>
       ) : null}
@@ -252,7 +252,9 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
   const aiDamage = k.spots.filter((p) => p.verdict?.verdict === 'damage').length;
   const long = Date.now() - sent > 2 * 3600_000;
   const nameOf = useNameOf();
-  const by = nameOf(k.createdBy) || k.createdByName || null;
+  // The automatic comparison: whose photos they were (nobody ran it).
+  const auto = k.auto === 'compare';
+  const by = auto ? nameOf(k.walkBy) || null : nameOf(k.createdBy) || k.createdByName || null;
   return (
     <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={by ? t('Review {name}, {van}', { name: by, van: van }) : t('Review {van}', { van: van })}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>{by ? `${by} – ${van}` : van}</Text>
@@ -262,8 +264,10 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
         {where ? <T v="hint">{where}</T> : null}
       </Row>
       <Row gap={6}>
+        {auto ? <Pill v="solid" text={k.walkKind === 'pickup' ? t('Pick-up photos') : k.walkKind === 'dropoff' ? t('Drop-off photos') : t('Walk-around')} /> : null}
         <Pill text={tp(k.spots.length, '{n} spot', '{n} spots')} />
-        <Pill v={aiDamage ? 'bad' : 'good'} text={aiDamage ? tp(aiDamage, 'AI found {n} damage', 'AI found {n} damages') : t('AI found no damage')} />
+        {auto ? <Pill v={aiDamage ? 'bad' : 'amber'} text={aiDamage ? tp(aiDamage, 'AI comparison: {n} new damage', 'AI comparison: {n} new damages') : t('AI comparison: not sure')} />
+          : <Pill v={aiDamage ? 'bad' : 'good'} text={aiDamage ? tp(aiDamage, 'AI found {n} damage', 'AI found {n} damages') : t('AI found no damage')} />}
         {k.missedNote ? <Pill v="amber" text={t('Note from the driver')} /> : null}
       </Row>
     </ActionCard>

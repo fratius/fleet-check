@@ -33,7 +33,7 @@ export interface Answer<T> { obj: T; usage: Usage; model: string }
  * (structured output), and falls back to plain JSON in the text if the model rejects the schema.
  */
 export async function ask<T>(key: string, tier: Tier, parts: Part[], prompt: string, schema: object, maxTokens: number): Promise<Answer<T>> {
-  if (process.env.FUNCTIONS_EMULATOR === 'true' && key === 'not-used-in-tests') return testAnswer<T>(tier, parts, schema);
+  if (process.env.FUNCTIONS_EMULATOR === 'true' && key === 'not-used-in-tests') return testAnswer<T>(tier, parts, schema, prompt);
   const c = getClient(key);
   const model = MODELS[tier].id;
   const content: Anthropic.ContentBlockParam[] = [];
@@ -123,9 +123,17 @@ function toHttps(e: unknown): HttpsError {
 /** The column keys a fleet-list mapping may use (fleetfile.ts: mapSchema), so a manager's answer has no money in it. */
 const mapKeys = (props: Record<string, unknown>) =>
   (props.tables as { items?: { properties?: { columns?: { items?: { properties?: { key?: { enum?: string[] } } } } } } })?.items?.properties?.columns?.items?.properties?.key?.enum || [];
-function testAnswer<T>(tier: Tier, parts: Part[], schema: object): Answer<T> {
+function testAnswer<T>(tier: Tier, parts: Part[], schema: object, prompt = ''): Answer<T> {
   const props = (schema as { properties?: Record<string, unknown> }).properties || {};
-  const obj = 'more' in props
+  // The damage comparison (compare.ts): the first look marks a spot on the first photo of a walk-around (the front),
+  // unless the van's plate or name says QUIET; the second look calls it new damage.
+  const marks = /\(photo 1\):/.test(prompt) && !/quiet/i.test(prompt);
+  const obj = 'comparable' in props
+    ? { sameVan: true, comparable: true, issue: null, unsure: false,
+      changes: marks ? [{ box: [0.3, 0.35, 0.5, 0.5], beforeBox: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.7, why: 'Test answer.' }] : [] }
+    : 'decisions' in props
+    ? { decisions: [{ spot: 1, verdict: 'new', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.' }], more: [] }
+    : 'more' in props
     // A PDF or photos of a printed fleet list, copied into a table (fleetfile.ts).
     ? { readable: true, more: false, notes: null, rows: [
       ['Kennzeichen', 'Fzg-Nr.', 'Standort', 'Fahrzeug', 'FIN', 'HU', 'Leasingrate', 'Kraftstoff', 'Fahrer'],

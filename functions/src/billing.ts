@@ -96,7 +96,7 @@ export const MAX_COMPANIES = 3;
  * The version of the terms (AGB) and data processing agreement (AVV) people accept when they create a company; null
  * until they are published. Set it together with TERMS_VERSION in src/lib/billing.ts.
  */
-export const TERMS_VERSION: string | null = '2026-11-12';
+export const TERMS_VERSION: string | null = '2026-11-20';
 
 export type BillingStatus = 'incomplete' | 'trialing' | 'active' | 'past_due' | 'unpaid' | 'paused' | 'canceled' | 'comped';
 export interface Billing {

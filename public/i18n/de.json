@@ -53,6 +53,10 @@
  "A photo path is outside this company.": "Ein Fotopfad liegt außerhalb dieser Firma.",
  "A video or the photos are needed to drop it off.": "Für die Abgabe brauchst du ein Video oder die Fotos.",
  "A walk-around": "Ein Rundgang",
+ "A walk-around shows {n} possible new damages. Review them.": {
+  "one": "Ein Rundgang zeigt {n} möglichen neuen Schaden. Bewerte ihn.",
+  "other": "Ein Rundgang zeigt {n} mögliche neue Schäden. Bewerte sie."
+ },
  "A walk-around with {n} photos (about {min} min) or one video.": {
   "one": "Ein Rundgang mit {n} Foto (etwa {min} Min.) oder ein Video.",
   "other": "Ein Rundgang mit {n} Fotos (etwa {min} Min.) oder ein Video."
@@ -60,6 +64,16 @@
  "A yearly plan can't switch to monthly in the app. Write to info@fratius.com.": "Ein Jahrestarif lässt sich in der App nicht auf monatlich umstellen. Schreib an info@fratius.com.",
  "ABS": "ABS",
  "AI checks need the Firebase backend. Finish the setup first.": "KI-Prüfungen brauchen das Firebase-Backend. Schließ zuerst die Einrichtung ab.",
+ "AI comparison": "KI-Vergleich",
+ "AI comparison: not sure": "KI-Vergleich: nicht sicher",
+ "AI comparison: {n} new damages": {
+  "one": "KI-Vergleich: {n} neuer Schaden",
+  "other": "KI-Vergleich: {n} neue Schäden"
+ },
+ "AI comparison: {n} spots to review": {
+  "one": "KI-Vergleich: {n} Stelle zu bewerten",
+  "other": "KI-Vergleich: {n} Stellen zu bewerten"
+ },
  "AI found no damage": "KI hat keinen Schaden gefunden",
  "AI found {n} damages": {
   "one": "KI hat {n} Schaden gefunden",
@@ -67,8 +81,11 @@
  },
  "AI model": "KI-Modell",
  "AI model for checks": "KI-Modell für Prüfungen",
+ "AI: new damage": "KI: neuer Schaden",
+ "AI: not sure": "KI: nicht sicher",
  "AI: {reason}": "KI: {reason}",
  "AI: {verdict}": "KI: {verdict}",
+ "About {first} per 12-photo walk-around, plus about {second} for each photo the second look checks. The test log shows the real cost.": "Etwa {first} pro Rundgang mit 12 Fotos, plus etwa {second} für jedes Foto, das der zweite Blick prüft. Das Testprotokoll zeigt die tatsächlichen Kosten.",
  "About {km} a year over the allowance, roughly {eur} a year extra.": "Etwa {km} pro Jahr über der vereinbarten Laufleistung, rund {eur} pro Jahr extra.",
  "About {km} a year over the allowance.": "Etwa {km} pro Jahr über der vereinbarten Laufleistung.",
  "About {m} m away": "Etwa {m} m entfernt",
@@ -129,12 +146,15 @@
  "Added by {name}, changed by {by}": "Hinzugefügt von {name}, geändert von {by}",
  "Adding the card…": "Karte wird hinterlegt…",
  "After": "Nachher",
+ "After every walk-around taken with the camera, each photo is compared with the van's earlier photo of the same frame. {quick} looks at every pair; {best} takes a second look at what it marks. New damage goes to the station's fleet managers to review, and they get a notification.": "Nach jedem Rundgang mit der Kamera wird jedes Foto mit dem früheren Foto derselben Ansicht des Transporters verglichen. {quick} prüft jedes Paar; {best} wirft einen zweiten Blick auf das, was es markiert. Neue Schäden gehen zur Bewertung an die Flottenmanager der Station, und sie bekommen eine Benachrichtigung.",
+ "After, {when}": "Nachher, {when}",
  "After: {name}, from {when}.": "Danach: {name}, ab {when}.",
  "Airbag": "Airbag",
  "All ({n})": "Alle ({n})",
  "All companies": "Alle Firmen",
  "All companies ({n})": "Alle Firmen ({n})",
  "All details": "Alle Details",
+ "All in, per walk-around": "Gesamt, pro Rundgang",
  "All spots": "Alle Stellen",
  "All stations": "Alle Stationen",
  "All vans": "Alle Transporter",
@@ -193,6 +213,8 @@
  "At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.": "An dieser Station gibt dein Flottenmanager die Transporter aus. Frag dort nach oder bitte darum, dass Fahrer Transporter selbst abholen dürfen.",
  "At your station, newest first. Kept for good.": "An deiner Station, neueste zuerst. Wird dauerhaft aufbewahrt.",
  "Automatic": "Automatik",
+ "Automatic damage comparison": "Automatischer Schadensvergleich",
+ "Automatic damage comparison is off for this company.": "Der automatische Schadensvergleich ist für diese Firma ausgeschaltet.",
  "Back": "Zurück",
  "Back to me": "Zurück zu mir",
  "Back to {title}": "Zurück zu {title}",
@@ -208,6 +230,7 @@
  "Before you start the wash": "Vor dem Waschen",
  "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.": "Bevor du es einschaltest: Damit wird aufgezeichnet, wie Mitarbeitende arbeiten. Sag deinen Fahrern, was aufgezeichnet wird und warum, und stimm es zuerst mit dem Betriebsrat ab, falls die Firma einen hat.",
  "Before {when}. There are no earlier photos of this van.": "Vor {when}. Es gibt keine früheren Fotos von diesem Transporter.",
+ "Before, {when}": "Vorher, {when}",
  "Before: {name}, until {when}.": "Davor: {name}, bis {when}.",
  "Before: {panel}, {when}": "Vorher: {panel}, {when}",
  "Best": "Beste",
@@ -303,6 +326,7 @@
  "Checking the video…": "Video wird geprüft…",
  "Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.": "Kontrollen, die Fahrer an ihrem Transporter machen, etwa Ölstand oder Laderaum. Der Fahrer, der den Transporter hat, sieht, was fällig ist, und hakt es ab. Er bekommt nach einer Stunde eine Erinnerung; du erfährst es, wenn es nach 3 Stunden noch nicht erledigt ist, und sofort, wenn ein Fahrer ein Problem findet. Erinnerungen nur zwischen 6:00 und 20:00 Uhr.",
  "Checks drivers haven't done yet (red after 3 hours), and problems they found in the last 7 days.": "Kontrollen, die Fahrer noch nicht gemacht haben (rot nach 3 Stunden), und Probleme, die sie in den letzten 7 Tagen gefunden haben.",
+ "Checks drivers sent, and new damage the AI found by comparing walk-arounds. Oldest first.": "Von Fahrern gesendete Prüfungen und neue Schäden, die die KI beim Vergleich von Rundgängen gefunden hat. Älteste zuerst.",
  "Checks drivers sent. Oldest first.": "Von Fahrern gesendete Prüfungen. Älteste zuerst.",
  "Checks for drivers": "Kontrollen für Fahrer",
  "Checks for drivers need the Firebase backend.": "Kontrollen für Fahrer brauchen das Firebase-Backend.",
@@ -340,6 +364,10 @@
  "Company and card": "Firma und Karte",
  "Company name": "Firmenname",
  "Compare with the dashboard and correct anything that's wrong.": "Vergleiche mit dem Tacho und korrigiere alles, was falsch ist.",
+ "Compare with the photos before": "Mit den Fotos davor vergleichen",
+ "Comparing every photo with the van's earlier photos. This takes about a minute.": "Jedes Foto wird mit den früheren Fotos des Transporters verglichen. Das dauert etwa eine Minute.",
+ "Comparisons": "Vergleiche",
+ "Comparisons ({n})": "Vergleiche ({n})",
  "Complaints": "Beschwerden",
  "Connected to Firebase project {project}. Photos and results sync across phones and the web.": "Verbunden mit dem Firebase-Projekt {project}. Fotos und Ergebnisse werden zwischen Handys und Web synchronisiert.",
  "Contact": "Kontakt",
@@ -357,6 +385,7 @@
  "Correct: {what}": "Korrigieren: {what}",
  "Corrected. What it was before is kept with it.": "Korrigiert. Der vorherige Stand bleibt dabei gespeichert.",
  "Cosmetic": "Optisch",
+ "Cost": "Kosten",
  "Cost in period": "Kosten im Zeitraum",
  "Cost per check, all in": "Kosten pro Prüfung, gesamt",
  "Cost per scan": "Kosten pro Scan",
@@ -441,6 +470,7 @@
  "Damage per 10,000 km": "Schäden pro 10.000 km",
  "Damage the AI missed": "Von der KI übersehene Schäden",
  "Damage the AI missed ({n})": "Von der KI übersehene Schäden ({n})",
+ "Damage the managers added": "Von Managern ergänzte Schäden",
  "Damage was approved in a check of these photos.": "In einer Prüfung dieser Fotos wurde ein Schaden bestätigt.",
  "Damage was approved: the photos are kept until {date}.": "Ein Schaden wurde bestätigt: Die Fotos werden bis zum {date} aufbewahrt.",
  "Damage {no}": "Schaden {no}",
@@ -583,6 +613,7 @@
  "Every check is done.": "Alle Kontrollen sind erledigt.",
  "Every company in the app. Opens and manages any of them.": "Alle Firmen in der App. Kann jede davon öffnen und verwalten.",
  "Every company using the app. Open one to see it as its owner would.": "Alle Firmen, die die App nutzen. Öffne eine, um sie so zu sehen wie ihr Inhaber.",
+ "Every comparison": "Jeder Vergleich",
  "Every dashboard photo updates the odometer.": "Jedes Tachofoto aktualisiert den Kilometerstand.",
  "Every entry": "Alle Einträge",
  "Every few days": "Alle paar Tage",
@@ -603,6 +634,7 @@
  },
  "Everyone who had this van, newest first. This history is kept for good.": "Alle, die diesen Transporter hatten, neueste zuerst. Dieser Verlauf wird dauerhaft aufbewahrt.",
  "Excel (.xlsx), CSV or PDF: a fleet list, a leasing or insurance list, an export from another system. One van per line, with its number plate. Anything else the file has is read too: VIN, first registration, TÜV, contract, insurance, fuel card, station.": "Excel (.xlsx), CSV oder PDF: eine Fuhrparkliste, eine Leasing- oder Versicherungsliste, ein Export aus einem anderen System. Ein Transporter pro Zeile, mit Kennzeichen. Alles andere in der Datei wird mitgelesen: VIN, Erstzulassung, TÜV, Vertrag, Versicherung, Tankkarte, Station.",
+ "Failed": "Fehlgeschlagen",
  "Failed, has to go again": "Nicht bestanden, muss erneut hin",
  "Fast": "Schnell",
  "Fault": "Schuld",
@@ -631,9 +663,12 @@
  "Firebase isn't connected yet, so this app keeps everything on this phone.": "Firebase ist noch nicht verbunden, daher speichert die App alles auf diesem Handy.",
  "First a video or the photos, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name.": "Zuerst ein Video oder die Fotos, damit dir Schäden, die schon da waren, nicht angelastet werden. Die Abholung kommt unter deinem Namen in den Verlauf des Transporters.",
  "First aid kit and warning triangle": "Verbandkasten und Warndreieck",
+ "First look": "Erster Blick",
+ "First look, per walk-around": "Erster Blick, pro Rundgang",
  "First name": "Vorname",
  "First registration": "Erstzulassung",
  "First station": "Erste Station",
+ "First walk-around": "Erster Rundgang",
  "First, the dashboard": "Zuerst der Tacho",
  "Fit the vehicle to the outline.": "Richte das Fahrzeug am Umriss aus.",
  "Flat, in good light, the whole page in the picture. More pages? Add them before reading.": "Flach, bei gutem Licht, die ganze Seite im Bild. Mehr Seiten? Füge sie vor dem Auslesen hinzu.",
@@ -673,6 +708,8 @@
  "Forgot your password?": "Passwort vergessen?",
  "Former people": "Ehemalige",
  "Found and approved": "Gefunden und bestätigt",
+ "Found by the AI comparing these photos with the van's earlier photos. It can be wrong: compare the before and after photos.": "Von der KI beim Vergleich dieser Fotos mit den früheren Fotos des Transporters gefunden. Sie kann sich irren: Vergleiche die Fotos vorher und nachher.",
+ "Found by the AI comparing these photos with the van's photos from {when}. It can be wrong: compare the before and after photos.": "Von der KI beim Vergleich dieser Fotos mit den Fotos des Transporters vom {when} gefunden. Sie kann sich irren: Vergleiche die Fotos vorher und nachher.",
  "Found {n} details. Ticked: new or different from what's saved. Correct anything that's wrong.": {
   "one": "{n} Angabe gefunden. Angehakt: neu oder anders als gespeichert. Korrigiere, was falsch ist.",
   "other": "{n} Angaben gefunden. Angehakt: neu oder anders als gespeichert. Korrigiere, was falsch ist."
@@ -1027,6 +1064,7 @@
  "No checks for this van yet.": "Noch keine Kontrollen für diesen Transporter.",
  "No checks yet. Add one: the suggestions make it a few taps.": "Noch keine Kontrollen. Füge eine hinzu: Mit den Vorschlägen sind es nur ein paar Fingertipps.",
  "No comments yet. For example: what the driver said, the repair or the insurance claim.": "Noch keine Kommentare. Zum Beispiel: was der Fahrer gesagt hat, die Reparatur oder der Versicherungsfall.",
+ "No comparisons yet. Every walk-around taken with the camera is compared with the van's earlier photos.": "Noch keine Vergleiche. Jeder Rundgang mit der Kamera wird mit den früheren Fotos des Transporters verglichen.",
  "No connection. Check your internet and try again.": "Keine Verbindung. Prüf dein Internet und versuch es noch mal.",
  "No connection. It's saved on this phone and goes through by itself when there's a connection.": "Keine Verbindung. Es ist auf diesem Handy gespeichert und wird von selbst gesendet, sobald eine Verbindung da ist.",
  "No connection. Showing what this phone last saw ({when}). Changes you make wait here and go through by themselves.": "Keine Verbindung. Angezeigt wird der letzte Stand dieses Handys ({when}). Änderungen, die du machst, warten hier und werden von selbst gesendet.",
@@ -1058,6 +1096,7 @@
  "No drop-off video or photos: {driver} didn't drop it off, the next driver took it over.": "Kein Abgabevideo und keine Fotos: {driver} hat ihn nicht abgegeben, der nächste Fahrer hat ihn übernommen.",
  "No drop-off video or photos: {driver} didn't drop it off, {next} took it over.": "Kein Abgabevideo und keine Fotos: {driver} hat ihn nicht abgegeben, {next} hat ihn übernommen.",
  "No earlier photos of this van": "Keine früheren Fotos von diesem Transporter",
+ "No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.": "Noch keine früheren Fotos dieses Transporters zum Vergleichen. Der nächste Rundgang wird mit diesen Fotos verglichen.",
  "No earlier photos, so it can't be narrowed down.": "Keine früheren Fotos, daher lässt es sich nicht eingrenzen.",
  "No end-of-tour photo": "Kein Foto zum Tourende",
  "No fleet manager at {station} yet.": "Noch kein Flottenmanager bei {station}.",
@@ -1069,6 +1108,7 @@
  "No km yet": "Noch kein Kilometerstand",
  "No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.": "Daraus ließ sich keine Liste von Transportern lesen. Lade die Liste als Excel-Datei oder CSV hoch, oder ein schärferes Foto.",
  "No make or model in the list": "Keine Marke und kein Modell in der Liste",
+ "No new damage": "Kein neuer Schaden",
  "No number plate yet. Add it under Details: the plate is how this van is shown everywhere.": "Noch kein Kennzeichen. Trag es unter Details ein: Am Kennzeichen erkennt man den Transporter überall.",
  "No number plates were found in this file. Check that it lists the vans with their plates, one van per line.": "In dieser Datei wurden keine Kennzeichen gefunden. Prüfe, ob sie die Transporter mit Kennzeichen auflistet, einen pro Zeile.",
  "No photo": "Kein Foto",
@@ -1113,6 +1153,16 @@
  "Not at fault": "Nicht schuld",
  "Not checked": "Nicht geprüft",
  "Not clear yet": "Noch unklar",
+ "Not compared": "Nicht verglichen",
+ "Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.": {
+  "one": "Nicht verglichen: In der kostenlosen Testphase und in Demo-Firmen bekommt jeder Transporter {n} Vergleich am Tag.",
+  "other": "Nicht verglichen: In der kostenlosen Testphase und in Demo-Firmen bekommt jeder Transporter {n} Vergleiche am Tag."
+ },
+ "Not compared: during the free trial each van gets {n} comparisons a day.": {
+  "one": "Nicht verglichen: In der kostenlosen Testphase bekommt jeder Transporter {n} Vergleich am Tag.",
+  "other": "Nicht verglichen: In der kostenlosen Testphase bekommt jeder Transporter {n} Vergleiche am Tag."
+ },
+ "Not compared: {list}.": "Nicht verglichen: {list}.",
  "Not connected to Firebase yet: vehicles are saved on this phone only.": "Noch nicht mit Firebase verbunden: Fahrzeuge werden nur auf diesem Handy gespeichert.",
  "Not damage": "Kein Schaden",
  "Not done yet.": "Noch nicht erledigt.",
@@ -1145,6 +1195,7 @@
  "Nothing recorded yet. Add the last service from its invoice to start.": "Noch nichts erfasst. Trag zum Start den letzten Service von seiner Rechnung ein.",
  "Nothing recorded.": "Nichts erfasst.",
  "Nothing reviewed yet.": "Noch nichts bewertet.",
+ "Nothing to decide right now. Checks appear here when a driver sends one or the AI finds new damage.": "Gerade gibt es nichts zu entscheiden. Prüfungen erscheinen hier, wenn ein Fahrer eine sendet oder die KI neue Schäden findet.",
  "Nothing to decide right now. Checks appear here when a driver sends one.": "Gerade nichts zu entscheiden. Prüfungen erscheinen hier, wenn ein Fahrer eine sendet.",
  "Nothing to save": "Nichts zu speichern",
  "Nothing waiting. Everything is sent.": "Nichts wartet. Alles ist gesendet.",
@@ -1217,6 +1268,7 @@
  "Only the person who started it, or the station's fleet manager, can cancel it.": "Nur die Person, die es gestartet hat, oder der Flottenmanager der Station kann es abbrechen.",
  "Only the result is kept, not the licence number or a copy.": "Nur das Ergebnis wird gespeichert, nicht die Führerscheinnummer oder eine Kopie.",
  "Only the station's fleet managers and owners decide this.": "Das entscheiden nur die Flottenmanager und Inhaber der Station.",
+ "Only walk-arounds taken with the camera are compared.": "Nur Rundgänge, die mit der Kamera aufgenommen wurden, werden verglichen.",
  "Only you": "Nur du",
  "Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.": "Nur du siehst das. Ein Link legt die kostenlosen Tage, einen Rabatt und den Tarif für einen DSP fest; der DSP hinterlegt trotzdem eine Karte.",
  "Only you see this. A link sets the free days, a discount, the plan and whether a card is asked at sign-up, for one DSP.": "Nur du siehst das. Ein Link legt für einen DSP die kostenlosen Tage, einen Rabatt und den Tarif fest, und ob bei der Registrierung eine Karte nötig ist.",
@@ -1233,6 +1285,8 @@
  "Open the check": "Prüfung öffnen",
  "Open the demo company": "Demofirma öffnen",
  "Open the fleet": "Zur Flotte",
+ "Open the photos after": "Fotos nachher öffnen",
+ "Open the photos before": "Fotos vorher öffnen",
  "Open this page on your phone to install the app there, or keep using it in this browser.": "Öffne diese Seite auf deinem Handy, um die App dort zu installieren, oder nutze sie weiter in diesem Browser.",
  "Open {name}": "{name} öffnen",
  "Open {plate}": "{plate} öffnen",
@@ -1278,6 +1332,7 @@
  "People of {station}. Someone who already has a van hands it back: it becomes free.": "Personen von {station}. Wer schon einen Transporter hat, gibt ihn zurück: Er wird frei.",
  "Per month, without VAT": "Pro Monat, ohne MwSt.",
  "Per van": "Pro Transporter",
+ "Per van and month": "Pro Transporter und Monat",
  "Percent off": "Rabatt in Prozent",
  "Period": "Zeitraum",
  "Person": "Person",
@@ -1351,6 +1406,7 @@
  "Please check before you go on": "Bitte prüf das, bevor du weitermachst",
  "Plugged in to charge": "Zum Laden angeschlossen",
  "Policy number": "Policennummer",
+ "Possible new damage: {van}": "Möglicher neuer Schaden: {van}",
  "Possible, {pct}%": "Möglich, {pct}%",
  "Power": "Leistung",
  "Price: {price}": "Preis: {price}",
@@ -1450,6 +1506,7 @@
  "Retired ({n})": "Ausgemustert ({n})",
  "Retiring takes a van out of the fleet (sold, returned, written off). Vans are never deleted: their checks and driver history stay.": "Ausmustern nimmt einen Transporter aus der Flotte (verkauft, zurückgegeben, Totalschaden). Transporter werden nie gelöscht: Ihre Prüfungen und ihr Fahrerverlauf bleiben.",
  "Review": "Bewertung",
+ "Review the spots": "Stellen bewerten",
  "Review {name}, {van}": "{name}, {van} bewerten",
  "Review {n} spots": {
   "one": "{n} Stelle bewerten",
@@ -1484,6 +1541,7 @@
  "Role": "Rolle",
  "Roller shutter": "Rolltor",
  "Run one from a walk-around below, or check photos you already have.": "Starte eine über einen Rundgang unten oder prüfe Fotos, die du schon hast.",
+ "Running": "Läuft",
  "Runs out at the end of {month}": "Läuft Ende {month} ab",
  "SUV or crossover": "SUV oder Crossover",
  "Safety briefing (yearly)": "Sicherheitsunterweisung (jährlich)",
@@ -1548,6 +1606,8 @@
  "Scan it": "Scannen",
  "Scan it and the app picks its type, or pick the type yourself.": "Scanne das Fahrzeug, dann erkennt die App den Typ, oder wähle ihn selbst.",
  "Scan with photos or a video?": "Mit Fotos oder Video scannen?",
+ "Second look": "Zweiter Blick",
+ "Second look, per photo checked": "Zweiter Blick, pro geprüftem Foto",
  "See all deadlines": "Alle Fristen ansehen",
  "See and change checks": "Kontrollen ansehen und ändern",
  "See the app the way each role sees it.": "Sieh die App so, wie jede Rolle sie sieht.",
@@ -1635,6 +1695,7 @@
  "Speed and cost": "Tempo und Kosten",
  "Speeding": "Zu schnell",
  "Spots per check": "Stellen pro Prüfung",
+ "Spots the first look marked that the second look calls already there or not damage are the false alarms it removes. Damage the managers added is what both missed.": "Stellen, die der erste Blick markiert und der zweite als schon vorhanden oder als kein Schaden einstuft, sind die Fehlalarme, die er aussortiert. Von Managern ergänzte Schäden haben beide übersehen.",
  "Spots the first pass marked that turned out to be dirt or reflections are the false alarms the close-ups remove.": "Stellen, die der erste Durchgang markiert hat und die sich als Schmutz oder Spiegelungen herausstellten, sind die Fehlalarme, die die Nahaufnahmen aussortieren.",
  "Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.": "Stell dich schräg zur Ecke. Stoßfängerecke in der Mitte, Radlauf im Bild.",
  "Standard roof": "Normaldach",
@@ -1759,9 +1820,14 @@
  "The AI couldn't read it.": "Die KI konnte es nicht lesen.",
  "The AI couldn't read it: {issue}.": "Die KI konnte es nicht lesen: {issue}.",
  "The AI declined to answer for these photos. Try other photos.": "Die KI hat eine Antwort zu diesen Fotos abgelehnt. Versuch andere Fotos.",
+ "The AI found no new damage. It can miss small damage.": "Die KI hat keinen neuen Schaden gefunden. Kleine Schäden kann sie übersehen.",
  "The AI functions aren't deployed yet. Check that the GitHub deploy ran.": "Die KI-Funktionen sind noch nicht bereitgestellt. Prüf, ob das GitHub-Deployment gelaufen ist.",
  "The AI isn't sure about the odometer. Compare it with the dashboard.": "Die KI ist sich beim Kilometerstand nicht sicher. Vergleiche ihn mit dem Tacho.",
  "The AI key isn't set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.": "Der KI-Schlüssel ist nicht gesetzt. Füge das Secret ANTHROPIC_API_KEY in GitHub hinzu und führe den Deploy-Workflow aus.",
+ "The AI marked {n} spots that may be new. Review them: your decision goes on the van's record.": {
+  "one": "Die KI hat {n} Stelle markiert, die neu sein kann. Bewerte sie: Deine Entscheidung kommt in die Schadensakte des Transporters.",
+  "other": "Die KI hat {n} Stellen markiert, die neu sein können. Bewerte sie: Deine Entscheidung kommt in die Schadensakte des Transporters."
+ },
  "The AI marks possible damage, then asks for close-ups of each spot.": "Die KI markiert mögliche Schäden und bittet dann um Nahaufnahmen jeder Stelle.",
  "The AI model": "Das KI-Modell",
  "The AI rejected the request: {why}": "Die KI hat die Anfrage abgelehnt: {why}",
@@ -1795,6 +1861,7 @@
  "The company's owner adds the plan and the card. Ask them, then open Fratius again.": "Tarif und Karte hinterlegt der Flotteninhaber deiner Firma. Frag ihn und öffne Fratius dann noch mal.",
  "The company's plan is for {n} vans and they are all in use. Ask the owner for more room.": "Der Tarif der Firma gilt für {n} Transporter, und alle sind im Einsatz. Bitte den Flotteninhaber, Platz für mehr Transporter zu schaffen.",
  "The company's storage is full. Tell your fleet manager.": "Der Speicher der Firma ist voll. Sag es deinem Flottenmanager.",
+ "The comparison with the van's earlier photos didn't finish.": "Der Vergleich mit den früheren Fotos des Transporters wurde nicht beendet.",
  "The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.": "Die Kopie, die auf jedem Handy läuft, konnte nicht erstellt werden. Das ist das Original; es läuft auf iPhones und Macs.",
  "The cost doesn't look right.": "Die Kosten sehen nicht richtig aus.",
  "The damage log for {van}": "Das Schadensprotokoll für {van}",
@@ -1810,11 +1877,16 @@
  "The driver who has this van does its checks (or the station's fleet manager).": "Die Kontrollen macht der Fahrer, der diesen Transporter hat (oder der Flottenmanager der Station).",
  "The drivers of each van need the Firebase backend.": "Die Fahrer pro Transporter brauchen das Firebase-Backend.",
  "The drop-off photos of {van} are saved with its history.": "Die Abgabefotos von {van} sind in seinem Verlauf gespeichert.",
+ "The drop-off photos show {n} possible new damages. Review them.": {
+  "one": "Die Abgabefotos zeigen {n} möglichen neuen Schaden. Bewerte ihn.",
+  "other": "Die Abgabefotos zeigen {n} mögliche neue Schäden. Bewerte sie."
+ },
  "The file is bigger than {n} MB. Upload the list on its own, as .xlsx or CSV.": "Die Datei ist größer als {n} MB. Lade nur die Liste hoch, als .xlsx oder CSV.",
  "The file is deleted straight after reading. Vans aren't given to drivers from a file.": "Die Datei wird direkt nach dem Lesen gelöscht. Aus einer Datei werden keine Transporter an Fahrer vergeben.",
  "The file is too big. Upload the list on its own, as .xlsx or CSV.": "Die Datei ist zu groß. Lade nur die Liste hoch, als .xlsx oder CSV.",
  "The file lists {n} vans. Upload at most {max} at a time.": "Die Datei enthält {n} Transporter. Lade höchstens {max} auf einmal hoch.",
  "The file seems to be damaged. Save it again and upload it.": "Die Datei scheint beschädigt zu sein. Speichere sie neu und lade sie hoch.",
+ "The first walk-around of this van: nothing to compare with yet. The next one is compared with these photos.": "Der erste Rundgang dieses Transporters: noch nichts zum Vergleichen. Der nächste wird mit diesen Fotos verglichen.",
  "The fleet managers and drivers of your station.": "Die Flottenmanager und Fahrer deiner Station.",
  "The fleet owner changes these.": "Der Flotteninhaber ändert diese Einstellungen.",
  "The free trial ended on {day}.": "Die kostenlose Testphase ist am {day} abgelaufen.",
@@ -1844,6 +1916,7 @@
  "The most thorough look at every photo.": "Der gründlichste Blick auf jedes Foto.",
  "The name on the document doesn't look like {name}. Check it's theirs before saving.": "Der Name auf dem Dokument sieht nicht nach {name} aus. Prüf vor dem Speichern, ob es wirklich das richtige ist.",
  "The new TÜV date has to be after the day it was done.": "Das neue TÜV-Datum muss nach dem Tag der Durchführung liegen.",
+ "The newest walk-around of a van keeps its photos until a newer one is taken, so the next one can be compared with it.": "Der neueste Rundgang eines Transporters behält seine Fotos, bis ein neuerer aufgenommen wird, damit der nächste mit ihm verglichen werden kann.",
  "The next check shows on each driver's record and in Review. Every 6 months is common practice.": "Die nächste Kontrolle erscheint in der Akte jedes Fahrers und unter „Bewertung“. Alle 6 Monate ist üblich.",
  "The next dates show on the van, in the fleet list and in Review.": "Die nächsten Termine erscheinen beim Transporter, in der Flottenliste und unter „Bewertung“.",
  "The next service has to be after the day it was done.": "Der nächste Service muss nach dem Tag der Durchführung liegen.",
@@ -1868,6 +1941,10 @@
  "The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.": "Die Fotos zeigen den Zustand des Transporters bei der Rückgabe, damit dir Schäden, die schon da waren, nicht angelastet werden. Sie werden im Verlauf des Transporters aufbewahrt.",
  "The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.": "Die Fotos zeigen den Zustand des Transporters bei der Übernahme, damit dir Schäden, die schon da waren, nicht angelastet werden. Sie werden im Verlauf des Transporters aufbewahrt.",
  "The pick-up photos of {van} are saved with its history.": "Die Abholfotos von {van} sind in seinem Verlauf gespeichert.",
+ "The pick-up photos show {n} possible new damages. Review them.": {
+  "one": "Die Abholfotos zeigen {n} möglichen neuen Schaden. Bewerte ihn.",
+  "other": "Die Abholfotos zeigen {n} mögliche neue Schäden. Bewerte sie."
+ },
  "The pick-up video of {van} is saved with its history.": "Das Abholvideo von {van} ist in seinem Verlauf gespeichert.",
  "The plan has ended": "Der Tarif ist beendet",
  "The plan has ended. You can look at and export the data until {date}.": "Der Tarif ist beendet. Bis zum {date} kannst du die Daten noch ansehen und exportieren.",
@@ -1921,6 +1998,7 @@
  "These photos or this video were deleted already.": "Diese Fotos oder dieses Video sind schon gelöscht.",
  "These photos were already used. Take new ones.": "Diese Fotos wurden schon verwendet. Mach neue.",
  "These photos were deleted on {date}. The record of the walk-around stays.": "Diese Fotos wurden am {date} gelöscht. Der Eintrag zum Rundgang bleibt erhalten.",
+ "These photos weren't compared with the van's earlier photos.": "Diese Fotos wurden nicht mit den früheren Fotos des Transporters verglichen.",
  "They choose": "Freie Wahl",
  "They left the company. Their van history stays.": "Die Person hat die Firma verlassen. Ihr Transporterverlauf bleibt erhalten.",
  "This AI model isn't available on the Anthropic account. Pick another model in Account.": "Dieses KI-Modell ist im Anthropic-Konto nicht verfügbar. Wähle unter „Konto“ ein anderes Modell.",
@@ -1995,11 +2073,13 @@
  "This video was uploaded more than two hours ago. Record a new one.": "Dieses Video wurde vor mehr als zwei Stunden hochgeladen. Nimm ein neues auf.",
  "This walk-around has no uploaded photos.": "Dieser Rundgang hat keine hochgeladenen Fotos.",
  "This walk-around isn't available.": "Dieser Rundgang ist nicht verfügbar.",
+ "This walk-around was compared already.": "Dieser Rundgang wurde schon verglichen.",
  "This walk-around was deleted.": "Dieser Rundgang wurde gelöscht.",
  "This year": "Dieses Jahr",
  "Tick all": "Alle anhaken",
  "Tick the vans to add first.": "Hake zuerst die Transporter an, die hinzukommen sollen.",
  "Time": "Uhrzeit",
+ "Time is measured on the server, per AI call (the frames run side by side). Cost is from the tokens the API reported, at list prices.": "Die Zeit wird auf dem Server gemessen, pro KI-Aufruf (die Ansichten laufen parallel). Die Kosten ergeben sich aus den Tokens, die die API gemeldet hat, zu Listenpreisen.",
  "Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.": "Die Zeit wird auf dem Server gemessen, pro KI-Aufruf. Die Kosten ergeben sich aus den Tokens, die die API für {model} gemeldet hat, zu Listenpreisen.",
  "Time per scan": "Zeit pro Scan",
  "To check": "Zu prüfen",
@@ -2031,6 +2111,7 @@
  "Tours without end photo": "Touren ohne Endfoto",
  "Traffic fine": "Bußgeld",
  "Transporter ID {id}": "Transporter ID {id}",
+ "Trial limit": "Limit der Testphase",
  "Try again": "Noch mal versuchen",
  "Try again with this photo": "Mit diesem Foto noch mal versuchen",
  "Try it as someone else": "Als jemand anderes ausprobieren",
@@ -2321,9 +2402,15 @@
   "one": "und {n} weitere",
   "other": "und {n} weitere"
  },
+ "another vehicle in the photo": "anderes Fahrzeug auf dem Foto",
  "any plan": "jeder Tarif",
+ "approved, of {n} spots a manager decided": {
+  "one": "bestätigt, von {n} entschiedenen Stelle",
+  "other": "bestätigt, von {n} entschiedenen Stellen"
+ },
  "as on the phone": "wie auf dem Handy",
  "asked {when}": "angefragt am {when}",
+ "at 2 walk-arounds a day, 26 days": "bei 2 Rundgängen am Tag, 26 Tage",
  "at least 6 characters": "mindestens 6 Zeichen",
  "box van or Luton": "Koffertransporter",
  "broken part": "Teil defekt",
@@ -2339,6 +2426,7 @@
  "driver deleted their account": "Konto vom Fahrer gelöscht",
  "dropped off": "abgegeben",
  "due since {when}": "fällig seit {when}",
+ "earlier photo deleted": "früheres Foto gelöscht",
  "empty: for as long as they stay": "leer: solange sie Kunde bleiben",
  "empty: no end date": "leer: kein Enddatum",
  "every month": "jeden Monat",
@@ -2351,6 +2439,10 @@
  "fuel gauge": "Tankanzeige",
  "given to someone else": "an jemand anderen übergeben",
  "in {km}": "in {km}",
+ "in {n} checks": {
+  "one": "in {n} Prüfung",
+  "other": "in {n} Prüfungen"
+ },
  "in {n} days": {
   "one": "in {n} Tag",
   "other": "in {n} Tagen"
@@ -2371,6 +2463,10 @@
  "like 03/2028": "z. B. 03/2028",
  "litres": "Liter",
  "made free": "freigegeben",
+ "marked by the first look ({n} photos)": {
+  "one": "vom ersten Blick markiert ({n} Foto)",
+  "other": "vom ersten Blick markiert ({n} Fotos)"
+ },
  "median": "Median",
  "median time": "Median-Zeit",
  "mid-size van": "Mittelgroßer Transporter",
@@ -2390,6 +2486,7 @@
  "no cost yet": "noch keine Kosten",
  "no damage": "kein Schaden",
  "no date": "kein Datum",
+ "no earlier photo": "kein früheres Foto",
  "no end photo": "kein Endfoto",
  "no end photo (estimated)": "kein Endfoto (geschätzt)",
  "no free days": "keine kostenlosen Tage",
@@ -2422,7 +2519,9 @@
  "per 100 km": "pro 100 km",
  "per photo": "pro Foto",
  "phone app": "Handy-App",
+ "photo couldn't be opened": "Foto ließ sich nicht öffnen",
  "photos": "Fotos",
+ "photos too different": "Fotos zu unterschiedlich",
  "photos, {n} skipped": {
   "one": "Fotos, {n} übersprungen",
   "other": "Fotos, {n} übersprungen"
@@ -2459,6 +2558,7 @@
  "started {time} ago": "vor {time} gestartet",
  "swapped for another van": "gegen anderen Transporter getauscht",
  "taken over": "übernommen",
+ "the AI didn't answer": "die KI hat nicht geantwortet",
  "the document": "Dokument",
  "the driver": "dem Fahrer",
  "the fleet manager": "dem Flottenmanager",
@@ -2482,6 +2582,10 @@
  "vs others, same van": "vs. andere, gleicher Transporter",
  "vs same model": "vs. gleiches Modell",
  "walk-arounds": "Rundgänge",
+ "walk-arounds, {n} photos compared": {
+  "one": "Rundgänge, {n} Foto verglichen",
+  "other": "Rundgänge, {n} Fotos verglichen"
+ },
  "walk-in delivery van": "Paketwagen mit Durchstieg",
  "warning: {lights}": "Warnung: {lights}",
  "wash": "Wäsche",
@@ -2513,6 +2617,7 @@
  "{driver} has this van, not {name}.": "{driver} hat diesen Transporter, nicht {name}.",
  "{field}: enter a date like {example}.": "{field}: Gib ein Datum wie {example} ein.",
  "{field}: enter a number.": "{field}: Gib eine Zahl ein.",
+ "{frame} ({why})": "{frame} ({why})",
  "{from} to now, {time}": "{from} bis jetzt, {time}",
  "{from} to {to} km so far: {km} km": "{from} bis {to} km: bisher {km} km gefahren",
  "{from} to {to} km: {km} km driven": "{from} bis {to} km: {km} km gefahren",
@@ -2582,6 +2687,10 @@
  "{name}: {note}": "{name}: {note}",
  "{n} % off": "{n} % Rabatt",
  "{n} % off for {m} months": "{n} % Rabatt für {m} Monate",
+ "{n} added": {
+  "one": "{n} hinzugefügt",
+  "other": "{n} hinzugefügt"
+ },
  "{n} already in the fleet": {
   "one": "{n} schon in der Flotte",
   "other": "{n} schon in der Flotte"
@@ -2589,6 +2698,10 @@
  "{n} already on the van": {
   "one": "{n} schon am Transporter",
   "other": "{n} schon am Transporter"
+ },
+ "{n} already there": {
+  "one": "{n} schon vorhanden",
+  "other": "{n} schon vorhanden"
  },
  "{n} approved damages": {
   "one": "{n} bestätigter Schaden",
@@ -2674,6 +2787,10 @@
   "one": "{n} Aufnahme",
   "other": "{n} Aufnahmen"
  },
+ "{n} frames, {images} images": {
+  "one": "{n} Ansicht, {images} Bilder",
+  "other": "{n} Ansichten, {images} Bilder"
+ },
  "{n} h": "{n} Std.",
  "{n} images": {
   "one": "{n} Bild",
@@ -2713,6 +2830,10 @@
   "one": "{n}× kein Schaden",
   "other": "{n}× kein Schaden"
  },
+ "{n} not damage": {
+  "one": "{n} kein Schaden",
+  "other": "{n} kein Schaden"
+ },
  "{n} of {max} used": "{n} von {max} genutzt",
  "{n} open links": {
   "one": "{n} offener Link",
@@ -2730,6 +2851,18 @@
  "{n} photos": {
   "one": "{n} Foto",
   "other": "{n} Fotos"
+ },
+ "{n} photos compared": {
+  "one": "{n} Foto verglichen",
+  "other": "{n} Fotos verglichen"
+ },
+ "{n} photos compared with the van's earlier photos.": {
+  "one": "{n} Foto mit den früheren Fotos des Transporters verglichen.",
+  "other": "{n} Fotos mit den früheren Fotos des Transporters verglichen."
+ },
+ "{n} photos compared with the van's photos from {when}.": {
+  "one": "{n} Foto mit den Fotos des Transporters vom {when} verglichen.",
+  "other": "{n} Fotos mit den Fotos des Transporters vom {when} verglichen."
  },
  "{n} photos for this {cls}, about {min} min.": {
   "one": "{cls}: {n} Foto, etwa {min} Min.",
@@ -2758,6 +2891,10 @@
  "{n} possible damages": {
   "one": "{n} möglicher Schaden",
   "other": "{n} mögliche Schäden"
+ },
+ "{n} possible new damages": {
+  "one": "{n} möglicher neuer Schaden",
+  "other": "{n} mögliche neue Schäden"
  },
  "{n} reflections": {
   "one": "{n} Spiegelung",

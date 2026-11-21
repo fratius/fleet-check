@@ -270,10 +270,11 @@ export default function VehicleScreen() {
               <Row>
                 <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed'
                   ? (approved ? [tp(fresh, '{n} new damage', '{n} new damages'), approved > fresh ? tp(approved - fresh, '{n} already on the van', '{n} already on the van') : ''].filter(Boolean).join(', ') : t('No damage'))
-                  : tp(k.spots.length, '{n} spot, {dmg} damage by the AI', '{n} spots, {dmg} damage by the AI', { dmg })}</T>
+                  : k.auto ? tp(k.spots.length, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review')
+                    : tp(k.spots.length, '{n} spot, {dmg} damage by the AI', '{n} spots, {dmg} damage by the AI', { dmg })}</T>
                 <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? t('Reviewed') : k.status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
               </Row>
-              <T v="hint">{[whoDid(k.createdBy, k.createdByName) || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+              <T v="hint">{[(k.auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName)) || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
             </Pressable>
           );
         })}
@@ -293,7 +294,10 @@ export default function VehicleScreen() {
           <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <T v="h3">{[whoDid(w.createdBy), fmtWhen(w.createdAt)].filter(Boolean).join(' – ')}</T>
             <T v="hint">{[tp(w.frames, '{taken} of {n} photo', '{taken} of {n} photos', { taken: w.taken }), w.totalMs ? mmss(w.totalMs) : '',
-              w.source === 'library' ? t('from library') : tp(w.retakes, '{n} retake', '{n} retakes')].filter(Boolean).join(', ')}</T>
+              w.source === 'library' ? t('from library') : tp(w.retakes, '{n} retake', '{n} retakes'),
+              // The automatic comparison, for the station's staff (drivers scan; the fleet manager decides).
+              s.staff && w.cmp?.status === 'done' && w.cmp.found + w.cmp.unsure ? tp(w.cmp.found + w.cmp.unsure, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review') : '',
+            ].filter(Boolean).join(', ')}</T>
           </Pressable>
         ))}
       </View>

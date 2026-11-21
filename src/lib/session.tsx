@@ -18,7 +18,7 @@ import { outbox, sendWrite, startOutbox } from './outbox';
 import { loadWebUrl } from './people';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type NameRow, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type NameRow, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type Compare, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -116,6 +116,11 @@ export interface Session {
   /** AI model for this company's checks. The owner sets it for everyone. */
   tier: Tier;
   setTier(t: Tier): Promise<void>;
+  /** The automatic damage comparison after every walk-around: on unless the app creator switched it off. */
+  aiCompare: boolean;
+  setAiCompare(on: boolean): Promise<void>;
+  /** The comparisons, frame by frame, with time and cost (the app creator only; empty for everyone else). */
+  compares: Compare[];
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string, name: string): Promise<void>;
   /** A new company (the server's createCompany); its id. With payments: made, then opened once the card is in. */
@@ -426,6 +431,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     await sendWrite('update', ['orgs', org.id], { aiTier: tier }, { title: t('The AI model') });
     setOrg((o) => (o && o.id === org.id ? { ...o, aiTier: tier } : o));
   }, [mode, org, role]);
+  // Only the app creator switches the comparison (the rules refuse it from anyone else).
+  const aiCompare = mode === 'firebase' && org?.aiCompare !== false;
+  const setAiCompare = useCallback(async (on: boolean) => {
+    if (mode !== 'firebase' || !org || !creator || viewAs) return;
+    await sendWrite('update', ['orgs', org.id], { aiCompare: on }, { title: t('Automatic damage comparison') });
+    setOrg((o) => (o && o.id === org.id ? { ...o, aiCompare: on } : o));
+  }, [mode, org, creator, viewAs]);
   const staff = role === 'owner' || role === 'manager';
   const seesAiStats = mode === 'local' ? !viewAs : creator && !viewAs;
   // Owners (and the app creator) read every station; managers and drivers only their own.
@@ -443,6 +455,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [checks, setChecks] = useState<Check[]>([]);
   const [scans, setScans] = useState<Scan[]>([]);
   const [usage, setUsage] = useState<CheckUsage[]>([]);
+  const [compares, setCompares] = useState<Compare[]>([]);
   const [details, setDetails] = useState<VehicleDetails[]>([]);
   const [costs, setCosts] = useState<VehicleCosts[]>([]);
   const [records, setRecords] = useState<DriverRecord[]>([]);
@@ -555,7 +568,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (seesAiStats) {
       subs.push(store.scans.subscribe((r) => { setScans(r); setLoaded((l) => ({ ...l, scans: true })); }, err));
       subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
-    } else setLoaded((l) => ({ ...l, scans: true }));
+      if (store.mode === 'firebase') subs.push(store.compares.subscribe((r) => setCompares(r), () => {}));
+    } else { setLoaded((l) => ({ ...l, scans: true })); setCompares([]); }
     return () => { gone = true; subs.forEach((u) => u()); };
   }, [store, seesAiStats, staff, role, user?.uid, cacheKey]);
   // The saved copy follows the live data (only once the server answered, so an empty start never overwrites it).
@@ -624,6 +638,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, tryOut: mode === 'firebase' && creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
     store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, names, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
+    aiCompare, setAiCompare, compares: seesAiStats ? compares : [],
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

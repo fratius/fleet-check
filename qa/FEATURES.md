@@ -130,6 +130,24 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 5.4 **The AI only suggests.** No damage goes on a van's record until a fleet manager or owner approves it.
 - MUST 5.5 **Uploads never ask anyone to take a photo or video again.** Photos are kept on the phone first and go up by
   themselves, also after the connection comes back or the app was closed.
+- MUST 5.6 **Every walk-around taken with the camera is compared with the van's earlier photos by the AI**, by itself,
+  photo by photo (each photo with the newest earlier photo of the same view of that van). Nobody has to start it.
+  The van's first walk-around has nothing to compare with, and the walk-around says so; in a demo company the made-up
+  walk-arounds don't count, so a van's first real walk-around there is a start too. Photos from the library and
+  video handovers aren't compared.
+- MUST 5.7 What the comparison finds is only a suggestion: it appears in Review as a damage check for the station's
+  fleet managers and owners, with the same part of the van before and after for each spot, and nothing goes on the
+  van's record until a fleet manager or owner approves it.
+- SHOULD 5.8 On a walk-around, owners and the station's fleet managers see how the comparison went: still running,
+  nothing new, spots to review (with the way to the review), or which photos weren't compared and why. If it didn't
+  finish they can run it again.
+- SHOULD 5.9 Only the app creator switches the automatic comparison on or off for a company (Account tab) and sees
+  what it costs (test log). Owners, managers and drivers never see AI cost.
+- SHOULD 5.10 A van's newest walk-around keeps its photos until a newer one is taken; that walk-around's page says so
+  (in a demo company nothing is deleted, and the page says that instead).
+- LIMIT 5.11 During the free trial and in demo companies each van gets 2 comparisons a day; after that a walk-around
+  says it wasn't compared. That's correct. On the test system the made-up AI marks a spot on the first photo of a
+  compared walk-around.
 
 ## 6. Review and the damage record
 

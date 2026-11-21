@@ -397,5 +397,6 @@
  "hours": "ore",
  "minutes": "minuti",
  "seconds": "secondi",
- "{n} % off": "{n}% di sconto"
+ "{n} % off": "{n}% di sconto",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Il giro più recente di ogni furgone resta salvato finché non se ne fa uno più nuovo: l'app confronta ogni giro con le foto precedenti del furgone per trovare i danni nuovi."
 }

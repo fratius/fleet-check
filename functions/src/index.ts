@@ -10,12 +10,16 @@ import { getStorage } from 'firebase-admin/storage';
 import { logger, setGlobalOptions } from 'firebase-functions';
 import { onCall, onRequest, type CallableRequest } from 'firebase-functions/https';
 import { onSchedule } from 'firebase-functions/scheduler';
-import { onDocumentWritten } from 'firebase-functions/firestore';
+import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import nodemailer from 'nodemailer';
 import webpush from 'web-push';
 
 import { ask, type Part } from './claude';
+import {
+  COMPARE_PER_VAN_DAY, MAX_CHANGES, MAX_FRAMES, cleanBox, comparePrompt, compareSchema, confirmPrompt, confirmSchema, foundIn, grow, pickRefs, pickSpots,
+  type Found, type NotCompared, type Ref, type WalkLite,
+} from './compare';
 import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, plateCrop, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
@@ -29,7 +33,7 @@ import {
   transcribePrompt, transcribeSchema, type Problem, type Table,
 } from './fleetfile';
 import { makePlayback, playsAsIs, probe } from './video';
-import { N_, fail, langOf, tr } from './i18n';
+import { N_, fail, langOf, tr, trp } from './i18n';
 import { cleanRequests, onCallOnce } from './once';
 import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, normPlate, purchaseFlags,
@@ -454,6 +458,278 @@ export const submitCheck = onCallOnce('submitCheck', { timeoutSeconds: 30 }, asy
     });
   });
   return { ok: true };
+});
+
+/* ---------- 4a. The automatic damage comparison after every walk-around (compare.ts) ---------- */
+// Product owner, 2026-11-20: after each walk-around (a pick-up, a drop-off or any other taken with the camera) every
+// photo is compared with the newest earlier photo of the same frame of that van. Haiku looks at every pair; the
+// frames it marks, or isn't sure about, get a second look by Opus with close crops from the full-size photos. What
+// Opus calls new damage, or can't decide, becomes a damage check for the station's fleet managers to review (the
+// final word stays theirs, ROLES.md); new damage also sends them a notification (the owners where the station has no
+// manager). Runs on its own after the walk-around is saved (compareOnWalk); staff can run it again when it failed or
+// never ran (compareWalk). On for every company unless the app creator switches it off (orgs/{org}.aiCompare = false).
+// Video handovers have no frames and are skipped. Trial and demo companies: COMPARE_PER_VAN_DAY per van a day.
+//   orgs/{org}/compares/{walkId}   server only, read by the app creator: every frame's answers, time and cost
+//   walkarounds/{walkId}.cmp       server only: the summary the station's staff see on the walk-around
+//   checks/cmp-{walkId}            the damage check to review, when something was found (auto: 'compare')
+
+/** The comparison is on unless the app creator switched it off for the company. */
+const compareOn = (org: { aiCompare?: unknown } | undefined) => !!org && org.aiCompare !== false;
+const cmpCheckId = (walkId: string) => `cmp-${walkId}`;
+/** A run marked running for longer than this died (the function was stopped): it can run again. */
+const CMP_STALE_MS = 15 * 60_000;
+
+type CmpStatus = 'running' | 'done' | 'failed' | 'first' | 'limit';
+interface CmpSummary {
+  status: CmpStatus; at: number; frames: number; compared: number; notCompared: { label: string; why: NotCompared }[];
+  found: number; unsure: number; checkId: string | null; refAt: number | null;
+}
+interface CmpWalk extends WalkLite {
+  vehicleId: string; vehicleName: string; cls: string; stationId?: string | null; createdBy?: string | null;
+  handover?: { kind?: string } | null; cmp?: CmpSummary | null;
+}
+
+/**
+ * One more comparison of this van today for a trial or demo company (COMPARE_PER_VAN_DAY), counted with the rest of
+ * its AI allowance (orgs/{org}/aiDaily/{day}). Paying companies and the ones set up by hand aren't counted.
+ */
+async function compareAllowed(orgId: string, org: Record<string, unknown>, vehicleId: string): Promise<boolean> {
+  if (!standing(org).limited) return true;
+  const day = berlinDay();
+  const ref = db().doc(`orgs/${orgId}/aiDaily/${day}`);
+  return db().runTransaction(async (tx) => {
+    const used = Number(((await tx.get(ref)).data()?.compare as Record<string, unknown> | undefined)?.[vehicleId]) || 0;
+    if (used >= COMPARE_PER_VAN_DAY) return false;
+    tx.set(ref, { compare: { [vehicleId]: FieldValue.increment(1) }, day, at: Date.now() }, { merge: true });
+    return true;
+  });
+}
+
+/** One frame: what the first look said, what the second look said, and the spots for the manager. */
+interface FrameRun {
+  n: number; label: string; ref: Ref | null; why: NotCompared | null;
+  haiku: { changes: unknown[]; unsure: boolean; issue: string | null; ms: number; cost: number } | null;
+  opus: { decisions: unknown[]; more: unknown[]; ms: number; cost: number } | null;
+  found: Found[]; bufs?: { now: Buffer; before: Buffer };
+  /** AI use of the two looks, and which one failed (the error is logged; the frame counts as not compared or unclear). */
+  usage1?: Usage; usage2?: Usage; failedAt?: 'first' | 'second';
+}
+
+/**
+ * Compares one walk-around with the van's earlier photos. Returns the summary written on the walk-around, or null
+ * when it doesn't run (not a camera walk-around, the comparison is off, it ran already or is running).
+ * again: staff asked for it (it failed, or the walk-around was taken before comparisons started).
+ */
+async function runCompare(orgId: string, walkId: string, o: { again?: boolean } = {}): Promise<CmpSummary | null> {
+  const t0 = Date.now();
+  const org = db().doc(`orgs/${orgId}`);
+  const wref = org.collection('walkarounds').doc(walkId);
+  const [oSnap, wSnap] = await Promise.all([org.get(), wref.get()]);
+  const od = oSnap.data() as Record<string, unknown> | undefined;
+  const w = wSnap.exists ? ({ id: walkId, ...wSnap.data() } as CmpWalk) : undefined;
+  if (!w || !od || w.demo === true || w.source !== 'camera' || !compareOn(od)) return null;
+  // A company without an active plan can't work (guard): nothing is compared for it either.
+  if (await paymentsBlock(od)) return null;
+  // The van by its plate, as everywhere (vans.ts).
+  const vanDoc = (await org.collection('vehicles').doc(w.vehicleId).get()).data() as { name?: string; plate?: string } | undefined;
+  const van = vanName(vanDoc || { name: w.vehicleName });
+  const photos = (w.photos || []).filter((p) => p.path).slice(0, MAX_FRAMES);
+  if (!photos.length) return null;
+
+  // One run per walk-around (a trigger can fire twice); again only after a failed run, or one that never ran.
+  const cref = org.collection('compares').doc(walkId);
+  const claimed = await db().runTransaction(async (tx) => {
+    const c = await tx.get(cref);
+    const x = c.data() as { status?: CmpStatus; startedAt?: number } | undefined;
+    const dead = x?.status === 'running' && Date.now() - Number(x.startedAt || 0) > CMP_STALE_MS;
+    if (c.exists && !dead && !(o.again && x?.status === 'failed')) return false;
+    tx.set(cref, {
+      walkId, vehicleId: w.vehicleId, vehicleName: w.vehicleName, stationId: w.stationId || null, createdAt: w.createdAt, walkAt: w.createdAt, walkBy: w.createdBy || null,
+      startedAt: Date.now(), status: 'running', runs: FieldValue.increment(1),
+    }, { merge: true });
+    tx.update(wref, { cmp: { status: 'running', at: Date.now(), frames: photos.length, compared: 0, notCompared: [], found: 0, unsure: 0, checkId: null, refAt: null } });
+    return true;
+  });
+  if (!claimed) return null;
+
+  const finish = async (sum: CmpSummary, extra: Record<string, unknown>) => {
+    await Promise.all([wref.update({ cmp: sum }), cref.set({ ...extra, status: sum.status, doneAt: Date.now(), serverMs: Date.now() - t0, summary: sum }, { merge: true })]);
+    return sum;
+  };
+  try {
+    // The van's earlier walk-arounds, newest first: each frame is compared with the newest earlier photo of it.
+    const earlier = (await org.collection('walkarounds').where('vehicleId', '==', w.vehicleId).where('createdAt', '<', w.createdAt)
+      .orderBy('createdAt', 'desc').limit(12).get()).docs.map((d) => ({ id: d.id, ...d.data() } as WalkLite));
+    const refs = pickRefs({ ...w, photos }, earlier);
+    const base = { at: Date.now(), frames: photos.length, found: 0, unsure: 0, checkId: null };
+    if (!refs.some(Boolean)) {
+      return finish({ ...base, status: 'first', compared: 0, notCompared: photos.map((p) => ({ label: p.label, why: 'first' as const })), refAt: null }, { frames: [] });
+    }
+    if (!(await compareAllowed(orgId, od, w.vehicleId))) {
+      return finish({ ...base, status: 'limit', compared: 0, notCompared: [], refAt: null }, { frames: [] });
+    }
+
+    const key = ANTHROPIC_API_KEY.value();
+    const runs: FrameRun[] = await pool(photos, 4, async (p, i): Promise<FrameRun> => {
+      const ref = refs[i];
+      const fr: FrameRun = { n: p.n, label: p.label, ref, why: null, haiku: null, opus: null, found: [] };
+      if (!ref) return { ...fr, why: 'first' };
+      let now: Buffer, before: Buffer;
+      try {
+        [now, before] = await Promise.all([download(checkPath(p.path, `orgs/${orgId}/walkarounds/${walkId}/`)), download(checkPath(ref.path, `orgs/${orgId}/walkarounds/`))]);
+      } catch { return { ...fr, why: 'missing' }; }
+      let imgs: [Sent, Sent];
+      try { imgs = await Promise.all([fit(before), fit(now)]) as [Sent, Sent]; } catch { return { ...fr, why: 'unreadable' }; }
+      const nowAt = typeof p.takenAt === 'number' ? p.takenAt : w.createdAt;
+      try {
+        const a = await ask<Record<string, unknown>>(key, 'quick', [{ label: 'Image 1 (BEFORE)', image: imgs[0] }, { label: 'Image 2 (NOW)', image: imgs[1] }],
+          comparePrompt(van, w.cls, p.label, p.n, ref.at, nowAt), compareSchema, 1500);
+        fr.usage1 = a.usage;
+        const changes = ((Array.isArray(a.obj.changes) ? a.obj.changes : []) as Record<string, unknown>[])
+          .map((c) => ({ box: cleanBox(c.box), beforeBox: cleanBox(c.beforeBox), panel: str(c.panel, 60) || 'Body panel', type: DAMAGE_TYPES.includes(c.type as string) ? (c.type as string) : 'other',
+            sizeCm: posInt(c.sizeCm), confidence: round(clamp01(c.confidence)), why: str(c.why, 200) || '' }))
+          .filter((c): c is typeof c & { box: Box } => !!c.box).slice(0, MAX_CHANGES);
+        const unsure = a.obj.unsure === true;
+        fr.haiku = { changes, unsure, issue: str(a.obj.issue, 120), ms: a.usage.ms, cost: a.usage.cost };
+        if (a.obj.sameVan === false) return { ...fr, why: 'other vehicle' };
+        if (a.obj.comparable === false) return { ...fr, why: 'not comparable' };
+        if (!changes.length && !unsure) return fr;
+        // Kept for the crops the manager sees, only while this frame has something to show.
+        fr.bufs = { now, before };
+        // The second look: both whole frames (smaller when there are crops to look at), and a BEFORE and a NOW crop
+        // of every marked spot from the full-size photos.
+        const whole = changes.length ? 2000 : undefined;
+        const [b1, n1] = whole ? await Promise.all([fit(before, whole), fit(now, whole)]) : imgs;
+        const crops = await Promise.all(changes.map(async (c) => {
+          const [bc, nc] = await Promise.all([refCrop(before, c.beforeBox || grow(c.box, 1.6)), refCrop(now, c.box)]);
+          return Promise.all([fit(bc, 1600), fit(nc, 1600)]);
+        }));
+        const parts: Part[] = [{ label: 'Image 1 (BEFORE, whole frame)', image: b1 }, { label: 'Image 2 (NOW, whole frame)', image: n1 }];
+        crops.forEach(([bc, nc], k) => parts.push({ label: `Image ${3 + k * 2} (spot ${k + 1}, BEFORE)`, image: bc }, { label: `Image ${4 + k * 2} (spot ${k + 1}, NOW)`, image: nc }));
+        const b = await ask<Record<string, unknown>>(key, 'complex', parts, confirmPrompt(van, w.cls, p.label, ref.at, nowAt, changes), confirmSchema, 2500);
+        fr.usage2 = b.usage;
+        fr.opus = { decisions: Array.isArray(b.obj.decisions) ? b.obj.decisions : [], more: Array.isArray(b.obj.more) ? b.obj.more : [], ms: b.usage.ms, cost: b.usage.cost };
+        fr.found = foundIn(i, p.label, ref, changes, b.obj);
+        if (!fr.found.length) delete fr.bufs;
+        return fr;
+      } catch (e) {
+        logger.warn('A frame wasn\'t compared', { orgId, walkId, label: p.label, message: String((e as Error)?.message || e) });
+        return fr.haiku ? { ...fr, failedAt: 'second' } : { ...fr, why: 'failed', failedAt: 'first' };
+      }
+    });
+
+    let haiku = noUsage(), opus = noUsage();
+    for (const r of runs) {
+      if (r.usage1) haiku = addUsage(haiku, r.usage1);
+      if (r.usage2) opus = addUsage(opus, r.usage2);
+    }
+    // A frame whose second look failed still goes to the manager: its marked spots, unclear.
+    for (const r of runs) {
+      if (r.failedAt !== 'second' || !r.haiku || !r.ref) continue;
+      r.found = (r.haiku.changes as { box: Box; beforeBox: Box | null; panel: string; type: string }[])
+        .map((c) => ({ frame: photos.findIndex((p) => p.n === r.n), label: r.label, box: c.box, beforeBox: c.beforeBox, panel: c.panel, type: c.type, sizeCm: null,
+          severity: null, verdict: 'unclear' as const, confidence: 0, reason: '', ref: r.ref! }));
+    }
+    const notCompared = runs.filter((r) => r.why).map((r) => ({ label: r.label, why: r.why! }));
+    const compared = runs.length - notCompared.length;
+    const spots = pickSpots(runs.flatMap((r) => r.found));
+    const refAt = spots.length ? Math.min(...spots.map((s) => s.ref.at)) : Math.min(...runs.filter((r) => r.ref && !r.why).map((r) => r.ref!.at), Infinity);
+    // What the app creator's log keeps of each frame (no photos, no usage per frame: the totals are kept).
+    const log = runs.map((r) => ({ n: r.n, label: r.label, ref: r.ref, why: r.why, haiku: r.haiku, opus: r.opus, found: r.found.length, failedAt: r.failedAt || null }));
+    if (!compared && runs.every((r) => r.why === 'failed' || r.why === 'first')) {
+      return finish({ ...base, status: 'failed', compared: 0, notCompared, refAt: null }, { frames: log, haiku, opus });
+    }
+
+    let checkId: string | null = null;
+    if (spots.length) {
+      checkId = cmpCheckId(walkId);
+      const kref = org.collection('checks').doc(checkId);
+      const bufOf = (s: Found) => runs.find((r) => r.n === photos[s.frame]?.n)?.bufs;
+      const out = await pool(spots, 4, async (s, j) => {
+        const bufs = bufOf(s);
+        const [refPath, beforePath] = bufs ? await Promise.all([
+          save(`orgs/${orgId}/checks/${checkId}/ref${j + 1}.jpg`, await refCrop(bufs.now, s.box)),
+          save(`orgs/${orgId}/checks/${checkId}/before${j + 1}.jpg`, await refCrop(bufs.before, s.beforeBox || grow(s.box, 1.6))),
+        ]) : [null, null];
+        return {
+          photo: s.frame, photoLabel: s.label, box: s.box, panel: s.panel, type: s.type, sizeCm: s.sizeCm, conf: s.confidence, mightBe: null, closeup: '',
+          refPath, closeups: [], feedback: null, markPath: null, beforePath, beforeWalkId: s.ref.walkId, beforeAt: s.ref.at,
+          verdict: { verdict: s.verdict, type: s.verdict === 'damage' ? s.type : null, sizeCm: s.sizeCm, severity: s.severity, confidence: s.confidence, reason: s.reason, closeupBox: null },
+        };
+      });
+      const createdAt = Date.now();
+      const latest = (await wref.get()).data() as CmpWalk | undefined;
+      const b = db().batch();
+      b.set(kref, {
+        // Who ran it: nobody (the app compares by itself); whose photos: walkBy, by account id only (names.ts).
+        vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt, createdBy: null, auto: 'compare',
+        walkBy: w.createdBy || null, walkKind: latest?.handover?.kind === 'pickup' || latest?.handover?.kind === 'dropoff' ? latest.handover.kind : 'walkaround',
+        refWalkIds: [...new Set(spots.map((s) => s.ref.walkId))], refAt,
+        stationId: w.stationId || null, status: 'submitted', submittedAt: createdAt, review: null,
+        tier: 'complex', model: MODELS.complex.id, photos: compared, spots: out, notVisible: [], notCompared, missedNote: '',
+      });
+      b.set(usageRef(orgId, checkId), {
+        checkId, stationId: w.stationId || null, createdAt, tier: 'complex', model: MODELS.complex.id, auto: 'compare',
+        pass1: haiku, pass2: opus, serverMs: Date.now() - t0, prepMs: null, spotMs: {},
+      });
+      await b.commit();
+    }
+    const found = spots.filter((s) => s.verdict === 'damage').length;
+    const sum: CmpSummary = { ...base, status: 'done', compared, notCompared, found, unsure: spots.length - found, checkId, refAt: Number.isFinite(refAt) ? refAt : null };
+    await finish(sum, { frames: log, haiku, opus, cost: round(haiku.cost + opus.cost), checkId });
+    if (found && checkId) await tellDamage(orgId, w, van, checkId, found).catch((e) => logger.warn('Damage notification not sent', e as Error));
+    return sum;
+  } catch (e) {
+    logger.error('Comparison failed', { orgId, walkId, message: String((e as Error)?.message || e) });
+    await finish({ status: 'failed', at: Date.now(), frames: photos.length, compared: 0, notCompared: [], found: 0, unsure: 0, checkId: null, refAt: null },
+      { error: String((e as Error)?.message || e).slice(0, 300) }).catch(() => {});
+    return null;
+  }
+}
+
+/** New damage found: the station's fleet managers hear about it (the owners where it has none), not whoever took the photos. */
+async function tellDamage(orgId: string, w: CmpWalk, van: string, checkId: string, n: number) {
+  const kind = ((await db().doc(`orgs/${orgId}/walkarounds/${w.id}`).get()).data() as CmpWalk | undefined)?.handover?.kind;
+  const people = await bossesOf(orgId, w.stationId || null, 'fuel', w.createdBy || '');
+  await tell(people, (lang) => ({
+    title: tr(lang, 'Possible new damage: {van}', { van }),
+    body: kind === 'dropoff' ? trp(lang, n, 'The drop-off photos show {n} possible new damage. Review it.', 'The drop-off photos show {n} possible new damages. Review them.')
+      : kind === 'pickup' ? trp(lang, n, 'The pick-up photos show {n} possible new damage. Review it.', 'The pick-up photos show {n} possible new damages. Review them.')
+        : trp(lang, n, 'A walk-around shows {n} possible new damage. Review it.', 'A walk-around shows {n} possible new damages. Review them.'),
+    url: `/check/${checkId}`, tag: `check-${checkId}`,
+  }));
+}
+
+/** Runs by itself once a walk-around is saved. */
+export const compareOnWalk = onDocumentCreated({
+  document: 'orgs/{orgId}/walkarounds/{walkId}', secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS], timeoutSeconds: 540, memory: '2GiB', cpu: 1, concurrency: 4, maxInstances: 20,
+}, async (e) => {
+  await runCompare(e.params.orgId, e.params.walkId);
+});
+
+/**
+ * Owners and the station's fleet managers run the comparison of a walk-around again when it failed, or for one taken
+ * before comparisons started. The app creator too (any company).
+ */
+export const compareWalk = onCallOnce('compareWalk', { ...opts(540), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const walkId = String(req.data?.walkId || '');
+  if (!ID.test(walkId)) throw fail('invalid-argument', 'Unknown walk-around.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const [oSnap, wSnap, cSnap] = await Promise.all([org.get(), org.collection('walkarounds').doc(walkId).get(), org.collection('compares').doc(walkId).get()]);
+  const w = wSnap.data() as CmpWalk | undefined;
+  if (!w) throw fail('not-found', 'This walk-around was deleted.');
+  needStation(who, w.stationId);
+  if (!compareOn(oSnap.data())) throw fail('failed-precondition', 'Automatic damage comparison is off for this company.');
+  if (w.source !== 'camera') throw fail('failed-precondition', 'Only walk-arounds taken with the camera are compared.');
+  if (w.mediaDeletedAt) throw fail('failed-precondition', 'These photos or this video were deleted already.');
+  const cx = cSnap.data() as { status?: CmpStatus; startedAt?: number } | undefined;
+  const stuck = cx?.status === 'failed' || (cx?.status === 'running' && Date.now() - Number(cx.startedAt || 0) > CMP_STALE_MS);
+  if (cSnap.exists && !stuck) throw fail('failed-precondition', 'This walk-around was compared already.');
+  const sum = await runCompare(who.orgId, walkId, { again: true });
+  if (!sum) throw fail('failed-precondition', 'This walk-around was compared already.');
+  return { cmp: sum };
 });
 
 /* ---------- 5. setupStations: moves a company made before stations existed onto stations ---------- */

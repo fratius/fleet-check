@@ -6,6 +6,7 @@
 // And an incident written without signal that reaches the server much later (the rules want its time near the
 // server's) is sent once more as made now, instead of stopping as "refused".
 // And a sign-up link without a card: the sign-up page asks for no card and the company opens with its free days.
+// And the AI comparison of a walk-around shows for its owner, also in a demo company.
 // Run: emulators:exec --only auth,firestore,functions,storage "node --test tests/offline.e2e.mjs" (APP_DIR = the web build).
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -293,6 +294,33 @@ test('an incident written without signal and sent twenty minutes later still goe
   await until(async () => (await page.locator('text=/stopped\\. Tap to see why/ >> visible=true').count()) === 0 && (await page.locator('text=/wait(s)? on this phone/ >> visible=true').count()) === 0, 60_000, 'nothing left waiting or stopped');
   await visible(page, 'Parked on the pavement').waitFor({ timeout: 30_000 });
   await ctx.close();
+});
+
+test('the AI comparison of a walk-around shows for the owner, also in a demo company', async () => {
+  // The blind tester found the card hidden in a demo company, where walk-arounds are compared too (PR #32).
+  // Written past the rules as the server writes it; the walk-around is marked as made-up so the trigger leaves it.
+  const now = Date.now();
+  const ORG_D = 'demoCmpOrg', ST_D = 'demoCmpSt', VAN_D = 'demoCmpVan', WALK = 'demoCmpWalk';
+  const b = db.batch();
+  b.set(db.doc(`orgs/${ORG_D}`), { name: 'Demo DSP (test data)', createdBy: OWNER2.uid, createdAt: now, stationsReady: true, aiTier: 'quick', demo: true });
+  b.set(db.doc(`orgs/${ORG_D}/members/${OWNER2.uid}`), { role: 'owner', stationIds: [], email: OWNER2.email, name: OWNER2.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_D}/stations/${ST_D}`), { name: 'Main station', code: 'DBE3', createdAt: now });
+  b.set(db.doc(`orgs/${ORG_D}/vehicles/${VAN_D}`), { name: '', plate: 'B-DC 1', cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: ST_D, createdAt: now, createdBy: OWNER2.uid, scanId: null });
+  b.set(db.doc(`orgs/${ORG_D}/walkarounds/${WALK}`), {
+    vehicleId: VAN_D, vehicleName: 'B-DC 1', cls: 'large_van', stationId: ST_D, source: 'camera', createdAt: now, createdBy: OWNER2.uid, demo: false,
+    totalMs: null, frames: 1, taken: 1, skipped: 0, retakes: 0, photos: [{ n: 1, label: 'Front', w: 900, h: 1200, takenAt: now }],
+    cmp: { status: 'done', at: now, frames: 12, compared: 12, notCompared: [], found: 1, unsure: 0, checkId: null, refAt: now - 3600_000 },
+  });
+  b.set(db.doc(`users/${OWNER2.uid}`), { orgIds: [ORG_A, ORG_B, ORG_D] }, { merge: true });
+  await b.commit();
+  const page = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  await signIn(page, OWNER2);
+  await openCompany(page, 'Demo DSP (test data)');
+  await page.goto(`${URL0}/walk/${WALK}`);
+  await visible(page, 'AI comparison').waitFor({ timeout: 60_000 });
+  await visible(page, '1 possible new damage').waitFor({ timeout: 10_000 });
+  await visible(page, '12 photos compared with the van\'s photos from').waitFor({ timeout: 10_000 });
+  await page.context().close();
 });
 
 test('a sign-up link without a card: the page asks for no card, and the company opens with its free days', async () => {

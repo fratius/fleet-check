@@ -397,5 +397,6 @@
  "hours": "ساعت",
  "minutes": "دقیقه",
  "seconds": "ثانیه",
- "{n} % off": "{n}% تخفیف"
+ "{n} % off": "{n}% تخفیف",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "جدیدترین بازدید دورتادور هر ون نگه داشته می‌شود تا بازدید جدیدتری انجام شود: اپ هر بازدید را با عکس‌های قبلی ون مقایسه می‌کند تا آسیب‌های جدید را پیدا کند."
 }

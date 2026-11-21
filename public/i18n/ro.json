@@ -54,6 +54,11 @@
  "A photo path is outside this company.": "Calea unei fotografii este în afara acestei companii.",
  "A video or the photos are needed to drop it off.": "Pentru predare e nevoie de un videoclip sau de fotografii.",
  "A walk-around": "Inspecție",
+ "A walk-around shows {n} possible new damages. Review them.": {
+  "one": "O inspecție arată {n} posibilă avarie nouă. Evaluează-o.",
+  "few": "O inspecție arată {n} posibile avarii noi. Evaluează-le.",
+  "other": "O inspecție arată {n} de posibile avarii noi. Evaluează-le."
+ },
  "A walk-around with {n} photos (about {min} min) or one video.": {
   "one": "O inspecție cu {n} fotografie (cam {min} min) sau un videoclip.",
   "few": "O inspecție cu {n} fotografii (cam {min} min) sau un videoclip.",
@@ -62,6 +67,18 @@
  "A yearly plan can't switch to monthly in the app. Write to info@fratius.com.": "Un plan anual nu poate trece la lunar în aplicație. Scrie la info@fratius.com.",
  "ABS": "ABS",
  "AI checks need the Firebase backend. Finish the setup first.": "Verificările AI au nevoie de backendul Firebase. Termină mai întâi configurarea.",
+ "AI comparison": "Comparație AI",
+ "AI comparison: not sure": "Comparație AI: nesigur",
+ "AI comparison: {n} new damages": {
+  "one": "Comparație AI: {n} avarie nouă",
+  "few": "Comparație AI: {n} avarii noi",
+  "other": "Comparație AI: {n} de avarii noi"
+ },
+ "AI comparison: {n} spots to review": {
+  "one": "Comparație AI: {n} zonă de evaluat",
+  "few": "Comparație AI: {n} zone de evaluat",
+  "other": "Comparație AI: {n} de zone de evaluat"
+ },
  "AI found no damage": "AI nu a găsit avarii",
  "AI found {n} damages": {
   "one": "AI a găsit {n} avarie",
@@ -70,8 +87,11 @@
  },
  "AI model": "Model AI",
  "AI model for checks": "Model AI pentru verificări",
+ "AI: new damage": "AI: avarie nouă",
+ "AI: not sure": "AI: nesigur",
  "AI: {reason}": "AI: {reason}",
  "AI: {verdict}": "AI: {verdict}",
+ "About {first} per 12-photo walk-around, plus about {second} for each photo the second look checks. The test log shows the real cost.": "Cam {first} pentru o inspecție cu 12 fotografii, plus cam {second} pentru fiecare fotografie verificată a doua oară. Jurnalul de teste arată costul real.",
  "About {km} a year over the allowance, roughly {eur} a year extra.": "Cam {km} pe an peste limita de kilometri, adică aproximativ {eur} pe an în plus.",
  "About {km} a year over the allowance.": "Cam {km} pe an peste limita de kilometri.",
  "About {m} m away": "La circa {m} m",
@@ -134,12 +154,15 @@
  "Added by {name}, changed by {by}": "Adăugat de {name}, modificat de {by}",
  "Adding the card…": "Se adaugă cardul…",
  "After": "După",
+ "After every walk-around taken with the camera, each photo is compared with the van's earlier photo of the same frame. {quick} looks at every pair; {best} takes a second look at what it marks. New damage goes to the station's fleet managers to review, and they get a notification.": "După fiecare inspecție făcută cu camera, fiecare fotografie e comparată cu fotografia anterioară a dubei din același cadru. {quick} se uită la fiecare pereche; {best} se uită a doua oară la ce marchează. Avariile noi ajung la managerii de flotă ai stației pentru evaluare, iar ei primesc o notificare.",
+ "After, {when}": "După, {when}",
  "After: {name}, from {when}.": "După: {name}, din {when}.",
  "Airbag": "Airbag",
  "All ({n})": "Toate ({n})",
  "All companies": "Toate companiile",
  "All companies ({n})": "Toate companiile ({n})",
  "All details": "Toate detaliile",
+ "All in, per walk-around": "Total, pe inspecție",
  "All spots": "Toate zonele",
  "All stations": "Toate stațiile",
  "All vans": "Toate dubele",
@@ -201,6 +224,8 @@
  "At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.": "La această stație, managerul de flotă împarte dubele. Cere-i o dubă sau cere-i să le permită șoferilor să preia singuri dubele.",
  "At your station, newest first. Kept for good.": "La stația ta, cele mai noi primele. Se păstrează definitiv.",
  "Automatic": "Automată",
+ "Automatic damage comparison": "Comparație automată a avariilor",
+ "Automatic damage comparison is off for this company.": "Comparația automată a avariilor e dezactivată pentru această companie.",
  "Back": "Înapoi",
  "Back to me": "Înapoi la contul meu",
  "Back to {title}": "Înapoi la {title}",
@@ -216,6 +241,7 @@
  "Before you start the wash": "Înainte să începi spălarea",
  "Before you turn it on: this records how employees work. Tell your drivers what is recorded and why, and if the company has a works council (Betriebsrat), agree it with them first.": "Înainte să activezi: asta înregistrează cum lucrează angajații. Spune-le șoferilor ce se înregistrează și de ce, iar dacă firma are un consiliu al angajaților (Betriebsrat), stabilește mai întâi cu el.",
  "Before {when}. There are no earlier photos of this van.": "Înainte de {when}. Nu există fotografii mai vechi ale acestei dube.",
+ "Before, {when}": "Înainte, {when}",
  "Before: {name}, until {when}.": "Înainte: {name}, până pe {when}.",
  "Before: {panel}, {when}": "Înainte: {panel}, {when}",
  "Best": "Cel mai bun",
@@ -312,6 +338,7 @@
  "Checking the video…": "Se verifică videoclipul…",
  "Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what's due and ticks it off. They get a reminder after an hour; you hear about it if it's still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.": "Verificări pe care șoferii le fac la duba lor, cum ar fi nivelul uleiului sau spațiul de încărcare. Șoferul care are duba vede ce e de făcut și bifează. Primește un memento după o oră; tu afli dacă tot nu e făcută după 3 ore și imediat când un șofer găsește o problemă. Mementouri doar între 6:00 și 20:00.",
  "Checks drivers haven't done yet (red after 3 hours), and problems they found in the last 7 days.": "Verificări pe care șoferii nu le-au făcut încă (cu roșu după 3 ore) și probleme găsite în ultimele 7 zile.",
+ "Checks drivers sent, and new damage the AI found by comparing walk-arounds. Oldest first.": "Verificări trimise de șoferi și avarii noi găsite de AI comparând inspecțiile. Cele mai vechi primele.",
  "Checks drivers sent. Oldest first.": "Verificări trimise de șoferi. Cele mai vechi primele.",
  "Checks for drivers": "Verificări pentru șoferi",
  "Checks for drivers need the Firebase backend.": "Verificările pentru șoferi au nevoie de backendul Firebase.",
@@ -349,6 +376,10 @@
  "Company and card": "Compania și cardul",
  "Company name": "Numele companiei",
  "Compare with the dashboard and correct anything that's wrong.": "Compară cu bordul și corectează ce e greșit.",
+ "Compare with the photos before": "Compară cu fotografiile de dinainte",
+ "Comparing every photo with the van's earlier photos. This takes about a minute.": "Fiecare fotografie e comparată cu fotografiile anterioare ale dubei. Durează cam un minut.",
+ "Comparisons": "Comparații",
+ "Comparisons ({n})": "Comparații ({n})",
  "Complaints": "Reclamații",
  "Connected to Firebase project {project}. Photos and results sync across phones and the web.": "Conectat la proiectul Firebase {project}. Fotografiile și rezultatele se sincronizează între telefoane și web.",
  "Contact": "Contact",
@@ -366,6 +397,7 @@
  "Correct: {what}": "Corectează: {what}",
  "Corrected. What it was before is kept with it.": "Corectat. Ce era înainte se păstrează alături.",
  "Cosmetic": "Estetică",
+ "Cost": "Cost",
  "Cost in period": "Cost în perioadă",
  "Cost per check, all in": "Cost pe verificare, tot inclus",
  "Cost per scan": "Cost pe scanare",
@@ -451,6 +483,7 @@
  "Damage per 10,000 km": "Avarii la 10.000 km",
  "Damage the AI missed": "Avarii ratate de AI",
  "Damage the AI missed ({n})": "Avarii ratate de AI ({n})",
+ "Damage the managers added": "Avarii adăugate de manageri",
  "Damage was approved in a check of these photos.": "Într-o verificare a acestor fotografii s-a aprobat o avarie.",
  "Damage was approved: the photos are kept until {date}.": "S-a aprobat o avarie: fotografiile se păstrează până la {date}.",
  "Damage {no}": "Avaria {no}",
@@ -595,6 +628,7 @@
  "Every check is done.": "Toate verificările sunt făcute.",
  "Every company in the app. Opens and manages any of them.": "Toate companiile din aplicație. Le deschide și le administrează pe oricare.",
  "Every company using the app. Open one to see it as its owner would.": "Toate companiile care folosesc aplicația. Deschide una ca s-o vezi cum o vede proprietarul ei.",
+ "Every comparison": "Toate comparațiile",
  "Every dashboard photo updates the odometer.": "Fiecare fotografie a bordului actualizează kilometrajul.",
  "Every entry": "Toate înregistrările",
  "Every few days": "La câteva zile",
@@ -616,6 +650,7 @@
  },
  "Everyone who had this van, newest first. This history is kept for good.": "Toți cei care au avut această dubă, cei mai recenți primii. Istoricul se păstrează definitiv.",
  "Excel (.xlsx), CSV or PDF: a fleet list, a leasing or insurance list, an export from another system. One van per line, with its number plate. Anything else the file has is read too: VIN, first registration, TÜV, contract, insurance, fuel card, station.": "Excel (.xlsx), CSV sau PDF: o listă a flotei, o listă de leasing sau de asigurare, un export din alt sistem. O dubă pe rând, cu numărul de înmatriculare. Se citește și tot restul din fișier: VIN, prima înmatriculare, TÜV, contract, asigurare, card de combustibil, stație.",
+ "Failed": "Eșuat",
  "Failed, has to go again": "Respins, trebuie să meargă din nou",
  "Fast": "Rapid",
  "Fault": "Vină",
@@ -645,9 +680,12 @@
  "Firebase isn't connected yet, so this app keeps everything on this phone.": "Firebase nu e încă conectat, așa că aplicația păstrează totul pe acest telefon.",
  "First a video or the photos, so damage that was already there isn't put on you. The pick-up goes on the van's history under your name.": "Mai întâi un videoclip sau fotografiile, ca avariile care existau deja să nu fie puse pe seama ta. Preluarea intră în istoricul dubei pe numele tău.",
  "First aid kit and warning triangle": "Trusă de prim ajutor și triunghi",
+ "First look": "Prima privire",
+ "First look, per walk-around": "Prima privire, pe inspecție",
  "First name": "Prenume",
  "First registration": "Prima înmatriculare",
  "First station": "Prima stație",
+ "First walk-around": "Prima inspecție",
  "First, the dashboard": "Mai întâi, bordul",
  "Fit the vehicle to the outline.": "Încadrează vehiculul în contur.",
  "Flat, in good light, the whole page in the picture. More pages? Add them before reading.": "Pe o suprafață plană, în lumină bună, cu toată pagina în imagine. Mai multe pagini? Adaugă-le înainte de citire.",
@@ -687,6 +725,8 @@
  "Forgot your password?": "Ai uitat parola?",
  "Former people": "Foști membri",
  "Found and approved": "Găsită și aprobată",
+ "Found by the AI comparing these photos with the van's earlier photos. It can be wrong: compare the before and after photos.": "Găsite de AI comparând aceste fotografii cu fotografiile anterioare ale dubei. Poate greși: compară fotografiile de înainte și de după.",
+ "Found by the AI comparing these photos with the van's photos from {when}. It can be wrong: compare the before and after photos.": "Găsite de AI comparând aceste fotografii cu fotografiile dubei din {when}. Poate greși: compară fotografiile de înainte și de după.",
  "Found {n} details. Ticked: new or different from what's saved. Correct anything that's wrong.": {
   "one": "S-a găsit {n} detaliu. Bifat: nou sau diferit față de ce e salvat. Corectează ce e greșit.",
   "few": "S-au găsit {n} detalii. Bifate: noi sau diferite față de ce e salvat. Corectează ce e greșit.",
@@ -1048,6 +1088,7 @@
  "No checks for this van yet.": "Încă nicio verificare pentru această dubă.",
  "No checks yet. Add one: the suggestions make it a few taps.": "Încă nicio verificare. Adaugă una: cu sugestiile e gata din câteva atingeri.",
  "No comments yet. For example: what the driver said, the repair or the insurance claim.": "Niciun comentariu încă. De exemplu: ce a spus șoferul, reparația sau dosarul de daună.",
+ "No comparisons yet. Every walk-around taken with the camera is compared with the van's earlier photos.": "Încă nicio comparație. Fiecare inspecție făcută cu camera e comparată cu fotografiile anterioare ale dubei.",
  "No connection. Check your internet and try again.": "Fără conexiune. Verifică internetul și încearcă din nou.",
  "No connection. It's saved on this phone and goes through by itself when there's a connection.": "Fără conexiune. E salvat pe acest telefon și se trimite singur când apare conexiunea.",
  "No connection. Showing what this phone last saw ({when}). Changes you make wait here and go through by themselves.": "Fără conexiune. Se arată ce a văzut ultima dată acest telefon ({when}). Modificările pe care le faci așteaptă aici și se trimit singure.",
@@ -1081,6 +1122,7 @@
  "No drop-off video or photos: {driver} didn't drop it off, the next driver took it over.": "Fără videoclip sau fotografii de predare: {driver} nu a predat-o, a preluat-o următorul șofer.",
  "No drop-off video or photos: {driver} didn't drop it off, {next} took it over.": "Fără videoclip sau fotografii de predare: {driver} nu a predat-o, a preluat-o {next}.",
  "No earlier photos of this van": "Nu există fotografii mai vechi ale acestei dube",
+ "No earlier photos of this van to compare with yet. The next walk-around is compared with these photos.": "Încă nu există fotografii anterioare ale acestei dube cu care să fie comparată. Următoarea inspecție va fi comparată cu aceste fotografii.",
  "No earlier photos, so it can't be narrowed down.": "Nu există fotografii mai vechi, așa că intervalul nu poate fi restrâns.",
  "No end-of-tour photo": "Fără fotografie de final de tură",
  "No fleet manager at {station} yet.": "Încă nu există un manager de flotă la {station}.",
@@ -1092,6 +1134,7 @@
  "No km yet": "Încă fără kilometraj",
  "No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.": "Nu s-a putut citi o listă de dube de aici. Încarcă lista ca fișier Excel sau CSV, sau o fotografie mai clară.",
  "No make or model in the list": "Fără marcă sau model în listă",
+ "No new damage": "Nicio avarie nouă",
  "No number plate yet. Add it under Details: the plate is how this van is shown everywhere.": "Încă nu are număr de înmatriculare. Adaugă-l la Detalii: după număr apare această dubă peste tot.",
  "No number plates were found in this file. Check that it lists the vans with their plates, one van per line.": "Nu s-a găsit niciun număr de înmatriculare în acest fișier. Verifică dacă listează dubele cu numerele lor, câte o dubă pe rând.",
  "No photo": "Nicio fotografie",
@@ -1136,6 +1179,18 @@
  "Not at fault": "Fără vină",
  "Not checked": "Neverificat",
  "Not clear yet": "Încă neclar",
+ "Not compared": "Necomparate",
+ "Not compared: during the free trial and in demo companies each van gets {n} comparisons a day.": {
+  "one": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} comparație pe zi.",
+  "few": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} comparații pe zi.",
+  "other": "Necomparată: în perioada de probă gratuită și în companiile demo fiecare dubă are {n} de comparații pe zi."
+ },
+ "Not compared: during the free trial each van gets {n} comparisons a day.": {
+  "one": "Necomparată: în perioada de probă gratuită fiecare dubă are {n} comparație pe zi.",
+  "few": "Necomparată: în perioada de probă gratuită fiecare dubă are {n} comparații pe zi.",
+  "other": "Necomparată: în perioada de probă gratuită fiecare dubă are {n} de comparații pe zi."
+ },
+ "Not compared: {list}.": "Necomparate: {list}.",
  "Not connected to Firebase yet: vehicles are saved on this phone only.": "Încă neconectat la Firebase: vehiculele sunt salvate doar pe acest telefon.",
  "Not damage": "Nu e avarie",
  "Not done yet.": "Încă nefăcută.",
@@ -1168,6 +1223,7 @@
  "Nothing recorded yet. Add the last service from its invoice to start.": "Nimic înregistrat încă. Pentru început, adaugă ultimul service de pe factura lui.",
  "Nothing recorded.": "Nimic înregistrat.",
  "Nothing reviewed yet.": "Nimic evaluat încă.",
+ "Nothing to decide right now. Checks appear here when a driver sends one or the AI finds new damage.": "Nimic de decis acum. Verificările apar aici când un șofer trimite una sau când AI găsește avarii noi.",
  "Nothing to decide right now. Checks appear here when a driver sends one.": "Nimic de decis acum. Verificările apar aici când un șofer trimite una.",
  "Nothing to save": "Nimic de salvat",
  "Nothing waiting. Everything is sent.": "Nimic în așteptare. Totul e trimis.",
@@ -1240,6 +1296,7 @@
  "Only the person who started it, or the station's fleet manager, can cancel it.": "Doar persoana care a început-o sau managerul de flotă al stației o poate anula.",
  "Only the result is kept, not the licence number or a copy.": "Se păstrează doar rezultatul, nu numărul permisului sau o copie.",
  "Only the station's fleet managers and owners decide this.": "Doar managerii de flotă ai stației și proprietarii decid asta.",
+ "Only walk-arounds taken with the camera are compared.": "Se compară doar inspecțiile făcute cu camera.",
  "Only you": "Doar tu",
  "Only you see this. A link sets the free days, a discount and the plan for one DSP; they still add a card.": "Doar tu vezi asta. Un link stabilește zilele gratuite, o reducere și planul pentru un DSP; DSP-ul adaugă totuși un card.",
  "Only you see this. A link sets the free days, a discount, the plan and whether a card is asked at sign-up, for one DSP.": "Doar tu vezi asta. Un link stabilește zilele gratuite, o reducere, planul și dacă se cere un card la înscriere, pentru un DSP.",
@@ -1256,6 +1313,8 @@
  "Open the check": "Deschide verificarea",
  "Open the demo company": "Deschide compania demo",
  "Open the fleet": "Deschide flota",
+ "Open the photos after": "Deschide fotografiile de după",
+ "Open the photos before": "Deschide fotografiile de dinainte",
  "Open this page on your phone to install the app there, or keep using it in this browser.": "Deschide această pagină pe telefon ca să instalezi aplicația acolo sau folosește-o în continuare în acest browser.",
  "Open {name}": "Deschide {name}",
  "Open {plate}": "Deschide {plate}",
@@ -1301,6 +1360,7 @@
  "People of {station}. Someone who already has a van hands it back: it becomes free.": "Persoanele din {station}. Cine are deja o dubă o returnează: aceasta devine liberă.",
  "Per month, without VAT": "Pe lună, fără TVA",
  "Per van": "Pe dubă",
+ "Per van and month": "Pe dubă și lună",
  "Percent off": "Reducere procentuală",
  "Period": "Perioadă",
  "Person": "Persoană",
@@ -1377,6 +1437,7 @@
  "Please check before you go on": "Verifică înainte să continui",
  "Plugged in to charge": "Conectată la încărcare",
  "Policy number": "Număr poliță",
+ "Possible new damage: {van}": "Posibilă avarie nouă: {van}",
  "Possible, {pct}%": "Posibil, {pct}%",
  "Power": "Putere",
  "Price: {price}": "Preț: {price}",
@@ -1478,6 +1539,7 @@
  "Retired ({n})": "Retrase ({n})",
  "Retiring takes a van out of the fleet (sold, returned, written off). Vans are never deleted: their checks and driver history stay.": "Retragerea scoate o dubă din flotă (vândută, returnată, casată). Dubele nu se șterg niciodată: verificările și istoricul șoferilor rămân.",
  "Review": "Evaluare",
+ "Review the spots": "Evaluează zonele",
  "Review {name}, {van}": "Evaluează: {name}, {van}",
  "Review {n} spots": {
   "one": "Evaluează {n} zonă",
@@ -1513,6 +1575,7 @@
  "Role": "Rol",
  "Roller shutter": "Ușă rulou",
  "Run one from a walk-around below, or check photos you already have.": "Pornește una dintr-o inspecție de mai jos sau verifică fotografii pe care le ai deja.",
+ "Running": "În desfășurare",
  "Runs out at the end of {month}": "Expiră la sfârșitul lunii {month}",
  "SUV or crossover": "SUV sau crossover",
  "Safety briefing (yearly)": "Instruire de siguranță (anuală)",
@@ -1581,6 +1644,8 @@
  "Scan it": "Scaneaz-o",
  "Scan it and the app picks its type, or pick the type yourself.": "Scaneaz-o și aplicația îi alege tipul sau alege tu tipul.",
  "Scan with photos or a video?": "Scanezi cu fotografii sau cu videoclip?",
+ "Second look": "A doua privire",
+ "Second look, per photo checked": "A doua privire, pe fotografie verificată",
  "See all deadlines": "Vezi toate termenele",
  "See and change checks": "Vezi și schimbă verificările",
  "See the app the way each role sees it.": "Vezi aplicația așa cum o vede fiecare rol.",
@@ -1672,6 +1737,7 @@
  "Speed and cost": "Viteză și cost",
  "Speeding": "Viteză excesivă",
  "Spots per check": "Zone pe verificare",
+ "Spots the first look marked that the second look calls already there or not damage are the false alarms it removes. Damage the managers added is what both missed.": "Zonele marcate la prima privire pe care a doua privire le consideră deja existente sau fără avarie sunt alarmele false pe care le elimină. Avariile adăugate de manageri sunt cele pe care le-au ratat amândouă.",
  "Spots the first pass marked that turned out to be dirt or reflections are the false alarms the close-ups remove.": "Zonele marcate la prima trecere care s-au dovedit murdărie sau reflexii sunt alarmele false eliminate de prim-planuri.",
  "Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.": "Stai în unghi față de colț. Colțul barei la mijloc, pasajul roții în imagine.",
  "Standard roof": "Acoperiș standard",
@@ -1797,9 +1863,15 @@
  "The AI couldn't read it.": "AI nu a putut citi.",
  "The AI couldn't read it: {issue}.": "AI nu a putut citi: {issue}.",
  "The AI declined to answer for these photos. Try other photos.": "AI a refuzat să răspundă pentru aceste fotografii. Încearcă alte fotografii.",
+ "The AI found no new damage. It can miss small damage.": "AI nu a găsit nicio avarie nouă. Poate rata avarii mici.",
  "The AI functions aren't deployed yet. Check that the GitHub deploy ran.": "Funcțiile AI nu sunt încă publicate. Verifică dacă a rulat deploy-ul din GitHub.",
  "The AI isn't sure about the odometer. Compare it with the dashboard.": "AI nu e sigur de kilometraj. Compară-l cu bordul.",
  "The AI key isn't set. Add the ANTHROPIC_API_KEY secret in GitHub and run the Deploy workflow.": "Cheia AI nu e setată. Adaugă secretul ANTHROPIC_API_KEY în GitHub și rulează workflow-ul Deploy.",
+ "The AI marked {n} spots that may be new. Review them: your decision goes on the van's record.": {
+  "one": "AI a marcat {n} zonă care poate fi nouă. Evaluează-o: decizia ta intră în registrul de avarii al dubei.",
+  "few": "AI a marcat {n} zone care pot fi noi. Evaluează-le: decizia ta intră în registrul de avarii al dubei.",
+  "other": "AI a marcat {n} de zone care pot fi noi. Evaluează-le: decizia ta intră în registrul de avarii al dubei."
+ },
  "The AI marks possible damage, then asks for close-ups of each spot.": "AI marchează posibilele avarii, apoi cere prim-planuri pentru fiecare zonă.",
  "The AI model": "Modelul AI",
  "The AI rejected the request: {why}": "AI a respins cererea: {why}",
@@ -1833,6 +1905,7 @@
  "The company's owner adds the plan and the card. Ask them, then open Fratius again.": "Planul și cardul le adaugă proprietarul flotei. Cere-i asta, apoi deschide din nou Fratius.",
  "The company's plan is for {n} vans and they are all in use. Ask the owner for more room.": "Planul companiei este pentru {n} de dube și toate sunt în uz. Cere-i proprietarului flotei mai mult loc.",
  "The company's storage is full. Tell your fleet manager.": "Spațiul de stocare al companiei e plin. Anunță managerul de flotă.",
+ "The comparison with the van's earlier photos didn't finish.": "Comparația cu fotografiile anterioare ale dubei nu s-a terminat.",
  "The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.": "Copia care rulează pe orice telefon nu a putut fi creată. Acesta e originalul; rulează pe iPhone și Mac.",
  "The cost doesn't look right.": "Costul nu pare corect.",
  "The damage log for {van}": "Jurnalul de avarii al dubei {van}",
@@ -1848,11 +1921,17 @@
  "The driver who has this van does its checks (or the station's fleet manager).": "Verificările acestei dube le face șoferul care o are (sau managerul de flotă al stației).",
  "The drivers of each van need the Firebase backend.": "Șoferii fiecărei dube au nevoie de backendul Firebase.",
  "The drop-off photos of {van} are saved with its history.": "Fotografiile de predare ale dubei {van} sunt salvate în istoricul ei.",
+ "The drop-off photos show {n} possible new damages. Review them.": {
+  "one": "Fotografiile de predare arată {n} posibilă avarie nouă. Evaluează-o.",
+  "few": "Fotografiile de predare arată {n} posibile avarii noi. Evaluează-le.",
+  "other": "Fotografiile de predare arată {n} de posibile avarii noi. Evaluează-le."
+ },
  "The file is bigger than {n} MB. Upload the list on its own, as .xlsx or CSV.": "Fișierul are peste {n} MB. Încarcă doar lista, ca .xlsx sau CSV.",
  "The file is deleted straight after reading. Vans aren't given to drivers from a file.": "Fișierul se șterge imediat după citire. Dintr-un fișier nu se dau dube șoferilor.",
  "The file is too big. Upload the list on its own, as .xlsx or CSV.": "Fișierul e prea mare. Încarcă doar lista, ca .xlsx sau CSV.",
  "The file lists {n} vans. Upload at most {max} at a time.": "Fișierul conține {n} dube. Încarcă cel mult {max} odată.",
  "The file seems to be damaged. Save it again and upload it.": "Fișierul pare deteriorat. Salvează-l din nou și încarcă-l.",
+ "The first walk-around of this van: nothing to compare with yet. The next one is compared with these photos.": "Prima inspecție a acestei dube: încă nimic de comparat. Următoarea va fi comparată cu aceste fotografii.",
  "The fleet managers and drivers of your station.": "Managerii de flotă și șoferii stației tale.",
  "The fleet owner changes these.": "Proprietarul flotei le modifică.",
  "The free trial ended on {day}.": "Perioada de probă gratuită s-a încheiat pe {day}.",
@@ -1882,6 +1961,7 @@
  "The most thorough look at every photo.": "Cea mai atentă analiză a fiecărei fotografii.",
  "The name on the document doesn't look like {name}. Check it's theirs before saving.": "Numele de pe document nu pare a fi {name}. Verifică dacă e al persoanei înainte de salvare.",
  "The new TÜV date has to be after the day it was done.": "Noua dată TÜV trebuie să fie după ziua în care s-a făcut.",
+ "The newest walk-around of a van keeps its photos until a newer one is taken, so the next one can be compared with it.": "Cea mai nouă inspecție a unei dube își păstrează fotografiile până se face una mai nouă, ca următoarea să poată fi comparată cu ea.",
  "The next check shows on each driver's record and in Review. Every 6 months is common practice.": "Următoarea verificare apare în fișa fiecărui șofer și în Evaluare. De obicei se face la fiecare 6 luni.",
  "The next dates show on the van, in the fleet list and in Review.": "Următoarele termene apar pe dubă, în lista flotei și în Evaluare.",
  "The next service has to be after the day it was done.": "Următorul service trebuie să fie după ziua în care s-a făcut.",
@@ -1906,6 +1986,11 @@
  "The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.": "Fotografiile arată starea dubei când ai adus-o înapoi, ca avariile care existau deja să nu fie puse pe seama ta. Se păstrează în istoricul dubei.",
  "The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.": "Fotografiile arată starea dubei când ai luat-o, ca avariile care existau deja să nu fie puse pe seama ta. Se păstrează în istoricul dubei.",
  "The pick-up photos of {van} are saved with its history.": "Fotografiile de preluare ale dubei {van} sunt salvate în istoricul ei.",
+ "The pick-up photos show {n} possible new damages. Review them.": {
+  "one": "Fotografiile de preluare arată {n} posibilă avarie nouă. Evaluează-o.",
+  "few": "Fotografiile de preluare arată {n} posibile avarii noi. Evaluează-le.",
+  "other": "Fotografiile de preluare arată {n} de posibile avarii noi. Evaluează-le."
+ },
  "The pick-up video of {van} is saved with its history.": "Videoclipul de preluare al dubei {van} e salvat în istoricul ei.",
  "The plan has ended": "Planul s-a încheiat",
  "The plan has ended. You can look at and export the data until {date}.": "Planul s-a încheiat. Poți vedea și exporta datele până pe {date}.",
@@ -1960,6 +2045,7 @@
  "These photos or this video were deleted already.": "Aceste fotografii sau acest videoclip au fost deja șterse.",
  "These photos were already used. Take new ones.": "Aceste fotografii au fost deja folosite. Fă altele noi.",
  "These photos were deleted on {date}. The record of the walk-around stays.": "Aceste fotografii au fost șterse pe {date}. Inspecția rămâne înregistrată.",
+ "These photos weren't compared with the van's earlier photos.": "Aceste fotografii nu au fost comparate cu fotografiile anterioare ale dubei.",
  "They choose": "La alegere",
  "They left the company. Their van history stays.": "A plecat din companie. Istoricul dubelor rămâne.",
  "This AI model isn't available on the Anthropic account. Pick another model in Account.": "Acest model AI nu e disponibil în contul Anthropic. Alege alt model în Cont.",
@@ -2034,11 +2120,13 @@
  "This video was uploaded more than two hours ago. Record a new one.": "Acest videoclip a fost încărcat acum mai mult de două ore. Înregistrează unul nou.",
  "This walk-around has no uploaded photos.": "Această inspecție nu are fotografii încărcate.",
  "This walk-around isn't available.": "Această inspecție nu e disponibilă.",
+ "This walk-around was compared already.": "Această inspecție a fost deja comparată.",
  "This walk-around was deleted.": "Această inspecție a fost ștearsă.",
  "This year": "Anul acesta",
  "Tick all": "Bifează tot",
  "Tick the vans to add first.": "Bifează mai întâi dubele de adăugat.",
  "Time": "Ora",
+ "Time is measured on the server, per AI call (the frames run side by side). Cost is from the tokens the API reported, at list prices.": "Timpul se măsoară pe server, pentru fiecare apel AI (cadrele rulează în paralel). Costul provine din tokenii raportați de API, la prețurile de listă.",
  "Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.": "Timpul se măsoară pe server, pentru fiecare apel AI. Costul provine din tokenii raportați de API pentru {model}, la prețurile de listă.",
  "Time per scan": "Timp pe scanare",
  "To check": "De verificat",
@@ -2070,6 +2158,7 @@
  "Tours without end photo": "Ture fără fotografie de final",
  "Traffic fine": "Amendă de circulație",
  "Transporter ID {id}": "Transporter ID {id}",
+ "Trial limit": "Limită de probă",
  "Try again": "Încearcă din nou",
  "Try again with this photo": "Încearcă din nou cu această fotografie",
  "Try it as someone else": "Încearcă în rolul altcuiva",
@@ -2365,9 +2454,16 @@
   "few": "și încă {n}",
   "other": "și încă {n}"
  },
+ "another vehicle in the photo": "alt vehicul în fotografie",
  "any plan": "orice plan",
+ "approved, of {n} spots a manager decided": {
+  "one": "aprobate, din {n} zonă decisă de un manager",
+  "few": "aprobate, din {n} zone decise de un manager",
+  "other": "aprobate, din {n} de zone decise de un manager"
+ },
  "as on the phone": "ca pe telefon",
  "asked {when}": "cerere din {when}",
+ "at 2 walk-arounds a day, 26 days": "la 2 inspecții pe zi, 26 de zile",
  "at least 6 characters": "cel puțin 6 caractere",
  "box van or Luton": "dubă cu box sau Luton",
  "broken part": "piesă ruptă",
@@ -2383,6 +2479,7 @@
  "driver deleted their account": "cont șters de șofer",
  "dropped off": "predată",
  "due since {when}": "de făcut din {when}",
+ "earlier photo deleted": "fotografia anterioară a fost ștearsă",
  "empty: for as long as they stay": "gol: cât timp rămân clienți",
  "empty: no end date": "gol: fără dată de sfârșit",
  "every month": "în fiecare lună",
@@ -2395,6 +2492,11 @@
  "fuel gauge": "indicatorul de combustibil",
  "given to someone else": "dată altcuiva",
  "in {km}": "peste {km}",
+ "in {n} checks": {
+  "one": "în {n} verificare",
+  "few": "în {n} verificări",
+  "other": "în {n} de verificări"
+ },
  "in {n} days": {
   "one": "peste {n} zi",
   "few": "peste {n} zile",
@@ -2417,6 +2519,11 @@
  "like 03/2028": "de exemplu 03/2028",
  "litres": "litri",
  "made free": "eliberată",
+ "marked by the first look ({n} photos)": {
+  "one": "marcate la prima privire ({n} fotografie)",
+  "few": "marcate la prima privire ({n} fotografii)",
+  "other": "marcate la prima privire ({n} de fotografii)"
+ },
  "median": "mediana",
  "median time": "timp median",
  "mid-size van": "dubă medie",
@@ -2436,6 +2543,7 @@
  "no cost yet": "încă fără cost",
  "no damage": "fără avarie",
  "no date": "fără dată",
+ "no earlier photo": "nicio fotografie anterioară",
  "no end photo": "fără fotografie de final",
  "no end photo (estimated)": "fără fotografie de final (estimat)",
  "no free days": "fără zile gratuite",
@@ -2470,7 +2578,9 @@
  "per 100 km": "la 100 km",
  "per photo": "pe fotografie",
  "phone app": "aplicația de telefon",
+ "photo couldn't be opened": "fotografia nu a putut fi deschisă",
  "photos": "fotografii",
+ "photos too different": "fotografii prea diferite",
  "photos, {n} skipped": {
   "one": "fotografii, {n} sărită",
   "few": "fotografii, {n} sărite",
@@ -2511,6 +2621,7 @@
  "started {time} ago": "începută acum {time}",
  "swapped for another van": "schimbată cu altă dubă",
  "taken over": "preluată",
+ "the AI didn't answer": "AI nu a răspuns",
  "the document": "documentul",
  "the driver": "șoferul",
  "the fleet manager": "managerul de flotă",
@@ -2534,6 +2645,11 @@
  "vs others, same van": "vs. ceilalți, aceeași dubă",
  "vs same model": "vs. același model",
  "walk-arounds": "inspecții",
+ "walk-arounds, {n} photos compared": {
+  "one": "inspecții, {n} fotografie comparată",
+  "few": "inspecții, {n} fotografii comparate",
+  "other": "inspecții, {n} de fotografii comparate"
+ },
  "walk-in delivery van": "dubă de livrare walk-in",
  "warning: {lights}": "avertizare: {lights}",
  "wash": "spălare",
@@ -2566,6 +2682,7 @@
  "{driver} has this van, not {name}.": "Duba e la {driver}, nu la {name}.",
  "{field}: enter a date like {example}.": "{field}: introdu o dată de forma {example}.",
  "{field}: enter a number.": "{field}: introdu un număr.",
+ "{frame} ({why})": "{frame} ({why})",
  "{from} to now, {time}": "{from} – acum, {time}",
  "{from} to {to} km so far: {km} km": "De la {from} la {to} km: {km} km până acum",
  "{from} to {to} km: {km} km driven": "De la {from} la {to} km: {km} km parcurși",
@@ -2636,6 +2753,11 @@
  "{name}: {note}": "{name}: {note}",
  "{n} % off": "{n}% reducere",
  "{n} % off for {m} months": "{n}% reducere timp de {m} luni",
+ "{n} added": {
+  "one": "adăugate: {n}",
+  "few": "adăugate: {n}",
+  "other": "adăugate: {n}"
+ },
  "{n} already in the fleet": {
   "one": "{n} deja în flotă",
   "few": "{n} deja în flotă",
@@ -2645,6 +2767,11 @@
   "one": "{n} deja pe dubă",
   "few": "{n} deja pe dubă",
   "other": "{n} deja pe dubă"
+ },
+ "{n} already there": {
+  "one": "deja existente: {n}",
+  "few": "deja existente: {n}",
+  "other": "deja existente: {n}"
  },
  "{n} approved damages": {
   "one": "{n} avarie aprobată",
@@ -2751,6 +2878,11 @@
   "few": "{n} cadre",
   "other": "{n} de cadre"
  },
+ "{n} frames, {images} images": {
+  "one": "{n} cadru, {images} imagini",
+  "few": "{n} cadre, {images} imagini",
+  "other": "{n} de cadre, {images} de imagini"
+ },
  "{n} h": "{n} h",
  "{n} images": {
   "one": "{n} imagine",
@@ -2799,6 +2931,11 @@
   "few": "fără avarie: {n}",
   "other": "fără avarie: {n}"
  },
+ "{n} not damage": {
+  "one": "nu sunt avarii: {n}",
+  "few": "nu sunt avarii: {n}",
+  "other": "nu sunt avarii: {n}"
+ },
  "{n} of {max} used": "{n} din {max} folosite",
  "{n} open links": {
   "one": "{n} link activ",
@@ -2820,6 +2957,21 @@
   "one": "{n} fotografie",
   "few": "{n} fotografii",
   "other": "{n} de fotografii"
+ },
+ "{n} photos compared": {
+  "one": "{n} fotografie comparată",
+  "few": "{n} fotografii comparate",
+  "other": "{n} de fotografii comparate"
+ },
+ "{n} photos compared with the van's earlier photos.": {
+  "one": "{n} fotografie comparată cu fotografiile anterioare ale dubei.",
+  "few": "{n} fotografii comparate cu fotografiile anterioare ale dubei.",
+  "other": "{n} de fotografii comparate cu fotografiile anterioare ale dubei."
+ },
+ "{n} photos compared with the van's photos from {when}.": {
+  "one": "{n} fotografie comparată cu fotografiile dubei din {when}.",
+  "few": "{n} fotografii comparate cu fotografiile dubei din {when}.",
+  "other": "{n} de fotografii comparate cu fotografiile dubei din {when}."
  },
  "{n} photos for this {cls}, about {min} min.": {
   "one": "{n} fotografie pentru {cls}, cam {min} min.",
@@ -2855,6 +3007,11 @@
   "one": "{n} posibilă avarie",
   "few": "{n} posibile avarii",
   "other": "{n} de posibile avarii"
+ },
+ "{n} possible new damages": {
+  "one": "{n} posibilă avarie nouă",
+  "few": "{n} posibile avarii noi",
+  "other": "{n} de posibile avarii noi"
  },
  "{n} reflections": {
   "one": "{n} reflexie",

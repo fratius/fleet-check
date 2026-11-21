@@ -397,5 +397,6 @@
  "hours": "orë",
  "minutes": "minuta",
  "seconds": "sekonda",
- "{n} % off": "{n} % zbritje"
+ "{n} % off": "{n} % zbritje",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Inspektimi më i ri i çdo furgoni ruhet derisa të bëhet një më i ri: aplikacioni krahason çdo inspektim me fotot e mëparshme të furgonit për të gjetur dëmtimet e reja."
 }

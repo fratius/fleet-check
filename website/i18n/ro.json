@@ -397,5 +397,6 @@
  "hours": "ore",
  "minutes": "minute",
  "seconds": "secunde",
- "{n} % off": "{n}% reducere"
+ "{n} % off": "{n}% reducere",
+ "Each van's newest walk-around stays until a newer one is taken: the app compares every walk-around with the van's earlier photos to find new damage.": "Cea mai nouă inspecție a fiecărei dube se păstrează până se face una mai nouă: aplicația compară fiecare inspecție cu fotografiile anterioare ale dubei ca să găsească avariile noi."
 }
