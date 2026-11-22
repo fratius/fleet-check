@@ -6,7 +6,8 @@
 // And an incident written without signal that reaches the server much later (the rules want its time near the
 // server's) is sent once more as made now, instead of stopping as "refused".
 // And a sign-up link without a card: the sign-up page asks for no card and the company opens with its free days.
-// And the AI comparison of a walk-around shows for its owner, also in a demo company.
+// And the AI comparison of a walk-around shows for its owner, also in a demo company; and for the driver who took the
+// pick-up or drop-off photos, with the close-ups to take.
 // Run: emulators:exec --only auth,firestore,functions,storage "node --test tests/offline.e2e.mjs" (APP_DIR = the web build).
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, statSync } from 'node:fs';
@@ -320,6 +321,83 @@ test('the AI comparison of a walk-around shows for the owner, also in a demo com
   await visible(page, 'AI comparison').waitFor({ timeout: 60_000 });
   await visible(page, '1 possible new damage').waitFor({ timeout: 10_000 });
   await visible(page, '12 photos compared with the van\'s photos from').waitFor({ timeout: 10_000 });
+  await page.context().close();
+});
+
+test('A1, A4–A7: the driver sees the AI result of their pick-up or drop-off on the Vans tab, and the close-ups on the check', async () => {
+  // Product owner, 2026-11-22. Written past the rules as the server writes them; the walk-arounds' photos have no files,
+  // so the comparison trigger leaves them alone.
+  const now = Date.now();
+  const ORG_C = 'closeupOrg', ST_C = 'closeupSt', VAN_C = 'closeupVan', W1 = 'closeupWalk1', K1 = 'cmp-closeupWalk1';
+  const RIA = { email: 'ria.closeup@example.com', password: 'closeup-pass-1', name: 'Ria Driver' };
+  const r = await auth.createUser({ email: RIA.email, password: RIA.password, displayName: RIA.name });
+  const b = db.batch();
+  b.set(db.doc(`orgs/${ORG_C}`), { name: 'Closeup DSP', createdBy: OWNER2.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+  b.set(db.doc(`orgs/${ORG_C}/members/${OWNER2.uid}`), { role: 'owner', stationIds: [], email: OWNER2.email, name: OWNER2.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_C}/members/${r.uid}`), { role: 'driver', stationIds: [ST_C], email: RIA.email, name: RIA.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_C}/stations/${ST_C}`), { name: 'Main station', code: 'DBE4', createdAt: now });
+  b.set(db.doc(`orgs/${ORG_C}/vehicles/${VAN_C}`), { name: '', plate: 'B-CU 1', cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: ST_C, createdAt: now, createdBy: OWNER2.uid, scanId: null });
+  b.set(db.doc(`users/${r.uid}`), { orgIds: [ORG_C], orgId: ORG_C, email: RIA.email, name: RIA.name });
+  const walk = (id, at, kind, cmp) => b.set(db.doc(`orgs/${ORG_C}/walkarounds/${id}`), {
+    vehicleId: VAN_C, vehicleName: 'B-CU 1', cls: 'large_van', stationId: ST_C, source: 'camera', createdAt: at, createdBy: r.uid,
+    totalMs: null, frames: 1, taken: 1, skipped: 0, retakes: 0, photos: [{ n: 1, label: 'Front', w: 900, h: 1200, takenAt: at }],
+    handover: { kind, assignmentId: 'closeupA1' }, forHandover: kind, cmp,
+  });
+  walk(W1, now - 60_000, 'dropoff', { status: 'done', at: now, frames: 12, compared: 12, notCompared: [], found: 1, unsure: 0, checkId: K1, refAt: now - 86400_000 });
+  const spot = { photo: 0, photoLabel: 'Front', box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, conf: 0.8, mightBe: null, closeup: '',
+    refPath: null, beforePath: null, beforeWalkId: 'closeupWalk0', beforeAt: now - 86400_000, closeups: [], feedback: null, markPath: null, verdict: null,
+    cmp: { verdict: 'damage', confidence: 0.8, reason: 'A new scratch on the bumper.', severity: 'cosmetic' } };
+  const kref = db.doc(`orgs/${ORG_C}/checks/${K1}`);
+  b.set(kref, {
+    vehicleId: VAN_C, vehicleName: 'B-CU 1', cls: 'large_van', walkId: W1, createdAt: now - 50_000, createdBy: null, auto: 'compare', walkBy: r.uid, walkKind: 'dropoff',
+    refWalkIds: ['closeupWalk0'], refAt: now - 86400_000, stationId: ST_C, status: 'checking', submittedAt: null, review: null, closeupBy: now + 29 * 60_000,
+    tier: 'complex', model: 'test', photos: 12, spots: [spot], notVisible: [], notCompared: [], missedNote: '',
+  });
+  await b.commit();
+  const page = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+  await signIn(page, RIA);
+  // A4 on the Vans tab: close-ups to take, with the time they have.
+  await visible(page, 'AI check of your drop-off photos').waitFor({ timeout: 60_000 });
+  await visible(page, 'The AI found 1 spot that may be new damage. Take close-ups of it now').waitFor({ timeout: 10_000 });
+  await visible(page, 'After that the spots go to your fleet manager without close-ups.').waitFor({ timeout: 10_000 });
+  await button(page, 'Take close-ups').click();
+  // The check: the before and after of the spot, and the close-ups to take.
+  await visible(page, 'Take close-ups of 1 spot').waitFor({ timeout: 30_000 });
+  await visible(page, 'Before,').waitFor({ timeout: 10_000 });
+  await visible(page, 'AI: new damage').waitFor({ timeout: 10_000 });
+  // A5: the close-ups showed damage.
+  const shot = { ...spot, closeups: ['orgs/closeupOrg/checks/cmp-closeupWalk1/spot1_1_x.jpg'],
+    verdict: { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'A scratch in the close-up.', closeupBox: null } };
+  await kref.update({ status: 'submitted', submittedAt: Date.now(), submittedBy: r.uid, spots: [shot] });
+  await visible(page, 'Your fleet manager is reviewing the possible damage.').waitFor({ timeout: 30_000 });
+  await visible(page, 'Close-ups: damage').waitFor({ timeout: 10_000 });
+  // No decision for a driver.
+  assert.equal(await button(page, 'Not damage').count(), 0);
+  await page.goto(`${URL0}/`);
+  await visible(page, 'Your fleet manager is reviewing the possible damage.').waitFor({ timeout: 60_000 });
+  // A6: the close-ups showed none.
+  await kref.update({ spots: [{ ...shot, verdict: { ...shot.verdict, verdict: 'no_damage', type: null, sizeCm: null, severity: null } }] });
+  await visible(page, 'Your close-ups show no damage. Your fleet manager confirms it.').waitFor({ timeout: 30_000 });
+  // A7: nobody took close-ups within 30 minutes.
+  await kref.update({ spots: [{ ...spot, verdict: { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null } }],
+    submittedBy: null, sentLate: true, noCloseups: true });
+  await visible(page, 'Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.').waitFor({ timeout: 30_000 });
+  // A1/A2: a newer pick-up with nothing new; A3: the van's first photos.
+  await db.doc(`orgs/${ORG_C}/walkarounds/closeupWalk2`).set({
+    vehicleId: VAN_C, vehicleName: 'B-CU 1', cls: 'large_van', stationId: ST_C, source: 'camera', createdAt: Date.now(), createdBy: r.uid,
+    totalMs: null, frames: 1, taken: 1, skipped: 0, retakes: 0, photos: [{ n: 1, label: 'Front', w: 900, h: 1200, takenAt: Date.now() }],
+    handover: { kind: 'pickup', assignmentId: 'closeupA2' }, forHandover: 'pickup',
+    cmp: { status: 'done', at: Date.now(), frames: 12, compared: 12, notCompared: [], found: 0, unsure: 0, checkId: null, refAt: now - 60_000 },
+  });
+  await visible(page, 'AI check of your pick-up photos').waitFor({ timeout: 30_000 });
+  await visible(page, 'No new damage on your pick-up photos.').waitFor({ timeout: 10_000 });
+  await db.doc(`orgs/${ORG_C}/walkarounds/closeupWalk2`).update({ cmp: { status: 'first', at: Date.now(), frames: 12, compared: 0, notCompared: [], found: 0, unsure: 0, checkId: null, refAt: null } });
+  await visible(page, 'These are the first photos of this van: the next pick-ups and drop-offs are compared with them.').waitFor({ timeout: 30_000 });
+  // Close-ups still to take on the earlier drop-off stay on the Vans tab next to the newer pick-up (blind QA, round 1).
+  await kref.update({ status: 'checking', submittedAt: null, sentLate: false, noCloseups: false, spots: [spot] });
+  await visible(page, 'AI check of your drop-off photos').waitFor({ timeout: 30_000 });
+  await button(page, 'Take close-ups').waitFor({ timeout: 10_000 });
+  await visible(page, 'AI check of your pick-up photos').waitFor({ timeout: 10_000 });
   await page.context().close();
 });
 

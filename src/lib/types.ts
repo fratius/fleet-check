@@ -516,6 +516,8 @@ export interface Walkaround {
   /** Set by the server when these photos were taken to pick up or drop off the van. */
   /** The photos of a pick-up or drop-off (set by the server); late: added after the handover, not by the driver at pick-up. */
   handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string; late?: boolean };
+  /** Written by the app: the pick-up or drop-off step follows these photos (a hint; `handover` is the server's mark). */
+  forHandover?: 'pickup' | 'dropoff';
   /** Kept 90 days as damage (lib/media.ts), set by the server: marked as damage, or damage approved in these checks. */
   keepMark?: KeepMark | null;
   keepDamage?: string[];
@@ -576,6 +578,11 @@ export interface Spot {
   beforePath?: string | null;
   beforeWalkId?: string | null;
   beforeAt?: number | null;
+  /**
+   * What the comparison's second look (Opus) said about this spot, kept apart from `verdict`: at a pick-up or drop-off
+   * the close-ups give the spot its verdict (checkSpot), and this one stays for the manager.
+   */
+  cmp?: { verdict: 'damage' | 'unclear'; confidence: number; reason: string; severity: string | null } | null;
 }
 
 /** The manager's final word on one spot. */
@@ -662,6 +669,15 @@ export interface Check {
   refWalkIds?: string[];
   refAt?: number | null;
   notCompared?: CmpGap[];
+  /**
+   * A pick-up or drop-off (product owner, 2026-11-22): the driver who took the photos takes close-ups of the spots
+   * until closeupBy, then the check goes to the fleet managers (status 'checking' until then). submittedBy: who sent
+   * it (null: it went by itself after closeupBy); sentLate: it went by itself; noCloseups: without any close-ups.
+   */
+  closeupBy?: number | null;
+  submittedBy?: string | null;
+  sentLate?: boolean;
+  noCloseups?: boolean;
 }
 
 /** A frame the automatic comparison couldn't compare, and why. */

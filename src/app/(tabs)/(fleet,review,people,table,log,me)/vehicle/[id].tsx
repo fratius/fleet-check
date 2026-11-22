@@ -3,6 +3,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View, type ScrollViewInstance } from 'react-native';
 
+import { MyHandoverCompare } from '@/components/compare';
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { DriverPicker, HistoryList, kmLine, sinceText, useHistory } from '@/components/history';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
@@ -138,6 +139,8 @@ export default function VehicleScreen() {
       <BuyNow v={v} />
       {/* Changes to this van made on this phone and still on their way (no connection): not to be done again. */}
       <PendingChanges vehicleId={v.id} />
+      {/* The AI comparison of this driver's pick-up or drop-off photos of this van: the result, or close-ups to take. */}
+      <MyHandoverCompare vehicleId={v.id} />
       {/* Checks for drivers due on this van now (the driver who has it, and the station's managers). */}
       <DueChecks v={v} />
       <View style={{ zIndex: 5 }} onLayout={(e) => { spots.current.model = e.nativeEvent.layout.y; }}>

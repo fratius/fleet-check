@@ -319,6 +319,8 @@ interface Spot {
   photo: number; photoLabel: string; box: Box; panel: string; type: string; sizeCm: number | null; conf: number;
   mightBe: 'dirt' | 'reflection' | null; closeup: string; refPath: string | null; closeups: string[];
   verdict: null | Record<string, unknown>; feedback: null; markPath: string | null;
+  /** The automatic comparison's verdict (Opus), kept apart from the close-ups' verdict. */
+  cmp?: { verdict: 'damage' | 'unclear'; confidence: number; reason: string; severity: string | null } | null;
 }
 
 export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
@@ -390,7 +392,7 @@ export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
 });
 
 /* ---------- 3. checkSpot: decide one spot from the driver's close-ups ---------- */
-export const checkSpot = onCallOnce('checkSpot', opts(180), async (req) => {
+export const checkSpot = onCallOnce('checkSpot', { ...opts(180), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   const { orgId, tier } = who;
   const checkId = String(req.data?.checkId || '');
@@ -402,16 +404,18 @@ export const checkSpot = onCallOnce('checkSpot', opts(180), async (req) => {
   const cref = db().doc(`orgs/${orgId}/checks/${checkId}`);
   const snap = await cref.get();
   if (!snap.exists) throw fail('not-found', 'This check was deleted.');
-  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string };
+  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null };
   needStation(who, k.stationId);
   if (k.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
+  needCloseupTaker(who, k);
   const spot = k.spots?.[j];
   if (!Number.isInteger(j) || !spot) throw fail('invalid-argument', 'Unknown spot.');
   if (!spot.refPath) throw fail('failed-precondition', 'The marked photo for this spot is missing.');
 
   const [refBuf, ...closeBufs] = await Promise.all([download(spot.refPath), ...closeups.map((p: string) => download(p))]);
   const [refImg, ...closeImgs] = await Promise.all([fit(refBuf), ...closeBufs.map((b) => fit(b))]);
-  const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), tier,
+  // The comparison's close-ups are checked by the strongest model (product owner, 2026-11-22: Opus double-checks).
+  const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), k.auto === 'compare' ? 'complex' : tier,
     [{ label: 'Image 1', image: refImg }, ...closeImgs.map((image, m) => ({ label: `Image ${m + 2}`, image }))],
     spotPrompt(k.vehicleName, k.cls, spot, closeImgs.length), spotSchema, 1200);
   const o = a.obj;
@@ -435,28 +439,112 @@ export const checkSpot = onCallOnce('checkSpot', opts(180), async (req) => {
     tx.update(cref, { spots: next, updatedAt: FieldValue.serverTimestamp() });
     tx.set(uref, { checkId, pass2: addUsage(prev, a.usage), spotMs: { [j]: a.usage.ms } }, { merge: true });
   });
+  // The comparison's check goes to the fleet manager once every spot has a clear answer from the close-ups.
+  if (k.auto === 'compare') await sendCompareCheck(orgId, checkId, who.uid, 'closeups').catch((e) => logger.warn('Check not sent on', e as Error));
   return { verdict, model: a.model, ...(who.creator ? { usage: a.usage, ms: a.usage.ms } : {}) };
 });
 
+/** The comparison's close-ups: whoever took the photos, or the station's staff; not another driver. */
+function needCloseupTaker(who: Who, k: { auto?: string; walkBy?: string | null }) {
+  if (k.auto !== 'compare' || who.role !== 'driver' || who.claim) return;
+  if (k.walkBy !== who.uid) throw fail('permission-denied', 'Only the driver who took these photos can add close-ups.');
+}
+
+/**
+ * The comparison's check from the person at the van to the fleet manager. how: 'closeups' (only when every spot has
+ * a close-up answer other than unclear), 'sent' (they sent it), 'late' (nobody took close-ups within CLOSEUP_MS).
+ * The managers get a notification when there's damage: in a close-up, or where no close-up says otherwise. Returns
+ * whether it was sent now.
+ */
+async function sendCompareCheck(orgId: string, checkId: string, by: string | null, how: 'closeups' | 'sent' | 'late'): Promise<boolean> {
+  const cref = db().doc(`orgs/${orgId}/checks/${checkId}`);
+  type K = { spots: Spot[]; stationId?: string | null; status?: string; walkId: string; walkBy?: string | null; vehicleId: string; vehicleName: string };
+  const k = await db().runTransaction(async (tx) => {
+    const cur = await tx.get(cref);
+    const d = cur.data() as K | undefined;
+    if (!d || d.status !== 'checking') return null;
+    if (how === 'closeups' && !d.spots.every((p) => p.verdict && p.verdict.verdict !== 'unclear')) return null;
+    const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null };
+    const none = d.spots.every((p) => !p.closeups?.length);
+    tx.update(cref, {
+      spots: d.spots.map((p) => (p.verdict ? p : { ...p, verdict: skipped })), status: 'submitted', submittedAt: Date.now(), submittedBy: by,
+      ...(how === 'late' ? { noCloseups: none, sentLate: true } : {}),
+    });
+    tx.delete(db().doc(`closeupDue/${orgId}__${checkId}`));
+    return d;
+  });
+  if (!k) return false;
+  const dmg = k.spots.filter((p) => p.verdict?.verdict === 'damage'
+    || ((!p.verdict || ['skipped', 'unclear'].includes(String(p.verdict.verdict))) && p.cmp?.verdict === 'damage')).length;
+  const vanDoc = (await db().doc(`orgs/${orgId}/vehicles/${k.vehicleId}`).get()).data() as { name?: string; plate?: string } | undefined;
+  const van = vanName(vanDoc || { name: k.vehicleName });
+  const w = { id: k.walkId, stationId: k.stationId || null, createdBy: k.walkBy || null } as CmpWalk;
+  if (dmg) await tellDamage(orgId, w, van, checkId, dmg).catch((e) => logger.warn('Damage notification not sent', e as Error));
+  if (how === 'late' && k.walkBy) {
+    await notify(k.walkBy, (lang) => ({
+      title: tr(lang, 'Sent to your fleet manager: {van}', { van }),
+      body: tr(lang, 'Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.'),
+      url: `/check/${checkId}`, tag: `check-${checkId}`,
+    })).catch(() => 0);
+  }
+  return true;
+}
+
+/** Every 10 minutes: the comparison's checks whose close-ups didn't come within CLOSEUP_MS go to the manager. */
+async function sendDueCloseups(now: number, orgId?: string) {
+  let q = db().collection('closeupDue').where('at', '<=', now).limit(200);
+  if (orgId) q = db().collection('closeupDue').where('orgId', '==', orgId).where('at', '<=', now).limit(200);
+  const due = (await q.get()).docs;
+  let sent = 0;
+  for (const d of due) {
+    const x = d.data() as { orgId: string; checkId: string };
+    try {
+      if (await sendCompareCheck(x.orgId, x.checkId, null, 'late')) sent++;
+      else await d.ref.delete();
+    } catch (e) { logger.warn('A check wasn\'t sent on', { ...x, message: String((e as Error)?.message || e) }); }
+  }
+  return { due: due.length, sent };
+}
+export const closeupSweep = onSchedule({ schedule: 'every 10 minutes', timeZone: 'Europe/Berlin', secrets: [WEBPUSH_KEYS], timeoutSeconds: 300 }, async () => {
+  logger.info('Close-ups due', await sendDueCloseups(Date.now()));
+});
+/** The app creator runs it now for one company (the tests: with a time ahead). */
+export const closeupSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const orgId = String(req.data?.orgId || '');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
+  const now = process.env.FUNCTIONS_EMULATOR === 'true' && Number(req.data?.now) > 0 ? Number(req.data.now) : Date.now();
+  return sendDueCloseups(now, orgId);
+});
+
 /* ---------- 4. submitCheck: the driver is done with close-ups and sends the check to the manager ---------- */
-export const submitCheck = onCallOnce('submitCheck', { timeoutSeconds: 30 }, async (req) => {
+export const submitCheck = onCallOnce('submitCheck', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   const checkId = String(req.data?.checkId || '');
   if (!ID.test(checkId)) throw fail('invalid-argument', 'Unknown check.');
   const note = typeof req.data?.missedNote === 'string' ? req.data.missedNote.trim().slice(0, 500) : '';
   const cref = db().doc(`orgs/${who.orgId}/checks/${checkId}`);
+  let auto = false;
   await db().runTransaction(async (tx) => {
     const cur = await tx.get(cref);
     if (!cur.exists) throw fail('not-found', 'This check was deleted.');
-    const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string };
+    const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null };
     needStation(who, d.stationId);
     if (d.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
+    needCloseupTaker(who, d);
+    auto = d.auto === 'compare' && d.status === 'checking';
+    if (auto) return;
     const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null };
     tx.update(cref, {
       spots: d.spots.map((p) => (p.verdict ? p : { ...p, verdict: skipped })),
       status: 'submitted', submittedAt: Date.now(), submittedBy: who.uid, missedNote: note,
     });
   });
+  // The comparison's check: sent on (the managers hear about damage), with the note.
+  if (auto) {
+    if (note) await cref.update({ missedNote: note });
+    await sendCompareCheck(who.orgId, checkId, who.uid, 'sent');
+  }
   return { ok: true };
 });
 
@@ -478,6 +566,53 @@ const compareOn = (org: { aiCompare?: unknown } | undefined) => !!org && org.aiC
 const cmpCheckId = (walkId: string) => `cmp-${walkId}`;
 /** A run marked running for longer than this died (the function was stopped): it can run again. */
 const CMP_STALE_MS = 15 * 60_000;
+/**
+ * The driver's part (product owner, 2026-11-22): after a pick-up or drop-off with photos, whoever took them is told the
+ * result: nothing new, the van's starting point, or spots to take close-ups of. The close-ups (checked by Opus) and
+ * the check then go to the station's fleet managers; without close-ups after CLOSEUP_MS it goes to them by itself.
+ */
+const CLOSEUP_MS = 30 * 60_000;
+/**
+ * The walk-around is a pick-up or drop-off only once the handover step (pickUpVan, dropOffVan, addHandoverPhotos)
+ * marked it, just after it was saved. The app says one follows (forHandover): the comparison waits that long for it.
+ */
+const HANDOVER_WAIT_MS = 120_000;
+/** A comparison run again later (compareWalk) doesn't ask the driver for close-ups: they've long left the van. */
+const DRIVER_FRESH_MS = 60 * 60_000;
+type HandKind = 'pickup' | 'dropoff' | null;
+async function handoverKind(wref: FirebaseFirestore.DocumentReference, w: CmpWalk): Promise<HandKind> {
+  if (Date.now() - w.createdAt > DRIVER_FRESH_MS) return null;
+  const kindOf = (x?: CmpWalk): HandKind => { const k = x?.handover?.kind; return k === 'pickup' || k === 'dropoff' ? k : null; };
+  let k = kindOf((await wref.get()).data() as CmpWalk | undefined);
+  const until = Date.now() + HANDOVER_WAIT_MS;
+  // Photos the app saved for a pick-up or drop-off may not have the server's mark yet: wait for it a little.
+  while (!k && (w.forHandover === 'pickup' || w.forHandover === 'dropoff') && Date.now() < until) {
+    await new Promise((r) => setTimeout(r, 1500));
+    k = kindOf((await wref.get()).data() as CmpWalk | undefined);
+  }
+  return k;
+}
+/** The driver (whoever took the pick-up or drop-off photos) hears how the comparison went. */
+async function tellDriver(orgId: string, uid: string | null | undefined, van: string, kind: HandKind,
+  what: { found: number; checkId: string } | 'none' | 'first', walkId: string) {
+  if (!uid || !kind) return;
+  const pick = kind === 'pickup';
+  await notify(uid, (lang) => (what === 'first' ? {
+    title: tr(lang, 'Starting point: {van}', { van }),
+    body: tr(lang, 'These are the first photos of this van: the next pick-ups and drop-offs are compared with them.'),
+    url: `/walk/${walkId}`, tag: `cmp-${walkId}`,
+  } : what === 'none' ? {
+    title: tr(lang, 'No new damage: {van}', { van }),
+    body: pick ? tr(lang, 'The AI compared your pick-up photos with the van\'s earlier photos and found no new damage.')
+      : tr(lang, 'The AI compared your drop-off photos with the van\'s earlier photos and found no new damage.'),
+    url: `/walk/${walkId}`, tag: `cmp-${walkId}`,
+  } : {
+    title: tr(lang, 'Take close-ups: {van}', { van }),
+    body: pick ? trp(lang, what.found, 'The AI found {n} spot on your pick-up photos that may be new damage. Take close-ups of it now.', 'The AI found {n} spots on your pick-up photos that may be new damage. Take close-ups of them now.')
+      : trp(lang, what.found, 'The AI found {n} spot on your drop-off photos that may be new damage. Take close-ups of it now.', 'The AI found {n} spots on your drop-off photos that may be new damage. Take close-ups of them now.'),
+    url: `/check/${what.checkId}`, tag: `check-${what.checkId}`,
+  })).catch((e) => { logger.warn('Driver not told about the comparison', e as Error); return 0; });
+}
 
 type CmpStatus = 'running' | 'done' | 'failed' | 'first' | 'limit';
 interface CmpSummary {
@@ -486,7 +621,7 @@ interface CmpSummary {
 }
 interface CmpWalk extends WalkLite {
   vehicleId: string; vehicleName: string; cls: string; stationId?: string | null; createdBy?: string | null;
-  handover?: { kind?: string } | null; cmp?: CmpSummary | null;
+  handover?: { kind?: string } | null; forHandover?: string; cmp?: CmpSummary | null;
 }
 
 /**
@@ -563,7 +698,9 @@ async function runCompare(orgId: string, walkId: string, o: { again?: boolean } 
     const refs = pickRefs({ ...w, photos }, earlier);
     const base = { at: Date.now(), frames: photos.length, found: 0, unsure: 0, checkId: null };
     if (!refs.some(Boolean)) {
-      return finish({ ...base, status: 'first', compared: 0, notCompared: photos.map((p) => ({ label: p.label, why: 'first' as const })), refAt: null }, { frames: [] });
+      const sum0 = await finish({ ...base, status: 'first', compared: 0, notCompared: photos.map((p) => ({ label: p.label, why: 'first' as const })), refAt: null }, { frames: [] });
+      await tellDriver(orgId, w.createdBy, van, await handoverKind(wref, w), 'first', walkId);
+      return sum0;
     }
     if (!(await compareAllowed(orgId, od, w.vehicleId))) {
       return finish({ ...base, status: 'limit', compared: 0, notCompared: [], refAt: null }, { frames: [] });
@@ -641,6 +778,9 @@ async function runCompare(orgId: string, walkId: string, o: { again?: boolean } 
     }
 
     let checkId: string | null = null;
+    // A pick-up or drop-off: whoever took the photos takes close-ups of the spots first (CLOSEUP_MS).
+    const kind = await handoverKind(wref, w);
+    const closeups = !!kind && !!w.createdBy;
     if (spots.length) {
       checkId = cmpCheckId(walkId);
       const kref = org.collection('checks').doc(checkId);
@@ -654,30 +794,37 @@ async function runCompare(orgId: string, walkId: string, o: { again?: boolean } 
         return {
           photo: s.frame, photoLabel: s.label, box: s.box, panel: s.panel, type: s.type, sizeCm: s.sizeCm, conf: s.confidence, mightBe: null, closeup: '',
           refPath, closeups: [], feedback: null, markPath: null, beforePath, beforeWalkId: s.ref.walkId, beforeAt: s.ref.at,
-          verdict: { verdict: s.verdict, type: s.verdict === 'damage' ? s.type : null, sizeCm: s.sizeCm, severity: s.severity, confidence: s.confidence, reason: s.reason, closeupBox: null },
+          cmp: { verdict: s.verdict, confidence: s.confidence, reason: s.reason, severity: s.severity },
+          // With close-ups to come the spot has no verdict yet (the close-ups give it); otherwise the comparison's.
+          verdict: closeups ? null : { verdict: s.verdict, type: s.verdict === 'damage' ? s.type : null, sizeCm: s.sizeCm, severity: s.severity, confidence: s.confidence, reason: s.reason, closeupBox: null },
         };
       });
       const createdAt = Date.now();
-      const latest = (await wref.get()).data() as CmpWalk | undefined;
       const b = db().batch();
       b.set(kref, {
         // Who ran it: nobody (the app compares by itself); whose photos: walkBy, by account id only (names.ts).
         vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt, createdBy: null, auto: 'compare',
-        walkBy: w.createdBy || null, walkKind: latest?.handover?.kind === 'pickup' || latest?.handover?.kind === 'dropoff' ? latest.handover.kind : 'walkaround',
+        walkBy: w.createdBy || null, walkKind: kind || 'walkaround',
         refWalkIds: [...new Set(spots.map((s) => s.ref.walkId))], refAt,
-        stationId: w.stationId || null, status: 'submitted', submittedAt: createdAt, review: null,
+        stationId: w.stationId || null, status: closeups ? 'checking' : 'submitted', submittedAt: closeups ? null : createdAt, review: null,
+        closeupBy: closeups ? createdAt + CLOSEUP_MS : null,
         tier: 'complex', model: MODELS.complex.id, photos: compared, spots: out, notVisible: [], notCompared, missedNote: '',
       });
       b.set(usageRef(orgId, checkId), {
         checkId, stationId: w.stationId || null, createdAt, tier: 'complex', model: MODELS.complex.id, auto: 'compare',
         pass1: haiku, pass2: opus, serverMs: Date.now() - t0, prepMs: null, spotMs: {},
       });
+      // The clock for the close-ups (sendDueCloseups looks here every 10 minutes).
+      if (closeups) b.set(db().doc(`closeupDue/${orgId}__${checkId}`), { orgId, checkId, at: createdAt + CLOSEUP_MS });
       await b.commit();
     }
     const found = spots.filter((s) => s.verdict === 'damage').length;
     const sum: CmpSummary = { ...base, status: 'done', compared, notCompared, found, unsure: spots.length - found, checkId, refAt: Number.isFinite(refAt) ? refAt : null };
     await finish(sum, { frames: log, haiku, opus, cost: round(haiku.cost + opus.cost), checkId });
-    if (found && checkId) await tellDamage(orgId, w, van, checkId, found).catch((e) => logger.warn('Damage notification not sent', e as Error));
+    if (closeups) {
+      // The driver first: nothing new, or close-ups to take. The managers hear when the check reaches them.
+      if (checkId || compared) await tellDriver(orgId, w.createdBy, van, kind, checkId ? { found: spots.length, checkId } : 'none', walkId);
+    } else if (found && checkId) await tellDamage(orgId, w, van, checkId, found).catch((e) => logger.warn('Damage notification not sent', e as Error));
     return sum;
   } catch (e) {
     logger.error('Comparison failed', { orgId, walkId, message: String((e as Error)?.message || e) });

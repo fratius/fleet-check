@@ -19,7 +19,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
-import { gapList } from '@/lib/compare';
+import { closeupState, gapList } from '@/lib/compare';
 
 /** What the AI said about a spot: its name, its colour, and the name inside a sentence ("AI: dirt or residue"). */
 const VERDICT: Record<VerdictKind, [string, PillV, string]> = {
@@ -165,9 +165,21 @@ function CheckView({ id }: { id: string }) {
         <Stack.Screen options={{ title: t('Close-ups') }} />
         <BackBar title={t('All spots')} onPress={() => setPhase('list')} />
         <View style={{ gap: 4 }}><T v="hint">{t('Close-up {i} of {n}', { i: i + 1, n })}</T><T v="h1">{cap(p.panel)}</T></View>
-        <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />
+        {/* The comparison's spot: that part of the van before (the earlier photos) and now, both boxed. */}
+        {k.auto === 'compare' ? (
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+            {([[p.beforePath, p.beforeAt ? t('Before, {when}', { when: fmtWhen(p.beforeAt) }) : t('Before')], [p.refPath, t('Now')]] as const).map(([src, label]) => (
+              <View key={label} style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}, ${label}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />
+                  : <View style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}><T v="hint">{t('No photo')}</T></View>}
+                <T v="small" numberOfLines={2}>{label}</T>
+              </View>
+            ))}
+          </View>
+        ) : <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />}
         <View style={{ gap: 6 }}>
-          <T>{t('1. Find the spot in the yellow box.')}{p.closeup ? ' ' + p.closeup : ''}</T>
+          <T>{k.auto === 'compare' ? t('1. Find the spot in the yellow box (photo: {where}). The AI thinks it may be new since the photo before.', { where: t(p.photoLabel) })
+            : t('1. Find the spot in the yellow box.')}{p.closeup ? ' ' + p.closeup : ''}</T>
           <T>{t('2. Wipe it with your hand or a cloth.')}</T>
           <T>{t('3. Take one photo straight on, about 30 to 50 cm away.')}</T>
           <T>{t('4. Take a second from a low angle along the panel. It shows whether a mark is a scratch or a reflection.')}</T>
@@ -244,6 +256,16 @@ function CheckView({ id }: { id: string }) {
   // Who did the check: drivers see only their own (lib/names.ts). The automatic comparison: who took the photos.
   const auto = k.auto === 'compare';
   const by = auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName);
+  // The comparison's close-ups: the driver who took the photos, or the station's staff; never another driver (the
+  // server refuses them too: needCloseupTaker).
+  const shoots = status === 'checking' && (!auto || reviewer || (!!s.user && k.walkBy === s.user.uid));
+  const mine = auto && !!s.user && k.walkBy === s.user.uid && !reviewer;
+  const cst = auto ? closeupState(k) : null;
+  const driverSays = !mine || status === 'checking' ? null : [
+    k.sentLate ? (k.noCloseups ? t('Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.')
+      : t('The 30 minutes for close-ups were up, so the spots went to your fleet manager with the close-ups taken.')) : '',
+    cst === 'damage' ? t('Your fleet manager is reviewing the possible damage.') : cst === 'clean' ? t('Your close-ups show no damage. Your fleet manager confirms it.') : '',
+  ].filter(Boolean).join(' ');
   const what = k.walkKind === 'pickup' ? t('Pick-up photos') : k.walkKind === 'dropoff' ? t('Drop-off photos') : t('Walk-around');
   const sub = status === 'reviewed' ? (k.review?.at
     ? t('Reviewed by {name}, {when}. This is the final word on this van\'s damage.', { name: reviewerName, when: fmtWhen(k.review.at) })
@@ -266,6 +288,10 @@ function CheckView({ id }: { id: string }) {
         {auto ? <T>{k.refAt ? t('Found by the AI comparing these photos with the van\'s photos from {when}. It can be wrong: compare the before and after photos.', { when: fmtWhen(k.refAt) })
           : t('Found by the AI comparing these photos with the van\'s earlier photos. It can be wrong: compare the before and after photos.')}</T> : null}
         <T>{sub}</T>
+        {auto && status === 'checking' && k.closeupBy && shoots ? <T v="small" color={Date.now() > k.closeupBy ? c.alert : undefined}>{Date.now() > k.closeupBy
+          ? t('The 30 minutes for close-ups are up: the spots go to your fleet manager now.')
+          : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) })}</T> : null}
+        {auto && status === 'checking' && !shoots ? <T v="hint">{t('The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.')}</T> : null}
         <Row>
           <Pill v={status === 'reviewed' ? 'solid' : status === 'submitted' ? 'amber' : 'muted'} text={status === 'reviewed' ? t('Reviewed') : status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
           {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
@@ -275,14 +301,20 @@ function CheckView({ id }: { id: string }) {
         ? <Notice text={t('The photos of this check were deleted on {date}. The decisions and the van\'s damage record stay.', { date: day(k.mediaDeletedAt!) })} />
         : <T v="small">{k.keepUntil ? t('Damage was approved: the photos are kept until {date}.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })
           : t('Photos and videos of a month are deleted on the 15th of the month after, never while the van is still with the driver who had it: these on {date} at the earliest.', { date: day(deleteFrom(k.createdAt, k.keepUntil)) })}</T>) : null}
+      {driverSays ? <Notice text={driverSays} /> : null}
+      {auto && k.sentLate && !mine && status !== 'checking' ? <Notice tone="bad" text={k.noCloseups
+        ? t('Nobody took close-ups within 30 minutes, so this check came without them. Decide from the before and after photos.')
+        : t('The 30 minutes for close-ups were up, so this check came with only the close-ups taken.')} /> : null}
       {s.seesAiStats ? <CostPanel k={k} auto={auto} /> : null}
-      {status === 'checking' && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
-      {status === 'checking' && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
+      {shoots && n > 0 && !checked ? <Button v="primary" wide title={tp(n, 'Take close-ups of {n} spot', 'Take close-ups of {n} spots')} onPress={() => { setI(0); setPhase('capture'); }} /> : null}
+      {shoots && n > 0 && checked && open > 0 ? <Button title={t('Take more close-ups')} onPress={() => { setI(Math.max(0, k.spots.findIndex((p) => !p.verdict || p.verdict.verdict === 'unclear' || p.verdict.verdict === 'skipped'))); setPhase('capture'); }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       {k.missedNote && status !== 'checking' ? <Notice text={t('Note from {name}: {note}', { name: by || t('the driver'), note: k.missedNote })} /> : null}
       {k.spots.map((p, j) => {
         const v = p.verdict;
         const d = decisions[String(j)];
+        // The comparison's own answer (kept apart when close-ups gave the spot its verdict; older checks: the verdict).
+        const cv = auto ? (p.cmp?.verdict || (v && !p.closeups.length && (v.verdict === 'damage' || v.verdict === 'unclear') ? v.verdict : null)) : null;
         return (
           <Card key={j}>
             <Row>
@@ -292,7 +324,9 @@ function CheckView({ id }: { id: string }) {
               <T v="h3" style={{ flex: 1 }}>{cap(p.panel)}</T>
             </Row>
             <Row>
-              {v && auto ? <Pill v={v.verdict === 'damage' ? 'bad' : 'muted'} text={v.verdict === 'damage' ? t('AI: new damage') : t('AI: not sure')} />
+              {auto && cv ? <Pill v={cv === 'damage' ? 'bad' : 'muted'} text={cv === 'damage' ? t('AI: new damage') : t('AI: not sure')} /> : null}
+              {auto && v && p.closeups.length ? <Pill v={VERDICT[v.verdict][1]} text={t('Close-ups: {verdict}', { verdict: t(VERDICT[v.verdict][2]) })} />
+                : auto && cv ? null
                 : v ? <Pill v={VERDICT[v.verdict][1]} text={t('AI: {verdict}', { verdict: t(VERDICT[v.verdict][2]) })} />
                 : <Pill v={p.conf >= 0.6 ? 'bad' : 'amber'} text={p.conf >= 0.6 ? t('Likely, {pct}%', { pct: Math.round(p.conf * 100) }) : t('Possible, {pct}%', { pct: Math.round(p.conf * 100) })} />}
               {(() => {
@@ -303,6 +337,7 @@ function CheckView({ id }: { id: string }) {
               {v?.severity ? <Pill text={v.severity === 'repair' ? t('Bodyshop repair') : t('Cosmetic')} /> : null}
               {v?.ms && s.seesAiStats ? <Pill v="muted" text={secs(v.ms)} /> : null}
             </Row>
+            {auto && p.cmp?.reason && p.cmp.reason !== v?.reason ? <T>{p.cmp.reason}</T> : null}
             {v?.reason ? <T>{v.reason}</T> : !v && p.mightBe ? <T v="hint">{t('Could also be {what}.', { what: p.mightBe })}</T> : null}
             {/* The automatic comparison: the same part of the earlier photo next to the new one, both boxed. */}
             {auto ? (
@@ -314,6 +349,19 @@ function CheckView({ id }: { id: string }) {
                     <T v="small" numberOfLines={2}>{label}</T>
                   </View>
                 ))}
+              </View>
+            ) : null}
+            {auto && p.closeups.length ? (
+              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
+                {p.closeups.map((cp, m) => {
+                  const label = m === 0 ? (p.markPath ? t('Straight on, damage boxed') : t('Straight on')) : t('Low angle');
+                  return (
+                    <View key={cp} style={{ flex: 1, minWidth: 0, maxWidth: 220, gap: 3 }}>
+                      <ZoomPhoto src={m === 0 && p.markPath ? p.markPath : cp} caption={`${cap(p.panel)}, ${label.toLocaleLowerCase(loc())}`} style={{ width: '100%', aspectRatio: 3 / 4 }} />
+                      <T v="small" numberOfLines={2}>{label}</T>
+                    </View>
+                  );
+                })}
               </View>
             ) : null}
             {auto && p.beforeWalkId ? (
@@ -384,7 +432,7 @@ function CheckView({ id }: { id: string }) {
         </Card>
       ) : null}
 
-      {status === 'checking' ? (
+      {shoots ? (
         <Card>
           <T v="h3">{t('Send to the fleet manager')}</T>
           <T v="hint">{t('Anything the AI missed? Where it is and what it is.')}</T>

@@ -79,7 +79,7 @@ function jpeg() {
 }
 
 /** A walk-around with every photo uploaded, as the app's scanner saves it. */
-async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0, real = false, takenAgo = 0 } = {}) {
+async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 0, real = false, takenAgo = 0, forHandover = null } = {}) {
   const id = doc(collection(p.db, 'orgs', orgId, 'walkarounds')).id;
   const ps = [];
   for (let n = 1; n <= frames; n++) {
@@ -90,6 +90,8 @@ async function photos(p, orgId, van, { frames = 3, source = 'camera', skipped = 
   await setDoc(doc(p.db, 'orgs', orgId, 'walkarounds', id), {
     vehicleId: van.id, vehicleName: van.name, cls: 'van', stationId: van.stationId, source, createdAt: Date.now(), createdBy: p.uid,
     totalMs: null, frames, taken: frames - skipped, skipped, retakes: 0, photos: ps.slice(0, frames - skipped),
+    // The app says a pick-up or drop-off follows (src/lib/outbox.ts queueWalk).
+    ...(forHandover ? { forHandover } : {}),
   });
   return id;
 }
@@ -2525,4 +2527,241 @@ test('the AI compares every walk-around with the van\'s earlier photos; new dama
     srv.close();
     await pushCol.doc('cmp').delete();
   }
+});
+
+// ---------- Drivers hear the AI comparison of their pick-ups and drop-offs and take close-ups (product owner, 2026-11-22) ----------
+// The stand-in for the AI (functions/src/claude.ts): the comparison marks a spot on the first photo unless the van's
+// plate says QUIET; the close-ups show damage unless the van's name says SPOTLESS.
+const CU = {};
+/** A person's phone for notifications: a push service on this computer, as in the tests above. */
+async function phoneOf(p, id) {
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (c) => ch.push(c));
+    req.on('end', () => { got.push({ url: req.url, body: Buffer.concat(ch) }); res.statusCode = 201; res.end(); });
+  });
+  await new Promise((r) => srv.listen(0, HOST, r));
+  const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+  const auth = crypto.randomBytes(16).toString('base64url');
+  const col = adminDb().collection(`users/${p.uid}/push`);
+  await Promise.all((await col.get()).docs.map((d) => d.ref.delete()));
+  await col.doc(id).set({ endpoint: `http://${HOST}:${srv.address().port}/push/${id}`,
+    keys: { p256dh: ecdh.getPublicKey().toString('base64url'), auth }, createdAt: Date.now(), device: `${id} phone` });
+  return {
+    notes: () => got.filter((g) => g.url === `/push/${id}`).map((g) => JSON.parse(fnRequire('http_ece').decrypt(g.body, { version: 'aes128gcm', privateKey: ecdh, authSecret: auth }).toString())),
+    close: async () => { srv.close(); await col.doc(id).delete(); },
+  };
+}
+const cuWalk = async (id) => (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'walkarounds', id))).data();
+const cuCmp = (id, ...states) => waitFor(async () => {
+  const c = (await cuWalk(id))?.cmp;
+  return c && states.includes(c.status) ? c : null;
+}, `the comparison of ${id}`, 120_000);
+const cuCheck = async (id) => (await getDoc(doc(S.mgr.db, 'orgs', S.org, 'checks', id))).data();
+const cuNote = (ph, test, what) => waitFor(async () => ph.notes().find(test), what, 60_000);
+/** Picks up or drops off a van with every photo, as the app does: the photos say a handover follows. */
+async function handover(p, van, kind) {
+  const walkId = await photos(p, S.org, van, { real: true, forHandover: kind });
+  await p.call(kind === 'pickup' ? 'pickUpVan' : 'dropOffVan', { orgId: S.org, vehicleId: van.id, walkId });
+  return walkId;
+}
+/** A close-up of a spot, uploaded and checked as the check page does it. */
+async function closeUp(p, checkId, spot = 0) {
+  const path = `orgs/${S.org}/checks/${checkId}/spot${spot + 1}_1_${Math.random().toString(36).slice(2, 8)}.jpg`;
+  await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+  return p.call('checkSpot', { orgId: S.org, checkId, spot, closeups: [path], tier: 'quick' });
+}
+
+test('close-ups: two drivers at station 1, three vans, everyone\'s phone', async () => {
+  CU.cr = await appCreator('Wim Sweeper');
+  const join = async (name) => {
+    const { invites } = await S.mgr.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
+    const p = await person(name);
+    const [firstName, lastName] = name.split(' ');
+    await p.call('acceptInvite', { token: invites[0].token, details: { firstName, lastName, phone: '+49 151 8', transporterId: firstName.toUpperCase() } });
+    return p;
+  };
+  CU.ronja = await join('Ronja Closeup');
+  CU.vito = await join('Vito Otherdriver');
+  const mkVan = async (name, plate) => {
+    const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(r, { name, plate, cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
+    return { id: r.id, name, stationId: S.s1 };
+  };
+  CU.r1 = await mkVan('Van CU1', 'CLS 1');
+  CU.r2 = await mkVan('Van CU2', 'QUIET 3');
+  CU.r3 = await mkVan('Van SPOTLESS', 'CLS 3');
+  await S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: true });
+  CU.ph = { ronja: await phoneOf(CU.ronja, 'ronja'), vito: await phoneOf(CU.vito, 'vito'), mgr: await phoneOf(S.mgr, 'mgr') };
+});
+
+test('A3: the van\'s first photos: the driver is told they\'re the starting point for the next comparisons', async () => {
+  const w = await handover(CU.ronja, CU.r1, 'pickup');
+  const c = await cuCmp(w, 'first', 'done', 'failed');
+  assert.equal(c.status, 'first');
+  assert.equal(c.checkId, null);
+  const n = await cuNote(CU.ph.ronja, (m) => m.url === `/walk/${w}`, 'the starting point note');
+  assert.equal(n.title, 'Starting point: CLS 1');
+  assert.match(n.body, /first photos of this van: the next pick-ups and drop-offs are compared with them/);
+});
+
+test('A4: possible new damage: the driver is asked to take close-ups of each spot, with its before and after', async () => {
+  const w = await handover(CU.ronja, CU.r1, 'dropoff');
+  const c = await cuCmp(w, 'done', 'failed');
+  assert.equal(c.status, 'done', JSON.stringify(c));
+  assert.equal(c.checkId, `cmp-${w}`);
+  CU.k1 = c.checkId;
+  const k = await cuCheck(CU.k1);
+  // Waiting for the driver's close-ups, for 30 minutes; no spot has an answer from close-ups yet.
+  assert.equal(k.status, 'checking');
+  assert.equal(k.walkBy, CU.ronja.uid);
+  assert.equal(k.walkKind, 'dropoff');
+  assert.ok(Math.abs(k.closeupBy - k.createdAt - 30 * 60_000) < 1000, `${k.closeupBy - k.createdAt}`);
+  assert.equal(k.spots.length, 1);
+  assert.equal(k.spots[0].verdict, null);
+  assert.equal(k.spots[0].cmp.verdict, 'damage');
+  // The before and after of that part of the van, for the driver to find it.
+  for (const path of [k.spots[0].beforePath, k.spots[0].refPath]) assert.ok((await getBytes(ref(CU.ronja.st, path))).byteLength > 1000, path);
+  const n = await cuNote(CU.ph.ronja, (m) => m.url === `/check/${CU.k1}`, 'the close-ups note');
+  assert.equal(n.title, 'Take close-ups: CLS 1');
+  assert.match(n.body, /1 spot on your drop-off photos that may be new damage\. Take close-ups of it now/);
+  // The manager hears about it only when the check reaches them.
+  await new Promise((r) => setTimeout(r, 3000));
+  assert.equal(CU.ph.mgr.notes().filter((m) => m.url === `/check/${CU.k1}`).length, 0);
+});
+
+test('A8: only the driver who took the photos (and the station\'s staff) adds close-ups; a driver never approves damage', async () => {
+  // Another driver of the station sees the check but can't take its close-ups or send it.
+  await fails(closeUp(CU.vito, CU.k1), 'permission-denied');
+  await fails(CU.vito.call('submitCheck', { orgId: S.org, checkId: CU.k1 }), 'permission-denied');
+  // The driver who took the photos can't approve or reject anything, or mark the check reviewed.
+  const kref = doc(CU.ronja.db, 'orgs', S.org, 'checks', CU.k1);
+  await fails(updateDoc(kref, { review: { decisions: { 0: { damage: false, note: '', by: CU.ronja.uid, byName: 'x', at: Date.now(), known: null } }, manual: [], by: null, byName: null, at: null } }), 'permission-denied');
+  await fails(updateDoc(kref, { status: 'reviewed', reviewedAt: Date.now() }), 'permission-denied');
+  assert.equal((await cuCheck(CU.k1)).status, 'checking');
+});
+
+test('A5: close-ups show damage: the driver is told the fleet manager is reviewing it; the managers get the check and a notification', async () => {
+  const r = await closeUp(CU.ronja, CU.k1);
+  assert.equal(r.verdict.verdict, 'damage');
+  const k = await waitFor(async () => { const x = await cuCheck(CU.k1); return x.status === 'submitted' ? x : null; }, 'the check sent on');
+  assert.equal(k.submittedBy, CU.ronja.uid);
+  assert.equal(k.spots[0].verdict.verdict, 'damage');
+  assert.equal(k.spots[0].cmp.verdict, 'damage', 'the comparison\'s answer stays for the manager');
+  assert.equal(k.spots[0].closeups.length, 1);
+  assert.ok(!k.sentLate);
+  const n = await cuNote(CU.ph.mgr, (m) => m.url === `/check/${CU.k1}`, 'the manager\'s note');
+  assert.equal(n.title, 'Possible new damage: CLS 1');
+  assert.match(n.body, /drop-off photos show 1 possible new damage/);
+  // The clock is stopped.
+  assert.equal((await adminDb().doc(`closeupDue/${S.org}__${CU.k1}`).get()).exists, false);
+});
+
+test('A1: after a pick-up or drop-off with photos, the driver who took them gets the AI result as a notification; nobody else', async () => {
+  const before = { vito: CU.ph.vito.notes().length, mgr: CU.ph.mgr.notes().length };
+  const pick = await handover(CU.ronja, CU.r2, 'pickup');
+  await cuNote(CU.ph.ronja, (m) => m.url === `/walk/${pick}`, 'the pick-up result');
+  const drop = await handover(CU.ronja, CU.r2, 'dropoff');
+  await cuNote(CU.ph.ronja, (m) => m.url === `/walk/${drop}`, 'the drop-off result');
+  await new Promise((r) => setTimeout(r, 2000));
+  const about = (m) => [`/walk/${pick}`, `/walk/${drop}`].includes(m.url);
+  assert.equal(CU.ph.vito.notes().slice(before.vito).filter(about).length, 0);
+  assert.equal(CU.ph.mgr.notes().slice(before.mgr).filter(about).length, 0);
+  CU.drop2 = drop;
+});
+
+test('A2: nothing new found: the driver is told "No new damage on your drop-off (or pick-up) photos"', async () => {
+  const c = await cuCmp(CU.drop2, 'done', 'failed');
+  assert.equal(c.status, 'done');
+  assert.equal(c.checkId, null);
+  const n = CU.ph.ronja.notes().find((m) => m.url === `/walk/${CU.drop2}`);
+  assert.equal(n.title, 'No new damage: QUIET 3');
+  assert.match(n.body, /compared your drop-off photos with the van's earlier photos and found no new damage/);
+  // And a pick-up of the same van by another driver.
+  const pick = await handover(CU.vito, CU.r2, 'pickup');
+  const p = await cuNote(CU.ph.vito, (m) => m.url === `/walk/${pick}`, 'the pick-up result');
+  assert.equal(p.title, 'No new damage: QUIET 3');
+  assert.match(p.body, /compared your pick-up photos/);
+  await handover(CU.vito, CU.r2, 'dropoff');
+});
+
+test('A6: close-ups show no damage: the check goes to Review without a notification, for the manager to confirm', async () => {
+  await handover(CU.ronja, CU.r3, 'pickup');
+  const w = await handover(CU.ronja, CU.r3, 'dropoff');
+  const c = await cuCmp(w, 'done', 'failed');
+  assert.equal(c.checkId, `cmp-${w}`);
+  assert.equal((await cuCheck(c.checkId)).status, 'checking');
+  await cuNote(CU.ph.ronja, (m) => m.url === `/check/${c.checkId}`, 'the close-ups note');
+  const r = await closeUp(CU.ronja, c.checkId);
+  assert.equal(r.verdict.verdict, 'no_damage');
+  const k = await waitFor(async () => { const x = await cuCheck(c.checkId); return x.status === 'submitted' ? x : null; }, 'the check sent on');
+  assert.equal(k.review, null, 'the manager still decides');
+  await new Promise((r) => setTimeout(r, 3000));
+  assert.equal(CU.ph.mgr.notes().filter((m) => m.url === `/check/${c.checkId}`).length, 0);
+  // The station's staff can take the close-ups too (A8): the manager, for the next pick-up of this van.
+  const w2 = await handover(CU.vito, CU.r3, 'pickup');
+  const c2 = await cuCmp(w2, 'done', 'failed');
+  assert.equal((await cuCheck(c2.checkId)).status, 'checking');
+  assert.equal((await closeUp(S.mgr, c2.checkId)).verdict.verdict, 'no_damage');
+  const k2 = await waitFor(async () => { const x = await cuCheck(c2.checkId); return x.status === 'submitted' ? x : null; }, 'the manager\'s close-ups sent on');
+  assert.equal(k2.submittedBy, S.mgr.uid);
+  CU.vitoHasR3 = true;
+});
+
+test('A7: no close-ups within 30 minutes: the check goes to the manager without them, marked as such, and the driver is told', async () => {
+  const w = await handover(CU.ronja, CU.r1, 'pickup');
+  const c = await cuCmp(w, 'done', 'failed');
+  const id = c.checkId;
+  assert.equal((await cuCheck(id)).status, 'checking');
+  // Only the app creator runs the sweep by hand; before the 30 minutes are up it leaves the check alone.
+  await fails(S.own.call('closeupSweepNow', { orgId: S.org }), 'permission-denied');
+  await CU.cr.call('closeupSweepNow', { orgId: S.org, now: Date.now() + 60_000 });
+  assert.equal((await cuCheck(id)).status, 'checking');
+  const r = await CU.cr.call('closeupSweepNow', { orgId: S.org, now: Date.now() + 31 * 60_000 });
+  assert.ok(r.sent >= 1, JSON.stringify(r));
+  const k = await cuCheck(id);
+  assert.equal(k.status, 'submitted');
+  assert.equal(k.sentLate, true);
+  assert.equal(k.noCloseups, true);
+  assert.equal(k.submittedBy, null);
+  assert.equal(k.spots[0].verdict.verdict, 'skipped');
+  assert.equal(k.spots[0].cmp.verdict, 'damage');
+  const d = await cuNote(CU.ph.ronja, (m) => m.url === `/check/${id}` && /Sent to your fleet manager/.test(m.title), 'the driver\'s note');
+  assert.equal(d.title, 'Sent to your fleet manager: CLS 1');
+  assert.match(d.body, /Nobody took close-ups within 30 minutes/);
+  // New damage the AI found without close-ups still reaches the managers.
+  await cuNote(CU.ph.mgr, (m) => m.url === `/check/${id}`, 'the manager\'s note');
+  assert.equal((await adminDb().doc(`closeupDue/${S.org}__${id}`).get()).exists, false);
+  // Sent once: a second sweep finds nothing more for it.
+  const again = await CU.cr.call('closeupSweepNow', { orgId: S.org, now: Date.now() + 31 * 60_000 });
+  assert.equal(again.sent, 0, JSON.stringify(again));
+});
+
+test('A9: unchanged: other walk-arounds go straight to the manager, library photos aren\'t compared, drivers see no other driver\'s name', async () => {
+  // A walk-around that isn't a pick-up or drop-off: straight to the manager, no close-ups asked, no driver note.
+  const before = CU.ph.vito.notes().length;
+  const w = await photos(CU.vito, S.org, CU.r1, { real: true });
+  const c = await cuCmp(w, 'done', 'failed');
+  const k = await cuCheck(c.checkId);
+  assert.equal(k.status, 'submitted');
+  assert.equal(k.walkKind, 'walkaround');
+  assert.equal(k.closeupBy, null);
+  assert.equal(k.spots[0].verdict.verdict, 'damage');
+  await cuNote(CU.ph.mgr, (m) => m.url === `/check/${c.checkId}`, 'the manager\'s note');
+  assert.equal(CU.ph.vito.notes().slice(before).filter((m) => m.url === `/walk/${w}` || m.url === `/check/${c.checkId}`).length, 0);
+  // Library photos aren't compared.
+  const lib = await photos(CU.vito, S.org, CU.r1, { real: true, source: 'library' });
+  await new Promise((r) => setTimeout(r, 5000));
+  assert.equal((await cuWalk(lib)).cmp, undefined);
+  // Another driver reads Ronja's checks without her name (by account id only).
+  for (const id of [CU.k1, c.checkId]) {
+    const dk = (await getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', id))).data();
+    assert.ok(!/Ronja|Closeup|Vito|Otherdriver/.test(JSON.stringify(dk)), id);
+  }
+});
+
+test('close-ups: put things back (pick-ups off at station 1, the phones)', async () => {
+  await S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
+  for (const ph of Object.values(CU.ph || {})) await ph.close();
 });

@@ -217,6 +217,9 @@ export async function queueWalk(o: {
       vehicleId: v.id, vehicleName: v.name, cls: v.cls, stationId: v.stationId, source: o.meta.source, createdAt: now, createdBy: o.uid,
       totalMs: o.meta.totalMs, frames: o.meta.frames, taken: o.shots.length, skipped: o.meta.skipped, retakes: o.meta.retakes, photos,
       ...(o.meta.overlay ? { overlay: o.meta.overlay } : {}),
+      // Says the pick-up or drop-off step follows, so the AI comparison waits for it (functions/src/index.ts
+      // handoverKind) and tells this driver the result. Only a hint: the server marks the handover itself (handover).
+      ...(o.what !== 'walkaround' ? { forHandover: o.what } : {}),
     },
   });
   return id;
