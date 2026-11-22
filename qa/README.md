@@ -5,7 +5,7 @@ Three layers, each catching what the one before can't:
 | Layer | What it is | When | Catches | Costs |
 |---|---|---|---|---|
 | Scripted tests | Rules, history end to end, offline in a browser, all on the emulators (tests/) | Every push (Test), every Deploy | What we already know can break: 322 rule checks, 27 flows | Free |
-| **Blind tester** | An AI that has never seen the code tries to break the app through a phone-sized browser, against [FEATURES.md](FEATURES.md) | On request: label `blind-qa` on a pull request, or Actions > Blind QA | What nobody thought to script: role leaks, double taps, odd input, offline mid-step, broken translations | About $3 to $10 a run (Sonnet), capped at $8 by default |
+| **Blind tester** | An AI that has never seen the code tries to break the app through a phone-sized browser, against [FEATURES.md](FEATURES.md) | Every change, in the loop of the `verify` skill (label `blind-qa`), or Actions > Blind QA | Whether the product owner's approved criteria really hold, and what nobody scripted: role leaks, double taps, odd input, offline mid-step | The product owner's Claude plan usage (5 to 15 minutes a run; $0.40 to $1 at API prices on the first 8 runs), no API credits |
 | **Live check** | As the demo company's fleet manager on the live project: upload a photo, read it back, list the vans, ask the AI ([scripts/live-check.mjs](../scripts/live-check.mjs)) | After every Deploy | What the emulators can't see: missing permissions, indexes, a refused AI key (the 11 Nov upload outage) | About $0.0005 |
 
 ## The blind tester
@@ -36,10 +36,9 @@ Three layers, each catching what the one before can't:
 
 ## Setting it up (once)
 
-1. Optional but recommended: a separate Anthropic key for the tester, as the secret `QA_ANTHROPIC_API_KEY`
-   (Settings > Secrets and variables > Actions), so its spend shows apart from the app's AI. Without it the workflow
-   uses `ANTHROPIC_API_KEY`. A key that works in several workspaces needs the variable `QA_ANTHROPIC_WORKSPACE_ID`
-   (or `ANTHROPIC_WORKSPACE_ID`).
+1. On your computer: `claude setup-token` (signs in with your Claude subscription and prints a token). Save it as the
+   secret `CLAUDE_CODE_OAUTH_TOKEN` (GitHub > Settings > Secrets and variables > Actions). The tester then runs on your
+   plan's usage, never API credits. The token lasts about a year; make a new one when runs say it was refused.
 2. For the live check: a demo company in the live app (Account > Demo company, as the app creator). Without one,
    Deploy says so and skips the check.
 
@@ -48,4 +47,4 @@ Three layers, each catching what the one before can't:
 - On a pull request: add the label `blind-qa`. The report comes back as a comment; the label is taken off so you can
   add it again.
 - By hand: Actions > Blind QA > Run workflow, pick the branch, write what changed as you'd tell a tester, pick the
-  model (Opus finds more, costs about twice as much) and the most it may spend.
+  model (Opus finds more and uses more of your plan).

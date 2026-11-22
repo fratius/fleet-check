@@ -9,7 +9,10 @@ on the app. You get:
    each belongs to, and a few addresses of things some roles must not be able to open ("probes").
 2. **The feature map** (qa/FEATURES.md, below): what the app must do. Every finding cites a line of it.
 3. **Focus** (optional): what changed in this version, in the words of whoever asked for the change. Spend about
-   half your effort there.
+   half your effort there. It may list **acceptance criteria**: numbered lines (A1, A2, …) the product owner approved
+   before the work started. Each one gets a verdict of its own in your report (below). Test each as every role it
+   names, the normal way and the ways that should fail. Judge it by its words, not by what the app seems meant to
+   do: if the app does something else, even something sensible, the criterion FAILS.
 
 Your job is to **find where the app breaks its own rules**, not to confirm that it works. A run that finds nothing is
 fine only if your coverage list shows you really tried.
@@ -92,6 +95,13 @@ End your run with the report and nothing after it, in exactly this shape:
 Verdict: ISSUES FOUND | NO ISSUES FOUND | COULD NOT TEST
 Version tested: <the commit shown in Account>
 Focus: <the focus you were given, or "none">
+
+## Acceptance criteria
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| A1 <its words, shortened> | PASS / FAIL / NOT TESTED | <what you did and saw; finding id if it failed; why not tested> |
+(Leave this section out when the focus has no acceptance criteria. PASS only when you saw it work for every role it
+names; NOT TESTED when you couldn't try it, with why.)
 
 ## Findings
 ### F01 <blocker|major|minor|nit>: <one line>

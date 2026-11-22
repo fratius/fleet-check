@@ -5,11 +5,11 @@
 # app and the emulators, started in a folder with nothing but its photos. It gets qa/TESTER.md, the accounts and
 # qa/FEATURES.md, and the focus. Its report and screenshots end up in $QA_DIR.
 #
-# Needs: APP_DIR (the web build for the emulators), QA_DIR (an empty folder outside the repo), QA_ANTHROPIC_KEY (the
-# tester's Claude key; not called ANTHROPIC_API_KEY, so the functions emulator never sees it and keeps its made-up AI
-# answers instead of calling the real AI).
-# Optional: QA_FOCUS (plain words: what changed), QA_MODEL, QA_BUDGET_USD, QA_ACTIONS (rough number of browser
-# actions to plan for), ANTHROPIC_CUSTOM_HEADERS.
+# Needs: APP_DIR (the web build for the emulators), QA_DIR (an empty folder outside the repo), QA_OAUTH_TOKEN (the
+# product owner's Claude subscription token from `claude setup-token`: the run uses his plan's usage, not API
+# credits; not called CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY, so the functions emulator never sees it).
+# Optional: QA_FOCUS (plain words: what changed), QA_MODEL, QA_ACTIONS (rough number of browser actions to plan for),
+# QA_MINUTES (the most the tester may run, default 45).
 set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 : "${APP_DIR:?APP_DIR must be the web build for the emulators}" "${QA_DIR:?QA_DIR must be an empty folder outside the repo}"
@@ -93,13 +93,17 @@ DISALLOWED=$(printf 'mcp__browser__browser_%s,' "${NOT[@]}")
 # The tester's own folder: only its photos, the browser's settings and what it writes (screenshots).
 cd "$QA_DIR"
 set +e
-: "${QA_ANTHROPIC_KEY:?QA_ANTHROPIC_KEY must be set to the tester Claude key}"
-ANTHROPIC_API_KEY="$QA_ANTHROPIC_KEY" claude -p "Do the QA run described below. Work only through the browser tools.
+: "${QA_OAUTH_TOKEN:?QA_OAUTH_TOKEN must be the Claude subscription token (claude setup-token)}"
+# A home of its own: no settings, memory, plugins or skills from anywhere (--bare would do that, but it only takes an
+# API key, never a subscription token). The run's own tool list in report.md proves what it really had.
+mkdir -p "$QA_DIR/home"
+env -u ANTHROPIC_API_KEY HOME="$QA_DIR/home" CLAUDE_CODE_OAUTH_TOKEN="$QA_OAUTH_TOKEN" \
+  timeout "${QA_MINUTES:-45}m" claude -p "Do the QA run described below. Work only through the browser tools.
 
 $(cat "$QA_DIR/prompt.md")" \
-  --bare --tools "" --strict-mcp-config --mcp-config "$QA_DIR/mcp.json" \
+  --setting-sources "" --disable-slash-commands --tools "" --strict-mcp-config --mcp-config "$QA_DIR/mcp.json" \
   --allowedTools "${ALLOWED%,}" --disallowedTools "${DISALLOWED%,}" --permission-mode dontAsk \
-  --model "${QA_MODEL:-claude-sonnet-5-5}" --max-budget-usd "${QA_BUDGET_USD:-8}" \
+  --model "${QA_MODEL:-claude-sonnet-5-5}" \
   --no-session-persistence --output-format stream-json --verbose < /dev/null > "$QA_DIR/transcript.jsonl" 2> "$QA_DIR/claude.log"
 CODE=$?
 set -e
