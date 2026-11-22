@@ -356,8 +356,9 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   then, "submitted" after) once every spot has a clear answer from its close-ups, when the driver sends it, or by
   itself 30 minutes after it was made (`closeupDue`, `closeupSweep` every 10 minutes), marked as sent without
   close-ups. Close-ups showing damage, or a spot the AI called new damage without close-ups: the managers get the
-  notification, and the driver is told "Your fleet manager is reviewing the damage." Close-ups showing none: the
-  check still goes to Review for the manager to confirm, without a notification, and the driver is told so. Only
+  notification, and the driver is told "Your fleet manager is reviewing the possible damage." (product owner,
+  2026-11-22: possible, as the manager decides). Close-ups showing none: the check still goes to Review for the
+  manager to confirm, without a notification, and the driver is told so. Only
   the driver who took the photos, and the station's managers and owners, add close-ups or send the check on
   (`needCloseupTaker`); a driver never approves or rejects damage. Any other walk-around (not a handover) goes
   straight to the managers as before, and nobody else is told.

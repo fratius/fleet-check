@@ -19385,8 +19385,8 @@
   ]
  },
  {
-  "id": "ea8820d8",
-  "key": "Your fleet manager is reviewing the damage.",
+  "id": "430873a1",
+  "key": "Your fleet manager is reviewing the possible damage.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:267",
    "src/components/compare.tsx:138"

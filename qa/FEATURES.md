@@ -162,8 +162,8 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 5.14 For the van's first photos, that driver is told they're the starting point for the next comparisons.
 - MUST 5.15 When the AI finds possible new damage, that driver is asked to take close-ups of each spot, seeing the
   before and after of that part of the van.
-- MUST 5.16 When the close-ups show damage, that driver is told "Your fleet manager is reviewing the damage", and the
-  station's fleet managers (the owners where the station has none) get the check and a notification.
+- MUST 5.16 When the close-ups show damage, that driver is told "Your fleet manager is reviewing the possible
+  damage", and the station's fleet managers (the owners where the station has none) get the check and a notification.
 - MUST 5.17 When the close-ups show no damage, the check still goes to Review for the manager to confirm, without a
   notification, and the driver is told the close-ups show no damage and the manager confirms it.
 - MUST 5.18 When nobody takes close-ups within 30 minutes, the check goes to the manager without them, marked as

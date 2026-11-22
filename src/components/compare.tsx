@@ -135,7 +135,7 @@ function DriverCheckState({ k }: { k: Check }) {
   return (
     <View style={{ gap: 8 }}>
       {late ? <T>{late}</T> : null}
-      <T>{st === 'damage' ? t('Your fleet manager is reviewing the damage.')
+      <T>{st === 'damage' ? t('Your fleet manager is reviewing the possible damage.')
         : st === 'clean' ? t('Your close-ups show no damage. Your fleet manager confirms it.')
           : st === 'reviewed' ? t('Your fleet manager reviewed the spots.')
             : t('The spots are with your fleet manager, who decides.')}</T>

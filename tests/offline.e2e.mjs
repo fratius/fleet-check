@@ -369,12 +369,12 @@ test('A1, A4–A7: the driver sees the AI result of their pick-up or drop-off on
   const shot = { ...spot, closeups: ['orgs/closeupOrg/checks/cmp-closeupWalk1/spot1_1_x.jpg'],
     verdict: { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'A scratch in the close-up.', closeupBox: null } };
   await kref.update({ status: 'submitted', submittedAt: Date.now(), submittedBy: r.uid, spots: [shot] });
-  await visible(page, 'Your fleet manager is reviewing the damage.').waitFor({ timeout: 30_000 });
+  await visible(page, 'Your fleet manager is reviewing the possible damage.').waitFor({ timeout: 30_000 });
   await visible(page, 'Close-ups: damage').waitFor({ timeout: 10_000 });
   // No decision for a driver.
   assert.equal(await button(page, 'Not damage').count(), 0);
   await page.goto(`${URL0}/`);
-  await visible(page, 'Your fleet manager is reviewing the damage.').waitFor({ timeout: 60_000 });
+  await visible(page, 'Your fleet manager is reviewing the possible damage.').waitFor({ timeout: 60_000 });
   // A6: the close-ups showed none.
   await kref.update({ spots: [{ ...shot, verdict: { ...shot.verdict, verdict: 'no_damage', type: null, sizeCm: null, severity: null } }] });
   await visible(page, 'Your close-ups show no damage. Your fleet manager confirms it.').waitFor({ timeout: 30_000 });

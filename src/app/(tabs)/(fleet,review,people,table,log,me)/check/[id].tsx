@@ -264,7 +264,7 @@ function CheckView({ id }: { id: string }) {
   const driverSays = !mine || status === 'checking' ? null : [
     k.sentLate ? (k.noCloseups ? t('Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.')
       : t('The 30 minutes for close-ups were up, so the spots went to your fleet manager with the close-ups taken.')) : '',
-    cst === 'damage' ? t('Your fleet manager is reviewing the damage.') : cst === 'clean' ? t('Your close-ups show no damage. Your fleet manager confirms it.') : '',
+    cst === 'damage' ? t('Your fleet manager is reviewing the possible damage.') : cst === 'clean' ? t('Your close-ups show no damage. Your fleet manager confirms it.') : '',
   ].filter(Boolean).join(' ');
   const what = k.walkKind === 'pickup' ? t('Pick-up photos') : k.walkKind === 'dropoff' ? t('Drop-off photos') : t('Walk-around');
   const sub = status === 'reviewed' ? (k.review?.at

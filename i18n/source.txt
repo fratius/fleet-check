@@ -2573,7 +2573,7 @@ a2bb6af7	Your decision	[check/[id].tsx]
 c6b6f706	Your fleet manager gets the details.
 4c26a8b2	Your fleet manager gives out the vans at this station.
 2093e054	Your fleet manager gives you a van.
-ea8820d8	Your fleet manager is reviewing the damage.
+430873a1	Your fleet manager is reviewing the possible damage.
 289fdd13	Your fleet manager refused it
 cc5527b7	Your fleet manager refused it. Cancel it.
 a43bd15d	Your fleet manager reviewed the spots.
