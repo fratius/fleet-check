@@ -23,10 +23,15 @@ import { AcceptTerms } from '@/components/terms';
 import { useOutbox } from '@/lib/outbox';
 import { isApk } from '@/lib/apk';
 
+const unsentText = (n: number) => tp(n, '{n} thing made on this phone isn\'t sent yet. If you sign out, it waits here and goes through when you sign in again on this phone.', '{n} things made on this phone aren\'t sent yet. If you sign out, they wait here and go through when you sign in again on this phone.');
+
 export default function Account() {
   const s = useSession();
   const c = useColors();
-  const [armed, setArmed] = useState(false);
+  // Sign out asks first, and the question stays until the person answers it (product owner, 2026-11-22: a second tap
+  // within 3 seconds read as "Sign out does nothing").
+  const [asking, setAsking] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // Uploads and changes of this person still waiting on this phone (they stay through a sign-out).
   const box = useOutbox();
   const unsent = box.jobs.filter((j) => j.uid === s.user?.uid && !box.done.has(j.id)).length;
@@ -108,14 +113,21 @@ export default function Account() {
         <T v="body">{versionLine()}</T>
       </Card>
 
-      {s.mode === 'firebase' && unsent ? (
-        <Notice text={tp(unsent, '{n} thing made on this phone isn\'t sent yet. If you sign out, it waits here and goes through when you sign in again on this phone.', '{n} things made on this phone aren\'t sent yet. If you sign out, they wait here and go through when you sign in again on this phone.')} />
-      ) : null}
-      {s.mode === 'firebase' ? (
-        <Button v="danger" title={armed ? t('Tap again to sign out') : t('Sign out')} onPress={() => {
-          if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
-          s.signOut();
-        }} />
+      {s.mode === 'firebase' && unsent && !asking ? <Notice text={unsentText(unsent)} /> : null}
+      {s.mode === 'firebase' && !asking ? <Button v="danger" title={t('Sign out')} onPress={() => setAsking(true)} /> : null}
+      {s.mode === 'firebase' && asking ? (
+        <Card>
+          <T v="h3">{t('Sign out of Fratius?')}</T>
+          {unsent ? <Notice text={unsentText(unsent)} /> : <T v="hint">{t('You can sign in again any time with your email and password.')}</T>}
+          <Row>
+            <Button v="danger" title={leaving ? t('Signing out…') : t('Sign out')} loading={leaving} onPress={async () => {
+              setLeaving(true);
+              // Goes to the sign-in screen when it's done (the app's screens are only for someone signed in).
+              try { await s.signOut(); } finally { setLeaving(false); }
+            }} />
+            <Button title={t('Cancel')} disabled={leaving} onPress={() => setAsking(false)} />
+          </Row>
+        </Card>
       ) : null}
       {s.viewAs ? null : <DeleteAccount />}
       <LegalLinks />

@@ -1843,11 +1843,13 @@ ada2e9e9	Sign in	[app/join/[token].tsx, app/sign-in.tsx]
 12fa900e	Sign in again, then try again.
 5ff76486	Sign in or create an account first.
 dc1649a1	Sign out	[account.tsx, app/sign-in.tsx, app/start.tsx]
+1bbc513a	Sign out of Fratius?
 3e246491	Sign up as a driver at {company} in Fratius: open this link on your phone, pick your station and create your account. A fleet manager then approves you. {link}
 3f9aac88	Sign up as a driver at {company}.
 bb8712d7	Sign-up links and offers
 eee52995	Signed in as {email}
 a9411e1d	Signed in as {email}. You'll join with this account.
+3ca85ca6	Signing out…	[account.tsx]
 710365b5	Sill to roof edge in frame. Keep the whole wheel arch in view.
 7dae5bb7	Sill to roof edge in frame. Overlap the next frame a little.
 40bc3e9a	since {day}	[components/companies.tsx]
@@ -1974,7 +1976,6 @@ c0c62214	Tap a photo to see it whole.
 336f2fcd	Tap again to remove it
 3afaa47c	Tap again to remove the demo company
 ea6b21e0	Tap again to retire
-2a31ad29	Tap again to sign out
 80da9307	Tap again to stop
 256d0bed	Tap again: everything in the demo is made new
 a34401de	Tap again: it won't be sent
@@ -2525,6 +2526,7 @@ cf86156a	You can cancel any time to the end of the period paid for: Account, the
 d88a78ed	You can only add vans to your own station.
 361cb63e	You can only decide about drivers of your own station.
 63483336	You can only invite drivers to your own station.
+971b786c	You can sign in again any time with your email and password.
 245a641b	You can't change your own role or station.
 d72be038	You can't remove yourself here.
 0838a19a	You don't have access to that.

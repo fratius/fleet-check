@@ -279,6 +279,14 @@ a decision about what the app must do, so it goes in a pull request of its own t
   days end (Account, then Plan and billing; a strip in the last week). Without a card the company stops when they
   end: everyone sees that the owner adds a card, and nothing in it is deleted. A card added later keeps the link's
   terms and gives no new free days. Links with the switch on (the default) still ask for a card at sign-up.
+- MUST 13.6 **Signing out asks first** (owner, manager or driver, Account tab): "Sign out" shows a confirmation with
+  "Sign out" and "Cancel" that stays until they choose; it doesn't go away by itself.
+- MUST 13.7 After confirming, the button shows "Signing out…" and the sign-in screen appears within a few seconds.
+  Then the app's address, or going Back, shows sign-in, never the app or the company's data.
+- MUST 13.8 Signing out works even with no connection, and even when the phone can't clear what it saved.
+- MUST 13.9 Cancel leaves them signed in on the Account tab, with nothing changed.
+- MUST 13.10 Things made on the phone and not sent yet: the confirmation says so; they stay on the phone and go
+  through at the next sign-in on it.
 
 ## 14. Everywhere
 
