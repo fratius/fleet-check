@@ -426,6 +426,13 @@ const accountTab = async (page) => {
   await visible(page, 'Version').waitFor({ timeout: 30_000 });
 };
 const signInScreen = (page) => page.locator('input[type=email] >> visible=true').first();
+/** Waits for the sign-in screen; if it doesn't come, says what the page shows instead. */
+async function onSignIn(page, ms = 15_000) {
+  try { await signInScreen(page).waitFor({ timeout: ms }); } catch (e) {
+    const text = await page.locator('body').innerText().catch(() => '?');
+    throw new Error(`No sign-in screen at ${page.url()}. The page shows: ${text.replace(/\s+/g, ' ').slice(0, 600)}`);
+  }
+}
 
 test('A1, A4: signing out asks first, the question stays until answered, and Cancel changes nothing', async () => {
   await signoutCompany();
@@ -473,12 +480,12 @@ test('A2, A3: after confirming it shows "Signing out…", then sign-in; even whe
   await button(page, 'Sign out').click();
   // A2: it shows it's working, then the sign-in screen within a few seconds.
   await visible(page, 'Signing out…').waitFor({ timeout: 3000 });
-  await signInScreen(page).waitFor({ timeout: 15_000 });
+  await onSignIn(page);
   assert.ok(Date.now() - t0 < 15_000);
   // The app's address, or Back: sign-in, never the app or the company's data.
   for (const go of [() => page.goto(`${URL0}/account`), () => page.goBack(), () => page.goto(`${URL0}/`)]) {
     await go();
-    await signInScreen(page).waitFor({ timeout: 30_000 });
+    await onSignIn(page, 30_000);
     await page.waitForTimeout(1500);
     assert.equal(await page.locator('text=B-SO 1 >> visible=true').count(), 0);
     assert.equal(await page.locator('text="Version" >> visible=true').count(), 0);
@@ -510,7 +517,7 @@ test('A3, A5: signing out without a connection, with a change not sent yet: it s
   await visible(page, '1 thing made on this phone isn\'t sent yet.').waitFor({ timeout: 10_000 });
   await button(page, 'Sign out').click();
   // A3: signed out without a connection.
-  await signInScreen(page).waitFor({ timeout: 15_000 });
+  await onSignIn(page);
   assert.equal((await db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`).get()).data().name, 'Van S');
   // A5: the next sign-in on this phone sends it.
   await ctx.setOffline(false);
