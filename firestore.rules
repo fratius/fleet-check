@@ -36,6 +36,11 @@ service cloud.firestore {
       return (viewingIn(orgId) && va().get('st', null) is string && stationId in [va().st])
         || (realMember(orgId) && stationId in m(orgId).get('stationIds', []));
     }
+    // A person's record (members) shares a station with the one asking (managers; owners pass before).
+    function sharesStation(orgId) {
+      return (viewingIn(orgId) && va().get('st', null) is string && resource.data.get('stationIds', []).hasAny([va().st]))
+        || (realMember(orgId) && resource.data.get('stationIds', []).hasAny(m(orgId).get('stationIds', [])));
+    }
     // Can see or work on things at this station? Owners and the creator pass before the station is read,
     // so records saved before stations existed stay visible to them.
     function at(orgId, stationId) { return owner(orgId) || (member(orgId) && inStation(orgId, stationId)); }
@@ -188,8 +193,13 @@ service cloud.firestore {
       }
 
       match /members/{uid} {
-        allow get: if (signedIn() && uid == me()) || staff(orgId);
-        allow list: if staff(orgId);
+        // Owners see everyone; a fleet manager only the people of their own stations (product owner, 22 Nov 2026:
+        // another station's drivers and their phone, email and Transporter ID stay hidden). A person who left (no
+        // record any more) reads as gone, not refused. Lists by managers ask where('stationIds', 'array-contains-any',
+        // their stations) (watchMembers in src/lib/people.ts).
+        allow get: if (signedIn() && uid == me()) || owner(orgId)
+          || (manager(orgId) && (resource == null || sharesStation(orgId)));
+        allow list: if owner(orgId) || (manager(orgId) && sharesStation(orgId));
         // The person who created the company becomes its first owner.
         allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();

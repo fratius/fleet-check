@@ -17,13 +17,20 @@ const db = () => fb()!.db;
  * isn't the connection (without one a list just waits), so it's said in the console, then the screen does its part.
  */
 const refused = (what: string, then?: () => void) => (e: unknown) => { console.warn(`The list ${what} was refused:`, e); then?.(); };
-export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onError?: () => void) {
+/**
+ * The people of a company: owners and the app creator all of them (stationIds null), fleet managers only those of
+ * their stations (the rules refuse the rest: firestore.rules, members). Use `peopleScope(s)`.
+ */
+export function watchMembers(orgId: string, stationIds: string[] | null, cb: (rows: Member[]) => void, onError?: () => void) {
+  if (stationIds && !stationIds.length) { cb([]); return () => {}; }
   // Without a connection: the people this phone saw last (lib/offline.ts), until the server answers.
   const uid = fb()?.auth.currentUser?.uid;
-  const key = uid ? `${uid}-${orgId}-members` : null;
+  const key = uid ? `${uid}-${orgId}-members${stationIds ? '-' + stationIds.join(',') : ''}` : null;
   let live = false, gone = false;
   if (key) readCache<Member[]>(key).then((rows) => { if (!live && !gone && rows) cb(rows); });
-  const off = onSnapshot(collection(db(), 'orgs', orgId, 'members'), (snap) => {
+  const col = collection(db(), 'orgs', orgId, 'members');
+  const q = stationIds ? query(col, where('stationIds', 'array-contains-any', stationIds.slice(0, 30))) : col;
+  const off = onSnapshot(q, (snap) => {
     const rows = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }));
     if (!snap.metadata.fromCache) { live = true; if (key) writeCache(key, rows); }
     else if (!live && !rows.length) return;
@@ -31,6 +38,10 @@ export function watchMembers(orgId: string, cb: (rows: Member[]) => void, onErro
   }, refused('members', onError));
   return () => { gone = true; off(); };
 }
+
+/** Whose people a screen may list: null (everyone) for owners and the app creator, else the person's stations. */
+export const peopleScope = (s: { role: string | null; myStations: { id: string }[] }): string[] | null =>
+  s.role === 'owner' ? null : s.myStations.map((st) => st.id);
 
 /** One walk-around by id, for history links to photos older than the ones the app keeps loaded. */
 export async function fetchWalk(orgId: string, id: string): Promise<Walkaround | null> {

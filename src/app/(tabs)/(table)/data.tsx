@@ -6,7 +6,7 @@ import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
 import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
-import { watchMembers } from '@/lib/people';
+import { watchMembers, peopleScope } from '@/lib/people';
 import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
 import { HU_RESULT, serviceName, serviceVanRows, type ServiceVanRow } from '@/lib/service';
@@ -35,6 +35,7 @@ const sum = <R,>(rows: R[], f: (r: R) => number | null | undefined) => rows.redu
 
 export default function DataScreen() {
   const s = useSession();
+  const scopeKey = (peopleScope(s) || ['*']).join(',');
   const c = useColors();
   const [period, setPeriod] = useState<Period>('30');
   const [station, setStation] = useState<string | null>(null);
@@ -53,8 +54,8 @@ export default function DataScreen() {
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
-    return watchMembers(orgId, setMembers);
-  }, [orgId, s.mode, s.staff]);
+    return watchMembers(orgId, peopleScope(s), setMembers);
+  }, [orgId, s.mode, s.staff, scopeKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const owner = s.role === 'owner';
   const multi = s.myStations.length > 1;

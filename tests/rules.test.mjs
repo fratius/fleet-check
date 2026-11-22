@@ -227,7 +227,35 @@ describe('people and invites', () => {
   test('people cannot change someone else\'s details', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/members/drv2`), { phone: '1' })));
   test('driver cannot list people', () => assertFails(getDocs(collection(as('drv1'), `orgs/${O}/members`))));
   test('driver reads their own membership', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/members/drv1`))));
-  test('manager lists people', () => assertSucceeds(getDocs(collection(as('mgr1'), `orgs/${O}/members`))));
+  // Who sees which people (product owner, 22 Nov 2026; qa/FEATURES.md 1.3a–1.3d).
+  const peopleAt = (db, sts) => query(collection(db, `orgs/${O}/members`), where('stationIds', 'array-contains-any', sts));
+  test('A1: a manager lists the people of their own station', async () => {
+    const snap = await assertSucceeds(getDocs(peopleAt(as('mgr1'), [S1])));
+    const ids = snap.docs.map((d) => d.id).sort();
+    if (ids.join() !== 'drv1,mgr1') throw new Error(`listed ${ids}`);
+  });
+  test('A1: a manager reads a driver of their own station', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/members/drv1`))));
+  test('A1: a manager can\'t read a driver of another station (phone, email, Transporter ID)', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/members/drv2`))));
+  test('A1: a manager can\'t list the whole company, or another station\'s people', async () => {
+    await assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/members`)));
+    await assertFails(getDocs(peopleAt(as('mgr1'), [S2])));
+    await assertFails(getDocs(peopleAt(as('mgr1'), [S1, S2])));
+  });
+  test('A1: a person who left the manager\'s station reads as gone, not refused', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/members/left1`))));
+  test('A2: the owner still reads and lists everyone', async () => {
+    await assertSucceeds(getDoc(doc(as('own'), `orgs/${O}/members/drv2`)));
+    const snap = await assertSucceeds(getDocs(collection(as('own'), `orgs/${O}/members`)));
+    if (snap.size < 5) throw new Error(`owner listed ${snap.size}`);
+  });
+  test('A3: a manager still reads every staff name (names), but not another station\'s manager\'s record', async () => {
+    await assertSucceeds(getDocs(collection(as('mgr1'), `orgs/${O}/names`)));
+    await assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/members/mgr2`)));
+  });
+  test('A4: a driver still reads only themselves', async () => {
+    await assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/members/drv1`)));
+    await assertFails(getDoc(doc(as('drv1'), `orgs/${O}/members/mgr1`)));
+    await assertFails(getDocs(peopleAt(as('drv1'), [S1])));
+  });
   test('removing people goes through the server, even for the owner', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/members/drv1`))));
   test('manager cannot remove a driver from the app (removePerson ends their van)', () => assertFails(deleteDoc(doc(as('mgr1'), `orgs/${O}/members/drv1`))));
   test('manager cannot remove a driver of another station', () => assertFails(deleteDoc(doc(as('mgr1'), `orgs/${O}/members/drv2`))));
@@ -331,7 +359,11 @@ describe('the app creator viewing the app as someone else', () => {
   test('as a manager: not another station\'s history', () => assertFails(getDoc(doc(asMgr(), `orgs/${O}/assignments/a2`))));
   test('as a manager: reviews damage at the station', () => assertSucceeds(updateDoc(doc(asMgr(), `orgs/${O}/checks/c1`), review)));
   test('as a manager: not at another station', () => assertFails(updateDoc(doc(asMgr(), `orgs/${O}/checks/c2`), review)));
-  test('as a manager: lists people', () => assertSucceeds(getDocs(collection(asMgr(), `orgs/${O}/members`))));
+  test('as a manager: lists the people of the station it views', () => assertSucceeds(getDocs(query(collection(asMgr(), `orgs/${O}/members`), where('stationIds', 'array-contains-any', [S1])))));
+  test('as a manager: not the whole company, nor another station\'s driver', async () => {
+    await assertFails(getDocs(collection(asMgr(), `orgs/${O}/members`)));
+    await assertFails(getDoc(doc(asMgr(), `orgs/${O}/members/drv2`)));
+  });
   test('as a manager: cannot add a station', () => assertFails(setDoc(doc(asMgr(), `orgs/${O}/stations/st9`), { name: 'DXX9', code: '', createdAt: 9 })));
   test('as a manager: watches the station\'s videos', () => assertSucceeds(getDoc(doc(asMgr(), `orgs/${O}/videos/vd1`))));
   // As an owner of company O.

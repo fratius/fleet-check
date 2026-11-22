@@ -9,7 +9,7 @@ import { useSession } from '@/lib/session';
 import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
 import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
-import { watchMembers } from '@/lib/people';
+import { watchMembers, peopleScope } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
 import { fwd, t, tp } from '@/lib/i18n';
@@ -26,6 +26,7 @@ type Cat = 'all' | 'pump' | 'review' | 'missing' | 'warn' | 'chk' | 'due' | 'buy
  */
 export default function ReviewQueue() {
   const s = useSession();
+  const scopeKey = (peopleScope(s) || ['*']).join(',');
   const c = useColors();
   const [cat, setCat] = useState<Cat>('all');
   const [allDone, setAllDone] = useState(false);
@@ -36,8 +37,8 @@ export default function ReviewQueue() {
   const byOf = (k: Check) => nameOf(k.createdBy) || k.createdByName || null;
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
-    return watchMembers(orgId, setMembers);
-  }, [orgId, s.mode, s.staff]);
+    return watchMembers(orgId, peopleScope(s), setMembers);
+  }, [orgId, s.mode, s.staff, scopeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!s.staff) return <Screen><T v="h1">{t('Review')}</T><Card dashed><T v="hint">{t('Fleet managers and owners review damage checks.')}</T></Card></Screen>;
   const mine = s.checks.filter((k) => s.runs(k.stationId));
   const waiting = mine.filter((k) => k.status === 'submitted').sort((a, b) => (a.submittedAt || a.createdAt) - (b.submittedAt || b.createdAt));

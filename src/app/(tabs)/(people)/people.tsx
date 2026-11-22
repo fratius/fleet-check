@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 
 import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
-import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers } from '@/lib/people';
+import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
@@ -20,16 +20,17 @@ import { vanAlias, vanName } from '@/lib/vans';
  */
 export default function People() {
   const s = useSession();
+  const scopeKey = (peopleScope(s) || ['*']).join(',');
   const [members, setMembers] = useState<Member[] | null>(null);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
-    const a = watchMembers(orgId, setMembers, () => setErr(t('Couldn\'t load the people of this company.')));
+    const a = watchMembers(orgId, peopleScope(s), setMembers, () => setErr(t('Couldn\'t load the people of this company.')));
     const b = watchInvites(orgId, setInvites, () => setErr(t('Couldn\'t load the invite links.')));
     return () => { a(); b(); };
-  }, [orgId, s.mode, s.staff]);
+  }, [orgId, s.mode, s.staff, scopeKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!s.staff) return <Screen><T v="h1">{t('People')}</T><Card dashed><T v="hint">{t('Only fleet managers and owners manage people.')}</T></Card></Screen>;
   const owner = s.role === 'owner';
