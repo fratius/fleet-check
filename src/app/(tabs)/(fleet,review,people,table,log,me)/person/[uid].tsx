@@ -31,6 +31,8 @@ export default function PersonScreen() {
   const me = uid === s.user?.uid;
   const allowed = s.staff || me;
   const [member, setMember] = useState<Member | null | undefined>(undefined);
+  // The server said no: someone this person may not see (another station's people for a manager).
+  const [hidden, setHidden] = useState(false);
   const [picking, setPicking] = useState(false);
   const [manage, setManage] = useState(false);
   const [tab, setTab] = useState<'record' | 'tours' | 'vans'>(openTab === 'tours' || openTab === 'vans' ? openTab : 'record');
@@ -39,7 +41,8 @@ export default function PersonScreen() {
   useEffect(() => {
     if (!orgId || !uid || !allowed || s.mode !== 'firebase') return;
     if (me && s.member) { setMember(s.member); return; }
-    return watchMember(orgId, uid, setMember, () => setMember(null));
+    setHidden(false);
+    return watchMember(orgId, uid, setMember, () => { setMember(null); setHidden(true); });
   }, [orgId, uid, allowed, me, s.member, s.mode]);
   const history = useHistory({ driverId: uid });
   const data = useDriverData(allowed ? uid : undefined);
@@ -48,6 +51,7 @@ export default function PersonScreen() {
   if (s.mode !== 'firebase') return <Screen edges={[]}><Card dashed><T v="hint">{t('People and van history need the Firebase backend.')}</T></Card></Screen>;
 
   const rows = history.rows || [];
+  if (hidden && !rows.length) return <Screen edges={[]}><Card dashed><T v="hint">{t('This person isn\'t at your station, or isn\'t in the company.')}</T></Card></Screen>;
   const name = member?.name || rows[0]?.driverName || (me ? s.user?.name : '') || t('Unknown person');
   const r = member ? roleOf(member) : null;
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === uid);

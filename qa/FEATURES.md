@@ -37,6 +37,13 @@ a decision about what the app must do, so it goes in a pull request of its own t
   company.
 - MUST 1.3 A fleet manager sees only their own station: its vans, its drivers, its walk-arounds and checks, its
   history. Nothing of the company's other stations.
+- MUST 1.3a (A1, 22 Nov 2026) A fleet manager sees only the people of their own station: its drivers and their
+  details. Another station's driver, opened by address, shows "not found" and none of their data (no name, phone,
+  email or Transporter ID).
+- MUST 1.3b (A2) A fleet owner still sees everyone in the company.
+- MUST 1.3c (A3) A fleet manager still sees the other managers' names where the app shows them, and the call buttons
+  at the pump still work, but not other stations' drivers.
+- MUST 1.3d (A4) A driver still sees only themselves on the people side.
 - MUST 1.4 A driver sees the vans of their station and **only their own** history, tours, refuels, record and
   incidents. Never another driver's history or record.
 - MUST 1.5 A driver can't change vans, people, records or reviews, can't approve anyone or any damage, can't buy

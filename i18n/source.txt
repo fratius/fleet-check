@@ -2195,6 +2195,7 @@ af229b44	This link was used already, so its terms stay. Make a new link instead.
 38fd41f8	This looks like	[components/docscan.tsx]
 770bedff	This number plate isn't right: {plate}.
 d0626d34	This one is closed.
+c2a8680d	This person isn't at your station, or isn't in the company.
 cca3e72f	This person isn't in the company any more.
 a42b9371	This person works at another station.
 da28f1e8	This phone gets a notification when someone gives you a van.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { t } from './i18n';
-import { watchMembers } from './people';
+import { peopleScope, watchMembers } from './people';
 import { useSession } from './session';
 import type { Member, Vehicle } from './types';
 
@@ -20,10 +20,12 @@ export function useNameOf(): (uid: string | null | undefined) => string | null {
   const s = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const orgId = s.org?.id;
+  // Managers get their stations' people here; every staff name still comes from the company's names (s.names).
+  const scopeKey = (peopleScope(s) || ['*']).join(',');
   useEffect(() => {
     if (s.mode !== 'firebase' || !s.staff || !orgId) return;
-    return watchMembers(orgId, setMembers, () => {});
-  }, [s.mode, s.staff, orgId]);
+    return watchMembers(orgId, peopleScope(s), setMembers, () => {});
+  }, [s.mode, s.staff, orgId, scopeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   return useMemo(() => {
     const m = new Map<string, string>();
     if (s.staff) {

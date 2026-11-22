@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button, F, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { watchHistory, watchMembers } from '@/lib/people';
+import { watchHistory, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { useHolder, useNameOf } from '@/lib/names';
 import { QUEUED, sendCall } from '@/lib/outbox';
@@ -152,6 +152,7 @@ function given(person: string, van: string, r: { notified?: number; unchanged?: 
 /** Owners and managers of the van's station give it to a driver (or a fleet manager) of that station. */
 export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const s = useSession();
+  const scopeKey = (peopleScope(s) || ['*']).join(',');
   const c = useColors();
   const [members, setMembers] = useState<Member[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -159,8 +160,8 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId) return;
-    return watchMembers(orgId, setMembers, () => setErr(t('Couldn\'t load the people of this station.')));
-  }, [orgId]);
+    return watchMembers(orgId, peopleScope(s), setMembers, () => setErr(t('Couldn\'t load the people of this station.')));
+  }, [orgId, scopeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const vanOf = useMemo(() => new Map(s.vehicles.filter((x) => x.assignedTo && !x.retired).map((x) => [x.assignedTo!.driverId, x])), [s.vehicles]);
   const people = (members || [])
     .filter((m) => ['driver', 'manager'].includes(roleOf(m) || '') && (m.stationIds || []).includes(v.stationId || ''))
