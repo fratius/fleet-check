@@ -393,6 +393,11 @@ test('A1, A4–A7: the driver sees the AI result of their pick-up or drop-off on
   await visible(page, 'No new damage on your pick-up photos.').waitFor({ timeout: 10_000 });
   await db.doc(`orgs/${ORG_C}/walkarounds/closeupWalk2`).update({ cmp: { status: 'first', at: Date.now(), frames: 12, compared: 0, notCompared: [], found: 0, unsure: 0, checkId: null, refAt: null } });
   await visible(page, 'These are the first photos of this van: the next pick-ups and drop-offs are compared with them.').waitFor({ timeout: 30_000 });
+  // Close-ups still to take on the earlier drop-off stay on the Vans tab next to the newer pick-up (blind QA, round 1).
+  await kref.update({ status: 'checking', submittedAt: null, sentLate: false, noCloseups: false, spots: [spot] });
+  await visible(page, 'AI check of your drop-off photos').waitFor({ timeout: 30_000 });
+  await button(page, 'Take close-ups').waitFor({ timeout: 10_000 });
+  await visible(page, 'AI check of your pick-up photos').waitFor({ timeout: 10_000 });
   await page.context().close();
 });
 

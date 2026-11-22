@@ -174,6 +174,8 @@ a decision about what the app must do, so it goes in a pull request of its own t
   goes straight to the manager, and its driver isn't asked for anything. Drivers never see another driver's name.
 - LIMIT 5.21 On the test system the made-up AI says every close-up shows damage, unless the van's name has the word
   SPOTLESS in it. That's correct.
+- LIMIT 5.22 On the test system the made-up comparison finds nothing new when the van's plate or name has the word
+  QUIET in it (owners and managers can add such a van). That's correct.
 
 ## 6. Review and the damage record
 

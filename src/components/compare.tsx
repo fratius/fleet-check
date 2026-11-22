@@ -146,13 +146,16 @@ function DriverCheckState({ k }: { k: Check }) {
 
 /**
  * The comparison of the driver's newest pick-up or drop-off photos of the last 12 hours (of one van, or any), for that
- * driver: on the Vans tab and on the van, where the driver is after a handover.
+ * driver: on the Vans tab and on the van, where the driver is after a handover. Older ones still waiting for their
+ * close-ups stay too (a drop-off, then a pick-up of another van at once: both).
  */
 export function MyHandoverCompare({ vehicleId }: { vehicleId?: string }) {
   const s = useSession();
   if (s.mode !== 'firebase' || s.staff || !s.user) return null;
   const since = Date.now() - 12 * 3600_000;
-  const w = s.walks.filter((x) => x.createdBy === s.user!.uid && x.handover && x.source === 'camera' && !x.demo && x.createdAt > since
-    && (!vehicleId || x.vehicleId === vehicleId)).sort((a, b) => b.createdAt - a.createdAt)[0];
-  return w ? <DriverCompareCard w={w} /> : null;
+  const mine = s.walks.filter((x) => x.createdBy === s.user!.uid && x.handover && x.source === 'camera' && !x.demo && x.createdAt > since
+    && (!vehicleId || x.vehicleId === vehicleId)).sort((a, b) => b.createdAt - a.createdAt);
+  const waiting = (x: Walkaround) => !!x.cmp?.checkId && s.checks.find((k) => k.id === x.cmp!.checkId)?.status === 'checking';
+  const shown = mine.filter((x, i) => i === 0 || waiting(x)).slice(0, 3);
+  return shown.length ? <>{shown.map((w) => <DriverCompareCard key={w.id} w={w} />)}</> : null;
 }
