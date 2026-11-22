@@ -2,7 +2,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 
-import { CompareCard } from '@/components/compare';
+import { CompareCard, DriverCompareCard } from '@/components/compare';
 import { KeepCard, useMediaGone } from '@/components/keep';
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
@@ -49,6 +49,7 @@ export default function WalkScreen() {
         <Stat value={String(w.retakes)} label={t('retakes')} />
       </Stats>
       <CompareCard w={w} />
+      <DriverCompareCard w={w} />
       <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt}
         newest={w.source === 'camera' && !s.vehicles.find((v) => v.id === w.vehicleId)?.retired
           && !s.walks.some((x) => x.vehicleId === w.vehicleId && x.source === 'camera' && x.createdAt > w.createdAt && x.id !== w.id)} />

@@ -7,6 +7,7 @@ import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, kmText } from '@/components/dash';
 import { BuyButtons, MyOpenBuy } from '@/components/buy';
+import { MyHandoverCompare } from '@/components/compare';
 import { ScanChoice } from '@/components/scanchoice';
 import { DueChecks, dueOn } from '@/components/routines';
 import { isOpen } from '@/lib/stats';
@@ -73,6 +74,8 @@ export default function Fleet() {
       {tourElsewhere ? <TourCard v={tourElsewhere} compact /> : null}
       {/* A refuel, wash or parts purchase left half done (the app was closed at the pump). */}
       <MyOpenBuy />
+      {/* The AI comparison of the driver's newest pick-up or drop-off photos: the result, or close-ups to take. */}
+      <MyHandoverCompare />
       {/* Checks for drivers due on the driver's van now. */}
       {s.myVan && !pickup ? <DueChecks v={s.myVan} /> : null}
       {s.myVan && pickup ? <PickupRequest v={s.myVan} a={pickup} compact /> : s.myVan ? (

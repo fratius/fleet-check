@@ -67,6 +67,8 @@ test('the other lists (src/lib/people.ts, src/lib/data.ts) have their indexes', 
     ['services', [['vehicleId', A], ['stationId', A], ['day', D]]],
     // data.ts: the Data tab's service list for a period (managers by station)
     ['services', [['stationId', A], ['day', D]]],
+    // functions/src/index.ts sendDueCloseups: a company's checks whose 30 minutes for close-ups are up
+    ['closeupDue', [['orgId', A], ['at', A]]],
   ];
   assert.deepEqual(needed.filter(([coll, fields]) => !has(coll, fields)).map(([coll, fields]) => name(coll, fields)), [], 'add these to firestore.indexes.json');
 });

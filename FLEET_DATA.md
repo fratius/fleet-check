@@ -239,7 +239,12 @@ Each walk-around taken with the camera carries `cmp`, written only by the server
 van's earlier photos went (running, first, limit, done, failed), how many photos were compared, which weren't and
 why, how many spots it found and the damage check it made. The check (`checks/cmp-{walkId}`) keeps, per spot, the
 same part of the earlier photo (`beforePath`), which walk-around that was (`beforeWalkId`) and when it was taken
-(`beforeAt`), and who took the new photos by account id only (`walkBy`). What the AI answered for every frame, with
+(`beforeAt`), and who took the new photos by account id only (`walkBy`). At a pick-up or drop-off it also keeps
+the comparison's own answer per spot (`cmp`) apart from the close-ups' (`verdict`), the deadline for the close-ups
+(`closeupBy`), who sent it on (`submittedBy`, null when it went by itself) and whether it went by itself (`sentLate`)
+without any close-up (`noCloseups`). `closeupDue/{org}__{checkId}` (server only, deleted when the check is sent)
+holds the time it goes to the managers by itself. The app writes `forHandover` on photos taken for a pick-up or
+drop-off, so the comparison waits for the server's `handover` mark. What the AI answered for every frame, with
 time and cost, is in `orgs/{org}/compares/{walkId}`, read only by the app creator. Nothing about the person is in
 the AI's answers.
 

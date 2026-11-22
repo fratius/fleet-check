@@ -155,6 +155,25 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - LIMIT 5.11 During the free trial and in demo companies each van gets 2 comparisons a day; after that a walk-around
   says it wasn't compared. That's correct. On the test system the made-up AI marks a spot on the first photo of a
   compared walk-around.
+- MUST 5.12 **After a pick-up or drop-off with photos, the driver who took them gets the AI result** as a
+  notification and on their Vans tab, usually about a minute later.
+- MUST 5.13 When nothing new is found, that driver is told "No new damage on your drop-off photos" (or "pick-up
+  photos").
+- MUST 5.14 For the van's first photos, that driver is told they're the starting point for the next comparisons.
+- MUST 5.15 When the AI finds possible new damage, that driver is asked to take close-ups of each spot, seeing the
+  before and after of that part of the van.
+- MUST 5.16 When the close-ups show damage, that driver is told "Your fleet manager is reviewing the damage", and the
+  station's fleet managers (the owners where the station has none) get the check and a notification.
+- MUST 5.17 When the close-ups show no damage, the check still goes to Review for the manager to confirm, without a
+  notification, and the driver is told the close-ups show no damage and the manager confirms it.
+- MUST 5.18 When nobody takes close-ups within 30 minutes, the check goes to the manager without them, marked as
+  such, and the driver is told.
+- MUST 5.19 Only the driver who took the photos, and the station's fleet managers and owners, can add close-ups to
+  them. A driver never approves or rejects damage.
+- MUST 5.20 Video handovers and library photos aren't compared; any other walk-around (not a pick-up or drop-off)
+  goes straight to the manager, and its driver isn't asked for anything. Drivers never see another driver's name.
+- LIMIT 5.21 On the test system the made-up AI says every close-up shows damage, unless the van's name has the word
+  SPOTLESS in it. That's correct.
 
 ## 6. Review and the damage record
 

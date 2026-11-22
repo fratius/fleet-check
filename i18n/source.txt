@@ -209,6 +209,7 @@ b83d53d4	{what}: {name}	[components/buy.tsx]
 8b9ee848	€ per km (monthly rate)
 f93f7c1b	€ per litre	[data.tsx]
 681f295c	0: they pay at sign-up
+855e2980	1. Find the spot in the yellow box (photo: {where}). The AI thinks it may be new since the photo before.
 0edbd1ae	1. Find the spot in the yellow box.
 24b8c7f1	1. In Chrome, tap the menu (three dots, top right).
 d7c7f89a	1. Tap the Share button at the bottom of Safari (the square with an arrow).
@@ -321,6 +322,8 @@ b79c9721	Added by the manager
 90dedde9	After every walk-around taken with the camera, each photo is compared with the van's earlier photo of the same frame. {quick} looks at every pair; {best} takes a second look at what it marks. New damage goes to the station's fleet managers to review, and they get a notification.
 e54e8d6a	After, {when}	[check/[id].tsx]
 b123db9a	After: {name}, from {when}.
+b8afe6af	AI check of your drop-off photos
+ef40a3ab	AI check of your pick-up photos
 c3460f99	AI checks need the Firebase backend. Finish the setup first.
 4220f5cf	AI comparison	[components/compare.tsx]
 a0860c41	AI comparison: {n} new damage || AI comparison: {n} new damages
@@ -539,6 +542,9 @@ af1848cb	Close-up {no}: {panel}	[components/damage.tsx]
 0c08e633	Close-up check, per spot
 fbc622af	Close-ups	[check/[id].tsx]
 9144def0	Close-ups pending	[index.tsx, check/[id].tsx, person/[uid].tsx]
+3697d5cc	Close-ups: {n} damage || Close-ups: {n} damages	[review.tsx]
+e1e26b26	Close-ups: {verdict}	[check/[id].tsx]
+abbb722c	Close-ups: no damage	[review.tsx]
 0f0a5573	Closing…	[buy/[id].tsx]
 adac6937	Code	[people.tsx]
 f28563a4	Colour	[components/vanfacts.tsx]
@@ -554,6 +560,7 @@ e5117c34	Company and card	[components/plansetup.tsx]
 70ef29d4	Compare with the dashboard and correct anything that's wrong.
 34c2c5ac	Compare with the photos before
 1f47edf4	Comparing every photo with the van's earlier photos. This takes about a minute.
+7104e72f	Comparing your photos with the van's earlier photos. This takes about a minute.
 e46ee00f	Comparisons	[log.tsx]
 a7c60214	Comparisons ({n})	[log.tsx]
 527dceda	Complaints	[data.tsx]
@@ -1239,6 +1246,7 @@ a68a5573	no card, refused	[data.tsx]
 145b57a6	No check recorded yet
 e99a3c58	No checks for this van yet.
 f3d9e0dc	No checks yet. Add one: the suggestions make it a few taps.
+e14c0946	No close-ups	[review.tsx]
 3e8a6d08	No comments yet. For example: what the driver said, the repair or the insurance claim.
 9cf349a0	No comparisons yet. Every walk-around taken with the camera is compared with the van's earlier photos.
 1d25c533	No connection. {n} item waits on this phone and goes through by itself. || No connection. {n} items wait on this phone and go through by themselves.
@@ -1285,6 +1293,9 @@ e2d281e8	No km yet	[index.tsx]
 6bd6ba58	No list of vans could be read from this. Upload the list as an Excel file or CSV, or a sharper photo.
 3299dba7	No make or model in the list
 973ec381	No new damage	[log.tsx, components/compare.tsx]
+8b32cb3f	No new damage on your drop-off photos.
+57781441	No new damage on your pick-up photos.
+e5b6b640	No new damage: {van}
 ed222d6a	No number plate yet. Add it under Details: the plate is how this van is shown everywhere.
 04b2fca8	No number plates were found in this file. Check that it lists the vans with their plates, one van per line.
 b7caebb3	No photo	[check/[id].tsx, app/scan/[id].tsx, components/damage.tsx]
@@ -1323,6 +1334,9 @@ aa87cace	Nobody had the van in that time.
 062f9311	Nobody has had this van yet.
 60c394e6	Nobody has this van.
 3467126e	Nobody to call is on record for this station. Call the office.
+92e8d88f	Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.
+3050576d	Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.
+417fe86b	Nobody took close-ups within 30 minutes, so this check came without them. Decide from the before and after photos.
 6eef6648	None	[vehicle/[id].tsx, data.tsx, components/driverrec.tsx]
 5f94c6a3	None found. If one is lit, tell your fleet manager.
 b63b728c	none on record	[data.tsx]
@@ -1378,7 +1392,7 @@ f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settin
 b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.
 1f86c3ed	Notifications aren't set up on the server yet. Try again after the next update.
 c9bc849a	now	[components/damage.tsx]
-e3b82040	Now	[components/history.tsx]
+e3b82040	Now	[check/[id].tsx, components/history.tsx]
 29df038b	Now: {value}	[components/docscan.tsx]
 445a0f2c	Number plate	[add.tsx, bulk.tsx, vehicle/[id].tsx]
 c70bba01	odometer	[buy/[id].tsx]
@@ -1433,6 +1447,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 44a30114	Only the app creator can do this.
 e252761d	Only the app creator can open a demo company.
 994b6999	Only the app creator sees the test log.
+4fbe3f33	Only the driver who took these photos can add close-ups.
 1a935b78	Only the fleet owner adds stations.
 a5d81727	Only the fleet owner can change the plan and the card.
 e9ccc77a	Only the fleet owner can do this.
@@ -1784,6 +1799,7 @@ f5c117f0	scuff	[check/[id].tsx]
 9d0b0ff4	See and change checks
 63dd3d51	See the app the way each role sees it.
 ab17ded1	see the record	[lib/fleet.ts]
+16e358c8	See the spots	[components/compare.tsx]
 1b956f20	Seen again in {n} later check || Seen again in {n} later checks
 c5bced94	Seen again: {dates}.	[components/damage.tsx]
 8eb1e0ba	Seen from above, front on the left. Start at the front and walk down the vehicle's left side.
@@ -1800,6 +1816,7 @@ dbc6eb8c	Sending {n} item… || Sending {n} items…	[components/uploads.tsx]
 cf765512	Sending…	[components/uploads.tsx]
 a83064fa	Sent {when}. The fleet manager approves or rejects each spot.
 46b8c953	Sent to the fleet manager
+e0654a92	Sent to your fleet manager: {van}
 c149b95b	Sent. The fleet manager approves or rejects each spot.
 329cb8b6	Service	[vehicle/[id].tsx, data.tsx, components/service.tsx]
 1d1501e3	Service (distance)	[lib/fleet.ts]
@@ -1877,6 +1894,8 @@ c6a4a263	Started {when} ({time} ago) at {km}. If the van is back, end it with a 
 d8fd5c7c	Started {when} at {km}. When you're back: a photo of the dashboard with the ignition on.
 c6876364	Started {when}, no end photo yet
 00bb6481	Started another one	[index.ts]
+79a43d7e	Starting point	[components/compare.tsx]
+43c9be90	Starting point: {van}	[index.ts]
 e5f58095	Starting…	[buy/[id].tsx]
 4cb8d854	Station	[add.tsx, bulk.tsx, vehicle/[id].tsx]
 1724f351	Station {name} isn't yours
@@ -1920,7 +1939,9 @@ fb909170	Tailgate, rear window, bumper and lights in frame.
 b02298a2	Take a new photo
 2298471c	Take a photo	[components/docscan.tsx]
 fabc4745	Take a photo of the parts first.
+a51ba307	Take close-ups	[components/compare.tsx]
 e4e076db	Take close-ups of {n} spot || Take close-ups of {n} spots
+a65a95db	Take close-ups: {van}	[index.ts]
 f7609863	Take it again	[buy/[id].tsx, components/dash.tsx]
 563d8e34	Take it again: {why}
 ff6d8326	Take more close-ups	[check/[id].tsx]
@@ -1939,6 +1960,7 @@ f801a56f	Take the photo of the receipt first.
 f5176fe0	Take the photo of the receipt when you're done.
 1e709bc4	Take the photos of the van first.
 ff79b413	Take the pick-up video or photos
+fb63a339	Take them by {time}. After that the spots go to your fleet manager without close-ups.
 8a4a8595	Taken {when}	[components/uploads.tsx]
 a1668ef3	Taken out of the fleet {when} by {name}. Its walk-arounds, damage checks and driver history stay.
 6860c389	Taken out of the fleet {when}. Its walk-arounds, damage checks and driver history stay.
@@ -1981,10 +2003,19 @@ cb2061ab	That phone number doesn't look right.
 0803cc8b	That's a window of {time}: the last photos without it to the photos it was found in.
 80227a1b	That's who had the van, not proof of who caused it. Compare the photos.
 f4c23a3d	The {model} model looks at every photo at full resolution. This usually takes under a minute.
+a22b8fe7	The 30 minutes for close-ups are up: the spots go to your fleet manager now.
+6cb64b43	The 30 minutes for close-ups were up, so the spots went to your fleet manager with the close-ups taken.
+08f68818	The 30 minutes for close-ups were up, so this check came with only the close-ups taken.
+a3923ed2	The AI compared them with the van's earlier photos. It can miss small damage.
+d59dceca	The AI compared your drop-off photos with the van's earlier photos and found no new damage.
+5d4ec173	The AI compared your pick-up photos with the van's earlier photos and found no new damage.
 b5261da5	The AI couldn't read it: {issue}.
 a8810b04	The AI couldn't read it.
 27226595	The AI declined to answer for these photos. Try other photos.
 30210a7d	the AI didn't answer
+16ea9117	The AI found {n} spot on your drop-off photos that may be new damage. Take close-ups of it now. || The AI found {n} spots on your drop-off photos that may be new damage. Take close-ups of them now.
+4a5abef7	The AI found {n} spot on your pick-up photos that may be new damage. Take close-ups of it now. || The AI found {n} spots on your pick-up photos that may be new damage. Take close-ups of them now.
+6bf2dcf2	The AI found {n} spot that may be new damage. Take close-ups of it now: you see the before and after of that part of the van. || The AI found {n} spots that may be new damage. Take close-ups of each one now: you see the before and after of that part of the van.
 775827b5	The AI found no new damage. It can miss small damage.
 36cc054d	The AI functions aren't deployed yet. Check that the GitHub deploy ran.
 5c32b021	The AI isn't sure about the odometer. Compare it with the dashboard.
@@ -2020,6 +2051,7 @@ e7537c03	The company's name and billing address go on your invoices.
 b8de3c42	The company's plan is for {n} vans and they are all in use. Ask the owner for more room.
 19b8ebc5	The company's storage is full. Tell your fleet manager.
 23fc4e2f	The comparison with the van's earlier photos didn't finish.
+1ac5182a	The comparison with the van's earlier photos didn't finish. Your fleet manager can run it again.
 1d7e4397	The copy that plays on every phone couldn't be made. This is the original; it plays on iPhones and Macs.
 3ad53213	The cost doesn't look right.
 13d7a301	The damage log for {van}
@@ -2035,6 +2067,8 @@ c85fa974	the document	[components/docscan.tsx]
 915b2337	The driver is still taking close-ups.
 b65a1bf8	The driver takes one as proof, for example of the cargo area.
 561d103c	The driver who has this van does its checks (or the station's fleet manager).
+de0eb4a8	The driver who took the photos is taking close-ups of the spots, until {time}. The check comes to Review then, with or without them.
+f76dc62e	The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.
 53dcacda	The drivers of each van need the Firebase backend.
 5cbc0bc7	The drop-off photos of {van} are saved with its history.
 1c280cbb	The drop-off photos show {n} possible new damage. Review it. || The drop-off photos show {n} possible new damages. Review them.
@@ -2111,6 +2145,7 @@ aebdea71	The receipt couldn't be read. Type the numbers from it.
 0da98e11	The receipt is dated {date}.
 9e522813	The receipt shows a card ending {last4}; this van's card ends {expected}.
 de1018b5	The service history needs the Firebase backend.
+d7e49a45	The spots are with your fleet manager, who decides.
 a511a830	The times you had this van.
 0c5fe82b	The TÜV date stays as it is. Record it again when the van passes.
 5daed61d	The TÜV of {van} ran out at the end of {month}. Book the inspection now.
@@ -2145,6 +2180,7 @@ a25106e6	Then {price} plus VAT every year, until you cancel.
 89a3bc81	There's a problem	[components/routines.tsx]
 d9c37a80	There's no connection. The vans are saved by themselves when it's back; the strip at the bottom shows it.
 16656a60	There's nothing in this file.
+20101695	These are the first photos of this van: the next pick-ups and drop-offs are compared with them.
 469dbdc0	These might be damage, dirt or reflections. Take close-ups of each spot, then send it to the fleet manager.
 dcb6e009	These photos aren't yours or aren't of this van.
 de5fd80c	These photos belong to another station.
@@ -2241,6 +2277,7 @@ d130cd05	Time per scan	[log.tsx]
 16fc847f	To have a van as a driver, view as a fleet owner or fleet manager first, open a van, tap "{button}" and pick yourself. As a fleet manager you can also allow or refuse your own refuel or wash. Only your sign-in can do these two things.
 ac1f2811	To keep going after {date}, add a card before then: Account, then Plan and billing, in the web app.
 066f77ce	To review	[review.tsx]
+637057df	to the review by {time} at the latest
 2dd2bed7	today	[lib/fleet.ts]
 d1cf730a	Today when you change the odometer
 37087aec	Today: {price} plus VAT for the first month.
@@ -2525,6 +2562,7 @@ f7b7847b	You're invited to join {company} in Fratius as a driver at {station}. O
 4ab29102	Your account	[components/plansetup.tsx]
 01384ed0	Your account isn't a member of this company.
 f3658985	Your account, your company and the card, in one step. Drivers and stations are unlimited on every plan.
+d9bf2ea1	Your close-ups show no damage. Your fleet manager confirms it.
 411d3ee3	Your companies	[components/companies.tsx]
 3f7a84ea	Your company	[app/sign-in.tsx, components/plansetup.tsx]
 73141892	Your company starts with {n} days free.
@@ -2535,8 +2573,10 @@ a2bb6af7	Your decision	[check/[id].tsx]
 c6b6f706	Your fleet manager gets the details.
 4c26a8b2	Your fleet manager gives out the vans at this station.
 2093e054	Your fleet manager gives you a van.
+ea8820d8	Your fleet manager is reviewing the damage.
 289fdd13	Your fleet manager refused it
 cc5527b7	Your fleet manager refused it. Cancel it.
+a43bd15d	Your fleet manager reviewed the spots.
 98820f29	Your fleet manager sets the checks.
 8c6a40e8	Your Fratius plan for {company}
 207d7077	Your free Fratius trial for {company}

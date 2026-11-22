@@ -344,16 +344,29 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   full-size photos. Both are told to look only at the van, not at what is around it. The models are fixed (not the
   company's model setting).
 - **The AI only suggests; the fleet manager decides** (the rule above). What Opus calls new damage, or can't decide,
-  becomes a damage check (`checks/cmp-{walkId}`, `auto: 'compare'`, status "submitted") with the same part of the
-  photo before and after, which the owners and the station's managers approve or reject like any other. New damage
-  also sends the station's fleet managers a notification (the owners where the station has none), never the person
-  who took the photos. Approved damage goes on the van's record; the damage log names who had the van since the
-  photos it was compared with.
+  becomes a damage check (`checks/cmp-{walkId}`, `auto: 'compare'`) with the same part of the photo before and after,
+  which the owners and the station's managers approve or reject like any other. New damage also sends the station's
+  fleet managers a notification (the owners where the station has none). Approved damage goes on the van's record;
+  the damage log names who had the van since the photos it was compared with.
+- **At a pick-up or drop-off the driver who took the photos hears the result (product owner, 2026-11-22)**, as a
+  notification and on the Vans tab (and the van), usually about a minute later: "No new damage on your drop-off (or
+  pick-up) photos", or that these are the van's first photos and the starting point for the next comparisons, or
+  that the AI found spots that may be new damage. Then the driver takes close-ups of each spot (seeing the before
+  and after of that part of the van), and Opus checks them. The check reaches the managers (status "checking" until
+  then, "submitted" after) once every spot has a clear answer from its close-ups, when the driver sends it, or by
+  itself 30 minutes after it was made (`closeupDue`, `closeupSweep` every 10 minutes), marked as sent without
+  close-ups. Close-ups showing damage, or a spot the AI called new damage without close-ups: the managers get the
+  notification, and the driver is told "Your fleet manager is reviewing the damage." Close-ups showing none: the
+  check still goes to Review for the manager to confirm, without a notification, and the driver is told so. Only
+  the driver who took the photos, and the station's managers and owners, add close-ups or send the check on
+  (`needCloseupTaker`); a driver never approves or rejects damage. Any other walk-around (not a handover) goes
+  straight to the managers as before, and nobody else is told.
 - **Who sees what:** owners and the station's managers see on each walk-around how the comparison went (`cmp`,
   written only by the server: running, first, nothing new, spots to review, not compared and why, or didn't finish)
-  and can run it again when it failed, or for a walk-around taken before it started (`compareWalk`). That card isn't
-  shown to drivers (they scan, the manager decides); the damage checks the comparison makes are records of their
-  station like any other, which drivers see as before (account ids only, no names). What the AI said about every
+  and can run it again when it failed, or for a walk-around taken before it started (`compareWalk`). Drivers see
+  that card only for their own pick-ups and drop-offs (above; since 2026-11-22), never for anyone else's photos; the
+  damage checks the comparison makes are records of their station like any other, which drivers see as before
+  (account ids only, no names). What the AI said about every
   frame, the time and the cost (`orgs/{org}/compares/{walkId}`) are the app creator's only (the test log).
 - **On for every company**; only the app creator switches it off for one (`orgs/{org}.aiCompare = false`, Account
   tab; AGB § 5 (4): offered before it is sold, so it can be limited or ended). During the free trial and in demo

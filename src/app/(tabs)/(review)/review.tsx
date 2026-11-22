@@ -12,7 +12,7 @@ import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
 import { watchMembers, peopleScope } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
-import { fwd, t, tp } from '@/lib/i18n';
+import { fwd, loc, t, tp } from '@/lib/i18n';
 import { dueOn, routineName } from '@/components/routines';
 import { vanAlias, vanName } from '@/lib/vans';
 
@@ -34,7 +34,8 @@ export default function ReviewQueue() {
   const orgId = s.org?.id;
   // Names by account id: vans and checks keep only who, since drivers read them (lib/names.ts).
   const nameOf = useNameOf();
-  const byOf = (k: Check) => nameOf(k.createdBy) || k.createdByName || null;
+  // The automatic comparison: whose photos they were (nobody ran it); at a pick-up or drop-off they take the close-ups.
+  const byOf = (k: Check) => (k.auto === 'compare' ? nameOf(k.walkBy) || null : nameOf(k.createdBy) || k.createdByName || null);
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
     return watchMembers(orgId, peopleScope(s), setMembers);
@@ -182,7 +183,8 @@ export default function ReviewQueue() {
             {!atVan.length ? <T v="hint">{t('No driver is at a van right now.')}</T> : null}
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
-                title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }), where(k.stationId)].filter(Boolean).join(', ')}
+                title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }),
+                  k.closeupBy ? t('to the review by {time} at the latest', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : '', where(k.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="muted" text={tp(k.spots.length, '{done} of {n} spot', '{done} of {n} spots', { done: k.spots.filter((p) => p.verdict).length })} />} />
             ))}
           </List>
@@ -256,6 +258,10 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
   // The automatic comparison: whose photos they were (nobody ran it).
   const auto = k.auto === 'compare';
   const by = auto ? nameOf(k.walkBy) || null : nameOf(k.createdBy) || k.createdByName || null;
+  // The comparison's own answer, and (at a pick-up or drop-off) what the driver's close-ups showed.
+  const cmpN = auto ? k.spots.filter((p) => (p.cmp?.verdict || p.verdict?.verdict) === 'damage').length : 0;
+  const shot = auto ? k.spots.filter((p) => p.closeups?.length) : [];
+  const shotN = shot.filter((p) => p.verdict?.verdict === 'damage').length;
   return (
     <ActionCard band={MARKER} onPress={() => router.push(`/check/${k.id}`)} label={by ? t('Review {name}, {van}', { name: by, van: van }) : t('Review {van}', { van: van })}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>{by ? `${by} – ${van}` : van}</Text>
@@ -267,8 +273,10 @@ function ToReview({ k, van, alias, where }: { k: Check; van: string; alias: stri
       <Row gap={6}>
         {auto ? <Pill v="solid" text={k.walkKind === 'pickup' ? t('Pick-up photos') : k.walkKind === 'dropoff' ? t('Drop-off photos') : t('Walk-around')} /> : null}
         <Pill text={tp(k.spots.length, '{n} spot', '{n} spots')} />
-        {auto ? <Pill v={aiDamage ? 'bad' : 'amber'} text={aiDamage ? tp(aiDamage, 'AI comparison: {n} new damage', 'AI comparison: {n} new damages') : t('AI comparison: not sure')} />
+        {auto ? <Pill v={cmpN ? 'bad' : 'amber'} text={cmpN ? tp(cmpN, 'AI comparison: {n} new damage', 'AI comparison: {n} new damages') : t('AI comparison: not sure')} />
           : <Pill v={aiDamage ? 'bad' : 'good'} text={aiDamage ? tp(aiDamage, 'AI found {n} damage', 'AI found {n} damages') : t('AI found no damage')} />}
+        {auto && shot.length ? <Pill v={shotN ? 'bad' : 'good'} text={shotN ? tp(shotN, 'Close-ups: {n} damage', 'Close-ups: {n} damages') : t('Close-ups: no damage')} />
+          : auto && k.closeupBy ? <Pill v="amber" text={t('No close-ups')} /> : null}
         {k.missedNote ? <Pill v="amber" text={t('Note from the driver')} /> : null}
       </Row>
     </ActionCard>

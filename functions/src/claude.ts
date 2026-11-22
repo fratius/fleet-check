@@ -173,8 +173,11 @@ function testAnswer<T>(tier: Tier, parts: Part[], schema: object, prompt = ''): 
     ? { readable: true, plate: 'B-FR 1234', confidence: 0.95, issue: null }
     : 'spots' in props
     ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }
+    // The close-up check of a spot: damage, unless the van's name says SPOTLESS (the tests' close-ups that show none).
     : 'verdict' in props
-      ? { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.', closeupBox: [0.3, 0.3, 0.6, 0.6] }
+      ? /spotless/i.test(prompt)
+        ? { verdict: 'no_damage', type: null, sizeCm: null, severity: null, confidence: 0.9, reason: 'Test answer.', closeupBox: null }
+        : { verdict: 'damage', type: 'scratch', sizeCm: 6, severity: 'cosmetic', confidence: 0.9, reason: 'Test answer.', closeupBox: [0.3, 0.3, 0.6, 0.6] }
       : { class: 'large_van', confidence: 0.9, make: 'Test', model: 'Van', roof: 'high', slidingDoorLeft: 'no', slidingDoorRight: 'yes', rearDoors: 'barn', alternatives: [], photoIssues: [], reason: 'Test answer.',
         plate: 'B-FR 1234', plateImage: 1, plateBox: [0.4, 0.62, 0.6, 0.7] };
   const inTok = 1500 * parts.length, outTok = 200;
