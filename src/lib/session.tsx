@@ -399,10 +399,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = useCallback(async (email: string) => { await retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim())); }, []);
   const signOut = useCallback(async () => {
     if (!fb()) return;
-    // This phone stops getting this person's notifications (without a connection it can't say so: not waited for).
-    if (fbUser.current) await Promise.race([forgetPush(fbUser.current.uid), nap(3000)]);
-    // What this phone kept for an offline start goes too (a shared phone). Unsent changes stay for their next sign-in.
-    if (fbUser.current) await clearCaches(fbUser.current.uid);
+    const uid = fbUser.current?.uid;
+    // Whatever goes wrong before it, the person is signed out (product owner, 2026-11-22), within a few seconds.
+    try {
+      // This phone stops getting this person's notifications (without a connection it can't say so: not waited for).
+      if (uid) await Promise.race([forgetPush(uid).catch(() => {}), nap(3000)]);
+      // What this phone kept for an offline start goes too (a shared phone). Unsent changes stay for their next sign-in.
+      if (uid) await Promise.race([clearCaches(uid), nap(3000)]);
+    } catch { /* signed out below all the same */ }
     await fbSignOut(fb()!.auth);
   }, []);
 

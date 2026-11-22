@@ -28,7 +28,9 @@ function Routes() {
       {/* The store app: a tapped notification opens its page once the app is ready. */}
       {status === 'ready' ? <NotificationTaps /> : null}
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.page } }}>
-        <Stack.Protected guard={status === 'ready'}>
+        {/* Signed out (just now, or the app opened at one of its pages, or Back after signing out): the sign-in screen,
+            not the router's own pick, the sign-up page (product owner, 2026-11-22; the website's "Log in" opens "/"). */}
+        <Stack.Protected guard={status === 'ready'} redirectTo="/sign-in">
           {/* Every page lives in a tab (so the tab bar stays); only the camera opens over everything. */}
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="scan/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade', contentStyle: { backgroundColor: '#000' } }} />

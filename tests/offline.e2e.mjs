@@ -401,6 +401,131 @@ test('A1, A4–A7: the driver sees the AI result of their pick-up or drop-off on
   await page.context().close();
 });
 
+// ---------- Signing out (product owner, 2026-11-22): asks first, waits for the answer, always signs out ----------
+const ORG_S = 'signoutOrg', ST_S = 'signoutSt', VAN_S = 'signoutVan';
+const SO_MGR = { email: 'sami.signout@example.com', password: 'signout-pass-1', name: 'Sami Manager' };
+const SO_DRV = { email: 'dora.signout@example.com', password: 'signout-pass-2', name: 'Dora Driver' };
+async function signoutCompany() {
+  if (SO_MGR.uid) return;
+  const now = Date.now();
+  const m = await auth.createUser({ email: SO_MGR.email, password: SO_MGR.password, displayName: SO_MGR.name });
+  const d = await auth.createUser({ email: SO_DRV.email, password: SO_DRV.password, displayName: SO_DRV.name });
+  const b = db.batch();
+  b.set(db.doc(`orgs/${ORG_S}`), { name: 'Signout DSP', createdBy: OWNER.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+  b.set(db.doc(`orgs/${ORG_S}/members/${OWNER.uid}`), { role: 'owner', stationIds: [], email: OWNER.email, name: OWNER.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_S}/members/${m.uid}`), { role: 'manager', stationIds: [ST_S], email: SO_MGR.email, name: SO_MGR.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_S}/members/${d.uid}`), { role: 'driver', stationIds: [ST_S], email: SO_DRV.email, name: SO_DRV.name, joinedAt: now });
+  b.set(db.doc(`orgs/${ORG_S}/stations/${ST_S}`), { name: 'Main station', code: 'DBE5', createdAt: now });
+  b.set(db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`), { name: 'Van S', plate: 'B-SO 1', cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: ST_S, createdAt: now, createdBy: OWNER.uid, scanId: null });
+  for (const [u, who] of [[m, SO_MGR], [d, SO_DRV]]) b.set(db.doc(`users/${u.uid}`), { orgIds: [ORG_S], orgId: ORG_S, email: who.email, name: who.name });
+  await b.commit();
+  SO_MGR.uid = m.uid; SO_DRV.uid = d.uid;
+}
+const accountTab = async (page) => {
+  await page.locator('text="Account" >> visible=true').last().click();
+  await visible(page, 'Version').waitFor({ timeout: 30_000 });
+};
+const signInScreen = (page) => page.locator('input[type=email] >> visible=true').first();
+/** Waits for the sign-in screen; if it doesn't come, says what the page shows instead. */
+async function onSignIn(page, ms = 15_000) {
+  try { await signInScreen(page).waitFor({ timeout: ms }); } catch (e) {
+    const text = await page.locator('body').innerText().catch(() => '?');
+    throw new Error(`No sign-in screen at ${page.url()}. The page shows: ${text.replace(/\s+/g, ' ').slice(0, 600)}`);
+  }
+}
+
+test('A1, A4: signing out asks first, the question stays until answered, and Cancel changes nothing', async () => {
+  await signoutCompany();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  await signIn(page, SO_DRV);
+  await visible(page, 'B-SO 1').waitFor({ timeout: 60_000 });
+  await accountTab(page);
+  await button(page, 'Sign out').click();
+  await visible(page, 'Sign out of Fratius?').waitFor({ timeout: 10_000 });
+  // A1: it doesn't go away by itself (it used to, after 3 seconds).
+  await page.waitForTimeout(5000);
+  assert.equal(await page.locator('text="Sign out of Fratius?" >> visible=true').count(), 1);
+  assert.equal(await button(page, 'Cancel').count(), 1);
+  // A4: Cancel: still signed in, on the Account tab.
+  await button(page, 'Cancel').click();
+  await until(async () => (await page.locator('text="Sign out of Fratius?" >> visible=true').count()) === 0, 10_000, 'the question to go');
+  await visible(page, 'Version').waitFor({ timeout: 5000 });
+  await button(page, 'Sign out').waitFor({ timeout: 5000 });
+  await page.reload();
+  await visible(page, 'Version').waitFor({ timeout: 60_000 });
+  assert.equal(await signInScreen(page).count(), 0);
+  await ctx.close();
+});
+
+test('A2, A3: after confirming it shows "Signing out…", then sign-in; even when the phone can\'t clear what it saved', async () => {
+  await signoutCompany();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  await signIn(page, SO_DRV);
+  await visible(page, 'B-SO 1').waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(4000);
+  await accountTab(page);
+  // A3: clearing what this phone kept never finishes (its storage is stuck); Firebase's own storage still works.
+  await page.evaluate(() => {
+    const orig = IDBDatabase.prototype.transaction;
+    IDBDatabase.prototype.transaction = function (...a) {
+      if (this.name === 'fratius-outbox') return { objectStore: () => ({ getAllKeys: () => ({}), delete: () => ({}), get: () => ({}), put: () => ({}) }) };
+      return orig.apply(this, a);
+    };
+  });
+  await button(page, 'Sign out').click();
+  await visible(page, 'Sign out of Fratius?').waitFor({ timeout: 10_000 });
+  const t0 = Date.now();
+  await button(page, 'Sign out').click();
+  // A2: it shows it's working, then the sign-in screen within a few seconds.
+  await visible(page, 'Signing out…').waitFor({ timeout: 3000 });
+  await onSignIn(page);
+  assert.ok(Date.now() - t0 < 15_000);
+  // The app's address, or Back: sign-in, never the app or the company's data.
+  for (const go of [() => page.goto(`${URL0}/account`), () => page.goBack(), () => page.goto(`${URL0}/`)]) {
+    await go();
+    await onSignIn(page, 30_000);
+    await page.waitForTimeout(1500);
+    assert.equal(await page.locator('text=B-SO 1 >> visible=true').count(), 0);
+    assert.equal(await page.locator('text="Version" >> visible=true').count(), 0);
+  }
+  await ctx.close();
+});
+
+test('A3, A5: signing out without a connection, with a change not sent yet: it says so, and the change goes through at the next sign-in', async () => {
+  await signoutCompany();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  await signIn(page, SO_MGR);
+  await visible(page, 'B-SO 1').waitFor({ timeout: 60_000 });
+  await visible(page, 'B-SO 1').click();
+  await tab(page, 'Details').waitFor({ timeout: 30_000 });
+  await page.waitForTimeout(6000);
+  // No connection: the van is renamed on this phone only.
+  await ctx.setOffline(true);
+  await tab(page, 'Details').click();
+  await button(page, 'Plate, name and type').click();
+  await page.locator('input >> visible=true').nth(1).fill('Van Signout');
+  await button(page, 'Save changes').click();
+  await visible(page, 'Van Signout').waitFor({ timeout: 15_000 });
+  await page.waitForTimeout(3000);
+  await accountTab(page);
+  await button(page, 'Sign out').click();
+  // A5: the question says something waits on this phone.
+  await visible(page, 'Sign out of Fratius?').waitFor({ timeout: 10_000 });
+  await visible(page, '1 thing made on this phone isn\'t sent yet.').waitFor({ timeout: 10_000 });
+  await button(page, 'Sign out').click();
+  // A3: signed out without a connection.
+  await onSignIn(page);
+  assert.equal((await db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`).get()).data().name, 'Van S');
+  // A5: the next sign-in on this phone sends it.
+  await ctx.setOffline(false);
+  await signIn(page, SO_MGR);
+  await until(async () => (await db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`).get()).data().name === 'Van Signout', 90_000, 'the rename to reach the server');
+  await ctx.close();
+});
+
 test('a sign-up link without a card: the page asks for no card, and the company opens with its free days', async () => {
   // Payments on with the tests' fake Stripe (functions/src/payments.ts), and a link the app creator made with
   // "Require a credit card" off (product owner, 2026-11-20). Nothing from js.stripe.com is needed on this path.
