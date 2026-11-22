@@ -13,7 +13,8 @@ const read = (p) => readFileSync(path(p), 'utf8');
 test('the tester has a browser and nothing else: no files, no shell, no code in the page or in Node', () => {
   const run = read('../qa/run.sh');
   // No built-in tools at all, no settings or CLAUDE.md from anywhere, only the browser server from its own file.
-  assert.match(run, /--bare --tools "" --strict-mcp-config --mcp-config "\$QA_DIR\/mcp\.json"/);
+  assert.match(run, /--setting-sources "" --disable-slash-commands --tools "" --strict-mcp-config --mcp-config "\$QA_DIR\/mcp\.json"/);
+  assert.match(run, /HOME="\$QA_DIR\/home"/);
   assert.match(run, /--permission-mode dontAsk/);
   // Playwright MCP offers these whatever its settings say: taken away by name.
   const not = run.match(/^NOT=\(([^)]*)\)/m)[1].split(/\s+/).filter(Boolean);
@@ -29,13 +30,16 @@ test('the tester has a browser and nothing else: no files, no shell, no code in 
   assert.match(read('../qa/serve.mjs'), /p\.endsWith\('\.map'\)/);
 });
 
-test('the functions on the emulators keep their made-up AI answers: the tester\'s key never reaches them', () => {
+test('the tester runs on the product owner\'s plan, and its token never reaches the functions emulator', () => {
   const wf = read('../.github/workflows/blind-qa.yml');
   const step = wf.slice(wf.indexOf('- name: The blind run, on the emulators'), wf.indexOf('- name: Keep the report'));
-  assert.match(step, /QA_ANTHROPIC_KEY: \$\{\{ secrets\.QA_ANTHROPIC_API_KEY \|\| secrets\.ANTHROPIC_API_KEY \}\}/);
+  assert.match(step, /QA_OAUTH_TOKEN: \$\{\{ secrets\.CLAUDE_CODE_OAUTH_TOKEN \}\}/);
+  assert.doesNotMatch(wf, /QA_ANTHROPIC_API_KEY|secrets\.ANTHROPIC_API_KEY/, 'no API key: the plan\'s usage only');
+  assert.doesNotMatch(step, /^\s+CLAUDE_CODE_OAUTH_TOKEN:/m);
   assert.doesNotMatch(step, /^\s+ANTHROPIC_API_KEY:/m, 'no ANTHROPIC_API_KEY in the emulators\' environment');
   assert.match(step, /echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions\/\.secret\.local/);
-  assert.match(read('../qa/run.sh'), /ANTHROPIC_API_KEY="\$QA_ANTHROPIC_KEY" claude -p/);
+  assert.match(read('../qa/run.sh'), /env -u ANTHROPIC_API_KEY HOME="\$QA_DIR\/home" CLAUDE_CODE_OAUTH_TOKEN="\$QA_OAUTH_TOKEN"/);
+  assert.doesNotMatch(read('../qa/run.sh'), /^\s+--bare\b|claude -p.*--bare/m, '--bare takes only an API key');
   // The brief comes from main, so the version under test can't soften it.
   assert.match(wf, /git show origin\/main:qa\/TESTER\.md > qa\/TESTER\.md/);
 });
@@ -72,6 +76,10 @@ test('the report says when the tester could have read code (a tool other than th
   r = report(['mcp__browser__browser_click', 'Read', 'Bash'], full);
   assert.match(r.md, /\*\*Blind: NO\.\*\* The tester also had Read, Bash/);
   assert.match(r.out, /blind=false/);
+  // Acceptance criteria: the loop is done only when every one passes.
+  r = report(['mcp__browser__browser_click'], '# Blind QA report\n\nVerdict: ISSUES FOUND\n\n## Acceptance criteria\n| Criterion | Verdict | Evidence |\n|---|---|---|\n| A1 managers retire vans | PASS | done |\n| A2 drivers can\'t | FAIL | F01 |\n| A3 history stays | NOT TESTED | no time |\n');
+  assert.match(r.md, /\*\*Acceptance criteria:\*\* 1 of 3 pass; open: A2 FAIL, A3 NOT TESTED/);
+  assert.match(r.out, /criteria=3\ncriteria_open=2\n/);
   // Cut off before the report: what it last wrote, and no verdict made up.
   r = report(['mcp__browser__browser_click'], '');
   assert.match(r.md, /Verdict: NO REPORT/);

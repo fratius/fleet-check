@@ -1,34 +1,50 @@
 ---
 name: verify
-description: How to prove a change to Fratius works before calling it done, with evidence the product owner can check. The claim in plain words, the cheap checks, the scripted end-to-end tests in CI, the blind tester (an AI that has never seen the code), what to do with its findings, and the live check after Deploy. Use before opening, updating or finishing any pull request that changes the app.
+description: The loop every change to Fratius goes through, from the product owner's request to a pull request he can merge. Agree acceptance criteria with him first, code and document, a scripted test per criterion, the Test workflow, the blind tester checking his criteria (not your claims), fix and retest at most three rounds, then a hand-over with what to check on his phone. Use for any request that changes the app, from the first reply.
 ---
 
-# Verify a change
+# The loop: from "I want x, y, z" to a pull request he can merge
 
-"Done" means proven, with evidence someone else can check. "It should work" and "the types pass" are not proof.
-The product owner reviews evidence, not diffs: every pull request says what was verified, how, and what wasn't.
+The product owner asks for x, y, z. He wants it built, documented, checked by a tester that has never seen the code,
+fixed until it does what he asked, and only then handed to him. He reviews evidence, not code. You run the whole loop
+in one session and stop for him at three points only: **the criteria (step 1), after round 3 (step 6), the hand-over
+(step 7)**. Everything runs on his Claude plan (this session and the tester's subscription token), never API credits.
 
 Why it's built this way (the Claude Code team's own practice, Nov 2026): end-to-end tests are the hardest to fool;
-a separate grader that didn't write the work catches what the author talks itself into; and checks must stay out of
-reach of the work they check.
+a grader that didn't write the work catches what the author talks itself into; checks stay out of reach of the work
+they check; a loop needs a stop.
 
-## 1. Write the claim before the code
+## 1. Acceptance criteria first, approved by him (stop and ask)
 
-In the pull request body, a section **`## For the tester`**: what changes for each role, in the product owner's
-words, as you'd tell a QA person. No file names, function names, collections or code: this section is the only
-thing the blind tester learns about the change (qa/focus.mjs passes nothing else).
+Before any code, turn his request into numbered criteria, **A1, A2, …**, in his words, one testable thing each, as
+what a person sees and does. Name the role in every one. Add what must **not** happen, and what must stay as it was.
 
-> ## For the tester
-> Fleet managers can now retire a van from the van page (before, only owners could). A retired van keeps its
-> history and can be brought back. Drivers still can't retire vans.
+> A1. A fleet manager can retire a van of their own station from the van page.
+> A2. A driver doesn't see "Retire" and can't retire a van.
+> A3. A manager can't retire a van of another station.
+> A4. A retired van keeps its whole history and can be brought back.
 
-For new behaviour, **add** lines to `qa/FEATURES.md` (MUST for the product owner's rules, SHOULD for the rest), in
-the section they belong to, from what the product owner asked. You may only add lines in a branch that changes the
-app: changing or removing a line, or touching `qa/TESTER.md`, `qa/run.sh` and the other files `qa/guard.mjs` lists,
-fails the Test workflow. That's deliberate: what the app must do isn't decided by the code that does it. If a line
-is wrong or out of date, say so to the product owner and change it in a pull request of its own.
+Show them to him and ask: "Is this what you want? Anything missing or wrong?" Don't build until he says yes. His
+"yes" is the definition of done: not your claim, not the code's behaviour. If he changes his mind later, the criteria
+change first, and he approves them again.
 
-## 2. Cheap checks before pushing
+Then:
+- Add them to `qa/FEATURES.md` as new MUST lines in their section (add only; `qa/guard.mjs` refuses changes to
+  existing lines in a branch that changes the app). If a criterion contradicts an existing line, or ROLES.md, say so
+  in step 1; changing a rule is a pull request of its own.
+- Open the pull request early with the section **`## For the tester`**: the approved criteria, word for word, with
+  their ids. That section is all the blind tester learns about the change (`qa/focus.mjs`). No file names, functions
+  or code in it.
+
+## 2. Build, test, document
+
+- Code the change. Follow AGENTS.md and ROLES.md.
+- **One scripted test per criterion** that fails without the change: a rule → `tests/rules.test.mjs`; a server flow →
+  `tests/history.test.mjs`; a screen, offline or a real browser → `tests/offline.e2e.mjs`. Name each test after its
+  criterion ("A2: a driver can't retire a van").
+- Document as you go, in the pull request (`## What changed`, for him: per role, what's new, what you decided and
+  why, honest limits) and in the repo docs the change touches (ROLES.md, FLEET_DATA.md, AGENTS.md).
+- Cheap checks before each push:
 
 ```bash
 npm run typecheck
@@ -37,71 +53,71 @@ node --test tests/outbox.test.mjs tests/indexes.test.mjs tests/deploy.test.mjs t
 node --import ./tests/alias.mjs --test tests/outline.test.mjs
 ```
 
-## 3. A scripted test for the change
+## 3. The Test workflow green
 
-Every change gets a test that fails without it (say how you know: you ran it before the fix, or why it can't pass
-without it):
-
-- an access rule → `tests/rules.test.mjs` (every role, including what must fail);
-- a server flow (handovers, history, joining, refuels) → `tests/history.test.mjs`;
-- something on screen, offline, or that needs a real browser → `tests/offline.e2e.mjs` (Playwright on the emulators).
-
-Claude's cloud sessions can't download the emulators: these run in CI only. Push, then watch the Test workflow:
+Push the branch (pushing a branch is not the gate; merging into main is, and only he merges). Claude's cloud
+sessions can't run the emulators, so the rules, history and browser tests run in CI. Wait for them:
 
 ```bash
-gh api "repos/fratius/fleet-check/actions/runs?branch=$(git branch --show-current)&per_page=3" \
-  --jq '.workflow_runs[] | [.name, .status, .conclusion, .html_url] | @tsv'
+B=$(git branch --show-current)
+gh api "repos/fratius/fleet-check/actions/runs?branch=$B&per_page=3" --jq '.workflow_runs[] | [.name, .status, .conclusion, .html_url] | @tsv'
 ```
 
-Don't say it's green until the run says so. Never skip, sleep or retry a flaky test to make it pass: find the cause,
-or delete the test and write down why.
+Red: fix and push again (this doesn't count as a round). Never skip, sleep or retry a flaky test to make it pass.
 
-## 4. The blind tester
-
-For anything people use (screens, roles, joining, handovers, damage, refuels, offline, languages), once the Test
-workflow is green, ask for a blind run: it costs money (about $3 to $10), so once per pull request, not per push.
+## 4. The blind tester checks his criteria
 
 ```bash
-gh api repos/fratius/fleet-check/issues/<PR number>/labels -f 'labels[]=blind-qa'
+gh api repos/fratius/fleet-check/issues/<PR>/labels -f 'labels[]=blind-qa'
 ```
 
-The Blind QA workflow builds the app for the emulators, seeds a demo company with a sign-in per role and a rival
-company (qa/seed.mjs), checks the basics work (scripts/live-check.mjs --emulators), and then an AI tester with only a
-browser (no files, no shell, no code) tries to break it against qa/FEATURES.md. Its report comes back as a comment
-on the pull request; screenshots and the transcript are in the run's artifact "blind-qa". The report's last lines say
-whether the run was really blind; if not, the run doesn't count.
+It runs on his plan (secret `CLAUDE_CODE_OAUTH_TOKEN`), about 5 to 15 minutes. Wait for it (check the Blind QA run
+every few minutes, or `send_later` yourself a check-in), then read its comment:
 
-The product owner can also start it by hand: Actions > Blind QA > Run workflow, with the focus in his words.
+```bash
+gh api "repos/fratius/fleet-check/issues/<PR>/comments?per_page=100" --jq '[.[] | select(.body | test("# Blind QA report"))] | last | .body'
+```
 
-## 5. Findings
+The report has a verdict per criterion (PASS / FAIL / NOT TESTED), findings with steps and screenshots, and whether
+the run was really blind. A run that wasn't blind doesn't count.
 
-For each finding:
+**Done** means: every criterion PASS, no blocker or major finding, the run blind. Then go to step 7.
 
-1. **Reproduce it as a scripted test first** (step 3), and see it fail. A finding that becomes a test never needs an
-   agent (or money) to be found again.
+## 5. Fix what failed (one round)
+
+For each FAIL, NOT TESTED and blocker or major finding:
+1. **Reproduce it as a scripted test first**, and see it fail in CI. A bug that became a test never needs the tester
+   again.
 2. Fix it; the test passes.
-3. If you think a finding is wrong (the tester misread the map, or hit a LIMIT), say why in the pull request. Never
-   change qa/FEATURES.md or qa/TESTER.md to make a finding go away (the Test workflow stops that anyway).
+3. If you think the tester is wrong (it misread a criterion, or hit a LIMIT in the map), don't argue it away: write
+   why in the pull request, and ask him in step 7. Never change qa/FEATURES.md, qa/TESTER.md or a criterion to make a
+   finding go away.
+4. NOT TESTED because the tester couldn't reach it (a LIMIT: phone app, real AI, payments): it goes on his phone
+   list in step 7, not into another round.
 
-**At most three rounds** of fix → Test → blind run. If findings are still open after the third, stop and tell the
-product owner what's left, with the reports. Don't keep going on your own.
+Minor findings and nits: fix if quick, otherwise list them in step 7. Push, then back to step 3: that was one round.
 
-## 6. Say how it was verified
+## 6. Stop after three rounds (ask him)
 
-End the pull request body with:
+If after the third blind run anything is still FAIL, or a blocker or major is open, stop. Tell him what's still
+failing, what you tried, the three reports, and what you suggest (a different approach, a narrower criterion, or
+accepting it). Don't start round four on your own.
+
+## 7. Hand-over (he merges)
+
+End the pull request with this, and send him the same in short:
 
 ```
 ## Verified
-- Type checks, web build: passed
-- Rules / history / offline tests: <run link>, passed (new: "<test name>")
-- Blind QA: <run link>, 2 findings (F01 fixed + test "…", F02 not a bug: …)
-- Not verified: <what wasn't: a real iPhone, the store app, real AI answers, payments…>
+| Criterion | Blind tester | Scripted test |
+|---|---|---|
+| A1 … | PASS (run link) | "A1: …" passed |
+| A2 … | PASS | "A2: …" passed |
+- Rounds: 2 (round 1: A3 failed, a manager could retire another station's van: fixed, test "A3: …")
+- Test workflow: <run link>, passed
+- Not verified, check on your phone: <what the tester can't reach: the store app, the camera screen, notifications, real AI answers, payments>
+- Open, your call: <minor findings left, tester findings you think are wrong and why>
 ```
 
-"Verified: none" is allowed, but it has to be written.
-
-## 7. After the merge
-
-Deploy runs the job **"The live app works for a real member"** (scripts/live-check.mjs): as the demo company's
-fleet manager it uploads a photo, reads it back, lists the vans and asks the AI, on the live project. The emulators
-can't catch a missing IAM role, index or AI key; this can. If it's red, the live app is broken now: say so first.
+Merging is his decision. After the merge, Deploy runs **"The live app works for a real member"**
+(scripts/live-check.mjs) on the live project. If it's red, the live app is broken now: tell him first.

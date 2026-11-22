@@ -7,14 +7,13 @@
 #
 # Start it: Actions > Blind QA > Run workflow (pick the branch, say what changed), or add the label "blind-qa" to a
 # pull request (its "## For the tester" section is the focus; the label is taken off afterwards so it can be added
-# again). It doesn't run by itself on every push: each run costs money (about $3 to $10 with Sonnet, more with Opus;
-# capped by the budget below).
+# again). It doesn't run by itself on every push.
 #
 # It reports and never blocks a merge (observe mode, as the Claude Code team starts every new gate). Make it a
 # required check only once its findings have been right for a few weeks.
 #
-# Key: the secret QA_ANTHROPIC_API_KEY (a key of its own, so the tester's spend shows apart from the app's AI in the
-# Anthropic console), else ANTHROPIC_API_KEY.
+# Sign-in: the secret CLAUDE_CODE_OAUTH_TOKEN, the product owner's Claude subscription token (`claude setup-token` on
+# his computer), so runs use his plan's usage, not API credits. A run takes about 5 to 15 minutes of it.
 name: Blind QA
 
 on:
@@ -29,10 +28,6 @@ on:
         type: choice
         options: [claude-sonnet-5-5, claude-opus-5-5]
         default: claude-sonnet-5-5
-      budget:
-        description: Most the run may spend, in US dollars
-        required: false
-        default: '8'
   pull_request:
     types: [labeled]
 
@@ -54,11 +49,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - name: Check the key is there
+      - name: Check the subscription token is there
         env:
-          KEY: ${{ secrets.QA_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          [ -n "$KEY" ] || { echo "::error title=Missing secret::Add QA_ANTHROPIC_API_KEY (or ANTHROPIC_API_KEY) under Settings > Secrets and variables > Actions."; exit 1; }
+          [ -n "$TOKEN" ] || { echo "::error title=Missing secret::Run 'claude setup-token' on your computer and save the token as the secret CLAUDE_CODE_OAUTH_TOKEN (Settings > Secrets and variables > Actions)."; exit 1; }
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -101,10 +96,8 @@ jobs:
         id: run
         shell: bash
         env:
-          QA_ANTHROPIC_KEY: ${{ secrets.QA_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
-          WORKSPACE: ${{ vars.QA_ANTHROPIC_WORKSPACE_ID || vars.ANTHROPIC_WORKSPACE_ID }}
+          QA_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           QA_MODEL: ${{ inputs.model || 'claude-sonnet-5-5' }}
-          QA_BUDGET_USD: ${{ inputs.budget || '8' }}
         run: |
           # The functions answer with made-up AI results (their key is "not-used-in-tests"), as in the other tests.
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
@@ -112,7 +105,6 @@ jobs:
           echo "SMTP_URL=none" >> functions/.secret.local
           echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
           echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
-          if [ -n "$WORKSPACE" ]; then export ANTHROPIC_CUSTOM_HEADERS="anthropic-workspace-id: $WORKSPACE"; fi
           export QA_DIR="$RUNNER_TEMP/qa" APP_DIR="$PWD/dist-qa" QA_FOCUS="$(cat "$RUNNER_TEMP/focus.txt")"
           npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "bash qa/run.sh" 2>&1 | tee "$RUNNER_TEMP/emulators.log"
       - name: Keep the report, screenshots and transcript
