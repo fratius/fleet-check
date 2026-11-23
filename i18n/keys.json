@@ -466,7 +466,7 @@
   "key": "{n} frames",
   "one": "{n} frame",
   "where": [
-   "src/lib/frames.ts:654"
+   "src/lib/frames.ts:666"
   ]
  },
  {
@@ -1529,7 +1529,7 @@
   "id": "3958e474",
   "key": "{van}, frame {n} of {total}",
   "where": [
-   "src/app/scan/[id].tsx:193"
+   "src/app/scan/[id].tsx:204"
   ]
  },
  {
@@ -2064,7 +2064,7 @@
   "id": "193742ba",
   "key": "About {m} m away.",
   "where": [
-   "src/app/scan/[id].tsx:308"
+   "src/app/scan/[id].tsx:321"
   ]
  },
  {
@@ -2615,7 +2615,7 @@
   "key": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to drop off the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:234"
+   "src/app/scan/[id].tsx:245"
   ]
  },
  {
@@ -2623,7 +2623,7 @@
   "key": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "one": "All {n} photos are needed to pick up the van. Tap a missing one to take it.",
   "where": [
-   "src/app/scan/[id].tsx:233"
+   "src/app/scan/[id].tsx:244"
   ]
  },
  {
@@ -2688,7 +2688,7 @@
   "id": "1dfb1b87",
   "key": "Allow camera",
   "where": [
-   "src/app/scan/[id].tsx:215"
+   "src/app/scan/[id].tsx:226"
   ]
  },
  {
@@ -3083,7 +3083,7 @@
   "key": "Back",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:201",
-   "src/app/scan/[id].tsx:328",
+   "src/app/scan/[id].tsx:341",
    "src/app/start.tsx:37",
    "src/components/viewas.tsx:108"
   ]
@@ -3408,7 +3408,7 @@
   "id": "3bddb099",
   "key": "Camera access",
   "where": [
-   "src/app/scan/[id].tsx:213"
+   "src/app/scan/[id].tsx:224"
   ]
  },
  {
@@ -3424,7 +3424,7 @@
    "src/app/(tabs)/(people)/people.tsx:117",
    "src/app/(tabs)/(people)/people.tsx:352",
    "src/app/(tabs)/(people)/people.tsx:93",
-   "src/app/scan/[id].tsx:328",
+   "src/app/scan/[id].tsx:341",
    "src/components/dash.tsx:188",
    "src/components/deleteaccount.tsx:62",
    "src/components/docscan.tsx:256",
@@ -3900,7 +3900,7 @@
   "id": "574f9222",
   "key": "Checking the photo…",
   "where": [
-   "src/app/scan/[id].tsx:307"
+   "src/app/scan/[id].tsx:320"
   ]
  },
  {
@@ -4083,10 +4083,10 @@
   "key": "Close",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:139",
-   "src/app/scan/[id].tsx:106",
-   "src/app/scan/[id].tsx:191",
-   "src/app/scan/[id].tsx:216",
-   "src/app/scan/[id].tsx:263",
+   "src/app/scan/[id].tsx:109",
+   "src/app/scan/[id].tsx:202",
+   "src/app/scan/[id].tsx:227",
+   "src/app/scan/[id].tsx:274",
    "src/components/damage.tsx:115",
    "src/components/language.tsx:35",
    "src/components/ui.tsx:269"
@@ -4654,14 +4654,14 @@
   "id": "4a6273cd",
   "key": "Couldn't save the photos on this phone. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:185"
+   "src/app/scan/[id].tsx:196"
   ]
  },
  {
   "id": "5df8d986",
   "key": "Couldn't save the photos.",
   "where": [
-   "src/app/scan/[id].tsx:175"
+   "src/app/scan/[id].tsx:186"
   ]
  },
  {
@@ -4689,7 +4689,7 @@
   "id": "2df44d47",
   "key": "Couldn't take the photo. Try again.",
   "where": [
-   "src/app/scan/[id].tsx:146"
+   "src/app/scan/[id].tsx:157"
   ]
  },
  {
@@ -5172,7 +5172,7 @@
   "id": "36fff63c",
   "key": "Discard",
   "where": [
-   "src/app/scan/[id].tsx:273"
+   "src/app/scan/[id].tsx:284"
   ]
  },
  {
@@ -5186,7 +5186,7 @@
   "id": "f6d8d9f6",
   "key": "Does the vehicle line up with the outline?",
   "where": [
-   "src/app/scan/[id].tsx:307"
+   "src/app/scan/[id].tsx:320"
   ]
  },
  {
@@ -5207,7 +5207,7 @@
   "id": "e9b450d1",
   "key": "Done",
   "where": [
-   "src/app/scan/[id].tsx:191",
+   "src/app/scan/[id].tsx:202",
    "src/components/buy.tsx:44",
    "src/components/offers.tsx:156"
   ]
@@ -5432,7 +5432,7 @@
   "id": "def13277",
   "key": "Drop off {van}",
   "where": [
-   "src/app/scan/[id].tsx:271"
+   "src/app/scan/[id].tsx:282"
   ]
  },
  {
@@ -5466,7 +5466,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:40",
    "src/app/(tabs)/(review)/review.tsx:274",
-   "src/app/scan/[id].tsx:194",
+   "src/app/scan/[id].tsx:205",
    "src/components/history.tsx:113"
   ]
  },
@@ -6323,7 +6323,7 @@
   "id": "67f297b4",
   "key": "Firebase isn't connected yet, so photos stay on this phone.",
   "where": [
-   "src/app/scan/[id].tsx:278"
+   "src/app/scan/[id].tsx:289"
   ]
  },
  {
@@ -6404,7 +6404,7 @@
   "id": "d7819728",
   "key": "Fit the vehicle to the outline.",
   "where": [
-   "src/app/scan/[id].tsx:308"
+   "src/app/scan/[id].tsx:321"
   ]
  },
  {
@@ -6734,7 +6734,7 @@
   "id": "8b485903",
   "key": "Frame {n}, {label}",
   "where": [
-   "src/app/scan/[id].tsx:201"
+   "src/app/scan/[id].tsx:212"
   ]
  },
  {
@@ -7423,6 +7423,13 @@
   "server": true,
   "where": [
    "functions/src/prompts.ts:175"
+  ]
+ },
+ {
+  "id": "a2adce03",
+  "key": "Hold the phone upright.",
+  "where": [
+   "src/app/scan/[id].tsx:121"
   ]
  },
  {
@@ -8288,21 +8295,21 @@
   "id": "a2e420de",
   "key": "Left: no sliding door",
   "where": [
-   "src/lib/frames.ts:649"
+   "src/lib/frames.ts:661"
   ]
  },
  {
   "id": "8df12a33",
   "key": "Left: not seen",
   "where": [
-   "src/lib/frames.ts:649"
+   "src/lib/frames.ts:661"
   ]
  },
  {
   "id": "fd4b1d03",
   "key": "Left: sliding door",
   "where": [
-   "src/lib/frames.ts:649"
+   "src/lib/frames.ts:661"
   ]
  },
  {
@@ -8388,7 +8395,7 @@
   "id": "a36ef8ab",
   "key": "Light",
   "where": [
-   "src/app/scan/[id].tsx:196"
+   "src/app/scan/[id].tsx:207"
   ]
  },
  {
@@ -9728,7 +9735,7 @@
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:174",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:348",
-   "src/app/scan/[id].tsx:242",
+   "src/app/scan/[id].tsx:253",
    "src/components/damage.tsx:60"
   ]
  },
@@ -11044,7 +11051,7 @@
   "id": "85d84762",
   "key": "Open Settings to allow the camera",
   "where": [
-   "src/app/scan/[id].tsx:215"
+   "src/app/scan/[id].tsx:226"
   ]
  },
  {
@@ -11208,7 +11215,7 @@
   "id": "1d47dfde",
   "key": "Outline: {model}",
   "where": [
-   "src/lib/frames.ts:653"
+   "src/lib/frames.ts:665"
   ]
  },
  {
@@ -11644,7 +11651,7 @@
   "key": "photos",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:48",
-   "src/app/scan/[id].tsx:229"
+   "src/app/scan/[id].tsx:240"
   ]
  },
  {
@@ -11703,7 +11710,7 @@
   "id": "7940a0da",
   "key": "Photos upload to your company's storage, so the walk-around is kept as evidence.",
   "where": [
-   "src/app/scan/[id].tsx:278"
+   "src/app/scan/[id].tsx:289"
   ]
  },
  {
@@ -11712,7 +11719,7 @@
   "one": "photos, {n} skipped",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:48",
-   "src/app/scan/[id].tsx:229"
+   "src/app/scan/[id].tsx:240"
   ]
  },
  {
@@ -11803,7 +11810,7 @@
   "id": "9055f977",
   "key": "Pick up {van}",
   "where": [
-   "src/app/scan/[id].tsx:271"
+   "src/app/scan/[id].tsx:282"
   ]
  },
  {
@@ -11852,7 +11859,7 @@
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:37",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:40",
    "src/app/(tabs)/(review)/review.tsx:274",
-   "src/app/scan/[id].tsx:194",
+   "src/app/scan/[id].tsx:205",
    "src/components/history.tsx:111"
   ]
  },
@@ -12147,7 +12154,7 @@
   "id": "5177429b",
   "key": "Raised roof",
   "where": [
-   "src/lib/frames.ts:646"
+   "src/lib/frames.ts:658"
   ]
  },
  {
@@ -12701,8 +12708,8 @@
   "key": "Retake",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:193",
-   "src/app/scan/[id].tsx:316",
-   "src/app/scan/[id].tsx:320"
+   "src/app/scan/[id].tsx:329",
+   "src/app/scan/[id].tsx:333"
   ]
  },
  {
@@ -12710,7 +12717,7 @@
   "key": "retakes",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:49",
-   "src/app/scan/[id].tsx:230"
+   "src/app/scan/[id].tsx:241"
   ]
  },
  {
@@ -12979,21 +12986,21 @@
   "id": "c2d95f81",
   "key": "Right: no sliding door",
   "where": [
-   "src/lib/frames.ts:650"
+   "src/lib/frames.ts:662"
   ]
  },
  {
   "id": "96773df5",
   "key": "Right: not seen",
   "where": [
-   "src/lib/frames.ts:650"
+   "src/lib/frames.ts:662"
   ]
  },
  {
   "id": "6d7ddbdb",
   "key": "Right: sliding door",
   "where": [
-   "src/lib/frames.ts:650"
+   "src/lib/frames.ts:662"
   ]
  },
  {
@@ -13113,7 +13120,7 @@
   "key": "Save {n} photos",
   "one": "Save {n} photo",
   "where": [
-   "src/app/scan/[id].tsx:272"
+   "src/app/scan/[id].tsx:283"
   ]
  },
  {
@@ -13179,7 +13186,7 @@
   "id": "0f673564",
   "key": "Save the pick-up photos",
   "where": [
-   "src/app/scan/[id].tsx:271"
+   "src/app/scan/[id].tsx:282"
   ]
  },
  {
@@ -13282,21 +13289,21 @@
   "id": "369c534d",
   "key": "Saving",
   "where": [
-   "src/app/scan/[id].tsx:171"
+   "src/app/scan/[id].tsx:182"
   ]
  },
  {
   "id": "e16cdd31",
   "key": "Saving {done} of {total} on this phone",
   "where": [
-   "src/app/scan/[id].tsx:182"
+   "src/app/scan/[id].tsx:193"
   ]
  },
  {
   "id": "5da14777",
   "key": "Saving the photos on this phone…",
   "where": [
-   "src/app/scan/[id].tsx:179"
+   "src/app/scan/[id].tsx:190"
   ]
  },
  {
@@ -13930,7 +13937,7 @@
   "id": "3da47453",
   "key": "Skip",
   "where": [
-   "src/app/scan/[id].tsx:332"
+   "src/app/scan/[id].tsx:345"
   ]
  },
  {
@@ -13952,7 +13959,7 @@
   "key": "Skipped",
   "where": [
    "src/app/(tabs)/(log)/log.tsx:262",
-   "src/app/scan/[id].tsx:242"
+   "src/app/scan/[id].tsx:253"
   ]
  },
  {
@@ -14103,7 +14110,7 @@
   "id": "0ca28021",
   "key": "Standard roof",
   "where": [
-   "src/lib/frames.ts:646"
+   "src/lib/frames.ts:658"
   ]
  },
  {
@@ -14644,7 +14651,7 @@
   "id": "c108c747",
   "key": "Take photo {n}",
   "where": [
-   "src/app/scan/[id].tsx:330"
+   "src/app/scan/[id].tsx:343"
   ]
  },
  {
@@ -14762,7 +14769,7 @@
   "id": "a364f3b8",
   "key": "Tap a photo to retake it.",
   "where": [
-   "src/app/scan/[id].tsx:235"
+   "src/app/scan/[id].tsx:246"
   ]
  },
  {
@@ -14821,7 +14828,7 @@
   "id": "80da9307",
   "key": "Tap again to stop",
   "where": [
-   "src/app/scan/[id].tsx:191"
+   "src/app/scan/[id].tsx:202"
   ]
  },
  {
@@ -15254,7 +15261,7 @@
   "id": "3e5c42fa",
   "key": "The camera couldn't start.",
   "where": [
-   "src/app/scan/[id].tsx:293",
+   "src/app/scan/[id].tsx:304",
    "src/components/recorder.tsx:55",
    "src/components/recorder.tsx:73"
   ]
@@ -15927,7 +15934,7 @@
   "id": "0e91970e",
   "key": "The photos are saved as a walk-around.",
   "where": [
-   "src/app/scan/[id].tsx:260",
+   "src/app/scan/[id].tsx:271",
    "src/components/uploads.tsx:65"
   ]
  },
@@ -15935,7 +15942,7 @@
   "id": "080d6247",
   "key": "The photos are saved on this phone. They upload by themselves, also if the connection drops. You can close this.",
   "where": [
-   "src/app/scan/[id].tsx:232"
+   "src/app/scan/[id].tsx:243"
   ]
  },
  {
@@ -15956,14 +15963,14 @@
   "id": "f19fa04d",
   "key": "The photos show the van's state when you brought it back, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:277"
+   "src/app/scan/[id].tsx:288"
   ]
  },
  {
   "id": "077e462b",
   "key": "The photos show the van's state when you took it, so damage that was already there isn't put on you. They're kept with the van's history.",
   "where": [
-   "src/app/scan/[id].tsx:276"
+   "src/app/scan/[id].tsx:287"
   ]
  },
  {
@@ -16273,7 +16280,7 @@
   "id": "53bc068c",
   "key": "The walk-around uses the camera with an outline to fit the vehicle into.",
   "where": [
-   "src/app/scan/[id].tsx:214"
+   "src/app/scan/[id].tsx:225"
   ]
  },
  {
@@ -16940,7 +16947,7 @@
   "key": "This vehicle isn't in the fleet any more.",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:80",
-   "src/app/scan/[id].tsx:106"
+   "src/app/scan/[id].tsx:109"
   ]
  },
  {
@@ -17245,7 +17252,7 @@
   "key": "total time",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/walk/[id].tsx:47",
-   "src/app/scan/[id].tsx:228"
+   "src/app/scan/[id].tsx:239"
   ]
  },
  {
@@ -17359,7 +17366,7 @@
   "key": "Try again",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:64",
-   "src/app/scan/[id].tsx:262",
+   "src/app/scan/[id].tsx:273",
    "src/components/uploads.tsx:68"
   ]
  },
@@ -17390,6 +17397,13 @@
   "where": [
    "src/components/pickup.tsx:88",
    "src/components/pickup.tsx:97"
+  ]
+ },
+ {
+  "id": "cacfebf5",
+  "key": "Turn the phone sideways, its top to the left.",
+  "where": [
+   "src/app/scan/[id].tsx:120"
   ]
  },
  {
@@ -17959,7 +17973,7 @@
   "id": "a3240fd9",
   "key": "Use anyway",
   "where": [
-   "src/app/scan/[id].tsx:315"
+   "src/app/scan/[id].tsx:328"
   ]
  },
  {
@@ -17976,7 +17990,7 @@
   "id": "a75e1e28",
   "key": "Use photo",
   "where": [
-   "src/app/scan/[id].tsx:321"
+   "src/app/scan/[id].tsx:334"
   ]
  },
  {
@@ -18313,7 +18327,7 @@
   "id": "3871fb25",
   "key": "Walk-around done",
   "where": [
-   "src/app/scan/[id].tsx:194"
+   "src/app/scan/[id].tsx:205"
   ]
  },
  {

@@ -56,14 +56,15 @@ export interface Damage {
 }
 
 /**
- * The shapes a walk-around's photos were lined up with, so damage stays where it was placed: the outlines of today
- * (`overlay` 3: the van's silhouette, rounded corners), the first ones in perspective (2), or the flat ones before.
+ * The shapes and cameras a walk-around's photos were lined up with, so damage stays where it was placed: today's
+ * outlines (`overlay` 4: corners taken sideways), the silhouettes with every frame upright (3), the first ones in
+ * perspective (2), or the flat ones before.
  */
 function specsFor(v: Vehicle, current: Spec) {
-  const old: Partial<Record<1 | 2, Spec>> = {};
+  const old: Partial<Record<1 | 2 | 3, Spec>> = {};
   return (w: Walkaround | null): Spec => {
     if (!w || w.overlay === current.ver) return current;
-    const ver = w.overlay === 2 ? 2 : 1;
+    const ver = w.overlay === 2 || w.overlay === 3 ? w.overlay : 1;
     return (old[ver] ??= makeSpec(v.cls, v, ver));
   };
 }

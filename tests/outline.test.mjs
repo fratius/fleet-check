@@ -31,7 +31,7 @@ const VANS = [
 test('make and model pick the family, but only one with the class\'s body', () => {
   for (const [cls, make, model, id] of VANS) {
     const sp = makeSpec(cls, { make, model });
-    assert.equal(sp.ver, 3);
+    assert.equal(sp.ver, 4);
     assert.equal(sp.fam?.id, id, `${make} ${model}`);
   }
   // The class wins: a Transit Custom read as a large van gets the large van's own shape.
@@ -59,6 +59,19 @@ test('older photos keep the first outlines', () => {
   assert.ok(!overlaySVG(sp, buildFrames(sp)[0], 3 / 4, 300).includes('viewBox="0 0 300 400"'));
 });
 
+test('corners are taken with the phone sideways, and so is any part wider than tall; older outlines stay upright', () => {
+  const orient = (sp) => Object.fromEntries(buildFrames(sp).map((f) => [f.label, f.orient]));
+  const vito = orient(makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }));
+  for (const [label, o] of Object.entries(vito)) assert.equal(o, / corner$/.test(label) ? 'landscape' : 'portrait', label);
+  const car = orient(makeSpec('car', {}));
+  assert.ok(Object.entries(car).every(([, o]) => o === 'landscape'), JSON.stringify(car));
+  for (const ver of [1, 2, 3]) assert.ok(buildFrames(makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }, ver)).every((f) => f.orient === 'portrait'));
+  // Sideways: turned into the upright preview by default, flat where the screen turned too.
+  const sp = makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }), corner = buildFrames(sp).find((f) => f.kind === 'corner');
+  assert.ok(overlaySVG(sp, corner, 3 / 4, 300).includes('viewBox="0 0 300 400"') && overlaySVG(sp, corner, 3 / 4, 300).includes('rotate(90)'));
+  assert.ok(overlaySVG(sp, corner, 3 / 4, 400, false).includes('viewBox="0 0 400 300"'));
+});
+
 test('every frame draws an outline, with a sensible distance to stand at', () => {
   for (const c of CLASSES) {
     const sp = makeSpec(c.id, { slideR: 'yes' });
@@ -73,9 +86,9 @@ test('every frame draws an outline, with a sensible distance to stand at', () =>
 });
 
 test('a point on the van seen in a photo is placed back where it is (within 3 cm)', () => {
-  // Today's outlines, and the first ones in perspective (photos of 16 to 23 November 2026 were lined up with those).
-  for (const [cls, make, model, ver] of [VANS[0], VANS[4], VANS[8], ['car', '', ''], ['box_truck', '', ''], ['midsize_van', 'Mercedes-Benz', 'Vito', 2]]) {
-    const sp = makeSpec(cls, { make, model, slideR: 'yes' }, typeof ver === 'number' ? ver : 3);
+  // Today's outlines, and the two before them (photos of 16 to 23 November 2026 were lined up with those).
+  for (const [cls, make, model, ver] of [VANS[0], VANS[4], VANS[8], ['car', '', ''], ['box_truck', '', ''], ['midsize_van', 'Mercedes-Benz', 'Vito', 2], ['midsize_van', 'Mercedes-Benz', 'Vito', 3]]) {
+    const sp = makeSpec(cls, { make, model, slideR: 'yes' }, typeof ver === 'number' ? ver : 4);
     const S = solid(sp);
     let n = 0;
     for (const f of buildFrames(sp)) {

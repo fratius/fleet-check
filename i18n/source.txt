@@ -983,6 +983,7 @@ aa279bfd	Height, weight, payload and cargo space.
 2a73e11c	Hi {name},	[payments.ts, website.ts]
 e841ab06	High confidence, {pct}%	[add.tsx]
 de50e8e9	High-voltage system	[prompts.ts]
+a2adce03	Hold the phone upright.
 9e25a34e	Hours	[data.tsx]
 360b3c57	Hours per tour	[data.tsx]
 2dd54a62	How far to trust these numbers
@@ -2315,6 +2316,7 @@ e7e2ff34	Try again with this photo
 63b84bd9	Try it as someone else
 dd0c3cd3	Turn off on this phone
 5ab087ec	Turn on notifications	[components/pickup.tsx]
+cacfebf5	Turn the phone sideways, its top to the left.
 988aeeba	TÜV	[data.tsx]
 5c77dcec	TÜV (main inspection)	[service.ts, components/service.tsx, components/vanfacts.tsx]
 11175300	TÜV done	[components/service.tsx]

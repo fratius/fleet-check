@@ -11,7 +11,8 @@
  * World coordinates are metres: x along the length (0 = front bumper), y up, z across (+ = the van's left side).
  * The picture is the portrait 3:4 camera box: u across (0..1), v down (0..1).
  *
- * The shapes and cameras of ver 2 stay as they were: photos taken with them are placed on the van by them.
+ * The shapes and cameras of each earlier version stay as they were (2: sharp corners; 3: every frame upright):
+ * photos taken with them are placed on the van by them.
  *
  * Only types come from frames.ts (it imports this file).
  */
@@ -29,9 +30,8 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const r1 = (v: number) => Math.round(v * 10) / 10;
 const r3 = (v: number) => Math.round(v * 1000) / 1000;
 
-/** Phone main camera (about 26 mm equivalent, 4:3), held upright: field of view across and up. */
-const HFOV = (53.1 * Math.PI) / 180, VFOV = (67.3 * Math.PI) / 180;
-const FX = 0.5 / Math.tan(HFOV / 2), FY = 0.5 / Math.tan(VFOV / 2);
+/** Phone main camera (about 26 mm equivalent, 4:3): field of view along its short and its long side. */
+const SHORT = 0.5 / Math.tan(((53.1 * Math.PI) / 180) / 2), LONG = 0.5 / Math.tan(((67.3 * Math.PI) / 180) / 2);
 /** Where the phone is held. */
 const EYE_Y = 1.45;
 /** Share of the camera box the framed part of the van fills. */
@@ -154,6 +154,8 @@ function landmarks(sp: Spec): Ln[] {
 
 export interface FrameCam {
   eye: V3; fwd: V3; right: V3; up: V3;
+  /** The phone is held sideways for this frame (a 4:3 picture), and the lens scale across and up for that. */
+  land: boolean; fx: number; fy: number;
   /** Shift that centres the framed part in the box (a slight turn of the phone). */
   du: number; dv: number;
   /** About how far the driver stands from the nearest part of the van, in metres. */
@@ -162,11 +164,11 @@ export interface FrameCam {
 /** Where on the box a point is: u across, v down, and its depth. */
 export function project(c: FrameCam, p: V3): [number, number, number] {
   const d = sub(p, c.eye), z = dot(d, c.fwd);
-  return [0.5 + (FX * dot(d, c.right)) / z + c.du, 0.5 - (FY * dot(d, c.up)) / z + c.dv, z];
+  return [0.5 + (c.fx * dot(d, c.right)) / z + c.du, 0.5 - (c.fy * dot(d, c.up)) / z + c.dv, z];
 }
 /** The ray from the camera through a point of the box. */
 export function ray(c: FrameCam, u: number, v: number): V3 {
-  const X = (u - c.du - 0.5) / FX, Y = (0.5 - (v - c.dv)) / FY;
+  const X = (u - c.du - 0.5) / c.fx, Y = (0.5 - (v - c.dv)) / c.fy;
   return norm(add(c.fwd, add(mul(c.right, X), mul(c.up, Y))));
 }
 
@@ -206,10 +208,21 @@ function viewDir(f: Pick<Frame, 'kind' | 'side' | 'corner'>): V3 {
   const c = f.corner;
   return norm([c === 'fl' || c === 'fr' ? -1 : 1, 0, c === 'fl' || c === 'rl' ? 1 : -1]);
 }
-function camAt(target: V3, dir: V3, d: number): FrameCam {
+/**
+ * Frames taken with the phone held sideways (since ver 4): the corners, and any other part of the van that is
+ * wider than it is tall (a car's side or front). Tall parts (a van's front, rear and side sections) stay upright:
+ * sideways they would fill less of the picture.
+ */
+export function frameLand(sp: Spec, f: Pick<Frame, 'kind' | 'seg'>): boolean {
+  if (sp.ver < 4) return false;
+  if (f.kind === 'corner') return true;
+  const H = solid(sp).H;
+  return f.kind === 'side' ? (f.seg![2] - f.seg![1]) * sp.L > H * 1.1 : sp.W > H * 1.1;
+}
+function camAt(target: V3, dir: V3, d: number, land: boolean): FrameCam {
   const eye: V3 = [target[0] + dir[0] * d, EYE_Y, target[2] + dir[2] * d];
   const fwd = norm(sub(target, eye)), right = norm(cross(fwd, [0, 1, 0])), up = cross(right, fwd);
-  return { eye, fwd, right, up, du: 0, dv: 0, dist: d };
+  return { eye, fwd, right, up, land, fx: land ? LONG : SHORT, fy: land ? SHORT : LONG, du: 0, dv: 0, dist: d };
 }
 const cams = new WeakMap<Spec, Map<string, FrameCam>>();
 /** The camera that sees the frame's part of the van filling FILL of the box, centred. */
@@ -219,7 +232,7 @@ export function frameCam(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'cor
   if (!m) { m = new Map(); cams.set(sp, m); }
   const hit = m.get(key);
   if (hit) return hit;
-  const P = framed(sp, f), dir = viewDir(f);
+  const P = framed(sp, f), dir = viewDir(f), land = frameLand(sp, f);
   const target = mul(P.reduce((a, p) => add(a, p), [0, 0, 0] as V3), 1 / P.length);
   const box = (c: FrameCam) => {
     let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
@@ -229,8 +242,8 @@ export function frameCam(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'cor
   // The nearest point must stay well in front of the camera; then the distance at which the part fills FILL.
   const near = Math.max(...P.map((p) => dot(sub(p, target), dir)));
   let lo = near + 0.6, hi = 30;
-  for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (box(camAt(target, dir, mid)).size > FILL) lo = mid; else hi = mid; }
-  const c = camAt(target, dir, hi), bb = box(c);
+  for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (box(camAt(target, dir, mid, land)).size > FILL) lo = mid; else hi = mid; }
+  const c = camAt(target, dir, hi, land), bb = box(c);
   c.du = 0.5 - (bb.u0 + bb.u1) / 2;
   c.dv = 0.5 - (bb.v0 + bb.v1) / 2;
   // How far from the van, measured on the ground to the nearest framed point.
@@ -243,7 +256,9 @@ export function frameCam(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'cor
 
 type Run = { d: string; w: 0 | 1 };
 const runsCache = new WeakMap<FrameCam, Run[]>();
-/** The outline of a frame in the 300 x 400 box (worked out once per frame: the camera screen redraws often). */
+/** The picture's size in drawing units: 300 x 400 upright, 400 x 300 with the phone held sideways. */
+const units = (c: FrameCam): [number, number] => (c.land ? [400, 300] : [300, 400]);
+/** The outline of a frame in its picture (worked out once per frame: the camera screen redraws often). */
 function runsOf(sp: Spec, c: FrameCam): Run[] {
   const hit = runsCache.get(c);
   if (hit) return hit;
@@ -253,20 +268,21 @@ function runsOf(sp: Spec, c: FrameCam): Run[] {
 }
 
 /** The picture is worked out on a grid a little larger than the box, so a van that runs past an edge closes outside it. */
-const GW = 162, GH = 216, MARGIN = 0.1;
+const GRID = 162, MARGIN = 0.1;
 /**
  * The line round the van as the camera sees it: the body's surface and the wheels are dotted onto a grid, and the
  * edge of what they cover is traced and smoothed.
  */
 function silhouette(sp: Spec, c: FrameCam): string[] {
+  const [UW, UH] = units(c), GW = (GRID * UW) / 300, GH = (GRID * UH) / 300;
   const S = solid(sp), b = sp.b, mask = new Uint8Array(GW * GH);
   const [ex, ey, ez] = c.eye, [fx, fy, fz] = c.fwd, [rx, ry, rz] = c.right, [ux, uy, uz] = c.up;
   const ku = GW / (1 + 2 * MARGIN), kv = GH / (1 + 2 * MARGIN);
   const put = (x: number, y: number, z: number) => {
     const dx = x - ex, dy = y - ey, dz = z - ez, depth = dx * fx + dy * fy + dz * fz;
     if (depth < 0.3) return;
-    const i = Math.floor((0.5 + (FX * (dx * rx + dy * ry + dz * rz)) / depth + c.du + MARGIN) * ku);
-    const j = Math.floor((0.5 - (FY * (dx * ux + dy * uy + dz * uz)) / depth + c.dv + MARGIN) * kv);
+    const i = Math.floor((0.5 + (c.fx * (dx * rx + dy * ry + dz * rz)) / depth + c.du + MARGIN) * ku);
+    const j = Math.floor((0.5 - (c.fy * (dx * ux + dy * uy + dz * uz)) / depth + c.dv + MARGIN) * kv);
     if (i < 1 || j < 1 || i > GW - 2 || j > GH - 2) return;
     const o = j * GW + i;
     mask[o - GW - 1] = mask[o - GW] = mask[o - GW + 1] = mask[o - 1] = mask[o] = mask[o + 1] = mask[o + GW - 1] = mask[o + GW] = mask[o + GW + 1] = 1;
@@ -337,7 +353,7 @@ function silhouette(sp: Spec, c: FrameCam): string[] {
     // Outer edges only (they run clockwise on the screen), and nothing smaller than a wheel.
     if (a2 < 2 * 60) continue;
     loop = smooth(simplify(loop, 1.1));
-    out.push('M' + loop.map(([i, j]) => `${r1((i / ku - MARGIN) * 300)} ${r1((j / kv - MARGIN) * 400)}`).join(' L') + ' Z');
+    out.push('M' + loop.map(([i, j]) => `${r1((i / ku - MARGIN) * UW)} ${r1((j / kv - MARGIN) * UH)}`).join(' L') + ' Z');
   }
   return out;
 }
@@ -368,7 +384,7 @@ function smooth(loop: P2[]): P2[] {
 
 /** The landmarks the camera sees: windows, lights and wheels not hidden behind the body. */
 function landmarkRuns(sp: Spec, c: FrameCam): Run[] {
-  const S = solid(sp), out: Run[] = [];
+  const S = solid(sp), out: Run[] = [], [UW, UH] = units(c);
   const seen = (p: V3) => {
     const d = sub(p, c.eye), len = Math.hypot(d[0], d[1], d[2]), k = Math.max(4, Math.ceil(len / 0.06));
     for (let j = 1; j < k; j++) {
@@ -386,7 +402,7 @@ function landmarkRuns(sp: Spec, c: FrameCam): Run[] {
     for (const p of l.pts) {
       const [u, v, z] = project(c, p);
       if (z < 0.2 || !seen(p)) { flush(); continue; }
-      run.push(`${r1(u * 300)} ${r1(v * 400)}`);
+      run.push(`${r1(u * UW)} ${r1(v * UH)}`);
     }
     flush();
   }
@@ -397,9 +413,12 @@ export interface OPaint { line: string; halo: string | null; body: number; detai
 export const OVERLAY_PAINT: OPaint = { line: '#E2FF1C', halo: '#000000', body: 3, detail: 1.6, detailOpacity: 0.85 };
 export const THUMB_PAINT: OPaint = { line: '#E2FF1C', halo: null, body: 1.6, detail: 0.9, detailOpacity: 0.7 };
 
-/** The outline as SVG paths for a box `pxW` pixels wide (300 x 400 units). */
-export function outlinePaths(sp: Spec, f: Frame, pxW: number, p: OPaint): string {
-  const u = 300 / pxW, runs = runsOf(sp, frameCam(sp, f));
+/**
+ * The outline as SVG paths in the frame's own picture (300 x 400 units, or 400 x 300 for a frame taken sideways),
+ * with line widths for `upx` units per screen pixel.
+ */
+export function outlinePaths(sp: Spec, f: Frame, upx: number, p: OPaint): string {
+  const u = upx, runs = runsOf(sp, frameCam(sp, f));
   const pass = (color: string, extra: number, fade: number) => runs.map((r) =>
     `<path d="${r.d}" fill="none" stroke="${color}" stroke-width="${r3(((r.w ? p.detail : p.body) + extra) * u)}" stroke-linejoin="round" stroke-linecap="round"`
     + ` stroke-opacity="${r3((r.w ? p.detailOpacity : 1) * fade)}"/>`).join('');
