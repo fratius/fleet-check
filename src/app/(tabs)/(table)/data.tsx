@@ -404,7 +404,9 @@ function WhoHad() {
   const vans = s.vehicles.filter((v) => s.runs(v.stationId)).sort((a, b) => vanName(a).localeCompare(vanName(b)));
   const list = q.trim() ? vans.filter((v) => `${v.name} ${v.plate}`.toLowerCase().includes(q.trim().toLowerCase())) : vans;
   const d = parseDay(day);
-  const when = d && /^\d{1,2}:\d{2}$/.test(at.trim()) ? new Date(`${d}T${at.trim().padStart(5, '0')}`).getTime() : null;
+  // A day ahead has no answer yet (typed; the calendar doesn't offer one).
+  const ahead = !!d && d > today();
+  const when = d && !ahead && /^\d{1,2}:\d{2}$/.test(at.trim()) ? new Date(`${d}T${at.trim().padStart(5, '0')}`).getTime() : null;
   const r = van && when ? whoHad(s.assignments, van, when) : null;
   const v = vans.find((x) => x.id === van);
   return (
@@ -430,7 +432,7 @@ function WhoHad() {
             <T v="small">{t('The app keeps the latest 500 handovers here; older ones are on the van\'s Drivers tab.')}</T>
           </View>
         )
-      ) : <T v="small">{!van ? t('Pick a van.') : t('Enter the day like 22.10.2026 and the time like 14:30.')}</T>}
+      ) : <T v="small" color={ahead ? c.alert : undefined}>{!van ? t('Pick a van.') : ahead ? t('The day can\'t be in the future.') : t('Enter the day like 22.10.2026 and the time like 14:30.')}</T>}
     </Card>
   );
 }
