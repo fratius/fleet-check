@@ -49,6 +49,11 @@ functions/lib/
 functions/.secret.local
 *service-account*.json
 i18n/out/
+# Made by scripts/i18n.mjs and scripts/site-i18n.mjs from the code each time: committed, every pull request
+# that touched a text conflicted with every other one (their file:line lists).
+i18n/keys.json
+i18n/source.txt
+i18n/site-keys.json
 
 # The Android test app, fetched by scripts/website-apk.sh when the website is deployed
 website/downloads/

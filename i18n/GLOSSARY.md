@@ -9,7 +9,7 @@ in a hurry, sometimes at a petrol pump), **fleet managers** and **fleet owners**
 
 ## The file
 
-- `i18n/keys.json`: every English text the app shows (`key`). Counts also have `one` (the English singular); the key
+- `i18n/keys.json` (made by `node scripts/i18n.mjs`, not committed): every English text the app shows (`key`). Counts also have `one` (the English singular); the key
   is the English plural. `where` says which file and line shows it: open it when a short text is ambiguous.
 - Your output: `public/i18n/<code>.json`, one object: `{ "English key": "translation", ... }`. For counts:
   `{ "English plural key": { "one": "...", "few": "...", "other": "..." } }` with exactly the forms your language
