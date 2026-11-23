@@ -111,6 +111,11 @@ The app is built on Expo SDK 58 because that's what Expo Go in the App Store run
 
 The store app is built by the **Store build** workflow (Actions tab) on EAS, as Fratius, `com.fratius.app`. The steps for the developer accounts, signing and submitting, and the texts for the store pages, are in [store/README.md](store/README.md) and [store/listing.md](store/listing.md). Every Deploy also updates the store app, as long as no native package changed since its builds (`scripts/native.mjs`).
 
+## Versions and releases
+
+- **Store version** (`version` in app.json, now 1.0.0): changes only with new App Store and Google Play builds. The store apps only take updates made for their version, so raising it for an ordinary change would stop their updates.
+- **Release number**: every deploy of main gets the next one (r1, r2, …). The app shows it under Account, e.g. `1.0.0-r12 (87e4b42), web app`, and GitHub has a release **v1.0.0-r12** with the pull requests it added (repository > Releases). To see what a phone runs, read the number off its Account tab and open that release.
+
 ## Payments (Stripe)
 
 Fleet owners pay on the web only, by card, through Stripe; the store apps sell nothing. Everything in Stripe is made by the Deploy workflow from two keys, so nothing needs setting up by hand in Stripe's product catalogue:

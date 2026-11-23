@@ -357,14 +357,14 @@ function FleetSettings() {
   );
 }
 
-/** "Version d81ff4b of Oct 25, 13:27, web app": the same on the phone and the web once both run the latest. */
 /**
- * "1.0.0 (d60bda2), web app": the app version and the build it runs (each Deploy updates the app without changing
- * the version, so the build is what tells two phones apart), and where it runs.
+ * "1.0.0-r12 (d60bda2), web app": the store version, the release number of the Deploy it came from (the GitHub
+ * Release v1.0.0-r12 lists what it contains), the commit, and where it runs. Each Deploy updates the app without
+ * changing the store version, so the release number is what tells two phones apart.
  */
 function versionLine() {
-  const b = (Constants.expoConfig?.extra as { build?: { sha?: string } } | undefined)?.build;
+  const b = (Constants.expoConfig?.extra as { build?: { sha?: string; release?: number | null } } | undefined)?.build;
   const where = Platform.OS === 'web' ? t('web app') : Constants.appOwnership === 'expo' ? 'Expo Go' : isApk() ? t('Android test version') : t('phone app');
-  const version = Constants.expoConfig?.version || '';
+  const version = (Constants.expoConfig?.version || '') + (b?.release ? `-r${b.release}` : '');
   return b?.sha ? t('{version} ({build}), {where}', { version, build: b.sha, where }) : t('{version}, {where}', { version, where });
 }
