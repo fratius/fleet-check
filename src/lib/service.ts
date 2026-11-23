@@ -107,3 +107,7 @@ export function apptState(a: Pick<ServiceAppointment, 'day' | 'time' | 'at'>, no
 }
 /** "25 Nov 2026, 09:30". */
 export const apptWhen = (a: Pick<ServiceAppointment, 'day' | 'time'>) => `${fmtDay(a.day)}, ${a.time}`;
+
+/** The van's next garage visit drivers may see, while it's not more than half a day past (vehicles.garageVisit). */
+export const visitOf = (v: Pick<Vehicle, 'garageVisit' | 'retired'>, now = Date.now()) =>
+  (v.garageVisit && !v.retired && v.garageVisit.at > now - 12 * 3600_000 ? v.garageVisit : null);

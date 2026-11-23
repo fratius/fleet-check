@@ -34,6 +34,11 @@ export interface Vehicle {
   assignedTo?: { assignmentId: string; driverId: string; /** Older records only. */ driverName?: string; since: number; kmStart?: number | null; kmEnd?: number | null } | null;
   /** The latest dashboard photo (set by the server): everyone at the station sees the km, levels and warning lights. */
   dash?: VanDash | null;
+  /**
+   * Its next garage visit that drivers may see (from the service appointments, kept by the server): what for, when
+   * (German time) and the garage. Never the notes.
+   */
+  garageVisit?: { id: string; kind: ServiceKind; name: string | null; day: string; time: string; at: number; garage: string | null } | null;
   /** Checks for drivers due on this van now, for whoever has it (set by the server). */
   todo?: RoutineTodo[] | null;
   /** When each check for drivers was last done on this van, by routine id (set by the server). */
@@ -155,11 +160,13 @@ export interface ServiceAppointment {
   garage: string | null; note: string | null;
   /** Minutes before when the reminder goes (0: none); `remindAt` when it will (null: none, or sent: `remindedAt`). */
   remind: number; remindAt: number | null; remindedAt?: number | null;
+  /** Drivers see on the van that it's booked (missing on the first ones: yes). */
+  drivers?: boolean;
   status: 'booked' | 'done' | 'cancelled';
   vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
   by: string; byName: string; createdAt: number; updatedAt?: number;
   /** Moves and changes: when, by whom, what it was before. */
-  changes?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceAppointment, 'kind' | 'name' | 'day' | 'time' | 'garage' | 'note' | 'remind'>> }[];
+  changes?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceAppointment, 'kind' | 'name' | 'day' | 'time' | 'garage' | 'note' | 'remind' | 'drivers'>> }[];
   serviceId?: string; doneAt?: number; doneByName?: string;
   cancelledAt?: number; cancelledByName?: string; reason?: string | null;
 }

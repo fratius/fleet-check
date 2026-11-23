@@ -8,7 +8,7 @@ import { eur, fmtDay, km, today } from '@/lib/fleet';
 import { N_, t, tp } from '@/lib/i18n';
 import { newId } from '@/lib/images';
 import { QUEUED, sendCall, useOutbox } from '@/lib/outbox';
-import { ADD_KINDS, BOOK_KINDS, HU_RESULT, REMIND, REMIND_DEFAULT, SERVICE_HINT, SERVICE_NAME, apptState, apptWhen, huDue, openAppointments, readTime, remindLabel, serviceDue, serviceName, watchServices } from '@/lib/service';
+import { ADD_KINDS, BOOK_KINDS, HU_RESULT, REMIND, REMIND_DEFAULT, SERVICE_HINT, SERVICE_NAME, apptState, apptWhen, huDue, openAppointments, readTime, remindLabel, serviceDue, serviceName, visitOf, watchServices } from '@/lib/service';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import type { HuResult, ServiceAppointment, ServiceKind, ServiceRecord, Vehicle } from '@/lib/types';
@@ -387,6 +387,8 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
   const [garage, setGarage] = useState(appt?.garage || '');
   const [note, setNote] = useState(appt?.note || '');
   const [remind, setRemind] = useState(appt?.remind ?? REMIND_DEFAULT);
+  // Drivers see on the van that it's booked (what for, when, the garage; never the notes). On unless switched off.
+  const [drivers, setDrivers] = useState(appt?.drivers !== false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -405,7 +407,7 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
     try {
       const data = {
         orgId: s.org!.id, action: move ? 'move' : 'book', id: id.current, vehicleId: v.id, kind, name: kind === 'other' ? name.trim() : null,
-        day: dayV, time: timeV, garage: garage.trim() || null, note: note.trim() || null, remind,
+        day: dayV, time: timeV, garage: garage.trim() || null, note: note.trim() || null, remind, drivers,
       };
       const what = kind === 'other' ? name.trim() : t(SERVICE_NAME[kind]);
       const r = await sendCall<{ remindAt?: number | null; unchanged?: boolean }>('appointment', data, {
@@ -438,6 +440,14 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
         <T v="medium">{t('Remind me')}</T>
         <Row>{REMIND.map(([m, label]) => <Chip key={m} text={t(label)} on={remind === m} onPress={() => setRemind(m)} />)}</Row>
         <T v="small">{t('The reminder goes to you and the station\'s fleet managers, with notifications turned on in Account.')}</T>
+      </View>
+      <View style={{ gap: 6 }}>
+        <T v="medium">{t('Drivers')}</T>
+        <Row>
+          <Chip text={t('Drivers see it on the van')} on={drivers} onPress={() => setDrivers(true)} />
+          <Chip text={t('Only managers and owners')} on={!drivers} onPress={() => setDrivers(false)} />
+        </Row>
+        <T v="small">{drivers ? t('The station\'s drivers see on the van and in the fleet list that it\'s booked: what for, when and the garage. Not the notes.') : t('Drivers don\'t see this appointment.')}</T>
       </View>
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title={move ? t('Save the change') : t('Book')} loading={busy} onPress={save} /><Button v="link" title={t('Cancel')} onPress={onCancel} /></Row>
@@ -473,6 +483,7 @@ function AppointmentCard({ a, v, canAct, onFill, onMove, onCancelled }: {
       </View>
       <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(a), a.garage || ''].filter(Boolean).join(', ')}</Text>
       {a.note ? <T v="body">{a.note}</T> : null}
+      <T v="small">{a.drivers === false ? t('Drivers don\'t see this appointment.') : t('Drivers see it on the van.')}</T>
       <T v="small">{a.remind === 0 ? t('No reminder.') : a.remindAt ? t('Reminder {when}.', { when: remindLabel(a.remind) }) : a.remindedAt ? t('Reminder sent.') : t('No reminder: that time had already passed.')}</T>
       <T v="small">{last
         ? t('Booked by {name}. Changed by {who}, was {when}.', { name: a.byName, who: last.byName, when: apptWhen({ day: last.was.day || a.day, time: last.was.time || a.time }) })
@@ -511,6 +522,27 @@ function PastAppointment({ a, first }: { a: ServiceAppointment; first: boolean }
         : a.reason ? t('Booked by {name}. Cancelled by {who}: {reason}', { name: a.byName, who: a.cancelledByName || '', reason: a.reason })
           : t('Booked by {name}. Cancelled by {who}.', { name: a.byName, who: a.cancelledByName || '' })}</T>
       {a.changes?.length ? <T v="small">{tp(a.changes.length, 'Moved or changed {n} time.', 'Moved or changed {n} times.')}</T> : null}
+    </View>
+  );
+}
+
+/**
+ * On the van page, for everyone at the station: the van is booked at the garage (vehicles.garageVisit: what for,
+ * when, the garage), so a driver can plan around it. Owners and managers book and change it on the Service tab.
+ */
+export function GarageVisitCard({ v }: { v: Vehicle }) {
+  const c = useColors();
+  const g = visitOf(v);
+  if (!g) return null;
+  const st = apptState(g);
+  return (
+    <View style={{ borderWidth: 2, borderColor: st.soon ? c.amber : c.ink, borderRadius: 4, backgroundColor: c.paper, padding: 12, gap: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+        <T v="h3" style={{ flex: 1 }}>{t('Booked at the garage: {what}', { what: serviceName(g) })}</T>
+        <Pill v={st.v === 'bad' ? 'amber' : st.v} text={st.v === 'bad' ? t('Now') : st.text} />
+      </View>
+      <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(g), g.garage || ''].filter(Boolean).join(', ')}</Text>
+      <T v="small">{t('The van goes to the garage then. Ask your fleet manager if you have it that day.')}</T>
     </View>
   );
 }

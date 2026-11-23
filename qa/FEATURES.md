@@ -245,6 +245,9 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 9.15 The reminder goes at the chosen time before the appointment, once, to whoever booked it and the station's
   fleet managers (the owners where it has none); a moved appointment gets its new reminder. Like the TÜV reminder
   (9.11), it can't be seen in the test system; the card says whether a reminder is set or was sent.
+- SHOULD 9.16 When booking, the manager chooses whether **drivers see it** (on unless "Only managers and owners" is
+  chosen). Then the station's drivers see on the van page and in the fleet list that the van is booked at the garage:
+  what for, when and the garage, never the notes; it follows a move and goes away when it's cancelled or done.
 
 ## 10. Data tab
 

@@ -170,6 +170,8 @@ export const REMIND_DEFAULT = 1440;
 export interface ApptInput {
   kind: ServiceKind; name: string | null; day: string; time: string; at: number;
   garage: string | null; note: string | null; remind: number;
+  /** Drivers see on the van that it's booked (what for, when, the garage; never the notes). */
+  drivers: boolean;
 }
 const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -204,10 +206,18 @@ export function readAppointment(d: Record<string, unknown>, now: number): ApptIn
   if (at > now + 550 * 86400_000) throw new Bad(N_('That\'s too far ahead. Book it closer to the time.'));
   const remind = d.remind == null ? REMIND_DEFAULT : Number(d.remind);
   if (!REMIND_MIN.includes(remind)) throw new Bad(N_('Choose when to be reminded.'));
-  return { kind, name, day: d.day, time: d.time, at, garage: text(d.garage, 80), note: text(d.note, 1000), remind };
+  if (d.drivers != null && typeof d.drivers !== 'boolean') throw new Bad(N_('Choose whether drivers see it.'));
+  return { kind, name, day: d.day, time: d.time, at, garage: text(d.garage, 80), note: text(d.note, 1000), remind, drivers: d.drivers !== false };
 }
 
 /** When the reminder goes: `remind` minutes before; none when that moment has already passed (or no reminder). */
 export const remindAtFor = (at: number, remind: number, now: number) => (remind > 0 && at - remind * 60_000 > now ? at - remind * 60_000 : null);
 /** What a move may change (what it was before goes in `changes`). */
-export const APPT_FIELDS = ['kind', 'name', 'day', 'time', 'garage', 'note', 'remind'] as const;
+export const APPT_FIELDS = ['kind', 'name', 'day', 'time', 'garage', 'note', 'remind', 'drivers'] as const;
+
+/** What drivers see on the van: the next booked appointment they may see. Older than half a day: no longer shown. */
+export interface GarageVisit { id: string; kind: ServiceKind; name: string | null; day: string; time: string; at: number; garage: string | null }
+export function nextVisit(rows: (ApptInput & { id: string; status: string })[], now: number): GarageVisit | null {
+  const a = rows.filter((x) => x.status === 'booked' && x.drivers !== false && x.at > now - 12 * 3600_000).sort((x, y) => x.at - y.at)[0];
+  return a ? { id: a.id, kind: a.kind, name: a.name, day: a.day, time: a.time, at: a.at, garage: a.garage } : null;
+}

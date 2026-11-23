@@ -51,7 +51,7 @@ import {
 } from './payments';
 import { NAMES, nameOf } from './names';
 import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
-import { APPT_FIELDS, Bad, FIXABLE, SERVICE_NAME, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readAppointment, readService, remindAtFor, type ApptInput, type ServiceInput } from './service';
+import { APPT_FIELDS, Bad, FIXABLE, SERVICE_NAME, nextVisit, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readAppointment, readService, remindAtFor, type ApptInput, type ServiceInput } from './service';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -3178,7 +3178,7 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
   const apptId = d.appointmentId == null ? null : String(d.appointmentId);
   if (apptId != null && !ID.test(apptId)) throw fail('invalid-argument', 'Unknown appointment.');
   const aref = apptId ? org.collection('serviceAppointments').doc(apptId) : null;
-  return db().runTransaction(async (tx) => {
+  const out = await db().runTransaction(async (tx) => {
     const [v, before, det, appt] = await Promise.all([tx.get(vref), tx.get(ref), tx.get(dref), aref ? tx.get(aref) : Promise.resolve(null)]);
     if (!v.exists) throw fail('not-found', 'This van was removed.');
     const van = v.data() as { name: string; plate?: string; stationId?: string | null };
@@ -3218,6 +3218,9 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
     }
     return { id, again: false, appointmentDone: !!fromAppt, applied: Object.keys(patch).filter((k) => k.startsWith('due.') && patch[k] != null).map((k) => k.slice(4)) };
   });
+  // Done: the van no longer shows it to drivers.
+  if (apptId && 'appointmentDone' in out && out.appointmentDone) await syncGarageVisit(org, vehicleId);
+  return out;
 });
 
 /* ---------- 17b. Service appointments (service.ts) ---------- */
@@ -3235,6 +3238,18 @@ type ApptDoc = ApptInput & {
   cancelledAt?: number; cancelledBy?: string; cancelledByName?: string; reason?: string | null;
 };
 const MAX_MOVES = 30;
+
+/**
+ * The van's next garage visit that drivers may see (vehicles/{id}.garageVisit), from its booked appointments: kept
+ * by the server after every booking, move, cancel and done. Drivers read the van, not the appointments.
+ */
+async function syncGarageVisit(org: R, vehicleId: string) {
+  const rows = await org.collection('serviceAppointments').where('vehicleId', '==', vehicleId).where('status', '==', 'booked').get();
+  const next = nextVisit(rows.docs.map((d) => ({ ...(d.data() as ApptDoc), id: d.id })), Date.now());
+  const vref = org.collection('vehicles').doc(vehicleId);
+  const now = (await vref.get()).data()?.garageVisit ?? null;
+  if (JSON.stringify(now) !== JSON.stringify(next)) await vref.update({ garageVisit: next }).catch(() => {});
+}
 
 export const appointment = onCallOnce('appointment', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
@@ -3273,15 +3288,17 @@ export const appointment = onCallOnce('appointment', { timeoutSeconds: 30 }, asy
       };
       tx.set(ref, doc);
       return { id, again: false, remindAt };
-    });
+    }).then(async (r) => { await syncGarageVisit(org, vehicleId); return r; });
   }
 
   if (d.action !== 'move' && d.action !== 'cancel') throw fail('invalid-argument', 'Unknown step.');
-  return db().runTransaction(async (tx) => {
+  let vanId = '';
+  const out = await db().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw fail('not-found', 'This appointment isn\'t there any more.');
     const old = snap.data() as ApptDoc;
     needStation(who, old.stationId);
+    vanId = old.vehicleId;
     if (old.status === 'done') throw fail('failed-precondition', 'This appointment is done already: the service was filled in.');
     if (old.status === 'cancelled') {
       if (d.action === 'cancel') return { id, unchanged: true };
@@ -3308,6 +3325,8 @@ export const appointment = onCallOnce('appointment', { timeoutSeconds: 30 }, asy
     });
     return { id, changed: Object.keys(set), remindAt };
   });
+  if (vanId) await syncGarageVisit(org, vanId);
+  return out;
 });
 
 /** "Tue, 25.11., 09:30": an appointment's time in the reader's language, in German time. */

@@ -113,6 +113,11 @@ Each van's **Service** tab, for owners and the managers of the van's station (dr
   as usual and marks the appointment done, linked both ways (`serviceId`, `appointmentId`). Records:
   `orgs/{org}/serviceAppointments`, written only by the server (`appointment`, and `service` for done), never
   deleted, read by owners and the van's station managers; they move with the van (`moveVan`).
+- **Drivers see that a van is booked** (product owner, 2026-11-23, optional per appointment, on unless switched to
+  "Only managers and owners"): a card on the van page and a "Garage: …" pill in the fleet list, with what for, when
+  and the garage, never the notes. Drivers don't read the appointments: the server keeps the van's next such
+  appointment on the van (`vehicles.garageVisit`) after every booking, move, cancel and done; shown until half a
+  day after its time.
 
 Not stored: invoice photos (the cost and the garage are typed in). Costs are euros without VAT.
 

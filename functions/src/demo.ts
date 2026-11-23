@@ -222,8 +222,11 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
   for (const [n, kind, time, plusDays, garage] of appts) {
     const on = berlin(now + plusDays * day);
     const at = berlinMs(on, time);
-    batch.set(org.collection('serviceAppointments').doc(), {
-      kind, name: null, day: on, time, at, garage, note: null, remind: 1440, remindAt: null, remindedAt: plusDays ? null : at - 1440 * 60_000,
+    const aref = org.collection('serviceAppointments').doc();
+    // Drivers see it on the van too (vehicles.garageVisit, as the server keeps it).
+    batch.set(org.collection('vehicles').doc(vans[n].id), { garageVisit: { id: aref.id, kind, name: null, day: on, time, at, garage } }, { merge: true });
+    batch.set(aref, {
+      kind, name: null, day: on, time, at, garage, note: null, remind: 1440, drivers: true, remindAt: null, remindedAt: plusDays ? null : at - 1440 * 60_000,
       status: 'booked', vehicleId: vans[n].id, vehicleName: VANS[n][0], plate: VANS[n][1], stationId: stationIds[vans[n].st],
       by: uid, byName: ownerName, createdAt: now - 3 * day, changes: [],
     });

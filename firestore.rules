@@ -216,13 +216,14 @@ service cloud.firestore {
       match /vehicles/{id} {
         allow read: if at(orgId, resource.data.stationId);
         // Who has it (assignedTo, with their km), its latest dashboard (dash: km, levels, warning lights) and its
-        // checks for drivers (todo: due now; routines: when each was last done) are the server's.
+        // checks for drivers (todo: due now; routines: when each was last done) and its next garage visit drivers may
+        // see (garageVisit, from the service appointments) are the server's.
         // Not beyond the vans of the company's plan: then the owner takes the add-on or the next plan (Plan and billing).
         allow create: if runs(orgId, request.resource.data.stationId)
-          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines'])
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit'])
           && (creator() || vanRoom(orgId));
         allow update: if runs(orgId, resource.data.stationId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines']);
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit']);
       }
 
       // The business side of a van (doc id = the van's id): contract, insurance, deadlines, odometer, notes.

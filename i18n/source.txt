@@ -440,6 +440,7 @@ cf741b61	Between {from} and {to}
 c832844d	Bodyshop repair	[check/[id].tsx]
 f69f2330	Book	[components/service.tsx]
 5f87c447	Book an appointment	[components/service.tsx]
+ef024fd8	Booked at the garage: {what}
 f49d9eda	Booked by {name}.	[components/service.tsx]
 7c1b3ff7	Booked by {name}. Cancelled by {who}: {reason}
 a474eb0c	Booked by {name}. Cancelled by {who}.
@@ -562,6 +563,7 @@ a60c6721	Choose how often.	[index.ts]
 78a2c3c2	Choose what the appointment is for.
 1feacb8b	Choose what was done.
 c188d811	Choose when to be reminded.
+05f0a056	Choose whether drivers see it.
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
@@ -733,9 +735,12 @@ b5c7d8b5	Driver	[bulk.tsx, vehicle/[id].tsx, people.tsx]
 a40ad45b	Drivers	[vehicle/[id].tsx, people.tsx, data.tsx]
 cf547f5f	Drivers ({n})	[people.tsx]
 ea640e03	Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.
+a06980b4	Drivers don't see this appointment.
 18004b1d	Drivers of this van
 075aaa9e	Drivers photograph the dashboard when a tour starts and when it ends. The AI reads the odometer, fuel or battery and warning lights; the driver checks the numbers. You get kilometres and fuel per tour and per driver in the Data tab.
 27af107e	Drivers pick up and drop off the van they were told to take, with a video or photos. You can still give vans out.
+a242e9ce	Drivers see it on the van
+f4360e98	Drivers see it on the van.
 2d7cf262	Drivers stopped because the fuel card isn't the van's, or they have none. They're waiting for you: allow or refuse.
 aff2277c	Drivers themselves	[people.tsx]
 a0963d6e	Drivers who signed up with the driver link. They see nothing until you approve them.
@@ -975,6 +980,7 @@ f6edc40a	Fuel, wash	[data.tsx]
 8fe7954f	Full cover	[lib/fleet.ts]
 6ae7a749	Full-time	[lib/fleet.ts]
 f614ac32	Garage	[data.tsx, components/service.tsx]
+d1cc449e	Garage: {when}	[index.tsx]
 ead9650a	Gas	[vehicle/[id].tsx]
 b1142de8	Gas (CNG)	[lib/fleet.ts]
 b1ba8f0c	Gearbox	[components/vanfacts.tsx]
@@ -1440,7 +1446,7 @@ f0afb2d2	Notifications are blocked for Fratius. Allow them in the phone's settin
 b1e25bdb	Notifications are blocked for Fratius. Allow them in the phone's settings (iPhone: Settings > Notifications > Fratius; Android: Settings > Apps > Fratius > Notifications), then come back here.
 1f86c3ed	Notifications aren't set up on the server yet. Try again after the next update.
 c9bc849a	now	[components/damage.tsx]
-e3b82040	Now	[check/[id].tsx, components/history.tsx]
+e3b82040	Now	[index.tsx, check/[id].tsx, components/history.tsx]
 29df038b	Now: {value}	[components/docscan.tsx]
 445a0f2c	Number plate	[add.tsx, bulk.tsx, vehicle/[id].tsx]
 c70bba01	odometer	[buy/[id].tsx]
@@ -1487,6 +1493,7 @@ ee5b2e53	One station: its vans and drivers, invite links for drivers, who drives
 7255da23	Only fleet managers give vans to drivers. Switch if you assign vans elsewhere, like Amazon's tools.
 49fc35ff	Only if you were told to take this van: {name} didn't drop it off.
 47735ac4	Only if you were told to take this van: the driver who has it didn't drop it off.
+6a844722	Only managers and owners
 014b98f7	Only owners and this station's fleet managers see this part; the costs only owners.
 18780e20	Only owners and this station's fleet managers see this part.
 669aa41e	only owners see this
@@ -2206,6 +2213,7 @@ aebdea71	The receipt couldn't be read. Type the numbers from it.
 b9929b19	The reminder goes to you and the station's fleet managers, with notifications turned on in Account.
 de1018b5	The service history needs the Firebase backend.
 d7e49a45	The spots are with your fleet manager, who decides.
+89d350e0	The station's drivers see on the van and in the fleet list that it's booked: what for, when and the garage. Not the notes.
 a511a830	The times you had this van.
 0c5fe82b	The TÜV date stays as it is. Record it again when the van passes.
 5daed61d	The TÜV of {van} ran out at the end of {month}. Book the inspection now.
@@ -2213,6 +2221,7 @@ f13f4782	The TÜV of {van} runs out at the end of {month}. Book the inspection n
 213b5071	The type decides the photo frames drivers get on a walk-around.
 7d77c988	The upload was refused. Check that you still belong to this company, then try again.
 89bb8cdd	The van already had {km} km on {date}. Check the km, or correct the odometer under Details.
+4af2572b	The van goes to the garage then. Ask your fleet manager if you have it that day.
 94a4b241	The van hasn't been dropped off yet. Drop it off with the photos instead.
 eb9c4666	The van hasn't been dropped off yet. Drop it off with the video instead.
 d94be526	The van is	[components/vanfacts.tsx]

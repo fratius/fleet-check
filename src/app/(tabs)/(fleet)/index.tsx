@@ -15,6 +15,7 @@ import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useHolder, useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
+import { apptState, visitOf } from '@/lib/service';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
 import { vanAlias, vanName } from '@/lib/vans';
@@ -157,6 +158,7 @@ export default function Fleet() {
                 {dueOn(v).length ? <Pill v="amber" text={tp(dueOn(v).length, '{n} check to do', '{n} checks to do')} /> : null}
                 {v.dash?.warnings?.length && Date.now() - v.dash.at < 7 * 86_400_000 ? <Pill v="bad" text={tp(v.dash.warnings.length, '{n} warning light', '{n} warning lights')} /> : null}
                 {damages ? <Pill v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null}
+                {visitOf(v) ? <Pill v={apptState(visitOf(v)!).soon ? 'amber' : 'muted'} text={t('Garage: {when}', { when: apptState(visitOf(v)!).v === 'bad' ? t('Now') : apptState(visitOf(v)!).text })} /> : null}
                 {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null}
                 {due.length > 1 ? <Pill v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null}
               </Row>
