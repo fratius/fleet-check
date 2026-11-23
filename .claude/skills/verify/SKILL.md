@@ -44,6 +44,10 @@ Then:
   criterion ("A2: a driver can't retire a van").
 - Document as you go, in the pull request (`## What changed`, for him: per role, what's new, what you decided and
   why, honest limits) and in the repo docs the change touches (ROLES.md, FLEET_DATA.md, AGENTS.md).
+- **Translate every new or changed text into all 31 languages in the same pull request**, app and website alike.
+  English-only is not done: CI fails while any language misses a text. After changing texts:
+  `node scripts/i18n.mjs` (or `node scripts/site-i18n.mjs`) lists what's missing; translate per AGENTS.md
+  (Languages) and i18n/GLOSSARY.md, merge with `node scripts/i18n-merge.mjs <code>`, and check with `--strict`.
 - Cheap checks before each push:
 
 ```bash
@@ -51,6 +55,7 @@ npm run typecheck
 npx expo export -p web
 node --test tests/outbox.test.mjs tests/indexes.test.mjs tests/deploy.test.mjs tests/qa.test.mjs
 node --import ./tests/alias.mjs --test tests/outline.test.mjs
+node scripts/i18n.mjs --strict && node scripts/site-i18n.mjs --strict
 ```
 
 ## 3. The Test workflow green
