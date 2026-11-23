@@ -1,6 +1,6 @@
 // The texts to translate, and what each language is missing.
 //
-//   node scripts/i18n.mjs            writes i18n/keys.json (not committed: made from the code each time) (every text, from the app and the functions) and reports,
+//   node scripts/i18n.mjs            writes i18n/keys.json (every text, from the app and the functions; not committed) and reports,
 //                                    per language in public/i18n/<code>.json, what is missing or broken
 //   node scripts/i18n.mjs --prune    also removes translations of texts the app no longer has
 //   node scripts/i18n.mjs --strict   fails when a language misses a text, or a translation is broken (a {placeholder} lost or invented)
