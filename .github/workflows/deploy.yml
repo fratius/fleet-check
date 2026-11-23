@@ -3,6 +3,12 @@
 #   web:     the web app and the website (fratius.com) on Firebase Hosting
 #   phone:   an update on the "main" channel that opens in Expo Go, and one on "production" for the App Store and
 #            Google Play app (only while its native packages match store/native.json, see scripts/native.mjs)
+#   release: the next running release number (r1, r2, …): the app shows it in Account ("1.0.0-r12"), and once
+#            everything is live a tag v<version>-r<n> and a GitHub Release list the pull requests it adds
+#
+# Versions: app.json "version" (1.0.0) is the store version. Store apps only take updates made for it, so it changes
+# only with new store builds (a native package changed, or a release worth a new number in the stores), never per
+# deploy. The release number counts every deploy and carries on across store versions.
 #
 # Secrets (Settings > Secrets and variables > Actions):
 #   FIREBASE_SERVICE_ACCOUNT  JSON key of a service account with the Owner role on the Firebase project
@@ -33,6 +39,21 @@ env:
   FIREBASE_TOOLS: firebase-tools@15.33.0
 
 jobs:
+  number:
+    name: Release number
+    runs-on: ubuntu-24.04
+    outputs:
+      n: ${{ steps.n.outputs.n }}
+      version: ${{ steps.n.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: n
+        name: The next running number, after the highest release tag (v<version>-r<n>)
+        run: |
+          last=$(git ls-remote --tags origin 'refs/tags/v*-r*' | sed -E 's#.*-r([0-9]+)(\^\{\})?$#\1#' | sort -n | tail -1)
+          echo "n=$(( ${last:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+          echo "version=$(jq -r .expo.version app.json)" >> "$GITHUB_OUTPUT"
+
   rules-test:
     name: Test the access rules
     runs-on: ubuntu-24.04
@@ -350,8 +371,10 @@ jobs:
   web:
     name: Web app
     # The app goes live only after the tests passed and the rules and functions it calls are deployed.
-    needs: backend
+    needs: [backend, number]
     runs-on: ubuntu-24.04
+    env:
+      FLEET_RELEASE: ${{ needs.number.outputs.n }}
     steps:
       - name: Check the secret is there
         env:
@@ -432,8 +455,10 @@ jobs:
   phone:
     name: Phone app (Expo Go and store app)
     # The app goes live only after the tests passed and the rules and functions it calls are deployed.
-    needs: backend
+    needs: [backend, number]
     runs-on: ubuntu-24.04
+    env:
+      FLEET_RELEASE: ${{ needs.number.outputs.n }}
     steps:
       - name: Check the secret is there
         id: token
@@ -467,7 +492,7 @@ jobs:
         run: |
           set -euo pipefail
           eas update --clear-cache --channel main --platform all --environment production --non-interactive --json \
-            --message "$(printf '%s' "$MSG" | head -n1 | cut -c1-100)" > "$RUNNER_TEMP/update.json"
+            --message "r$FLEET_RELEASE: $(printf '%s' "$MSG" | head -n1 | cut -c1-90)" > "$RUNNER_TEMP/update.json"
           PID=$(jq -r '.expo.extra.eas.projectId' app.json)
           GROUP=$(jq -r '.[0].group' "$RUNNER_TEMP/update.json")
           RUNTIME=$(jq -r '.[0].runtimeVersion' "$RUNNER_TEMP/update.json")
@@ -496,8 +521,36 @@ jobs:
             exit 0
           fi
           if STORE_BUILD=1 eas update --channel production --platform all --environment production --non-interactive \
-              --message "$(printf '%s' "$MSG" | head -n1 | cut -c1-100)"; then
+              --message "r$FLEET_RELEASE: $(printf '%s' "$MSG" | head -n1 | cut -c1-90)"; then
             echo "::notice title=Store app updated::Update on the production channel for version $(jq -r .expo.version app.json): the App Store and Google Play app load it on their next start."
           else
             echo "::warning title=Store app not updated::Publishing to the production channel failed; the store apps keep their last update."
           fi
+
+  release:
+    name: Tag and release notes
+    # Only once the web app and the phone updates are out: a failed deploy doesn't use up a number.
+    needs: [number, web, phone, live-check]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Tag v<version>-r<n> and write the release (the pull requests merged since the last one)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ needs.number.outputs.n }}
+          VERSION: ${{ needs.number.outputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v$VERSION-r$N"
+          PREV=$(git tag -l 'v*-r*' | sed -E 's#.*-r([0-9]+)$#\1 &#' | sort -n | tail -1 | cut -d' ' -f2 || true)
+          if [ -n "$PREV" ]; then
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$VERSION release $N" --generate-notes --notes-start-tag "$PREV"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$VERSION release $N" --generate-notes \
+              --notes "The first numbered release. From here on every deploy of main gets the next number, and its release lists the pull requests it adds. Before it: everything up to #47 (date and time pickers)."
+          fi
+          echo "::notice title=Released::$TAG: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

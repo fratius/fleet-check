@@ -26,7 +26,9 @@ module.exports = ({ config }) => {
   }
   // Which version this is (the commit and when it was built), shown in the Account tab, so the phone app and the
   // web app can be compared: Expo Go only switches to a new version the next time it starts.
-  extra.build = { sha: (process.env.GITHUB_SHA || '').slice(0, 7) || 'dev', at: new Date().toISOString() };
+  // `release`: the running release number Deploy gives each deploy of main (tag v<version>-r<n>, a GitHub Release
+  // with what it adds); none for local builds.
+  extra.build = { sha: (process.env.GITHUB_SHA || '').slice(0, 7) || 'dev', at: new Date().toISOString(), release: Number(process.env.FLEET_RELEASE) || null };
   // STORE_BUILD=1: the App Store and Google Play app (eas.json sets it for its builds; Deploy sets it for the
   // updates on the "production" channel). Its updates go to the app version ("1.0.0"), not to the Expo SDK like
   // Expo Go's: a new native package needs a new version and new store builds (scripts/native.mjs checks it).
