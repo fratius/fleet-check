@@ -9,6 +9,11 @@
 # pull request (its "## For the tester" section is the focus; the label is taken off afterwards so it can be added
 # again). It doesn't run by itself on every push.
 #
+# The label uses pull_request_target, not pull_request: GitHub sends no pull_request event while a pull request has
+# a merge conflict (there is no merge commit to run on), so the label silently did nothing on such pull requests
+# (#32, #42). pull_request_target runs this file as it is on main, for branches of this repository only, and tests
+# the pull request's own head commit, conflict or not. A change to this file therefore takes effect once merged.
+#
 # It reports and never blocks a merge (observe mode, as the Claude Code team starts every new gate). Make it a
 # required check only once its findings have been right for a few weeks.
 #
@@ -28,7 +33,7 @@ on:
         type: choice
         options: [claude-sonnet-5-5, claude-opus-5-5]
         default: claude-sonnet-5-5
-  pull_request:
+  pull_request_target:
     types: [labeled]
 
 concurrency:
@@ -45,7 +50,9 @@ env:
 jobs:
   blind:
     name: A tester who has never seen the code
-    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'blind-qa'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.label.name == 'blind-qa' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -135,4 +142,4 @@ jobs:
           [ -n "$PR" ] || exit 0
           { head -c 60000 "$RUNNER_TEMP/qa/report.md"; echo; echo "Screenshots and transcript: [the run]($RUN_URL), artifact \"blind-qa\"."; } > "$RUNNER_TEMP/comment.md"
           gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"
-          if [ "${{ github.event_name }}" = pull_request ]; then gh pr edit "$PR" --remove-label blind-qa || true; fi
+          if [ "${{ github.event_name }}" = pull_request_target ]; then gh pr edit "$PR" --remove-label blind-qa || true; fi

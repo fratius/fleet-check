@@ -76,6 +76,12 @@ Red: fix and push again (this doesn't count as a round). Never skip, sleep or re
 gh api repos/fratius/fleet-check/issues/<PR>/labels -f 'labels[]=blind-qa'
 ```
 
+If no Blind QA run shows up within a minute, start it by hand on the branch (same tester, focus typed in):
+
+```bash
+gh api repos/fratius/fleet-check/actions/workflows/blind-qa.yml/dispatches -f ref=<branch> -f "inputs[focus]=<the For the tester section>"
+```
+
 It runs on his plan (secret `CLAUDE_CODE_OAUTH_TOKEN`), about 5 to 15 minutes. Wait for it (check the Blind QA run
 every few minutes, or `send_later` yourself a check-in), then read its comment:
 
