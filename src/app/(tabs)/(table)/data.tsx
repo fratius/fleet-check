@@ -4,8 +4,9 @@ import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
 import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
+import { DateField, TimeField } from '@/components/pickers';
 import { usePeriodData } from '@/lib/data';
-import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
+import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay, today } from '@/lib/fleet';
 import { watchMembers, peopleScope } from '@/lib/people';
 import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
@@ -413,8 +414,8 @@ function WhoHad() {
       <Field label={t('Van')} value={q} onChangeText={setQ} placeholder={t('Name or plate')} autoCorrect={false} />
       <Row gap={6}>{list.slice(0, 12).map((x) => <Chip key={x.id} text={x.plate || x.name} on={van === x.id} onPress={() => setVan(x.id)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><Field label={t('Day')} value={day} onChangeText={setDay} placeholder="DD.MM.YYYY" /></View>
-        <View style={{ width: 110 }}><Field label={t('Time')} value={at} onChangeText={setAt} placeholder="14:30" /></View>
+        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} value={at} onChangeText={setAt} /></View>
       </Row>
       {r && v ? (
         r.at ? (

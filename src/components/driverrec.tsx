@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
+import { DateField, TimeField } from '@/components/pickers';
 import { DueLine, FactSection, type FieldSpec, type Vals } from '@/components/vanfacts';
 import { CHECK_MONTHS, EMPLOYMENT, LICENCE_CLASSES, addMonths, driverDeadlines, fmtDay, lastCheck, parseDay, today } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
@@ -130,7 +131,7 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
         {checks.length > 6 ? <T v="small">{tp(checks.length - 6, 'and {n} earlier', 'and {n} earlier')}</T> : null}
         {canCheck ? (open ? (
           <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
-            <Field label={t('Day of the check')} value={day} onChangeText={setDay} placeholder={t('DD.MM.YYYY')} />
+            <DateField label={t('Day of the check')} value={day} onChangeText={setDay} max={today()} />
             <Row><Chip text={t('Licence is fine')} on={ok} onPress={() => setOk(true)} /><Chip text={t('Problem')} on={!ok} onPress={() => setOk(false)} /></Row>
             <Field label={ok ? t('Note') : t('What is the problem?')} hint={ok ? t('optional') : undefined} value={note} onChangeText={setNote} maxLength={300} />
             <T v="small">{t('Only the result is kept, not the licence number or a copy.')}</T>
@@ -219,8 +220,8 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
       <T v="medium">{prev ? t('Correct the incident') : t('New incident')}</T>
       <Row gap={6}>{(Object.keys(INCIDENT) as IncidentKind[]).map((k) => <Chip key={k} text={t(INCIDENT[k])} on={kind === k} onPress={() => setKind(k)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><Field label={t('Day')} value={day} onChangeText={setDay} placeholder={t('DD.MM.YYYY')} /></View>
-        <View style={{ width: 110 }}><Field label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} placeholder="14:30" /></View>
+        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} /></View>
       </Row>
       {kind === 'fine' ? <><T v="medium">{t('For')}</T><Row gap={6}>{Object.entries(FINE).map(([k, label]) => <Chip key={k} text={t(label)} on={fineType === k} onPress={() => setFineType(k)} />)}</Row></> : null}
       {kind === 'accident' ? <><T v="medium">{t('Fault')}</T><Row gap={6}>{Object.entries(FAULT).map(([k, label]) => <Chip key={k} text={t(label)} on={atFault === k} onPress={() => setAtFault(k)} />)}</Row></> : null}

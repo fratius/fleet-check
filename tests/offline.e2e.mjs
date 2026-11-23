@@ -573,3 +573,70 @@ test('a sign-up link without a card: the page asks for no card, and the company 
     await db.doc('platform/stripe').delete();
   }
 });
+
+test('dates and times: digits get their dots and colon, the calendar and the clock wheel fill in an appointment (A1, A2, A4–A6)', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  await signIn(page, OWNER2);
+  await visible(page, 'B-ON 1').waitFor({ timeout: 60_000 });
+  await page.goto(`${URL0}/vehicle/onlineVan1?tab=service`);
+  await button(page, 'Book an appointment').click();
+  const day = page.getByRole('textbox', { name: 'Day', exact: true });
+  const time = page.getByRole('textbox', { name: 'Time', exact: true });
+  // A1, A2: only digits typed.
+  await day.pressSequentially('31032027');
+  assert.equal(await day.inputValue(), '31.03.2027');
+  await time.pressSequentially('0930');
+  assert.equal(await time.inputValue(), '09:30');
+  await day.fill('');
+  await time.fill('');
+  await time.pressSequentially('930');
+  await day.click(); // leaving the time field writes it out in full
+  assert.equal(await time.inputValue(), '09:30');
+
+  // A4, A5: the calendar opens on this month, yesterday can't be picked; a day next month fills in the field.
+  const n = new Date();
+  const label = (d) => new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+  await page.getByRole('button', { name: 'Pick a day: Day' }).click();
+  await button(page, 'Today').waitFor({ timeout: 10_000 });
+  assert.ok(await page.locator('text=Mon >> visible=true').count(), 'weeks start on Monday');
+  if (n.getDate() > 1) {
+    const y = page.getByRole('button', { name: label(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate() - 1)), exact: true });
+    assert.equal(await y.getAttribute('aria-disabled'), 'true', 'yesterday can\'t be picked for an appointment');
+  }
+  await page.getByRole('button', { name: 'Next month' }).click();
+  const pick = new Date(Date.UTC(n.getFullYear(), n.getMonth() + 1, 15));
+  await page.getByRole('button', { name: label(pick), exact: true }).click();
+  const iso = pick.toISOString().slice(0, 10);
+  assert.equal(await day.inputValue(), iso.split('-').reverse().join('.'));
+
+  // A6: the clock wheel, in steps of 5 minutes; Cancel leaves the time as it was, Done fills it in.
+  await page.getByRole('button', { name: 'Pick a time: Time' }).click();
+  await page.getByRole('button', { name: 'Hours 14' }).click();
+  assert.equal(await page.getByRole('button', { name: 'Minutes 37' }).count(), 0, '5-minute steps');
+  await button(page, 'Cancel').click();
+  assert.equal(await time.inputValue(), '09:30');
+  await page.getByRole('button', { name: 'Pick a time: Time' }).click();
+  await page.getByRole('button', { name: 'Hours 14' }).click();
+  await page.getByRole('button', { name: 'Minutes 45' }).click();
+  await button(page, 'Done').click();
+  assert.equal(await time.inputValue(), '14:45');
+
+  await page.locator('[role=button] >> text="Tyres" >> visible=true').first().click();
+  await button(page, 'Book').click();
+  const a = await until(async () => {
+    const q = await db.collection(`orgs/${ORG_A}/serviceAppointments`).where('vehicleId', '==', 'onlineVan1').get();
+    return q.size ? q.docs[0].data() : null;
+  }, 60_000, 'the appointment to reach the server');
+  assert.equal(a.day, iso);
+  assert.equal(a.time, '14:45');
+
+  // A5: the day a service was done can't be in the future: the calendar doesn't go past this month.
+  await button(page, 'Add service').click();
+  await page.locator('[role=button] >> text="Tyres" >> visible=true').first().click();
+  await page.getByRole('button', { name: 'Pick a day: Day it was done' }).click();
+  assert.equal(await page.getByRole('button', { name: 'Next month' }).getAttribute('aria-disabled'), 'true');
+  await button(page, 'Today').click();
+  assert.equal(await page.getByRole('textbox', { name: 'Day it was done', exact: true }).inputValue(), new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+  await ctx.close();
+});

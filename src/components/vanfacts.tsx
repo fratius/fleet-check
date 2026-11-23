@@ -3,6 +3,7 @@ import { Linking, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
+import { DateField, MonthField } from '@/components/pickers';
 import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, huColor, km, mileage, notOwned, parseDay, today, type Deadline } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
@@ -222,13 +223,17 @@ function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; val
             </View>
           );
         }
+        if (f.kind === 'day' || f.kind === 'month') {
+          const P = f.kind === 'day' ? DateField : MonthField;
+          return <P key={f.key} label={t(f.label)} hint={f.hint ? t(f.hint) : undefined} value={String(form[f.key] ?? '')} onChangeText={(text) => set(f.key, text)} />;
+        }
         const numeric = f.kind === 'num' || f.kind === 'eur';
         return (
           <Field key={f.key} label={t(f.label) + (f.unit ? ` (${f.unit})` : f.kind === 'eur' ? ' (€)' : '')} hint={f.hint ? t(f.hint) : undefined} value={String(form[f.key] ?? '')}
             onChangeText={(text) => set(f.key, f.kind === 'upper' ? text.toUpperCase() : text)}
             keyboardType={numeric ? 'decimal-pad' : f.kind === 'phone' ? 'phone-pad' : 'default'}
             autoCapitalize={f.kind === 'upper' ? 'characters' : 'sentences'} multiline={f.kind === 'long'}
-            placeholder={f.kind === 'day' ? t('DD.MM.YYYY') : f.kind === 'month' ? t('MM/YYYY') : undefined} maxLength={f.key === 'vin' ? 17 : f.kind === 'long' ? 1000 : 120} />
+            maxLength={f.key === 'vin' ? 17 : f.kind === 'long' ? 1000 : 120} />
         );
       })}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
