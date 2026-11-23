@@ -578,7 +578,8 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
   const page = await ctx.newPage();
   await signIn(page, OWNER2);
-  await visible(page, 'B-ON 1').waitFor({ timeout: 60_000 });
+  // An earlier test leaves this owner in their other company.
+  await openCompany(page, 'Online DSP');
   await page.goto(`${URL0}/vehicle/onlineVan1?tab=service`);
   await button(page, 'Book an appointment').click();
   const day = page.getByRole('textbox', { name: 'Day', exact: true });
