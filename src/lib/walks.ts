@@ -21,7 +21,7 @@ async function pool<T>(items: T[], n: number, fn: (t: T, i: number) => Promise<v
  * setup the local file uris are kept as they are.
  */
 export async function saveWalk(store: Store, v: Vehicle, uid: string | null, shots: LocalShot[], meta: {
-  source: Walkaround['source']; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2;
+  source: Walkaround['source']; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 | 3;
 }, onProgress?: (done: number, total: number) => void): Promise<string> {
   const id = newId();
   const photos: Photo[] = shots.map((s) => ({ n: s.n, label: s.label, w: s.w, h: s.h, takenAt: s.takenAt, ...(s.q ? { q: s.q } : {}) }));

@@ -226,8 +226,8 @@ How far to trust it (also on the screen):
 
 ### Walk-around photos: outline and photo check
 
-Each walk-around (`orgs/{org}/walkarounds/{id}`) says which outlines its photos were lined up with (`overlay: 2`:
-in perspective from the van's model; missing on older ones), so a damage spot in an older photo is still placed on
+Each walk-around (`orgs/{org}/walkarounds/{id}`) says which outlines its photos were lined up with (`overlay: 3`:
+the van's silhouette from its model; 2: the first outlines in perspective; missing on older ones), so a damage spot in an older photo is still placed on
 the van with the shapes of its time. Each photo can carry `q`: what the photo check on the phone warned about (too
 dark, too bright, glare, blurred) and its three measures (brightness, edge strength, share of pure white). It's kept
 when the driver used the photo anyway, and so the limits in `src/lib/quality.ts` can be set from real photos.
