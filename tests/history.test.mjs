@@ -1413,7 +1413,17 @@ test('service appointments: owners and the station\'s managers book, move and ca
   assert.equal(svc2.appointmentDone, false);
   assert.equal((await appt(S.own, 'apTyres')).status, 'cancelled');
   // The appointments go with the van to another station: its new managers see them, the old ones don't.
+  // Cancelled: the van no longer shows it.
+  await call(S.own, { ...book, id: 'apGone', kind: 'repair' });
+  assert.equal((await visit()).id, 'apGone');
+  await call(S.own, { action: 'cancel', id: 'apGone', reason: 'garage closed' });
+  assert.equal(await visit(), null, 'cancelled: the van no longer shows it');
   await call(S.own, { ...book, id: 'apBrakes', kind: 'brakes' });
+  assert.equal((await visit()).id, 'apBrakes');
+  // Switched to "Only managers and owners" with a move: drivers stop seeing it; switched back, they see it again.
+  await call(S.mgr, { ...book, id: 'apBrakes', kind: 'brakes', action: 'move', drivers: false });
+  assert.equal(await visit(), null, 'managers and owners only');
+  await call(S.mgr, { ...book, id: 'apBrakes', kind: 'brakes', action: 'move', drivers: true });
   assert.equal((await visit()).id, 'apBrakes');
   await S.own.call('moveVan', { orgId: S.org, vehicleId: va, stationId: S.s2 });
   assert.equal((await appt(S.own, 'apBrakes')).stationId, S.s2);
