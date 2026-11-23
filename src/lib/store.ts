@@ -8,7 +8,7 @@ import { fb } from './firebase';
 import { N_, t } from './i18n';
 import { newId } from './images';
 import { netKind, retrying } from './net';
-import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, CmpSummary, Compare, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
+import type { AccountCompany, Assignment, BillingConfig, BillingStarted, OfferInput, Org, BuyKind, Check, CheckUsage, CmpSummary, Compare, DashValues, Purchase, ReceiptRead, DriverRecord, IdentifyResult, Incident, Tour, VehicleCosts, VehicleDetails, DriverLink, Invite, InvitePeek, JoinDetails, Role, Routine, RoutineDone, RoutineHow, RoutineTodo, Scan, ServiceAppointment, Spot, Station, Tier, Usage, Vehicle, Verdict, Video, Walkaround } from './types';
 
 export interface Coll<T extends { id: string }> {
   /** `fromCache`: only what this phone has (no connection yet), not confirmed by the server. */
@@ -151,6 +151,8 @@ export interface Store {
   routines: Coll<Routine>;
   /** Checks done: the station's for owners and managers, their own for drivers. */
   routineDone: Coll<RoutineDone>;
+  /** Service appointments at the garage: owners and the station's managers (the rules refuse drivers). */
+  appointments: Coll<ServiceAppointment>;
 }
 
 /**
@@ -165,13 +167,13 @@ export function makeStore(orgId: string | null, scope: string[] | null = null, d
       tours: fsColl(orgId, 'tours', scope, driverId),
       assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by'),
       purchases: fsColl(orgId, 'purchases', scope, driverId, 'by'), routines: fsColl(orgId, 'routines'),
-      routineDone: fsColl(orgId, 'routineDone', scope, driverId, 'by') };
+      routineDone: fsColl(orgId, 'routineDone', scope, driverId, 'by'), appointments: fsColl(orgId, 'serviceAppointments', scope) };
   }
   return { mode: 'local', orgId: 'local', stations: localColl<Station>('stations', [{ id: LOCAL_STATION, name: 'Main station', code: '', createdAt: 0 }]),
     vehicles: localColl('vehicles'), walks: localColl('walkarounds'), checks: localColl('checks'), scans: localColl('scans'), usage: localColl('checkUsage'), compares: localColl('compares'), details: localColl('vehicleDetails'),
     costs: localColl('vehicleCosts'), records: localColl('driverRecords'), incidents: localColl('incidents'), tours: localColl('tours'),
     assignments: localColl('assignments'), videos: localColl('videos'), purchases: localColl('purchases'), routines: localColl('routines'),
-    routineDone: localColl('routineDone') };
+    routineDone: localColl('routineDone'), appointments: localColl('serviceAppointments') };
 }
 
 /** What the server read from a dashboard photo, before the person confirms it. */

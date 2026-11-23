@@ -154,3 +154,60 @@ export function detailsPatch(now: DetailsNow | undefined, s: ServiceInput, id: s
 export const huRemindNow = (hu: string, today: string) => isDay(hu) && addMonths(monthEnd(hu), -1) <= today;
 /** The latest TÜV date the sweep asks for (a month and a day ahead, filtered exactly by huRemindNow). */
 export const huQueryUpTo = (today: string) => addMonths(addDays(today, 1), 1);
+
+/* ---------- Service appointments (product owner, 2026-11-23) ---------- */
+// Not every service is done on the spot: the van goes to the garage at a booked time. Owners and the van's station
+// managers book it (orgs/{org}/serviceAppointments, written only by the `appointment` function in index.ts), move or
+// cancel it, and get a reminder the chosen time before (a day by default). When it's done they fill in the service
+// from it (the `service` function with appointmentId), which marks it done. Nothing is deleted: moves keep what it
+// was before, a cancelled one stays as cancelled.
+
+/** What can be booked: the four common ones, the TÜV and Other. */
+export const APPT_KINDS: ServiceKind[] = ['service', 'tyres', 'brakes', 'repair', 'hu', 'other'];
+/** How long before the appointment the reminder goes, in minutes; 0: no reminder. */
+export const REMIND_MIN = [0, 60, 180, 1440, 2880, 10080];
+export const REMIND_DEFAULT = 1440;
+export interface ApptInput {
+  kind: ServiceKind; name: string | null; day: string; time: string; at: number;
+  garage: string | null; note: string | null; remind: number;
+}
+const TIME = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** The moment of a day and a time in German time (where the companies are), as ms. */
+export function berlinMs(day: string, time: string): number {
+  const [y, m, d] = day.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  const guess = Date.UTC(y, m - 1, d, h, mi);
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const off = (ms: number) => {
+    const p = fmt.formatToParts(ms);
+    const g = (t: string) => Number(p.find((x) => x.type === t)!.value);
+    return Date.UTC(g('year'), g('month') - 1, g('day'), g('hour'), g('minute')) - ms;
+  };
+  const first = guess - off(guess);
+  return guess - off(first);
+}
+
+/**
+ * Checks a booking (or a move) and tidies it. `now` in ms. Throws Bad with the English message, like readService.
+ * A time already gone is refused (a few minutes' grace for a phone's clock); a year and a half ahead at most.
+ */
+export function readAppointment(d: Record<string, unknown>, now: number): ApptInput {
+  const kind = d.kind as ServiceKind;
+  if (!APPT_KINDS.includes(kind)) throw new Bad(N_('Choose what the appointment is for.'));
+  const name = kind === 'other' ? text(d.name, 60) : null;
+  if (kind === 'other' && (!name || name.length < 2)) throw new Bad(N_('Say what the appointment is for.'));
+  if (!isDay(d.day)) throw new Bad(N_('Enter the day of the appointment, like 31.03.2027.'));
+  if (typeof d.time !== 'string' || !TIME.test(d.time)) throw new Bad(N_('Enter the time of the appointment, like 09:30.'));
+  const at = berlinMs(d.day, d.time);
+  if (at < now - 10 * 60_000) throw new Bad(N_('That time has already passed. Choose a time ahead.'));
+  if (at > now + 550 * 86400_000) throw new Bad(N_('That\'s too far ahead. Book it closer to the time.'));
+  const remind = d.remind == null ? REMIND_DEFAULT : Number(d.remind);
+  if (!REMIND_MIN.includes(remind)) throw new Bad(N_('Choose when to be reminded.'));
+  return { kind, name, day: d.day, time: d.time, at, garage: text(d.garage, 80), note: text(d.note, 1000), remind };
+}
+
+/** When the reminder goes: `remind` minutes before; none when that moment has already passed (or no reminder). */
+export const remindAtFor = (at: number, remind: number, now: number) => (remind > 0 && at - remind * 60_000 > now ? at - remind * 60_000 : null);
+/** What a move may change (what it was before goes in `changes`). */
+export const APPT_FIELDS = ['kind', 'name', 'day', 'time', 'garage', 'note', 'remind'] as const;

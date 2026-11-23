@@ -18,7 +18,7 @@ import { outbox, sendWrite, startOutbox } from './outbox';
 import { loadWebUrl } from './people';
 import { forgetPush, refreshPush } from './push';
 import { LOCAL_STATION, ai, makeStore, type Store } from './store';
-import { roleOf, type NameRow, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type CheckUsage, type Compare, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
+import { roleOf, type NameRow, type Assignment, type Check, type Purchase, type Routine, type RoutineDone, type ServiceAppointment, type CheckUsage, type Compare, type DriverRecord, type Tour, type VehicleCosts, type VehicleDetails, type Video, type JoinDetails, type Member, type Org, type Role, type Scan, type Station, type Tier, type Vehicle, type Walkaround } from './types';
 
 type Status = 'loading' | 'signedOut' | 'needsOrg' | 'ready';
 
@@ -30,7 +30,7 @@ export interface ViewAs { org: string; role: Role; st: string | null }
 /** The company and role kept on the phone for an offline start (lib/offline.ts). */
 interface SavedSession { companies: Company[]; org: Org; member: Member; viewAs: ViewAs | null; creator: boolean }
 /** The lists kept on the phone for an offline start (lib/offline.ts). */
-type CacheName = 'stations' | 'vehicles' | 'walks' | 'checks' | 'assignments' | 'videos' | 'tours' | 'purchases' | 'routines' | 'routineDone' | 'details' | 'records' | 'costs' | 'names';
+type CacheName = 'stations' | 'vehicles' | 'walks' | 'checks' | 'assignments' | 'videos' | 'tours' | 'purchases' | 'routines' | 'routineDone' | 'details' | 'records' | 'costs' | 'names' | 'appointments';
 
 function parseViewAs(v: unknown): ViewAs | null {
   const x = v as { org?: unknown; role?: unknown; st?: unknown } | null | undefined;
@@ -105,6 +105,8 @@ export interface Session {
    * managers only. Drivers get none: they don't see other drivers' names (use lib/names.ts to show who did something).
    */
   names: NameRow[];
+  /** Service appointments at the garage (booked, moved, cancelled, done; the latest 500): owners and managers only. */
+  appointments: ServiceAppointment[];
   /** Owners change company settings: dashboard photos on tours, how often licences are checked. */
   setOrgSettings(patch: Partial<Pick<Org, 'dashScans' | 'licenceCheckMonths'>>): Promise<void>;
   /** The van this person drives now, if any. */
@@ -467,6 +469,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [routineDone, setRoutineDone] = useState<RoutineDone[]>([]);
+  const [appointments, setAppointments] = useState<ServiceAppointment[]>([]);
   const [ownRecord, setOwnRecord] = useState<DriverRecord | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -480,7 +483,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const liveData = useRef(false);
   useEffect(() => {
     setStations([]); setVehicles([]); setWalks([]); setChecks([]); setScans([]); setUsage([]); setDetails([]); setAssignments([]); setVideos([]);
-    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null); setNames([]);
+    setCosts([]); setRecords([]); setTours([]); setPurchases([]); setRoutines([]); setRoutineDone([]); setOwnRecord(null); setNames([]); setAppointments([]);
     setLoaded({ vehicles: false, walks: false, checks: false, scans: false, stations: false });
     setDataError(null);
     setOfflineAt(null);
@@ -541,6 +544,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (staff) {
       subs.push(store.details.subscribe(take('details', setDetails), () => {}));
       subs.push(store.records.subscribe(take('records', setRecords), () => {}));
+      subs.push(store.appointments.subscribe(take('appointments', setAppointments), () => {}));
     }
     // The people's names (also of those who left), to show who had a van or did a check: owners and managers only.
     if (staff && store.mode === 'firebase') {
@@ -583,11 +587,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const cut = <T,>(rows: T[]) => rows.slice(0, 300);
       writeCache(cacheKey, { at: Date.now(), data: {
         stations, vehicles, walks: cut(walks), checks: cut(checks), assignments: cut(assignments), videos: cut(videos), tours: cut(tours),
-        purchases: cut(purchases), routines, routineDone: cut(routineDone), details, records, costs, names,
+        purchases: cut(purchases), routines, routineDone: cut(routineDone), details, records, costs, names, appointments: cut(appointments),
       } });
     }, 3000);
     return () => clearTimeout(timer);
-  }, [cacheKey, stations, vehicles, walks, checks, assignments, videos, tours, purchases, routines, routineDone, details, records, costs, names]);
+  }, [cacheKey, stations, vehicles, walks, checks, assignments, videos, tours, purchases, routines, routineDone, details, records, costs, names, appointments]);
   // For the app creator: each check with its AI speed and cost filled in.
   const checksShown = useMemo(() => {
     if (!seesAiStats || !usage.length) return checks;
@@ -641,7 +645,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [vanById]);
   const value: Session = {
     status, mode, user, creator: creator && !viewAs, canViewAs: mode === 'local' || creator, tryOut: mode === 'firebase' && creator, viewAs, setViewAs, companies, org, member, role, staff, myStations, stations, stationName, vanName: vanNameOf, runs,
-    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, names, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
+    store, vehicles, walks, checks: checksShown, scans, seesAiStats, details, costs, records, tours, purchases, routines, routineDone, myRecord, names, appointments, setOrgSettings, assignments, videos, myVan, offlineAt, loaded, dataError, tier, setTier,
     aiCompare, setAiCompare, compares: seesAiStats ? compares : [],
     signIn, signUp, createOrg, joinWithLink, openDemo, removeDemo: removeDemoFn, switchOrg, resetPassword, signOut, deleteAccount,
   };

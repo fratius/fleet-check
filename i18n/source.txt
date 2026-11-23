@@ -200,15 +200,20 @@ ce06e3b1	{van}, warning light: {lights}
 3bbbbb8f	{vans}, {people}	[people.tsx]
 83d78021	{version} ({build}), {where}	[account.tsx]
 1756a552	{version}, {where}	[account.tsx]
+7da013ac	{what} at {garage}, {when}.
 69992ba9	{what} on {van}	[components/service.tsx]
 f0215a48	{what}, {van}	[check/[id].tsx, walk/[id].tsx]
 b8c7725f	{what}, {van}, by {who}
+6d6a9cf2	{what}, {when}.	[index.ts]
 b83d53d4	{what}: {name}	[components/buy.tsx]
 1db2d917	{when}, {taken} of {n} photo || {when}, {taken} of {n} photos
 7f3dfa38	€ a month	[data.tsx]
 8b9ee848	€ per km (monthly rate)
 f93f7c1b	€ per litre	[data.tsx]
 681f295c	0: they pay at sign-up
+0ef8e544	1 day before	[lib/service.ts]
+f2a1e2cb	1 hour before	[lib/service.ts]
+efb33729	1 week before	[lib/service.ts]
 855e2980	1. Find the spot in the yellow box (photo: {where}). The AI thinks it may be new since the photo before.
 0edbd1ae	1. Find the spot in the yellow box.
 24b8c7f1	1. In Chrome, tap the menu (three dots, top right).
@@ -216,11 +221,13 @@ d7c7f89a	1. Tap the Share button at the bottom of Safari (the square with an arr
 8825c6ad	1. Your details	[app/join/[token].tsx]
 3e95d583	1. Your station	[app/join/[token].tsx]
 95ce3ea1	17 characters, on the registration document
+f2f1f802	2 days before	[lib/service.ts]
 95beea45	2. Tap {add}, then {ok}.
 a533bead	2. Tap {install} or {add}.
 57b51b86	2. Wipe it with your hand or a cloth.
 2176fc6a	2. Your account	[app/join/[token].tsx]
 ca60e502	2. Your details	[app/join/[token].tsx]
+21413b56	3 hours before	[lib/service.ts]
 914411d9	3. Open Fratius from your home screen and sign in with the same email and password.
 80c2d898	3. Open Fratius from your home screen and sign in.
 704983e9	3. Take one photo straight on, about 30 to 50 cm away.
@@ -383,6 +390,11 @@ e33cf6f8	Anything else to remember about working with them.
 c13cfbf3	Anything else: you name it
 b10294be	Anything the AI missed? Where it is and what it is.
 a168c0e9	App creator	[account.tsx, components/companies.tsx, lib/types.ts]
+2d05c593	Appointment	[data.tsx]
+d1a05816	Appointment cancelled	[components/service.tsx]
+b9a56e88	Appointment: {what}	[review.tsx]
+4d06886e	Appointment: {what} on {van}
+1f3f4957	Appointments	[components/service.tsx]
 7b2c7f14	Approve	[people.tsx]
 23daca93	Approved by {name}, {when}.
 a0ad3418	Approved by {name}.	[components/damage.tsx]
@@ -426,6 +438,15 @@ cf741b61	Between {from} and {to}
 763fe55e	Billed	[components/offers.tsx, components/plansetup.tsx]
 718a7e8a	Body	[bulk.tsx, vehicle/[id].tsx]
 c832844d	Bodyshop repair	[check/[id].tsx]
+f69f2330	Book	[components/service.tsx]
+5f87c447	Book an appointment	[components/service.tsx]
+f49d9eda	Booked by {name}.	[components/service.tsx]
+7c1b3ff7	Booked by {name}. Cancelled by {who}: {reason}
+a474eb0c	Booked by {name}. Cancelled by {who}.
+9a307c36	Booked by {name}. Changed by {who}, was {when}.
+59cbaf95	Booked by {name}. Service filled in by {who}.
+38b2774a	Booked for {when}.	[components/service.tsx]
+d1af235f	Booked for {when}. No reminder: that time has already passed.
 c2abb664	Both doors, bumper and lights in frame, up to the roof edge.
 60781137	Both doors, bumper and lights in frame.
 d7031f3a	Both sides	[vehicle/[id].tsx]
@@ -450,9 +471,12 @@ e81cdad2	Call your fleet manager. They allow or refuse it in the app, and this s
 3bddb099	Camera access	[app/scan/[id].tsx]
 77dfd213	Cancel	[buy/[id].tsx, check/[id].tsx, vehicle/[id].tsx]
 f54c1375	Cancel an invite link
+81822bef	Cancel appointment	[components/service.tsx]
 e577b7bf	Cancel before {date} and you pay nothing.
 9fe73f01	Cancel before {date} and you pay nothing. Stripe reminds you by email 7 days before.
 6e689208	Cancel my request	[app/sign-in.tsx]
+f2cf8659	Cancel the appointment	[components/service.tsx]
+37719e9d	Cancel the appointment: {what} on {van}
 4ad41471	Cancel the parts purchase
 a471f1a9	Cancel the parts purchase; it stays on record as refused.
 fd2b5f41	Cancel the refuel	[components/buy.tsx]
@@ -462,6 +486,7 @@ db3dc2a4	Cancelled by {name}: {reason}
 524b2f0e	Cancelled by {name}.	[buy/[id].tsx]
 9ac12815	Cancelled: the plan ends on {date}.
 70c3d56e	Cancelled: the plan ends on {date}. Nothing more is charged.
+ce40569f	Cancelled. It stays in the van's appointments.
 cee18487	Cancelling…	[buy/[id].tsx]
 9e32521d	car	[lib/frames.ts]
 bc47a3dc	Car	[lib/frames.ts]
@@ -478,6 +503,8 @@ cedff071	Change check	[components/routines.tsx]
 861bb73f	Change date	[components/service.tsx]
 789b14df	Change language	[components/language.tsx]
 5dccc310	Change plan	[plan.tsx]
+e2b67b9d	Change the appointment	[components/service.tsx]
+9a430898	Change the appointment: {what} on {van}
 4498dc66	Change the plan	[plan.tsx]
 c5dd099a	Change the review	[check/[id].tsx]
 45f404e2	Change the station {name}
@@ -486,6 +513,7 @@ fbc7a234	Change your plan, card or billing address, see your invoices or cancel:
 59853957	Changed by {name}, {day}.
 a02f6889	Changed by {name}, {when}.
 2f9607e7	Changed by {name}.	[account.tsx]
+fc9963ea	Changed to {when}. What it was before is kept with it.
 8f4ac2d1	Changing the type changes the photo frames.
 21ec34e7	Check and save	[buy/[id].tsx]
 6b57d1d2	Check close-ups	[check/[id].tsx]
@@ -531,7 +559,9 @@ a60c6721	Choose how often.	[index.ts]
 7190b327	Choose the vans.	[index.ts, components/routines.tsx]
 6137e47e	Choose vans	[components/routines.tsx]
 30b97e34	Choose vans of that station.
+78a2c3c2	Choose what the appointment is for.
 1feacb8b	Choose what was done.
+c188d811	Choose when to be reminded.
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
@@ -657,7 +687,7 @@ a2e230ae	Dashboard photos on every tour
 d685eb68	Dashboard, {when}	[buy/[id].tsx]
 e5e429bc	Data	[_layout.tsx, data.tsx, app/(tabs)/_layout.tsx]
 b7da0b1e	Data processing agreement (AVV)
-987b9ced	Day	[data.tsx, components/driverrec.tsx]
+987b9ced	Day	[data.tsx, components/driverrec.tsx, components/service.tsx]
 c5c493ce	Day it was done
 8767f694	Day of the check
 a4df0e55	Days with a van
@@ -735,6 +765,7 @@ e216ffda	During the trial the AI does up to {checks} damage checks and {reads} o
 3e96504e	Each kilometre over the allowance
 6c14de32	Each run records its model, time and cost, so the test log can compare them.
 99bc58ec	Each starts with a photo of the dashboard; a wash then checks the fuel card and takes the receipt.
+a8d1247b	Earlier appointments	[components/service.tsx]
 89f722e3	earlier photo deleted	[lib/compare.ts]
 b322b353	Early-bird price: {n} % off for sign-ups until {date}. It stays yours for as long as your plan runs.
 a98de641	Early-bird price: {n} % off, for as long as your plan runs.
@@ -764,12 +795,14 @@ d1f552c3	Enter the company name.
 460d4307	Enter the day it was done, like 31.03.2027.
 a1ea6571	Enter the day like 22.10.2026 and the time like 14:30.
 0ecbe790	Enter the day like 22.10.2026.
+1f398c57	Enter the day of the appointment, like 31.03.2027.
 769d894f	Enter the day of the check: today or a day in the last 12 months.
 4db2ec5e	Enter the litres from the receipt.
 cb05a00d	Enter the month on the new sticker, like 03/2028.
 e73e1f01	Enter the number plate: it's how this van is shown everywhere.
 2fd5abc8	Enter the odometer reading in km.
 2ee9b4f6	Enter the time like 14:30, or leave it empty.
+36183d1b	Enter the time of the appointment, like 09:30.
 0131ab7b	Enter the total from the receipt.
 0fa0eb0b	Enter the van's km.
 0cbe0847	Enter your company name.
@@ -818,6 +851,7 @@ aa57e3ce	Everyone who had this van, newest first. This history is kept for good.
 d6fc00bb	fewer than the vans in use
 776c2ef8	Fill in {n} van || Fill in {n} vans
 e68fa2ad	Fill in from a document
+38fe045e	Fill in the service
 2d310f4a	Fill up now	[buy/[id].tsx]
 51b692c2	Fill up, then the receipt
 9eef175e	Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.
@@ -862,6 +896,7 @@ f7880600	For	[components/driverrec.tsx]
 5ccd3311	For a traffic fine or a complaint that arrives days later: pick the van and the moment. The answer comes from the van's history, which nobody can change.
 ae3ebd50	For example 48213	[components/dash.tsx]
 f5b90e46	For example: {example}	[people.tsx]
+9808cdfe	For example: booking number, who to ask for, bring the spare key
 6f3803d9	For example: defects to fix
 a0d15ccf	For example: dent in the right rear door, 3 cm, below the handle
 a3af3156	For example: DXX1 Berlin
@@ -871,6 +906,7 @@ a3af3156	For example: DXX1 Berlin
 b1b20bc2	For example: oil below the minimum, needs a litre
 c8fc1f1b	For example: oil level
 a2b84716	For example: right rear door, below the handle
+1f8cdbe3	For example: the garage cancelled
 fd776819	For example: use the card in the glovebox
 d2f24c84	For example: windscreen, battery, air conditioning
 2c52fef5	For example: winter tyres on, 4 new Michelin
@@ -902,6 +938,7 @@ c901a478	Free until {date}. Nothing is charged before then; cancel any time befo
 ed487f8a	Free until {date}. Then {price} plus VAT {per}.
 923e75de	Free vans first. Taking a van from someone else leaves them without one.
 9b3f00d9	from library	[vehicle/[id].tsx]
+689e81a2	From the appointment on {when}. Saving it marks the appointment done.
 64544340	From the dashboard photo
 46989fb6	From the dashboard photo {when}, {name}.
 85e9ca1e	From the dashboard photo {when}.
@@ -980,6 +1017,7 @@ a4d5d13e	Has had it since {when}
 18103d89	Has this van now
 3f608b49	Height	[components/vanfacts.tsx]
 aa279bfd	Height, weight, payload and cargo space.
+a4c7ee9b	HH:MM	[components/service.tsx]
 2a73e11c	Hi {name},	[payments.ts, website.ts]
 e841ab06	High confidence, {pct}%	[add.tsx]
 de50e8e9	High-voltage system	[prompts.ts]
@@ -1008,6 +1046,7 @@ db71e0bf	Imprint	[components/legal.tsx]
 23ca0de7	in {km}	[lib/fleet.ts]
 3f68068c	in {n} check || in {n} checks	[log.tsx]
 61c1f73a	in {n} day || in {n} days	[lib/fleet.ts]
+e2d68fef	In {n} day || In {n} days	[lib/service.ts]
 12ca64b3	in {n} month || in {n} months	[lib/fleet.ts]
 b6059d83	In this time: {walks}, {checks}
 606606cb	In this time: {walks}, {checks}, {damage} found
@@ -1032,13 +1071,16 @@ a0395986	Insurance deductible	[components/vanfacts.tsx]
 e9e2b470	Invoices come from Stripe, our payment provider, by email.
 5a4f7da7	Is {type} the right type?
 c6a0023b	Is it right that there's no vehicle?
+d78ef528	It stays in the van's appointments as cancelled.
 4180f5d0	It's right, save it
 797e0902	It's the van's card (ending {last4}).
 7ed6cd23	It's the van's card.
 348b927c	It's your own: someone else has to allow it.
+4ef4581d	Its time has come. Fill in the service once it's done, or move it if the garage changed it.
 365786f8	Join {company}	[app/join/[token].tsx]
 c30cc528	Join or create another company
 445f6bf2	Keep filming: at least {n} seconds.
+d9f36924	Keep it	[components/service.tsx]
 731594dc	Keeping the photos	[components/keep.tsx]
 cdb37ef3	Keeping the video	[components/keep.tsx]
 2531c31e	kerbed rim	[check/[id].tsx]
@@ -1195,6 +1237,8 @@ d31edb7b	Monthly	[account.tsx, plan.tsx, components/offers.tsx]
 a7a8e36c	More links	[people.tsx]
 af3c18d2	Move {name} to {station}
 4756e50f	Move {van} to {station}
+61696fcc	Move or change	[components/service.tsx]
+376ed39b	Moved or changed {n} time. || Moved or changed {n} times.
 4f23c76e	moved to another station
 709a2322	Name	[people.tsx]
 c3bf26d0	Name or plate	[data.tsx]
@@ -1304,6 +1348,9 @@ b1e0aaf7	No pick-up video	[review.tsx]
 a7f6c6c2	No pick-up video or photos yet.
 d52a9fe0	No refuels, washes or parts in the last 7 days.
 378da33a	No refuels, washes or parts in this period.
+0206be14	No reminder	[lib/service.ts]
+c1866ee7	No reminder: that time had already passed.
+7a8d9d8f	No reminder.	[components/service.tsx]
 7c680faf	No service recorded in this period. Add one on a van's Service tab.
 f1ff1fcc	No sign-up links yet.
 7552f8e2	No start-of-tour photo	[review.tsx]
@@ -1670,6 +1717,9 @@ da9928d4	Registration certificate	[components/docscan.tsx]
 6561c36a	Registration certificate (Fahrzeugschein), lease, rental or insurance contract, inspection report, service invoice: the AI sees what it is and fills in the right sections below. You check everything before it's saved.
 1a98465c	Registration certificate part II
 2b03b592	Reject	[people.tsx]
+25df3f71	Remind me	[components/service.tsx]
+d196e053	Reminder {when}.	[components/service.tsx]
+6fa6cc5e	Reminder sent.	[components/service.tsx]
 e963907d	Remove	[check/[id].tsx, people.tsx, components/routines.tsx]
 24d9518f	Remove {name} from {company}
 3a6d7a70	Remove a station	[lib/people.ts]
@@ -1753,6 +1803,7 @@ efc007a3	Save	[buy/[id].tsx, people.tsx, components/service.tsx]
 ed70459b	Save and end the tour
 24689bd9	Save and start the tour
 179359b3	Save changes	[vehicle/[id].tsx, components/routines.tsx]
+b2bb7f46	Save the change	[components/service.tsx]
 7a3d56ee	Save the check	[components/driverrec.tsx]
 b087ec19	Save the check "{name}"
 4c7df601	Save the correction	[components/driverrec.tsx, components/service.tsx]
@@ -1764,6 +1815,7 @@ ffe4bca0	Save the reading	[components/dash.tsx]
 061f6767	Saved {n} detail from {what}, and the licence check. The photo wasn't kept. || Saved {n} details from {what}, and the licence check. The photo wasn't kept.
 9871cd39	Saved {n} detail from {what}. The photo wasn't kept. || Saved {n} details from {what}. The photo wasn't kept.
 c1b66eea	Saved in the service history.
+02aef0a1	Saved in the service history. The appointment is done.
 6f57c463	Saved on this phone only until Firebase is connected.
 abda9b97	Saved on this phone. It goes through after the one before it.
 5d58f0ca	Saved on this phone. It goes through by itself, you don't need to do it again.
@@ -1780,6 +1832,7 @@ a97cc10e	Saving the vans	[bulk.tsx]
 89c6f332	Saving the video…	[components/video.tsx]
 d1944261	Saving the walk-around…	[components/uploads.tsx]
 56a2285c	Saving…	[buy/[id].tsx, components/dash.tsx, components/docscan.tsx]
+19c513f6	Say what the appointment is for.
 f818ed23	Say what the problem is.
 8ba65f51	Say what the problem with the licence is.
 fcd78d0e	Say what was done.
@@ -1822,6 +1875,7 @@ c149b95b	Sent. The fleet manager approves or rejects each spot.
 329cb8b6	Service	[vehicle/[id].tsx, data.tsx, components/service.tsx]
 1d1501e3	Service (distance)	[lib/fleet.ts]
 9bdcea0c	Service and oil change
+c784d7d3	Service appointment: {van}	[index.ts]
 6ba95446	Service at	[components/vanfacts.tsx]
 355d43c0	Service by date	[components/vanfacts.tsx]
 4202eb24	Service due	[prompts.ts]
@@ -1834,6 +1888,7 @@ d4ce959d	Sets the photo frames of a walk-around. Change it under Name, plate and
 09ca55ca	Share	[people.tsx]
 e6dbeca8	Sharing isn't available on this phone.
 d97d1ee3	Show	[log.tsx]
+4383a1e0	Show {n} earlier appointment || Show {n} earlier appointments
 62b01e8b	Show all {n}	[person/[uid].tsx, review.tsx]
 05da90b2	Show all {n} row || Show all {n} rows
 db8c1b38	Show all {n} vans || Show all {n} vans
@@ -2000,9 +2055,11 @@ d6dd7411	Thanks for signing up {company}. This is what you ordered:
 ef9365df	That file isn't a video.
 cb2061ab	That phone number doesn't look right.
 1e8d9466	That station doesn't exist any more. Pick another one.
+f510e244	That time has already passed. Choose a time ahead.
 2135b4fd	That's {more} km more than the last reading ({km} km). Check the number, or confirm it's right.
 1a009a4e	That's a lot of checks already. Remove one first.
 0803cc8b	That's a window of {time}: the last photos without it to the photos it was found in.
+7a5da6f7	That's too far ahead. Book it closer to the time.
 80227a1b	That's who had the van, not proof of who caused it. Compare the photos.
 f4c23a3d	The {model} model looks at every photo at full resolution. This usually takes under a minute.
 a22b8fe7	The 30 minutes for close-ups are up: the spots go to your fleet manager now.
@@ -2146,6 +2203,7 @@ f4ab4f15	The receipt couldn't be read: {issue}. Type the numbers from it.
 aebdea71	The receipt couldn't be read. Type the numbers from it.
 0da98e11	The receipt is dated {date}.
 9e522813	The receipt shows a card ending {last4}; this van's card ends {expected}.
+b9929b19	The reminder goes to you and the station's fleet managers, with notifications turned on in Account.
 de1018b5	The service history needs the Firebase backend.
 d7e49a45	The spots are with your fleet manager, who decides.
 a511a830	The times you had this van.
@@ -2193,6 +2251,10 @@ f7d0d2b1	These photos were already used. Take new ones.
 4cfa97a7	They choose	[components/offers.tsx]
 738a4e4e	They left the company. Their van history stays.
 f77d05d1	This AI model isn't available on the Anthropic account. Pick another model in Account.
+6f638b7a	This appointment is done already: the service was filled in.
+6edff29c	This appointment isn't there any more.
+130d30be	This appointment was cancelled. Book a new one.
+5d0d9798	This appointment was changed many times already. Cancel it and book a new one.
 1b0bcfd0	This browser can't show notifications. Use Chrome on Android, or the app on an iPhone's home screen.
 2a89189d	This browser gave no notification address.
 43255b91	This change was refused. Check that you still belong to this company and may change it.
@@ -2271,7 +2333,7 @@ a67535de	This video belongs to another station.
 094c097f	This year	[data.tsx]
 862551ca	Tick all	[bulk.tsx]
 8cd6c44d	Tick the vans to add first.
-6c82e6dd	Time	[data.tsx, components/driverrec.tsx]
+6c82e6dd	Time	[data.tsx, components/driverrec.tsx, components/service.tsx]
 7cdfba00	Time is measured on the server, per AI call (the frames run side by side). Cost is from the tokens the API reported, at list prices.
 a31e2a60	Time is measured on the server, per AI call. Cost is from the tokens the API reported for {model} at list prices.
 d130cd05	Time per scan	[log.tsx]
@@ -2282,11 +2344,13 @@ ac1f2811	To keep going after {date}, add a card before then: Account, then Plan 
 637057df	to the review by {time} at the latest
 2dd2bed7	today	[lib/fleet.ts]
 d1cf730a	Today when you change the odometer
+f18f8c70	Today, {time}	[lib/service.ts]
 37087aec	Today: {price} plus VAT for the first month.
 55b5b84f	Today: {price} plus VAT for the first year.
 6d0bd7b3	Today: {price}, VAT included.
 1ec1d529	Today: {price}.	[components/plansetup.tsx]
 2dac81d6	tomorrow	[lib/fleet.ts]
+7438fbfc	Tomorrow, {time}	[lib/service.ts]
 736cfe84	Too bright. Step aside so the sun or a lamp doesn't shine into the camera.
 f54c4fbd	Too dark to see damage. Turn on the light, or take it where it's brighter.
 db97c592	Too many AI checks at once. Wait a minute and try again.
@@ -2338,6 +2402,7 @@ f2624f07	Tyre pressure	[prompts.ts]
 249a3708	Tyres	[routines.ts, service.ts, components/routines.tsx]
 8259dd1a	unclear	[check/[id].tsx]
 ff75e0dc	Unclear	[check/[id].tsx]
+82933e48	Unknown appointment.	[index.ts]
 7f74e948	Unknown check.	[index.ts]
 79655081	Unknown company.	[index.ts]
 2f98d5ec	Unknown handover.	[index.ts]
@@ -2457,9 +2522,11 @@ f8cd530a	Washer fluid	[prompts.ts, routines.ts, components/routines.tsx]
 5a9649da	web app	[account.tsx]
 a6b01068	Welcome to Fratius, {name}
 97211a88	What	[data.tsx]
+6a6904d7	What for	[components/service.tsx]
 7661e659	What happened	[buy/[id].tsx, components/driverrec.tsx]
 51ecc5b2	What happens next	[website.ts]
 d2d42d35	What is the problem?
+04bf54ad	What it was before is kept with it, with your name.
 5f7b5a49	What it was before is kept with the record, with your name.
 4e517ae4	What needs your attention, most urgent first.
 c66b4d48	What the close-ups showed
@@ -2491,6 +2558,7 @@ a5c7919e	Who to call after an accident.
 aefbf2a6	Who was driving?	[data.tsx]
 0f532b4e	Whole front in frame: bumper, grille, lights and windscreen, up to the roof edge.
 e3ca5663	Whole front in frame: bumper, grille, lights and windscreen.
+21e2caea	Why	[components/service.tsx]
 c0054b76	Why (parts)	[data.tsx]
 0150efe2	Why were they needed?
 3e0e8b49	Why: {note}	[purchases.ts, buy/[id].tsx]

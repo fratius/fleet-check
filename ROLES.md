@@ -245,7 +245,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   Expo Go. Each person turns them on per phone in the Account tab (`users/{uid}/push/{id}`, only theirs, only real
   push services or an Expo push token). The web key pair is the `WEBPUSH_KEYS` secret, made once by the Deploy
   workflow; the public half is in `config/push`. The store app's keys (Apple, Firebase Cloud Messaging) are kept on
-  expo.dev. Sent: a van given to a driver, fuel card and receipt questions to the station's managers, TÜV reminders, website
+  expo.dev. Sent: a van given to a driver, fuel card and receipt questions to the station's managers, TÜV and service appointment reminders, website
   requests to the app creator.
 - **Managers are told when handover proof is missing:** the Review tab lists (and its badge counts) vans given to
   a driver more than 2 hours ago without the pick-up video or photos; and at pick-up-yourself stations, handovers
@@ -278,6 +278,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 | Damage log `damageLog` | read | read | the ones they're in | the server only |
 | Refuels, washes, parts `purchases` | read | read | their own | the server only; never deleted |
 | Service history and the TÜV `services` | read, add, correct | read, add, correct | no | the server only (`service`); never deleted |
+| Service appointments `serviceAppointments` | read, book, move, cancel | read, book, move, cancel | no | the server only (`appointment`, `service`); never deleted |
 | Checks for drivers `routines` | read, set (any station or all) | read, set (own station) | read | the server only (`routine`) |
 | Checks done `routineDone` | read | read | their own | the server only (`routineDone`); never deleted |
 | What the AI read from dashboard, card and receipt `buyReads` | no | no | no | the server; app creator reads |
@@ -317,6 +318,11 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   nothing is deleted. Drivers neither see nor add them. The records move with the van (`moveVan`). A month before a
   van's TÜV runs out, its station's managers (or the owners where there is none) get one notification per TÜV date
   (`serviceSweep`; what was sent is in `serviceNags`, server only).
+- **Service appointments** (the `appointment` function; `orgs/{org}/serviceAppointments`; FLEET_DATA.md): the same
+  people book an appointment at the garage for a van, move it, cancel it, and fill in the service from it (which
+  marks it done). Kept for good: a move keeps what it was before, a cancelled one stays as cancelled. Drivers
+  neither see nor book them. The reminder (the chosen time before, a day by default) goes to whoever booked it and
+  the station's managers (or the owners where there is none) (`appointmentSweep`). They move with the van.
 - **The van's latest dashboard** (`vehicles/{id}.dash`: km, fuel or battery, range, warning lights, when and by
   whom) is written only by the server, from tour photos and from the dashboard photo of a finished refuel, wash or
   parts purchase. Everyone at the station sees it on the van and the km in the fleet list (drivers too: they need

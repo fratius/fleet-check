@@ -51,7 +51,7 @@ import {
 } from './payments';
 import { NAMES, nameOf } from './names';
 import { HOWS, SUGGESTIONS, applies, dayOf, loadRoutines, nagsDue, refreshTodo, vanTodo, type How, type Last, type Routine, type VanForRoutines } from './routines';
-import { Bad, FIXABLE, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readService, type ServiceInput } from './service';
+import { APPT_FIELDS, Bad, FIXABLE, SERVICE_NAME, detailsPatch, huQueryUpTo, huRemindNow, monthEnd, readAppointment, readService, remindAtFor, type ApptInput, type ServiceInput } from './service';
 
 initializeApp();
 // Same region as the Firestore database and Storage bucket (US), so photos don't cross the Atlantic twice.
@@ -1444,12 +1444,14 @@ export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req)
     // Its contract, costs and deadlines go with it, so the new station's managers see them (and the old one's don't).
     if (details.exists) tx.update(dref, { stationId });
   });
-  // Its service history too (service.ts): it belongs to the van, whoever runs it now.
-  const svc = await org.collection('services').where('vehicleId', '==', vehicleId).get();
-  for (let i = 0; i < svc.docs.length; i += 400) {
-    const b = db().batch();
-    svc.docs.slice(i, i + 400).forEach((x) => { if (x.data().stationId !== stationId) b.update(x.ref, { stationId }); });
-    await b.commit();
+  // Its service history and appointments too (service.ts): they belong to the van, whoever runs it now.
+  for (const coll of ['services', 'serviceAppointments']) {
+    const svc = await org.collection(coll).where('vehicleId', '==', vehicleId).get();
+    for (let i = 0; i < svc.docs.length; i += 400) {
+      const b = db().batch();
+      svc.docs.slice(i, i + 400).forEach((x) => { if (x.data().stationId !== stationId) b.update(x.ref, { stationId }); });
+      await b.commit();
+    }
   }
   return { ok: true };
 });
@@ -3172,8 +3174,12 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
   const x = read(d, false);
   const vref = org.collection('vehicles').doc(vehicleId);
   const dref = org.collection('vehicleDetails').doc(vehicleId);
+  // Filled in from an appointment: it's marked done with this service (when it's still booked for this van).
+  const apptId = d.appointmentId == null ? null : String(d.appointmentId);
+  if (apptId != null && !ID.test(apptId)) throw fail('invalid-argument', 'Unknown appointment.');
+  const aref = apptId ? org.collection('serviceAppointments').doc(apptId) : null;
   return db().runTransaction(async (tx) => {
-    const [v, before, det] = await Promise.all([tx.get(vref), tx.get(ref), tx.get(dref)]);
+    const [v, before, det, appt] = await Promise.all([tx.get(vref), tx.get(ref), tx.get(dref), aref ? tx.get(aref) : Promise.resolve(null)]);
     if (!v.exists) throw fail('not-found', 'This van was removed.');
     const van = v.data() as { name: string; plate?: string; stationId?: string | null };
     needStation(who, van.stationId);
@@ -3192,7 +3198,11 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
       ...x, vehicleId, vehicleName: vanName(van), plate: van.plate || '', stationId: van.stationId || null,
       by: who.uid, byName: who.name, createdAt: now, edits: [],
     };
-    tx.set(ref, doc);
+    const a = appt?.exists ? (appt.data() as ApptDoc) : null;
+    const fromAppt = a && a.status === 'booked' && a.vehicleId === vehicleId;
+    tx.set(ref, fromAppt ? { ...doc, appointmentId: apptId } : doc);
+    // Done: the appointment says so and links to the service. One that was cancelled or done meanwhile stays as it is.
+    if (fromAppt) tx.update(aref!, { status: 'done', serviceId: id, doneAt: now, doneBy: who.uid, doneByName: who.name, remindAt: null });
     const patch = detailsPatch(det.exists ? det.data() : undefined, x, id);
     const meta = { updatedAt: now, updatedByName: who.name };
     if (det.exists) {
@@ -3206,8 +3216,158 @@ export const service = onCallOnce('service', { timeoutSeconds: 30 }, async (req)
       }
       tx.set(dref, { ...top, ...nested, stationId: van.stationId || null, createdAt: now, ...meta });
     }
-    return { id, again: false, applied: Object.keys(patch).filter((k) => k.startsWith('due.') && patch[k] != null).map((k) => k.slice(4)) };
+    return { id, again: false, appointmentDone: !!fromAppt, applied: Object.keys(patch).filter((k) => k.startsWith('due.') && patch[k] != null).map((k) => k.slice(4)) };
   });
+});
+
+/* ---------- 17b. Service appointments (service.ts) ---------- */
+// Not every service is done on the spot (product owner, 2026-11-23): owners and the station's fleet managers book an
+// appointment at the garage, move it or cancel it, and get a reminder the time they chose before (a day by default).
+// When it's done, filling in the service from it (service, with appointmentId) marks it done. Never deleted: a move
+// keeps what it was before and who moved it; a cancelled one stays, as cancelled.
+
+type ApptDoc = ApptInput & {
+  vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
+  status: 'booked' | 'done' | 'cancelled'; remindAt: number | null; remindedAt?: number | null;
+  by: string; byName: string; createdAt: number;
+  changes?: { at: number; by: string; byName: string; was: Record<string, unknown> }[];
+  serviceId?: string; doneAt?: number; doneBy?: string; doneByName?: string;
+  cancelledAt?: number; cancelledBy?: string; cancelledByName?: string; reason?: string | null;
+};
+const MAX_MOVES = 30;
+
+export const appointment = onCallOnce('appointment', { timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const d = (req.data || {}) as Record<string, unknown>;
+  const org = db().doc(`orgs/${who.orgId}`);
+  const id = String(d.id || '');
+  if (!ID.test(id)) throw fail('invalid-argument', 'Unknown appointment.');
+  const ref = org.collection('serviceAppointments').doc(id);
+  const now = Date.now();
+  const read = () => {
+    try { return readAppointment(d, now); } catch (e) { if (e instanceof Bad) throw fail('invalid-argument', e.t, e.v); throw e; }
+  };
+
+  if (d.action === 'book') {
+    const vehicleId = String(d.vehicleId || '');
+    if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
+    const x = read();
+    const vref = org.collection('vehicles').doc(vehicleId);
+    return db().runTransaction(async (tx) => {
+      const [v, before] = await Promise.all([tx.get(vref), tx.get(ref)]);
+      if (!v.exists) throw fail('not-found', 'This van was removed.');
+      const van = v.data() as { name: string; plate?: string; stationId?: string | null; retired?: boolean };
+      needStation(who, van.stationId);
+      // Booked already (the phone sent it again): the same answer. Someone else's id: not theirs to use.
+      if (before.exists) {
+        const b = before.data() as ApptDoc;
+        if (b.by !== who.uid || b.vehicleId !== vehicleId) throw fail('invalid-argument', 'Unknown appointment.');
+        return { id, again: true, remindAt: b.remindAt };
+      }
+      if (van.retired) throw fail('failed-precondition', 'This van is retired.');
+      const remindAt = remindAtFor(x.at, x.remind, now);
+      const doc: ApptDoc = {
+        ...x, vehicleId, vehicleName: vanName(van), plate: van.plate || '', stationId: van.stationId || null,
+        status: 'booked', remindAt, remindedAt: null, by: who.uid, byName: who.name, createdAt: now, changes: [],
+      };
+      tx.set(ref, doc);
+      return { id, again: false, remindAt };
+    });
+  }
+
+  if (d.action !== 'move' && d.action !== 'cancel') throw fail('invalid-argument', 'Unknown step.');
+  return db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw fail('not-found', 'This appointment isn\'t there any more.');
+    const old = snap.data() as ApptDoc;
+    needStation(who, old.stationId);
+    if (old.status === 'done') throw fail('failed-precondition', 'This appointment is done already: the service was filled in.');
+    if (old.status === 'cancelled') {
+      if (d.action === 'cancel') return { id, unchanged: true };
+      throw fail('failed-precondition', 'This appointment was cancelled. Book a new one.');
+    }
+    if ((old.changes || []).length >= MAX_MOVES) throw fail('resource-exhausted', 'This appointment was changed many times already. Cancel it and book a new one.');
+    if (d.action === 'cancel') {
+      const reason = typeof d.reason === 'string' && d.reason.trim() ? d.reason.trim().slice(0, 300) : null;
+      tx.update(ref, { status: 'cancelled', remindAt: null, cancelledAt: now, cancelledBy: who.uid, cancelledByName: who.name, reason });
+      return { id, cancelled: true };
+    }
+    // Moved (or its details changed): what it was before is kept with who changed it; the reminder follows the new time.
+    const x = read();
+    const was: Record<string, unknown> = {}, set: Record<string, unknown> = {};
+    for (const k of APPT_FIELDS) {
+      if (JSON.stringify(old[k] ?? null) !== JSON.stringify(x[k] ?? null)) { was[k] = old[k] ?? null; set[k] = x[k] ?? null; }
+    }
+    if (!Object.keys(set).length) return { id, unchanged: true, remindAt: old.remindAt };
+    const timeChanged = 'day' in set || 'time' in set || 'remind' in set;
+    const remindAt = timeChanged ? remindAtFor(x.at, x.remind, now) : old.remindAt;
+    tx.update(ref, {
+      ...set, at: x.at, remindAt, ...(timeChanged ? { remindedAt: null } : {}),
+      updatedAt: now, changes: FieldValue.arrayUnion({ at: now, by: who.uid, byName: who.name, was }),
+    });
+    return { id, changed: Object.keys(set), remindAt };
+  });
+});
+
+/** "Tue, 25.11., 09:30": an appointment's time in the reader's language, in German time. */
+function apptWhen(lang: string, at: number) {
+  const o: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' };
+  try { return new Intl.DateTimeFormat(lang, o).format(at); } catch { return new Intl.DateTimeFormat('en', o).format(at); }
+}
+
+/**
+ * The appointment reminders due now: the station's fleet managers (the owners where it has none) and whoever booked
+ * it, if they're still in the company. Claimed in a transaction first (the reminder is cleared), so two runs never
+ * send it twice; a move sets a new one. Demo companies are left out.
+ */
+export async function sweepAppointments(now = Date.now()) {
+  let appointments = 0, told = 0;
+  for (const o of (await db().collection('orgs').get()).docs) {
+    if (o.data().demo === true) continue;
+    const due = await o.ref.collection('serviceAppointments').where('remindAt', '<=', now).get();
+    for (const ad of due.docs) {
+      const a = await db().runTransaction(async (tx) => {
+        const x = (await tx.get(ad.ref)).data() as ApptDoc | undefined;
+        if (!x || x.status !== 'booked' || x.remindAt == null || x.remindAt > now) return null;
+        tx.update(ad.ref, { remindAt: null, remindedAt: now });
+        return x;
+      });
+      if (!a) continue;
+      const people = await bossesOf(o.id, a.stationId || null, 'wash', a.by);
+      const booker = await o.ref.collection('members').doc(a.by).get();
+      const role = booker.data()?.role as string | undefined;
+      const stations = (booker.data()?.stationIds || []) as string[];
+      if (booker.exists && (role === 'owner' || role === 'admin' || (role === 'manager' && (!a.stationId || stations.includes(a.stationId))))) {
+        people.push({ uid: a.by, name: a.byName, phone: null });
+      }
+      const name = vanName({ name: a.vehicleName, plate: a.plate });
+      const n = await tell(people, (lang) => {
+        const what = a.kind === 'other' && a.name ? a.name : tr(lang, SERVICE_NAME[a.kind as Exclude<ApptInput['kind'], 'other'>] || 'Service and oil change');
+        const when = apptWhen(lang, a.at);
+        return {
+          title: tr(lang, 'Service appointment: {van}', { van: name }),
+          body: a.garage ? tr(lang, '{what} at {garage}, {when}.', { what, garage: a.garage, when }) : tr(lang, '{what}, {when}.', { what, when }),
+          url: `/vehicle/${a.vehicleId}?tab=service`, tag: `appt-${ad.id}`,
+        };
+      });
+      await ad.ref.update({ remindedTo: people.length, told: n });
+      appointments++; told += n;
+    }
+  }
+  return { appointments, told };
+}
+
+export const appointmentSweep = onSchedule({ schedule: 'every 15 minutes', timeZone: 'Europe/Berlin', secrets: [WEBPUSH_KEYS], timeoutSeconds: 300, retryCount: 1 }, async () => {
+  const r = await sweepAppointments();
+  if (r.appointments) logger.info('Appointment reminders', r);
+});
+
+/** The same, now (the app creator; the emulator tests pass a time). */
+export const appointmentSweepNow = onCall({ timeoutSeconds: 300, secrets: [WEBPUSH_KEYS] }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const at = process.env.FUNCTIONS_EMULATOR === 'true' && typeof req.data?.now === 'number' ? req.data.now : Date.now();
+  return sweepAppointments(at);
 });
 
 /** "März 2027": the sticker's month in the reader's language. */

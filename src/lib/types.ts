@@ -136,6 +136,32 @@ export interface ServiceRecord {
   updatedAt?: number; updatedByName?: string;
   /** Corrections: when, by whom, and what the fields were before. */
   edits?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceRecord, 'name' | 'day' | 'km' | 'cost' | 'garage' | 'note' | 'result'>> }[];
+  /** Filled in from this appointment. */
+  appointmentId?: string;
+}
+
+/**
+ * A service appointment at the garage (orgs/{org}/serviceAppointments): booked, moved, cancelled or done (the service
+ * was filled in from it). Written only by the server (functions/src/service.ts), never deleted. Owners and the van's
+ * station managers read them.
+ */
+export interface ServiceAppointment {
+  id: string;
+  kind: ServiceKind;
+  /** What it's for, as typed (Other only). */
+  name: string | null;
+  /** The day and time, in German time: "YYYY-MM-DD", "HH:MM"; `at` the same moment in ms. */
+  day: string; time: string; at: number;
+  garage: string | null; note: string | null;
+  /** Minutes before when the reminder goes (0: none); `remindAt` when it will (null: none, or sent: `remindedAt`). */
+  remind: number; remindAt: number | null; remindedAt?: number | null;
+  status: 'booked' | 'done' | 'cancelled';
+  vehicleId: string; vehicleName: string; plate: string; stationId: string | null;
+  by: string; byName: string; createdAt: number; updatedAt?: number;
+  /** Moves and changes: when, by whom, what it was before. */
+  changes?: { at: number; by: string; byName: string; was: Partial<Pick<ServiceAppointment, 'kind' | 'name' | 'day' | 'time' | 'garage' | 'note' | 'remind'>> }[];
+  serviceId?: string; doneAt?: number; doneByName?: string;
+  cancelledAt?: number; cancelledByName?: string; reason?: string | null;
 }
 
 /** A person's name, for owners and fleet managers (orgs/{org}/names/{uid}, kept by the server; functions/src/names.ts). */
