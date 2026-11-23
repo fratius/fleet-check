@@ -359,6 +359,7 @@
  "Choose what was done.": "Alege ce s-a făcut.",
  "Choose your station.": "Alege stația ta.",
  "Classes": "Categorii",
+ "Clear search": "Șterge căutarea",
  "Close": "Închide",
  "Close it (not finished)": "Închide (nefinalizat)",
  "Close {name}'s purchase for {van}": "Închide achiziția: {name}, {van}",
@@ -1169,6 +1170,7 @@
  "No type scans yet. Add a vehicle and tap Identify the type.": "Încă nicio scanare de tip. Adaugă un vehicul și atinge Identifică tipul.",
  "No van": "Fără dubă",
  "No van has a driver yet. Open a van to give it to one.": "Încă nicio dubă nu are șofer. Deschide o dubă ca s-o dai unui șofer.",
+ "No van matches {q}.": "Nicio dubă nu corespunde cu {q}.",
  "No van yet.": "Încă nicio dubă.",
  "No vans at {stations} yet. Your fleet manager adds them.": "Încă nicio dubă la {stations}. Managerul de flotă le adaugă.",
  "No vans at {station}.": "Nicio dubă la {station}.",
@@ -1664,6 +1666,8 @@
  "Scan it": "Scaneaz-o",
  "Scan it and the app picks its type, or pick the type yourself.": "Scaneaz-o și aplicația îi alege tipul sau alege tu tipul.",
  "Scan with photos or a video?": "Scanezi cu fotografii sau cu videoclip?",
+ "Search by plate or fleet number": "Caută după număr de înmatriculare sau număr de flotă",
+ "Search vans": "Caută dube",
  "Second look": "A doua privire",
  "Second look, per photo checked": "A doua privire, pe fotografie verificată",
  "See all deadlines": "Vezi toate termenele",
@@ -3189,6 +3193,11 @@
   "one": "{n} dubă în listă",
   "few": "{n} dube în listă",
   "other": "{n} de dube în listă"
+ },
+ "{n} vans match": {
+  "one": "{n} dubă găsită",
+  "few": "{n} dube găsite",
+  "other": "{n} de dube găsite"
  },
  "{n} walk-arounds": {
   "one": "{n} inspecție",

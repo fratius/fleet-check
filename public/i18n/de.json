@@ -347,6 +347,7 @@
  "Choose what was done.": "Wähle, was gemacht wurde.",
  "Choose your station.": "Wähle deine Station.",
  "Classes": "Klassen",
+ "Clear search": "Suche leeren",
  "Close": "Schließen",
  "Close it (not finished)": "Schließen (nicht abgeschlossen)",
  "Close {name}'s purchase for {van}": "Kauf von {name} für {van} schließen",
@@ -1142,6 +1143,7 @@
  "No type scans yet. Add a vehicle and tap Identify the type.": "Noch keine Typ-Scans. Füge ein Fahrzeug hinzu und tippe auf „Typ erkennen“.",
  "No van": "Kein Transporter",
  "No van has a driver yet. Open a van to give it to one.": "Noch kein Transporter hat einen Fahrer. Öffne einen Transporter, um ihn jemandem zu übergeben.",
+ "No van matches {q}.": "Kein Transporter passt zu {q}.",
  "No van yet.": "Noch kein Transporter.",
  "No vans at {stations} yet. Your fleet manager adds them.": "Noch keine Transporter bei {stations}. Dein Flottenmanager fügt sie hinzu.",
  "No vans at {station}.": "Keine Transporter bei {station}.",
@@ -1625,6 +1627,8 @@
  "Scan it": "Scannen",
  "Scan it and the app picks its type, or pick the type yourself.": "Scanne das Fahrzeug, dann erkennt die App den Typ, oder wähle ihn selbst.",
  "Scan with photos or a video?": "Mit Fotos oder Video scannen?",
+ "Search by plate or fleet number": "Nach Kennzeichen oder Fahrzeugnummer suchen",
+ "Search vans": "Transporter suchen",
  "Second look": "Zweiter Blick",
  "Second look, per photo checked": "Zweiter Blick, pro geprüftem Foto",
  "See all deadlines": "Alle Fristen ansehen",
@@ -3045,6 +3049,10 @@
  "{n} vans in the list": {
   "one": "{n} Transporter in der Liste",
   "other": "{n} Transporter in der Liste"
+ },
+ "{n} vans match": {
+  "one": "{n} Transporter passt",
+  "other": "{n} Transporter passen"
  },
  "{n} walk-arounds": {
   "one": "{n} Rundgang",

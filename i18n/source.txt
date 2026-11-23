@@ -113,6 +113,7 @@ a8f99025	{n} unclear || {n} unclear	[log.tsx]
 6c669603	{n} van is at another station and was left as it is. || {n} vans are at another station and were left as they are.
 13014f49	{n} van filled in || {n} vans filled in
 e3f01f8c	{n} van in the list || {n} vans in the list
+58c0ef56	{n} van matches || {n} vans match	[index.tsx]
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
@@ -534,6 +535,7 @@ a60c6721	Choose how often.	[index.ts]
 1feacb8b	Choose what was done.
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
+67300d0f	Clear search	[index.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
 0e056a7b	Close {name}'s purchase for {van}
 85a2ce1c	Close it (not finished)
@@ -1316,6 +1318,7 @@ b675b026	No station	[lib/session.tsx]
 51e2a023	No type scans yet. Add a vehicle and tap Identify the type.
 d0edf678	No van	[person/[uid].tsx, people.tsx, components/history.tsx]
 3104ed6c	No van has a driver yet. Open a van to give it to one.
+4a44b35d	No van matches {q}.
 8fea8db6	No van yet.	[person/[uid].tsx]
 c17279ab	No vans at {station}.
 c8ec2a70	No vans at {stations} yet. Your fleet manager adds them.
@@ -1793,6 +1796,8 @@ ca8717a6	Scan with photos or a video?
 758a7660	scans	[log.tsx]
 ffdf8c66	scratch	[check/[id].tsx]
 f5c117f0	scuff	[check/[id].tsx]
+30c8e3bd	Search by plate or fleet number
+6c858556	Search vans	[index.tsx]
 1618025d	Second look	[check/[id].tsx, log.tsx]
 3f00bcee	Second look, per photo checked
 6b7c6eda	See {company} exactly as a fleet owner, fleet manager or driver does: the same screens and the same access, checked by the server. Only the app creator has this switch.

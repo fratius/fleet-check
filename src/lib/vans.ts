@@ -20,3 +20,14 @@ export function vanAlias(v: Named | null | undefined): string {
 
 /** Plates written the same way, for finding a van and for spotting the same plate twice. */
 export const plateKey = (p: string | null | undefined) => (p || '').toUpperCase().replace(/[^A-Z0-9ÄÖÜ]/g, '');
+
+/**
+ * The Fleet search (product owner, 2026-11-23): a van matches when what was typed appears, in that order and
+ * without gaps, in its plate or its own name or fleet number. Spaces, dashes and capitals don't count, so "314",
+ * "dx314" and "B-DX 314" all find B-DX 3141.
+ */
+export function vanMatches(v: Named, query: string): boolean {
+  const q = plateKey(query);
+  if (!q) return true;
+  return plateKey(v.plate).includes(q) || plateKey(v.name).includes(q);
+}
