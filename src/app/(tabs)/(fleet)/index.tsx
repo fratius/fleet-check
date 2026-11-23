@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
-import { Button, Card, Chip, F, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, SearchBox, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, kmText } from '@/components/dash';
@@ -67,16 +67,7 @@ export default function Fleet() {
       </View>
       {/* Search: the list follows each letter typed. */}
       {s.loaded.vehicles && here.length ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper, paddingLeft: 2 }}>
-          <TextInput value={query} onChangeText={setQuery} placeholder={t('Search by plate or fleet number')} placeholderTextColor={c.ink2}
-            accessibilityLabel={t('Search vans')} autoCapitalize="characters" autoCorrect={false} returnKeyType="search" clearButtonMode="never"
-            style={{ flex: 1, minHeight: 48, paddingHorizontal: 10, fontFamily: F.body, fontSize: 18, color: c.ink, outlineWidth: 0 }} />
-          {query ? (
-            <Pressable accessibilityRole="button" accessibilityLabel={t('Clear search')} onPress={() => setQuery('')} style={{ paddingHorizontal: 14, minHeight: 48, justifyContent: 'center' }}>
-              <T v="medium">✕</T>
-            </Pressable>
-          ) : null}
-        </View>
+        <SearchBox value={query} onChange={setQuery} placeholder={t('Search by plate or fleet number')} label={t('Search vans')} caps />
       ) : null}
       {searching ? <T v="hint">{vans.length ? tp(vans.length, '{n} van matches', '{n} vans match') : t('No van matches {q}.', { q: query.trim() })}</T> : null}
       {s.creator && s.role === 'owner' && !s.companies.some((x) => x.id === s.org?.id) ? <Notice text={t('You\'re viewing {company} as the app creator.', { company: s.org?.name })} /> : null}

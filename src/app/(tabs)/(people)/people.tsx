@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 
-import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, SearchBox, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -10,7 +10,7 @@ import { sendCall } from '@/lib/outbox';
 import { ROLE_NAME, roleOf, type Assignment, type DriverLink, type Invite, type JoinRequest, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
-import { vanAlias, vanName } from '@/lib/vans';
+import { nameKey, personMatches, vanAlias, vanName } from '@/lib/vans';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, one-time invite links for fleet managers.
@@ -20,10 +20,12 @@ import { vanAlias, vanName } from '@/lib/vans';
  */
 export default function People() {
   const s = useSession();
+  const c = useColors();
   const scopeKey = (peopleScope(s) || ['*']).join(',');
   const [members, setMembers] = useState<Member[] | null>(null);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || s.mode !== 'firebase' || !s.staff) return;
@@ -36,6 +38,12 @@ export default function People() {
   const owner = s.role === 'owner';
   const stations = owner ? s.stations : s.myStations;
   const owners = (members || []).filter((m) => roleOf(m) === 'owner');
+  // The search (product owner, 2026-11-23): everyone this person sees whose name, Transporter ID or phone has what
+  // was typed, in that order; drivers first, then by name.
+  const searching = !!nameKey(query);
+  const found = searching ? (members || []).filter((m) => personMatches(m, query))
+    .sort((a, b) => Number(roleOf(a) !== 'driver') - Number(roleOf(b) !== 'driver') || a.name.localeCompare(b.name)) : [];
+  const stationsOf = (m: Member) => (m.stationIds || []).map((id) => s.stationName(id)).filter(Boolean).join(', ');
 
   return (
     <Screen>
@@ -44,6 +52,24 @@ export default function People() {
         <T v="hint">{owner ? t('Fleet managers and drivers of {company}, by station.', { company: s.org?.name || '' }) : t('The fleet managers and drivers of your station.')}</T>
       </View>
       {err ? <Notice tone="bad" text={err} /> : null}
+      {members?.length ? <SearchBox value={query} onChange={setQuery} placeholder={t('Search by name, Transporter ID or phone')} label={t('Search people')} /> : null}
+      {searching ? (
+        <>
+          <T v="hint">{found.length ? tp(found.length, '{n} person matches', '{n} people match') : t('Nobody matches {q}.', { q: query.trim() })}</T>
+          {found.length ? (
+            <View style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 10, gap: 10 }}>
+              {found.map((m, i) => (
+                <View key={m.uid} style={{ gap: 2 }}>
+                  {roleOf(m) === 'driver' ? <DriverRow m={m} first={i === 0} />
+                    : <BossRow m={m} label={roleOf(m) === 'owner' ? t('Fleet owner') : t('Fleet manager')} />}
+                  {stations.length > 1 && stationsOf(m) ? <T v="small">{stationsOf(m)}</T> : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </>
+      ) : (
+        <>
       <JoinRequests />
       <DriverLinkCard />
       {stations.map((st) => (
@@ -59,6 +85,8 @@ export default function People() {
       {owner ? <Unassigned members={(members || []).filter((m) => roleOf(m) !== 'owner' && !(m.stationIds || []).some((id) => s.stations.some((st) => st.id === id)))} /> : null}
       {owner ? <Stations members={members || []} /> : null}
       {members ? <Former members={members} /> : null}
+        </>
+      )}
       {!members && !err ? <T v="hint">{t('Loading…')}</T> : null}
     </Screen>
   );

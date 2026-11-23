@@ -1189,6 +1189,7 @@
  "Nobody had {van} then.": "Nimeni nu avea {van} atunci.",
  "Nobody has had this van yet.": "Nimeni nu a avut încă această dubă.",
  "Nobody has this van.": "Nimeni nu are această dubă.",
+ "Nobody matches {q}.": "Nimeni nu corespunde cu {q}.",
  "Nobody to call is on record for this station. Call the office.": "Nu e înregistrat nimeni de sunat pentru această stație. Sună la birou.",
  "Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.": "Nimeni n-a făcut prim-planuri în 30 de minute, așa că zonele găsite de AI au ajuns la managerul tău de flotă fără ele.",
  "Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.": "Nimeni n-a făcut prim-planuri în 30 de minute, așa că zonele au ajuns la managerul tău de flotă fără ele.",
@@ -1666,7 +1667,9 @@
  "Scan it": "Scaneaz-o",
  "Scan it and the app picks its type, or pick the type yourself.": "Scaneaz-o și aplicația îi alege tipul sau alege tu tipul.",
  "Scan with photos or a video?": "Scanezi cu fotografii sau cu videoclip?",
+ "Search by name, Transporter ID or phone": "Caută după nume, Transporter ID sau telefon",
  "Search by plate or fleet number": "Caută după număr de înmatriculare sau număr de flotă",
+ "Search people": "Caută persoane",
  "Search vans": "Caută dube",
  "Second look": "A doua privire",
  "Second look, per photo checked": "A doua privire, pe fotografie verificată",
@@ -3012,6 +3015,11 @@
   "one": "{n} persoană",
   "few": "{n} persoane",
   "other": "{n} de persoane"
+ },
+ "{n} people match": {
+  "one": "{n} persoană găsită",
+  "few": "{n} persoane găsite",
+  "other": "{n} de persoane găsite"
  },
  "{n} per walk-around": "{n} pe inspecție",
  "{n} photo sets from the library aren't counted here.": {

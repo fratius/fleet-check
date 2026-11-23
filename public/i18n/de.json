@@ -1162,6 +1162,7 @@
  "Nobody had {van} then.": "Niemand hatte {van} zu der Zeit.",
  "Nobody has had this van yet.": "Noch niemand hatte diesen Transporter.",
  "Nobody has this van.": "Niemand hat diesen Transporter.",
+ "Nobody matches {q}.": "Niemand passt zu {q}.",
  "Nobody to call is on record for this station. Call the office.": "Für diese Station ist niemand zum Anrufen hinterlegt. Ruf im Büro an.",
  "Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.": "Niemand hat innerhalb von 30 Minuten Nahaufnahmen gemacht, deshalb gingen die Stellen, die die KI gefunden hat, ohne sie an deinen Flottenmanager.",
  "Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.": "Niemand hat innerhalb von 30 Minuten Nahaufnahmen gemacht, deshalb gingen die Stellen ohne sie an deinen Flottenmanager.",
@@ -1627,7 +1628,9 @@
  "Scan it": "Scannen",
  "Scan it and the app picks its type, or pick the type yourself.": "Scanne das Fahrzeug, dann erkennt die App den Typ, oder wähle ihn selbst.",
  "Scan with photos or a video?": "Mit Fotos oder Video scannen?",
+ "Search by name, Transporter ID or phone": "Nach Name, Transporter ID oder Telefon suchen",
  "Search by plate or fleet number": "Nach Kennzeichen oder Fahrzeugnummer suchen",
+ "Search people": "Personen suchen",
  "Search vans": "Transporter suchen",
  "Second look": "Zweiter Blick",
  "Second look, per photo checked": "Zweiter Blick, pro geprüftem Foto",
@@ -2904,6 +2907,10 @@
  "{n} people": {
   "one": "{n} Person",
   "other": "{n} Personen"
+ },
+ "{n} people match": {
+  "one": "{n} Person passt",
+  "other": "{n} Personen passen"
  },
  "{n} per walk-around": "{n} pro Rundgang",
  "{n} photo sets from the library aren't counted here.": {
