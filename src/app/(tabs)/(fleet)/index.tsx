@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, TextInput, View } from 'react-native';
 
-import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, F, Notice, Pill, Plate, Row, Screen, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, kmText } from '@/components/dash';
@@ -17,13 +17,14 @@ import { deadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
-import { vanAlias, vanName } from '@/lib/vans';
+import { plateKey, vanAlias, vanMatches, vanName } from '@/lib/vans';
 
 export default function Fleet() {
   const s = useSession();
   const c = useColors();
   const [only, setOnly] = useState<string | null>(null);
   const [show, setShow] = useState<'all' | 'free' | 'taken' | 'retired'>('all');
+  const [query, setQuery] = useState('');
   // A van a manager gave this driver that still needs its pick-up video or photos.
   const pickup = usePickupRequest(s.myVan);
   const whoDid = useWhoDid();
@@ -37,7 +38,10 @@ export default function Fleet() {
   const taken = active.filter((v) => v.assignedTo);
   const retired = here.filter((v) => v.retired);
   const tracking = s.mode === 'firebase' && s.staff;
-  const vans = !tracking ? active : show === 'free' ? free : show === 'taken' ? taken : show === 'retired' ? retired : active;
+  // Searching looks through every van of the chosen station, retired ones too (product owner, 2026-11-23).
+  const searching = !!plateKey(query);
+  const vans = searching ? (tracking ? here : active).filter((v) => vanMatches(v, query))
+    : !tracking ? active : show === 'free' ? free : show === 'taken' ? taken : show === 'retired' ? retired : active;
   const count = active.length;
   const canAdd = s.staff && (s.role === 'owner' || s.myStations.some((st) => s.runs(st.id)));
   const where = s.mode === 'local' ? t('Test mode, saved on this phone')
@@ -61,6 +65,20 @@ export default function Fleet() {
         </View>
         {canAdd ? <Button small title={t('Add vehicle')} onPress={() => router.push('/add')} /> : null}
       </View>
+      {/* Search: the list follows each letter typed. */}
+      {s.loaded.vehicles && here.length ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper, paddingLeft: 2 }}>
+          <TextInput value={query} onChangeText={setQuery} placeholder={t('Search by plate or fleet number')} placeholderTextColor={c.ink2}
+            accessibilityLabel={t('Search vans')} autoCapitalize="characters" autoCorrect={false} returnKeyType="search" clearButtonMode="never"
+            style={{ flex: 1, minHeight: 48, paddingHorizontal: 10, fontFamily: F.body, fontSize: 18, color: c.ink, outlineWidth: 0 }} />
+          {query ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={t('Clear search')} onPress={() => setQuery('')} style={{ paddingHorizontal: 14, minHeight: 48, justifyContent: 'center' }}>
+              <T v="medium">✕</T>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {searching ? <T v="hint">{vans.length ? tp(vans.length, '{n} van matches', '{n} vans match') : t('No van matches {q}.', { q: query.trim() })}</T> : null}
       {s.creator && s.role === 'owner' && !s.companies.some((x) => x.id === s.org?.id) ? <Notice text={t('You\'re viewing {company} as the app creator.', { company: s.org?.name })} /> : null}
       {s.dataError ? <Notice tone="bad" text={s.dataError} /> : null}
       {showStations ? (
@@ -98,7 +116,7 @@ export default function Fleet() {
       {s.mode === 'firebase' && s.user ? (
         <Button small v="link" title={s.staff ? t('Your own van history') : t('Your record, tours and vans')} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
       ) : null}
-      {tracking && s.loaded.vehicles && count + retired.length ? (
+      {tracking && s.loaded.vehicles && count + retired.length && !searching ? (
         <Row>
           <Chip text={t('All ({n})', { n: active.length })} on={show === 'all'} onPress={() => setShow('all')} />
           <Chip text={t('Free ({n})', { n: free.length })} on={show === 'free'} onPress={() => setShow('free')} />
@@ -106,7 +124,7 @@ export default function Fleet() {
           {retired.length ? <Chip text={t('Retired ({n})', { n: retired.length })} on={show === 'retired'} onPress={() => setShow('retired')} /> : null}
         </Row>
       ) : null}
-      {tracking && s.loaded.vehicles && count && !vans.length ? (
+      {tracking && s.loaded.vehicles && count && !vans.length && !searching ? (
         <T v="hint">{show === 'free' ? t('Every van has a driver.') : show === 'taken' ? t('No van has a driver yet. Open a van to give it to one.') : t('Nothing here.')}</T>
       ) : null}
       {!s.loaded.vehicles ? <ActivityIndicator color={c.ink} style={{ marginTop: 24 }} /> : null}

@@ -206,14 +206,14 @@
   "id": "ff4d79e4",
   "key": "{label} {when}",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:160"
+   "src/app/(tabs)/(fleet)/index.tsx:179"
   ]
  },
  {
   "id": "23226033",
   "key": "{label} overdue",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:160"
+   "src/app/(tabs)/(fleet)/index.tsx:179"
   ]
  },
  {
@@ -299,7 +299,7 @@
   "key": "{n} approved damages",
   "one": "{n} approved damage",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:159",
+   "src/app/(tabs)/(fleet)/index.tsx:178",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:224",
    "src/components/history.tsx:128"
   ]
@@ -335,7 +335,7 @@
   "key": "{n} checks to do",
   "one": "{n} check to do",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:157",
+   "src/app/(tabs)/(fleet)/index.tsx:176",
    "src/components/routines.tsx:79"
   ]
  },
@@ -528,7 +528,7 @@
   "key": "{n} more due",
   "one": "{n} more due",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:161"
+   "src/app/(tabs)/(fleet)/index.tsx:180"
   ]
  },
  {
@@ -797,7 +797,7 @@
   "key": "{n} stations",
   "one": "{n} station",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:44"
+   "src/app/(tabs)/(fleet)/index.tsx:48"
   ]
  },
  {
@@ -856,7 +856,7 @@
   "where": [
    "src/app/(tabs)/(fleet)/bulk.tsx:289",
    "src/app/(tabs)/(fleet)/bulk.tsx:309",
-   "src/app/(tabs)/(fleet)/index.tsx:60",
+   "src/app/(tabs)/(fleet)/index.tsx:64",
    "src/app/(tabs)/(people)/people.tsx:124",
    "src/app/(tabs)/(people)/people.tsx:158",
    "src/components/routines.tsx:63"
@@ -911,6 +911,14 @@
   ]
  },
  {
+  "id": "58c0ef56",
+  "key": "{n} vans match",
+  "one": "{n} van matches",
+  "where": [
+   "src/app/(tabs)/(fleet)/index.tsx:82"
+  ]
+ },
+ {
   "id": "fdc3d8d6",
   "key": "{n} walk-arounds",
   "one": "{n} walk-around",
@@ -924,7 +932,7 @@
   "key": "{n} warning lights",
   "one": "{n} warning light",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:158"
+   "src/app/(tabs)/(fleet)/index.tsx:177"
   ]
  },
  {
@@ -2396,8 +2404,8 @@
   "key": "Add vehicle",
   "where": [
    "src/app/(tabs)/(fleet)/add.tsx:145",
-   "src/app/(tabs)/(fleet)/index.tsx:119",
-   "src/app/(tabs)/(fleet)/index.tsx:62",
+   "src/app/(tabs)/(fleet)/index.tsx:138",
+   "src/app/(tabs)/(fleet)/index.tsx:66",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:45"
   ]
  },
@@ -2595,7 +2603,7 @@
   "id": "b3d07d2c",
   "key": "All ({n})",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:103"
+   "src/app/(tabs)/(fleet)/index.tsx:122"
   ]
  },
  {
@@ -2665,7 +2673,7 @@
   "id": "19238dd3",
   "key": "All stations",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:68",
+   "src/app/(tabs)/(fleet)/index.tsx:87",
    "src/app/(tabs)/(table)/data.tsx:147"
   ]
  },
@@ -2702,7 +2710,7 @@
   "id": "cbd211d6",
   "key": "Allow camera access in Settings to record the video.",
   "where": [
-   "src/components/recorder.tsx:64",
+   "src/components/recorder.tsx:83",
    "src/components/video.tsx:74"
   ]
  },
@@ -3433,8 +3441,9 @@
    "src/components/history.tsx:206",
    "src/components/history.tsx:250",
    "src/components/offers.tsx:180",
-   "src/components/recorder.tsx:65",
+   "src/components/recorder.tsx:106",
    "src/components/recorder.tsx:84",
+   "src/components/recorder.tsx:96",
    "src/components/routines.tsx:145",
    "src/components/routines.tsx:309",
    "src/components/scanchoice.tsx:45",
@@ -4079,6 +4088,13 @@
   ]
  },
  {
+  "id": "67300d0f",
+  "key": "Clear search",
+  "where": [
+   "src/app/(tabs)/(fleet)/index.tsx:76"
+  ]
+ },
+ {
   "id": "bbfa773e",
   "key": "Close",
   "where": [
@@ -4138,7 +4154,7 @@
   "id": "9144def0",
   "key": "Close-ups pending",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:156",
+   "src/app/(tabs)/(fleet)/index.tsx:175",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:296",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:224",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:278"
@@ -4781,7 +4797,7 @@
   "key": "damage",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:26",
-   "src/lib/damage.ts:139"
+   "src/lib/damage.ts:140"
   ]
  },
  {
@@ -5424,7 +5440,7 @@
   "id": "3d71a25d",
   "key": "Drop off",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:90",
+   "src/app/(tabs)/(fleet)/index.tsx:109",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:194"
   ]
  },
@@ -6116,7 +6132,7 @@
   "id": "b02c659d",
   "key": "Every van has a driver.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:110"
+   "src/app/(tabs)/(fleet)/index.tsx:129"
   ]
  },
  {
@@ -6231,7 +6247,7 @@
   "id": "9eef175e",
   "key": "Film once around the van: start at the front, walk slowly round with the whole side in view, end at the front. 20 to 60 seconds.",
   "where": [
-   "src/components/recorder.tsx:77",
+   "src/components/recorder.tsx:99",
    "src/components/video.tsx:89"
   ]
  },
@@ -6418,7 +6434,7 @@
   "id": "e1991511",
   "key": "Fleet",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:59",
+   "src/app/(tabs)/(fleet)/index.tsx:63",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/_layout.tsx:23",
    "src/app/(tabs)/_layout.tsx:73"
   ]
@@ -6755,9 +6771,9 @@
   "id": "75f52718",
   "key": "Free",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:147",
-   "src/app/(tabs)/(fleet)/index.tsx:151",
-   "src/app/(tabs)/(fleet)/index.tsx:154",
+   "src/app/(tabs)/(fleet)/index.tsx:166",
+   "src/app/(tabs)/(fleet)/index.tsx:170",
+   "src/app/(tabs)/(fleet)/index.tsx:173",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:190",
    "src/components/history.tsx:243",
    "src/components/history.tsx:245"
@@ -6767,7 +6783,7 @@
   "id": "e12e759b",
   "key": "Free ({n})",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:104"
+   "src/app/(tabs)/(fleet)/index.tsx:123"
   ]
  },
  {
@@ -7631,7 +7647,7 @@
   "id": "20716e92",
   "key": "In use",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:154"
+   "src/app/(tabs)/(fleet)/index.tsx:173"
   ]
  },
  {
@@ -7830,7 +7846,7 @@
   "id": "445f6bf2",
   "key": "Keep filming: at least {n} seconds.",
   "where": [
-   "src/components/recorder.tsx:82"
+   "src/components/recorder.tsx:104"
   ]
  },
  {
@@ -8085,14 +8101,14 @@
   "id": "3f26ee1e",
   "key": "Last walk-around {when}",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:149"
+   "src/app/(tabs)/(fleet)/index.tsx:168"
   ]
  },
  {
   "id": "a7ba28a5",
   "key": "Last walk-around {when}, by {name}",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:149"
+   "src/app/(tabs)/(fleet)/index.tsx:168"
   ]
  },
  {
@@ -9665,7 +9681,7 @@
   "id": "e2d281e8",
   "key": "No km yet",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:145"
+   "src/app/(tabs)/(fleet)/index.tsx:164"
   ]
  },
  {
@@ -9850,7 +9866,14 @@
   "id": "3104ed6c",
   "key": "No van has a driver yet. Open a van to give it to one.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:110"
+   "src/app/(tabs)/(fleet)/index.tsx:129"
+  ]
+ },
+ {
+  "id": "4a44b35d",
+  "key": "No van matches {q}.",
+  "where": [
+   "src/app/(tabs)/(fleet)/index.tsx:82"
   ]
  },
  {
@@ -9871,14 +9894,14 @@
   "id": "c8ec2a70",
   "key": "No vans at {stations} yet. Your fleet manager adds them.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:124"
+   "src/app/(tabs)/(fleet)/index.tsx:143"
   ]
  },
  {
   "id": "a9263a62",
   "key": "No vans here yet. Add one by scanning it or picking its type. Each van keeps its own photo frames, walk-arounds and damage record.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:117"
+   "src/app/(tabs)/(fleet)/index.tsx:136"
   ]
  },
  {
@@ -9900,7 +9923,7 @@
   "id": "b4a5a8e3",
   "key": "No walk-around yet",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:149"
+   "src/app/(tabs)/(fleet)/index.tsx:168"
   ]
  },
  {
@@ -10307,7 +10330,7 @@
   "id": "7f420221",
   "key": "Nothing here.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:110"
+   "src/app/(tabs)/(fleet)/index.tsx:129"
   ]
  },
  {
@@ -11817,7 +11840,7 @@
   "id": "41b66719",
   "key": "Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:96"
+   "src/app/(tabs)/(fleet)/index.tsx:115"
   ]
  },
  {
@@ -12745,7 +12768,7 @@
   "id": "37d1213e",
   "key": "Retired",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:152",
+   "src/app/(tabs)/(fleet)/index.tsx:171",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:165"
   ]
  },
@@ -12753,7 +12776,7 @@
   "id": "e30baeef",
   "key": "Retired ({n})",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:106"
+   "src/app/(tabs)/(fleet)/index.tsx:125"
   ]
  },
  {
@@ -13441,6 +13464,20 @@
   "key": "scuff",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:459"
+  ]
+ },
+ {
+  "id": "30c8e3bd",
+  "key": "Search by plate or fleet number",
+  "where": [
+   "src/app/(tabs)/(fleet)/index.tsx:72"
+  ]
+ },
+ {
+  "id": "6c858556",
+  "key": "Search vans",
+  "where": [
+   "src/app/(tabs)/(fleet)/index.tsx:73"
   ]
  },
  {
@@ -14147,7 +14184,7 @@
   "id": "e92d02d3",
   "key": "Start recording",
   "where": [
-   "src/components/recorder.tsx:85"
+   "src/components/recorder.tsx:107"
   ]
  },
  {
@@ -14365,7 +14402,7 @@
   "id": "ee0d9dc8",
   "key": "Stop recording",
   "where": [
-   "src/components/recorder.tsx:85"
+   "src/components/recorder.tsx:107"
   ]
  },
  {
@@ -14923,7 +14960,7 @@
   "id": "ea9239c7",
   "key": "Test mode, saved on this phone",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:43"
+   "src/app/(tabs)/(fleet)/index.tsx:47"
   ]
  },
  {
@@ -15262,8 +15299,8 @@
   "key": "The camera couldn't start.",
   "where": [
    "src/app/scan/[id].tsx:304",
-   "src/components/recorder.tsx:55",
-   "src/components/recorder.tsx:73"
+   "src/components/recorder.tsx:69",
+   "src/components/recorder.tsx:92"
   ]
  },
  {
@@ -17872,7 +17909,7 @@
   "id": "2b424361",
   "key": "Upload your fleet list",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:120"
+   "src/app/(tabs)/(fleet)/index.tsx:139"
   ]
  },
  {
@@ -18082,7 +18119,7 @@
   "key": "Vans",
   "where": [
    "src/app/(tabs)/(fleet)/bulk.tsx:324",
-   "src/app/(tabs)/(fleet)/index.tsx:59",
+   "src/app/(tabs)/(fleet)/index.tsx:63",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:105",
    "src/app/(tabs)/(table)/data.tsx:121",
    "src/app/(tabs)/(table)/data.tsx:166",
@@ -18278,7 +18315,7 @@
   "id": "ab1ff8cb",
   "key": "Waiting for review",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:155",
+   "src/app/(tabs)/(fleet)/index.tsx:174",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:296",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/person/[uid].tsx:224",
    "src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx:278"
@@ -18812,7 +18849,7 @@
   "id": "0a81e4d4",
   "key": "With a driver ({n})",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:105"
+   "src/app/(tabs)/(fleet)/index.tsx:124"
   ]
  },
  {
@@ -19286,14 +19323,14 @@
   "id": "4f5672b4",
   "key": "You're signed in as {role} but not at a station yet. Ask your fleet manager to add you to one.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:125"
+   "src/app/(tabs)/(fleet)/index.tsx:144"
   ]
  },
  {
   "id": "6bf6957d",
   "key": "You're viewing {company} as the app creator.",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:64"
+   "src/app/(tabs)/(fleet)/index.tsx:83"
   ]
  },
  {
@@ -19516,7 +19553,7 @@
   "id": "df675083",
   "key": "Your own van history",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:99"
+   "src/app/(tabs)/(fleet)/index.tsx:118"
   ]
  },
  {
@@ -19554,7 +19591,7 @@
   "id": "3cd06e57",
   "key": "Your record, tours and vans",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:99"
+   "src/app/(tabs)/(fleet)/index.tsx:118"
   ]
  },
  {
@@ -19599,8 +19636,8 @@
   "id": "7d286166",
   "key": "Your van",
   "where": [
-   "src/app/(tabs)/(fleet)/index.tsx:153",
-   "src/app/(tabs)/(fleet)/index.tsx:84"
+   "src/app/(tabs)/(fleet)/index.tsx:103",
+   "src/app/(tabs)/(fleet)/index.tsx:172"
   ]
  },
  {
