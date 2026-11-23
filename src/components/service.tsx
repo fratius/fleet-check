@@ -248,6 +248,8 @@ function ServiceForm({ v, kind, rec, appt, onDone, onCancel }: { v: Vehicle; kin
     const dayV = (rDay as { value: unknown }).value as string | null, kmV = (rKm as { value: unknown }).value as number | null;
     if (kind === 'other' && name.trim().length < 2) { setErr(t('Say what was done.')); return; }
     if (!dayV) { setErr(t('Enter the day it was done, like 31.03.2027.')); return; }
+    // Typed as well as picked: no future day (blind QA, PR #47). The server allows a day ahead for time zones.
+    if (dayV > today()) { setErr(t('The day can\'t be in the future.')); return; }
     if (kmV == null) { setErr(t('Enter the van\'s km.')); return; }
     if (kind === 'hu' && !result) { setErr(t('Choose how the TÜV went.')); return; }
     // Far fewer km than the van already had on or before that day is a typo (the server refuses it too).

@@ -100,6 +100,7 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
   const save = async () => {
     const d = parseDay(day);
     if (!d) { setErr(t('Enter the day like 22.10.2026.')); return; }
+    if (d > today()) { setErr(t('The day can\'t be in the future.')); return; }
     if (!ok && !note.trim()) { setErr(t('Say what the problem is.')); return; }
     setBusy(true); setErr(null);
     try {
@@ -201,6 +202,7 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
   const otherDriver = at && vehicleId ? whoHad(s.assignments, vehicleId, at).at : null;
   const save = async () => {
     if (!d) { setErr(t('Enter the day like 22.10.2026.')); return; }
+    if (d > today()) { setErr(t('The day can\'t be in the future.')); return; }
     if (time && !/^\d{1,2}:\d{2}$/.test(time.trim())) { setErr(t('Enter the time like 14:30, or leave it empty.')); return; }
     setBusy(true); setErr(null);
     const van = vans.find((v) => v.id === vehicleId) || s.vehicles.find((v) => v.id === vehicleId);

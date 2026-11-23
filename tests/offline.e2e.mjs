@@ -615,12 +615,13 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
   await page.getByRole('button', { name: 'Pick a time: Time' }).click();
   await page.getByRole('button', { name: 'Hours 14' }).click();
   assert.equal(await page.getByRole('button', { name: 'Minutes 37' }).count(), 0, '5-minute steps');
-  await button(page, 'Cancel').click();
+  // The pop-up's Cancel (the form below has one too).
+  await page.getByRole('button', { name: 'Cancel', exact: true }).last().click();
   assert.equal(await time.inputValue(), '09:30');
   await page.getByRole('button', { name: 'Pick a time: Time' }).click();
   await page.getByRole('button', { name: 'Hours 14' }).click();
   await page.getByRole('button', { name: 'Minutes 45' }).click();
-  await button(page, 'Done').click();
+  await page.getByRole('button', { name: 'Done', exact: true }).last().click();
   assert.equal(await time.inputValue(), '14:45');
 
   await page.locator('[role=button] >> text="Tyres" >> visible=true').first().click();
@@ -638,6 +639,16 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
   await page.getByRole('button', { name: 'Pick a day: Day it was done' }).click();
   assert.equal(await page.getByRole('button', { name: 'Next month' }).getAttribute('aria-disabled'), 'true');
   await button(page, 'Today').click();
-  assert.equal(await page.getByRole('textbox', { name: 'Day it was done', exact: true }).inputValue(), new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+  const doneDay = page.getByRole('textbox', { name: 'Day it was done', exact: true });
+  assert.equal(await doneDay.inputValue(), new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+  // Typed instead of picked, a future day is refused too (blind QA, PR #47, F02).
+  const tomorrow = new Date(Date.now() + 86400_000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  await doneDay.fill('');
+  await doneDay.pressSequentially(tomorrow.replace(/\./g, ''));
+  assert.equal(await doneDay.inputValue(), tomorrow);
+  await page.getByRole('textbox', { name: 'Odometer (km)', exact: true }).fill('12000');
+  await button(page, 'Save').click();
+  await visible(page, 'The day can\'t be in the future.').waitFor({ timeout: 10_000 });
+  assert.equal((await db.collection(`orgs/${ORG_A}/services`).where('vehicleId', '==', 'onlineVan1').get()).size, 0);
   await ctx.close();
 });
