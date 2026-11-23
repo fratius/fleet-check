@@ -9,6 +9,8 @@ import { execFileSync } from 'node:child_process';
 const ROOT = new URL('..', import.meta.url).pathname;
 const code = process.argv[2];
 if (!/^[a-z]{2,3}$/.test(code || '')) { console.error('Usage: node scripts/i18n-merge.mjs <code>'); process.exit(1); }
+// i18n/keys.json isn't committed: make it from the code now, so the ids match what the code shows today.
+execFileSync('node', [join(ROOT, 'scripts/i18n.mjs')], { stdio: 'ignore' });
 const keys = JSON.parse(readFileSync(join(ROOT, 'i18n/keys.json'), 'utf8'));
 const byId = new Map(keys.map((k) => [k.id, k.key]));
 const outDir = join(ROOT, 'i18n/out');

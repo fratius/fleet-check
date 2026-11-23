@@ -9,7 +9,7 @@ drivers who open the link. The tone is plain, confident marketing: short sentenc
 
 - `i18n/site-keys.json`: every English text of the page (`key`), with an id and `where` (`page` = text on the
   page, `attribute …` = a screen-reader label or placeholder, `script` = drawn by the page's script).
-  Made by `node scripts/site-i18n.mjs`.
+  Made by `node scripts/site-i18n.mjs`; not committed.
 - Output: `website/i18n/<code>.json`, one object `{ "English key": "translation", ... }` with every key.
 - Check: `node scripts/site-i18n.mjs` lists what each language misses; `--strict` (CI) fails when a translation
   loses or invents a `{placeholder}`. Missing texts show in English until translated.
