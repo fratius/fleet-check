@@ -389,6 +389,7 @@
  "Choose whether drivers see it.": "Alege dacă șoferii o văd.",
  "Choose your station.": "Alege stația ta.",
  "Classes": "Categorii",
+ "Clear search": "Șterge căutarea",
  "Close": "Închide",
  "Close it (not finished)": "Închide (nefinalizat)",
  "Close {name}'s purchase for {van}": "Închide achiziția: {name}, {van}",
@@ -1228,6 +1229,7 @@
  "No type scans yet. Add a vehicle and tap Identify the type.": "Încă nicio scanare de tip. Adaugă un vehicul și atinge Identifică tipul.",
  "No van": "Fără dubă",
  "No van has a driver yet. Open a van to give it to one.": "Încă nicio dubă nu are șofer. Deschide o dubă ca s-o dai unui șofer.",
+ "No van matches {q}.": "Nicio dubă nu corespunde cu {q}.",
  "No van yet.": "Încă nicio dubă.",
  "No vans at {stations} yet. Your fleet manager adds them.": "Încă nicio dubă la {stations}. Managerul de flotă le adaugă.",
  "No vans at {station}.": "Nicio dubă la {station}.",
@@ -1246,6 +1248,7 @@
  "Nobody had {van} then.": "Nimeni nu avea {van} atunci.",
  "Nobody has had this van yet.": "Nimeni nu a avut încă această dubă.",
  "Nobody has this van.": "Nimeni nu are această dubă.",
+ "Nobody matches {q}.": "Nimeni nu corespunde cu {q}.",
  "Nobody to call is on record for this station. Call the office.": "Nu e înregistrat nimeni de sunat pentru această stație. Sună la birou.",
  "Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.": "Nimeni n-a făcut prim-planuri în 30 de minute, așa că zonele găsite de AI au ajuns la managerul tău de flotă fără ele.",
  "Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.": "Nimeni n-a făcut prim-planuri în 30 de minute, așa că zonele au ajuns la managerul tău de flotă fără ele.",
@@ -1730,6 +1733,10 @@
  "Scan it": "Scaneaz-o",
  "Scan it and the app picks its type, or pick the type yourself.": "Scaneaz-o și aplicația îi alege tipul sau alege tu tipul.",
  "Scan with photos or a video?": "Scanezi cu fotografii sau cu videoclip?",
+ "Search by name, Transporter ID or phone": "Caută după nume, Transporter ID sau telefon",
+ "Search by plate or fleet number": "Caută după număr de înmatriculare sau număr de flotă",
+ "Search people": "Caută persoane",
+ "Search vans": "Caută dube",
  "Second look": "A doua privire",
  "Second look, per photo checked": "A doua privire, pe fotografie verificată",
  "See all deadlines": "Vezi toate termenele",
@@ -3096,6 +3103,11 @@
   "few": "{n} persoane",
   "other": "{n} de persoane"
  },
+ "{n} people match": {
+  "one": "{n} persoană găsită",
+  "few": "{n} persoane găsite",
+  "other": "{n} de persoane găsite"
+ },
  "{n} per walk-around": "{n} pe inspecție",
  "{n} photo sets from the library aren't counted here.": {
   "one": "{n} set de fotografii din galerie nu este numărat aici.",
@@ -3276,6 +3288,11 @@
   "one": "{n} dubă în listă",
   "few": "{n} dube în listă",
   "other": "{n} de dube în listă"
+ },
+ "{n} vans match": {
+  "one": "{n} dubă găsită",
+  "few": "{n} dube găsite",
+  "other": "{n} de dube găsite"
  },
  "{n} walk-arounds": {
   "one": "{n} inspecție",

@@ -76,6 +76,7 @@ aa959e4f	{n} new van is ticked: untick some, or choose a bigger plan. || {n} new
 4311d112	{n} of {max} used
 40e10ce6	{n} open link || {n} open links	[people.tsx]
 fe1c91a0	{n} person || {n} people	[people.tsx]
+4b691c9c	{n} person matches || {n} people match	[people.tsx]
 2be0554f	{n} per walk-around	[log.tsx]
 01be2036	{n} photo set from the library isn't counted here. || {n} photo sets from the library aren't counted here.
 8525f940	{n} photo || {n} photos	[check/[id].tsx, vehicle/[id].tsx, log.tsx]
@@ -113,6 +114,7 @@ a8f99025	{n} unclear || {n} unclear	[log.tsx]
 6c669603	{n} van is at another station and was left as it is. || {n} vans are at another station and were left as they are.
 13014f49	{n} van filled in || {n} vans filled in
 e3f01f8c	{n} van in the list || {n} vans in the list
+58c0ef56	{n} van matches || {n} vans match	[index.tsx]
 fdc3d8d6	{n} walk-around || {n} walk-arounds	[components/history.tsx]
 f492256d	{n} warning light || {n} warning lights	[index.tsx]
 a5da18e3	{name} (left)	[data.tsx]
@@ -566,6 +568,7 @@ c188d811	Choose when to be reminded.
 05f0a056	Choose whether drivers see it.
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
+67300d0f	Clear search	[components/ui.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
 0e056a7b	Close {name}'s purchase for {van}
 85a2ce1c	Close it (not finished)
@@ -1369,6 +1372,7 @@ b675b026	No station	[lib/session.tsx]
 51e2a023	No type scans yet. Add a vehicle and tap Identify the type.
 d0edf678	No van	[person/[uid].tsx, people.tsx, components/history.tsx]
 3104ed6c	No van has a driver yet. Open a van to give it to one.
+4a44b35d	No van matches {q}.
 8fea8db6	No van yet.	[person/[uid].tsx]
 c17279ab	No vans at {station}.
 c8ec2a70	No vans at {stations} yet. Your fleet manager adds them.
@@ -1387,6 +1391,7 @@ d265ea75	No, wrong	[add.tsx]
 aa87cace	Nobody had the van in that time.
 062f9311	Nobody has had this van yet.
 60c394e6	Nobody has this van.
+2ac03c44	Nobody matches {q}.	[people.tsx]
 3467126e	Nobody to call is on record for this station. Call the office.
 92e8d88f	Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.
 3050576d	Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.
@@ -1853,6 +1858,10 @@ ca8717a6	Scan with photos or a video?
 758a7660	scans	[log.tsx]
 ffdf8c66	scratch	[check/[id].tsx]
 f5c117f0	scuff	[check/[id].tsx]
+2485b6c3	Search by name, Transporter ID or phone
+30c8e3bd	Search by plate or fleet number
+b565ea6b	Search people	[people.tsx]
+6c858556	Search vans	[index.tsx]
 1618025d	Second look	[check/[id].tsx, log.tsx]
 3f00bcee	Second look, per photo checked
 6b7c6eda	See {company} exactly as a fleet owner, fleet manager or driver does: the same screens and the same access, checked by the server. Only the app creator has this switch.

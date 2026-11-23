@@ -377,6 +377,7 @@
  "Choose whether drivers see it.": "Wähle, ob Fahrer ihn sehen.",
  "Choose your station.": "Wähle deine Station.",
  "Classes": "Klassen",
+ "Clear search": "Suche leeren",
  "Close": "Schließen",
  "Close it (not finished)": "Schließen (nicht abgeschlossen)",
  "Close {name}'s purchase for {van}": "Kauf von {name} für {van} schließen",
@@ -1199,6 +1200,7 @@
  "No type scans yet. Add a vehicle and tap Identify the type.": "Noch keine Typ-Scans. Füge ein Fahrzeug hinzu und tippe auf „Typ erkennen“.",
  "No van": "Kein Transporter",
  "No van has a driver yet. Open a van to give it to one.": "Noch kein Transporter hat einen Fahrer. Öffne einen Transporter, um ihn jemandem zu übergeben.",
+ "No van matches {q}.": "Kein Transporter passt zu {q}.",
  "No van yet.": "Noch kein Transporter.",
  "No vans at {stations} yet. Your fleet manager adds them.": "Noch keine Transporter bei {stations}. Dein Flottenmanager fügt sie hinzu.",
  "No vans at {station}.": "Keine Transporter bei {station}.",
@@ -1217,6 +1219,7 @@
  "Nobody had {van} then.": "Niemand hatte {van} zu der Zeit.",
  "Nobody has had this van yet.": "Noch niemand hatte diesen Transporter.",
  "Nobody has this van.": "Niemand hat diesen Transporter.",
+ "Nobody matches {q}.": "Niemand passt zu {q}.",
  "Nobody to call is on record for this station. Call the office.": "Für diese Station ist niemand zum Anrufen hinterlegt. Ruf im Büro an.",
  "Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.": "Niemand hat innerhalb von 30 Minuten Nahaufnahmen gemacht, deshalb gingen die Stellen, die die KI gefunden hat, ohne sie an deinen Flottenmanager.",
  "Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.": "Niemand hat innerhalb von 30 Minuten Nahaufnahmen gemacht, deshalb gingen die Stellen ohne sie an deinen Flottenmanager.",
@@ -1689,6 +1692,10 @@
  "Scan it": "Scannen",
  "Scan it and the app picks its type, or pick the type yourself.": "Scanne das Fahrzeug, dann erkennt die App den Typ, oder wähle ihn selbst.",
  "Scan with photos or a video?": "Mit Fotos oder Video scannen?",
+ "Search by name, Transporter ID or phone": "Nach Name, Transporter ID oder Telefon suchen",
+ "Search by plate or fleet number": "Nach Kennzeichen oder Fahrzeugnummer suchen",
+ "Search people": "Personen suchen",
+ "Search vans": "Transporter suchen",
  "Second look": "Zweiter Blick",
  "Second look, per photo checked": "Zweiter Blick, pro geprüftem Foto",
  "See all deadlines": "Alle Fristen ansehen",
@@ -2985,6 +2992,10 @@
   "one": "{n} Person",
   "other": "{n} Personen"
  },
+ "{n} people match": {
+  "one": "{n} Person passt",
+  "other": "{n} Personen passen"
+ },
  "{n} per walk-around": "{n} pro Rundgang",
  "{n} photo sets from the library aren't counted here.": {
   "one": "{n} Fotosatz aus der Galerie wird hier nicht gezählt.",
@@ -3129,6 +3140,10 @@
  "{n} vans in the list": {
   "one": "{n} Transporter in der Liste",
   "other": "{n} Transporter in der Liste"
+ },
+ "{n} vans match": {
+  "one": "{n} Transporter passt",
+  "other": "{n} Transporter passen"
  },
  "{n} walk-arounds": {
   "one": "{n} Rundgang",

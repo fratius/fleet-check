@@ -110,6 +110,13 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - LIMIT 3.14 On the test system the AI's reading of a file is made up (0.2): any CSV or Excel file gets the same
   column layout (A plate, B own name, C station, D make and model, E VIN, F TÜV, G monthly rate, H fuel, I driver),
   and a PDF or photo gets the same two vans. Judge the flow around it.
+- SHOULD 3.15 The Fleet page has a search box at the top. The list narrows with every character typed: a van shows
+  when what was typed appears in that order, without gaps, in its number plate or its own name or fleet number
+  ("314" finds B-DX 3141 and B-DX 1314, not M-AB 413). Spaces, dashes and capitals don't matter. It searches the
+  chosen station's vans, retired ones too; the ✕ clears it and the full list comes back.
+- SHOULD 3.16 People (owners and fleet managers) has a search box at the top that filters as you type: everyone they
+  can see whose name has what was typed in that order ("ana p" finds Ana Pop and Ioana Popescu; accents and capitals
+  don't matter), or whose Transporter ID or phone number has it. Drivers come first; ✕ brings back the page.
 
 ## 4. Drivers pick up and drop off vans themselves
 
