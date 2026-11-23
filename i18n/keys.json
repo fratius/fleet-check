@@ -466,7 +466,7 @@
   "key": "{n} frames",
   "one": "{n} frame",
   "where": [
-   "src/lib/frames.ts:650"
+   "src/lib/frames.ts:654"
   ]
  },
  {
@@ -3255,14 +3255,14 @@
   "id": "c2abb664",
   "key": "Both doors, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:364"
+   "src/lib/frames.ts:368"
   ]
  },
  {
   "id": "60781137",
   "key": "Both doors, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:364"
+   "src/lib/frames.ts:368"
   ]
  },
  {
@@ -4781,7 +4781,7 @@
   "key": "damage",
   "where": [
    "src/app/(tabs)/(fleet,review,people,table,log,me)/check/[id].tsx:26",
-   "src/lib/damage.ts:135"
+   "src/lib/damage.ts:139"
   ]
  },
  {
@@ -6917,7 +6917,7 @@
   "id": "dd19f988",
   "key": "Front",
   "where": [
-   "src/lib/frames.ts:327",
+   "src/lib/frames.ts:331",
    "src/lib/van3d.ts:346"
   ]
  },
@@ -6925,14 +6925,14 @@
   "id": "2ec943d6",
   "key": "Front left corner",
   "where": [
-   "src/lib/frames.ts:327"
+   "src/lib/frames.ts:331"
   ]
  },
  {
   "id": "794829ba",
   "key": "Front right corner",
   "where": [
-   "src/lib/frames.ts:327"
+   "src/lib/frames.ts:331"
   ]
  },
  {
@@ -8155,91 +8155,91 @@
   "id": "6fe8d725",
   "key": "Left box side, front half",
   "where": [
-   "src/lib/frames.ts:332"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "20c6f611",
   "key": "Left box side, rear half",
   "where": [
-   "src/lib/frames.ts:332"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "715cb160",
   "key": "Left cab door and front corner",
   "where": [
-   "src/lib/frames.ts:331"
+   "src/lib/frames.ts:335"
   ]
  },
  {
   "id": "2865c11f",
   "key": "Left cab door and wing",
   "where": [
-   "src/lib/frames.ts:329"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "61369bbb",
   "key": "Left cab doors and wing",
   "where": [
-   "src/lib/frames.ts:328"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "105fcc1c",
   "key": "Left cargo side panel",
   "where": [
-   "src/lib/frames.ts:330"
+   "src/lib/frames.ts:334"
   ]
  },
  {
   "id": "8c1865a1",
   "key": "Left cargo side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:329"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "e4064f9f",
   "key": "Left cargo side, front half",
   "where": [
-   "src/lib/frames.ts:332"
+   "src/lib/frames.ts:336"
   ]
  },
  {
   "id": "751c667d",
   "key": "Left cargo side, rear half",
   "where": [
-   "src/lib/frames.ts:331"
+   "src/lib/frames.ts:335"
   ]
  },
  {
   "id": "a75bfc94",
   "key": "Left front door and wing",
   "where": [
-   "src/lib/frames.ts:328"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "8c0867d2",
   "key": "Left load bed side",
   "where": [
-   "src/lib/frames.ts:328"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "f9c5a320",
   "key": "Left rear door and quarter",
   "where": [
-   "src/lib/frames.ts:328"
+   "src/lib/frames.ts:332"
   ]
  },
  {
   "id": "7ca1d80b",
   "key": "Left rear quarter",
   "where": [
-   "src/lib/frames.ts:331"
+   "src/lib/frames.ts:335"
   ]
  },
  {
@@ -8253,28 +8253,28 @@
   "id": "472f3e1a",
   "key": "Left sliding door",
   "where": [
-   "src/lib/frames.ts:330"
+   "src/lib/frames.ts:334"
   ]
  },
  {
   "id": "de6bb9b3",
   "key": "Left sliding door and rear quarter",
   "where": [
-   "src/lib/frames.ts:329"
+   "src/lib/frames.ts:333"
   ]
  },
  {
   "id": "39aed7a9",
   "key": "Left sliding door or side panel",
   "where": [
-   "src/lib/frames.ts:331"
+   "src/lib/frames.ts:335"
   ]
  },
  {
   "id": "8f24d5d1",
   "key": "Left sliding door or side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:330"
+   "src/lib/frames.ts:334"
   ]
  },
  {
@@ -8288,21 +8288,21 @@
   "id": "a2e420de",
   "key": "Left: no sliding door",
   "where": [
-   "src/lib/frames.ts:645"
+   "src/lib/frames.ts:649"
   ]
  },
  {
   "id": "8df12a33",
   "key": "Left: not seen",
   "where": [
-   "src/lib/frames.ts:645"
+   "src/lib/frames.ts:649"
   ]
  },
  {
   "id": "fd4b1d03",
   "key": "Left: sliding door",
   "where": [
-   "src/lib/frames.ts:645"
+   "src/lib/frames.ts:649"
   ]
  },
  {
@@ -11208,7 +11208,7 @@
   "id": "1d47dfde",
   "key": "Outline: {model}",
   "where": [
-   "src/lib/frames.ts:649"
+   "src/lib/frames.ts:653"
   ]
  },
  {
@@ -12147,7 +12147,7 @@
   "id": "5177429b",
   "key": "Raised roof",
   "where": [
-   "src/lib/frames.ts:642"
+   "src/lib/frames.ts:646"
   ]
  },
  {
@@ -12287,14 +12287,14 @@
   "id": "95c78766",
   "key": "Rear left corner",
   "where": [
-   "src/lib/frames.ts:327"
+   "src/lib/frames.ts:331"
   ]
  },
  {
   "id": "cb7adecf",
   "key": "Rear right corner",
   "where": [
-   "src/lib/frames.ts:327"
+   "src/lib/frames.ts:331"
   ]
  },
  {
@@ -12837,91 +12837,91 @@
   "id": "98864b88",
   "key": "Right box side, front half",
   "where": [
-   "src/lib/frames.ts:337"
+   "src/lib/frames.ts:341"
   ]
  },
  {
   "id": "6a662739",
   "key": "Right box side, rear half",
   "where": [
-   "src/lib/frames.ts:337"
+   "src/lib/frames.ts:341"
   ]
  },
  {
   "id": "609a9399",
   "key": "Right cab door and front corner",
   "where": [
-   "src/lib/frames.ts:336"
+   "src/lib/frames.ts:340"
   ]
  },
  {
   "id": "bd8d715b",
   "key": "Right cab door and wing",
   "where": [
-   "src/lib/frames.ts:334"
+   "src/lib/frames.ts:338"
   ]
  },
  {
   "id": "7030b8e5",
   "key": "Right cab doors and wing",
   "where": [
-   "src/lib/frames.ts:333"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "1efc5b90",
   "key": "Right cargo side panel",
   "where": [
-   "src/lib/frames.ts:335"
+   "src/lib/frames.ts:339"
   ]
  },
  {
   "id": "c85a71db",
   "key": "Right cargo side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:334"
+   "src/lib/frames.ts:338"
   ]
  },
  {
   "id": "dcfc3280",
   "key": "Right cargo side, front half",
   "where": [
-   "src/lib/frames.ts:337"
+   "src/lib/frames.ts:341"
   ]
  },
  {
   "id": "2debf30a",
   "key": "Right cargo side, rear half",
   "where": [
-   "src/lib/frames.ts:336"
+   "src/lib/frames.ts:340"
   ]
  },
  {
   "id": "abcda8fd",
   "key": "Right front door and wing",
   "where": [
-   "src/lib/frames.ts:333"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "de9f3f1c",
   "key": "Right load bed side",
   "where": [
-   "src/lib/frames.ts:333"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "b5b9fafa",
   "key": "Right rear door and quarter",
   "where": [
-   "src/lib/frames.ts:333"
+   "src/lib/frames.ts:337"
   ]
  },
  {
   "id": "7685d6a2",
   "key": "Right rear quarter",
   "where": [
-   "src/lib/frames.ts:336"
+   "src/lib/frames.ts:340"
   ]
  },
  {
@@ -12935,28 +12935,28 @@
   "id": "a0c0591b",
   "key": "Right sliding door",
   "where": [
-   "src/lib/frames.ts:335"
+   "src/lib/frames.ts:339"
   ]
  },
  {
   "id": "b82fab32",
   "key": "Right sliding door and rear quarter",
   "where": [
-   "src/lib/frames.ts:334"
+   "src/lib/frames.ts:338"
   ]
  },
  {
   "id": "13091385",
   "key": "Right sliding door or side panel",
   "where": [
-   "src/lib/frames.ts:336"
+   "src/lib/frames.ts:340"
   ]
  },
  {
   "id": "1e79097a",
   "key": "Right sliding door or side panel and rear quarter",
   "where": [
-   "src/lib/frames.ts:335"
+   "src/lib/frames.ts:339"
   ]
  },
  {
@@ -12979,21 +12979,21 @@
   "id": "c2d95f81",
   "key": "Right: no sliding door",
   "where": [
-   "src/lib/frames.ts:646"
+   "src/lib/frames.ts:650"
   ]
  },
  {
   "id": "96773df5",
   "key": "Right: not seen",
   "where": [
-   "src/lib/frames.ts:646"
+   "src/lib/frames.ts:650"
   ]
  },
  {
   "id": "6d7ddbdb",
   "key": "Right: sliding door",
   "where": [
-   "src/lib/frames.ts:646"
+   "src/lib/frames.ts:650"
   ]
  },
  {
@@ -13777,14 +13777,14 @@
   "id": "49234967",
   "key": "Shutter, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:362"
+   "src/lib/frames.ts:366"
   ]
  },
  {
   "id": "f2c394b1",
   "key": "Shutter, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:362"
+   "src/lib/frames.ts:366"
   ]
  },
  {
@@ -13887,14 +13887,14 @@
   "id": "710365b5",
   "key": "Sill to roof edge in frame. Keep the whole wheel arch in view.",
   "where": [
-   "src/lib/frames.ts:370"
+   "src/lib/frames.ts:374"
   ]
  },
  {
   "id": "7dae5bb7",
   "key": "Sill to roof edge in frame. Overlap the next frame a little.",
   "where": [
-   "src/lib/frames.ts:370"
+   "src/lib/frames.ts:374"
   ]
  },
  {
@@ -14096,14 +14096,14 @@
   "id": "5d79415d",
   "key": "Stand at an angle to the corner. Bumper corner in the middle, wheel arch in view.",
   "where": [
-   "src/lib/frames.ts:367"
+   "src/lib/frames.ts:371"
   ]
  },
  {
   "id": "0ca28021",
   "key": "Standard roof",
   "where": [
-   "src/lib/frames.ts:642"
+   "src/lib/frames.ts:646"
   ]
  },
  {
@@ -14505,28 +14505,28 @@
   "id": "581d5026",
   "key": "Tailgate, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:363"
+   "src/lib/frames.ts:367"
   ]
  },
  {
   "id": "8ad23ab6",
   "key": "Tailgate, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:363"
+   "src/lib/frames.ts:367"
   ]
  },
  {
   "id": "280edab5",
   "key": "Tailgate, rear window, bumper and lights in frame, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:361"
+   "src/lib/frames.ts:365"
   ]
  },
  {
   "id": "fb909170",
   "key": "Tailgate, rear window, bumper and lights in frame.",
   "where": [
-   "src/lib/frames.ts:361"
+   "src/lib/frames.ts:365"
   ]
  },
  {
@@ -18754,14 +18754,14 @@
   "id": "0f532b4e",
   "key": "Whole front in frame: bumper, grille, lights and windscreen, up to the roof edge.",
   "where": [
-   "src/lib/frames.ts:358"
+   "src/lib/frames.ts:362"
   ]
  },
  {
   "id": "e3ca5663",
   "key": "Whole front in frame: bumper, grille, lights and windscreen.",
   "where": [
-   "src/lib/frames.ts:358"
+   "src/lib/frames.ts:362"
   ]
  },
  {

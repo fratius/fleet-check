@@ -78,7 +78,7 @@ function onEnd(sp: Spec, pts: P2[], front: boolean, y: number, z: number): Pos {
  * photo position maps back to the drawing and from there to the body. (u, v) is 0..1 across and down the photo.
  */
 export function locateInFrame(sp: Spec, f: Frame, u: number, v: number): Pos {
-  if (sp.ver === 2) return locateSeen(sp, f, u, v);
+  if (sp.ver >= 2) return locateSeen(sp, f, u, v);
   const pts = profile(sp);
   const vb = fitBox(frameBox(sp, f), 3 / 4, OVERLAY_FILL);
   let X = vb[0] + u * vb[2];

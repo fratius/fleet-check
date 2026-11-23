@@ -165,7 +165,7 @@ export default function ScanScreen() {
     if (job) { outbox.retry(job.id); return; }
     setPhase('saving'); setSaveErr(null);
     const meta = { source: 'camera' as const, frames: frames.length, skipped: slots.filter((x) => x === 'skip').length, retakes, totalMs: totalMs.current,
-      ...(sp.ver === 2 ? { overlay: 2 as const } : {}) };
+      ...(sp.ver >= 2 ? { overlay: sp.ver as 2 | 3 } : {}) };
     if (s.mode !== 'firebase') {
       // Test mode: the photos stay on this phone as they are.
       setProgress(t('Saving'));

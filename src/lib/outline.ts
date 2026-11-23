@@ -1,11 +1,17 @@
 /**
- * The walk-around outlines in perspective (Spec.ver 2): a 3D line drawing of the van (body edges, wheel arches,
- * wheels, doors, windows, lights, grille, bumpers, mirrors) seen through a phone camera standing where the driver
- * stands for each frame. Lines on the far side of the van or hidden behind it are left out, so the outline looks
- * like the van in front of the camera, not like a flat drawing.
+ * The walk-around outlines in perspective (Spec.ver 2 and 3): the van seen through a phone camera standing where
+ * the driver stands for each frame.
+ *
+ * What is drawn (since ver 3, after the first photos from a real yard): one line round the van as the camera sees
+ * it (its silhouette, wheels included), and only the landmarks a driver lines up by: the windows, the lights and
+ * the wheels. No door seams, bumpers, plates, trims or ground lines: they never matched a real van closely enough
+ * and hid the van behind lines. The body has rounded corners seen from above (a real van is no box), which is
+ * what makes the corner views match.
  *
  * World coordinates are metres: x along the length (0 = front bumper), y up, z across (+ = the van's left side).
  * The picture is the portrait 3:4 camera box: u across (0..1), v down (0..1).
+ *
+ * The shapes and cameras of ver 2 stay as they were: photos taken with them are placed on the van by them.
  *
  * Only types come from frames.ts (it imports this file).
  */
@@ -31,11 +37,22 @@ const EYE_Y = 1.45;
 /** Share of the camera box the framed part of the van fills. */
 export const FILL = 0.82;
 
-/* ---------- the body as a solid: what hides what ---------- */
+/* ---------- the body as a solid ---------- */
 
-interface Solid { H: number; rows: number[][]; step: number; hw: (y: number) => number; front: (y: number) => number; rear: (y: number) => number }
+interface Solid {
+  H: number; rows: number[][]; step: number;
+  /** Half the width at height y; with x, also narrowed by the rounded corners near the front and rear. */
+  hw: (y: number, x?: number) => number;
+  front: (y: number) => number; rear: (y: number) => number;
+  /** Corner radius seen from above, front and rear (0 for ver 2), and where the body starts and ends. */
+  rf: number; rr: number; x0: number; x1: number;
+}
+/** How round the corners are seen from above, per body: front, rear (metres). */
+const ROUND: Record<string, [number, number]> = {
+  car: [0.45, 0.3], suv: [0.42, 0.25], pickup: [0.36, 0.1], compact: [0.34, 0.14], mid: [0.4, 0.16], large: [0.42, 0.12], step: [0.15, 0.06], box: [0.3, 0.04],
+};
 const solids = new WeakMap<Spec, Solid>();
-/** The van's body for hidden-line tests: the side profile pushed across its width (narrower above the windows). */
+/** The van's body: the side profile pushed across its width (narrower above the windows, rounded at the corners). */
 export function solid(sp: Spec): Solid {
   let s = solids.get(sp);
   if (s) return s;
@@ -51,11 +68,19 @@ export function solid(sp: Spec): Solid {
     }
     rows.push(xs.sort((p, q) => p - q));
   }
-  const W2 = sp.W / 2;
-  const hw = (y: number) => (y <= f.belt ? W2 : W2 * (1 - (1 - f.top) * clamp((y - f.belt) / Math.max(0.1, sp.H - f.belt), 0, 1)));
+  const W2 = sp.W / 2, x0 = Math.min(...pts.map((p) => p[0])), x1 = Math.max(...pts.map((p) => p[0]));
+  const [rf, rr] = sp.ver >= 3 ? ROUND[sp.body] || [0.3, 0.1] : [0, 0];
   const row = (y: number) => rows[clamp(Math.floor(y / step), 0, rows.length - 1)];
+  const base = (y: number) => (y <= f.belt ? W2 : W2 * (1 - (1 - f.top) * clamp((y - f.belt) / Math.max(0.1, sp.H - f.belt), 0, 1)));
+  // How much a quarter circle of radius R takes off the width, t metres into the corner.
+  const cut = (R: number, t: number) => (t <= 0 || R <= 0 ? 0 : R - Math.sqrt(Math.max(0, R * R - Math.min(t, R) ** 2)));
+  const hw = (y: number, x?: number) => {
+    const w = base(y);
+    if (x == null || (!rf && !rr)) return w;
+    return Math.max(w * 0.4, w - cut(rf, rf - (x - x0)) - cut(rr, rr - (x1 - x)));
+  };
   const front = (y: number) => row(y)[0] ?? 0, rear = (y: number) => { const r = row(y); return r[r.length - 1] ?? sp.L; };
-  s = { H, rows, step, hw, front, rear };
+  s = { H, rows, step, hw, front, rear, rf, rr, x0, x1 };
   solids.set(sp, s);
   return s;
 }
@@ -63,134 +88,63 @@ export function solid(sp: Spec): Solid {
 export function inside(s: Solid, p: V3, e = 0.012): boolean {
   const [x, y, z] = p;
   if (y <= e || y >= s.H - e) return false;
-  if (Math.abs(z) >= s.hw(y) - e) return false;
+  if (Math.abs(z) >= s.hw(y, x) - e) return false;
   const xs = s.rows[Math.floor(y / s.step)];
   if (!xs) return false;
   for (let i = 0; i + 1 < xs.length; i += 2) if (x > xs[i] + e && x < xs[i + 1] - e) return true;
   return false;
 }
+/** Where the front or rear surface is at height y, z across (it curves back round the corners). */
+function endX(S: Solid, front: boolean, y: number, z: number): number {
+  const R = front ? S.rf : S.rr, a = Math.abs(z) - (S.hw(y) - R);
+  const d = R <= 0 || a <= 0 ? 0 : R - Math.sqrt(Math.max(0, R * R - Math.min(a, R) ** 2));
+  return front ? Math.max(S.front(y), S.x0 + d) : Math.min(S.rear(y), S.x1 - d);
+}
 
-/* ---------- the line drawing ---------- */
+/* ---------- the landmarks: windows, lights, wheels ---------- */
 
-/** One line of the drawing: points, the normals of the surfaces it lies on (seen when any faces the camera), weight. */
-interface Ln { pts: V3[]; ns: V3[]; w: 0 | 1 | 2; dash?: boolean }
+/** One landmark line. `see`: from where it shows (a side's lines from that side, the front's from ahead of the van). */
+interface Ln { pts: V3[]; see: 'left' | 'right' | 'front' | 'rear' }
 
-const lines3 = new WeakMap<Spec, Ln[]>();
 /** Splits a polyline so no piece is longer than `d` (perspective bends what is straight in the drawing's plane). */
-function dense(pts: V3[], closed: boolean, d = 0.05): V3[] {
-  const src = closed ? [...pts, pts[0]] : pts, out: V3[] = [src[0]];
+function dense<T extends number[]>(pts: T[], closed: boolean, d = 0.05): T[] {
+  const src = closed ? [...pts, pts[0]] : pts, out: T[] = [src[0]];
   for (let i = 1; i < src.length; i++) {
-    const a = src[i - 1], b = src[i], k = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / d));
-    for (let j = 1; j <= k; j++) out.push(add(a, mul(sub(b, a), j / k)));
+    const a = src[i - 1], b = src[i], k = Math.max(1, Math.ceil(Math.hypot(...b.map((v, j) => v - a[j])) / d));
+    for (let j = 1; j <= k; j++) out.push(a.map((v, q) => v + ((b[q] - v) * j) / k) as T);
   }
   return out;
 }
-const circle = (cx: number, cy: number, z: number, r: number, k = 28): V3[] =>
-  Array.from({ length: k + 1 }, (_, i) => [cx + r * Math.cos((i / k) * Math.PI * 2), cy + r * Math.sin((i / k) * Math.PI * 2), z] as V3);
-
-export function lineModel(sp: Spec): Ln[] {
+const lines3 = new WeakMap<Spec, Ln[]>();
+function landmarks(sp: Spec): Ln[] {
   const cached = lines3.get(sp);
   if (cached) return cached;
-  const b = sp.b, x = b.x, S = solid(sp), pts = b.pts, n = pts.length;
-  const out: Ln[] = [];
-  const area = pts.reduce((a, p, i) => { const q = pts[(i + 1) % n]; return a + (p[0] * q[1] - q[0] * p[1]); }, 0);
-  const sgn = area > 0 ? 1 : -1;
-  const edgeN = pts.map((p, i) => { const q = pts[(i + 1) % n]; return norm([sgn * (q[1] - p[1]), -sgn * (q[0] - p[0]), 0]); });
-  const hw = S.hw;
-  // Body edges: the profile on each side, where the side meets the front, roof, rear and bottom.
+  const b = sp.b, x = b.x, S = solid(sp), out: Ln[] = [];
+  const onSide = (s: number, p: P2[]) =>
+    out.push({ pts: dense(p, true).map(([px, py]) => [px, py, s * (S.hw(py, px) + 0.006)] as V3), see: s > 0 ? 'left' : 'right' });
+  // Points are (z across, y up) on the front or rear surface.
+  const onEnd = (front: boolean, p: P2[]) =>
+    out.push({ pts: dense(p, true, 0.03).map(([pz, py]) => [endX(S, front, py, pz) + (front ? -0.006 : 0.006), py, pz] as V3), see: front ? 'front' : 'rear' });
+  const flip = (p: P2[]): P2[] => p.map(([z, y]) => [-z, y]);
   for (const s of [1, -1]) {
-    for (let i = 0; i < n; i++) {
-      const p = pts[i], q = pts[(i + 1) % n];
-      out.push({ pts: dense([[p[0], p[1], s * hw(p[1])], [q[0], q[1], s * hw(q[1])]], false), ns: [[0, 0, s], edgeN[i]], w: 0 });
-    }
-  }
-  // Creases across the width (top of the bumper, the bonnet's front edge, the windscreen's bottom and top, the roof's ends).
-  // Not round the wheel arches (their creases would cross the wheels).
-  const archR = x?.arch ?? b.r + 0.06;
-  const inArch = (p: P2) => p[1] <= b.r + archR + 0.01 && b.wheels.some((wx) => Math.abs(p[0] - wx) <= archR + 0.01);
-  for (let i = 0; i < n; i++) {
-    const a = edgeN[(i - 1 + n) % n], c = edgeN[i], p = pts[i];
-    if (inArch(p) || dot(a, c) > Math.cos((18 * Math.PI) / 180)) continue;
-    out.push({ pts: dense([[p[0], p[1], hw(p[1])], [p[0], p[1], -hw(p[1])]], false, 0.08), ns: [a, c], w: 1 });
-  }
-  const sideZ = (s: number, y: number) => s * (hw(y) + 0.005);
-  const onSide = (s: number, p: P2[], closed: boolean, w: 0 | 1 | 2, dash?: boolean) =>
-    out.push({ pts: dense(p.map(([px, py]) => [px, py, sideZ(s, py)] as V3), closed), ns: [[0, 0, s]], w, dash });
-  // The front and rear surfaces at height y (the profile's first and last crossing), and their outward normal there.
-  const endN = (front: boolean, y: number): V3 => {
-    for (let i = 0; i < n; i++) {
-      const p = pts[i], q = pts[(i + 1) % n];
-      if ((p[1] - y) * (q[1] - y) > 0 || p[1] === q[1]) continue;
-      const xx = p[0] + ((y - p[1]) / (q[1] - p[1])) * (q[0] - p[0]);
-      if (Math.abs(xx - (front ? S.front(y) : S.rear(y))) < 0.02) return edgeN[i];
-    }
-    return [front ? -1 : 1, 0, 0];
-  };
-  const onEnd = (front: boolean, p: P2[], closed: boolean, w: 0 | 1 | 2) => {
-    const d = dense(p.map(([pz, py]) => [0, py, pz] as V3), closed, 0.03)
-      .map(([, py, pz]) => [front ? S.front(py) - 0.006 : S.rear(py) + 0.006, py, pz] as V3);
-    const mid = d[Math.floor(d.length / 2)][1];
-    out.push({ pts: d, ns: [endN(front, mid)], w });
-  };
-  const mirrorZ = (p: P2[]): P2[] => p.map(([z, y]) => [-z, y]);
-
-  for (const s of [1, -1]) {
-    const side = s > 0 ? 'left' : 'right';
-    onSide(s, b.glass, true, 1);
-    (x?.seams ?? b.doors.map(([dx, dy]) => [[dx, b.sill + 0.04], [dx, dy]] as P2[])).forEach((sm) => onSide(s, sm, false, 1));
-    if (b.slide && sp.slide[side] !== 'no' && (sp.body === 'compact' || sp.body === 'mid' || sp.body === 'large')) {
-      const z = b.slide, y0 = b.sill + 0.06, c = 0.05;
-      onSide(s, [[z.x, y0], [z.x + z.w, y0], [z.x + z.w, z.top - c], [z.x + z.w - c, z.top], [z.x + c, z.top], [z.x, z.top - c]], true, 1, sp.slide[side] === 'unknown');
-      if (x?.rail && sp.slide[side] === 'yes') onSide(s, [[z.x + z.w + 0.02, x.rail], [sp.L - 0.3, x.rail]], false, 2);
-      if (x && sp.slide[side] === 'yes') onSide(s, [[z.x + 0.1, b.face.belt - 0.1], [z.x + 0.28, b.face.belt - 0.1]], false, 1);
-    }
-    if (x?.handle) onSide(s, [x.handle, [x.handle[0] + 0.18, x.handle[1]]], false, 1);
-    if (x) {
-      const [w0, w1] = [b.wheels[0], b.wheels[b.wheels.length - 1]];
-      const ext = (wx: number, y: number) => { const d = Math.sqrt(Math.max(0, x.arch * x.arch - (y - b.r) ** 2)); return [wx - d, wx + d]; };
-      if (x.trim != null) onSide(s, [[ext(w0, x.trim)[1], x.trim], [ext(w1, x.trim)[0], x.trim]], false, 2);
-      // Bumpers where they reach the side: from the nose to the front arch, from the rear arch to the back.
-      if (x.bumperTop < b.r + x.arch) onSide(s, [[S.front(x.bumperTop) + 0.01, x.bumperTop], [ext(w0, x.bumperTop)[0], x.bumperTop]], false, 1);
-      if (x.rearBumperTop < b.r + x.arch) onSide(s, [[ext(w1, x.rearBumperTop)[1], x.rearBumperTop], [S.rear(x.rearBumperTop) - 0.01, x.rearBumperTop]], false, 1);
-      if (x.lampSide) onSide(s, x.lampSide, true, 1);
-      const m = x.mirror;
-      if (m) {
-        const z0 = s * (hw(m.y0) + 0.03), z1 = s * (hw(m.y0) + m.out);
-        out.push({ pts: dense([[m.x0, m.y0, z0], [m.x0, m.y0, z1], [m.x0, m.y1, z1], [m.x0, m.y1, z0]], true, 0.03), ns: [[-1, 0, 0]], w: 1 });
-        out.push({ pts: dense([[m.x0, m.y0, z1], [m.x1, m.y0, z1], [m.x1, m.y1, z1], [m.x0, m.y1, z1]], true, 0.03), ns: [[0, 0, s]], w: 1 });
-      }
-    }
-    // Wheels: the tyre and the rim, just inside the body side.
-    b.wheels.forEach((wx) => {
-      const z = s * (sp.W / 2 - 0.03);
-      out.push({ pts: circle(wx, b.r, z, b.r), ns: [[0, 0, s]], w: 0 });
-      out.push({ pts: circle(wx, b.r, z + s * 0.01, b.r * 0.62, 22), ns: [[0, 0, s]], w: 2 });
-    });
+    onSide(s, b.glass);
+    if (x?.lampSide && !S.rf) onSide(s, x.lampSide);
+    b.wheels.forEach((wx) => out.push({
+      pts: Array.from({ length: 33 }, (_, i) => [wx + b.r * Math.cos((i / 32) * Math.PI * 2), b.r + b.r * Math.sin((i / 32) * Math.PI * 2), s * (sp.W / 2 - 0.03)] as V3),
+      see: s > 0 ? 'left' : 'right',
+    }));
   }
   if (x) {
-    const F = x.front, R = x.rear;
-    onEnd(true, F.lamp, true, 1); onEnd(true, mirrorZ(F.lamp), true, 1);
-    onEnd(true, F.grille, true, 1);
-    if (F.intake) onEnd(true, F.intake, true, 2);
-    onEnd(true, [[-0.26, F.plate - 0.055], [0.26, F.plate - 0.055], [0.26, F.plate + 0.055], [-0.26, F.plate + 0.055]], true, 2);
-    const [s0, s1] = F.screen, ya = s0 + 0.05, yb = s1 - 0.05;
-    onEnd(true, [[hw(ya) - 0.1, ya], [hw(yb) - 0.14, yb], [-(hw(yb) - 0.14), yb], [-(hw(ya) - 0.1), ya]], true, 1);
-    const [t0, t1, tw] = R.tail;
-    for (const s of [1, -1]) onEnd(false, [[s * (hw(t0) - 0.03), t0], [s * (hw(t0) - 0.03 - tw), t0], [s * (hw(t1) - 0.03 - tw), t1], [s * (hw(t1) - 0.03), t1]], true, 1);
-    const [d0, d1] = R.doors, dz = (y: number) => hw(y) - 0.06 - tw;
-    if (sp.rear === 'barn' || sp.rear === 'roller') {
-      onEnd(false, [[dz(d0), d0], [dz(d1), d1], [-dz(d1), d1], [-dz(d0), d0]], true, 1);
-      if (sp.rear === 'barn') onEnd(false, [[0, d0], [0, d1]], false, 1);
-      else for (let y = d0 + 0.25; y < d1 - 0.05; y += 0.25) onEnd(false, [[dz(y) - 0.02, y], [-dz(y) + 0.02, y]], false, 2);
-    } else if (sp.rear === 'tailgate') {
+    const F = x.front, hw = S.hw;
+    onEnd(true, F.lamp); onEnd(true, flip(F.lamp));
+    const ya = F.screen[0] + 0.05, yb = F.screen[1] - 0.05;
+    onEnd(true, [[hw(ya) - 0.1, ya], [hw(yb) - 0.14, yb], [-(hw(yb) - 0.14), yb], [-(hw(ya) - 0.1), ya]]);
+    const [t0, t1, tw] = x.rear.tail;
+    for (const s of [1, -1]) onEnd(false, [[s * (hw(t0) - 0.03), t0], [s * (hw(t0) - 0.03 - tw), t0], [s * (hw(t1) - 0.03 - tw), t1], [s * (hw(t1) - 0.03), t1]]);
+    if (b.face.rearKind === 'greenhouse') {
       const g0 = b.face.belt + 0.06, g1 = Math.min(sp.H - 0.08, b.face.glassTop);
-      if (b.face.rearKind === 'greenhouse') onEnd(false, [[hw(g0) - 0.16, g0], [hw(g1) - 0.18, g1], [-(hw(g1) - 0.18), g1], [-(hw(g0) - 0.16), g0]], true, 1);
-      onEnd(false, [[dz(d0), d0], [dz(d1), d1], [-dz(d1), d1], [-dz(d0), d0]], true, 2);
-    } else {
-      onEnd(false, [[dz(d0), d0], [dz(d1), d1], [-dz(d1), d1], [-dz(d0), d0]], true, 1);
+      onEnd(false, [[hw(g0) - 0.16, g0], [hw(g1) - 0.18, g1], [-(hw(g1) - 0.18), g1], [-(hw(g0) - 0.16), g0]]);
     }
-    onEnd(false, [[-hw(x.rearBumperTop) + 0.02, x.rearBumperTop], [hw(x.rearBumperTop) - 0.02, x.rearBumperTop]], false, 1);
-    onEnd(false, [[-0.26, R.plate - 0.055], [0.26, R.plate - 0.055], [0.26, R.plate + 0.055], [-0.26, R.plate + 0.055]], true, 2);
   }
   lines3.set(sp, out);
   return out;
@@ -239,7 +193,8 @@ function framed(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'corner'>): V
   } else {
     const front = f.corner === 'fl' || f.corner === 'fr', s = f.corner === 'fl' || f.corner === 'rl' ? 1 : -1;
     for (let y = 0.05; y < S.H; y += 0.05) out.push([front ? S.front(y) : S.rear(y), y, s * hw(y)], [front ? S.front(y) : S.rear(y), y, -s * hw(y) * 0.6]);
-    strip(front ? 0 : L - 2.4, front ? 2.4 : L, s);
+    const side = sp.ver >= 3 ? 2.8 : 2.4;
+    strip(front ? 0 : L - side, front ? side : L, s);
   }
   return out;
 }
@@ -286,20 +241,135 @@ export function frameCam(sp: Spec, f: Pick<Frame, 'kind' | 'side' | 'seg' | 'cor
 
 /* ---------- drawing ---------- */
 
-type Run = { d: string; w: 0 | 1 | 2; dash?: boolean };
+type Run = { d: string; w: 0 | 1 };
 const runsCache = new WeakMap<FrameCam, Run[]>();
-/** Visible runs of each line, projected into the 300 x 400 box (worked out once per frame: the camera screen redraws often). */
-function visibleRuns(sp: Spec, c: FrameCam): Run[] {
+/** The outline of a frame in the 300 x 400 box (worked out once per frame: the camera screen redraws often). */
+function runsOf(sp: Spec, c: FrameCam): Run[] {
   const hit = runsCache.get(c);
   if (hit) return hit;
-  const runs = findRuns(sp, c);
+  const runs = [...silhouette(sp, c).map((d) => ({ d, w: 0 as const })), ...landmarkRuns(sp, c)];
   runsCache.set(c, runs);
   return runs;
 }
-function findRuns(sp: Spec, c: FrameCam): Run[] {
+
+/** The picture is worked out on a grid a little larger than the box, so a van that runs past an edge closes outside it. */
+const GW = 162, GH = 216, MARGIN = 0.1;
+/**
+ * The line round the van as the camera sees it: the body's surface and the wheels are dotted onto a grid, and the
+ * edge of what they cover is traced and smoothed.
+ */
+function silhouette(sp: Spec, c: FrameCam): string[] {
+  const S = solid(sp), b = sp.b, mask = new Uint8Array(GW * GH);
+  const [ex, ey, ez] = c.eye, [fx, fy, fz] = c.fwd, [rx, ry, rz] = c.right, [ux, uy, uz] = c.up;
+  const ku = GW / (1 + 2 * MARGIN), kv = GH / (1 + 2 * MARGIN);
+  const put = (x: number, y: number, z: number) => {
+    const dx = x - ex, dy = y - ey, dz = z - ez, depth = dx * fx + dy * fy + dz * fz;
+    if (depth < 0.3) return;
+    const i = Math.floor((0.5 + (FX * (dx * rx + dy * ry + dz * rz)) / depth + c.du + MARGIN) * ku);
+    const j = Math.floor((0.5 - (FY * (dx * ux + dy * uy + dz * uz)) / depth + c.dv + MARGIN) * kv);
+    if (i < 1 || j < 1 || i > GW - 2 || j > GH - 2) return;
+    const o = j * GW + i;
+    mask[o - GW - 1] = mask[o - GW] = mask[o - GW + 1] = mask[o - 1] = mask[o] = mask[o + 1] = mask[o + GW - 1] = mask[o + GW] = mask[o + GW + 1] = 1;
+  };
+  const D = 0.03;
+  // The two sides.
+  for (let y = D / 2; y < S.H; y += D) {
+    const xs = S.rows[Math.floor(y / S.step)] || [];
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const n = Math.max(1, Math.ceil((xs[k + 1] - xs[k]) / D));
+      for (let q = 0; q <= n; q++) { const x = xs[k] + ((xs[k + 1] - xs[k]) * q) / n, w = S.hw(y, x); put(x, y, w); put(x, y, -w); }
+    }
+  }
+  // The rounded corners, along their curve.
+  for (const [R, xe, dir] of [[S.rf, S.x0, 1], [S.rr, S.x1, -1]] as const) {
+    if (R <= 0) continue;
+    const n = Math.ceil((R * Math.PI) / 2 / D);
+    for (let y = D / 2; y < S.H; y += D) {
+      const xs = S.rows[Math.floor(y / S.step)] || [];
+      if (!xs.length) continue;
+      const w = S.hw(y);
+      for (let q = 0; q <= n; q++) {
+        const phi = ((q / n) * Math.PI) / 2, x = xe + dir * R * (1 - Math.cos(phi)), z = w - R + R * Math.sin(phi);
+        if (x < xs[0] || x > xs[xs.length - 1]) continue;
+        put(x, y, z); put(x, y, -z);
+      }
+    }
+  }
+  // Front, bonnet, windscreen, roof and rear, across the width (the underside never shows).
+  const prof = dense(b.pts as P2[], true, D);
+  const area = b.pts.reduce((a, p, i) => { const q = b.pts[(i + 1) % b.pts.length]; return a + (p[0] * q[1] - q[0] * p[1]); }, 0);
+  for (let i = 0; i + 1 < prof.length; i++) {
+    const [x, y] = prof[i], ny = -(area > 0 ? 1 : -1) * (prof[i + 1][0] - x);
+    if (ny < -1e-6 && y < S.H * 0.5) continue;
+    const w = S.hw(y, x), n = Math.max(1, Math.ceil((2 * w) / D));
+    for (let q = 0; q <= n; q++) put(x, y, -w + (2 * w * q) / n);
+  }
+  // Wheels: the tread across its width and the outer face.
+  const steps = Math.ceil((2 * Math.PI * b.r) / D);
+  for (const wx of b.wheels) for (const s of [1, -1]) for (let k = 0; k < steps; k++) {
+    const co = Math.cos((k / steps) * Math.PI * 2), si = Math.sin((k / steps) * Math.PI * 2);
+    for (let t = 0; t <= 6; t++) put(wx + b.r * co, b.r + b.r * si, s * (sp.W / 2 - 0.03 - t * 0.035));
+    for (let q = 1; q < 5; q++) put(wx + b.r * co * (q / 5), b.r + b.r * si * (q / 5), s * (sp.W / 2 - 0.03));
+  }
+  // The edge of what is covered: steps between a covered and an empty cell, joined into loops (covered on the right hand).
+  const at = (i: number, j: number) => (i < 0 || j < 0 || i >= GW || j >= GH ? 0 : mask[j * GW + i]);
+  const next = new Map<number, number[]>(), V = GW + 1;
+  const edge = (a: number, bb: number) => { const l = next.get(a); if (l) l.push(bb); else next.set(a, [bb]); };
+  for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
+    if (!mask[j * GW + i]) continue;
+    if (!at(i, j - 1)) edge(j * V + i, j * V + i + 1);
+    if (!at(i + 1, j)) edge(j * V + i + 1, (j + 1) * V + i + 1);
+    if (!at(i, j + 1)) edge((j + 1) * V + i + 1, (j + 1) * V + i);
+    if (!at(i - 1, j)) edge((j + 1) * V + i, j * V + i);
+  }
+  const out: string[] = [];
+  for (const start of [...next.keys()]) {
+    let loop: P2[] = [], v = start;
+    for (let guard = 0; guard < 4 * GW * GH; guard++) {
+      const l = next.get(v);
+      if (!l || !l.length) break;
+      loop.push([v % V, Math.floor(v / V)]);
+      v = l.pop()!;
+      if (v === start) break;
+    }
+    if (loop.length < 12) continue;
+    const a2 = loop.reduce((a, p, i) => { const q = loop[(i + 1) % loop.length]; return a + (p[0] * q[1] - q[0] * p[1]); }, 0);
+    // Outer edges only (they run clockwise on the screen), and nothing smaller than a wheel.
+    if (a2 < 2 * 60) continue;
+    loop = smooth(simplify(loop, 1.1));
+    out.push('M' + loop.map(([i, j]) => `${r1((i / ku - MARGIN) * 300)} ${r1((j / kv - MARGIN) * 400)}`).join(' L') + ' Z');
+  }
+  return out;
+}
+/** Drops the points of a closed line that lie within `eps` of the line through their neighbours (Douglas-Peucker). */
+function simplify(loop: P2[], eps: number): P2[] {
+  // Cut the loop at its two points furthest apart on x, simplify both halves.
+  let lo = 0, hi = 0;
+  loop.forEach((p, i) => { if (p[0] < loop[lo][0]) lo = i; if (p[0] > loop[hi][0]) hi = i; });
+  const part = (a: number, b: number) => { const o: P2[] = []; for (let i = a; ; i = (i + 1) % loop.length) { o.push(loop[i]); if (i === b) break; } return o; };
+  const dp = (p: P2[]): P2[] => {
+    if (p.length < 3) return p;
+    const [ax, ay] = p[0], [bx, by] = p[p.length - 1], len = Math.hypot(bx - ax, by - ay) || 1;
+    let worst = 0, k = 0;
+    for (let i = 1; i < p.length - 1; i++) { const d = Math.abs((p[i][0] - ax) * (by - ay) - (p[i][1] - ay) * (bx - ax)) / len; if (d > worst) { worst = d; k = i; } }
+    return worst <= eps ? [p[0], p[p.length - 1]] : [...dp(p.slice(0, k + 1)).slice(0, -1), ...dp(p.slice(k))];
+  };
+  return [...dp(part(lo, hi)).slice(0, -1), ...dp(part(hi, lo)).slice(0, -1)];
+}
+/** Rounds the corners of a closed line (corner cutting, twice). */
+function smooth(loop: P2[]): P2[] {
+  for (let pass = 0; pass < 2; pass++) {
+    const o: P2[] = [];
+    loop.forEach((p, i) => { const q = loop[(i + 1) % loop.length]; o.push([p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25], [p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75]); });
+    loop = o;
+  }
+  return loop;
+}
+
+/** The landmarks the camera sees: windows, lights and wheels not hidden behind the body. */
+function landmarkRuns(sp: Spec, c: FrameCam): Run[] {
   const S = solid(sp), out: Run[] = [];
   const seen = (p: V3) => {
-    // Something of the body between the camera and the point hides it.
     const d = sub(p, c.eye), len = Math.hypot(d[0], d[1], d[2]), k = Math.max(4, Math.ceil(len / 0.06));
     for (let j = 1; j < k; j++) {
       const t = j / k;
@@ -308,11 +378,11 @@ function findRuns(sp: Spec, c: FrameCam): Run[] {
     }
     return true;
   };
-  for (const l of lineModel(sp)) {
-    const mid = l.pts[Math.floor(l.pts.length / 2)];
-    if (!l.ns.some((nn) => dot(nn, norm(sub(c.eye, mid))) > 0.03)) continue;
+  for (const l of landmarks(sp)) {
+    const from = l.see === 'left' ? c.eye[2] > 0.5 : l.see === 'right' ? c.eye[2] < -0.5 : l.see === 'front' ? c.eye[0] < -0.3 : c.eye[0] > sp.L + 0.3;
+    if (!from) continue;
     let run: string[] = [];
-    const flush = () => { if (run.length > 1) out.push({ d: 'M' + run.join(' L'), w: l.w, dash: l.dash }); run = []; };
+    const flush = () => { if (run.length > 1) out.push({ d: 'M' + run.join(' L'), w: 1 }); run = []; };
     for (const p of l.pts) {
       const [u, v, z] = project(c, p);
       if (z < 0.2 || !seen(p)) { flush(); continue; }
@@ -322,42 +392,16 @@ function findRuns(sp: Spec, c: FrameCam): Run[] {
   }
   return out;
 }
-/** The ground under the framed side or end, as a dashed guide. */
-function groundLine(sp: Spec, f: Frame, c: FrameCam): string {
-  const segs: V3[][] = [];
-  const W2 = sp.W / 2;
-  if (f.kind === 'side') { const s = f.side === 'left' ? 1 : -1; segs.push([[-4, 0, s * W2], [sp.L + 4, 0, s * W2]]); }
-  else if (f.kind === 'front' || f.kind === 'rear') { const x = f.kind === 'front' ? 0.05 : sp.L - 0.05; segs.push([[x, 0, -4], [x, 0, 4]]); }
-  else {
-    const front = f.corner === 'fl' || f.corner === 'fr', s = f.corner === 'fl' || f.corner === 'rl' ? 1 : -1, x = front ? 0.05 : sp.L - 0.05;
-    segs.push([[x, 0, s * W2], [x, 0, -s * 4]], [[x, 0, s * W2], [front ? sp.L : 0, 0, s * W2]]);
-  }
-  let d = '';
-  for (const sg of segs) {
-    let run: string[] = [];
-    for (const p of dense(sg, false, 0.1)) {
-      const [u, v, z] = project(c, p);
-      if (z < 0.3) { if (run.length > 1) d += 'M' + run.join(' L'); run = []; continue; }
-      run.push(`${r1(u * 300)} ${r1(v * 400)}`);
-    }
-    if (run.length > 1) d += 'M' + run.join(' L');
-  }
-  return d;
-}
 
-export interface OPaint { line: string; halo: string | null; body: number; detail: number; faint: number; faintOpacity: number; ground: string }
-export const OVERLAY_PAINT: OPaint = { line: '#E2FF1C', halo: '#000000', body: 2.6, detail: 1.7, faint: 1.2, faintOpacity: 0.7, ground: '#FFFFFF' };
-export const THUMB_PAINT: OPaint = { line: '#E2FF1C', halo: null, body: 1.5, detail: 1, faint: 0.8, faintOpacity: 0.6, ground: '#FFFFFF' };
+export interface OPaint { line: string; halo: string | null; body: number; detail: number; detailOpacity: number }
+export const OVERLAY_PAINT: OPaint = { line: '#E2FF1C', halo: '#000000', body: 3, detail: 1.6, detailOpacity: 0.85 };
+export const THUMB_PAINT: OPaint = { line: '#E2FF1C', halo: null, body: 1.6, detail: 0.9, detailOpacity: 0.7 };
 
 /** The outline as SVG paths for a box `pxW` pixels wide (300 x 400 units). */
 export function outlinePaths(sp: Spec, f: Frame, pxW: number, p: OPaint): string {
-  const c = frameCam(sp, f), u = 300 / pxW, runs = visibleRuns(sp, c);
-  const width = (w: 0 | 1 | 2) => (w === 0 ? p.body : w === 1 ? p.detail : p.faint);
-  const pass = (color: string, extra: number, opacityScale: number) => runs.map((r) =>
-    `<path d="${r.d}" fill="none" stroke="${color}" stroke-width="${r3((width(r.w) + extra) * u)}" stroke-linejoin="round" stroke-linecap="round"`
-    + (r.w === 2 ? ` stroke-opacity="${r3(p.faintOpacity * opacityScale)}"` : opacityScale !== 1 ? ` stroke-opacity="${opacityScale}"` : '')
-    + (r.dash ? ` stroke-dasharray="${r3(5 * u)} ${r3(4 * u)}"` : '') + '/>').join('');
-  const g = groundLine(sp, f, c);
-  return (g ? `<path d="${g}" fill="none" stroke="${p.ground}" stroke-opacity="0.5" stroke-width="${r3(1.4 * u)}" stroke-dasharray="${r3(6 * u)} ${r3(6 * u)}"/>` : '')
-    + (p.halo ? pass(p.halo, 3, 0.45) : '') + pass(p.line, 0, 1);
+  const u = 300 / pxW, runs = runsOf(sp, frameCam(sp, f));
+  const pass = (color: string, extra: number, fade: number) => runs.map((r) =>
+    `<path d="${r.d}" fill="none" stroke="${color}" stroke-width="${r3(((r.w ? p.detail : p.body) + extra) * u)}" stroke-linejoin="round" stroke-linecap="round"`
+    + ` stroke-opacity="${r3((r.w ? p.detailOpacity : 1) * fade)}"/>`).join('');
+  return (p.halo ? pass(p.halo, 2.5, 0.45) : '') + pass(p.line, 0, 1);
 }

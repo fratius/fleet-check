@@ -511,8 +511,8 @@ export interface Walkaround {
   skipped: number;
   retakes: number;
   photos: Photo[];
-  /** The outlines the photos were lined up with: 2 = in perspective from the van's model (lib/outline.ts); missing = the first ones. */
-  overlay?: 1 | 2;
+  /** The outlines the photos were lined up with: 3 = the van's silhouette from its model (lib/outline.ts); 2 = the first ones in perspective; missing = the flat ones. */
+  overlay?: 1 | 2 | 3;
   /** Set by the server when these photos were taken to pick up or drop off the van. */
   /** The photos of a pick-up or drop-off (set by the server); late: added after the handover, not by the driver at pick-up. */
   handover?: { kind: 'pickup' | 'dropoff'; assignmentId: string; late?: boolean };

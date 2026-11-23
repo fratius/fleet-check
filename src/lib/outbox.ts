@@ -188,7 +188,7 @@ const thenFor = (what: 'pickup' | 'dropoff' | 'walkaround', assignmentId: string
  */
 export async function queueWalk(o: {
   orgId: string; uid: string; v: Vehicle; shots: LocalShot[]; what: 'pickup' | 'dropoff' | 'walkaround'; assignmentId?: string | null;
-  meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 };
+  meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 | 3 };
 }, onPrep?: (done: number, total: number) => void): Promise<string> {
   await ready();
   const id = newId();

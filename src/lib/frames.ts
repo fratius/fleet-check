@@ -152,7 +152,7 @@ export interface Spec {
    * van's model (lib/shape.ts, lib/outline.ts). Walk-arounds say which one they were taken with (`overlay`), so a
    * position in an older photo is read with the shapes it was lined up with.
    */
-  ver: 1 | 2;
+  ver: 1 | 2 | 3;
   /** The model the outlines follow (ver 2), or null for the class's own shape. */
   fam: { id: string; name: string } | null;
 }
@@ -160,23 +160,23 @@ export interface Spec {
 /** What the shape is made from: the class and body details, and the make and model when known. */
 export type ShapeAttrs = Partial<VehicleAttrs> & { make?: string | null; model?: string | null };
 
-export function makeSpec(cls: string, attrs?: ShapeAttrs | null, ver: 1 | 2 = 2): Spec {
+export function makeSpec(cls: string, attrs?: ShapeAttrs | null, ver: 1 | 2 | 3 = 3): Spec {
   const c = CLS[cls] || CLS.large_van;
   const a = { ...defaultAttrs(), ...(attrs || {}) };
   const rear = a.rear !== 'unknown' && REAR_LABEL[a.rear as RearKind] ? (a.rear as RearKind) : c.rear;
   const slide = { left: a.slideL || 'unknown', right: a.slideR || 'unknown' };
-  const fam = ver === 2 ? shapeFamily(c, a.make, a.model) : null;
+  const fam = ver >= 2 ? shapeFamily(c, a.make, a.model) : null;
   if (fam) {
     const [L, f0, f1] = (c.id === 'large_van_long' && fam.long) || fam.std;
     const H = a.roof === 'high' ? fam.roofHigh : a.roof === 'low' ? fam.roofLow : fam.roofDef === 'high' ? fam.roofHigh : fam.roofLow;
-    return { id: c.id, name: c.name, body: c.body, L, W: fam.W, H, rear, slide, b: famBody(fam, L, [f0, f1], H),
-      ver: 2, fam: fam.name ? { id: fam.id, name: fam.name } : null };
+    return { id: c.id, name: c.name, body: c.body, L, W: fam.W, H, rear, slide, b: famBody(fam, L, [f0, f1], H, ver),
+      ver, fam: fam.name ? { id: fam.id, name: fam.name } : null };
   }
   let H = c.H;
   if (c.body === 'large' && a.roof === 'low') H = 2.35;
   if (c.body === 'mid' && a.roof === 'high') H = 2.3;
   const b = BODY[c.body](c.L, H);
-  return { id: c.id, name: c.name, body: c.body, L: c.L, W: c.W, H, rear, slide, b: ver === 2 ? withDetails(b, c.body, c.W, H) : b, ver, fam: null };
+  return { id: c.id, name: c.name, body: c.body, L: c.L, W: c.W, H, rear, slide, b: ver >= 2 ? withDetails(b, c.body, c.W, H) : b, ver, fam: null };
 }
 
 /* ---------- shapes for the second outlines ---------- */
@@ -206,7 +206,7 @@ function lampShape(style: LampStyle, hw: number, y0: number, y1: number, zIn: nu
 }
 
 /** A van of a known family (or the class's average van) at the given length, axles and roof height. */
-function famBody(f: Fam, L: number, wheels: [number, number], H: number): Body {
+function famBody(f: Fam, L: number, wheels: [number, number], H: number, ver: number): Body {
   const r = f.r, ra = r + 0.07, sill = f.sill, W = f.W, hw = W / 2;
   const nose = f.nose;
   const [xs, ys] = nose[nose.length - 1], [xb, yb] = nose[nose.length - 2];
@@ -221,7 +221,11 @@ function famBody(f: Fam, L: number, wheels: [number, number], H: number): Body {
     }
   } else pts.push([roofAt, H]);
   const rbt = f.rearBumperTop;
-  pts.push([L - 0.12, H], [L - 0.04, H - 0.04], [L - 0.03, H - 0.14], [L - 0.03, rbt + 0.02], [L, rbt], [L, sill + 0.02], [L - 0.05, sill - 0.04]);
+  // The rear: nearly upright on large vans; smaller vans lean in above the lights and the roof curves down to it.
+  if (ver < 3) pts.push([L - 0.12, H], [L - 0.04, H - 0.04], [L - 0.03, H - 0.14]);
+  else if (f.body === 'large') pts.push([L - 0.22, H], [L - 0.11, H - 0.03], [L - 0.06, H - 0.1], [L - 0.04, H - 0.26]);
+  else pts.push([L - 0.42, H], [L - 0.27, H - 0.03], [L - 0.17, H - 0.1], [L - 0.11, H - 0.22], [L - 0.04, f.belt - 0.05]);
+  pts.push([L - 0.03, rbt + 0.02], [L, rbt], [L, sill + 0.02], [L - 0.05, sill - 0.04]);
   // The bottom edge from the rear to the front, round both wheel arches.
   pts.push(...archPts(wheels[1], r, ra, sill), ...archPts(wheels[0], r, ra, sill));
   // The side window follows the windscreen's slope a little behind it (the A-pillar).
@@ -341,7 +345,7 @@ const HFOV = (67 * Math.PI) / 180, VFOV = (53 * Math.PI) / 180;
 export const CA = 0.6, CK = 0.16, CL = 2.4;
 /** The scanner is portrait-only, so every frame is framed upright. */
 function measure(sp: Spec, f: Omit<Frame, 'orient' | 'dist' | 'hint'>) {
-  if (sp.ver === 2) return { orient: 'portrait' as const, dist: Math.max(1, Math.round(frameCam(sp, f).dist * 2) / 2) };
+  if (sp.ver >= 2) return { orient: 'portrait' as const, dist: Math.max(1, Math.round(frameCam(sp, f).dist * 2) / 2) };
   let w: number, h: number;
   if (f.kind === 'front') { w = sp.W + 0.4; h = sp.H; }
   else if (f.kind === 'rear') { w = sp.W; h = sp.H; }
@@ -562,7 +566,7 @@ function unitsFor(bb: readonly number[], aspect: number, fill: number, px: numbe
 
 /** Thumbnail with a dark viewfinder background, corner brackets and ground line. */
 export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
-  if (sp.ver === 2) {
+  if (sp.ver >= 2) {
     const u = 300 / (px * 0.75);
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#16181C"/>`
       + outlinePaths(sp, f, px * 0.75, THUMB_PAINT)
@@ -585,7 +589,7 @@ export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
 export const OVERLAY_FILL = 0.82;
 /** Live camera overlay: the outline drawn twice (dark halo, yellow line) for a preview `pxW` wide with the given aspect. */
 export function overlaySVG(sp: Spec, f: Frame, aspect: number, pxW: number): string {
-  if (sp.ver === 2) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" preserveAspectRatio="none">${outlinePaths(sp, f, pxW, OVERLAY_PAINT)}</svg>`;
+  if (sp.ver >= 2) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" preserveAspectRatio="none">${outlinePaths(sp, f, pxW, OVERLAY_PAINT)}</svg>`;
   const probe = frameGeom(sp, f, styler(PAINT.overlay, 1));
   const { vb, u } = unitsFor(probe.bbox, aspect, OVERLAY_FILL, pxW);
   const halo = frameGeom(sp, f, styler(PAINT.halo, u));

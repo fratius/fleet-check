@@ -31,7 +31,7 @@ const VANS = [
 test('make and model pick the family, but only one with the class\'s body', () => {
   for (const [cls, make, model, id] of VANS) {
     const sp = makeSpec(cls, { make, model });
-    assert.equal(sp.ver, 2);
+    assert.equal(sp.ver, 3);
     assert.equal(sp.fam?.id, id, `${make} ${model}`);
   }
   // The class wins: a Transit Custom read as a large van gets the large van's own shape.
@@ -64,7 +64,8 @@ test('every frame draws an outline, with a sensible distance to stand at', () =>
     const sp = makeSpec(c.id, { slideR: 'yes' });
     for (const f of buildFrames(sp)) {
       const svg = overlaySVG(sp, f, 3 / 4, 300);
-      assert.ok((svg.match(/<path /g) || []).length > 10, `${c.id} ${f.label}`);
+      assert.ok(/<path d="M[^"]+ Z"/.test(svg), `${c.id} ${f.label}: no line round the van`);
+      assert.ok((svg.match(/<path /g) || []).length <= 30, `${c.id} ${f.label}: too many lines`);
       assert.ok(!svg.includes('NaN'), `${c.id} ${f.label}`);
       assert.ok(f.dist >= 1 && f.dist <= 6, `${c.id} ${f.label}: ${f.dist} m`);
     }
@@ -72,17 +73,18 @@ test('every frame draws an outline, with a sensible distance to stand at', () =>
 });
 
 test('a point on the van seen in a photo is placed back where it is (within 3 cm)', () => {
-  for (const [cls, make, model] of [VANS[0], VANS[4], VANS[8], ['car', '', ''], ['box_truck', '', '']]) {
-    const sp = makeSpec(cls, { make, model, slideR: 'yes' });
+  // Today's outlines, and the first ones in perspective (photos of 16 to 23 November 2026 were lined up with those).
+  for (const [cls, make, model, ver] of [VANS[0], VANS[4], VANS[8], ['car', '', ''], ['box_truck', '', ''], ['midsize_van', 'Mercedes-Benz', 'Vito', 2]]) {
+    const sp = makeSpec(cls, { make, model, slideR: 'yes' }, typeof ver === 'number' ? ver : 3);
     const S = solid(sp);
     let n = 0;
     for (const f of buildFrames(sp)) {
       const c = frameCam(sp, f);
       const pts = [];
       for (let x = 0.2; x < sp.L - 0.2; x += 0.35) for (let y = sp.b.sill + 0.1; y < sp.H - 0.2; y += 0.3) {
-        if (inside(S, [x, y, 0], 0.03)) for (const s of [1, -1]) pts.push({ p: [x, y, s * S.hw(y)], n: [0, 0, s] });
+        if (inside(S, [x, y, 0], 0.03)) for (const s of [1, -1]) pts.push({ p: [x, y, s * S.hw(y, x)], n: [0, 0, s] });
       }
-      for (let y = sp.b.sill + 0.05; y < sp.H - 0.2; y += 0.25) for (let z = -0.6; z <= 0.6; z += 0.4) {
+      for (let y = sp.b.sill + 0.05; y < sp.H - 0.2; y += 0.25) for (let z = -0.3; z <= 0.3; z += 0.3) { // the flat middle of the ends (the corners are round)
         // Only the real ends (a box van's cab wall under the box is behind the rear wheel, not its rear).
         if (S.front(y) < 1.2) pts.push({ p: [S.front(y), y, z], n: [-1, 0, 0] });
         if (S.rear(y) > sp.L - 0.3) pts.push({ p: [S.rear(y), y, z], n: [1, 0, 0] });
