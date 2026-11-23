@@ -192,6 +192,23 @@ export function Field({ label, hint, error, ...props }: { label: string; hint?: 
   );
 }
 
+/** A search box that filters as the person types (Fleet, People), with ✕ to clear it. */
+export function SearchBox({ value, onChange, placeholder, label, caps }: { value: string; onChange: (v: string) => void; placeholder: string; label: string; caps?: boolean }) {
+  const c = useColors();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 2, borderColor: c.ink, borderRadius: 4, backgroundColor: c.paper, paddingLeft: 2 }}>
+      <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.ink2} accessibilityLabel={label}
+        autoCapitalize={caps ? 'characters' : 'words'} autoCorrect={false} returnKeyType="search"
+        style={{ flex: 1, minHeight: 48, paddingHorizontal: 10, fontFamily: F.body, fontSize: 18, color: c.ink, outlineWidth: 0 }} />
+      {value ? (
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Clear search')} onPress={() => onChange('')} style={{ paddingHorizontal: 14, minHeight: 48, justifyContent: 'center' }}>
+          <T v="medium">✕</T>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export function Segmented<K extends string>({ options, value, onChange, label }: { options: [K, string][]; value: K; onChange: (k: K) => void; label?: string }) {
   const c = useColors();
   return (

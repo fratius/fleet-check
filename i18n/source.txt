@@ -76,6 +76,7 @@ aa959e4f	{n} new van is ticked: untick some, or choose a bigger plan. || {n} new
 4311d112	{n} of {max} used
 40e10ce6	{n} open link || {n} open links	[people.tsx]
 fe1c91a0	{n} person || {n} people	[people.tsx]
+4b691c9c	{n} person matches || {n} people match	[people.tsx]
 2be0554f	{n} per walk-around	[log.tsx]
 01be2036	{n} photo set from the library isn't counted here. || {n} photo sets from the library aren't counted here.
 8525f940	{n} photo || {n} photos	[check/[id].tsx, vehicle/[id].tsx, log.tsx]
@@ -535,7 +536,7 @@ a60c6721	Choose how often.	[index.ts]
 1feacb8b	Choose what was done.
 08fe91d2	Choose your station.	[index.ts]
 ed1846af	Classes	[components/driverrec.tsx]
-67300d0f	Clear search	[index.tsx]
+67300d0f	Clear search	[components/ui.tsx]
 bbfa773e	Close	[person/[uid].tsx, app/scan/[id].tsx, components/damage.tsx]
 0e056a7b	Close {name}'s purchase for {van}
 85a2ce1c	Close it (not finished)
@@ -1337,6 +1338,7 @@ d265ea75	No, wrong	[add.tsx]
 aa87cace	Nobody had the van in that time.
 062f9311	Nobody has had this van yet.
 60c394e6	Nobody has this van.
+2ac03c44	Nobody matches {q}.	[people.tsx]
 3467126e	Nobody to call is on record for this station. Call the office.
 92e8d88f	Nobody took close-ups within 30 minutes, so the spots the AI found went to your fleet manager without them.
 3050576d	Nobody took close-ups within 30 minutes, so the spots went to your fleet manager without them.
@@ -1796,7 +1798,9 @@ ca8717a6	Scan with photos or a video?
 758a7660	scans	[log.tsx]
 ffdf8c66	scratch	[check/[id].tsx]
 f5c117f0	scuff	[check/[id].tsx]
+2485b6c3	Search by name, Transporter ID or phone
 30c8e3bd	Search by plate or fleet number
+b565ea6b	Search people	[people.tsx]
 6c858556	Search vans	[index.tsx]
 1618025d	Second look	[check/[id].tsx, log.tsx]
 3f00bcee	Second look, per photo checked

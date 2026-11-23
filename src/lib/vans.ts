@@ -31,3 +31,21 @@ export function vanMatches(v: Named, query: string): boolean {
   if (!q) return true;
   return plateKey(v.plate).includes(q) || plateKey(v.name).includes(q);
 }
+
+/** Names as people type them: small letters, no accents (ș, é, ü), single spaces. */
+export const nameKey = (x: string | null | undefined) => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * The People search (product owner, 2026-11-23): like the Fleet search, what was typed appears in that order in the
+ * person's name ("ana p" finds Ana Pop and Ioana Popescu; accents and capitals don't count), their Amazon
+ * Transporter ID, or their phone number (digits only).
+ */
+export function personMatches(p: { name?: string | null; transporterId?: string | null; phone?: string | null }, query: string): boolean {
+  const q = nameKey(query);
+  if (!q) return true;
+  if (nameKey(p.name).includes(q)) return true;
+  const k = plateKey(query);
+  if (k && plateKey(p.transporterId).includes(k)) return true;
+  const digits = query.replace(/\D/g, '');
+  return digits.length >= 3 && digits.length === query.replace(/[\s+()/-]/g, '').length && (p.phone || '').replace(/\D/g, '').includes(digits);
+}
