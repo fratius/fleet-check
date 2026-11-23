@@ -114,6 +114,9 @@ a decision about what the app must do, so it goes in a pull request of its own t
   when what was typed appears in that order, without gaps, in its number plate or its own name or fleet number
   ("314" finds B-DX 3141 and B-DX 1314, not M-AB 413). Spaces, dashes and capitals don't matter. It searches the
   chosen station's vans, retired ones too; the ✕ clears it and the full list comes back.
+- SHOULD 3.16 People (owners and fleet managers) has a search box at the top that filters as you type: everyone they
+  can see whose name has what was typed in that order ("ana p" finds Ana Pop and Ioana Popescu; accents and capitals
+  don't matter), or whose Transporter ID or phone number has it. Drivers come first; ✕ brings back the page.
 
 ## 4. Drivers pick up and drop off vans themselves
 
