@@ -44,6 +44,17 @@ test('the tester runs on the product owner\'s plan, and its token never reaches 
   assert.match(wf, /git show origin\/main:qa\/TESTER\.md > qa\/TESTER\.md/);
 });
 
+test('the blind-qa label starts a run even when the pull request has a merge conflict', () => {
+  const wf = read('../.github/workflows/blind-qa.yml');
+  // pull_request sends nothing while there is a conflict; pull_request_target always does.
+  assert.match(wf, /^  pull_request_target:\n    types: \[labeled\]/m);
+  assert.doesNotMatch(wf, /^  pull_request:/m);
+  // Only this repository's branches get the secrets, and the run tests the pull request's head, not main.
+  assert.match(wf, /github\.event\.pull_request\.head\.repo\.full_name == github\.repository/);
+  assert.match(wf, /ref: \$\{\{ github\.event\.pull_request\.head\.sha \|\| github\.ref \}\}/);
+  assert.match(wf, /github\.event_name \}\}" = pull_request_target \]; then gh pr edit "\$PR" --remove-label blind-qa/);
+});
+
 test('the tester learns what changed only from the pull request\'s "For the tester" section', () => {
   const dir = mkdtempSync(join(tmpdir(), 'qa-focus-'));
   const focus = (pr, input = '') => {
