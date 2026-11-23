@@ -24,6 +24,19 @@ export async function prepare(uri: string, w: number, h: number, maxEdge = MAX_E
   } catch (e) { throw unreadable(e); }
 }
 /**
+ * A photo taken with the phone held sideways (its top to the left) while the screen stayed upright comes out
+ * lying on its side: this turns it a quarter anticlockwise, so it's stored the right way up.
+ */
+export async function upright(uri: string): Promise<Prepared> {
+  try {
+    const ctx = ImageManipulator.manipulate(uri);
+    ctx.rotate(-90);
+    const img = await ctx.renderAsync();
+    const out = await img.saveAsync({ format: SaveFormat.JPEG, compress: 0.92 });
+    return { uri: out.uri, w: out.width, h: out.height };
+  } catch (e) { throw unreadable(e); }
+}
+/**
  * A photo this phone or browser couldn't open or shrink (a format it doesn't read, a file that's gone, too big for
  * its memory). It happens on the phone, before anything is sent: the screens say so (whyFailed in lib/store.ts),
  * not "check the connection".

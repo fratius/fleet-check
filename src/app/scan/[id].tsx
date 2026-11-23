@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { F, MARKER, Svg, mmss, hs } from '@/components/ui';
@@ -13,6 +13,7 @@ import { flash } from '@/lib/flash';
 import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
+import { upright } from '@/lib/images';
 import { ISSUE_TEXT, checkPhoto } from '@/lib/quality';
 import type { PhotoQuality } from '@/lib/types';
 import { loc, t, tp, lang } from '@/lib/i18n';
@@ -68,7 +69,7 @@ export default function ScanScreen() {
   const [camErr, setCamErr] = useState<string | null>(null);
   const [i, setI] = useState(0);
   const [slots, setSlots] = useState<Slot[]>(() => frames.map(() => null));
-  const [pending, setPending] = useState<{ uri: string; w: number; h: number } | null>(null);
+  const [pending, setPending] = useState<{ uri: string; w: number; h: number; view: string } | null>(null);
   // The photo check of the photo under review (lib/quality.ts): 'checking' until it's measured, null if it couldn't be.
   const [quality, setQuality] = useState<PhotoQuality | null | 'checking'>(null);
   const checkSeq = useRef(0);
@@ -90,7 +91,9 @@ export default function ScanScreen() {
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
-  const { width: W } = useWindowDimensions();
+  const { width: W, height: winH } = useWindowDimensions();
+  // Only a browser turns the page with the phone (the apps stay upright): then the camera box lies flat too.
+  const wide = Platform.OS === 'web' && W > winH;
   // The space between the header and the controls, measured, so the camera box never covers either.
   const [area, setArea] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
@@ -108,9 +111,14 @@ export default function ScanScreen() {
   const f = frames[i];
   const taken = slots.filter((x) => x && x !== 'skip').length;
 
-  // Camera box: portrait 3:4, as large as fits between the header and the controls.
-  const boxH = area ? Math.floor(Math.min(area.h, (area.w * 4) / 3)) : 0;
-  const boxW = Math.floor((boxH * 3) / 4);
+  // Camera box: upright 3:4, as large as fits between the header and the controls. A frame taken sideways keeps
+  // the upright box in the apps (the outline is drawn turned, the driver turns the phone); in a browser that turned
+  // the page, the box lies flat (4:3) for it.
+  const land = f.orient === 'landscape', flat = land && wide;
+  const boxH = area ? Math.floor(flat ? Math.min(area.h, (area.w * 3) / 4) : Math.min(area.h, (area.w * 4) / 3)) : 0;
+  const boxW = Math.floor(flat ? (boxH * 4) / 3 : (boxH * 3) / 4);
+  const holdHint = land ? (wide ? null : t('Turn the phone sideways, its top to the left.'))
+    : wide || (i > 0 && frames[i - 1].orient === 'landscape') ? t('Hold the phone upright.') : null;
 
   const close = () => {
     if (phase === 'summary' || !slots.some(Boolean)) { router.back(); return; }
@@ -138,10 +146,13 @@ export default function ScanScreen() {
     try {
       const p = await cam.current.takePictureAsync({ quality: 0.9 });
       if (p?.uri) {
-        setPending({ uri: p.uri, w: p.width, h: p.height }); setPhase('review');
+        // Taken sideways while the screen stayed upright, the photo lies on its side: it's stored the right way up
+        // (the review shows it as the camera did).
+        const shot = land && p.width < p.height ? await upright(p.uri) : { uri: p.uri, w: p.width, h: p.height };
+        setPending({ ...shot, view: p.uri }); setPhase('review');
         const seq = ++checkSeq.current;
         setQuality('checking');
-        checkPhoto(p.uri).then((q) => { if (seq === checkSeq.current) setQuality(q); });
+        checkPhoto(shot.uri).then((q) => { if (seq === checkSeq.current) setQuality(q); });
       }
     } catch { setCamErr(t('Couldn\'t take the photo. Try again.')); }
     finally { setBusyShot(false); }
@@ -239,7 +250,7 @@ export default function ScanScreen() {
               return (
                 <Pressable key={fr.n} onPress={() => phase === 'summary' && goTo(k, true)} style={{ width: (W - 32 - 20) / 3 }}>
                   <View style={{ aspectRatio: 3 / 4, borderRadius: 3, overflow: 'hidden', backgroundColor: '#16181C', borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)', alignItems: 'center', justifyContent: 'center' }}>
-                    {sl && sl !== 'skip' ? <Image source={{ uri: sl.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Text style={st.note}>{sl === 'skip' ? t('Skipped') : t('No photo')}</Text>}
+                    {sl && sl !== 'skip' ? <Image source={{ uri: sl.uri }} style={StyleSheet.absoluteFill} contentFit={sl.w > sl.h ? 'contain' : 'cover'} /> : <Text style={st.note}>{sl === 'skip' ? t('Skipped') : t('No photo')}</Text>}
                     <View style={st.badge}><Text style={st.badgeT}>{fr.n}</Text></View>
                     {sl && sl !== 'skip' && sl.q?.issues.length ? (
                       <View accessibilityLabel={sl.q.issues.map((k) => t(ISSUE_TEXT[k])).join(' ')} style={[st.badge, { left: undefined, right: 4, backgroundColor: '#FFB74D' }]}><Text style={st.badgeT}>!</Text></View>
@@ -281,22 +292,24 @@ export default function ScanScreen() {
     );
   }
 
-  const xml = boxW > 0 ? overlaySVG(sp, f, 3 / 4, boxW) : '';
+  const xml = boxW > 0 ? overlaySVG(sp, f, 3 / 4, boxW, !wide) : '';
   const warned = quality && quality !== 'checking' && quality.issues.length ? quality.issues : null;
   return (
-    <Shell>
-      {header}
-      <View style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}
+    <Shell style={wide ? { flexDirection: 'row' } : undefined}>
+      {wide ? null : header}
+      <View style={{ flex: 1, minHeight: 0, minWidth: 0, alignItems: 'center', justifyContent: 'center', marginTop: 8 }}
         onLayout={(e) => { const { width, height } = e.nativeEvent.layout; setArea((a) => (a && Math.abs(a.w - width) < 1 && Math.abs(a.h - height) < 1 ? a : { w: width, h: height })); }}>
         {boxH > 0 ? <View style={{ width: boxW, height: boxH, overflow: 'hidden', backgroundColor: '#111' }}>
           <CameraView ref={cam} style={StyleSheet.absoluteFill} facing="back" ratio="4:3" enableTorch={torch && phase === 'aim'} animateShutter
             onCameraReady={() => setReady(true)} onMountError={(e) => setCamErr(e.message || t('The camera couldn\'t start.'))} />
-          {phase === 'review' && pending ? <Image source={{ uri: pending.uri }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
+          {phase === 'review' && pending ? <Image source={{ uri: pending.view }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
           <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg xml={xml} width={boxW} height={boxH} /></View>
           {!ready && !camErr ? <ActivityIndicator style={StyleSheet.absoluteFill} color="#fff" /> : null}
         </View> : null}
       </View>
-      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: 196 }}>
+      <View style={wide ? { width: 300, justifyContent: 'center', gap: 6 } : null}>
+      {wide ? header : null}
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, gap: 10, minHeight: wide ? 0 : 196 }}>
         {camErr ? <Text style={[st.hint, { color: '#FF8A80' }]}>{camErr}</Text> : null}
         {phase === 'review' && warned ? (
           <View accessibilityLiveRegion="polite" style={{ gap: 4 }}>
@@ -305,7 +318,7 @@ export default function ScanScreen() {
         ) : (
           <Text style={st.hint}>
             {phase === 'review' ? (quality === 'checking' ? t('Checking the photo…') : t('Does the vehicle line up with the outline?'))
-              : <><Text style={{ color: MARKER, fontFamily: F.semi }}>{t('Fit the vehicle to the outline.')} </Text>{t('About {m} m away.', { m: f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 }) })} {t(f.hint)}</>}
+              : <><Text style={{ color: MARKER, fontFamily: F.semi }}>{holdHint ? `${holdHint} ` : ''}{t('Fit the vehicle to the outline.')} </Text>{t('About {m} m away.', { m: f.dist.toLocaleString(loc(), { maximumFractionDigits: 1 }) })} {t(f.hint)}</>}
           </Text>
         )}
         {phase === 'review' ? (
@@ -332,6 +345,7 @@ export default function ScanScreen() {
             <View style={{ flex: 1, alignItems: 'flex-end' }}>{ho ? null : <Btn title={t('Skip')} kind="ghost" onPress={skip} />}</View>
           </View>
         )}
+      </View>
       </View>
     </Shell>
   );

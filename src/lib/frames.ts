@@ -10,7 +10,7 @@
  * attrPills() come back already translated (they're only shown).
  */
 import { N_, t, tp } from '@/lib/i18n';
-import { frameCam, outlinePaths, OVERLAY_PAINT, THUMB_PAINT } from '@/lib/outline';
+import { frameCam, frameLand, outlinePaths, OVERLAY_PAINT, THUMB_PAINT } from '@/lib/outline';
 import { shapeFamily, type Fam, type LampStyle } from '@/lib/shape';
 
 export type BodyKind = 'car' | 'suv' | 'pickup' | 'compact' | 'mid' | 'large' | 'step' | 'box';
@@ -343,9 +343,9 @@ export const FRAME_LABELS = [
 const HFOV = (67 * Math.PI) / 180, VFOV = (53 * Math.PI) / 180;
 /** Corner views: the flank is foreshortened by CA, skewed by CK, and shows its first CL metres. */
 export const CA = 0.6, CK = 0.16, CL = 2.4;
-/** The scanner is portrait-only, so every frame is framed upright. */
+/** How the phone is held for a frame (sideways for corners and parts wider than tall, since ver 3) and how far away to stand. */
 function measure(sp: Spec, f: Omit<Frame, 'orient' | 'dist' | 'hint'>) {
-  if (sp.ver >= 2) return { orient: 'portrait' as const, dist: Math.max(1, Math.round(frameCam(sp, f).dist * 2) / 2) };
+  if (sp.ver >= 2) return { orient: frameLand(sp, f) ? 'landscape' as const : 'portrait' as const, dist: Math.max(1, Math.round(frameCam(sp, f).dist * 2) / 2) };
   let w: number, h: number;
   if (f.kind === 'front') { w = sp.W + 0.4; h = sp.H; }
   else if (f.kind === 'rear') { w = sp.W; h = sp.H; }
@@ -567,10 +567,12 @@ function unitsFor(bb: readonly number[], aspect: number, fill: number, px: numbe
 /** Thumbnail with a dark viewfinder background, corner brackets and ground line. */
 export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
   if (sp.ver >= 2) {
-    const u = 300 / (px * 0.75);
+    // An upright tile; a frame taken sideways sits across its middle, with the corner marks round it.
+    const u = 300 / (px * 0.75), land = f.orient === 'landscape';
+    const marks = land ? 'M14 124 V98 H40 M260 98 H286 V124 M286 276 V302 H260 M40 302 H14 V276' : 'M18 60 V18 H60 M240 18 H282 V60 M282 340 V382 H240 M60 382 H18 V340';
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#16181C"/>`
-      + outlinePaths(sp, f, px * 0.75, THUMB_PAINT)
-      + `<path d="M18 60 V18 H60 M240 18 H282 V60 M282 340 V382 H240 M60 382 H18 V340" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="${r3(1.5 * u)}"/></svg>`;
+      + (land ? `<g transform="translate(0 87.5) scale(0.75)">${outlinePaths(sp, f, u / 0.75, THUMB_PAINT)}</g>` : outlinePaths(sp, f, u, THUMB_PAINT))
+      + `<path d="${marks}" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="${r3(1.5 * u)}"/></svg>`;
   }
   const aspect = 3 / 4;
   const probe = frameGeom(sp, f, styler(PAINT.thumb, 1));
@@ -587,9 +589,19 @@ export function frameThumbSVG(sp: Spec, f: Frame, px = 128): string {
 }
 
 export const OVERLAY_FILL = 0.82;
-/** Live camera overlay: the outline drawn twice (dark halo, yellow line) for a preview `pxW` wide with the given aspect. */
-export function overlaySVG(sp: Spec, f: Frame, aspect: number, pxW: number): string {
-  if (sp.ver >= 2) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" preserveAspectRatio="none">${outlinePaths(sp, f, pxW, OVERLAY_PAINT)}</svg>`;
+/**
+ * Live camera overlay: the outline drawn twice (dark halo, yellow line) for a preview `pxW` wide with the given aspect.
+ * A frame taken sideways is drawn turned a quarter clockwise into the upright preview (`turned`, the default: the
+ * screen doesn't turn with the phone, so held with its top to the left the outline stands upright), or as it is
+ * into a 4:3 preview where the screen did turn (the web app in a browser).
+ */
+export function overlaySVG(sp: Spec, f: Frame, aspect: number, pxW: number, turned = true): string {
+  if (sp.ver >= 2) {
+    const open = (vb: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" preserveAspectRatio="none">`;
+    if (f.orient !== 'landscape') return `${open('0 0 300 400')}${outlinePaths(sp, f, 300 / pxW, OVERLAY_PAINT)}</svg>`;
+    return turned ? `${open('0 0 300 400')}<g transform="translate(300 0) rotate(90)">${outlinePaths(sp, f, 300 / pxW, OVERLAY_PAINT)}</g></svg>`
+      : `${open('0 0 400 300')}${outlinePaths(sp, f, 400 / pxW, OVERLAY_PAINT)}</svg>`;
+  }
   const probe = frameGeom(sp, f, styler(PAINT.overlay, 1));
   const { vb, u } = unitsFor(probe.bbox, aspect, OVERLAY_FILL, pxW);
   const halo = frameGeom(sp, f, styler(PAINT.halo, u));

@@ -59,6 +59,19 @@ test('older photos keep the first outlines', () => {
   assert.ok(!overlaySVG(sp, buildFrames(sp)[0], 3 / 4, 300).includes('viewBox="0 0 300 400"'));
 });
 
+test('corners are taken with the phone sideways, and so is any part wider than tall; older outlines stay upright', () => {
+  const orient = (sp) => Object.fromEntries(buildFrames(sp).map((f) => [f.label, f.orient]));
+  const vito = orient(makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }));
+  for (const [label, o] of Object.entries(vito)) assert.equal(o, / corner$/.test(label) ? 'landscape' : 'portrait', label);
+  const car = orient(makeSpec('car', {}));
+  assert.ok(Object.entries(car).every(([, o]) => o === 'landscape'), JSON.stringify(car));
+  for (const ver of [1, 2]) assert.ok(buildFrames(makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }, ver)).every((f) => f.orient === 'portrait'));
+  // Sideways: turned into the upright preview by default, flat where the screen turned too.
+  const sp = makeSpec('midsize_van', { make: 'Mercedes-Benz', model: 'Vito' }), corner = buildFrames(sp).find((f) => f.kind === 'corner');
+  assert.ok(overlaySVG(sp, corner, 3 / 4, 300).includes('viewBox="0 0 300 400"') && overlaySVG(sp, corner, 3 / 4, 300).includes('rotate(90)'));
+  assert.ok(overlaySVG(sp, corner, 3 / 4, 400, false).includes('viewBox="0 0 400 300"'));
+});
+
 test('every frame draws an outline, with a sensible distance to stand at', () => {
   for (const c of CLASSES) {
     const sp = makeSpec(c.id, { slideR: 'yes' });
