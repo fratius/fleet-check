@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { UploadRow } from '@/components/uploads';
 import { Button, Card, Chip, F, Field, Notice, Pill, Row, T, useColors } from '@/components/ui';
+import { DateField, MonthField, TimeField } from '@/components/pickers';
 import { DueLine, HuSticker, fromInput, saveDetails, toInput, type FieldSpec } from '@/components/vanfacts';
 import { eur, fmtDay, km, today } from '@/lib/fleet';
 import { N_, t, tp } from '@/lib/i18n';
@@ -181,7 +182,7 @@ function HuCard({ v, onDone, canRecord }: { v: Vehicle; onDone: () => void; canR
       </View>
       {editing ? (
         <View style={{ gap: 8 }}>
-          <Field label={t('Month on the sticker')} hint={t('like 03/2028')} value={val} onChangeText={setVal} placeholder={t('MM/YYYY')} keyboardType="numbers-and-punctuation" autoFocus
+          <MonthField label={t('Month on the sticker')} hint={t('like 03/2028')} value={val} onChangeText={setVal} autoFocus
             returnKeyType="done" onSubmitEditing={save} />
           {err ? <T v="hint" color={c.alert}>{err}</T> : null}
           <Row><Button small v="primary" title={t('Save')} loading={busy} onPress={save} /><Button small v="link" title={t('Cancel')} onPress={() => { setEditing(false); setErr(null); }} /></Row>
@@ -247,6 +248,8 @@ function ServiceForm({ v, kind, rec, appt, onDone, onCancel }: { v: Vehicle; kin
     const dayV = (rDay as { value: unknown }).value as string | null, kmV = (rKm as { value: unknown }).value as number | null;
     if (kind === 'other' && name.trim().length < 2) { setErr(t('Say what was done.')); return; }
     if (!dayV) { setErr(t('Enter the day it was done, like 31.03.2027.')); return; }
+    // Typed as well as picked: no future day (blind QA, PR #47). The server allows a day ahead for time zones.
+    if (dayV > today()) { setErr(t('The day can\'t be in the future.')); return; }
     if (kmV == null) { setErr(t('Enter the van\'s km.')); return; }
     if (kind === 'hu' && !result) { setErr(t('Choose how the TÜV went.')); return; }
     // Far fewer km than the van already had on or before that day is a typo (the server refuses it too).
@@ -294,13 +297,13 @@ function ServiceForm({ v, kind, rec, appt, onDone, onCancel }: { v: Vehicle; kin
       {fix ? <T v="small">{t('What it was before is kept with the record, with your name.')}</T> : null}
       {appt ? <T v="small">{t('From the appointment on {when}. Saving it marks the appointment done.', { when: apptWhen(appt) })}</T> : null}
       {kind === 'other' ? <Field label={t('What was done')} value={name} onChangeText={setName} maxLength={60} placeholder={t('For example: windscreen, battery, air conditioning')} /> : null}
-      <Field label={t(F_DAY.label)} value={day} onChangeText={setDay} placeholder={t('DD.MM.YYYY')} keyboardType="numbers-and-punctuation" />
+      <DateField label={t(F_DAY.label)} value={day} onChangeText={setDay} max={today()} />
       <Field label={`${t(F_KM.label)} (km)`} hint={known ? t('last known {km}', { km: km(known) }) : t('needed')} value={kmText} onChangeText={setKm} keyboardType="decimal-pad" />
       {kind === 'hu' ? (
         <View style={{ gap: 6 }}>
           <T v="medium">{t('Result')}</T>
           <Row>{(Object.keys(HU_RESULT) as HuResult[]).map((k) => <Chip key={k} text={t(HU_RESULT[k])} on={result === k} onPress={() => setResult(k)} />)}</Row>
-          {!fix && result && result !== 'failed' ? <Field label={t('Month on the sticker')} hint={t('like 03/2028')} value={hu} onChangeText={setHu} placeholder={t('MM/YYYY')} keyboardType="numbers-and-punctuation" /> : null}
+          {!fix && result && result !== 'failed' ? <MonthField label={t('Month on the sticker')} hint={t('like 03/2028')} value={hu} onChangeText={setHu} /> : null}
           {result === 'failed' ? <T v="small" color={c.alert}>{t('The TÜV date stays as it is. Record it again when the van passes.')}</T> : null}
         </View>
       ) : null}
@@ -310,11 +313,11 @@ function ServiceForm({ v, kind, rec, appt, onDone, onCancel }: { v: Vehicle; kin
         placeholder={kind === 'tyres' ? t('For example: winter tyres on, 4 new Michelin') : kind === 'hu' ? t('For example: defects to fix') : t('What was done, parts changed')} />
       {!fix && kind === 'service' ? (
         <>
-          <Field label={t(F_NEXT.label)} hint={t('optional')} value={nextDay} onChangeText={setNextDay} placeholder={t('DD.MM.YYYY')} keyboardType="numbers-and-punctuation" />
+          <DateField label={t(F_NEXT.label)} hint={t('optional')} value={nextDay} onChangeText={setNextDay} />
           <Field label={`${t(F_NEXT_KM.label)} (km)`} hint={t('optional')} value={nextKm} onChangeText={setNextKm} keyboardType="decimal-pad" />
         </>
       ) : null}
-      {!fix && kind === 'tyres' ? <Field label={t(F_TYRES.label)} hint={t('optional')} value={tyres} onChangeText={setTyres} placeholder={t('DD.MM.YYYY')} keyboardType="numbers-and-punctuation" /> : null}
+      {!fix && kind === 'tyres' ? <DateField label={t(F_TYRES.label)} hint={t('optional')} value={tyres} onChangeText={setTyres} /> : null}
       {!fix && (kind === 'service' || kind === 'tyres') ? <T v="small">{t('The next dates show on the van, in the fleet list and in Review.')}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       <Row><Button v="primary" title={fix ? t('Save the correction') : t('Save')} loading={busy} onPress={save} /><Button v="link" title={t('Cancel')} onPress={onCancel} /></Row>
@@ -431,8 +434,8 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
       </View>
       {kind === 'other' ? <Field label={t('What for')} value={name} onChangeText={setName} maxLength={60} placeholder={t('For example: windscreen, battery, air conditioning')} /> : null}
       <Row>
-        <View style={{ flex: 1, minWidth: 150 }}><Field label={t('Day')} value={day} onChangeText={setDay} placeholder={t('DD.MM.YYYY')} keyboardType="numbers-and-punctuation" /></View>
-        <View style={{ flex: 1, minWidth: 110 }}><Field label={t('Time')} value={time} onChangeText={setTime} placeholder={t('HH:MM')} keyboardType="numbers-and-punctuation" onBlur={() => { const x = readTime(time); if (x) setTime(x); }} /></View>
+        <View style={{ flex: 1, minWidth: 150 }}><DateField label={t('Day')} value={day} onChangeText={setDay} min={today()} /></View>
+        <View style={{ flex: 1, minWidth: 110 }}><TimeField label={t('Time')} value={time} onChangeText={setTime} /></View>
       </Row>
       <Field label={kind === 'hu' ? t('Inspection centre') : t('Garage')} hint={t('optional')} value={garage} onChangeText={setGarage} maxLength={80} />
       <Field label={t('Notes')} hint={t('optional')} value={note} onChangeText={setNote} maxLength={1000} multiline placeholder={t('For example: booking number, who to ask for, bring the spare key')} />

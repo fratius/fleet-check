@@ -327,3 +327,15 @@ a decision about what the app must do, so it goes in a pull request of its own t
   a van or ending someone's tour, not on their own history or refuels. They see "You" for their own and "Another
   driver" (or no name) for anyone else. Owners and the station's managers still see every name, also of people who
   left. Managers' and owners' names on a driver's own things (who gave the van, who refused a refuel) are fine.
+- MUST 14.8 **Dates and times type themselves**: in every field that asks for a day, a month or a time (appointments,
+  services and TÜV, van details, driver records, incidents, "Who was driving?"), typing only digits is enough: the dots,
+  the slash and the colon appear by themselves (31032027 → 31.03.2027, 032027 → 03/2027, 0930 → 09:30; 9 and 930
+  still work as times). Typing them yourself and deleting work as usual. What is saved, and the message for a wrong
+  date, are as before.
+- MUST 14.9 Next to each of those fields a button opens a small pop-up: a **calendar** for a day (weeks from Monday,
+  month and day names in the app's language, today marked, the chosen day highlighted, arrows for the month, the title
+  to jump to another month or year; tapping a day fills the field and closes it), the **twelve months of a year** for a
+  month, and **two wheels** for a time (hours 00–23, minutes in steps of 5; Done fills it in, Cancel leaves it). An
+  appointment can't be given a past day there, and the day a service was done can't be a future one.
+- SHOULD 14.10 The pop-ups work on a phone-sized screen, without a connection, in every language, and right to left in
+  Arabic and Persian.

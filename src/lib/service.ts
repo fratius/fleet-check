@@ -81,14 +81,7 @@ export const REMIND: [number, string][] = [
 export const REMIND_DEFAULT = 1440;
 export const remindLabel = (m: number) => t(REMIND.find(([x]) => x === m)?.[1] || REMIND[2][1]);
 
-/** "9", "930", "9:30", "09.30" → "09:30"; null when it isn't a time. */
-export function readTime(raw: string): string | null {
-  const m = raw.trim().match(/^(\d{1,2})(?:[:.h ]?(\d{2}))?$/);
-  if (!m) return null;
-  const h = Number(m[1]), mi = Number(m[2] || 0);
-  if (h > 23 || mi > 59) return null;
-  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
-}
+export { readTime } from './datefmt';
 
 /** The booked ones, soonest first (the session keeps the latest 500 of every kind). */
 export const openAppointments = (rows: ServiceAppointment[], vehicleId?: string) =>

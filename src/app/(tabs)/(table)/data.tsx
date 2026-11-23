@@ -4,8 +4,9 @@ import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
 import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
+import { DateField, TimeField } from '@/components/pickers';
 import { usePeriodData } from '@/lib/data';
-import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
+import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay, today } from '@/lib/fleet';
 import { watchMembers, peopleScope } from '@/lib/people';
 import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
@@ -403,7 +404,9 @@ function WhoHad() {
   const vans = s.vehicles.filter((v) => s.runs(v.stationId)).sort((a, b) => vanName(a).localeCompare(vanName(b)));
   const list = q.trim() ? vans.filter((v) => `${v.name} ${v.plate}`.toLowerCase().includes(q.trim().toLowerCase())) : vans;
   const d = parseDay(day);
-  const when = d && /^\d{1,2}:\d{2}$/.test(at.trim()) ? new Date(`${d}T${at.trim().padStart(5, '0')}`).getTime() : null;
+  // A day ahead has no answer yet (typed; the calendar doesn't offer one).
+  const ahead = !!d && d > today();
+  const when = d && !ahead && /^\d{1,2}:\d{2}$/.test(at.trim()) ? new Date(`${d}T${at.trim().padStart(5, '0')}`).getTime() : null;
   const r = van && when ? whoHad(s.assignments, van, when) : null;
   const v = vans.find((x) => x.id === van);
   return (
@@ -413,8 +416,8 @@ function WhoHad() {
       <Field label={t('Van')} value={q} onChangeText={setQ} placeholder={t('Name or plate')} autoCorrect={false} />
       <Row gap={6}>{list.slice(0, 12).map((x) => <Chip key={x.id} text={x.plate || x.name} on={van === x.id} onPress={() => setVan(x.id)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><Field label={t('Day')} value={day} onChangeText={setDay} placeholder="DD.MM.YYYY" /></View>
-        <View style={{ width: 110 }}><Field label={t('Time')} value={at} onChangeText={setAt} placeholder="14:30" /></View>
+        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} value={at} onChangeText={setAt} /></View>
       </Row>
       {r && v ? (
         r.at ? (
@@ -429,7 +432,7 @@ function WhoHad() {
             <T v="small">{t('The app keeps the latest 500 handovers here; older ones are on the van\'s Drivers tab.')}</T>
           </View>
         )
-      ) : <T v="small">{!van ? t('Pick a van.') : t('Enter the day like 22.10.2026 and the time like 14:30.')}</T>}
+      ) : <T v="small" color={ahead ? c.alert : undefined}>{!van ? t('Pick a van.') : ahead ? t('The day can\'t be in the future.') : t('Enter the day like 22.10.2026 and the time like 14:30.')}</T>}
     </Card>
   );
 }

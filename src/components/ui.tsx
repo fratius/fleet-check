@@ -179,14 +179,21 @@ export function Pill({ text, v = 'default' }: { text: string; v?: PillV }) {
 export const Row = ({ children, gap = 8, style }: { children: React.ReactNode; gap?: number; style?: StyleProp<ViewStyle> }) =>
   <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap, alignItems: 'center' }, style]}>{children}</View>;
 
-export function Field({ label, hint, error, ...props }: { label: string; hint?: string; error?: string | null } & TextInputProps) {
+export function Field({ label, hint, error, after, ...props }: {
+  label: string; hint?: string; error?: string | null;
+  /** Next to the box, on its right (a calendar or clock button). */
+  after?: React.ReactNode;
+} & TextInputProps) {
   const c = useColors();
+  const box = (
+    <TextInput placeholderTextColor={c.ink2} accessibilityLabel={label} {...props}
+      style={[{ minHeight: 48, borderWidth: 2, borderColor: error ? c.alert : c.ink, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 10,
+        fontFamily: F.body, fontSize: 18, color: c.ink, backgroundColor: c.paper }, after ? { flex: 1, minWidth: 0 } : null, props.style]} />
+  );
   return (
     <View style={{ gap: 6 }}>
       <T v="medium">{label}{hint ? <T v="hint">{'  ' + hint}</T> : null}</T>
-      <TextInput placeholderTextColor={c.ink2} {...props}
-        style={[{ minHeight: 48, borderWidth: 2, borderColor: error ? c.alert : c.ink, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 10,
-          fontFamily: F.body, fontSize: 18, color: c.ink, backgroundColor: c.paper }, props.style]} />
+      {after ? <View style={{ flexDirection: 'row', gap: 6, alignItems: 'stretch' }}>{box}{after}</View> : box}
       {error ? <T v="hint" color={c.alert}>{error}</T> : null}
     </View>
   );
