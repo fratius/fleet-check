@@ -269,6 +269,7 @@
  "Booked by {name}. Cancelled by {who}.": "Programat de {name}. Anulat de {who}.",
  "Booked by {name}. Cancelled by {who}: {reason}": "Programat de {name}. Anulat de {who}: {reason}",
  "Booked by {name}. Changed by {who}, was {when}.": "Programat de {name}. Schimbat de {who}, era {when}.",
+ "Booked by {name}. Changed by {who}.": "Programat de {name}. Modificat de {who}.",
  "Booked by {name}. Service filled in by {who}.": "Programat de {name}. Service completat de {who}.",
  "Booked for {when}.": "Programat pentru {when}.",
  "Booked for {when}. No reminder: that time has already passed.": "Programat pentru {when}. Fără memento: momentul acela a trecut deja.",

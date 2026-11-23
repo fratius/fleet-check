@@ -447,6 +447,7 @@ f49d9eda	Booked by {name}.	[components/service.tsx]
 7c1b3ff7	Booked by {name}. Cancelled by {who}: {reason}
 a474eb0c	Booked by {name}. Cancelled by {who}.
 9a307c36	Booked by {name}. Changed by {who}, was {when}.
+70663832	Booked by {name}. Changed by {who}.
 59cbaf95	Booked by {name}. Service filled in by {who}.
 38b2774a	Booked for {when}.	[components/service.tsx]
 d1af235f	Booked for {when}. No reminder: that time has already passed.

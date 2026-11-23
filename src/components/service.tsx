@@ -486,7 +486,9 @@ function AppointmentCard({ a, v, canAct, onFill, onMove, onCancelled }: {
       <T v="small">{a.drivers === false ? t('Drivers don\'t see this appointment.') : t('Drivers see it on the van.')}</T>
       <T v="small">{a.remind === 0 ? t('No reminder.') : a.remindAt ? t('Reminder {when}.', { when: remindLabel(a.remind) }) : a.remindedAt ? t('Reminder sent.') : t('No reminder: that time had already passed.')}</T>
       <T v="small">{last
-        ? t('Booked by {name}. Changed by {who}, was {when}.', { name: a.byName, who: last.byName, when: apptWhen({ day: last.was.day || a.day, time: last.was.time || a.time }) })
+        ? last.was.day || last.was.time
+          ? t('Booked by {name}. Changed by {who}, was {when}.', { name: a.byName, who: last.byName, when: apptWhen({ day: last.was.day || a.day, time: last.was.time || a.time }) })
+          : t('Booked by {name}. Changed by {who}.', { name: a.byName, who: last.byName })
         : t('Booked by {name}.', { name: a.byName })}</T>
       {st.v === 'bad' ? <T v="small" color={c.alert}>{t('Its time has come. Fill in the service once it\'s done, or move it if the garage changed it.')}</T> : null}
       {asking ? (

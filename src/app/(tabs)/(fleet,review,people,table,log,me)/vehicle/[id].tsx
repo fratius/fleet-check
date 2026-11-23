@@ -158,8 +158,9 @@ export default function VehicleScreen() {
 
       {/* What the dashboard showed last: km, fuel or battery, range, warning lights. */}
       {!v.retired || v.dash ? <VanNow v={v} /> : null}
-      {/* Booked at the garage (drivers see it too, unless the appointment says not to). */}
-      <GarageVisitCard v={v} />
+      {/* Drivers: the van is booked at the garage (unless the appointment says not to). Owners and managers have the
+          appointments themselves on the Service tab. */}
+      {s.staff ? null : <GarageVisitCard v={v} />}
 
       {done ? <Notice text={done} /> : null}
       {s.runs(v.stationId) && !v.retired ? <Deadlines v={v} d={s.details.find((x) => x.id === v.id)} compact onOpen={openDetails} /> : null}

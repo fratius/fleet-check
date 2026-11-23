@@ -258,6 +258,7 @@
  "Booked by {name}. Cancelled by {who}.": "Gebucht von {name}. Abgesagt von {who}.",
  "Booked by {name}. Cancelled by {who}: {reason}": "Gebucht von {name}. Abgesagt von {who}: {reason}",
  "Booked by {name}. Changed by {who}, was {when}.": "Gebucht von {name}. Geändert von {who}, war {when}.",
+ "Booked by {name}. Changed by {who}.": "Gebucht von {name}. Geändert von {who}.",
  "Booked by {name}. Service filled in by {who}.": "Gebucht von {name}. Service eingetragen von {who}.",
  "Booked for {when}.": "Gebucht für {when}.",
  "Booked for {when}. No reminder: that time has already passed.": "Gebucht für {when}. Keine Erinnerung: Dieser Zeitpunkt ist schon vorbei.",
