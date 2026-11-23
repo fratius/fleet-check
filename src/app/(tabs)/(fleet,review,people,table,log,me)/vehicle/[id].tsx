@@ -11,6 +11,7 @@ import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, TourLine, VanNow } from '@/components/dash';
+import { GarageVisitCard } from '@/components/service';
 import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { VanService } from '@/components/service';
@@ -157,6 +158,9 @@ export default function VehicleScreen() {
 
       {/* What the dashboard showed last: km, fuel or battery, range, warning lights. */}
       {!v.retired || v.dash ? <VanNow v={v} /> : null}
+      {/* Drivers: the van is booked at the garage (unless the appointment says not to). Owners and managers have the
+          appointments themselves on the Service tab. */}
+      {s.staff ? null : <GarageVisitCard v={v} />}
 
       {done ? <Notice text={done} /> : null}
       {s.runs(v.stationId) && !v.retired ? <Deadlines v={v} d={s.details.find((x) => x.id === v.id)} compact onOpen={openDetails} /> : null}

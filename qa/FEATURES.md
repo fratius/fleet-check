@@ -239,6 +239,22 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 9.10 A month before a van's TÜV runs out, the fleet managers of its station (the owners where it has none) get a
   reminder, once per date. The TÜV also shows under "Due soon" in Review from a month before.
 - LIMIT 9.11 Phone notifications don't leave the test system (0.4), so the TÜV reminder itself can't be seen there.
+- SHOULD 9.12 On the Service tab, owners and the van's station managers **book an appointment** at the garage: what for
+  (the four common ones, the TÜV or Other), the day and time, the garage, notes, and when to be reminded (a day
+  before unless they choose another time, or no reminder). Booked appointments show on the Service tab and, in the
+  next 7 days or once their time has come, under "Due soon" in Review and as the next appointment in the Data tab.
+- MUST 9.13 An appointment can be moved or changed (what it was before stays visible with who changed it) or
+  cancelled (it stays, as cancelled, with who and why). **Nothing about an appointment is ever deleted.** Drivers
+  never see appointments; a manager never sees another station's.
+- MUST 9.14 "Fill in the service" on an appointment opens the service form filled in from it (what, garage, notes);
+  saving records the service like "Add service" (km required) and marks the appointment done. A done appointment
+  can't be moved or cancelled any more.
+- MUST 9.15 The reminder goes at the chosen time before the appointment, once, to whoever booked it and the station's
+  fleet managers (the owners where it has none); a moved appointment gets its new reminder. Like the TÜV reminder
+  (9.11), it can't be seen in the test system; the card says whether a reminder is set or was sent.
+- SHOULD 9.16 When booking, the manager chooses whether **drivers see it** (on unless "Only managers and owners" is
+  chosen). Then the station's drivers see on the van page and in the fleet list that the van is booked at the garage:
+  what for, when and the garage, never the notes; it follows a move and goes away when it's cancelled or done.
 
 ## 10. Data tab
 

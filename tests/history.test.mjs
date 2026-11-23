@@ -1285,6 +1285,152 @@ test('service history and the TÜV: owners and the station\'s managers record it
   }
 });
 
+test('service appointments: owners and the station\'s managers book, move and cancel them (kept); a reminder before; filling in the service marks it done', async () => {
+  const mk = async (plate, st) => {
+    const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
+    await setDoc(r, { name: '', plate, cls: 'van', stationId: S[st], createdAt: Date.now(), createdBy: S.own.uid });
+    return r.id;
+  };
+  const va = await mk('AP-1', 's1'), vx = await mk('AP-2', 's2');
+  const call = (p, x) => p.call('appointment', { orgId: S.org, ...x });
+  const appt = async (p, id) => (await getDoc(doc(p.db, 'orgs', S.org, 'serviceAppointments', id))).data();
+  // German time: the day the appointment is on, three days from now, at 10:00.
+  const berlinDay = (ms) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ms);
+  const day = berlinDay(Date.now() + 3 * 86400_000), later = berlinDay(Date.now() + 5 * 86400_000);
+  const book = { action: 'book', id: 'apOil', vehicleId: va, kind: 'service', day, time: '10:00', garage: 'Autohaus Ost', note: 'Ask for Jens' };
+  // Drivers don't book; managers only for their station's vans. What it's for, a real day and time, a time ahead.
+  await fails(call(S.d1, book), 'permission-denied');
+  await fails(call(S.mgr, { ...book, id: 'apX', vehicleId: vx }), 'permission-denied');
+  await fails(call(S.mgr, { ...book, kind: 'wash' }), 'invalid-argument');
+  await fails(call(S.mgr, { ...book, kind: 'other', name: '' }), 'invalid-argument');
+  await fails(call(S.mgr, { ...book, time: '25:00' }), 'invalid-argument');
+  await fails(call(S.mgr, { ...book, day: '2026-02-30' }), 'invalid-argument');
+  await fails(call(S.mgr, { ...book, day: berlinDay(Date.now() - 86400_000) }), 'invalid-argument');
+  await fails(call(S.mgr, { ...book, remind: 17 }), 'invalid-argument');
+  // The owner books it; reminded a day before unless chosen otherwise. Sent twice: once.
+  const r = await call(S.own, book);
+  const a1 = await appt(S.mgr, 'apOil');
+  assert.equal(a1.status, 'booked');
+  assert.equal(a1.remind, 1440);
+  assert.equal(a1.stationId, S.s1);
+  assert.equal(a1.vehicleName, 'AP-1');
+  assert.equal(a1.byName, 'Olga Owner');
+  // 10:00 in Berlin is 09:00 or 08:00 UTC (winter or summer time).
+  assert.ok([9, 8].includes(new Date(a1.at).getUTCHours()), new Date(a1.at).toISOString());
+  assert.equal(a1.remindAt, a1.at - 86400_000);
+  assert.equal(r.remindAt, a1.remindAt);
+  assert.equal((await call(S.own, book)).again, true);
+  await fails(call(S.mgr, { ...book, kind: 'tyres' }), 'invalid-argument');
+  // Drivers of the station see on the van that it's booked (unless the appointment says not to): what for, when and
+  // the garage, never the notes. They don't read the appointments themselves.
+  const visit = async () => (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', va))).data().garageVisit ?? null;
+  assert.deepEqual(await visit(), { id: 'apOil', kind: 'service', name: null, day, time: '10:00', at: a1.at, garage: 'Autohaus Ost' });
+  assert.ok(!JSON.stringify(await visit()).includes('Jens'));
+  await fails(updateDoc(doc(S.mgr.db, 'orgs', S.org, 'vehicles', va), { garageVisit: null }), 'permission-denied');
+  await fails(call(S.mgr, { ...book, id: 'apBad', drivers: 'yes' }), 'invalid-argument');
+  // Who reads them: owners and the station's managers, never drivers. Nobody writes or deletes them in the app.
+  const mine = await getDocs(query(collection(S.mgr.db, 'orgs', S.org, 'serviceAppointments'), where('stationId', 'in', [S.s1]), orderBy('createdAt', 'desc'), limit(500)));
+  assert.ok(mine.docs.some((d) => d.id === 'apOil'));
+  await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'serviceAppointments', 'apOil')), 'permission-denied');
+  await fails(updateDoc(doc(S.own.db, 'orgs', S.org, 'serviceAppointments', 'apOil'), { status: 'done' }), 'permission-denied');
+  await fails(deleteDoc(doc(S.own.db, 'orgs', S.org, 'serviceAppointments', 'apOil')), 'permission-denied');
+
+  const got = [];
+  const srv = http.createServer((req, res) => {
+    const ch = [];
+    req.on('data', (x) => ch.push(x));
+    req.on('end', () => { got.push(JSON.parse(Buffer.concat(ch).toString() || '{}')); res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ data: { status: 'ok', id: 't' } })); });
+  });
+  await new Promise((ok) => srv.listen(0, HOST, ok));
+  try {
+    await adminDb().doc(`users/${S.mgr.uid}/push/appt`).set({ expo: 'ExponentPushToken[dddddddddddddddddddddd]', platform: 'ios', createdAt: Date.now(), device: 'test', expoUrl: `http://${HOST}:${srv.address().port}/expo/appt` });
+    const cr = await appCreator('Andy Appt');
+    await fails(S.own.call('appointmentSweepNow', {}), 'permission-denied');
+    const forIt = () => got.filter((m) => m.data?.url === `/vehicle/${va}?tab=service`);
+    // A minute before the reminder: nothing. At its time: the station's fleet manager, with the plate and the garage.
+    await cr.call('appointmentSweepNow', { now: a1.remindAt - 60_000 });
+    assert.equal(forIt().length, 0);
+    await cr.call('appointmentSweepNow', { now: a1.remindAt + 60_000 });
+    assert.equal(forIt().length, 1);
+    assert.match(forIt()[0].title, /AP-1/);
+    assert.match(forIt()[0].body, /Autohaus Ost/);
+    // Once.
+    await cr.call('appointmentSweepNow', { now: a1.remindAt + 120_000 });
+    assert.equal(forIt().length, 1);
+    const a2 = await appt(S.own, 'apOil');
+    assert.equal(a2.remindAt, null);
+    assert.ok(a2.remindedAt);
+    // The garage moved it: the manager changes it. What it was before is kept with who changed it; a new reminder.
+    const mv = await call(S.mgr, { ...book, action: 'move', day: later, time: '14:30', remind: 180 });
+    assert.deepEqual(mv.changed.sort(), ['day', 'remind', 'time']);
+    const a3 = await appt(S.own, 'apOil');
+    assert.equal(a3.day, later);
+    assert.equal(a3.changes.length, 1);
+    assert.deepEqual(a3.changes[0].was, { day, time: '10:00', remind: 1440 });
+    assert.equal(a3.changes[0].byName, 'Max Manager');
+    assert.equal(a3.remindAt, a3.at - 3 * 3600_000);
+    assert.equal(a3.remindedAt, null);
+    assert.equal((await call(S.mgr, { ...book, action: 'move', day: later, time: '14:30', remind: 180 })).unchanged, true);
+    // The van follows the move.
+    assert.equal((await visit()).day, later);
+    assert.equal((await visit()).time, '14:30');
+    await fails(call(S.d1, { ...book, action: 'move', day: later }), 'permission-denied');
+    await cr.call('appointmentSweepNow', { now: a3.remindAt + 60_000 });
+    assert.equal(forIt().length, 2);
+  } finally {
+    await adminDb().doc(`users/${S.mgr.uid}/push/appt`).delete().catch(() => {});
+    srv.close();
+  }
+
+  // Done: the service filled in from it is recorded as usual and marks it done, linked both ways. Then it can't be
+  // moved or cancelled.
+  const svc = await S.mgr.call('service', { orgId: S.org, action: 'add', id: 'svcFromAppt', vehicleId: va, kind: 'service', day: berlinDay(Date.now()), km: 30500, cost: 250, garage: 'Autohaus Ost', appointmentId: 'apOil' });
+  assert.equal(svc.appointmentDone, true);
+  const a4 = await appt(S.own, 'apOil');
+  assert.equal(a4.status, 'done');
+  assert.equal(a4.serviceId, 'svcFromAppt');
+  assert.equal(a4.doneByName, 'Max Manager');
+  assert.equal(a4.remindAt, null);
+  assert.equal((await getDoc(doc(S.own.db, 'orgs', S.org, 'services', 'svcFromAppt'))).data().appointmentId, 'apOil');
+  assert.equal(await visit(), null, 'done: the van no longer shows it');
+  await fails(call(S.mgr, { ...book, action: 'move', time: '16:00' }), 'failed-precondition');
+  await fails(call(S.mgr, { action: 'cancel', id: 'apOil' }), 'failed-precondition');
+  // Cancelled: kept, with who and why; no reminder. Cancelling again changes nothing; a cancelled one isn't moved.
+  // Booked for managers and owners only: drivers don't see it on the van.
+  await call(S.own, { ...book, id: 'apTyres', kind: 'tyres', remind: 60, drivers: false });
+  assert.equal(await visit(), null);
+  assert.equal((await appt(S.own, 'apTyres')).drivers, false);
+  await call(S.mgr, { action: 'cancel', id: 'apTyres', reason: 'The garage cancelled' });
+  const c1 = await appt(S.own, 'apTyres');
+  assert.equal(c1.status, 'cancelled');
+  assert.equal(c1.reason, 'The garage cancelled');
+  assert.equal(c1.cancelledByName, 'Max Manager');
+  assert.equal(c1.remindAt, null);
+  assert.equal((await call(S.mgr, { action: 'cancel', id: 'apTyres' })).unchanged, true);
+  await fails(call(S.mgr, { ...book, id: 'apTyres', kind: 'tyres', action: 'move', time: '11:00' }), 'failed-precondition');
+  // A service from a cancelled appointment is still recorded; the appointment stays cancelled.
+  const svc2 = await S.mgr.call('service', { orgId: S.org, action: 'add', id: 'svcFromCancelled', vehicleId: va, kind: 'tyres', day: berlinDay(Date.now()), km: 30600, appointmentId: 'apTyres' });
+  assert.equal(svc2.appointmentDone, false);
+  assert.equal((await appt(S.own, 'apTyres')).status, 'cancelled');
+  // The appointments go with the van to another station: its new managers see them, the old ones don't.
+  // Cancelled: the van no longer shows it.
+  await call(S.own, { ...book, id: 'apGone', kind: 'repair' });
+  assert.equal((await visit()).id, 'apGone');
+  await call(S.own, { action: 'cancel', id: 'apGone', reason: 'garage closed' });
+  assert.equal(await visit(), null, 'cancelled: the van no longer shows it');
+  await call(S.own, { ...book, id: 'apBrakes', kind: 'brakes' });
+  assert.equal((await visit()).id, 'apBrakes');
+  // Switched to "Only managers and owners" with a move: drivers stop seeing it; switched back, they see it again.
+  await call(S.mgr, { ...book, id: 'apBrakes', kind: 'brakes', action: 'move', drivers: false });
+  assert.equal(await visit(), null, 'managers and owners only');
+  await call(S.mgr, { ...book, id: 'apBrakes', kind: 'brakes', action: 'move', drivers: true });
+  assert.equal((await visit()).id, 'apBrakes');
+  await S.own.call('moveVan', { orgId: S.org, vehicleId: va, stationId: S.s2 });
+  assert.equal((await appt(S.own, 'apBrakes')).stationId, S.s2);
+  await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'serviceAppointments', 'apBrakes')), 'permission-denied');
+  await fails(call(S.mgr, { action: 'cancel', id: 'apBrakes' }), 'permission-denied');
+});
+
 test('the company\'s names: owners and managers read them, each person their own, nobody writes them; a name change follows', async () => {
   const names = async (p) => (await getDocs(collection(p.db, 'orgs', S.org, 'names'))).docs.map((d) => [d.id, d.data().name]);
   // Filled by the server from the people (a trigger), and kept when someone leaves.

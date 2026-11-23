@@ -9,6 +9,7 @@ import { useSession } from '@/lib/session';
 import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
 import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
+import { apptState, apptWhen, openAppointments, serviceName } from '@/lib/service';
 import { watchMembers, peopleScope } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
@@ -54,6 +55,8 @@ export default function ReviewQueue() {
   // Inspections, service, tax, insurance and contract ends that are overdue or due soon, and the drivers' licence
   // checks, licences and safety briefings.
   const due = fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details);
+  // Service appointments in the next week, and the ones whose time has come and the service isn't filled in yet.
+  const appts = openAppointments(s.appointments).filter((a) => s.runs(a.stationId) && apptState(a).days <= 7);
   const known = new Map([...s.assignments.map((a) => [a.driverId, a.driverName] as const), ...s.tours.map((t) => [t.driverId, t.driverName] as const)]);
   const pdue = peopleDue(s.records.filter((r) => s.runs(r.stationId)), members, s.org?.licenceCheckMonths || CHECK_MONTHS, Date.now(), known);
   // Drivers stopped at the pump (not the van's fuel card, or none), oldest first; and the last week's refuels,
@@ -73,7 +76,7 @@ export default function ReviewQueue() {
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
     ...(pump.length ? [['pump', t('At the pump'), pump.length] as [Exclude<Cat, 'all'>, string, number]] : []),
     ['review', t('To review'), waiting.length], ['missing', t('Missing proof'), missing.length + gaps.length], ['warn', t('Warning lights'), warn.length],
-    ['chk', t('Checks for drivers'), todo.length + problems.length], ['due', t('Due soon'), due.length + pdue.length], ['buys', t('Fuel, wash, parts'), buys.length], ['van', t('At the van'), atVan.length], ['done', t('Reviewed'), done.length],
+    ['chk', t('Checks for drivers'), todo.length + problems.length], ['due', t('Due soon'), appts.length + due.length + pdue.length], ['buys', t('Fuel, wash, parts'), buys.length], ['van', t('At the van'), atVan.length], ['done', t('Reviewed'), done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
   const shownDone = allDone ? done : done.slice(0, 8);
@@ -150,17 +153,25 @@ export default function ReviewQueue() {
         </Section>
       ) : null}
 
-      {show('due') && (due.length || pdue.length || cat === 'due') ? (
-        <Section color={c.amber} title={t('Due soon')} count={due.length + pdue.length} note={t('Inspections, service, tax, insurance and contract ends; drivers\' licence checks, licences and safety briefings. In the next weeks, or overdue.')}>
+      {show('due') && (appts.length || due.length || pdue.length || cat === 'due') ? (
+        <Section color={c.amber} title={t('Due soon')} count={appts.length + due.length + pdue.length} note={t('Inspections, service, tax, insurance and contract ends; drivers\' licence checks, licences and safety briefings. In the next weeks, or overdue.')}>
           <List>
-            {!due.length && !pdue.length ? <T v="hint">{t('Nothing due in the next weeks.')}</T> : null}
+            {!appts.length && !due.length && !pdue.length ? <T v="hint">{t('Nothing due in the next weeks.')}</T> : null}
+            {appts.map((a, i) => {
+              const st = apptState(a);
+              return (
+                <ListRow key={`appt-${a.id}`} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: a.vehicleId, tab: 'service' } })}
+                  title={`${s.vanName(a)} – ${t('Appointment: {what}', { what: serviceName(a) })}`} line={[apptWhen(a), a.garage || '', where(a.stationId)].filter(Boolean).join(', ')}
+                  right={<Pill v={st.v === 'default' ? 'amber' : st.v} text={st.text} />} />
+              );
+            })}
             {pdue.map(({ uid, name, stationId, x }, i) => (
-              <ListRow key={`${uid}-${x.key}`} first={i === 0} onPress={() => router.push({ pathname: '/person/[uid]', params: { uid, tab: 'record' } })}
+              <ListRow key={`${uid}-${x.key}`} first={i === 0 && !appts.length} onPress={() => router.push({ pathname: '/person/[uid]', params: { uid, tab: 'record' } })}
                 title={`${name} – ${x.label}`} line={[x.day ? fmtDay(x.day) : '', where(stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
             {due.map(({ v, x }, i) => (
-              <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: ['hu', 'service', 'serviceKm', 'tyres'].includes(x.key) ? 'service' : 'details' } })}
+              <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length && !appts.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: ['hu', 'service', 'serviceKm', 'tyres'].includes(x.key) ? 'service' : 'details' } })}
                 title={`${vanName(v)} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}

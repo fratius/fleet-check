@@ -9,6 +9,7 @@ import { damageLogFor, modelOf, tourNumbers, type TourEnd } from './fleetlog';
 import { cardDigits, purchaseFlags, said, type BuyKind, type Receipt } from './purchases';
 import { fillVanDash } from './vandash';
 import { splitNames } from './names';
+import { berlinMs } from './service';
 import { monthEnd } from './service';
 
 /**
@@ -215,6 +216,21 @@ export async function createDemo(uid: string, ownerName: string, email: string, 
     batch.set(org.collection('vehicleCosts').doc(ref.id), demoCosts(n, now));
     return { id: ref.id, name, cls, st };
   });
+  // Two service appointments (service.ts): one tomorrow morning, one whose time has come and isn't filled in yet.
+  const berlin = (ms: number) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ms);
+  const appts: [number, string, string, number, string][] = [[0, 'service', '09:00', 1, 'Autohaus Demo'], [1, 'tyres', '08:00', 0, 'Reifen Demo']];
+  for (const [n, kind, time, plusDays, garage] of appts) {
+    const on = berlin(now + plusDays * day);
+    const at = berlinMs(on, time);
+    const aref = org.collection('serviceAppointments').doc();
+    // Drivers see it on the van too (vehicles.garageVisit, as the server keeps it).
+    batch.set(org.collection('vehicles').doc(vans[n].id), { garageVisit: { id: aref.id, kind, name: null, day: on, time, at, garage } }, { merge: true });
+    batch.set(aref, {
+      kind, name: null, day: on, time, at, garage, note: null, remind: 1440, drivers: true, remindAt: null, remindedAt: plusDays ? null : at - 1440 * 60_000,
+      status: 'booked', vehicleId: vans[n].id, vehicleName: VANS[n][0], plate: VANS[n][1], stationId: stationIds[vans[n].st],
+      by: uid, byName: ownerName, createdAt: now - 3 * day, changes: [],
+    });
+  }
   // A month of assignments: in each 4-day block every driver of a station has a different van of that
   // station, so nobody has two vans at once. The last block is still running.
   const BLOCKS = 7, BLOCK = 4 * day;

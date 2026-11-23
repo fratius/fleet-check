@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 let env;
 const O = 'org1', O2 = 'org2', S1 = 'st1', S2 = 'st2';
@@ -75,6 +75,8 @@ beforeEach(async () => {
     await put(`orgs/${O}/purchases/b2`, { kind: 'wash', status: 'done', vehicleId: 'v2', stationId: S2, by: 'drv2', byName: 'Driver 2', createdAt: 2, total: 12.9 });
     await put(`orgs/${O}/buyReads/br1`, { purchaseId: 'b1', step: 'card', by: 'drv1', createdAt: 1 });
     await put(`orgs/${O}/services/sv1`, { kind: 'service', name: null, day: '2026-11-02', km: 61200, cost: 389.5, garage: 'Autohaus Ost', note: 'Oil and filters', result: null, next: null, vehicleId: 'v1', vehicleName: 'V1', plate: 'V1', stationId: S1, by: 'mgr1', byName: 'Manager 1', createdAt: 1, edits: [] });
+    await put(`orgs/${O}/serviceAppointments/ap1`, { kind: 'service', name: null, day: '2027-01-12', time: '09:00', at: 1, garage: 'Autohaus Ost', note: null, remind: 1440, remindAt: null, status: 'booked', vehicleId: 'v1', vehicleName: 'V1', plate: 'V1', stationId: S1, by: 'mgr1', byName: 'Manager 1', createdAt: 1, changes: [] });
+    await put(`orgs/${O}/serviceAppointments/ap2`, { kind: 'hu', name: null, day: '2027-01-14', time: '08:00', at: 2, garage: 'TÜV Süd', note: null, remind: 1440, remindAt: null, status: 'booked', vehicleId: 'v2', vehicleName: 'V2', plate: 'V2', stationId: S2, by: 'own', byName: 'Owner', createdAt: 2, changes: [] });
     await put(`orgs/${O}/services/sv2`, { kind: 'hu', name: null, day: '2026-10-12', km: 80400, cost: 139, garage: 'TÜV Süd', note: null, result: 'passed', next: { hu: '2027-10-31' }, vehicleId: 'v2', vehicleName: 'V2', plate: 'V2', stationId: S2, by: 'own', byName: 'Owner', createdAt: 2, edits: [] });
     await put(`orgs/${O}/serviceNags/hu_v1_2027-03-31`, { kind: 'hu', vehicleId: 'v1', hu: '2027-03-31', at: 1 });
     await put(`orgs/${O}/dashReads/d1`, { by: 'drv1', vehicleId: 'v1', createdAt: 1 });
@@ -606,6 +608,23 @@ describe('refuels, washes and parts: every attempt kept, written by the server',
   test('…not the owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/buyReads/br1`))));
   test('the app creator viewing as a driver of S1 doesn\'t see others\' refuels', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/purchases/b1`))));
   test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/purchases/b1`))));
+});
+
+describe('service appointments: owners and the station\'s managers, written by the server', () => {
+  const ap = (db) => collection(db, `orgs/${O}/serviceAppointments`);
+  const atSt = (db, st) => query(ap(db), where('stationId', 'in', [st]), orderBy('createdAt', 'desc'));
+  test('the owner reads every one', () => assertSucceeds(getDocs(query(ap(as('own')), orderBy('createdAt', 'desc')))));
+  test('a manager reads their station\'s, as the app asks', () => assertSucceeds(getDocs(atSt(as('mgr1'), S1))));
+  test('not another station\'s', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/serviceAppointments/ap2`))));
+  test('…nor by asking for that station', () => assertFails(getDocs(atSt(as('mgr1'), S2))));
+  test('a driver never reads them', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/serviceAppointments/ap1`))));
+  test('…nor their station\'s list', () => assertFails(getDocs(atSt(as('drv1'), S1))));
+  test('nobody outside the company', () => assertFails(getDoc(doc(as('own2'), `orgs/${O}/serviceAppointments/ap1`))));
+  test('nobody books one from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/serviceAppointments/ap9`), { kind: 'tyres', day: '2027-01-20', time: '10:00', vehicleId: 'v1', stationId: S1, status: 'booked', by: 'own', createdAt: 3 })));
+  test('nobody marks one done or moves it from the app', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/serviceAppointments/ap1`), { status: 'done' })));
+  test('nobody deletes one, not even the owner', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/serviceAppointments/ap1`))));
+  test('the app creator viewing as a driver doesn\'t read them', () => assertFails(getDoc(doc(as('vdrv', { creator: true }), `orgs/${O}/serviceAppointments/ap1`))));
+  test('…viewing as the S1 manager does', () => assertSucceeds(getDoc(doc(as('vmgr', { creator: true }), `orgs/${O}/serviceAppointments/ap1`))));
 });
 
 describe('service history and the TÜV: owners and the station\'s managers, written by the server', () => {

@@ -99,8 +99,25 @@ Each van's **Service** tab, for owners and the managers of the van's station (dr
   and the next TÜV, service and tyre dates. The newest entry decides the next service (date and km together) and
   the next tyre change, also when its target is sooner than the old one (`dueFrom` remembers which entry set them);
   a TÜV date only moves later. Typing in an old invoice afterwards changes none of them.
-- **Data tab, Service**: per van (TÜV, next service, last service and its km, entries and cost in the period) and
-  every entry (day, van, what, km, cost, TÜV result, garage, notes, by); both in the Excel file.
+- **Data tab, Service**: per van (TÜV, next service, next appointment, last service and its km, entries and cost in
+  the period) and every entry (day, van, what, km, cost, TÜV result, garage, notes, by); both in the Excel file.
+- **Appointments at the garage** (product owner, 2026-11-23): not every service is done on the spot. "Book an
+  appointment" on the Service tab: what for (the four common ones, the TÜV or Other), the day and time (German
+  time), the garage, notes, and when to be reminded (1 hour, 3 hours, 1 day (the default), 2 days or a week before,
+  or not at all). The reminder goes to whoever booked it and the station's fleet managers (the owners where it has
+  none), as a phone notification (`appointmentSweep`, every 15 minutes; none when its time has already passed when
+  booking, none for demo companies). Booked ones show on the Service tab and in Review's "Due soon" (the next 7 days,
+  and those whose time has come). They can be moved or changed (what it was before is kept with who changed it, and
+  the reminder follows the new time) or cancelled (kept as cancelled, with who and why). "Fill in the service" opens
+  the service form filled in from it (what, garage, notes; its day once it has come); saving it records the service
+  as usual and marks the appointment done, linked both ways (`serviceId`, `appointmentId`). Records:
+  `orgs/{org}/serviceAppointments`, written only by the server (`appointment`, and `service` for done), never
+  deleted, read by owners and the van's station managers; they move with the van (`moveVan`).
+- **Drivers see that a van is booked** (product owner, 2026-11-23, optional per appointment, on unless switched to
+  "Only managers and owners"): a card on the van page and a "Garage: …" pill in the fleet list, with what for, when
+  and the garage, never the notes. Drivers don't read the appointments: the server keeps the van's next such
+  appointment on the van (`vehicles.garageVisit`) after every booking, move, cancel and done; shown until half a
+  day after its time.
 
 Not stored: invoice photos (the cost and the garage are typed in). Costs are euros without VAT.
 

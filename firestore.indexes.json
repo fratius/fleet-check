@@ -591,6 +591,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "serviceAppointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "stationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

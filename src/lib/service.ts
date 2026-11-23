@@ -1,9 +1,9 @@
 import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 
 import { fb } from './firebase';
-import { deadlines, type Deadline } from './fleet';
-import { N_, t } from './i18n';
-import type { HuResult, ServiceKind, ServiceRecord, Vehicle, VehicleDetails } from './types';
+import { daysTo, deadlines, fmtDay, type Deadline } from './fleet';
+import { N_, t, tp } from './i18n';
+import type { HuResult, ServiceAppointment, ServiceKind, ServiceRecord, Vehicle, VehicleDetails } from './types';
 
 /**
  * A van's service history (orgs/{org}/services, written by the server: functions/src/service.ts) and the TÜV.
@@ -47,8 +47,11 @@ export const huDue = (v: Vehicle, d: VehicleDetails | null | undefined): Deadlin
 export interface ServiceVanRow {
   id: string; name: string; plate: string | null; stationId: string | null; retired: boolean; model: string;
   hu: Deadline | null; next: Deadline | null; last: VehicleDetails['lastService'] | null; n: number; cost: number;
+  /** The next booked appointment (or one whose time has come and isn't filled in yet). */
+  appt: ServiceAppointment | null;
 }
-export function serviceVanRows(vans: Vehicle[], details: VehicleDetails[], services: ServiceRecord[]): ServiceVanRow[] {
+export function serviceVanRows(vans: Vehicle[], details: VehicleDetails[], services: ServiceRecord[], appts: ServiceAppointment[] = []): ServiceVanRow[] {
+  const open = openAppointments(appts);
   const det = new Map(details.map((d) => [d.id, d]));
   const per = new Map<string, { n: number; cost: number }>();
   for (const r of services) {
@@ -62,6 +65,49 @@ export function serviceVanRows(vans: Vehicle[], details: VehicleDetails[], servi
     return {
       id: v.id, name: v.name, plate: v.plate || null, stationId: v.stationId || null, retired: !!v.retired, model: [v.make, v.model].filter(Boolean).join(' '),
       hu: huDue(v, d), next: serviceDue(v, d)[0] || null, last: d?.lastService || null, n: p?.n || 0, cost: p?.cost || 0,
+      appt: open.find((a) => a.vehicleId === v.id) || null,
     };
   });
 }
+
+/* ---------- Service appointments (functions/src/service.ts) ---------- */
+
+/** What can be booked: the four common ones, the TÜV and Other. */
+export const BOOK_KINDS: ServiceKind[] = ['service', 'tyres', 'brakes', 'repair', 'hu', 'other'];
+/** When the reminder goes, in minutes before (0: none). The server takes only these. */
+export const REMIND: [number, string][] = [
+  [60, N_('1 hour before')], [180, N_('3 hours before')], [1440, N_('1 day before')], [2880, N_('2 days before')], [10080, N_('1 week before')], [0, N_('No reminder')],
+];
+export const REMIND_DEFAULT = 1440;
+export const remindLabel = (m: number) => t(REMIND.find(([x]) => x === m)?.[1] || REMIND[2][1]);
+
+/** "9", "930", "9:30", "09.30" → "09:30"; null when it isn't a time. */
+export function readTime(raw: string): string | null {
+  const m = raw.trim().match(/^(\d{1,2})(?:[:.h ]?(\d{2}))?$/);
+  if (!m) return null;
+  const h = Number(m[1]), mi = Number(m[2] || 0);
+  if (h > 23 || mi > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+}
+
+/** The booked ones, soonest first (the session keeps the latest 500 of every kind). */
+export const openAppointments = (rows: ServiceAppointment[], vehicleId?: string) =>
+  rows.filter((a) => a.status === 'booked' && (!vehicleId || a.vehicleId === vehicleId)).sort((a, b) => a.at - b.at);
+
+/**
+ * How close an appointment is, for a pill: its time has come (fill in the service), today, tomorrow, in n days, or
+ * just its day. `soon`: today, tomorrow or the time has come (Review lists the ones within a week).
+ */
+export function apptState(a: Pick<ServiceAppointment, 'day' | 'time' | 'at'>, now = Date.now()): { text: string; v: 'bad' | 'amber' | 'default'; soon: boolean; days: number } {
+  const days = daysTo(a.day, now);
+  if (a.at <= now) return { text: t('Fill in the service'), v: 'bad', soon: true, days };
+  if (days <= 0) return { text: t('Today, {time}', { time: a.time }), v: 'amber', soon: true, days };
+  if (days === 1) return { text: t('Tomorrow, {time}', { time: a.time }), v: 'amber', soon: true, days };
+  return { text: days <= 7 ? tp(days, 'In {n} day', 'In {n} days') : fmtDay(a.day), v: 'default', soon: false, days };
+}
+/** "25 Nov 2026, 09:30". */
+export const apptWhen = (a: Pick<ServiceAppointment, 'day' | 'time'>) => `${fmtDay(a.day)}, ${a.time}`;
+
+/** The van's next garage visit drivers may see, while it's not more than half a day past (vehicles.garageVisit). */
+export const visitOf = (v: Pick<Vehicle, 'garageVisit' | 'retired'>, now = Date.now()) =>
+  (v.garageVisit && !v.retired && v.garageVisit.at > now - 12 * 3600_000 ? v.garageVisit : null);

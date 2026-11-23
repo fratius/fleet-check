@@ -9,7 +9,7 @@ import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay } from '@/lib/fleet';
 import { watchMembers, peopleScope } from '@/lib/people';
 import { type Session, useSession } from '@/lib/session';
 import { driverRows, isOpen, totals, vanRows, whoHad, type DriverRow, type Inputs, type VanRow } from '@/lib/stats';
-import { HU_RESULT, serviceName, serviceVanRows, type ServiceVanRow } from '@/lib/service';
+import { HU_RESULT, apptWhen, serviceName, serviceVanRows, type ServiceVanRow } from '@/lib/service';
 import type { Member, Purchase, ServiceRecord, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
@@ -81,7 +81,7 @@ export default function DataScreen() {
   const services = useMemo(() => data.services.filter((r) => inScope(r.stationId)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data.services, station, s.mode]);
-  const svcVans = useMemo(() => serviceVanRows(inputs.vehicles, s.details, services), [inputs.vehicles, s.details, services]);
+  const svcVans = useMemo(() => serviceVanRows(inputs.vehicles, s.details, services, s.appointments), [inputs.vehicles, s.details, services, s.appointments]);
 
   if (!s.staff) return <Screen><T v="h1">{t('Data')}</T><Card dashed><T v="hint">{t('Fleet managers and owners see the fleet in numbers.')}</T></Card></Screen>;
 
@@ -343,6 +343,7 @@ function serviceVanCols(c: C, station: boolean, stationName: (id: string | null)
     // Sorted by days left; vans without a date last.
     { key: 'hu', label: t('TÜV'), width: 150, align: 'left', get: (v) => v.hu?.days ?? 99999, text: (v) => (v.hu?.day ? `${fmtDay(v.hu.day, true)}, ${v.hu.note}` : t('no date')), tone: (v) => (v.hu ? tone(v.hu) : c.ink2) },
     { key: 'next', label: t('Next service'), width: 190, align: 'left', get: (v) => v.next?.days ?? (v.next ? -1 : 99999), text: (v) => (v.next ? `${v.next.label}${v.next.day ? `, ${fmtDay(v.next.day)}` : ''}, ${v.next.note}` : ''), tone: (v) => tone(v.next) },
+    { key: 'appt', label: t('Appointment'), width: 200, align: 'left', get: (v) => v.appt?.at ?? 1e15, text: (v) => (v.appt ? `${apptWhen(v.appt)}, ${serviceName(v.appt)}` : ''), tone: (v) => (v.appt && v.appt.at <= Date.now() ? c.alert : undefined) },
     { key: 'last', label: t('Last service'), width: 200, align: 'left', get: (v) => v.last?.day ?? '', text: (v) => (v.last ? `${fmtDay(v.last.day)}, ${serviceName(v.last)}` : '') },
     { key: 'lastKm', label: t('km then'), width: 84, get: (v) => v.last?.km ?? null, text: (v) => int(v.last?.km) },
     { key: 'n', label: t('Entries in period'), width: 84, get: (v) => v.n, total: (vs) => int(sum(vs, (v) => v.n)) },
