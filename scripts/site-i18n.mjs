@@ -6,8 +6,8 @@
  *   node scripts/site-i18n.mjs            writes i18n/site-keys.json (every English text, with an id) and lists
  *                                         what each language misses
  *   node scripts/site-i18n.mjs --strict   also fails when a translation loses or invents a {placeholder} or changes
- *                                         the HTML tags in a text, or a language file is gone (CI). Missing texts
- *                                         only warn: the page shows them in English until translated.
+ *                                         the HTML tags in a text, a language file is gone, or a language misses
+ *                                         a text (CI): every change ships its texts in all 31 languages.
  *
  * The page translates itself in the browser: every text node and every aria-label, placeholder, title and alt of
  * the body (outside script, style and [translate="no"]), plus every t('…') and N_('…') in its script. The English
@@ -82,8 +82,8 @@ for (const code of codes) {
   const missing = list.filter(({ key }) => typeof tr[key] !== 'string' || !tr[key].trim());
   const broken = list.filter(({ key }) => typeof tr[key] === 'string' && (holders(tr[key]) !== holders(key) || tags(tr[key]) !== tags(key)));
   const extra = Object.keys(tr).filter((k) => !keys.has(k));
-  if (broken.length) bad++;
-  if (missing.length && process.env.GITHUB_ACTIONS) console.log(`::warning title=Website texts not translated::${code}: ${missing.length} texts show in English (node scripts/site-i18n.mjs)`);
+  if (broken.length || (strict && missing.length)) bad++;
+  if (missing.length && process.env.GITHUB_ACTIONS) console.log(`::error title=Website texts not translated::${code}: ${missing.length} texts show in English (node scripts/site-i18n.mjs)`);
   console.log(`${code}: ${missing.length} missing, ${broken.length} broken, ${extra.length} no longer used`);
   for (const { id, key } of broken) console.log(`  broken ${id}: ${JSON.stringify(key)} -> ${JSON.stringify(tr[key])}`);
   if (missing.length && missing.length <= 10) for (const { id, key } of missing) console.log(`  missing ${id}: ${JSON.stringify(key)}`);

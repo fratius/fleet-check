@@ -3,7 +3,7 @@
 //   node scripts/i18n.mjs            writes i18n/keys.json (every text, from the app and the functions) and reports,
 //                                    per language in public/i18n/<code>.json, what is missing or broken
 //   node scripts/i18n.mjs --prune    also removes translations of texts the app no longer has
-//   node scripts/i18n.mjs --strict   fails when a translation is broken (a {placeholder} lost or invented)
+//   node scripts/i18n.mjs --strict   fails when a language misses a text, or a translation is broken (a {placeholder} lost or invented)
 //   node scripts/i18n.mjs --lang=de  checks one language only, and leaves i18n/keys.json as it is (for translators)
 //
 // A text is found where it is passed to t(), tp(), tj() or N_() in the app, and to fail(), tr(), trp() or N_() in the
@@ -110,7 +110,8 @@ problems.forEach((p) => console.log(`  ! ${p}`));
 // Each language: missing, broken, no longer used.
 const ph = (s) => [...String(s).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
 const dir = join(ROOT, 'public/i18n');
-let broken = 0;
+let broken = 0, missingAll = 0;
+const lacking = [];
 if (existsSync(dir)) {
   const { formsOf } = await import(join(ROOT, 'scripts/plural-forms.mjs'));
   for (const f of readdirSync(dir).filter((x) => x.endsWith('.json') && (!only || x === `${only}.json`)).sort()) {
@@ -137,9 +138,15 @@ if (existsSync(dir)) {
       writeFileSync(join(dir, f), JSON.stringify(d, null, 1) + '\n');
     }
     broken += bad.length;
+    missingAll += missing;
+    if (missing) lacking.push(`${code} (${missing})`);
     console.log(`${code}: ${list.length - missing}/${list.length} translated${missing ? `, ${missing} missing (English shown)` : ''}${bad.length ? `, ${bad.length} broken` : ''}${unused.length ? `, ${unused.length} no longer used${args.has('--prune') ? ' (removed)' : ''}` : ''}`);
     bad.slice(0, only ? 200 : 8).forEach((b) => console.log(`    broken: ${b}`));
     if (only && missing) list.filter((k) => d[k.key] == null || d[k.key] === '').slice(0, 200).forEach((k) => console.log(`    missing: ${k.key}`));
   }
 }
-if (args.has('--strict') && (broken || problems.length)) process.exit(1);
+if (args.has('--strict') && missingAll) {
+  console.error(`\nNot translated: ${lacking.join(', ')}. Every change ships its texts in all languages:`);
+  console.error('  node scripts/i18n.mjs --lang=<code> lists them; translate into i18n/out/<code>.*.jsonl, then node scripts/i18n-merge.mjs <code>.');
+}
+if (args.has('--strict') && (broken || missingAll || problems.length)) process.exit(1);

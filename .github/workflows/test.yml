@@ -148,7 +148,7 @@ jobs:
         run: node --test tests/deploy.test.mjs
       - name: The blind tester stays blind, and its rules can't change with the app (qa/)
         run: node --test tests/qa.test.mjs
-      - name: Translations (no lost or invented placeholders)
+      - name: Translations (every text in every language, no lost or invented placeholders)
         run: node scripts/i18n.mjs --strict
       - name: Website translations (every text, no lost or invented placeholders)
         run: node scripts/site-i18n.mjs --strict
