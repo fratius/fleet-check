@@ -290,7 +290,7 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
           {signedIn ? (
             <>
               <T>{t('Signed in as {email}. You\'ll join with this account.', { email: s.user?.email })}</T>
-              <Row><Button small v="link" title={t('Use another account')} onPress={() => s.signOut()} /></Row>
+              <Row><Button small v="link" title={t('Use another account')} onPress={() => { setErr(null); setInfo(null); s.signOut(); }} /></Row>
             </>
           ) : (
             <>

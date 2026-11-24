@@ -402,9 +402,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = useCallback(async (email: string, back?: string) => {
     const send = (url?: string) => retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim(), url ? { url } : undefined));
     // A page Firebase doesn't allow to return to (its address isn't an authorised domain) still gets the email, without the way back.
+    // The same answer whether or not the email has an account: the screen must not tell who is registered.
+    const quiet = (e: unknown) => { if ((e as { code?: string })?.code !== 'auth/user-not-found') throw e; };
     await send(back).catch((e) => {
-      if (back && /unauthorized-continue-uri|invalid-continue-uri/.test(String((e as { code?: string })?.code))) return send();
-      throw e;
+      if (back && /unauthorized-continue-uri|invalid-continue-uri/.test(String((e as { code?: string })?.code))) return send().catch(quiet);
+      return quiet(e);
     });
   }, []);
   const signOut = useCallback(async () => {

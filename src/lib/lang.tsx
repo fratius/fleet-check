@@ -72,6 +72,10 @@ export const useLang = () => {
   return c;
 };
 
+let returnTo: string | null = null;
+/** The web page that was open when the language changed (once), to open again after the screens are drawn anew. */
+export function takeReturnTo(): string | null { const r = returnTo; returnTo = null; return r; }
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const device = deviceLang();
   const [state, setState] = useState<{ code: string; picked: string | null } | null>(null);
@@ -95,6 +99,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         document.head.appendChild(st);
       }
     }
+    // A switch draws every screen again (the key below), which on the web can land on the first page instead of this
+    // one (a driver switching language on their driver link ended up on sign-in): keep where they were.
+    if (now.current && Platform.OS === 'web' && typeof window !== 'undefined') returnTo = window.location.pathname + window.location.search;
     setState({ code: shown, picked });
   }, []);
 
