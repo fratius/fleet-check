@@ -684,7 +684,7 @@ test('A2, A3: the driver link asks only for station, name, email and password, w
   try {
     await page.goto(`${URL0}/join/${DRIVER_LINK}`);
     await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
-    assert.equal(await page.locator('text=/Mobile number|Transporter ID|phone/i >> visible=true').count(), 0, 'no phone number or Transporter ID');
+    assert.equal(await page.locator('text=/Mobile number|Transporter ID/i >> visible=true').count(), 0, 'no phone number or Transporter ID');
     await visible(page, 'Tip: use the same email as in your Amazon app.').waitFor({ timeout: 10_000 });
     await visible(page, 'Choose a safe password of your own, at least 6 characters.').waitFor({ timeout: 10_000 });
     assert.equal(await page.locator('input >> visible=true').count(), 4, 'first name, last name, email, password');

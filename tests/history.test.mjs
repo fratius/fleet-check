@@ -2976,7 +2976,7 @@ test('A6: the driver\'s welcome email: the company, the station, waiting for app
 
 test('A6: the driver gets a notification when a fleet manager approves them', async () => {
   const link = await S.mgr.call('driverLink', { orgId: S.org });
-  const pia = await person('Pia Approved');
+  const pia = await person('Pia Approved', `pia.approved.${run}@test.dev`);
   await pia.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Pia', lastName: 'Approved' } });
   const ph = await phoneOf(pia, 'pia');
   try {

@@ -328,8 +328,8 @@ function GetApp() {
       <T>{target === 'both'
         ? t('Install Fratius on your phone and sign in with the same email and password.')
         : t('Install the app and sign in with the same email and password.')}</T>
-      {ios ? <Button v="primary" wide title={t('iPhone: open the App Store')} onPress={() => openOut(APP_STORE)} accessibilityRole="link" /> : null}
-      {android ? <Button v={target === 'both' ? 'secondary' : 'primary'} wide title={GOOGLE_PLAY ? t('Android: open Google Play') : t('Android: download the app')} onPress={() => openOut(androidUrl())} accessibilityRole="link" /> : null}
+      {ios ? <Button v="primary" wide title={t('iPhone: open the App Store')} onPress={() => openOut(APP_STORE)} /> : null}
+      {android ? <Button v={target === 'both' ? 'secondary' : 'primary'} wide title={GOOGLE_PLAY ? t('Android: open Google Play') : t('Android: download the app')} onPress={() => openOut(androidUrl())} /> : null}
       {android && !GOOGLE_PLAY ? <T v="small">{t('Fratius isn\'t in Google Play yet: Android asks once to allow installing it from your browser.')}</T> : null}
     </Card>
   );
