@@ -800,7 +800,9 @@ test('F02: changing the language on the driver link stays on the driver link', a
     await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
     await page.locator('[role=button] >> text=/^Language: / >> visible=true').first().click();
     await page.locator('[role=radio] >> text="Română" >> visible=true').first().click();
-    await visible(page, 'Înscrie-te ca șofer la').waitFor({ timeout: 60_000 });
+    await visible(page, 'Înscrie-te ca șofer la').waitFor({ timeout: 60_000 }).catch(async (e) => {
+      throw new Error(`${e.message}\nat ${page.url()}\n${(await page.locator('body').innerText().catch(() => '')).slice(0, 600)}`);
+    });
     assert.match(page.url(), new RegExp(`/join/${DRIVER_LINK}$`));
     await button(page, 'Trimite cererea').waitFor({ timeout: 10_000 });
   } finally {

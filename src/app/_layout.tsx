@@ -1,7 +1,7 @@
 import { Barlow_400Regular, Barlow_500Medium, Barlow_600SemiBold } from '@expo-google-fonts/barlow';
 import { BarlowCondensed_500Medium, BarlowCondensed_600SemiBold, BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed';
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, type Href, Stack, ThemeProvider, router } from 'expo-router';
+import { DarkTheme, DefaultTheme, type Href, Stack, ThemeProvider, router, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -10,7 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColors } from '@/components/ui';
 import '@/lib/install';
-import { LanguageProvider, takeReturnTo } from '@/lib/lang';
+import { LanguageProvider, returnPath } from '@/lib/lang';
 import { NotificationTaps } from '@/lib/nativepush';
 import { SessionProvider, useSession } from '@/lib/session';
 import { keepAppShell } from '@/lib/appshell';
@@ -20,12 +20,14 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function Routes() {
   const { status } = useSession();
   const c = useColors();
-  // After a language switch, the page that was open (lib/lang.tsx), not the first one.
+  // After a language switch, the page that was open (lib/lang.tsx), not the first one: for a few seconds, any move
+  // away from it is undone once.
+  const path = usePathname();
   useEffect(() => {
     if (status === 'loading' || typeof window === 'undefined' || !window.location) return;
-    const back = takeReturnTo();
-    if (back && window.location.pathname + window.location.search !== back) router.replace(back as Href);
-  }, [status]);
+    const back = returnPath();
+    if (back && window.location.pathname + window.location.search !== back) { returnPath(true); router.replace(back as Href); }
+  }, [status, path]);
   if (status === 'loading') {
     return <View style={{ flex: 1, backgroundColor: c.page, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={c.ink} /></View>;
   }

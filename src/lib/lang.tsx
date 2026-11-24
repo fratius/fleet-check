@@ -72,9 +72,15 @@ export const useLang = () => {
   return c;
 };
 
-let returnTo: string | null = null;
-/** The web page that was open when the language changed (once), to open again after the screens are drawn anew. */
-export function takeReturnTo(): string | null { const r = returnTo; returnTo = null; return r; }
+let returnTo: { path: string; until: number } | null = null;
+/**
+ * The web page that was open when the language changed, for a few seconds after the screens are drawn anew (the
+ * router may move to its first page a moment later). `done` forgets it.
+ */
+export function returnPath(done = false): string | null {
+  if (done || (returnTo && Date.now() > returnTo.until)) returnTo = null;
+  return returnTo?.path ?? null;
+}
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const device = deviceLang();
@@ -101,7 +107,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
     // A switch draws every screen again (the key below), which on the web can land on the first page instead of this
     // one (a driver switching language on their driver link ended up on sign-in): keep where they were.
-    if (now.current && Platform.OS === 'web' && typeof window !== 'undefined') returnTo = window.location.pathname + window.location.search;
+    if (now.current && Platform.OS === 'web' && typeof window !== 'undefined') returnTo = { path: window.location.pathname + window.location.search, until: Date.now() + 5000 };
     setState({ code: shown, picked });
   }, []);
 
