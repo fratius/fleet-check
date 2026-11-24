@@ -67,19 +67,27 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
   `review` and `status` of a check.
 - **Joining is by link only** (product owner, 2026-11-05: drivers sign up with one company link and are approved).
   - **Drivers: the company's driver link.** Each company has one link for all its drivers. They open it, pick their
-    station from the company's stations, give their name (mobile number and Transporter ID optional; the approver sees their email) and create
-    their account. That makes a **request**, not a member: until an owner or a fleet manager of the station they
+    station from the company's stations, give their first and last name, email and password, and create their
+    account (product owner, 2026-11-24: no mobile number or Transporter ID; the approver sees name and email; the
+    email field suggests the same email as in their Amazon app, with a safe password of their own). A driver who
+    has an account signs in on the link, with "Forgot your password?" there. That makes a **request**, not a member: until an owner or a fleet manager of the station they
     picked approves it, they aren't in the company and see nothing of it (no vans, people or history). Owners
     decide for every station, managers for their own; drivers never. A rejected person can ask again after 24
     hours; a request nobody decides expires after 14 days; the person can take it back. When a request ends
     without joining (rejected, taken back, expired) only the name stays on it; a request still waiting is deleted
-    with the person's account. The approver is told when someone in the company already has the same Transporter
-    ID. Owners and managers see and share the link; **only owners make a new link**, and the old one stops working
+    with the person's account. (The approver is told when someone in the company already has the same Transporter
+    ID: only for requests from older app versions, which still sent one.) Owners and managers see and share the link; **only owners make a new link**, and the old one stops working
     at once (for a link that leaked or was shared with someone who left). Made and used by Cloud Functions
     (`driverLink`, `peekInvite`, `requestToJoin`, `decideJoinRequest`, `withdrawJoinRequest`); the requests are
     `orgs/{org}/joinRequests/{uid}` and the current link `orgs/{org}/links/drivers`, both server-written; the
     tokens are in `companyLinks` (server only). Owners and the station's managers get a notification for each new
-    request; the driver for the decision.
+    request; the driver for the decision. The driver also gets a welcome email for each new request (in the language
+    of the sign-up page: the company, the station, waiting for approval, where to get the app), and the page offers
+    the App Store on an iPhone, the Android app on Android, both on a computer. **An account that came in through a
+    driver link** (`users/{uid}.signedUpAs = 'driver'`, server-only) **never sees "Create a company"**: not on the
+    company screen, on `/start` or in Account (product owner, 2026-11-24: a driver was offered it). Drivers in a
+    company see only "Join another company" in Account. This is in the screens; the server doesn't refuse a company
+    to such an account.
   - **Fleet managers: one-time invite links.** Owners make them. One link is for one person, works once, and
     expires 24 hours after it was made. Several can be made at once. The link opens the join page, which asks for
     the person's details (name, mobile), creates their account, then shows how to put the app on the home screen.

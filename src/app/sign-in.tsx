@@ -9,7 +9,7 @@ import { LanguageLink } from '@/components/language';
 import { AcceptTerms } from '@/components/terms';
 import { Button, Card, Field, Notice, Row, Screen, Segmented, T, useColors } from '@/components/ui';
 import { TERMS_VERSION, TRIAL_DAYS, payMode, signupIntent, type PayMode } from '@/lib/billing';
-import { tokenFrom, watchMyJoinRequest, watchMyProfile } from '@/lib/people';
+import { tokenFrom, useSignedUpAsDriver, watchMyJoinRequest, watchMyProfile } from '@/lib/people';
 import { t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
@@ -35,7 +35,11 @@ export default function SignIn() {
   const [pm, setPm] = useState<PayMode['mode']>(null);
   useEffect(() => { payMode().then((x) => setPm(x.mode)); }, []);
   const cardFirst = pm === 'live';
-  const canCreate = !cardFirst || Platform.OS === 'web';
+  // Drivers who came in through their company's driver link never get "Create a company" (product owner, 2026-11-24:
+  // a driver was offered it after signing up).
+  const asDriver = useSignedUpAsDriver(s.user?.uid, s.status === 'needsOrg' && s.mode === 'firebase');
+  const canCreate = (!cardFirst || Platform.OS === 'web') && asDriver === false;
+  const mode2 = asDriver === false ? orgMode : 'join';
 
   const run = async (fn: () => Promise<unknown>) => {
     setErr(null); setInfo(null); setBusy(true);
@@ -48,19 +52,21 @@ export default function SignIn() {
         <View style={{ gap: 4, paddingTop: 12 }}>
           <T v="hint">{t('Signed in as {email}', { email: s.user?.email })}</T>
           <T v="h1">{t('Your company')}</T>
-          <T>{t('Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.')}</T>
+          <T>{asDriver
+            ? t('Open the driver link from your fleet manager, or paste it here.')
+            : t('Drivers and fleet managers: open the invite link you got from your manager or the fleet owner, or paste it here. Fleet owners: create your company.')}</T>
         </View>
         <LanguageLink />
         <Waiting />
         {canCreate ? <Segmented label={t('Company')} value={orgMode} onChange={(k) => { setOrgMode(k); setErr(null); }} options={[['join', t('I have an invite link')], ['create', t('Create a company')]]} /> : null}
-        {!canCreate ? <T v="hint">{t('Fleet owners create their company in the web app.')}</T> : null}
+        {!canCreate && asDriver === false ? <T v="hint">{t('Fleet owners create their company in the web app.')}</T> : null}
         <Card>
-          {orgMode === 'create' && canCreate && cardFirst ? (
+          {mode2 === 'create' && canCreate && cardFirst ? (
             <>
               <T>{t('Choose the plan, add the company\'s billing address and the card, and you\'re in. Nothing is charged during the free trial.')}</T>
               <Button v="primary" wide title={t('Create company')} onPress={() => router.push({ pathname: '/start', params: signupIntent.plan ? { plan: signupIntent.plan } : {} })} />
             </>
-          ) : orgMode === 'create' && canCreate ? (
+          ) : mode2 === 'create' && canCreate ? (
             <>
               <Field label={t('Company name')} value={company} onChangeText={setCompany} autoCapitalize="words" placeholder={t('For example: Hart Logistics GmbH')} />
               <Field label={t('First station')} hint={t('you can add more later')} value={station} onChangeText={setStation} autoCapitalize="characters" placeholder={t('For example: DXX1 Berlin')} />

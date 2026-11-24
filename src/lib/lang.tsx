@@ -117,6 +117,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const f = fb();
     const uid = f?.auth.currentUser?.uid;
     if (f && uid) await setDoc(doc(f.db, 'users', uid), { lang: c, appLang: c || device }, { merge: true }).catch(() => {});
+    // The web app opens the same page again in the new language. Drawing every screen anew (the key below) can land
+    // the web on the first page instead (a driver switching language on their driver link ended up on sign-in).
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.reload) { window.location.reload(); return; }
     await show(c || device, c);
   }, [show, device]);
 

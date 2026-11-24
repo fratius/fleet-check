@@ -346,7 +346,7 @@ export const ai = {
   peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
   acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
   driverLink: call<{ orgId: string; reset?: boolean }, DriverLink>('driverLink', 30000),
-  requestToJoin: call<{ token: string; stationId: string; details: JoinDetails }, { orgId: string; orgName: string; stationName: string; again: boolean }>('requestToJoin', 40000),
+  requestToJoin: call<{ token: string; stationId: string; details: JoinDetails; lang?: string }, { orgId: string; orgName: string; stationName: string; again: boolean }>('requestToJoin', 40000),
   decideJoinRequest: call<{ orgId: string; uid: string; approve: boolean }, { ok: boolean; approved: boolean }>('decideJoinRequest', 30000),
   withdrawJoinRequest: call<{ orgId: string }, { ok: boolean }>('withdrawJoinRequest', 30000),
   createDemoCompany: call<{ fresh?: boolean }, { orgId: string; existed: boolean }>('createDemoCompany', 130000),

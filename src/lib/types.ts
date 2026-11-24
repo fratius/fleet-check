@@ -932,7 +932,7 @@ export interface JoinRequest {
   decidedByName: string | null;
   decidedAt: number | null;
 }
-export interface JoinDetails { firstName: string; lastName: string; phone: string; transporterId: string }
+export interface JoinDetails { firstName: string; lastName: string; phone?: string; transporterId?: string }
 
 /** Normalised role: 'admin' is an owner. */
 export const roleOf = (m: Pick<Member, 'role'> | null | undefined): Role | null => (!m ? null : m.role === 'admin' ? 'owner' : m.role);

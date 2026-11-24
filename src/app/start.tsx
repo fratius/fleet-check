@@ -8,6 +8,7 @@ import { PlanSetup } from '@/components/plansetup';
 import { Button, Notice, Screen, T } from '@/components/ui';
 import { blocked, payMode, signupIntent, type PayMode } from '@/lib/billing';
 import { t } from '@/lib/i18n';
+import { useSignedUpAsDriver } from '@/lib/people';
 import { useSession } from '@/lib/session';
 
 /**
@@ -28,6 +29,8 @@ export default function Start() {
   const offer = String(q.offer || signupIntent.offer || '').toUpperCase().replace(/[^A-Z0-9]/g, '') || null;
   const ready = s.status === 'ready' && s.org && !blocked(s.org, pm?.mode ?? 'test', s.creator);
   useEffect(() => { if (ready && !another) router.replace('/'); }, [ready, another]);
+  // An account that came in through a driver link doesn't create a company here either (product owner, 2026-11-24).
+  const asDriver = useSignedUpAsDriver(s.user?.uid, s.status === 'needsOrg');
 
   if (Platform.OS !== 'web') {
     return (
@@ -38,7 +41,17 @@ export default function Start() {
       </Screen>
     );
   }
-  if (s.status === 'loading') return <Screen><T v="hint">{t('Loading…')}</T></Screen>;
+  if (s.status === 'loading' || asDriver === null) return <Screen><T v="hint">{t('Loading…')}</T></Screen>;
+  if (asDriver) {
+    return (
+      <Screen>
+        <T v="h1">Fratius</T>
+        <Notice text={t('This account signed up as a driver. Fleet owners create their company with an account of their own.')} />
+        <Button v="primary" title={t('Open Fratius')} onPress={() => router.replace('/')} />
+        <Button v="link" small title={t('Sign out')} onPress={() => s.signOut()} />
+      </Screen>
+    );
+  }
   // Signed in to a company that still waits for its card: only its owner adds it.
   const existing = s.status === 'ready' && s.org && !ready && !another ? s.org : null;
   if (existing && s.role !== 'owner') {

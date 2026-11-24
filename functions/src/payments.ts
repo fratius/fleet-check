@@ -528,7 +528,7 @@ export function localesFor(lang: string, country: string | null): string[] {
 
 /* ---------- the email after sign-up (what was ordered, the terms, how to cancel) ---------- */
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 /** Dates and amounts in the person's language: Western digits everywhere, Serbian in Latin script as in the app. */
 export const loc = (lang: string) => `${lang === 'en' ? 'en-GB' : lang === 'sr' ? 'sr-Latn' : lang}-u-nu-latn`;
 export function euro(cents: number, lang: string) {
@@ -538,11 +538,11 @@ export function day(t: number, lang: string) {
   try { return new Date(t).toLocaleDateString(loc(lang), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' }); } catch { return new Date(t).toISOString().slice(0, 10); }
 }
 
-const rtlOf = (lang: string) => lang === 'ar' || lang === 'fa';
+export const rtlOf = (lang: string) => lang === 'ar' || lang === 'fa';
 const termsHtml = (terms: string, links: string[][], version: string | null) => `<p style="margin:0 0 6px">${esc(terms)}</p>
 <p style="margin:0 0 20px">${links.map(([u, l]) => `<a href="${esc(u)}" style="color:#000">${esc(l)}</a>`).join(' · ')}${version ? ` <span style="color:#565C66">(${esc(version)})</span>` : ''}</p>`;
 /** The frame of Fratius' emails: the yellow header, the text, the footer with the Impressum. */
-function frame(lang: string, subject: string, inner: string): string {
+export function frame(lang: string, subject: string, inner: string): string {
   const font = "font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans',Arial,sans-serif";
   const tagline = tr(lang, 'Fleet management for delivery partners');
   return `<!doctype html><html lang="${esc(lang)}" dir="${rtlOf(lang) ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
@@ -559,7 +559,7 @@ ${inner}
 </td></tr></table>
 </body></html>`;
 }
-const footerText = (lang: string) => ['--', `Fratius · ${tr(lang, 'Fleet management for delivery partners')}`, 'https://fratius.com · info@fratius.com · https://fratius.com/impressum'];
+export const footerText = (lang: string) => ['--', `Fratius · ${tr(lang, 'Fleet management for delivery partners')}`, 'https://fratius.com · info@fratius.com · https://fratius.com/impressum'];
 
 export function orderMail(o: { lang: string; name: string; company: string; b: Billing; netCents: number; firstCents: number; appUrl: string; termsVersion: string | null }) {
   const { lang, b } = o;

@@ -21,7 +21,7 @@ import { chromium } from 'playwright';
 const fnRequire = createRequire(new URL('../functions/package.json', import.meta.url));
 const { initializeApp } = fnRequire('firebase-admin/app');
 const { getAuth } = fnRequire('firebase-admin/auth');
-const { getFirestore } = fnRequire('firebase-admin/firestore');
+const { FieldValue, getFirestore } = fnRequire('firebase-admin/firestore');
 
 const APP_DIR = process.env.APP_DIR || new URL('../dist-e2e', import.meta.url).pathname;
 const PORT = 8099;
@@ -651,4 +651,186 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
   await visible(page, 'The day can\'t be in the future.').waitFor({ timeout: 10_000 });
   assert.equal((await db.collection(`orgs/${ORG_A}/services`).where('vehicleId', '==', 'onlineVan1').get()).size, 0);
   await ctx.close();
+});
+
+/* ---------- Driver sign-up made simple (product owner, 2026-11-24; criteria A1–A8 in the pull request) ---------- */
+
+const UA = {
+  iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 19_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.1 Mobile/15E148 Safari/604.1',
+  android: 'Mozilla/5.0 (Linux; Android 16; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36',
+  desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+};
+const DRIVER_LINK = 'e2eDriverLinkToken0000000000001';
+async function driverLink() {
+  await db.doc(`companyLinks/${DRIVER_LINK}`).set({ orgId: ORG, active: true, token: DRIVER_LINK, createdAt: Date.now(), createdBy: OWNER.uid, createdByName: OWNER.name });
+}
+/** Opens the driver link and sends a request as a new driver (one station, picked by itself). */
+async function signUpDriver(page, who) {
+  const field = (label) => page.locator(`xpath=//*[normalize-space(.)="${label}"]/following-sibling::input[1] >> visible=true`).first();
+  await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+  await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+  await field('First name').fill(who.first);
+  await field('Last name').fill(who.last);
+  await page.locator('input[type=email] >> visible=true').first().fill(who.email);
+  await page.locator('input[type=password] >> visible=true').first().fill(who.password);
+  await button(page, 'Send request').click();
+  await visible(page, 'Request sent').waitFor({ timeout: 60_000 });
+}
+
+test('A2, A3: the driver link asks only for station, name, email and password, with the email tip and the password advice', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB', userAgent: UA.iphone });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    assert.equal(await page.locator('text=/Mobile number|Transporter ID/i >> visible=true').count(), 0, 'no phone number or Transporter ID');
+    await visible(page, 'Tip: use the same email as in your Amazon app.').waitFor({ timeout: 10_000 });
+    await visible(page, 'Choose a safe password of your own, at least 6 characters.').waitFor({ timeout: 10_000 });
+    assert.equal(await page.locator('input >> visible=true').count(), 4, 'first name, last name, email, password');
+  } finally { await ctx.close(); }
+});
+
+test('A1, A5, A6: after the request on an iPhone: the App Store, "Waiting for approval", and never "Create a company"', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB', userAgent: UA.iphone, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  try {
+    const who = { first: 'Ioana', last: 'Ștefănescu', email: 'ioana.e2e@example.com', password: 'driver-pass-1' };
+    await signUpDriver(page, who);
+    await visible(page, 'We sent a confirmation to ioana.e2e@example.com.').waitFor({ timeout: 10_000 });
+    await visible(page, 'Get Fratius').waitFor({ timeout: 10_000 });
+    const ios = button(page, 'iPhone: open the App Store');
+    await ios.waitFor({ timeout: 10_000 });
+    assert.equal(await page.locator('text=/^Android:/ >> visible=true').count(), 0, 'an iPhone gets only the App Store');
+    assert.equal(await page.locator('text=/Add to Home Screen/ >> visible=true').count(), 0, 'no home-screen web app steps');
+    // The App Store button goes to Fratius' App Store page (stopped here, the test has no App Store).
+    await page.route('https://apps.apple.com/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<title>App Store</title>' }));
+    await ios.click();
+    await page.waitForURL(/apps\.apple\.com\/app\/id\d+/, { timeout: 10_000 });
+    // Back in the web app (as after installing the app and signing in): waiting, and no "Create a company".
+    await page.goto(URL0 + '/');
+    await visible(page, 'Waiting for approval').waitFor({ timeout: 60_000 });
+    await visible(page, 'Open the driver link from your fleet manager, or paste it here.').waitFor({ timeout: 10_000 });
+    assert.equal(await page.locator('text=/Create a company|Create company/ >> visible=true').count(), 0, 'no Create a company while waiting');
+    // Rejected: still no "Create a company", and /start doesn't offer it either.
+    const u = await auth.getUserByEmail(who.email);
+    assert.equal((await db.doc(`users/${u.uid}`).get()).data().signedUpAs, 'driver');
+    await db.doc(`orgs/${ORG}/joinRequests/${u.uid}`).update({ status: 'rejected', decidedAt: Date.now() });
+    await db.doc(`users/${u.uid}`).update({ pendingJoin: FieldValue.delete() });
+    await page.reload();
+    await visible(page, 'Your company').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(2000);
+    assert.equal(await page.locator('text=/Create a company|Create company/ >> visible=true').count(), 0, 'no Create a company after a rejection');
+    await page.goto(URL0 + '/start');
+    await visible(page, 'This account signed up as a driver.').waitFor({ timeout: 60_000 });
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('A5: on an Android phone "Get Fratius" offers the Android app; on a computer both', async () => {
+  await driverLink();
+  for (const [kind, ua, mobile] of [['android', UA.android, true], ['desktop', UA.desktop, false]]) {
+    const ctx = await browser.newContext({ viewport: mobile ? { width: 412, height: 915 } : { width: 1280, height: 900 }, locale: 'en-GB', userAgent: ua, hasTouch: mobile, isMobile: mobile });
+    const page = await ctx.newPage();
+    try {
+      await signUpDriver(page, { first: 'Radu', last: kind, email: `radu.${kind}.e2e@example.com`, password: 'driver-pass-2' });
+      await button(page, 'Android: download the app').waitFor({ timeout: 10_000 });
+      assert.equal(await page.locator('[role=button] >> text="iPhone: open the App Store" >> visible=true').count(), kind === 'desktop' ? 1 : 0, kind);
+    } finally { await ctx.close(); }
+  }
+});
+
+test('A4: a driver who already has an account signs in on the link, and "Forgot your password?" sends the reset email', async () => {
+  await driverLink();
+  const email = 'ana.again.e2e@example.com';
+  await auth.createUser({ email, password: 'old-pass-123', displayName: 'Ana Again' });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB', userAgent: UA.android });
+  const page = await ctx.newPage();
+  const field = (label) => page.locator(`xpath=//*[normalize-space(.)="${label}"]/following-sibling::input[1] >> visible=true`).first();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    await field('First name').fill('Ana');
+    await field('Last name').fill('Again');
+    // "New account" with an email that has one: told to sign in, switched to it, the email kept.
+    await page.locator('input[type=email] >> visible=true').first().fill(email);
+    await page.locator('input[type=password] >> visible=true').first().fill('whatever-123');
+    await button(page, 'Send request').click();
+    await visible(page, 'An account with this email already exists. Sign in instead.').waitFor({ timeout: 30_000 });
+    const forgot = button(page, 'Forgot your password?');
+    await forgot.waitFor({ timeout: 10_000 });
+    assert.equal(await page.locator('input[type=email] >> visible=true').first().inputValue(), email);
+    await forgot.click();
+    await visible(page, 'Check your inbox for a link to set a new password.').waitFor({ timeout: 30_000 });
+    // The auth emulator keeps the reset email it would send.
+    const codes = await (await fetch(`http://127.0.0.1:9099/emulator/v1/projects/demo-fleet-check/oobCodes`)).json();
+    assert.ok(codes.oobCodes.some((c) => c.email === email && c.requestType === 'PASSWORD_RESET'), 'a password reset email was sent');
+    // With the right password the request goes through on this link.
+    await page.locator('input[type=password] >> visible=true').first().fill('old-pass-123');
+    await button(page, 'Send request').click();
+    await visible(page, 'Request sent').waitFor({ timeout: 60_000 });
+  } finally { await ctx.close(); }
+});
+
+// Round 1 of the blind tester (F01, F02, F04), each a test before the fix.
+test('A4 (F01): "Forgot your password?" answers the same whether or not the email has an account', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    await visible(page, 'I have one').click();
+    await page.locator('input[type=email] >> visible=true').first().fill('nobody.here.e2e@example.com');
+    await button(page, 'Forgot your password?').click();
+    await visible(page, 'Check your inbox for a link to set a new password.').waitFor({ timeout: 30_000 });
+    assert.equal(await page.locator('text=/Email or password is wrong/ >> visible=true').count(), 0);
+  } finally { await ctx.close(); }
+});
+
+test('F02: changing the language on the driver link stays on the driver link', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    await page.locator('[role=button] >> text=/^Language: / >> visible=true').first().click();
+    await page.locator('[role=radio] >> text="Română" >> visible=true').first().click();
+    await visible(page, 'Înscrie-te ca șofer la').waitFor({ timeout: 60_000 }).catch(async (e) => {
+      throw new Error(`${e.message}\nat ${page.url()}\n${(await page.locator('body').innerText().catch(() => '')).slice(0, 600)}`);
+    });
+    assert.match(page.url(), new RegExp(`/join/${DRIVER_LINK}$`));
+    await button(page, 'Trimite cererea').waitFor({ timeout: 10_000 });
+  } finally {
+    await page.evaluate(() => localStorage.clear()).catch(() => {});
+    await ctx.close();
+  }
+});
+
+test('F04: "Use another account" clears the message about the account before', async () => {
+  await driverLink();
+  const email = 'rita.rejected.e2e@example.com';
+  const u = await auth.createUser({ email, password: 'rejected-pass-1', displayName: 'Rita Rejected' });
+  await db.doc(`orgs/${ORG}/joinRequests/${u.uid}`).set({ uid: u.uid, email: '', name: 'Rita Rejected', firstName: 'Rita', lastName: 'Rejected', phone: '', transporterId: '', stationId: ST, stationName: 'Main station', link: DRIVER_LINK, createdAt: Date.now() - 3600_000, expiresAt: Date.now() + 86400_000, status: 'rejected', sameTransporterId: null, decidedBy: OWNER.uid, decidedByName: OWNER.name, decidedAt: Date.now() - 60_000 });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await signIn(page, { email, password: 'rejected-pass-1' });
+    await visible(page, 'Your company').waitFor({ timeout: 60_000 });
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Signed in as').waitFor({ timeout: 60_000 });
+    const xpathField = (label) => page.locator(`xpath=//*[normalize-space(.)="${label}"]/following-sibling::input[1] >> visible=true`).first();
+    await xpathField('First name').fill('Rita');
+    await xpathField('Last name').fill('Rejected');
+    await button(page, 'Send request').click();
+    const msg = page.locator('text=/wasn.t approved/ >> visible=true');
+    await msg.first().waitFor({ timeout: 30_000 });
+    await button(page, 'Use another account').click();
+    await page.locator('input[type=email] >> visible=true').first().waitFor({ timeout: 30_000 });
+    assert.equal(await msg.count(), 0, 'the old account\'s message is gone');
+  } finally { await ctx.close(); }
 });

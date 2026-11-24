@@ -39,6 +39,7 @@ import {
   BUY_KINDS, cardDigits, said, type Said, cardPrompt, cardSchema, cardVerdict, cleanCard, cleanReceipt, doneMessage, expired, fuelLitres, normPlate, purchaseFlags,
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
+import { joinMail } from './joinmail';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
 import {
@@ -1022,6 +1023,8 @@ interface JoinRequest {
   uid: string; email: string; name: string; firstName: string; lastName: string; phone: string; transporterId: string;
   stationId: string; stationName: string; link: string; createdAt: number; expiresAt: number; status: JoinStatus;
   sameTransporterId: string | null; decidedBy: string | null; decidedByName: string | null; decidedAt: number | null;
+  /** The welcome email (joinmail.ts): when it was tried for this request, and whether the mail server took it. */
+  welcomeAt?: number; welcomed?: boolean;
 }
 
 /** The company's current driver link (made the first time it's asked for). reset: owners only, a new link. */
@@ -1090,7 +1093,7 @@ async function staffOf(orgId: string, stationId: string, not: string) {
 }
 
 /** A driver signs up with the company's link: picks a station and waits for an owner or that station's manager. */
-export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
+export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS, SMTP_URL] }, async (req) => {
   const uid = req.auth?.uid;
   if (!uid) throw fail('unauthenticated', 'Sign in or create an account first.');
   const token = String(req.data?.token || '');
@@ -1137,9 +1140,13 @@ export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, s
       uid, email, name, firstName, lastName, phone, transporterId, stationId, stationName, link: token,
       createdAt: open ? was!.createdAt : now, expiresAt: now + REQUEST_DAYS * 86400_000, status: 'pending',
       sameTransporterId: same, decidedBy: null, decidedByName: null, decidedAt: null,
+      // Asking again while waiting keeps the welcome already sent: one email per request.
+      ...(open && was?.welcomeAt ? { welcomeAt: was.welcomeAt, welcomed: !!was.welcomed } : {}),
     };
     tx.set(rref, jr);
-    tx.set(db().doc(`users/${uid}`), { pendingJoin: { orgId, orgName, stationName, at: now }, email, name, firstName, lastName, phone }, { merge: true });
+    // signedUpAs: this account came in through a driver link; the app then offers no "Create a company" (product
+    // owner, 2026-11-24: a driver was offered it). Server-only in the rules, like pendingJoin.
+    tx.set(db().doc(`users/${uid}`), { pendingJoin: { orgId, orgName, stationName, at: now }, email, name, firstName, lastName, phone, signedUpAs: 'driver' }, { merge: true });
     return { orgId, orgName, stationName, again: open, movedStation: open && was!.stationId !== stationId };
   });
   await getAuth().updateUser(uid, { displayName: name }).catch(() => {});
@@ -1151,9 +1158,27 @@ export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, s
       url: '/people', tag: `join-${uid}`,
     })).catch(() => 0);
   }
+  // A welcome email for a new request (not for asking again), in the language the sign-up page was in.
+  if (!out.again && email) {
+    const asked = String(req.data?.lang || '');
+    const lang = /^[a-z]{2,3}$/.test(asked) ? asked : await langOf(uid);
+    const welcomeAt = Date.now();
+    const welcomed = await joinWelcome({ lang, name: firstName, company: orgName, station: stationName, email });
+    await rref.update({ welcomeAt, welcomed }).catch((e) => logger.warn('Welcome not recorded', e as Error));
+  }
   logger.info('Join request', { orgId, stationId, again: out.again });
   return out;
 });
+
+/** Sends the driver's welcome email (joinmail.ts); false when it wasn't sent (no SMTP_URL, or the mail server refused). */
+async function joinWelcome(o: { lang: string; name: string; company: string; station: string; email: string }): Promise<boolean> {
+  const smtp = (SMTP_URL.value() || '').trim();
+  if (!smtp || smtp === 'none') return false;
+  const mail = joinMail({ ...o, appUrl: await appUrl() });
+  const from = decodeURIComponent((smtp.match(/^smtps?:\/\/([^:@/]+)/) || [])[1] || '') || SIGNUP_TO;
+  return nodemailer.createTransport(smtp).sendMail({ from: `Fratius <${from}>`, to: o.email, replyTo: SIGNUP_TO, subject: mail.subject, text: mail.text, html: mail.html })
+    .then(() => true, (e) => { logger.error('Driver welcome email not sent', { message: String((e as Error)?.message || e) }); return false; });
+}
 
 /** An owner, or a fleet manager of the station, approves or rejects a driver who signed up with the link. */
 export const decideJoinRequest = onCallOnce('decideJoinRequest', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
