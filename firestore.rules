@@ -59,13 +59,14 @@ service cloud.firestore {
       return (!('lang' in d) || d.lang == null || (d.lang is string && d.lang.matches('[a-z]{2,3}')))
         && (!('appLang' in d) || d.appLang == null || (d.appLang is string && d.appLang.matches('[a-z]{2,3}')));
     }
-    // pendingJoin (the driver sign-up a person waits for) is written by the server only.
+    // pendingJoin (the driver sign-up a person waits for) and signedUpAs (came in through a driver link) are written by
+    // the server only.
     match /users/{uid} {
       allow read: if (signedIn() && uid == me()) || creator();
       allow create: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data)
-        && !('pendingJoin' in request.resource.data);
+        && !('pendingJoin' in request.resource.data) && !('signedUpAs' in request.resource.data);
       allow update: if signedIn() && uid == me() && okViewAs(request.resource.data) && okLang(request.resource.data)
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['pendingJoin']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['pendingJoin', 'signedUpAs']);
       allow delete: if signedIn() && uid == me();
     }
 

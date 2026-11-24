@@ -76,6 +76,17 @@ a decision about what the app must do, so it goes in a pull request of its own t
   A link used once doesn't work a second time, for anyone. Up to 20 can be made at once.
 - SHOULD 2.8 Opening a manager invite shows who invited you, to which company, role and station, before you join.
 - SHOULD 2.9 A new account without a link sees only "I have an invite link" or "Create a company".
+- MUST 2.10 (2026-11-24) A driver who signed up with the driver link never sees "Create a company": not while waiting,
+  not after being rejected, not in Account once in a company (there only "Join another company").
+- MUST 2.11 (2026-11-24) The driver link asks only for the station, first and last name, email and password: no mobile
+  number, no Transporter ID. The email field suggests the same email as in the Amazon app; the password field asks
+  for a safe password of their own.
+- MUST 2.12 (2026-11-24) A driver who already has an account signs in on the driver link; "Forgot your password?" is
+  there and sends a reset email. A new account with an email that already has one is told to sign in.
+- MUST 2.13 (2026-11-24) After sending the request, "Get Fratius" offers the App Store on an iPhone, the Android app on
+  an Android phone, both on a computer. After installing and signing in, the driver sees "Waiting for approval".
+- MUST 2.14 (2026-11-24) The driver gets one welcome email per request (company, station, waiting for approval, where
+  to get the app), and a notification when a fleet manager or the owner approves them.
 
 ## 3. Vans and the permanent history
 

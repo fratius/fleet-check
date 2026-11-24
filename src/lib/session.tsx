@@ -134,7 +134,8 @@ export interface Session {
   /** Removes the open demo company. */
   removeDemo(): Promise<void>;
   switchOrg(orgId: string): Promise<void>;
-  resetPassword(email: string): Promise<void>;
+  /** The reset email; `back`: the page the link in it returns to after the new password (a driver link). */
+  resetPassword(email: string, back?: string): Promise<void>;
   signOut(): Promise<void>;
   /** Deletes the person's account after they entered their password again (deleteAccount on the server). */
   deleteAccount(password: string): Promise<void>;
@@ -398,7 +399,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, [load]);
 
-  const resetPassword = useCallback(async (email: string) => { await retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim())); }, []);
+  const resetPassword = useCallback(async (email: string, back?: string) => {
+    const send = (url?: string) => retrying(() => sendPasswordResetEmail(fb()!.auth, email.trim(), url ? { url } : undefined));
+    // A page Firebase doesn't allow to return to (its address isn't an authorised domain) still gets the email, without the way back.
+    await send(back).catch((e) => {
+      if (back && /unauthorized-continue-uri|invalid-continue-uri/.test(String((e as { code?: string })?.code))) return send();
+      throw e;
+    });
+  }, []);
   const signOut = useCallback(async () => {
     if (!fb()) return;
     const uid = fbUser.current?.uid;

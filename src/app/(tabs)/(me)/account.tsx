@@ -211,7 +211,7 @@ function AddCompany() {
   const s = useSession();
   const c = useColors();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'join' | 'create'>('join');
+  const [picked, setMode] = useState<'join' | 'create'>('join');
   const [code, setCode] = useState('');
   const [company, setCompany] = useState('');
   const [station, setStation] = useState('');
@@ -223,13 +223,16 @@ function AddCompany() {
     setErr(null); setBusy(true);
     try { await fn(); setOpen(false); setCode(''); setCompany(''); setStation(''); setAccepted(false); } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
   };
-  if (!open) return <Button title={t('Join or create another company')} onPress={() => setOpen(true)} />;
+  // Drivers join other companies with a link; they don't create one (product owner, 2026-11-24).
+  const driver = s.role === 'driver' && !s.creator;
+  if (!open) return <Button title={driver ? t('Join another company') : t('Join or create another company')} onPress={() => setOpen(true)} />;
   // With live payments a new company starts with a card, on the web (start.tsx); the store apps only join.
   const cardFirst = pay === 'live';
+  const mode = driver ? 'join' : picked;
   return (
     <Card>
       <T v="h3">{t('Another company')}</T>
-      {cardFirst && Platform.OS !== 'web' ? null : <Segmented label={t('Another company')} value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['join', t('Invite link')], ['create', t('Create a company')]]} />}
+      {driver || (cardFirst && Platform.OS !== 'web') ? null : <Segmented label={t('Another company')} value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['join', t('Invite link')], ['create', t('Create a company')]]} />}
       {mode === 'create' && cardFirst && Platform.OS === 'web' ? (
         <Button v="primary" title={t('Create company')} onPress={() => router.push({ pathname: '/start', params: { new: '1' } })} />
       ) : mode === 'join' || cardFirst ? (

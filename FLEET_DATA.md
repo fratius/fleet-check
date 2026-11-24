@@ -314,8 +314,9 @@ the same person signs in again. Nothing more is read than without it: the rules 
 
 ### Sign-up requests (the company's driver link)
 
-A driver who signs up with the company's link leaves a request (`orgs/{org}/joinRequests/{uid}`): name, mobile,
-email, optional Transporter ID, the station picked, when, and who decided. Owners and the managers of that station
+A driver who signs up with the company's link leaves a request (`orgs/{org}/joinRequests/{uid}`): name, email, the
+station picked, when, who decided, and when the welcome email was sent (`welcomeAt`, `welcomed`). Since 24 November
+2026 the page asks for no mobile number or Transporter ID (requests from older app versions may still carry them). Owners and the managers of that station
 read it; the person reads their own. Approved: the details move to their membership as with an invite link.
 Rejected, taken back or expired after 14 days: phone, email and Transporter ID are removed, the name and dates stay.
 A request still waiting is deleted with the person's account.

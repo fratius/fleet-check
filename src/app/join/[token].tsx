@@ -1,13 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, View } from 'react-native';
 
 import { LanguageLink } from '@/components/language';
 import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, fmtWhen, useColors } from '@/components/ui';
-import { t, tj } from '@/lib/i18n';
-import { canPromptInstall, device, onInstallChange, promptInstall } from '@/lib/install';
+import { lang, t, tj } from '@/lib/i18n';
+import { device } from '@/lib/install';
+import { inviteUrl, loadWebUrl } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
+import { APP_STORE, GOOGLE_PLAY, androidUrl, appTarget } from '@/lib/stores';
 import { ROLE_NAME, type InvitePeek } from '@/lib/types';
 
 /**
@@ -87,8 +89,8 @@ export default function Join() {
           <T>{done.role === 'manager' ? t('You joined as a fleet manager at {station}.', { station: done.stationName }) : t('You joined as a driver at {station}.', { station: done.stationName })}</T>
           {done.role === 'driver' ? <T v="hint">{t('You\'ll see the vans of your station. Scan a van before and after your route; your fleet manager reviews any damage.')}</T> : null}
         </Card>
-        <Install />
-        <Button v="primary" wide title={t('Open Fratius')} onPress={() => router.replace('/')} />
+        <GetApp />
+        <Button v={device() === 'native' || device() === 'installed' ? 'primary' : 'secondary'} wide title={t('Continue in the browser')} onPress={() => router.replace('/')} />
       </Screen>
     );
   }
@@ -162,13 +164,12 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
   const [station, setStation] = useState<string | null>(stations.length === 1 ? stations[0].id : null);
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
-  const [phone, setPhone] = useState('');
-  const [tid, setTid] = useState('');
   const [mode, setMode] = useState<'up' | 'in'>('up');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const signedIn = s.status === 'ready' || s.status === 'needsOrg';
   useEffect(() => {
     if (!signedIn || !s.user) return;
@@ -185,7 +186,8 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
   }, [signedIn, s.user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = async () => {
-    setErr(null);
+    setErr(null); setInfo(null);
+    if (busy) return;
     if (!station) { setErr(t('Pick your station.')); return; }
     if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
     if (!signedIn) {
@@ -195,14 +197,30 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
     setBusy(true);
     try {
       if (!signedIn) {
-        if (mode === 'up') await s.signUp(email, password, `${first.trim()} ${last.trim()}`);
-        else await s.signIn(email, password);
+        if (mode === 'up') {
+          await s.signUp(email, password, `${first.trim()} ${last.trim()}`).catch((e) => {
+            // The email has an account already (a driver who signed up before): switch to signing in, the email kept.
+            if ((e as { code?: string })?.code === 'auth/email-already-in-use') { setMode('in'); setPassword(''); }
+            throw e;
+          });
+        } else await s.signIn(email, password);
       }
-      const r = await ai.requestToJoin({ token, stationId: station, details: { firstName: first, lastName: last, phone, transporterId: tid } });
+      // Name, email and password are enough (product owner, 2026-11-24): no phone number or Transporter ID.
+      const r = await ai.requestToJoin({ token, stationId: station, details: { firstName: first, lastName: last }, lang: lang() });
       onPeek({ ...peek, status: 'pending', stationName: r.stationName, requestedAt: Date.now() });
     } catch (e) {
       setErr(e instanceof AiError ? e.message : authMessage(e));
     } finally { setBusy(false); }
+  };
+  // Forgot the password: the reset email's link comes back to this driver link.
+  const forgot = async () => {
+    setErr(null); setInfo(null);
+    if (!email.trim()) { setErr(t('Enter your email address first.')); return; }
+    setBusy(true);
+    try {
+      await s.resetPassword(email, await linkBack(token));
+      setInfo(t('Check your inbox for a link to set a new password.'));
+    } catch (e) { setErr(authMessage(e)); } finally { setBusy(false); }
   };
 
   const header = (
@@ -232,9 +250,10 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
         <Card>
           <T>{tj('You asked to join {company} as a driver at {station}.', { company: <T key="c" v="medium">{peek.orgName}</T>, station: <T key="s" v="medium">{peek.stationName}</T> })}</T>
           <T v="hint">{t('A fleet manager of your station or the owner approves you. You get a notification, and Fratius opens your station once you\'re in.')}</T>
+          {s.user?.email ? <T v="small">{t('We sent a confirmation to {email}.', { email: s.user.email })}</T> : null}
         </Card>
-        <Install />
-        <Button v="primary" wide title={t('Open Fratius')} onPress={() => router.replace('/')} />
+        <GetApp />
+        <Button v={device() === 'native' || device() === 'installed' ? 'primary' : 'secondary'} wide title={t('Continue in the browser')} onPress={() => router.replace('/')} />
       </Screen>
     );
   }
@@ -264,8 +283,6 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
           <T v="h3">{t('2. Your details')}</T>
           <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
           <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
-          <Field label={t('Mobile number')} hint={t('optional')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
-          <Field label="Amazon Transporter ID" hint={t('optional')} value={tid} onChangeText={(x) => setTid(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} />
         </Card>
 
         <Card>
@@ -277,44 +294,57 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
             </>
           ) : (
             <>
-              <Segmented label={t('Account')} value={mode} onChange={(k) => { setMode(k); setErr(null); }} options={[['up', t('New account')], ['in', t('I have one')]]} />
-              <Field label={t('Email')} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" />
-              <Field label={t('Password')} hint={mode === 'up' ? t('at least 6 characters') : undefined} value={password} onChangeText={setPassword} secureTextEntry textContentType={mode === 'up' ? 'newPassword' : 'password'} />
+              <Segmented label={t('Account')} value={mode} onChange={(k) => { setMode(k); setErr(null); setInfo(null); }} options={[['up', t('New account')], ['in', t('I have one')]]} />
+              <Field label={t('Email')} hint={mode === 'up' ? t('Tip: use the same email as in your Amazon app.') : undefined} value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="emailAddress" />
+              <Field label={t('Password')} hint={mode === 'up' ? t('Choose a safe password of your own, at least 6 characters.') : undefined} value={password} onChangeText={setPassword} secureTextEntry textContentType={mode === 'up' ? 'newPassword' : 'password'} />
+              {mode === 'in' ? <Row><Button small v="link" title={t('Forgot your password?')} onPress={forgot} disabled={busy} /></Row> : null}
             </>
           )}
         </Card>
 
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-        <Button v="primary" wide title={t('Send request')} loading={busy} onPress={send} disabled={!stations.length} />
+        {info ? <T v="hint">{info}</T> : null}
+        <Button v="primary" wide title={t('Send request')} loading={busy} onPress={send} disabled={!stations.length || busy} />
         <T v="small">{t('You can install the app on your phone in the next step.')}</T>
       </Screen>
     </KeyboardAvoidingView>
   );
 }
 
-/** How to put the web app on the home screen, for the phone being used. */
-function Install() {
-  const [, force] = useState(0);
-  useEffect(() => onInstallChange(() => force((n) => n + 1)), []);
+/**
+ * "Get Fratius": the App Store on an iPhone, the Android app on an Android phone (Google Play once it's there, the test
+ * version on fratius.com until then), both on a computer (product owner, 2026-11-24: the link should open the iPhone or
+ * Android app, not the home-screen web app). Nothing inside the app itself.
+ */
+function GetApp() {
   const d = device();
   if (d === 'native' || d === 'installed') return null;
+  const target = appTarget();
+  const ios = target === 'ios' || target === 'both';
+  const android = target === 'android' || target === 'both';
   return (
     <Card>
-      <T v="h3">{t('Install the app')}</T>
-      {d === 'ios' ? (
-        <>
-          <T>{t('1. Tap the Share button at the bottom of Safari (the square with an arrow).')}</T>
-          <T>{tj('2. Tap {add}, then {ok}.', { add: <T key="a" v="medium">{t('Add to Home Screen')}</T>, ok: <T key="o" v="medium">{t('Add')}</T> })}</T>
-          <T>{t('3. Open Fratius from your home screen and sign in with the same email and password.')}</T>
-          <T v="small">{t('Use Safari: other browsers on iPhone can\'t add apps to the home screen.')}</T>
-        </>
-      ) : d === 'android' ? (
-        canPromptInstall()
-          ? <><T>{t('Put Fratius on your home screen like any other app.')}</T><Button v="primary" title={t('Install the app')} onPress={() => promptInstall()} /></>
-          : <><T>{t('1. In Chrome, tap the menu (three dots, top right).')}</T><T>{tj('2. Tap {install} or {add}.', { install: <T key="i" v="medium">{t('Install app')}</T>, add: <T key="a" v="medium">{t('Add to Home screen')}</T> })}</T><T>{t('3. Open Fratius from your home screen and sign in.')}</T></>
-      ) : (
-        <T>{t('Open this page on your phone to install the app there, or keep using it in this browser.')}</T>
-      )}
+      <T v="h3">{t('Get Fratius')}</T>
+      <T>{target === 'both'
+        ? t('Install Fratius on your phone and sign in with the same email and password.')
+        : t('Install the app and sign in with the same email and password.')}</T>
+      {ios ? <Button v="primary" wide title={t('iPhone: open the App Store')} onPress={() => openOut(APP_STORE)} accessibilityRole="link" /> : null}
+      {android ? <Button v={target === 'both' ? 'secondary' : 'primary'} wide title={GOOGLE_PLAY ? t('Android: open Google Play') : t('Android: download the app')} onPress={() => openOut(androidUrl())} accessibilityRole="link" /> : null}
+      {android && !GOOGLE_PLAY ? <T v="small">{t('Fratius isn\'t in Google Play yet: Android asks once to allow installing it from your browser.')}</T> : null}
     </Card>
   );
+}
+
+/** Opens a store page: the same tab on a phone (the store app takes over), a new tab on a computer. */
+function openOut(url: string) {
+  if (typeof window !== 'undefined' && Platform.OS === 'web') {
+    if (appTarget() === 'both') window.open(url, '_blank', 'noopener');
+    else window.location.href = url;
+  } else Linking.openURL(url).catch((e) => console.warn('Store page not opened', e));
+}
+
+/** The address of this driver link in the web app, for the password reset email to come back to. */
+async function linkBack(token: string): Promise<string> {
+  await loadWebUrl();
+  return inviteUrl(token);
 }

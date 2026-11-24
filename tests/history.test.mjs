@@ -2911,3 +2911,78 @@ test('close-ups: put things back (pick-ups off at station 1, the phones)', async
   await S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: false });
   for (const ph of Object.values(CU.ph || {})) await ph.close();
 });
+
+/* ---------- Driver sign-up made simple (product owner, 2026-11-24; criteria A1–A8 in the pull request) ---------- */
+
+test('A2, A6, A7: a driver signs up with name, email and password only, gets one welcome per request, and sees nothing until approved', async () => {
+  const link = await S.mgr.call('driverLink', { orgId: S.org });
+  const mara = await person('Mara Șerban', `mara.serban.${run}@test.dev`);
+  // Only first and last name (Romanian letters kept), no phone, no Transporter ID; the page's language goes along.
+  const r = await mara.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Mara', lastName: 'Șerban-Ţăranu' }, lang: 'ro' });
+  assert.equal(r.again, false);
+  const jr = (await getDoc(doc(mara.db, 'orgs', S.org, 'joinRequests', mara.uid))).data();
+  assert.equal(jr.name, 'Mara Șerban-Ţăranu');
+  assert.equal(jr.phone, '');
+  assert.equal(jr.transporterId, '');
+  assert.equal(jr.sameTransporterId, null);
+  // A6: the welcome was tried once for this request (the emulators have no mail server, so it isn't sent).
+  assert.equal(typeof jr.welcomeAt, 'number');
+  assert.equal(jr.welcomed, false, 'no email without SMTP_URL');
+  // Pressing "Send request" again (a second tap, another tab): the same request, no second welcome.
+  const again = await mara.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Mara', lastName: 'Șerban-Ţăranu' }, lang: 'ro' });
+  assert.equal(again.again, true);
+  const jr2 = (await getDoc(doc(mara.db, 'orgs', S.org, 'joinRequests', mara.uid))).data();
+  assert.equal(jr2.welcomeAt, jr.welcomeAt, 'one welcome per request');
+  const waiting = await getDocs(query(collection(S.own.db, 'orgs', S.org, 'joinRequests'), where('uid', '==', mara.uid)));
+  assert.equal(waiting.size, 1, 'one request, not two');
+  // A7: still nothing of the company until someone approves.
+  await fails(getDocs(query(collection(mara.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1]))), 'permission-denied');
+  await fails(getDoc(doc(mara.db, 'orgs', S.org)), 'permission-denied');
+  await S.mgr.call('decideJoinRequest', { orgId: S.org, uid: mara.uid, approve: false });
+});
+
+test('A1: an account from the driver link is marked as a driver by the server (the app offers it no "Create a company"), also after a rejection', async () => {
+  const link = await S.mgr.call('driverLink', { orgId: S.org });
+  const nico = await person('Nico Noco');
+  await nico.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Nico', lastName: 'Noco' } });
+  assert.equal((await getDoc(doc(nico.db, 'users', nico.uid))).data().signedUpAs, 'driver');
+  await S.mgr.call('decideJoinRequest', { orgId: S.org, uid: nico.uid, approve: false });
+  const p = (await getDoc(doc(nico.db, 'users', nico.uid))).data();
+  assert.equal(p.signedUpAs, 'driver', 'the mark stays after a rejection');
+  assert.equal(p.pendingJoin, undefined);
+  // The person can't take the mark off from the app.
+  await fails(updateDoc(doc(nico.db, 'users', nico.uid), { signedUpAs: null }), 'permission-denied');
+  // Owners who signed up themselves carry no mark.
+  assert.equal((await getDoc(doc(S.own.db, 'users', S.own.uid))).data()?.signedUpAs, undefined);
+});
+
+test('A6: the driver\'s welcome email: the company, the station, waiting for approval, where to get the app, in their language', async () => {
+  const { joinMail } = fnRequire('./lib/joinmail.js');
+  const o = { name: 'Mara', company: 'DSP One', station: 'DXX1', email: 'mara@test.dev', appUrl: 'https://app.fratius.com' };
+  const en = joinMail({ ...o, lang: 'en' });
+  assert.match(en.subject, /DSP One/);
+  for (const x of ['DSP One', 'DXX1', 'mara@test.dev', 'https://apps.apple.com/app/id', 'https://fratius.com/android', 'https://app.fratius.com', 'approves you']) {
+    assert.ok(en.text.includes(x), `the email says ${x}`);
+    assert.ok(en.html.includes(x.replace(/&/g, '&amp;')), `the html says ${x}`);
+  }
+  // In the driver's language (here Romanian), not English.
+  const ro = joinMail({ ...o, lang: 'ro' });
+  assert.notEqual(ro.subject, en.subject);
+  assert.match(ro.subject, /DSP One/);
+  assert.ok(ro.text.includes('https://apps.apple.com/app/id'));
+  // Arabic reads right to left.
+  assert.match(joinMail({ ...o, lang: 'ar' }).html, /dir="rtl"/);
+});
+
+test('A6: the driver gets a notification when a fleet manager approves them', async () => {
+  const link = await S.mgr.call('driverLink', { orgId: S.org });
+  const pia = await person('Pia Approved');
+  await pia.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Pia', lastName: 'Approved' } });
+  const ph = await phoneOf(pia, 'pia');
+  try {
+    await S.mgr.call('decideJoinRequest', { orgId: S.org, uid: pia.uid, approve: true });
+    const n = await waitFor(async () => ph.notes().find((m) => /DXX1/.test(m.body || '')), 'the approval notification', 30_000);
+    assert.match(n.body, /approved you/);
+    assert.equal((await getDoc(doc(pia.db, 'users', pia.uid))).data().orgIds.includes(S.org), true);
+  } finally { await ph.close(); }
+});

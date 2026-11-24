@@ -96,7 +96,7 @@ beforeEach(async () => {
     const jr = (uid, stationId) => ({ uid, name: uid, firstName: uid, lastName: 'X', phone: '+49 1', email: `${uid}@x`, transporterId: '', stationId, stationName: 'x', link: 'COMPANYLINKxxxxxxxxxxxxxxxxxxxxx', createdAt: 1, expiresAt: Date.now() + 1e9, status: 'pending' });
     await put(`orgs/${O}/joinRequests/wait1`, jr('wait1', S1));
     await put(`orgs/${O}/joinRequests/wait2`, jr('wait2', S2));
-    await put('users/wait1', { pendingJoin: { orgId: O, orgName: 'DSP One', stationName: 'x', at: 1 } });
+    await put('users/wait1', { pendingJoin: { orgId: O, orgName: 'DSP One', stationName: 'x', at: 1 }, signedUpAs: 'driver' });
   });
 });
 
@@ -303,6 +303,9 @@ describe('the company driver link and drivers waiting for approval', () => {
   test('the person cannot change their waiting note', () => assertFails(updateDoc(doc(as('wait1'), 'users/wait1'), { pendingJoin: { orgId: O2 } })));
   test('the person cannot write a waiting note on a new profile', () => assertFails(setDoc(doc(as('new2'), 'users/new2'), { pendingJoin: { orgId: O } })));
   test('the person still keeps the rest of their profile', () => assertSucceeds(updateDoc(doc(as('wait1'), 'users/wait1'), { lang: 'ro' })));
+  // A1 (driver sign-up, 2026-11-24): the mark that hides "Create a company" from drivers is the server's to write.
+  test('A1: a driver cannot remove the driver sign-up mark from their profile', () => assertFails(updateDoc(doc(as('wait1'), 'users/wait1'), { signedUpAs: null })));
+  test('A1: nobody writes the driver sign-up mark on a new profile', () => assertFails(setDoc(doc(as('new3'), 'users/new3'), { signedUpAs: 'owner' })));
 });
 
 describe('new companies', () => {

@@ -2,6 +2,8 @@ import {
   collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 
+import { useEffect, useState } from 'react';
+
 import { standing } from './billing';
 import { fb } from './firebase';
 import { t } from './i18n';
@@ -95,11 +97,31 @@ export function watchMyJoinRequest(orgId: string, uid: string, cb: (r: JoinReque
 }
 
 /** What the signed-in person waits for: the company they asked to join (users/{uid}.pendingJoin), and which companies they're in. */
-export function watchMyProfile(uid: string, cb: (p: { pendingJoin: { orgId: string; orgName: string; stationName: string; at: number } | null; orgIds: string[] }) => void) {
+export interface MyProfile {
+  pendingJoin: { orgId: string; orgName: string; stationName: string; at: number } | null;
+  orgIds: string[];
+  /** Came in through a company's driver link (written by the server): no "Create a company" for them. */
+  driver: boolean;
+}
+/**
+ * Whether this account came in through a driver link (or waits on one): those see no "Create a company". null until
+ * the profile has been read, so the option doesn't flash up first.
+ */
+export function useSignedUpAsDriver(uid: string | null | undefined, on = true): boolean | null {
+  const [driver, setDriver] = useState<{ uid: string; v: boolean } | null>(null);
+  useEffect(() => {
+    if (!uid || !on || !fb()) return;
+    return watchMyProfile(uid, (p) => setDriver({ uid, v: p.driver }));
+  }, [uid, on]);
+  if (!uid || !on || !fb()) return false;
+  return driver && driver.uid === uid ? driver.v : null;
+}
+export function watchMyProfile(uid: string, cb: (p: MyProfile) => void) {
   return onSnapshot(doc(db(), 'users', uid), (d) => {
     const x = d.data() || {};
-    cb({ pendingJoin: x.pendingJoin && typeof x.pendingJoin.orgId === 'string' ? x.pendingJoin : null, orgIds: Array.isArray(x.orgIds) ? x.orgIds : [] });
-  }, () => {});
+    const pendingJoin = x.pendingJoin && typeof x.pendingJoin.orgId === 'string' ? x.pendingJoin : null;
+    cb({ pendingJoin, orgIds: Array.isArray(x.orgIds) ? x.orgIds : [], driver: x.signedUpAs === 'driver' || !!pendingJoin });
+  }, (e) => console.warn('Profile not read', e));
 }
 
 // Changes go through the outbox (lib/outbox.ts): kept on the phone and sent by themselves without a connection.
