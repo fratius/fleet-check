@@ -28,6 +28,14 @@ on:
         description: What changed, in plain words, as you'd tell a tester (empty = the whole app)
         required: false
         default: ''
+      actions:
+        description: Browser actions to plan for (150 for a change; up to 1000 for a long run of the whole app)
+        required: false
+        default: '150'
+      minutes:
+        description: The most the tester may run, in minutes (45 for a change; up to 280 for a long run)
+        required: false
+        default: '45'
       model:
         description: The tester's model
         type: choice
@@ -36,8 +44,10 @@ on:
   pull_request_target:
     types: [labeled]
 
+# A pull request's label cancels its earlier run; runs started by hand each run on their own (several long runs of
+# different map sections side by side).
 concurrency:
-  group: blind-qa-${{ github.head_ref || github.ref }}
+  group: blind-qa-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -54,7 +64,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.label.name == 'blind-qa' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 330
     steps:
       - name: Check the subscription token is there
         env:
@@ -105,6 +115,8 @@ jobs:
         env:
           QA_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           QA_MODEL: ${{ inputs.model || 'claude-sonnet-5-5' }}
+          QA_ACTIONS: ${{ inputs.actions || '150' }}
+          QA_MINUTES: ${{ inputs.minutes || '45' }}
         run: |
           # The functions answer with made-up AI results (their key is "not-used-in-tests"), as in the other tests.
           echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
