@@ -774,3 +774,61 @@ test('A4: a driver who already has an account signs in on the link, and "Forgot 
     await visible(page, 'Request sent').waitFor({ timeout: 60_000 });
   } finally { await ctx.close(); }
 });
+
+// Round 1 of the blind tester (F01, F02, F04), each a test before the fix.
+test('A4 (F01): "Forgot your password?" answers the same whether or not the email has an account', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    await visible(page, 'I have one').click();
+    await page.locator('input[type=email] >> visible=true').first().fill('nobody.here.e2e@example.com');
+    await button(page, 'Forgot your password?').click();
+    await visible(page, 'Check your inbox for a link to set a new password.').waitFor({ timeout: 30_000 });
+    assert.equal(await page.locator('text=/Email or password is wrong/ >> visible=true').count(), 0);
+  } finally { await ctx.close(); }
+});
+
+test('F02: changing the language on the driver link stays on the driver link', async () => {
+  await driverLink();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Sign up as a driver at').waitFor({ timeout: 60_000 });
+    await page.locator('[role=button] >> text=/^Language: / >> visible=true').first().click();
+    await page.locator('[role=radio] >> text="Română" >> visible=true').first().click();
+    await visible(page, 'Înscrie-te ca șofer la').waitFor({ timeout: 60_000 });
+    assert.match(page.url(), new RegExp(`/join/${DRIVER_LINK}$`));
+    await button(page, 'Trimite cererea').waitFor({ timeout: 10_000 });
+  } finally {
+    await page.evaluate(() => localStorage.clear()).catch(() => {});
+    await ctx.close();
+  }
+});
+
+test('F04: "Use another account" clears the message about the account before', async () => {
+  await driverLink();
+  const email = 'rita.rejected.e2e@example.com';
+  const u = await auth.createUser({ email, password: 'rejected-pass-1', displayName: 'Rita Rejected' });
+  await db.doc(`orgs/${ORG}/joinRequests/${u.uid}`).set({ uid: u.uid, email: '', name: 'Rita Rejected', firstName: 'Rita', lastName: 'Rejected', phone: '', transporterId: '', stationId: ST, stationName: 'Main station', link: DRIVER_LINK, createdAt: Date.now() - 3600_000, expiresAt: Date.now() + 86400_000, status: 'rejected', sameTransporterId: null, decidedBy: OWNER.uid, decidedByName: OWNER.name, decidedAt: Date.now() - 60_000 });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  try {
+    await signIn(page, { email, password: 'rejected-pass-1' });
+    await visible(page, 'Your company').waitFor({ timeout: 60_000 });
+    await page.goto(`${URL0}/join/${DRIVER_LINK}`);
+    await visible(page, 'Signed in as').waitFor({ timeout: 60_000 });
+    const xpathField = (label) => page.locator(`xpath=//*[normalize-space(.)="${label}"]/following-sibling::input[1] >> visible=true`).first();
+    await xpathField('First name').fill('Rita');
+    await xpathField('Last name').fill('Rejected');
+    await button(page, 'Send request').click();
+    const msg = page.locator('text=/wasn.t approved/ >> visible=true');
+    await msg.first().waitFor({ timeout: 30_000 });
+    await button(page, 'Use another account').click();
+    await page.locator('input[type=email] >> visible=true').first().waitFor({ timeout: 30_000 });
+    assert.equal(await msg.count(), 0, 'the old account\'s message is gone');
+  } finally { await ctx.close(); }
+});
