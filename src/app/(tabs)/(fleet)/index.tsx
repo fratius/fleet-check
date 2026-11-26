@@ -103,7 +103,7 @@ export default function Fleet() {
       ) : null}
       {!s.staff ? <Notifications prompt /> : null}
       {/* Drivers see only their own van (blind test, 26 Nov 2026, cause 3a): another van is picked up by its plate. */}
-      {!s.staff && !s.myVan && s.mode === 'firebase' ? (s.myStations.some((st) => st.selfAssign) ? (
+      {!s.staff && !s.myVan && s.mode === 'firebase' && s.loaded.vehicles && s.loaded.stations ? (s.myStations.some((st) => st.selfAssign) ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <T v="h2" color="#000">{t('Pick up a van')}</T>
           <T color="#000">{t('Take a photo of the number plate of the van you were told to take, or type it. Then walk around it with the camera.')}</T>

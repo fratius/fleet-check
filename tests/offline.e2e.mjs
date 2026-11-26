@@ -919,7 +919,7 @@ async function takePhotos(page, count = Infinity) {
 }
 /** On "Pick up a van": types the plate, finds the van and opens the camera (drivers see only their own van: cause 3a). */
 async function pickByPlate(page, plate) {
-  await page.getByPlaceholder('B-DS 104').first().fill(plate);
+  await page.getByPlaceholder('B-XY 123').first().fill(plate);
   await button(page, 'Find the van').click();
   await button(page, 'Take the photos to pick it up').click();
 }
@@ -1112,11 +1112,11 @@ test('cause 3a (1a, 1b, 1d): a driver sees only the van they have, picks one up 
     for (const p of ['QUIET 1', 'QUIET 2', 'QUIET 3']) assert.equal(await visible(page, p).count(), 0, `${p} isn't listed`);
     // A plate that isn't the company's: said so.
     await button(page, 'Pick up a van').click();
-    await page.getByPlaceholder('B-DS 104').first().fill('QUIET 9');
+    await page.getByPlaceholder('B-XY 123').first().fill('QUIET 9');
     await button(page, 'Find the van').click();
     await visible(page, 'No van with the plate QUIET 9. Check the plate, or ask your fleet manager.').waitFor({ timeout: 60_000 });
     // Dirk's van: asked first, and no camera until "Take it over".
-    await page.getByPlaceholder('B-DS 104').first().fill('quiet 2');
+    await page.getByPlaceholder('B-XY 123').first().fill('quiet 2');
     await button(page, 'Find the van').click();
     await visible(page, 'Another driver has this van now. Take it over?').waitFor({ timeout: 60_000 });
     assert.equal(await button(page, 'Take the photos to pick it up').count(), 0, 'no camera before "Take it over"');
@@ -1140,7 +1140,7 @@ test('cause 3a (1d): a van that got another driver after the photos were taken s
   const { ctx, page, errors } = await camPage(CAM2);
   try {
     await page.goto(`${URL0}/pickup`);
-    await page.getByPlaceholder('B-DS 104').first().fill('QUIET 3');
+    await page.getByPlaceholder('B-XY 123').first().fill('QUIET 3');
     await button(page, 'Find the van').click();
     await button(page, 'Take the photos to pick it up').click();
     await frameNow(page);
@@ -1301,6 +1301,31 @@ test('cause 2 (A4): drivers without a van see no Refuel or Wash, and Add vehicle
     await button(ada.page, 'Refuel').waitFor({ timeout: 60_000 });
     await button(ada.page, 'Wash').waitFor({ timeout: 10_000 });
   } finally { await ada.ctx.close(); }
+});
+
+// Blind tester, round 1 on cause 3a (F01): a driver whose van went to someone else kept a "refuel isn't finished"
+// card that led only to "You don't have this van.". Their own one shows what happened and can be cancelled.
+test('cause 3a (F01): a refuel of a van the driver no longer has opens, says so, and can be cancelled', async () => {
+  await rwWorld();
+  const now = Date.now();
+  const id = 'rwBuyGone';
+  await db.doc(`orgs/${RW_ORG}/purchases/${id}`).set({
+    kind: 'fuel', status: 'waiting', vehicleId: RW_V2, vehicleName: 'RW 2', plate: 'RW 2', stationId: RW_ST, model: null, vanFuel: 'diesel', tankL: null,
+    by: RW_BEN.uid, byName: RW_BEN.name, role: 'driver', vanDriverId: null, notTheirVan: false,
+    dash: { path: `orgs/${RW_ORG}/buys/${RW_BEN.uid}/none.jpg`, at: now - 600_000, ai: null, confidence: null, readable: false, issue: null, done: true }, lastKm: null,
+    card: { needed: true, expected: null, result: 'missing', read: null, tries: 1, why: null, expired: null, at: now - 500_000 },
+    decision: null, receipt: null, parts: [], note: null, flags: [], corrected: [], odometerKm: null, fuelPct: null, litres: null, total: null, currency: null, merchant: null,
+    cancel: null, createdAt: now - 600_000, updatedAt: now - 500_000, doneAt: null,
+  });
+  const ben = await rwPage(RW_BEN);
+  try {
+    await ben.page.goto(`${URL0}/buy/${id}`);
+    await visible(ben.page, 'You don\'t have this van.').waitFor({ timeout: 60_000 });
+    await visible(ben.page, 'What happened').waitFor({ timeout: 10_000 });
+    assert.equal(await button(ben.page, 'Open RW 2').count(), 0, 'no way to a van that isn\'t his');
+    await button(ben.page, 'Cancel the refuel').click();
+    await until(async () => (await db.doc(`orgs/${RW_ORG}/purchases/${id}`).get()).data().status === 'cancelled' || null, 60_000, 'the cancel');
+  } finally { await ben.ctx.close(); }
 });
 
 // ---------- Blind test, 26 Nov 2026, cause 2b (B1, B2): the driver link on People ----------

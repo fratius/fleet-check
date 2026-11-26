@@ -65,6 +65,9 @@ export default function BuyPage() {
   // Blind test, 26 Nov 2026, cause 2 (the server refuses both too): drivers refuel and wash while they have a van, and
   // nobody starts a second one while one waits for a fleet manager's answer. Said first: a driver without a van has no
   // other van in the app either (cause 3a).
+  // Their own one of a van they no longer have (blind tester, cause 3a round 1: the card led to a refusal only): what
+  // happened, and closing it.
+  if (p && mine && !van && s.loaded.vehicles) return <Screen edges={[]}>{title}<Notice text={t('You don\'t have this van.')} /><Summary p={p} /></Screen>;
   if (!p && kind !== 'parts' && s.loaded.vehicles && !mayBuy(s)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('You don\'t have a van. Refuelling and washing are for drivers with a van: ask your fleet manager.')}</T></Card></Screen>;
   if (!van) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{!s.loaded.vehicles ? t('Loading…') : s.role === 'driver' ? t('You don\'t have this van.') : t('This van isn\'t in the fleet any more.')}</T></Card></Screen>;
   if (kind === 'parts' && !s.runs(van.stationId)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Owners and the station\'s fleet managers buy parts.')}</T></Card></Screen>;
@@ -413,6 +416,8 @@ function Summary({ p }: { p: Purchase }) {
   const c = useColors();
   const st = buyState(p);
   const staffHere = s.runs(p.stationId);
+  // The buyer whose van went to someone else (drivers see only the van they have): it's theirs to close.
+  const lostVan = p.by === s.user?.uid && !s.vehicles.some((v) => v.id === p.vehicleId);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -512,11 +517,16 @@ function Summary({ p }: { p: Purchase }) {
         </Card>
       ) : null}
 
+      {lostVan && isOpenBuy(p) ? (
+        <Button small v="link" title={busy || cancelText(p.kind)} onPress={() => act(t('Cancelling…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id },
+          { title: cancelText(p.kind), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }))} />
+      ) : null}
       {staffHere && isOpenBuy(p) && p.status !== 'waiting' && p.by !== s.user?.uid ? (
         <Button small v="link" title={busy || t('Close it (not finished)')} onPress={() => act(t('Closing…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id, reason: 'Not finished' },
           { title: t('Close {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }))} />
       ) : null}
-      <Button small v="link" title={t('Open {name}', { name: s.vanName(p) })} onPress={() => router.push(`/vehicle/${p.vehicleId}`)} />
+      {s.role !== 'driver' || s.vehicles.some((v) => v.id === p.vehicleId)
+        ? <Button small v="link" title={t('Open {name}', { name: s.vanName(p) })} onPress={() => router.push(`/vehicle/${p.vehicleId}`)} /> : null}
     </>
   );
 }

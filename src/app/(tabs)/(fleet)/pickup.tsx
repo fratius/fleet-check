@@ -28,7 +28,11 @@ export default function PickUp() {
   const title = <Stack.Screen options={{ title: t('Pick up a van') }} />;
   if (s.staff) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Fleet managers give out vans from the van\'s page.')}</T></Card></Screen>;
   // Until the session knows whether they have a van (the page opened by its address).
-  if (!s.loaded.vehicles) return <Screen edges={[]}>{title}<ActivityIndicator color={c.ink} /></Screen>;
+  if (!s.loaded.vehicles || !s.loaded.stations) return <Screen edges={[]}>{title}<ActivityIndicator color={c.ink} /></Screen>;
+  // Pick-ups by drivers are off at their station: said before any plate (the server refuses it too).
+  if (!s.myVan && !s.myStations.some((st) => st.selfAssign)) {
+    return <Screen edges={[]}>{title}<Notice text={t('At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.')} /></Screen>;
+  }
   if (s.myVan) {
     return <Screen edges={[]}>{title}<Notice text={t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(s.myVan) })} /></Screen>;
   }
@@ -61,7 +65,7 @@ export default function PickUp() {
       </View>
       <Card>
         <Button v="primary" wide title={busy || t('Take a photo of the plate')} loading={!!busy} disabled={!!busy} onPress={photo} />
-        <Field label={t('Or type the number plate')} value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder="B-DS 104" />
+        <Field label={t('Or type the number plate')} value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder="B-XY 123" />
         <Row><Button title={t('Find the van')} disabled={!!busy || !plate.trim()} onPress={() => { setBusy(t('Finding the van…')); find({ plate: plate.trim() }); }} /></Row>
         {err ? <T v="hint" color={c.alert}>{err}</T> : null}
       </Card>
