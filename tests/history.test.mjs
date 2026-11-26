@@ -3018,6 +3018,11 @@ test('cause 2: a company for who may do what: owner, two stations with a manager
   P.d2 = await join('d2', 'Emil Driver', 'driver', 's1');
   P.d3 = await join('d3', 'Fritz Driver', 'driver', 's2');
   P.out = await person('Otto Outsider', `perm.out.${run}@test.dev`);
+  // Someone who asked to join station 1 with the driver link (only an owner or station 1's manager decides).
+  const link = await P.own.call('driverLink', { orgId: P.org });
+  const asker = await person('Anna Asker', `perm.asker.${run}@test.dev`);
+  await asker.call('requestToJoin', { token: link.token, stationId: P.s1, details: { firstName: 'Anna', lastName: 'Asker' } });
+  P.asker = asker.uid;
   const vr = doc(collection(P.own.db, 'orgs', P.org, 'vehicles'));
   P.van = { id: vr.id, name: 'QUIET P1', stationId: P.s1 };
   await setDoc(vr, { name: '', plate: 'QUIET P1', cls: 'van', stationId: P.s1, createdAt: Date.now(), createdBy: P.own.uid });
@@ -3037,7 +3042,7 @@ test('cause 2 (A5): the permission table: every server action refuses everyone R
   // Who must be refused, by the action's level: those below it. With a probe (a real target at station 1): also a
   // manager and (member actions) a driver of station 2; with "own": another driver of station 1 (Emil).
   const below = { creator: ['own', 'mgr', 'd1', 'out'], owner: ['mgr', 'd1', 'out'], staff: ['d1', 'out'], member: ['out'] };
-  const w = { org: P.org, s1: P.s1, s2: P.s2, van1: P.van.id, walk1: P.walk1, check1: P.check1, assign1: P.assign1, d1: P.d1.uid, d2: P.d2.uid };
+  const w = { org: P.org, s1: P.s1, s2: P.s2, van1: P.van.id, walk1: P.walk1, check1: P.check1, assign1: P.assign1, d1: P.d1.uid, d2: P.d2.uid, asker: P.asker };
   const wrong = [];
   let tried = 0;
   for (const [name, a] of Object.entries(ACTIONS)) {

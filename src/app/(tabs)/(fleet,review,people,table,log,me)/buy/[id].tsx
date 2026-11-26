@@ -2,10 +2,10 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Text, View } from 'react-native';
 
-import { BUY_NAME, buyState, buyTitle, cancelText, cardLine, flagText, isOpenBuy, litresText, money, STALE_BUY, waitingTitle } from '@/components/buy';
+import { BUY_NAME, buyState, buyTitle, cancelText, cardLine, flagText, isOpenBuy, litresText, mayBuy, MineCard, money, STALE_BUY, waitingTitle } from '@/components/buy';
 import { kmText, takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
-import { Button, Card, Chip, F, Field, MARKER, Pill, Row, Screen, T, ZoomPhoto, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, fmtWhen, useColors, hs } from '@/components/ui';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
@@ -65,6 +65,18 @@ export default function BuyPage() {
   if (!van) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{s.loaded.vehicles ? t('This van isn\'t in the fleet any more.') : t('Loading…')}</T></Card></Screen>;
   if (kind === 'parts' && !s.runs(van.stationId)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Owners and the station\'s fleet managers buy parts.')}</T></Card></Screen>;
   if (kind === 'fuel' && van.fuel === 'electric') return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Electric vans are charged, not refuelled.')}</T></Card></Screen>;
+  // Blind test, 26 Nov 2026, cause 2 (the server refuses both too): drivers refuel and wash while they have a van, and
+  // nobody starts a second one while one waits for a fleet manager's answer.
+  if (!p && kind !== 'parts' && !mayBuy(s)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('You don\'t have a van. Refuelling and washing are for drivers with a van: ask your fleet manager.')}</T></Card></Screen>;
+  const waits = !p ? s.purchases.find((x) => x.by === s.user?.uid && x.status === 'waiting' && Date.now() - x.createdAt < STALE_BUY) : undefined;
+  if (waits) {
+    return (
+      <Screen edges={[]}>{title}
+        <Notice text={t('Your fleet manager hasn\'t answered about {van} yet. Wait for the answer, or cancel that one first.', { van: s.vanName(waits) })} />
+        <MineCard p={waits} withVan />
+      </Screen>
+    );
+  }
   return <Screen edges={[]}>{title}<Flow van={van} kind={kind} p={p} onStarted={setPid} /></Screen>;
 }
 

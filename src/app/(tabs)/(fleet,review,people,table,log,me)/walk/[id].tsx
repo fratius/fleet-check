@@ -53,7 +53,8 @@ export default function WalkScreen() {
       <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt}
         newest={w.source === 'camera' && !s.vehicles.find((v) => v.id === w.vehicleId)?.retired
           && !s.walks.some((x) => x.vehicleId === w.vehicleId && x.source === 'camera' && x.createdAt > w.createdAt && x.id !== w.id)} />
-      {s.mode === 'firebase' && gone(w.mediaDeletedAt) ? null : s.mode === 'firebase' ? (
+      {/* Only the driver who took the photos, or the station's staff, checks them (the server refuses anyone else). */}
+      {s.mode === 'firebase' && (gone(w.mediaDeletedAt) || !(s.runs(w.stationId) || s.tryOut || (!!s.user && w.createdBy === s.user.uid))) ? null : s.mode === 'firebase' ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
           <Button v="primary" wide title={checks.length ? t('Check for damage again') : t('Check for damage')}
             onPress={() => router.push({ pathname: '/check/[id]', params: { id: 'new', walk: w.id } })} />

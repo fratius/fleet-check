@@ -1132,7 +1132,7 @@ test('cause 2 (A1): another driver sees a damage check of someone else\'s photos
     await ben.page.goto(`${URL0}/walk/${RW_W1}`);
     await visible(ben.page, 'RW 1').waitFor({ timeout: 60_000 });
     await ben.page.waitForTimeout(1500);
-    assert.equal(await button(ben.page, 'Check for damage').count(), 0, 'no Check for damage');
+    for (const label of ['Check for damage', 'Check for damage again']) assert.equal(await button(ben.page, label).count(), 0, `no ${label}`);
     // The check's own link starts nothing.
     await ben.page.goto(`${URL0}/check/new?walk=${RW_W1}`);
     await visible(ben.page, 'Only the driver who took these photos, or a fleet manager, can do this.').waitFor({ timeout: 60_000 });
