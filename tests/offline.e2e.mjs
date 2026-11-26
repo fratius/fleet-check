@@ -73,7 +73,8 @@ before(async () => {
   b2.set(db.doc(`users/${o2.uid}`), { orgIds: [ORG_A, ORG_B], orgId: ORG_A, email: OWNER2.email, name: OWNER2.name });
   await b2.commit();
   OWNER2.uid = o2.uid;
-  browser = await chromium.launch();
+  // A fake camera (the same as the blind tester's), for the walk-around tests at the end.
+  browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
 });
 
 after(async () => {
@@ -832,5 +833,208 @@ test('F04: "Use another account" clears the message about the account before', a
     await button(page, 'Use another account').click();
     await page.locator('input[type=email] >> visible=true').first().waitFor({ timeout: 30_000 });
     assert.equal(await msg.count(), 0, 'the old account\'s message is gone');
+  } finally { await ctx.close(); }
+});
+
+
+/* ---------- Cause 1 of the blind test (26 Nov 2026): the walk-around camera finishes safely ---------- */
+// Criteria A1–A6 (pull request "Camera: nothing lost, saved once"). Each test failed on the app before the fix.
+// The photos are taken through the real camera screen with Chrome's fake camera; the vans' plates say QUIET so
+// the emulators' stand-in AI finds no damage in them.
+
+const CAM_ORG = 'camOrg1', CAM_ST = 'camSt1';
+const CAM_PICK = 'camVanPick', CAM_WALK = 'camVanWalk', CAM_DROP = 'camVanDrop';
+const CAM1 = { email: 'cara.camera@example.com', password: 'camera-pass-1', name: 'Cara Camera' };
+const CAM2 = { email: 'dirk.dropoff@example.com', password: 'camera-pass-2', name: 'Dirk Dropoff' };
+let camReady = null;
+function camWorld() {
+  camReady ??= (async () => {
+    const now = Date.now();
+    const a = await auth.createUser({ email: CAM1.email, password: CAM1.password, displayName: CAM1.name });
+    const c = await auth.createUser({ email: CAM2.email, password: CAM2.password, displayName: CAM2.name });
+    CAM1.uid = a.uid; CAM2.uid = c.uid;
+    const b = db.batch();
+    b.set(db.doc(`orgs/${CAM_ORG}`), { name: 'Camera DSP', createdBy: OWNER.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+    b.set(db.doc(`orgs/${CAM_ORG}/members/${OWNER.uid}`), { role: 'owner', stationIds: [], email: OWNER.email, name: OWNER.name, joinedAt: now });
+    b.set(db.doc(`orgs/${CAM_ORG}/stations/${CAM_ST}`), { name: 'Camera station', code: 'DCA1', createdAt: now, selfAssign: true, selfAssignBy: OWNER.name, selfAssignAt: now });
+    for (const p of [CAM1, CAM2]) {
+      b.set(db.doc(`orgs/${CAM_ORG}/members/${p.uid}`), { role: 'driver', stationIds: [CAM_ST], email: p.email, name: p.name, joinedAt: now });
+      b.set(db.doc(`users/${p.uid}`), { orgIds: [CAM_ORG], orgId: CAM_ORG, email: p.email, name: p.name });
+    }
+    const van = (plate) => ({ name: '', plate, cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: CAM_ST, createdAt: now, createdBy: OWNER.uid, scanId: null });
+    b.set(db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_PICK}`), van('QUIET 1'));
+    b.set(db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_WALK}`), van('QUIET 2'));
+    // Dirk has QUIET 3 (given by the owner an hour ago): he drops it off.
+    b.set(db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_DROP}`), { ...van('QUIET 3'), assignedTo: { assignmentId: 'camA1', driverId: c.uid, since: now - 3600_000, kmStart: null, kmEnd: null } });
+    b.set(db.doc(`orgs/${CAM_ORG}/assignments/camA1`), {
+      vehicleId: CAM_DROP, vehicleName: 'QUIET 3', plate: 'QUIET 3', driverId: c.uid, driverName: CAM2.name, stationId: CAM_ST, start: now - 3600_000, end: null,
+      startedBy: OWNER.uid, startedByName: OWNER.name, endedBy: null, endedByName: null, endReason: null, createdAt: now - 3600_000,
+    });
+    await b.commit();
+  })();
+  return camReady;
+}
+async function camPage(who) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB', permissions: ['camera'] });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await signIn(page, who);
+  await visible(page, 'Camera DSP').waitFor({ timeout: 60_000 }).catch(() => {});
+  return { ctx, page, errors };
+}
+/** On the camera screen: the frame shown and how many there are ("QUIET 1, frame 3 of 12"). */
+async function frameNow(page) {
+  const t = await until(async () => {
+    const allow = page.locator('[role=button] >> text="Allow camera" >> visible=true');
+    if (await allow.count()) await allow.first().click();
+    const x = await page.locator('text=/frame \\d+ of \\d+/ >> visible=true').first().textContent({ timeout: 1000 });
+    return x || null;
+  }, 60_000, 'the camera screen');
+  const m = /frame (\d+) of (\d+)/.exec(t);
+  return { n: Number(m[1]), total: Number(m[2]) };
+}
+/** Takes and uses photos until `count` are taken (or all, then the summary shows). */
+async function takePhotos(page, count = Infinity) {
+  for (let k = 0; k < count; k++) {
+    if (await page.locator('text=/photos? aren.t sent yet|Tap a photo to retake it|All \\d+ photos are needed/ >> visible=true').count()) return;
+    if (!(await page.locator('text=/frame \\d+ of \\d+/ >> visible=true').count())) {
+      // The summary (all taken) or the next frame on its way.
+      await page.waitForTimeout(300);
+      if (!(await page.locator('text=/frame \\d+ of \\d+/ >> visible=true').count())) return;
+    }
+    const { n } = await frameNow(page);
+    const shutter = page.getByRole('button', { name: `Take photo ${n}`, exact: true });
+    await until(async () => (await shutter.isEnabled()) || null, 60_000, 'the camera to be ready');
+    await shutter.click();
+    const use = page.locator('[role=button] >> text=/^(Use photo|Use anyway)$/ >> visible=true').first();
+    await use.waitFor({ timeout: 30_000 });
+    await use.click();
+    await until(async () => (await page.locator('text=/^(Use photo|Use anyway)$/ >> visible=true').count()) === 0 || null, 10_000, 'the photo to be used');
+  }
+}
+const walksOf = async (vehicleId, uid) => (await db.collection(`orgs/${CAM_ORG}/walkarounds`).where('vehicleId', '==', vehicleId).where('createdBy', '==', uid).get()).docs;
+
+test('A1: leaving the camera with photos that aren\'t sent asks first (Close, Discard, the browser\'s back); throwing away is the driver\'s choice', async () => {
+  await camWorld();
+  const { ctx, page, errors } = await camPage(CAM1);
+  try {
+    await page.goto(`${URL0}/vehicle/${CAM_PICK}`);
+    await page.locator('[role=button] >> text=/^Pick up with \\d+ photos$/ >> visible=true').first().click();
+    const { total } = await frameNow(page);
+    await takePhotos(page);
+    await visible(page, `${total}/${total}`).waitFor({ timeout: 30_000 });
+    // The top button asks; "Back to the photos" keeps everything.
+    await button(page, 'Close').click();
+    await visible(page, `${total} photos aren't sent yet.`).waitFor({ timeout: 10_000 });
+    await button(page, 'Pick up QUIET 1').waitFor({ timeout: 5000 });
+    await button(page, 'Back to the photos').click();
+    await visible(page, `${total}/${total}`).waitFor({ timeout: 5000 });
+    // Discard asks too.
+    await button(page, 'Discard').click();
+    await visible(page, `${total} photos aren't sent yet.`).waitFor({ timeout: 10_000 });
+    await button(page, 'Back to the photos').click();
+    // The browser's back button asks too.
+    await page.goBack();
+    await visible(page, `${total} photos aren't sent yet.`).waitFor({ timeout: 10_000 });
+    await button(page, `Throw away ${total} photos`).click();
+    await page.waitForURL(new RegExp(`/vehicle/${CAM_PICK}`), { timeout: 30_000 });
+    // Nothing was sent, and the van is still free.
+    assert.equal((await walksOf(CAM_PICK, CAM1.uid)).length, 0);
+    assert.equal((await db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_PICK}`).get()).data().assignedTo ?? null, null);
+    // Thrown away means gone: the camera starts again at frame 1.
+    await page.goto(`${URL0}/scan/${CAM_PICK}?handover=pickup`);
+    assert.equal((await frameNow(page)).n, 1);
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('A2: a reload part-way through keeps the photos already taken and goes on where it stopped', async () => {
+  await camWorld();
+  const { ctx, page } = await camPage(CAM1);
+  try {
+    await page.goto(`${URL0}/scan/${CAM_WALK}`);
+    await frameNow(page);
+    await takePhotos(page, 3);
+    assert.equal((await frameNow(page)).n, 4);
+    await page.waitForTimeout(1500); // the last photo is kept on the phone right after "Use photo"
+    await page.reload();
+    const f = await frameNow(page);
+    assert.equal(f.n, 4, 'goes on at frame 4');
+    await visible(page, 'Continued where you stopped: 3 photos kept.').waitFor({ timeout: 10_000 });
+    // And again after closing the browser tab and opening the camera from the van page.
+    const p2 = await ctx.newPage();
+    await page.close();
+    await p2.goto(`${URL0}/scan/${CAM_WALK}`);
+    assert.equal((await frameNow(p2)).n, 4);
+    // Thrown away: the next walk-around starts from scratch.
+    await button(p2, 'Close').click();
+    await button(p2, 'Throw away 3 photos').click();
+    await p2.goto(`${URL0}/scan/${CAM_WALK}`);
+    assert.equal((await frameNow(p2)).n, 1);
+  } finally { await ctx.close(); }
+});
+
+/**
+ * Guard test for cause 1: a walk-around, a pick-up and a drop-off, each on a camera page opened by its link (nothing
+ * to go back to) and its button pressed twice: one walk-around, the handover done once, and the page moves on.
+ */
+test('A3, A4 (guard): walk-around, pick-up and drop-off from a link, pressed twice: saved once and the screen moves on', async () => {
+  await camWorld();
+  for (const [who, van, kind, label, url] of [
+    [CAM1, CAM_WALK, 'walkaround', /^Save \d+ photos$/, `/scan/${CAM_WALK}`],
+    [CAM1, CAM_PICK, 'pickup', /^Pick up QUIET 1$/, `/scan/${CAM_PICK}?handover=pickup`],
+    [CAM2, CAM_DROP, 'dropoff', /^Drop off QUIET 3$/, `/scan/${CAM_DROP}?handover=dropoff`],
+  ]) {
+    const { ctx, page, errors } = await camPage(who);
+    try {
+      const before = (await walksOf(van, who.uid)).length;
+      await page.goto(URL0 + url);
+      await frameNow(page);
+      await takePhotos(page);
+      const send = page.locator(`[role=button] >> text=${label} >> visible=true`).first();
+      await send.waitFor({ timeout: 30_000 });
+      await send.dblclick();
+      // The page moves on: the walk-around's page, or the van's.
+      await page.waitForURL(kind === 'walkaround' ? /\/walk\// : new RegExp(`/vehicle/${van}`), { timeout: 120_000 });
+      await until(async () => (await walksOf(van, who.uid)).length > before || null, 120_000, `the ${kind} to arrive`);
+      await page.waitForTimeout(5000); // a second copy would have arrived by now
+      const walks = await walksOf(van, who.uid);
+      assert.equal(walks.length, before + 1, `${kind}: one walk-around`);
+      const v = (await db.doc(`orgs/${CAM_ORG}/vehicles/${van}`).get()).data();
+      if (kind === 'pickup') {
+        await until(async () => (await db.doc(`orgs/${CAM_ORG}/vehicles/${van}`).get()).data().assignedTo?.driverId === who.uid || null, 60_000, 'the pick-up');
+        const open = await db.collection(`orgs/${CAM_ORG}/assignments`).where('driverId', '==', who.uid).where('end', '==', null).get();
+        assert.equal(open.size, 1, 'one pick-up');
+      }
+      if (kind === 'dropoff') {
+        await until(async () => (await db.doc(`orgs/${CAM_ORG}/vehicles/${van}`).get()).data().assignedTo == null || null, 60_000, 'the drop-off');
+        assert.equal((await db.doc(`orgs/${CAM_ORG}/assignments/camA1`).get()).data().endReason, 'dropped off');
+      }
+      if (kind === 'walkaround') assert.equal(v.assignedTo ?? null, null);
+      assert.deepEqual(errors, []);
+    } finally { await ctx.close(); }
+  }
+});
+
+test('A5: offline, a drop-off waits on the phone and goes through once when the connection is back', async () => {
+  await camWorld();
+  // Cara has QUIET 1 since the pick-up test above.
+  await until(async () => (await db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_PICK}`).get()).data().assignedTo?.driverId === CAM1.uid || null, 30_000, 'Cara to have QUIET 1');
+  const { ctx, page } = await camPage(CAM1);
+  try {
+    const before = (await walksOf(CAM_PICK, CAM1.uid)).length;
+    await page.goto(`${URL0}/scan/${CAM_PICK}?handover=dropoff`);
+    await frameNow(page);
+    await takePhotos(page);
+    await ctx.setOffline(true);
+    await button(page, 'Drop off QUIET 1').click();
+    await visible(page, 'The photos are saved on this phone.').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(3000);
+    assert.equal((await walksOf(CAM_PICK, CAM1.uid)).length, before, 'nothing reached the server offline');
+    await ctx.setOffline(false);
+    await until(async () => (await db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_PICK}`).get()).data().assignedTo == null || null, 180_000, 'the drop-off after the connection is back');
+    await page.waitForTimeout(5000);
+    assert.equal((await walksOf(CAM_PICK, CAM1.uid)).length, before + 1, 'one walk-around');
   } finally { await ctx.close(); }
 });
