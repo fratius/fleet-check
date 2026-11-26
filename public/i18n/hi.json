@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "इस कंपनी के लिए स्वचालित नुकसान तुलना बंद है।",
  "Back": "वापस",
  "Back to me": "अपने व्यू पर वापस",
+ "Back to the photos": "फ़ोटो पर वापस जाएँ",
  "Back to {title}": "{title} पर वापस",
  "Balanced": "संतुलित",
  "Battery": "बैटरी",
@@ -419,6 +420,10 @@
  "Contact": "संपर्क",
  "Continue": "आगे बढ़ें",
  "Continue in the browser": "ब्राउज़र में जारी रखें",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "जहाँ रुके थे वहीं से जारी: {n} फ़ोटो रखी गई।",
+  "other": "जहाँ रुके थे वहीं से जारी: {n} फ़ोटो रखी गईं।"
+ },
  "Contract": "कॉन्ट्रैक्ट",
  "Contract number": "कॉन्ट्रैक्ट नंबर",
  "Contract, start date and, when they leave, the last working day.": "कॉन्ट्रैक्ट, शुरू होने की तारीख और, नौकरी छोड़ने पर, काम का आख़िरी दिन।",
@@ -943,6 +948,7 @@
  "Just looking?": "बस देख रहे हैं?",
  "Keep filming: at least {n} seconds.": "रिकॉर्डिंग जारी रखें: कम से कम {n} सेकंड।",
  "Keep it": "रहने दें",
+ "Keep taking photos": "फ़ोटो लेते रहें",
  "Keeping the photos": "फ़ोटो रखने की अवधि",
  "Keeping the video": "वीडियो रखने की अवधि",
  "Kept until {date}, 90 days after they were taken.": "{date} तक रखे जाएँगे, यानी लिए जाने के 90 दिन बाद तक।",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "गैलरी से फ़ोटो",
  "Photos taken": "ली गई फ़ोटो",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "फ़ोटो आपकी कंपनी के स्टोरेज में अपलोड होती हैं, ताकि वॉक-अराउंड सबूत के तौर पर रहे।",
+ "Photos you keep stay on this phone, also if the app closes.": "जो फ़ोटो आप रखते हैं वे इस फ़ोन पर रहती हैं, ऐप बंद होने पर भी।",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "फ़ोटो, वीडियो और बदलाव पहले इस फ़ोन पर सेव होते हैं, फिर भेजे जाते हैं। कनेक्शन न होने पर वे यहीं इंतज़ार करते हैं और अपने आप चले जाते हैं, इसलिए कुछ भी दोबारा नहीं करना पड़ता। ऐप खुला रखें, या बाद में फिर से खोलें।",
  "Pick a day: {field}": "दिन चुनें: {field}",
  "Pick a month: {field}": "महीना चुनें: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "इस वॉक-अराउंड की तुलना पहले ही हो चुकी है।",
  "This walk-around was deleted.": "यह वॉक-अराउंड मिटा दिया गया।",
  "This year": "इस साल",
+ "Throw away {n} photos": {
+  "one": "{n} फ़ोटो हटाएँ",
+  "other": "{n} फ़ोटो हटाएँ"
+ },
  "Tick all": "सभी चुनें",
  "Tick the vans to add first.": "पहले जोड़ने वाली वैन चुनें।",
  "Time": "समय",
@@ -3032,6 +3043,10 @@
   "one": "{n} फ़ोटो",
   "other": "{n} फ़ोटो"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} फ़ोटो अभी तक नहीं भेजी गई।",
+  "other": "{n} फ़ोटो अभी तक नहीं भेजी गईं।"
+ },
  "{n} photos compared": {
   "one": "{n} फ़ोटो की तुलना की गई",
   "other": "{n} फ़ोटो की तुलना की गई"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "इस {cls} के लिए {n} फ़ोटो।",
   "other": "इस {cls} के लिए {n} फ़ोटो।"
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} फ़ोटो दो घंटे से ज़्यादा पुरानी थी: उसे फिर से लें।",
+  "other": "{n} फ़ोटो दो घंटे से ज़्यादा पुरानी थीं: उन्हें फिर से लें।"
  },
  "{n} photos, about {min} min.": {
   "one": "{n} फ़ोटो, लगभग {min} मिनट।",

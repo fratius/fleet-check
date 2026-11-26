@@ -243,6 +243,7 @@
  "Automatic damage comparison is off for this company.": "Comparația automată a avariilor e dezactivată pentru această companie.",
  "Back": "Înapoi",
  "Back to me": "Înapoi la contul meu",
+ "Back to the photos": "Înapoi la fotografii",
  "Back to {title}": "Înapoi la {title}",
  "Balanced": "Echilibrat",
  "Battery": "Baterie",
@@ -432,6 +433,11 @@
  "Contact": "Contact",
  "Continue": "Continuă",
  "Continue in the browser": "Continuă în browser",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Ai continuat de unde ai rămas: {n} fotografie păstrată.",
+  "few": "Ai continuat de unde ai rămas: {n} fotografii păstrate.",
+  "other": "Ai continuat de unde ai rămas: {n} de fotografii păstrate."
+ },
  "Contract": "Contract",
  "Contract number": "Număr contract",
  "Contract, start date and, when they leave, the last working day.": "Contractul, data de început și, la plecare, ultima zi de lucru.",
@@ -965,6 +971,7 @@
  "Just looking?": "Doar te uiți?",
  "Keep filming: at least {n} seconds.": "Continuă să filmezi: cel puțin {n} secunde.",
  "Keep it": "Păstreaz-o",
+ "Keep taking photos": "Continuă să faci fotografii",
  "Keeping the photos": "Păstrarea fotografiilor",
  "Keeping the video": "Păstrarea videoclipului",
  "Kept until {date}, 90 days after they were taken.": "Se păstrează până la {date}, la 90 de zile de la realizare.",
@@ -1487,6 +1494,7 @@
  "Photos from the library": "Fotografii din galerie",
  "Photos taken": "Fotografii făcute",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotografiile se încarcă în spațiul de stocare al companiei, ca inspecția să rămână ca dovadă.",
+ "Photos you keep stay on this phone, also if the app closes.": "Fotografiile păstrate rămân pe acest telefon, chiar dacă aplicația se închide.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotografiile, videoclipurile și modificările se salvează mai întâi pe acest telefon, apoi se trimit. Fără conexiune așteaptă aici și se trimit singure, așa că nimic nu trebuie făcut de două ori. Ține aplicația deschisă sau deschide-o din nou mai târziu.",
  "Pick a day: {field}": "Alege o zi: {field}",
  "Pick a month: {field}": "Alege o lună: {field}",
@@ -2294,6 +2302,11 @@
  "This walk-around was compared already.": "Această inspecție a fost deja comparată.",
  "This walk-around was deleted.": "Această inspecție a fost ștearsă.",
  "This year": "Anul acesta",
+ "Throw away {n} photos": {
+  "one": "Aruncă {n} fotografie",
+  "few": "Aruncă {n} fotografii",
+  "other": "Aruncă {n} de fotografii"
+ },
  "Tick all": "Bifează tot",
  "Tick the vans to add first.": "Bifează mai întâi dubele de adăugat.",
  "Time": "Ora",
@@ -3151,6 +3164,11 @@
   "few": "{n} fotografii",
   "other": "{n} de fotografii"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotografie nu e trimisă încă.",
+  "few": "{n} fotografii nu sunt trimise încă.",
+  "other": "{n} de fotografii nu sunt trimise încă."
+ },
  "{n} photos compared": {
   "one": "{n} fotografie comparată",
   "few": "{n} fotografii comparate",
@@ -3180,6 +3198,11 @@
   "one": "{n} fotografie pentru {cls}.",
   "few": "{n} fotografii pentru {cls}.",
   "other": "{n} de fotografii pentru {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotografie avea mai mult de două ore: fă-o din nou.",
+  "few": "{n} fotografii aveau mai mult de două ore: fă-le din nou.",
+  "other": "{n} de fotografii aveau mai mult de două ore: fă-le din nou."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotografie, cam {min} min.",

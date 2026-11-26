@@ -254,6 +254,7 @@
  "Automatic damage comparison is off for this company.": "Automatinis pažeidimų palyginimas šioje įmonėje išjungtas.",
  "Back": "Atgal",
  "Back to me": "Grįžti į savo paskyrą",
+ "Back to the photos": "Atgal į nuotraukas",
  "Back to {title}": "Atgal: {title}",
  "Balanced": "Subalansuotas",
  "Battery": "Akumuliatorius",
@@ -445,6 +446,12 @@
  "Contact": "Kontaktas",
  "Continue": "Tęsti",
  "Continue in the browser": "Tęsti naršyklėje",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Tęsiama nuo ten, kur sustojote: išsaugota {n} nuotrauka.",
+  "few": "Tęsiama nuo ten, kur sustojote: išsaugotos {n} nuotraukos.",
+  "many": "Tęsiama nuo ten, kur sustojote: išsaugota {n} nuotraukos.",
+  "other": "Tęsiama nuo ten, kur sustojote: išsaugota {n} nuotraukų."
+ },
  "Contract": "Sutartis",
  "Contract number": "Sutarties numeris",
  "Contract, start date and, when they leave, the last working day.": "Sutartis, pradžios data ir, jei išeina, paskutinė darbo diena.",
@@ -987,6 +994,7 @@
  "Just looking?": "Tik apsižvalgote?",
  "Keep filming: at least {n} seconds.": "Filmuokite toliau: bent {n} s.",
  "Keep it": "Palikti",
+ "Keep taking photos": "Toliau fotografuoti",
  "Keeping the photos": "Nuotraukų saugojimas",
  "Keeping the video": "Vaizdo įrašo saugojimas",
  "Kept until {date}, 90 days after they were taken.": "Saugoma iki {date}, 90 dienų nuo užfiksavimo.",
@@ -1512,6 +1520,7 @@
  "Photos from the library": "Nuotraukos iš galerijos",
  "Photos taken": "Padaryta nuotraukų",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Nuotraukos įkeliamos į jūsų įmonės saugyklą, todėl apžiūra išsaugoma kaip įrodymas.",
+ "Photos you keep stay on this phone, also if the app closes.": "Išsaugotos nuotraukos lieka šiame telefone, net jei programėlė užsidaro.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Nuotraukos, vaizdo įrašai ir pakeitimai pirmiausia išsaugomi šiame telefone, tada išsiunčiami. Be ryšio jie laukia čia ir išsiunčiami savaime, todėl nieko nereikia daryti du kartus. Laikykite programėlę atidarytą arba vėliau atidarykite ją dar kartą.",
  "Pick a day: {field}": "Pasirinkti dieną: {field}",
  "Pick a month: {field}": "Pasirinkti mėnesį: {field}",
@@ -2341,6 +2350,12 @@
  "This walk-around was compared already.": "Ši apžiūra jau palyginta.",
  "This walk-around was deleted.": "Ši apžiūra ištrinta.",
  "This year": "Šie metai",
+ "Throw away {n} photos": {
+  "one": "Išmesti {n} nuotrauką",
+  "few": "Išmesti {n} nuotraukas",
+  "many": "Išmesti {n} nuotraukos",
+  "other": "Išmesti {n} nuotraukų"
+ },
  "Tick all": "Pažymėti visus",
  "Tick the vans to add first.": "Pirmiausia pažymėkite pridedamus furgonus.",
  "Time": "Laikas",
@@ -3258,6 +3273,12 @@
   "many": "{n} nuotraukos",
   "other": "{n} nuotraukų"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} nuotrauka dar neišsiųsta.",
+  "few": "{n} nuotraukos dar neišsiųstos.",
+  "many": "{n} nuotraukos dar neišsiųsta.",
+  "other": "{n} nuotraukų dar neišsiųsta."
+ },
  "{n} photos compared": {
   "few": "Palygintos {n} nuotraukos",
   "many": "Palyginta {n} nuotraukų",
@@ -3293,6 +3314,12 @@
   "few": "{n} nuotraukos šiam tipui ({cls}).",
   "many": "{n} nuotraukos šiam tipui ({cls}).",
   "other": "{n} nuotraukų šiam tipui ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} nuotrauka buvo senesnė nei dvi valandos: nufotografuokite iš naujo.",
+  "few": "{n} nuotraukos buvo senesnės nei dvi valandos: nufotografuokite iš naujo.",
+  "many": "{n} nuotraukos buvo senesnės nei dvi valandos: nufotografuokite iš naujo.",
+  "other": "{n} nuotraukų buvo senesnės nei dvi valandos: nufotografuokite iš naujo."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} nuotrauka, apie {min} min.",

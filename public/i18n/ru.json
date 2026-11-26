@@ -254,6 +254,7 @@
  "Automatic damage comparison is off for this company.": "Автоматическое сравнение повреждений для этой компании выключено.",
  "Back": "Назад",
  "Back to me": "Вернуться к себе",
+ "Back to the photos": "Назад к фото",
  "Back to {title}": "Назад: {title}",
  "Balanced": "Сбалансированная",
  "Battery": "Батарея",
@@ -445,6 +446,12 @@
  "Contact": "Контакт",
  "Continue": "Продолжить",
  "Continue in the browser": "Продолжить в браузере",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Продолжено с того места, где вы остановились: сохранено {n} фото.",
+  "few": "Продолжено с того места, где вы остановились: сохранены {n} фото.",
+  "many": "Продолжено с того места, где вы остановились: сохранено {n} фото.",
+  "other": "Продолжено с того места, где вы остановились: сохранено {n} фото."
+ },
  "Contract": "Договор",
  "Contract number": "Номер договора",
  "Contract, start date and, when they leave, the last working day.": "Договор, дата начала работы и, при увольнении, последний рабочий день.",
@@ -987,6 +994,7 @@
  "Just looking?": "Просто посмотреть?",
  "Keep filming: at least {n} seconds.": "Продолжайте снимать: не менее {n} с.",
  "Keep it": "Оставить",
+ "Keep taking photos": "Продолжить съёмку",
  "Keeping the photos": "Хранение фото",
  "Keeping the video": "Хранение видео",
  "Kept until {date}, 90 days after they were taken.": "Хранение до {date}: 90 дней со дня съёмки.",
@@ -1512,6 +1520,7 @@
  "Photos from the library": "Фото из галереи",
  "Photos taken": "Сделано фото",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Фото загружаются в хранилище вашей компании, поэтому осмотр сохраняется как доказательство.",
+ "Photos you keep stay on this phone, also if the app closes.": "Сохранённые фото остаются на этом телефоне, даже если приложение закроется.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Фото, видео и изменения сначала сохраняются на этом телефоне, а затем отправляются. Без подключения они ждут здесь и отправляются сами, так что ничего не нужно делать дважды. Держите приложение открытым или откройте его снова позже.",
  "Pick a day: {field}": "Выбрать день: {field}",
  "Pick a month: {field}": "Выбрать месяц: {field}",
@@ -2341,6 +2350,12 @@
  "This walk-around was compared already.": "Этот осмотр уже сравнён.",
  "This walk-around was deleted.": "Этот осмотр удалён.",
  "This year": "Этот год",
+ "Throw away {n} photos": {
+  "one": "Удалить {n} фото",
+  "few": "Удалить {n} фото",
+  "many": "Удалить {n} фото",
+  "other": "Удалить {n} фото"
+ },
  "Tick all": "Отметить все",
  "Tick the vans to add first.": "Сначала отметьте фургоны для добавления.",
  "Time": "Время",
@@ -3258,6 +3273,12 @@
   "many": "{n} фото",
   "other": "{n} фото"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} фото ещё не отправлено.",
+  "few": "{n} фото ещё не отправлены.",
+  "many": "{n} фото ещё не отправлено.",
+  "other": "{n} фото ещё не отправлено."
+ },
  "{n} photos compared": {
   "few": "{n} фото сравнено",
   "many": "{n} фото сравнено",
@@ -3293,6 +3314,12 @@
   "few": "{n} фото (тип: {cls}).",
   "many": "{n} фото (тип: {cls}).",
   "other": "{n} фото (тип: {cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} фото старше двух часов: сделайте его заново.",
+  "few": "{n} фото старше двух часов: сделайте их заново.",
+  "many": "{n} фото старше двух часов: сделайте их заново.",
+  "other": "{n} фото старше двух часов: сделайте их заново."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} фото, около {min} мин.",

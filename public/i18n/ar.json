@@ -276,6 +276,7 @@
  "Automatic damage comparison is off for this company.": "مقارنة الأضرار التلقائية متوقفة لهذه الشركة.",
  "Back": "رجوع",
  "Back to me": "العودة إلى حسابي",
+ "Back to the photos": "العودة إلى الصور",
  "Back to {title}": "العودة إلى {title}",
  "Balanced": "متوازن",
  "Battery": "البطارية",
@@ -471,6 +472,14 @@
  "Contact": "جهة الاتصال",
  "Continue": "متابعة",
  "Continue in the browser": "المتابعة في المتصفح",
+ "Continued where you stopped: {n} photos kept.": {
+  "zero": "تابعت من حيث توقفت: تم الاحتفاظ بـ {n} صورة.",
+  "one": "تابعت من حيث توقفت: تم الاحتفاظ بصورة واحدة.",
+  "two": "تابعت من حيث توقفت: تم الاحتفاظ بصورتين.",
+  "few": "تابعت من حيث توقفت: تم الاحتفاظ بـ {n} صور.",
+  "many": "تابعت من حيث توقفت: تم الاحتفاظ بـ {n} صورة.",
+  "other": "تابعت من حيث توقفت: تم الاحتفاظ بـ {n} صورة."
+ },
  "Contract": "العقد",
  "Contract number": "رقم العقد",
  "Contract, start date and, when they leave, the last working day.": "العقد، وتاريخ البدء، وعند المغادرة آخر يوم عمل.",
@@ -1031,6 +1040,7 @@
  "Just looking?": "تتصفح فقط؟",
  "Keep filming: at least {n} seconds.": "تابع التصوير: {n} ثانية على الأقل.",
  "Keep it": "أبقه",
+ "Keep taking photos": "متابعة التقاط الصور",
  "Keeping the photos": "مدة حفظ الصور",
  "Keeping the video": "مدة حفظ الفيديو",
  "Kept until {date}, 90 days after they were taken.": "تُحفظ حتى {date}، أي 90 يومًا من تاريخ التصوير.",
@@ -1572,6 +1582,7 @@
  "Photos from the library": "صور من معرض الصور",
  "Photos taken": "الصور الملتقطة",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "تُرفع الصور إلى مساحة تخزين شركتك، لتبقى جولة التصوير دليلًا.",
+ "Photos you keep stay on this phone, also if the app closes.": "الصور التي تحتفظ بها تبقى على هذا الهاتف، حتى لو أُغلق التطبيق.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "تُحفظ الصور ومقاطع الفيديو والتغييرات على هذا الهاتف أولًا، ثم تُرسل. بدون اتصال تنتظر هنا وتُرسل تلقائيًا، فلا حاجة لفعل أي شيء مرتين. أبقِ التطبيق مفتوحًا، أو افتحه مجددًا لاحقًا.",
  "Pick a day: {field}": "اختر يومًا: {field}",
  "Pick a month: {field}": "اختر شهرًا: {field}",
@@ -2447,6 +2458,14 @@
  "This walk-around was compared already.": "تمت مقارنة جولة التصوير هذه بالفعل.",
  "This walk-around was deleted.": "حُذفت جولة التصوير هذه.",
  "This year": "هذا العام",
+ "Throw away {n} photos": {
+  "zero": "حذف {n} صورة",
+  "one": "حذف صورة واحدة",
+  "two": "حذف صورتين",
+  "few": "حذف {n} صور",
+  "many": "حذف {n} صورة",
+  "other": "حذف {n} صورة"
+ },
  "Tick all": "تحديد الكل",
  "Tick the vans to add first.": "حدد أولًا الفانات المراد إضافتها.",
  "Time": "الوقت",
@@ -3484,6 +3503,14 @@
   "many": "{n} صورة",
   "other": "{n} صورة"
  },
+ "{n} photos aren't sent yet.": {
+  "zero": "لم تُرسل {n} صورة بعد.",
+  "one": "لم تُرسل صورة واحدة بعد.",
+  "two": "لم تُرسل صورتان بعد.",
+  "few": "لم تُرسل {n} صور بعد.",
+  "many": "لم تُرسل {n} صورة بعد.",
+  "other": "لم تُرسل {n} صورة بعد."
+ },
  "{n} photos compared": {
   "few": "تمت مقارنة {n} صور",
   "many": "تمت مقارنة {n} صورة",
@@ -3531,6 +3558,14 @@
   "few": "{n} صور لفئة {cls}.",
   "many": "{n} صورة لفئة {cls}.",
   "other": "{n} صورة لفئة {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "zero": "عمر {n} صورة أكثر من ساعتين: التقطها من جديد.",
+  "one": "عمر صورة واحدة أكثر من ساعتين: التقطها من جديد.",
+  "two": "عمر صورتين أكثر من ساعتين: التقطهما من جديد.",
+  "few": "عمر {n} صور أكثر من ساعتين: التقطها من جديد.",
+  "many": "عمر {n} صورة أكثر من ساعتين: التقطها من جديد.",
+  "other": "عمر {n} صورة أكثر من ساعتين: التقطها من جديد."
  },
  "{n} photos, about {min} min.": {
   "zero": "{n} صورة، حوالي {min} دقيقة.",

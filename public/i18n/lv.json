@@ -243,6 +243,7 @@
  "Automatic damage comparison is off for this company.": "Automātiskā bojājumu salīdzināšana šajā uzņēmumā ir izslēgta.",
  "Back": "Atpakaļ",
  "Back to me": "Atpakaļ uz savu skatu",
+ "Back to the photos": "Atpakaļ pie foto",
  "Back to {title}": "Atpakaļ: {title}",
  "Balanced": "Līdzsvarots",
  "Battery": "Akumulators",
@@ -432,6 +433,11 @@
  "Contact": "Kontakts",
  "Continue": "Turpināt",
  "Continue in the browser": "Turpināt pārlūkā",
+ "Continued where you stopped: {n} photos kept.": {
+  "zero": "Turpināts no vietas, kur apstājāties: saglabāti {n} foto.",
+  "one": "Turpināts no vietas, kur apstājāties: saglabāts {n} foto.",
+  "other": "Turpināts no vietas, kur apstājāties: saglabāti {n} foto."
+ },
  "Contract": "Līgums",
  "Contract number": "Līguma numurs",
  "Contract, start date and, when they leave, the last working day.": "Līgums, sākuma datums un, ja persona aiziet, pēdējā darba diena.",
@@ -965,6 +971,7 @@
  "Just looking?": "Tikai paskatīties?",
  "Keep filming: at least {n} seconds.": "Turpiniet filmēt: vismaz {n} s.",
  "Keep it": "Paturēt",
+ "Keep taking photos": "Turpināt fotografēt",
  "Keeping the photos": "Foto glabāšana",
  "Keeping the video": "Video glabāšana",
  "Kept until {date}, 90 days after they were taken.": "Tiek glabāti līdz {date}, 90 dienas pēc uzņemšanas.",
@@ -1482,6 +1489,7 @@
  "Photos from the library": "Foto no galerijas",
  "Photos taken": "Uzņemtie foto",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Foto tiek augšupielādēti jūsu uzņēmuma krātuvē, lai apskate saglabātos kā pierādījums.",
+ "Photos you keep stay on this phone, also if the app closes.": "Saglabātie foto paliek šajā tālrunī, pat ja lietotne tiek aizvērta.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Foto, video un izmaiņas vispirms tiek saglabātas šajā tālrunī un pēc tam nosūtītas. Bez savienojuma tās gaida šeit un tiek nosūtītas pašas, tāpēc nekas nav jādara divreiz. Turiet lietotni atvērtu vai vēlāk atveriet to vēlreiz.",
  "Pick a day: {field}": "Izvēlēties dienu: {field}",
  "Pick a month: {field}": "Izvēlēties mēnesi: {field}",
@@ -2288,6 +2296,11 @@
  "This walk-around was compared already.": "Šī apskate jau ir salīdzināta.",
  "This walk-around was deleted.": "Šī apskate ir dzēsta.",
  "This year": "Šogad",
+ "Throw away {n} photos": {
+  "zero": "Atmest {n} foto",
+  "one": "Atmest {n} foto",
+  "other": "Atmest {n} foto"
+ },
  "Tick all": "Atzīmēt visus",
  "Tick the vans to add first.": "Vispirms atzīmē pievienojamos busiņus.",
  "Time": "Laiks",
@@ -3145,6 +3158,11 @@
   "one": "{n} foto",
   "other": "{n} foto"
  },
+ "{n} photos aren't sent yet.": {
+  "zero": "{n} foto vēl nav nosūtīti.",
+  "one": "{n} foto vēl nav nosūtīts.",
+  "other": "{n} foto vēl nav nosūtīti."
+ },
  "{n} photos compared": {
   "one": "Salīdzināta {n} fotogrāfija",
   "zero": "Salīdzinātas {n} fotogrāfijas",
@@ -3174,6 +3192,11 @@
   "zero": "Šim transportlīdzeklim ({cls}) vajag {n} foto.",
   "one": "Šim transportlīdzeklim ({cls}) vajag {n} foto.",
   "other": "Šim transportlīdzeklim ({cls}) vajag {n} foto."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "zero": "{n} foto bija vecāki par divām stundām: uzņemiet tos vēlreiz.",
+  "one": "{n} foto bija vecāks par divām stundām: uzņemiet to vēlreiz.",
+  "other": "{n} foto bija vecāki par divām stundām: uzņemiet tos vēlreiz."
  },
  "{n} photos, about {min} min.": {
   "zero": "{n} foto, aptuveni {min} min.",

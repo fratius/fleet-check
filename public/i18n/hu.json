@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Az automatikus sérülés-összehasonlítás ki van kapcsolva ennél a cégnél.",
  "Back": "Vissza",
  "Back to me": "Vissza a saját nézetre",
+ "Back to the photos": "Vissza a fotókhoz",
  "Back to {title}": "Vissza: {title}",
  "Balanced": "Kiegyensúlyozott",
  "Battery": "Akkumulátor",
@@ -419,6 +420,10 @@
  "Contact": "Kapcsolat",
  "Continue": "Tovább",
  "Continue in the browser": "Folytatás böngészőben",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Ott folytatod, ahol abbahagytad: {n} fotó megmaradt.",
+  "other": "Ott folytatod, ahol abbahagytad: {n} fotó megmaradt."
+ },
  "Contract": "Szerződés",
  "Contract number": "Szerződésszám",
  "Contract, start date and, when they leave, the last working day.": "Szerződés, kezdő dátum és kilépéskor az utolsó munkanap.",
@@ -943,6 +948,7 @@
  "Just looking?": "Csak körülnéznél?",
  "Keep filming: at least {n} seconds.": "Folytasd a felvételt: legalább {n} másodperc.",
  "Keep it": "Megtartom",
+ "Keep taking photos": "Fotózás folytatása",
  "Keeping the photos": "A fotók megőrzése",
  "Keeping the video": "A videó megőrzése",
  "Kept until {date}, 90 days after they were taken.": "Megőrzés eddig: {date}, 90 nappal a felvétel után.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Fotók a galériából",
  "Photos taken": "Elkészült fotók",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "A fotók a céged tárhelyére töltődnek fel, így a körbejárás bizonyítékként megmarad.",
+ "Photos you keep stay on this phone, also if the app closes.": "A megtartott fotók ezen a telefonon maradnak, akkor is, ha az alkalmazás bezárul.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "A fotókat, videókat és módosításokat először ez a telefon menti el, aztán elküldi. Kapcsolat nélkül itt várnak, és maguktól elmennek, így semmit sem kell kétszer megcsinálni. Tartsd nyitva az appot, vagy nyisd meg később újra.",
  "Pick a day: {field}": "Nap kiválasztása: {field}",
  "Pick a month: {field}": "Hónap kiválasztása: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Ezt a körbejárást már összevetettük.",
  "This walk-around was deleted.": "Ezt a körbejárást törölték.",
  "This year": "Idén",
+ "Throw away {n} photos": {
+  "one": "{n} fotó elvetése",
+  "other": "{n} fotó elvetése"
+ },
  "Tick all": "Mind bejelölése",
  "Tick the vans to add first.": "Előbb jelölje be a hozzáadandó furgonokat.",
  "Time": "Idő",
@@ -3032,6 +3043,10 @@
   "one": "{n} fotó",
   "other": "{n} fotó"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotó még nincs elküldve.",
+  "other": "{n} fotó még nincs elküldve."
+ },
  "{n} photos compared": {
   "one": "{n} fotó összehasonlítva",
   "other": "{n} fotó összehasonlítva"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "Ennél a járműtípusnál ({cls}) {n} fotó kell.",
   "other": "Ennél a járműtípusnál ({cls}) {n} fotó kell."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotó két óránál régebbi volt: fotózd újra.",
+  "other": "{n} fotó két óránál régebbi volt: fotózd újra őket."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotó, kb. {min} perc.",

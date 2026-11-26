@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Automatisk skadesammenligning er slått av for dette firmaet.",
  "Back": "Tilbake",
  "Back to me": "Tilbake til meg",
+ "Back to the photos": "Tilbake til bildene",
  "Back to {title}": "Tilbake til {title}",
  "Balanced": "Balansert",
  "Battery": "Batteri",
@@ -419,6 +420,10 @@
  "Contact": "Kontakt",
  "Continue": "Fortsett",
  "Continue in the browser": "Fortsett i nettleseren",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Fortsatte der du slapp: {n} bilde beholdt.",
+  "other": "Fortsatte der du slapp: {n} bilder beholdt."
+ },
  "Contract": "Kontrakt",
  "Contract number": "Kontraktsnummer",
  "Contract, start date and, when they leave, the last working day.": "Kontrakt, startdato og, når personen slutter, siste arbeidsdag.",
@@ -943,6 +948,7 @@
  "Just looking?": "Vil du bare se deg rundt?",
  "Keep filming: at least {n} seconds.": "Fortsett å filme: minst {n} sekunder.",
  "Keep it": "Behold den",
+ "Keep taking photos": "Fortsett å ta bilder",
  "Keeping the photos": "Lagring av bildene",
  "Keeping the video": "Lagring av videoen",
  "Kept until {date}, 90 days after they were taken.": "Lagres til {date}, 90 dager etter at de ble tatt.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Bilder fra bildebiblioteket",
  "Photos taken": "Bilder tatt",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Bildene lastes opp til firmaets lagring, så rundgangen blir bevart som bevis.",
+ "Photos you keep stay on this phone, also if the app closes.": "Bilder du beholder, blir på denne telefonen, også hvis appen lukkes.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Bilder, videoer og endringer lagres først på denne telefonen og sendes deretter. Uten tilkobling venter de her og sendes automatisk, så ingenting må gjøres to ganger. Hold appen åpen, eller åpne den igjen senere.",
  "Pick a day: {field}": "Velg en dag: {field}",
  "Pick a month: {field}": "Velg en måned: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Denne rundgangen er allerede sammenlignet.",
  "This walk-around was deleted.": "Denne rundgangen ble slettet.",
  "This year": "I år",
+ "Throw away {n} photos": {
+  "one": "Forkast {n} bilde",
+  "other": "Forkast {n} bilder"
+ },
  "Tick all": "Kryss av alle",
  "Tick the vans to add first.": "Kryss først av varebilene som skal legges til.",
  "Time": "Tid",
@@ -3032,6 +3043,10 @@
   "one": "{n} bilde",
   "other": "{n} bilder"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} bilde er ikke sendt ennå.",
+  "other": "{n} bilder er ikke sendt ennå."
+ },
  "{n} photos compared": {
   "one": "{n} bilde sammenlignet",
   "other": "{n} bilder sammenlignet"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} bilde for en {cls}.",
   "other": "{n} bilder for en {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} bilde var over to timer gammelt: ta det på nytt.",
+  "other": "{n} bilder var over to timer gamle: ta dem på nytt."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} bilde, ca. {min} min.",

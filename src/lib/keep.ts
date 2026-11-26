@@ -111,18 +111,36 @@ export async function dropKept(jobId: string, keys: string[]) {
   await tx('readwrite', (s) => { for (const k of keys) s.delete(k); });
 }
 
-/** Deletes files of jobs that aren't on the list (the app was closed while it was saving them). */
+/** A walk-around being taken (lib/walkdraft.ts) keeps its photos here too, under "draft-<id>": not an upload yet. */
+const isDraft = (name: string) => name.startsWith('draft-');
+
+/** Deletes files of jobs that aren't on the list (the app was closed while it was saving them). Drafts are left alone. */
 export async function sweepKept(jobIds: Set<string>) {
   try {
     if (!isWeb) {
       const root = new Directory(Paths.document, ROOT);
       if (!root.exists) return;
-      for (const d of root.list()) if (!jobIds.has(d.name)) d.delete();
+      for (const d of root.list()) if (!isDraft(d.name) && !jobIds.has(d.name)) d.delete();
       return;
     }
     const keys = await tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys());
     // (The saved copy of the data, lib/offline.ts, lives here too: not an upload.)
-    const gone = (keys || []).map(String).filter((k) => !k.startsWith('cache/') && !jobIds.has(k.split('/')[0]));
+    const gone = (keys || []).map(String).filter((k) => !k.startsWith('cache/') && !isDraft(k) && !jobIds.has(k.split('/')[0]));
+    if (gone.length) await tx('readwrite', (s) => { for (const k of gone) s.delete(k); });
+  } catch { /* only tidying up */ }
+}
+
+/** Deletes the photos of drafts that aren't on the list (thrown away or too old: lib/walkdraft.ts pruneDrafts). */
+export async function sweepDrafts(draftDirs: Set<string>) {
+  try {
+    if (!isWeb) {
+      const root = new Directory(Paths.document, ROOT);
+      if (!root.exists) return;
+      for (const d of root.list()) if (isDraft(d.name) && !draftDirs.has(d.name)) d.delete();
+      return;
+    }
+    const keys = await tx<IDBValidKey[]>('readonly', (s) => s.getAllKeys());
+    const gone = (keys || []).map(String).filter((k) => isDraft(k) && !draftDirs.has(k.split('/')[0]));
     if (gone.length) await tx('readwrite', (s) => { for (const k of gone) s.delete(k); });
   } catch { /* only tidying up */ }
 }

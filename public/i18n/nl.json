@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Automatische schadevergelijking staat uit voor dit bedrijf.",
  "Back": "Terug",
  "Back to me": "Terug naar mezelf",
+ "Back to the photos": "Terug naar de foto's",
  "Back to {title}": "Terug naar {title}",
  "Balanced": "Gebalanceerd",
  "Battery": "Accu",
@@ -419,6 +420,10 @@
  "Contact": "Contact",
  "Continue": "Doorgaan",
  "Continue in the browser": "Verder in de browser",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Verder waar je was gebleven: {n} foto bewaard.",
+  "other": "Verder waar je was gebleven: {n} foto's bewaard."
+ },
  "Contract": "Contract",
  "Contract number": "Contractnummer",
  "Contract, start date and, when they leave, the last working day.": "Contract, startdatum en, bij vertrek, de laatste werkdag.",
@@ -943,6 +948,7 @@
  "Just looking?": "Alleen even kijken?",
  "Keep filming: at least {n} seconds.": "Blijf filmen: minstens {n} seconden.",
  "Keep it": "Laten staan",
+ "Keep taking photos": "Verder met foto's maken",
  "Keeping the photos": "Bewaren van de foto's",
  "Keeping the video": "Bewaren van de video",
  "Kept until {date}, 90 days after they were taken.": "Bewaard tot {date}, 90 dagen na de opname.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Foto's uit de galerij",
  "Photos taken": "Gemaakte foto's",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Foto's worden geüpload naar de opslag van je bedrijf, zodat de rondgang als bewijs bewaard blijft.",
+ "Photos you keep stay on this phone, also if the app closes.": "Bewaarde foto's blijven op deze telefoon, ook als de app sluit.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Foto's, video's en wijzigingen worden eerst op deze telefoon opgeslagen en daarna verstuurd. Zonder verbinding wachten ze hier en worden ze vanzelf verstuurd, zodat niets twee keer hoeft. Houd de app open of open hem later opnieuw.",
  "Pick a day: {field}": "Kies een dag: {field}",
  "Pick a month: {field}": "Kies een maand: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Deze rondgang is al vergeleken.",
  "This walk-around was deleted.": "Deze rondgang is verwijderd.",
  "This year": "Dit jaar",
+ "Throw away {n} photos": {
+  "one": "{n} foto weggooien",
+  "other": "{n} foto's weggooien"
+ },
  "Tick all": "Alles aanvinken",
  "Tick the vans to add first.": "Vink eerst de bestelbussen aan die je wilt toevoegen.",
  "Time": "Tijd",
@@ -3032,6 +3043,10 @@
   "one": "{n} foto",
   "other": "{n} foto's"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} foto is nog niet verstuurd.",
+  "other": "{n} foto's zijn nog niet verstuurd."
+ },
  "{n} photos compared": {
   "one": "{n} foto vergeleken",
   "other": "{n} foto's vergeleken"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} foto voor deze {cls}.",
   "other": "{n} foto's voor deze {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} foto was ouder dan twee uur: maak hem opnieuw.",
+  "other": "{n} foto's waren ouder dan twee uur: maak ze opnieuw."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} foto, ongeveer {min} min.",

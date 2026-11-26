@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "مقایسه خودکار آسیب برای این شرکت خاموش است.",
  "Back": "بازگشت",
  "Back to me": "بازگشت به حساب خودم",
+ "Back to the photos": "بازگشت به عکس‌ها",
  "Back to {title}": "بازگشت به {title}",
  "Balanced": "متعادل",
  "Battery": "باتری",
@@ -419,6 +420,10 @@
  "Contact": "تماس",
  "Continue": "ادامه",
  "Continue in the browser": "ادامه در مرورگر",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "از جایی که متوقف شدید ادامه یافت: {n} عکس نگه داشته شد.",
+  "other": "از جایی که متوقف شدید ادامه یافت: {n} عکس نگه داشته شد."
+ },
  "Contract": "قرارداد",
  "Contract number": "شماره قرارداد",
  "Contract, start date and, when they leave, the last working day.": "قرارداد، تاریخ شروع و، هنگام رفتن، آخرین روز کاری.",
@@ -943,6 +948,7 @@
  "Just looking?": "فقط می‌خواهید نگاه کنید؟",
  "Keep filming: at least {n} seconds.": "به فیلم‌برداری ادامه دهید: دست‌کم {n} ثانیه.",
  "Keep it": "نگه دار",
+ "Keep taking photos": "ادامهٔ گرفتن عکس",
  "Keeping the photos": "نگهداری عکس‌ها",
  "Keeping the video": "نگهداری ویدیو",
  "Kept until {date}, 90 days after they were taken.": "تا {date} نگه داشته می‌شود؛ ۹۰ روز پس از تصویربرداری.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "عکس‌ها از گالری",
  "Photos taken": "عکس‌های گرفته‌شده",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "عکس‌ها در فضای ذخیره‌سازی شرکت شما بارگذاری می‌شوند تا بازدید دورتادور به‌عنوان مدرک نگه داشته شود.",
+ "Photos you keep stay on this phone, also if the app closes.": "عکس‌هایی که نگه می‌دارید روی این گوشی می‌مانند، حتی اگر برنامه بسته شود.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "عکس‌ها، ویدیوها و تغییرات اول روی این گوشی ذخیره و بعد ارسال می‌شوند. بدون اتصال اینجا منتظر می‌مانند و خودشان ارسال می‌شوند، پس لازم نیست کاری دو بار انجام شود. اپ را باز نگه دارید، یا بعداً دوباره بازش کنید.",
  "Pick a day: {field}": "انتخاب روز: {field}",
  "Pick a month: {field}": "انتخاب ماه: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "این بازدید قبلاً مقایسه شده است.",
  "This walk-around was deleted.": "این بازدید دورتادور پاک شده است.",
  "This year": "امسال",
+ "Throw away {n} photos": {
+  "one": "دور انداختن {n} عکس",
+  "other": "دور انداختن {n} عکس"
+ },
  "Tick all": "علامت زدن همه",
  "Tick the vans to add first.": "ابتدا ون‌هایی را که باید اضافه شوند علامت بزنید.",
  "Time": "زمان",
@@ -3032,6 +3043,10 @@
   "one": "{n} عکس",
   "other": "{n} عکس"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} عکس هنوز ارسال نشده است.",
+  "other": "{n} عکس هنوز ارسال نشده است."
+ },
  "{n} photos compared": {
   "one": "{n} عکس مقایسه شد",
   "other": "{n} عکس مقایسه شد"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} عکس برای این {cls}.",
   "other": "{n} عکس برای این {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} عکس بیش از دو ساعت قدمت داشت: دوباره بگیرید.",
+  "other": "{n} عکس بیش از دو ساعت قدمت داشتند: دوباره بگیرید."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} عکس، حدود {min} دقیقه.",

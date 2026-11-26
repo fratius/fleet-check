@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Автоматичното сравнение на щети е изключено за тази фирма.",
  "Back": "Назад",
  "Back to me": "Обратно към моя профил",
+ "Back to the photos": "Обратно към снимките",
  "Back to {title}": "Назад към {title}",
  "Balanced": "Балансиран",
  "Battery": "Батерия",
@@ -419,6 +420,10 @@
  "Contact": "Контакт",
  "Continue": "Продължаване",
  "Continue in the browser": "Продължаване в браузъра",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Продължено оттам, докъдето стигнахте: {n} снимка е запазена.",
+  "other": "Продължено оттам, докъдето стигнахте: {n} снимки са запазени."
+ },
  "Contract": "Договор",
  "Contract number": "Номер на договора",
  "Contract, start date and, when they leave, the last working day.": "Договор, начална дата и при напускане – последен работен ден.",
@@ -943,6 +948,7 @@
  "Just looking?": "Само разглеждате?",
  "Keep filming: at least {n} seconds.": "Продължете да снимате: поне {n} секунди.",
  "Keep it": "Запазете го",
+ "Keep taking photos": "Продължете със снимките",
  "Keeping the photos": "Съхранение на снимките",
  "Keeping the video": "Съхранение на видеото",
  "Kept until {date}, 90 days after they were taken.": "Съхранение до {date}, 90 дни след заснемането.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Снимки от галерията",
  "Photos taken": "Направени снимки",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Снимките се качват в хранилището на вашата фирма, така че огледът се пази като доказателство.",
+ "Photos you keep stay on this phone, also if the app closes.": "Запазените снимки остават на този телефон, дори ако приложението се затвори.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Снимките, видеата и промените първо се запазват на този телефон, после се изпращат. Без връзка те чакат тук и се изпращат сами, така че нищо не се прави два пъти. Дръжте приложението отворено или го отворете отново по-късно.",
  "Pick a day: {field}": "Изберете ден: {field}",
  "Pick a month: {field}": "Изберете месец: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Този оглед вече е сравнен.",
  "This walk-around was deleted.": "Този оглед е изтрит.",
  "This year": "Тази година",
+ "Throw away {n} photos": {
+  "one": "Изхвърляне на {n} снимка",
+  "other": "Изхвърляне на {n} снимки"
+ },
  "Tick all": "Отметни всички",
  "Tick the vans to add first.": "Първо отметнете бусовете за добавяне.",
  "Time": "Час",
@@ -3032,6 +3043,10 @@
   "one": "{n} снимка",
   "other": "{n} снимки"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} снимка още не е изпратена.",
+  "other": "{n} снимки още не са изпратени."
+ },
  "{n} photos compared": {
   "one": "{n} снимка сравнена",
   "other": "{n} снимки сравнени"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} снимка за този {cls}.",
   "other": "{n} снимки за този {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} снимка беше на повече от два часа: направете я отново.",
+  "other": "{n} снимки бяха на повече от два часа: направете ги отново."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} снимка, около {min} мин.",

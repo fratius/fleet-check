@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Bu şirket için otomatik hasar karşılaştırması kapalı.",
  "Back": "Geri",
  "Back to me": "Kendi hesabıma dön",
+ "Back to the photos": "Fotoğraflara dön",
  "Back to {title}": "{title} sayfasına dön",
  "Balanced": "Dengeli",
  "Battery": "Batarya",
@@ -419,6 +420,10 @@
  "Contact": "İletişim",
  "Continue": "Devam",
  "Continue in the browser": "Tarayıcıda devam et",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Kaldığınız yerden devam edildi: {n} fotoğraf saklandı.",
+  "other": "Kaldığınız yerden devam edildi: {n} fotoğraf saklandı."
+ },
  "Contract": "Sözleşme",
  "Contract number": "Sözleşme numarası",
  "Contract, start date and, when they leave, the last working day.": "Sözleşme, başlangıç tarihi ve ayrıldığında son iş günü.",
@@ -943,6 +948,7 @@
  "Just looking?": "Sadece göz mü atıyorsunuz?",
  "Keep filming: at least {n} seconds.": "Çekmeye devam edin: en az {n} saniye.",
  "Keep it": "Kalsın",
+ "Keep taking photos": "Fotoğraf çekmeye devam et",
  "Keeping the photos": "Fotoğrafların saklanması",
  "Keeping the video": "Videonun saklanması",
  "Kept until {date}, 90 days after they were taken.": "Çekildikten 90 gün sonrasına, {date} tarihine kadar saklanır.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Galeriden fotoğraflar",
  "Photos taken": "Çekilen fotoğraflar",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotoğraflar şirketinizin depolama alanına yüklenir; böylece çevre kontrolü kanıt olarak saklanır.",
+ "Photos you keep stay on this phone, also if the app closes.": "Sakladığınız fotoğraflar, uygulama kapansa bile bu telefonda kalır.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotoğraflar, videolar ve değişiklikler önce bu telefona kaydedilir, sonra gönderilir. Bağlantı yoksa burada bekler ve kendiliğinden gönderilir; böylece hiçbir şeyi iki kez yapmanız gerekmez. Uygulamayı açık tutun ya da daha sonra yeniden açın.",
  "Pick a day: {field}": "Gün seçin: {field}",
  "Pick a month: {field}": "Ay seçin: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Bu çevre kontrolü zaten karşılaştırıldı.",
  "This walk-around was deleted.": "Bu çevre kontrolü silindi.",
  "This year": "Bu yıl",
+ "Throw away {n} photos": {
+  "one": "{n} fotoğrafı sil",
+  "other": "{n} fotoğrafı sil"
+ },
  "Tick all": "Tümünü işaretle",
  "Tick the vans to add first.": "Önce eklenecek panelvanları işaretleyin.",
  "Time": "Saat",
@@ -3032,6 +3043,10 @@
   "one": "{n} fotoğraf",
   "other": "{n} fotoğraf"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotoğraf henüz gönderilmedi.",
+  "other": "{n} fotoğraf henüz gönderilmedi."
+ },
  "{n} photos compared": {
   "one": "{n} fotoğraf karşılaştırıldı",
   "other": "{n} fotoğraf karşılaştırıldı"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "Bu {cls} için {n} fotoğraf.",
   "other": "Bu {cls} için {n} fotoğraf."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotoğraf iki saatten eskiydi: yeniden çekin.",
+  "other": "{n} fotoğraf iki saatten eskiydi: yeniden çekin."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotoğraf, yaklaşık {min} dk.",

@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Der automatische Schadensvergleich ist für diese Firma ausgeschaltet.",
  "Back": "Zurück",
  "Back to me": "Zurück zu mir",
+ "Back to the photos": "Zurück zu den Fotos",
  "Back to {title}": "Zurück zu {title}",
  "Balanced": "Ausgewogen",
  "Battery": "Batterie",
@@ -419,6 +420,10 @@
  "Contact": "Kontakt",
  "Continue": "Weiter",
  "Continue in the browser": "Im Browser weiter",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Weiter, wo du aufgehört hast: {n} Foto behalten.",
+  "other": "Weiter, wo du aufgehört hast: {n} Fotos behalten."
+ },
  "Contract": "Vertrag",
  "Contract number": "Vertragsnummer",
  "Contract, start date and, when they leave, the last working day.": "Vertrag, Eintrittsdatum und beim Ausscheiden der letzte Arbeitstag.",
@@ -943,6 +948,7 @@
  "Just looking?": "Nur mal schauen?",
  "Keep filming: at least {n} seconds.": "Weiterfilmen: mindestens {n} Sekunden.",
  "Keep it": "Behalten",
+ "Keep taking photos": "Weiter fotografieren",
  "Keeping the photos": "Aufbewahrung der Fotos",
  "Keeping the video": "Aufbewahrung des Videos",
  "Kept until {date}, 90 days after they were taken.": "Aufbewahrt bis zum {date}, 90 Tage nach der Aufnahme.",
@@ -1456,6 +1462,7 @@
  "Photos from the library": "Fotos aus der Galerie",
  "Photos taken": "Aufgenommene Fotos",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotos werden in den Speicher deiner Firma hochgeladen, damit der Rundgang als Nachweis erhalten bleibt.",
+ "Photos you keep stay on this phone, also if the app closes.": "Behaltene Fotos bleiben auf diesem Handy, auch wenn die App geschlossen wird.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotos, Videos und Änderungen werden zuerst auf diesem Handy gespeichert und dann gesendet. Ohne Verbindung warten sie hier und werden von selbst gesendet, sodass nichts doppelt gemacht werden muss. Lass die App offen oder öffne sie später wieder.",
  "Pick a day: {field}": "Tag wählen: {field}",
  "Pick a month: {field}": "Monat wählen: {field}",
@@ -2240,6 +2247,10 @@
  "This walk-around was compared already.": "Dieser Rundgang wurde schon verglichen.",
  "This walk-around was deleted.": "Dieser Rundgang wurde gelöscht.",
  "This year": "Dieses Jahr",
+ "Throw away {n} photos": {
+  "one": "{n} Foto verwerfen",
+  "other": "{n} Fotos verwerfen"
+ },
  "Tick all": "Alle anhaken",
  "Tick the vans to add first.": "Hake zuerst die Transporter an, die hinzukommen sollen.",
  "Time": "Uhrzeit",
@@ -3037,6 +3048,10 @@
   "one": "{n} Foto",
   "other": "{n} Fotos"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} Foto ist noch nicht gesendet.",
+  "other": "{n} Fotos sind noch nicht gesendet."
+ },
  "{n} photos compared": {
   "one": "{n} Foto verglichen",
   "other": "{n} Fotos verglichen"
@@ -3060,6 +3075,10 @@
  "{n} photos for this {cls}.": {
   "one": "{cls}: {n} Foto.",
   "other": "{cls}: {n} Fotos."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} Foto war älter als zwei Stunden: nimm es neu auf.",
+  "other": "{n} Fotos waren älter als zwei Stunden: nimm sie neu auf."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} Foto, etwa {min} Min.",

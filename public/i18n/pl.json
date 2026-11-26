@@ -254,6 +254,7 @@
  "Automatic damage comparison is off for this company.": "Automatyczne porównanie uszkodzeń jest wyłączone w tej firmie.",
  "Back": "Wstecz",
  "Back to me": "Wróć do siebie",
+ "Back to the photos": "Wróć do zdjęć",
  "Back to {title}": "Wróć do: {title}",
  "Balanced": "Zrównoważony",
  "Battery": "Bateria",
@@ -445,6 +446,12 @@
  "Contact": "Kontakt",
  "Continue": "Dalej",
  "Continue in the browser": "Kontynuuj w przeglądarce",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Kontynuujesz tam, gdzie skończyłeś: zachowano {n} zdjęcie.",
+  "few": "Kontynuujesz tam, gdzie skończyłeś: zachowano {n} zdjęcia.",
+  "many": "Kontynuujesz tam, gdzie skończyłeś: zachowano {n} zdjęć.",
+  "other": "Kontynuujesz tam, gdzie skończyłeś: zachowano {n} zdjęcia."
+ },
  "Contract": "Umowa",
  "Contract number": "Numer umowy",
  "Contract, start date and, when they leave, the last working day.": "Umowa, data rozpoczęcia i – przy odejściu – ostatni dzień pracy.",
@@ -987,6 +994,7 @@
  "Just looking?": "Tylko się rozglądasz?",
  "Keep filming: at least {n} seconds.": "Nagrywaj dalej: co najmniej {n} sekund.",
  "Keep it": "Zostaw",
+ "Keep taking photos": "Rób dalej zdjęcia",
  "Keeping the photos": "Przechowywanie zdjęć",
  "Keeping the video": "Przechowywanie filmu",
  "Kept until {date}, 90 days after they were taken.": "Przechowywanie do {date}, 90 dni od wykonania.",
@@ -1512,6 +1520,7 @@
  "Photos from the library": "Zdjęcia z galerii",
  "Photos taken": "Zrobione zdjęcia",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Zdjęcia trafiają do chmury twojej firmy, więc obchód zostaje jako dowód.",
+ "Photos you keep stay on this phone, also if the app closes.": "Zachowane zdjęcia zostają na tym telefonie, nawet jeśli aplikacja się zamknie.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Zdjęcia, filmy i zmiany są najpierw zapisywane na tym telefonie, a potem wysyłane. Bez połączenia czekają tutaj i zostaną wysłane automatycznie, więc niczego nie trzeba robić dwa razy. Nie zamykaj aplikacji albo otwórz ją później ponownie.",
  "Pick a day: {field}": "Wybierz dzień: {field}",
  "Pick a month: {field}": "Wybierz miesiąc: {field}",
@@ -2341,6 +2350,12 @@
  "This walk-around was compared already.": "Ten obchód został już porównany.",
  "This walk-around was deleted.": "Ten obchód został usunięty.",
  "This year": "Ten rok",
+ "Throw away {n} photos": {
+  "one": "Odrzuć {n} zdjęcie",
+  "few": "Odrzuć {n} zdjęcia",
+  "many": "Odrzuć {n} zdjęć",
+  "other": "Odrzuć {n} zdjęcia"
+ },
  "Tick all": "Zaznacz wszystkie",
  "Tick the vans to add first.": "Najpierw zaznacz furgonetki do dodania.",
  "Time": "Godzina",
@@ -3258,6 +3273,12 @@
   "many": "{n} zdjęć",
   "other": "{n} zdjęcia"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} zdjęcie nie zostało jeszcze wysłane.",
+  "few": "{n} zdjęcia nie zostały jeszcze wysłane.",
+  "many": "{n} zdjęć nie zostało jeszcze wysłanych.",
+  "other": "{n} zdjęcia nie zostało jeszcze wysłane."
+ },
  "{n} photos compared": {
   "few": "{n} zdjęcia porównane",
   "many": "{n} zdjęć porównanych",
@@ -3293,6 +3314,12 @@
   "few": "{n} zdjęcia ({cls}).",
   "many": "{n} zdjęć ({cls}).",
   "other": "{n} zdjęcia ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} zdjęcie miało ponad dwie godziny: zrób je jeszcze raz.",
+  "few": "{n} zdjęcia miały ponad dwie godziny: zrób je jeszcze raz.",
+  "many": "{n} zdjęć miało ponad dwie godziny: zrób je jeszcze raz.",
+  "other": "{n} zdjęcia miało ponad dwie godziny: zrób je jeszcze raz."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} zdjęcie, ok. {min} min.",
