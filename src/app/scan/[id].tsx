@@ -113,13 +113,18 @@ export default function ScanScreen() {
   const dirty = !walkId && slots.some((x) => !!x && x !== 'skip');
   const dirtyRef = useRef(false);
   useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
-  // The back gesture, the Android back button and the browser's back button ask too.
-  useEffect(() => nav.addListener('beforeRemove', (e) => {
-    if (allowLeave.current || !dirtyRef.current) return;
-    e.preventDefault();
-    leaveAction.current = e.data.action;
-    setLeave(true);
-  }), [nav]);
+  // The iPhone's back swipe and the Android back button ask too. A browser's own back button can't be held (the
+  // navigator lets it through on the web): there, as when the app or tab is closed, the draft keeps every photo and
+  // the camera continues with them next time.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    return nav.addListener('beforeRemove', (e) => {
+      if (allowLeave.current || !dirtyRef.current) return;
+      e.preventDefault();
+      leaveAction.current = e.data.action;
+      setLeave(true);
+    });
+  }, [nav]);
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);

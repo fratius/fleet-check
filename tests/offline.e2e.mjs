@@ -915,7 +915,7 @@ async function takePhotos(page, count = Infinity) {
 }
 const walksOf = async (vehicleId, uid) => (await db.collection(`orgs/${CAM_ORG}/walkarounds`).where('vehicleId', '==', vehicleId).where('createdBy', '==', uid).get()).docs;
 
-test('A1: leaving the camera with photos that aren\'t sent asks first (Close, Discard, the browser\'s back); throwing away is the driver\'s choice', async () => {
+test('A1: leaving the camera with photos that aren\'t sent asks first (Close, Discard); the browser\'s back keeps them; throwing away is the driver\'s choice', async () => {
   await camWorld();
   const { ctx, page, errors } = await camPage(CAM1);
   try {
@@ -934,8 +934,14 @@ test('A1: leaving the camera with photos that aren\'t sent asks first (Close, Di
     await button(page, 'Discard').click();
     await visible(page, `${total} photos aren't sent yet.`).waitFor({ timeout: 10_000 });
     await button(page, 'Back to the photos').click();
-    // The browser's back button asks too.
+    // The browser's own back button can't be held on the web: it leaves, but every photo is kept, and the camera
+    // continues with them (the phone apps ask, like Close).
     await page.goBack();
+    await page.waitForURL(new RegExp(`/vehicle/${CAM_PICK}`), { timeout: 30_000 });
+    await page.locator('[role=button] >> text=/^Pick up with \\d+ photos$/ >> visible=true').first().click();
+    await visible(page, `Continued where you stopped: ${total} photos kept.`).waitFor({ timeout: 30_000 });
+    await visible(page, `${total}/${total}`).waitFor({ timeout: 10_000 });
+    await button(page, 'Close').click();
     await visible(page, `${total} photos aren't sent yet.`).waitFor({ timeout: 10_000 });
     await button(page, `Throw away ${total} photos`).click();
     await page.waitForURL(new RegExp(`/vehicle/${CAM_PICK}`), { timeout: 30_000 });
