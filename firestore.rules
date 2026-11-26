@@ -374,7 +374,7 @@ service cloud.firestore {
         return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reopens'])
           && request.resource.data.status == 'submitted'
           && after is list && after.size() == before.size() + 1
-          && after[0:before.size()] == before
+          && (before.size() == 0 || after[0:before.size()] == before)
           && after[before.size()].keys().hasOnly(['by', 'byName', 'at'])
           && after[before.size()].by == me()
           && after[before.size()].at is number

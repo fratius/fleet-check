@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 let env;
 const O = 'org1', O2 = 'org2', S1 = 'st1', S2 = 'st2';
@@ -241,6 +241,11 @@ describe('a finished damage review is locked until it is reopened', () => {
     await assertSucceeds(updateDoc(c3(as('mgr1')), changed));
     await assertSucceeds(updateDoc(c3(as('mgr1')), { status: 'reviewed', reviewedAt: 6 }));
     await assertFails(updateDoc(c3(as('mgr1')), { review: review.review }));
+  });
+  test('the first reopening of a review (no earlier ones)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), `orgs/${O}/checks/c3`), { reopens: deleteField() }));
+    await assertFails(updateDoc(c3(as('mgr1')), { status: 'submitted', reopens: [] }));
+    await assertSucceeds(updateDoc(c3(as('mgr1')), { status: 'submitted', reopens: [{ by: 'mgr1', byName: 'Manager 1', at: 5 }] }));
   });
   test('a review still open can\'t write reopenings', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), { reopens: [{ by: 'mgr1', byName: 'Manager 1', at: 5 }] })));
 });
