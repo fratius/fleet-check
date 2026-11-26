@@ -6,6 +6,7 @@
  * Kept out on purpose (FLEET_DATA.md): licence numbers, dates and places of birth, home addresses, pay, health
  * data, ID numbers. They aren't in the list of things to read, and the prompt says not to repeat them.
  */
+import { numProblem } from './numbers';
 
 type Kind = 'text' | 'upper' | 'num' | 'day' | 'month' | 'choice' | 'multi' | 'phone' | 'long' | 'vin';
 interface F { key: string; kind: Kind; what: string; options?: string[]; owner?: boolean; max?: number }
@@ -170,7 +171,7 @@ export function cleanFields(raw: unknown, fields: F[]): Found[] {
     switch (f.kind) {
       case 'day': value = day(t); break;
       case 'month': value = day(t, true); break;
-      case 'num': { const n = num(t, f.key); value = n != null && n >= 0 && n < 10_000_000 ? n : null; break; }
+      case 'num': { const n = num(t, f.key); value = n != null && n < 10_000_000 && !numProblem(f.key, n) ? n : null; break; }
       case 'choice': value = f.options!.includes(t.toLowerCase()) ? t.toLowerCase() : null; break;
       case 'multi': {
         const list = t.split(/[,;/]+/).map((p) => p.trim()).map((p) => f.options!.find((o) => o.toLowerCase() === p.toLowerCase())).filter((p): p is string => !!p);

@@ -72,7 +72,7 @@ export function readService(d: Record<string, unknown>, today: string, { fix = f
   if (day < '1990-01-01') throw new Bad(N_('Enter the day it was done, like 31.03.2027.'));
   const km = num(d.km);
   if (km == null || Number.isNaN(km)) throw new Bad(N_('Enter the van\'s km.'));
-  if (km < 0 || km > 2_000_000) throw new Bad(N_('The km don\'t look right.'));
+  if (km <= 0 || km > 2_000_000) throw new Bad(N_('The km must be more than 0.'));
   const cost = num(d.cost);
   if (Number.isNaN(cost) || (cost != null && (cost < 0 || cost > 1_000_000))) throw new Bad(N_('The cost doesn\'t look right.'));
   const result = kind === 'hu' ? (d.result as HuResult) : null;

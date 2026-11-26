@@ -148,6 +148,8 @@ jobs:
         run: node --import ./tests/alias.mjs --test tests/compare.test.mjs
       - name: Who may call each server action and write each collection (tests/permissions.mjs, ROLES.md)
         run: node --test tests/permissions.test.mjs
+      - name: Numbers that can't be right, the same in the app, the server and the rules (src/lib/numbers.ts)
+        run: node --import ./tests/alias.mjs --test tests/numbers.test.mjs
       - name: A van's damage record and who found each damage (src/lib/damage.ts)
         run: node --import ./tests/alias.mjs --test tests/damage.test.mjs
       - name: Every list the app asks for has its index (firestore.indexes.json)

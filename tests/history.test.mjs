@@ -1736,7 +1736,8 @@ test('people delete their own account: login and profile go, the company keeps i
   await sam.call('deleteAccount', {});
   assert.equal((await getDoc(doc(dora.db, 'orgs', org.id))).exists(), true);
   assert.deepEqual(await dora.call('deleteAccount', {}), { ok: true, closed: ['Solo DSP'] });
-  assert.equal((await adminDb().doc(`orgs/${org.id}`).get()).exists, false);
+  // Closed, not deleted, since 26 Nov 2026 (cause 2b, B7: the records stay; tested at the end).
+  assert.ok((await adminDb().doc(`orgs/${org.id}`).get()).data().closed.at > 0);
 
   // A demo company goes with the account of whoever made it, demo logins included.
   // (Made while she was the app creator: only the app creator opens a demo; app creators can't delete their account.)
@@ -1975,12 +1976,12 @@ test('sign-up: a new company gets 30 days free from the server; the owner can\'t
 
 test('drivers sign up with the company\'s link, pick a station, and wait for an owner or that station\'s manager', async () => {
   const details = (first, last, extra = {}) => ({ firstName: first, lastName: last, phone: '+49 151 3', ...extra });
-  // Owners and managers get the company's one link (made the first time); drivers don't. Only owners make a new one.
+  // Owners and managers get the company's one link (it has it from the start); drivers don't. Who makes a new one
+  // (owners and managers since 26 Nov 2026) is in "cause 2b (B1, B2)" at the end.
   await fails(S.d1.call('driverLink', { orgId: S.org }), 'permission-denied');
   const link = await S.mgr.call('driverLink', { orgId: S.org });
   assert.equal((await S.own.call('driverLink', { orgId: S.org })).token, link.token);
   assert.equal((await getDoc(doc(S.mgr.db, 'orgs', S.org, 'links', 'drivers'))).data().token, link.token);
-  await fails(S.mgr.call('driverLink', { orgId: S.org, reset: true }), 'permission-denied');
 
   // Anyone with the link sees the company and its stations.
   const gina = await person('Gina Newdriver');
@@ -3130,4 +3131,175 @@ test('cause 2 (A4): a driver without a van can\'t start a refuel or wash; nobody
   // Fleet managers refuel their station's vans without having one.
   const mb = await P.mgr.call('purchase', { orgId: P.org, action: 'start', kind: 'fuel', vehicleId: P.van.id, path: await shot(P.mgr) });
   await P.mgr.call('purchase', { orgId: P.org, action: 'cancel', id: mb.id });
+});
+
+// ---------- Blind test, 26 Nov 2026, cause 2b: the driver link, the km, numbers that can't be right, closing a company ----------
+test('cause 2b (B1, B2): every company has its driver link from the start; owners and managers make a new one, and the others are told', async () => {
+  // A company made by the server has it when it's made.
+  const o = await person('Lina Linkowner', `b1.own.${run}@test.dev`);
+  const r = await o.call('createCompany', { company: 'Link DSP', station: 'DLK1', name: 'Lina Linkowner', terms: '2026-11-20', rid: `b1cc${run}` });
+  const made = (await getDoc(doc(o.db, 'orgs', r.orgId, 'links', 'drivers'))).data();
+  assert.ok(made?.token);
+  assert.equal(made.createdBy, o.uid);
+  assert.equal((await o.call('driverLink', { orgId: r.orgId })).token, made.token);
+  // A company made another way (here straight in the database, as the tests do) gets it too, by itself.
+  const pl = await waitFor(async () => (await adminDb().doc(`orgs/${P.org}/links/drivers`).get()).data(), 'the driver link of a new company');
+  assert.ok(pl.token);
+  // A fleet manager makes a new link: the old one stops, and the owner and the other station's manager are told who.
+  const ownPhone = await phoneOf(P.own, 'b2own');
+  const mgr2Phone = await phoneOf(P.mgr2, 'b2mgr2');
+  try {
+    const now = await P.mgr.call('driverLink', { orgId: P.org });
+    const fresh = await P.mgr.call('driverLink', { orgId: P.org, reset: true });
+    assert.notEqual(fresh.token, now.token);
+    assert.equal(fresh.createdByName, 'Mark Manager');
+    const late = await person('Lou Late', `b2.late.${run}@test.dev`);
+    assert.equal((await late.call('peekInvite', { token: now.token })).status, 'replaced');
+    assert.equal((await late.call('peekInvite', { token: fresh.token })).status, 'ok');
+    for (const ph of [ownPhone, mgr2Phone]) {
+      const n = await waitFor(async () => ph.notes().find((m) => /New driver link/.test(m.title || '')), 'the new link notification');
+      assert.match(n.title, /Permission DSP/);
+      assert.match(n.body, /Mark Manager/);
+    }
+    // The owner too; drivers never.
+    assert.notEqual((await P.own.call('driverLink', { orgId: P.org, reset: true })).token, fresh.token);
+    await fails(P.d1.call('driverLink', { orgId: P.org, reset: true }), 'permission-denied');
+  } finally { await ownPhone.close(); await mgr2Phone.close(); }
+});
+
+test('cause 2b (B3, B4): 0 km is refused; a lower km is asked again, then kept apart with the van keeping its km and the manager told', async () => {
+  await updateDoc(doc(P.own.db, 'orgs', P.org), { dashScans: true, dashScansBy: 'Paula Owner', dashScansAt: Date.now() });
+  // The van has 50,000 km in its record (the stand-in for the AI reads 48,213 from every dashboard photo).
+  await setDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicleDetails', P.van.id), { odometerKm: 50000, odometerAt: '2026-11-26' }, { merge: true });
+  const shot = async (p, folder) => {
+    const path = `orgs/${P.org}/${folder}/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const det = async () => (await adminDb().doc(`orgs/${P.org}/vehicleDetails/${P.van.id}`).get()).data();
+  const ph = await phoneOf(P.mgr, 'b4mgr');
+  try {
+    const r = await P.d1.call('readDashboard', { orgId: P.org, vehicleId: P.van.id, path: await shot(P.d1, 'dash') });
+    assert.equal(r.values.odometerKm, 48213);
+    assert.equal(r.vanKm, 50000);
+    await fails(P.d1.call('saveReading', { orgId: P.org, readId: r.readId, values: { odometerKm: 0 }, refuel: null, typed: true }), 'invalid-argument');
+    await fails(P.d1.call('saveReading', { orgId: P.org, readId: r.readId, values: { odometerKm: -5 }, refuel: null, typed: true }), 'invalid-argument');
+    // As the AI read it: asked to type it.
+    const e = await fails(P.d1.call('saveReading', { orgId: P.org, readId: r.readId, values: { odometerKm: 48213 }, refuel: null }), 'failed-precondition');
+    assert.match(e.message, /less than the van's/);
+    // Typed, and still lower: saved as typed, the van keeps its 50,000 km, the manager is told both numbers.
+    const s1 = await P.d1.call('saveReading', { orgId: P.org, readId: r.readId, values: { odometerKm: 48200 }, refuel: null, typed: true });
+    assert.equal(s1.kmKept, 50000);
+    const reading = (await adminDb().doc(`orgs/${P.org}/readings/${s1.readingId}`).get()).data();
+    assert.equal(reading.odometerKm, 48200);
+    assert.deepEqual(reading.kmLower, { typed: 48200, kept: 50000 });
+    assert.equal((await det()).odometerKm, 50000);
+    assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 50000);
+    // The flag the managers see in Review (blind tester, round 2 on #54): on the van, both numbers, who by account id.
+    const flag = (await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower;
+    assert.deepEqual([flag.typed, flag.kept, flag.by], [48200, 50000, P.d1.uid]);
+    await fails(updateDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicles', P.van.id), { kmLower: null }), 'permission-denied');
+    const n = await waitFor(async () => ph.notes().find((m) => /Odometer lower/.test(m.title || '')), 'the lower km notification');
+    assert.match(n.body, /48200/);
+    assert.match(n.body, /50000/);
+    // A refuel the same: 0 refused, lower asked again, then typed: done, flagged, the van keeps its km.
+    const b = await P.d1.call('purchase', { orgId: P.org, action: 'start', kind: 'fuel', vehicleId: P.van.id, path: await shot(P.d1, 'buys') });
+    await P.d1.call('purchase', { orgId: P.org, action: 'card', id: b.id, missing: true });
+    await P.mgr.call('purchase', { orgId: P.org, action: 'decide', id: b.id, allow: true });
+    await P.d1.call('purchase', { orgId: P.org, action: 'receipt', id: b.id, path: await shot(P.d1, 'buys') });
+    const values = (km) => ({ odometerKm: km, fuelPct: 25, litres: 45.2, total: 79.1 });
+    await fails(P.d1.call('purchase', { orgId: P.org, action: 'finish', id: b.id, values: values(0), typed: true }), 'invalid-argument');
+    await fails(P.d1.call('purchase', { orgId: P.org, action: 'finish', id: b.id, values: values(40000) }), 'failed-precondition');
+    const f = await P.d1.call('purchase', { orgId: P.org, action: 'finish', id: b.id, values: values(40000), typed: true });
+    assert.ok(f.flags.some((x) => x.key === 'odometer'));
+    assert.deepEqual((({ typed, kept }) => [typed, kept])((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower), [40000, 50000]);
+    assert.equal((await det()).odometerKm, 50000);
+    assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 50000);
+    // Higher is saved as usual.
+    const r2 = await P.d1.call('readDashboard', { orgId: P.org, vehicleId: P.van.id, path: await shot(P.d1, 'dash') });
+    await P.d1.call('saveReading', { orgId: P.org, readId: r2.readId, values: { odometerKm: 50120 }, refuel: null, typed: true });
+    assert.equal((await det()).odometerKm, 50120);
+    // From the app: the record's odometer can't go down or be 0 (the rules), only up.
+    await fails(setDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicleDetails', P.van.id), { odometerKm: 49000 }, { merge: true }), 'permission-denied');
+    await fails(setDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicleDetails', P.van.id), { odometerKm: 0 }, { merge: true }), 'permission-denied');
+    await setDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicleDetails', P.van.id), { odometerKm: 50200 }, { merge: true });
+  } finally { await ph.close(); }
+});
+
+test('cause 2b (B5): an owner or the station\'s manager corrects km that are too high, with a reason; the van\'s history keeps old, new, who and why', async () => {
+  const det = async () => (await adminDb().doc(`orgs/${P.org}/vehicleDetails/${P.van.id}`).get()).data();
+  const before = (await det()).odometerKm;
+  await fails(P.mgr.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 48300, reason: '' }), 'invalid-argument');
+  await fails(P.mgr.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 0, reason: 'Misread photo' }), 'invalid-argument');
+  await fails(P.mgr.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: before + 100, reason: 'Misread photo' }), 'failed-precondition');
+  await fails(P.d1.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 48300, reason: 'Misread photo' }), 'permission-denied');
+  const c = await P.mgr.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 48300, reason: 'Misread photo' });
+  assert.deepEqual([c.from, c.to], [before, 48300]);
+  assert.equal((await det()).odometerKm, 48300);
+  assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 48300);
+  // Corrected: the managers' flag of a lower km goes.
+  assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower, undefined);
+  // The history: the station's manager and the owner read it (as the app asks); drivers and other stations don't.
+  const q = (p, st) => getDocs(query(collection(p.db, 'orgs', P.org, 'kmCorrections'), where('vehicleId', '==', P.van.id), ...(st ? [where('stationId', 'in', st)] : [])));
+  const rows = (await q(P.mgr, [P.s1])).docs.map((d) => d.data());
+  assert.equal(rows.length, 1);
+  assert.deepEqual([rows[0].from, rows[0].to, rows[0].by, rows[0].byName, rows[0].reason], [before, 48300, P.mgr.uid, 'Mark Manager', 'Misread photo']);
+  assert.equal((await q(P.own)).size, 1);
+  await fails(q(P.d1, [P.s1]), 'permission-denied');
+  await fails(q(P.mgr2, [P.s1]), 'permission-denied');
+  assert.equal((await q(P.mgr2, [P.s2])).size, 0);
+  await fails(setDoc(doc(P.own.db, 'orgs', P.org, 'kmCorrections', 'fake'), { vehicleId: P.van.id, stationId: P.s1, from: 1, to: 1 }), 'permission-denied');
+  // The owner too.
+  await P.own.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 48250, reason: 'Typo in the service invoice' });
+  assert.equal((await det()).odometerKm, 48250);
+});
+
+test('cause 2b (B6): impossible numbers are refused on the server too: a service at 0 km', async () => {
+  const svc = (id, km) => ({ orgId: P.org, action: 'add', id, vehicleId: P.van.id, kind: 'service', day: '2026-11-20', km, cost: 10, garage: 'Garage', note: '' });
+  const e = await fails(P.mgr.call('service', svc('b6svc0', 0)), 'invalid-argument');
+  assert.match(e.message, /more than 0/);
+  await fails(P.mgr.call('service', svc('b6svc1', -40)), 'invalid-argument');
+  await P.mgr.call('service', svc('b6svc2', 48300));
+});
+
+test('cause 2b (B7): the only member deleting their account closes the company: records kept, read-only, reopened only by the app creator with a one-time owner link', async () => {
+  const solo = await person('Sol Single', `b7.solo.${run}@test.dev`);
+  const r = await solo.call('createCompany', { company: 'Single DSP', station: 'DSG1', name: 'Sol Single', terms: '2026-11-20', rid: `b7cc${run}` });
+  const st = (await getDocs(collection(solo.db, 'orgs', r.orgId, 'stations'))).docs[0].id;
+  const vr = doc(collection(solo.db, 'orgs', r.orgId, 'vehicles'));
+  await setDoc(vr, { name: '', plate: 'SG 1', cls: 'van', stationId: st, createdAt: Date.now(), createdBy: solo.uid });
+  const link = (await getDoc(doc(solo.db, 'orgs', r.orgId, 'links', 'drivers'))).data().token;
+  assert.deepEqual((await solo.call('deleteAccount', { check: true })).companies.map((c) => c.outcome), ['close']);
+  assert.deepEqual(await solo.call('deleteAccount', {}), { ok: true, closed: ['Single DSP'] });
+  const org = (await adminDb().doc(`orgs/${r.orgId}`).get()).data();
+  assert.ok(org.closed.at > 0);
+  assert.equal(org.closed.byName, 'Sol Single');
+  // The records stay; the person is gone from it; the driver link stops.
+  assert.equal((await adminDb().doc(`orgs/${r.orgId}/vehicles/${vr.id}`).get()).exists, true);
+  assert.equal((await adminDb().doc(`orgs/${r.orgId}/members/${solo.uid}`).get()).exists, false);
+  const nobody = await person('Nia Nobody', `b7.nobody.${run}@test.dev`);
+  assert.equal((await nobody.call('peekInvite', { token: link })).status, 'replaced');
+  // Read-only for the app creator too: no server action, no write, no owner link while closed; they still read it.
+  const cr = await appCreator('Rae Reopen');
+  assert.equal((await getDoc(doc(cr.db, 'orgs', r.orgId))).data().closed.byName, 'Sol Single');
+  const e = await fails(cr.call('retireVan', { orgId: r.orgId, vehicleId: vr.id }), 'failed-precondition');
+  assert.match(e.message, /closed/);
+  await fails(updateDoc(doc(cr.db, 'orgs', r.orgId, 'vehicles', vr.id), { color: 'white' }), 'permission-denied');
+  await fails(cr.call('ownerLink', { orgId: r.orgId }), 'failed-precondition');
+  // Nobody else reopens it.
+  await fails(nobody.call('reopenCompany', { orgId: r.orgId }), 'permission-denied');
+  // The app creator reopens it and makes a one-time owner link; its next owner joins with it.
+  await cr.call('reopenCompany', { orgId: r.orgId });
+  const again = (await adminDb().doc(`orgs/${r.orgId}`).get()).data();
+  assert.equal(again.closed, undefined);
+  assert.equal(again.reopens.length, 1);
+  await fails(cr.call('reopenCompany', { orgId: r.orgId }), 'failed-precondition');
+  const { invite } = await cr.call('ownerLink', { orgId: r.orgId });
+  const next = await person('Nell Nextowner', `b7.next.${run}@test.dev`);
+  await next.call('acceptInvite', { token: invite.token, details: { firstName: 'Nell', lastName: 'Nextowner' } });
+  const m = (await getDoc(doc(next.db, 'orgs', r.orgId, 'members', next.uid))).data();
+  assert.equal(m.role, 'owner');
+  assert.deepEqual(m.stationIds, []);
+  await fails(nobody.call('acceptInvite', { token: invite.token, details: { firstName: 'Nia', lastName: 'Nobody' } }), 'failed-precondition');
+  await updateDoc(doc(next.db, 'orgs', r.orgId, 'vehicles', vr.id), { color: 'white' });
 });

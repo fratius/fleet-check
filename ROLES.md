@@ -85,8 +85,11 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
     hours; a request nobody decides expires after 14 days; the person can take it back. When a request ends
     without joining (rejected, taken back, expired) only the name stays on it; a request still waiting is deleted
     with the person's account. (The approver is told when someone in the company already has the same Transporter
-    ID: only for requests from older app versions, which still sent one.) Owners and managers see and share the link; **only owners make a new link**, and the old one stops working
-    at once (for a link that leaked or was shared with someone who left). Made and used by Cloud Functions
+    ID: only for requests from older app versions, which still sent one.) **Every company has its link from the
+    start** (made with the company; Deploy gave one to the companies made before). Owners and managers see and share
+    it on People, and **both make a new link** (product owner, 2026-11-26): the screen says first that the old one
+    stops at once for every station, and the company's other owners and managers get a notification saying who made
+    it (for a link that leaked or was shared with someone who left). Made and used by Cloud Functions
     (`driverLink`, `peekInvite`, `requestToJoin`, `decideJoinRequest`, `withdrawJoinRequest`); the requests are
     `orgs/{org}/joinRequests/{uid}` and the current link `orgs/{org}/links/drivers`, both server-written; the
     tokens are in `companyLinks` (server only). Owners and the station's managers get a notification for each new
@@ -413,6 +416,24 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   station's managers also see who had the van and the comments. Drivers only see whether they had the van then.
 - **Comments** on a damage: owners and the station's managers write them (`orgs/{org}/damageNotes`); they are
   kept for good, nobody edits or deletes them.
+
+## Km, numbers and closed companies (product owner, 2026-11-26; blind test, cause 2b)
+
+- **A van's km never go down.** 0 and negative km are refused everywhere km are typed or read. A dashboard photo read
+  lower than the van's km is typed by the driver instead; typed lower still, the reading is kept as typed, the van
+  keeps its km and the station's fleet managers (or the owners) are told both numbers (`kmLower` on the reading, the
+  `odometer` flag on a refuel). From the app the odometer only goes up (firestore.rules `kmNotDown`).
+- **Owners and the station's fleet managers correct km that are too high**, with a reason (`correctKm`): the old km,
+  the new km, who and why are kept for good (`orgs/{org}/kmCorrections`, server only, read by owners and the
+  station's managers) and shown under the van's Mileage.
+- **Impossible numbers are refused** in the app, the rules and the server (`src/lib/numbers.ts` and
+  `functions/src/numbers.ts`, twins): negative money, keys, sizes and weights; a fuel tank, battery or range of 0 or
+  less; a model year before 1950 or after next year.
+- **A company whose only member deletes their account is closed, not deleted.** Its plan stops at once; its records
+  stay; photos and videos follow the usual deletion (without the newest walk-around kept). Nobody can change anything
+  in it, the app creator included (`guard`, firestore.rules `notClosed`); only the app creator sees it, marked
+  "Closed" in All companies, reopens it (`reopenCompany`) and then makes a one-time owner link (`ownerLink`, 24 hours,
+  one person) for its next owner. A demo company still goes with the account of whoever made it.
 
 ## Who may call what: the permission table (blind test, 26 Nov 2026, cause 2)
 

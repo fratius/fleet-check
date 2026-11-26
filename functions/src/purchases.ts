@@ -267,7 +267,7 @@ export function purchaseFlags(p: FlagInput): Flag[] {
   if (r?.total != null && p.total != null && Math.abs(p.total - r.total) > Math.max(0.5, r.total * 0.02)) {
     out.push(flag('typedTotal', '{name} saved a total of {total}; the receipt says {read}.', { name: p.byName, total: p.total.toFixed(2), read: r.total.toFixed(2) }));
   }
-  if (p.odometerKm != null && p.lastKm != null && p.odometerKm < p.lastKm - 50) {
+  if (p.odometerKm != null && p.lastKm != null && p.odometerKm < p.lastKm) {
     out.push(flag('odometer', 'The odometer ({km} km) is lower than the van\'s last reading ({last} km).', { km: p.odometerKm, last: p.lastKm }));
   }
   return out;
