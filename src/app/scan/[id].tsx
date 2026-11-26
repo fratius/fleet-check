@@ -11,7 +11,7 @@ import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
 import { outbox, outboxReady, queueWalk, useOutbox, type PickInfo } from '@/lib/outbox';
-import { usePickVan } from '@/lib/pickvan';
+import { toVansTab, usePickVan } from '@/lib/pickvan';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 import { newId, upright } from '@/lib/images';
@@ -158,7 +158,7 @@ export default function ScanScreen() {
     // A pick-up by the plate: to the Vans tab, which shows it on its way and then the van (not back to the plate page,
     // which would offer the same pick-up again).
     if (byPlate.current) {
-      if (router.canGoBack()) { router.back(); setTimeout(() => router.dismissTo('/'), 0); } else router.replace('/');
+      if (router.canGoBack()) { router.back(); setTimeout(toVansTab, 0); } else router.replace('/');
       return;
     }
     if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });

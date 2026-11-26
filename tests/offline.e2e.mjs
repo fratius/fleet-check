@@ -1274,9 +1274,11 @@ test('cause 2 (A4): drivers without a van see no Refuel or Wash, and Add vehicle
   await rwWorld();
   const ben = await rwPage(RW_BEN);
   try {
+    // Another van of the station by its link: not his (blind test, cause 3a), and no buttons.
     await ben.page.goto(`${URL0}/vehicle/${RW_V2}`);
-    await visible(ben.page, 'RW 2').waitFor({ timeout: 60_000 });
+    await visible(ben.page, 'You don\'t have this van.').waitFor({ timeout: 60_000 });
     await ben.page.waitForTimeout(1500);
+    assert.equal(await visible(ben.page, 'RW 2').count(), 0, 'nothing of the van');
     assert.equal(await button(ben.page, 'Refuel').count(), 0, 'no Refuel');
     assert.equal(await button(ben.page, 'Wash').count(), 0, 'no Wash');
     // The refuel page by its link says why.

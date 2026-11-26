@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import { useSession } from './session';
@@ -33,4 +34,9 @@ export function usePickVan(id: string | null, plate: string | null): { pv: PickV
     return () => { live = false; };
   }, [id, orgId, plate]);
   return { pv: id ? pv || known.get(id) || null : null, err };
+}
+
+/** After a pick-up by the plate: the Vans tab, whether the plate page is under it in the stack or the page was opened alone. */
+export function toVansTab() {
+  if (router.canDismiss()) router.dismissTo('/'); else router.replace('/');
 }

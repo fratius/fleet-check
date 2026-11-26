@@ -78,7 +78,8 @@ export default function VehicleScreen() {
   };
 
   if (!v || !CLS[v.cls]) {
-    return <Screen edges={[]}><Card dashed><T v="hint">{s.loaded.vehicles ? t('This vehicle isn\'t in the fleet any more.') : t('Loading…')}</T></Card></Screen>;
+    // Drivers have only their own van in the app (blind test, cause 3a): any other one isn't theirs, not gone.
+    return <Screen edges={[]}><Card dashed><T v="hint">{!s.loaded.vehicles ? t('Loading…') : s.role === 'driver' ? t('You don\'t have this van.') : t('This vehicle isn\'t in the fleet any more.')}</T></Card></Screen>;
   }
   const sp = makeSpec(v.cls, v);
   const frames = buildFrames(sp);

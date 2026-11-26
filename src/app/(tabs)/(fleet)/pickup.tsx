@@ -7,7 +7,7 @@ import { Button, Card, Field, Notice, Plate, Row, Screen, T, useColors } from '@
 import { VideoHandover } from '@/components/video';
 import { t } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
-import { findVanByPlate, type PickVan } from '@/lib/pickvan';
+import { findVanByPlate, toVansTab, type PickVan } from '@/lib/pickvan';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import { vanName } from '@/lib/vans';
@@ -82,7 +82,7 @@ export default function PickUp() {
             <View style={{ gap: 8 }}>
               <Button v="primary" wide title={t('Take the photos to pick it up')} onPress={go} />
               <VideoHandover v={found.van} kind="pickup" title={t('Record a video instead')} wide
-                pick={{ plate: found.plate, ...(takeOver ? { takeOver: true, expect: found.expect } : {}) }} onDone={() => router.dismissTo('/')} />
+                pick={{ plate: found.plate, ...(takeOver ? { takeOver: true, expect: found.expect } : {}) }} onDone={toVansTab} />
             </View>
           ) : null}
         </Card>

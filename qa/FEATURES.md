@@ -49,7 +49,7 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 1.4a (3a, 26 Nov 2026; product owner: this replaces "sees the vans of their station" in 1.4) A driver sees
   **only the van they have**, its walk-arounds and damage checks, and the walk-arounds and checks of their own photos.
   The station's other vans, and other drivers' walk-arounds and checks, aren't listed anywhere, and opened by their
-  address they show "not available" with none of their data.
+  address they show "You don't have this van." or "not available", with none of their data.
 - MUST 1.5 A driver can't change vans, people, records or reviews, can't approve anyone or any damage, can't buy
   parts and can't allow their own refuel. Buttons for those aren't shown to a driver, and opening such a page by its
   address doesn't let them do it either.
