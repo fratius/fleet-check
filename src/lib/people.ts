@@ -9,7 +9,7 @@ import { fb } from './firebase';
 import { t } from './i18n';
 import { readCache, writeCache } from './offline';
 import { sendWrite } from './outbox';
-import type { Assignment, Check, DamageNote, DriverLink, Invite, JoinRequest, Member, Org, Walkaround } from './types';
+import type { Assignment, Check, DamageNote, DriverLink, Invite, JoinRequest, KmCorrection, Member, Org, Walkaround } from './types';
 
 /** People, stations and invite links of a company. Firestore only; test mode has none of this. */
 
@@ -162,7 +162,7 @@ export const renameStation = (orgId: string, id: string, name: string, code: str
 export const deleteStation = (orgId: string, id: string) => sendWrite('delete', ['orgs', orgId, 'stations', id], null, { title: t('Remove a station') });
 
 /** For the app creator: every company with a few numbers. */
-export interface CompanyRow { id: string; name: string; createdAt: number; vans: number; people: number; checks: number; trial: ReturnType<typeof standing> }
+export interface CompanyRow { id: string; name: string; createdAt: number; vans: number; people: number; checks: number; trial: ReturnType<typeof standing>; closed: Org['closed'] }
 export async function allCompanies(): Promise<CompanyRow[]> {
   const snap = await getDocs(query(collection(db(), 'orgs'), orderBy('createdAt', 'desc')));
   const count = async (orgId: string, c: string) => {
@@ -171,7 +171,7 @@ export async function allCompanies(): Promise<CompanyRow[]> {
   return Promise.all(snap.docs.map(async (d) => {
     const o = d.data() as Org;
     const [vans, people, checks] = await Promise.all([count(d.id, 'vehicles'), count(d.id, 'members'), count(d.id, 'checks')]);
-    return { id: d.id, name: o.name, createdAt: o.createdAt || 0, vans, people, checks, trial: standing(o) };
+    return { id: d.id, name: o.name, createdAt: o.createdAt || 0, vans, people, checks, trial: standing(o), closed: o.closed || null };
   }));
 }
 
@@ -218,4 +218,20 @@ export async function addDamageNote(orgId: string, n: Omit<DamageNote, 'id' | 'c
   const ref = doc(collection(db(), 'orgs', orgId, 'damageNotes'));
   await sendWrite('set', ['orgs', orgId, 'damageNotes', ref.id], { ...n, text: n.text.trim().slice(0, 1000), createdAt: Date.now() },
     { title: t('A comment on damage'), vehicleId: (n as { vehicleId?: string }).vehicleId || null });
+}
+
+/**
+ * A van's km corrections (correctKm, server only), for owners and the station's managers. Equality filters only, so no
+ * index is needed; the screen sorts them.
+ */
+export function watchKmCorrections(orgId: string, vehicleId: string, stations: string[] | null, cb: (rows: KmCorrection[]) => void) {
+  const base = collection(db(), 'orgs', orgId, 'kmCorrections');
+  const q = stations ? query(base, where('vehicleId', '==', vehicleId), where('stationId', 'in', stations.slice(0, 30)), limit(100))
+    : query(base, where('vehicleId', '==', vehicleId), limit(100));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<KmCorrection, 'id'>) }))), refused('km corrections', () => cb([])));
+}
+
+/** How many fleet owners a company has (the app creator's owner link is for a company with none). */
+export async function ownerCount(orgId: string): Promise<number> {
+  return (await getDocs(query(collection(db(), 'orgs', orgId, 'members'), where('role', 'in', ['owner', 'admin']), limit(5)))).size;
 }

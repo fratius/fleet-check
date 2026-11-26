@@ -233,7 +233,7 @@ export async function cleanMedia(now: number, logReview: (orgId: string, checkId
   const state = db().doc('platform/media');
   const last = Number((await state.get()).data()?.lastRun || 0);
   const reviewsSince = last ? last - 2 * DAY_MS : now - (DAMAGE_DAYS + 50) * DAY_MS;
-  const orgs = onlyOrg ? [await db().doc(`orgs/${onlyOrg}`).get()] : (await db().collection('orgs').select('demo').get()).docs;
+  const orgs = onlyOrg ? [await db().doc(`orgs/${onlyOrg}`).get()] : (await db().collection('orgs').select('demo', 'closed').get()).docs;
   for (const o of orgs) {
     if (!o.exists || o.data()?.demo === true) continue;
     res.companies++;
@@ -245,7 +245,8 @@ export async function cleanMedia(now: number, logReview: (orgId: string, checkId
     }
     // Read after the reviews are followed, so a review that approved damage counts. Each van's newest walk-around is
     // held like the files of a van that is out with a driver.
-    const [kept, held, newest] = await Promise.all([keptKeys(o.id, cut), heldFiles(o.id, cut), newestWalks(o.id)]);
+    // A closed company has no next walk-around to compare with: its newest ones go like the rest (blind test, cause 2b).
+    const [kept, held, newest] = await Promise.all([keptKeys(o.id, cut), heldFiles(o.id, cut), o.data()?.closed ? new Set<string>() : newestWalks(o.id)]);
     newest.forEach((k) => held.keys.add(k));
     const gone = new Set<string>();
     let pageToken: string | undefined;

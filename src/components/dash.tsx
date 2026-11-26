@@ -109,6 +109,8 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   // The photo taken, and where it went: if reading it fails, it's sent again without taking it again.
   const [shot, setShot] = useState<{ uri: string; w: number; h: number; path?: string } | null>(null);
   const [read, setRead] = useState<DashRead | null>(null);
+  // The photo was read lower than the van's km (they never go down): the driver types the km instead.
+  const [low, setLow] = useState<{ read: number; van: number } | null>(null);
   const [form, setForm] = useState({ odo: '', fuel: '', battery: '', range: '' });
   const [warnings, setWarnings] = useState<string[]>([]);
   const [refuel, setRefuel] = useState<'no' | 'litres' | 'unknown' | null>(null);
@@ -135,7 +137,9 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       const at = path;
       const r = await retrying(() => ai.readDashboard({ orgId: s.org!.id, vehicleId: v.id, path: at }));
       setRead(r);
-      setForm({ odo: show(r.values.odometerKm), fuel: show(r.values.fuelPct), battery: show(r.values.batteryPct), range: show(r.values.rangeKm) });
+      const lower = r.vanKm != null && r.values.odometerKm != null && r.values.odometerKm < r.vanKm;
+      setLow(lower ? { read: r.values.odometerKm!, van: r.vanKm! } : null);
+      setForm({ odo: lower ? '' : show(r.values.odometerKm), fuel: show(r.values.fuelPct), battery: show(r.values.batteryPct), range: show(r.values.rangeKm) });
       setWarnings(r.values.warnings);
       // Refuels recorded with their receipt during this tour answer the refuelling question.
       const mine = s.tours.find((x) => x.vehicleId === v.id && isOpen(x) && x.driverId === s.user?.uid);
@@ -157,15 +161,17 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
     setErr(null); setJump(null);
     const odometerKm = num(form.odo);
     if (odometerKm == null || !Number.isFinite(odometerKm)) { setErr(t('Enter the odometer reading in km.')); return; }
+    if (odometerKm <= 0) { setErr(t('The km must be more than 0.')); return; }
     if (ending && !refuel) { setErr(ev ? t('Say whether you charged during the tour.') : t('Say whether you refuelled during the tour.')); return; }
     const values: DashValues = { odometerKm, fuelPct: ev ? null : num(form.fuel), batteryPct: ev ? num(form.battery) : null, rangeKm: num(form.range), warnings };
     const l = refuel === 'litres' ? num(litres) : null;
     if (refuel === 'litres' && (l == null || !(l > 0))) { setErr(t('Enter the litres from the receipt.')); return; }
     setStep(t('Saving…'));
     try {
-      const r = await ai.saveReading({ orgId: s.org!.id, readId: read.readId, values, sure,
+      const r = await ai.saveReading({ orgId: s.org!.id, readId: read.readId, values, sure, typed: !!low || odometerKm !== read.values.odometerKm,
         refuel: ending ? { litres: ev ? null : l, kwh: null, unknown: refuel === 'unknown' || (ev && refuel === 'litres') } : null });
-      flash(`van:${v.id}`, savedText(r.role, r.tour, odometerKm));
+      flash(`van:${v.id}`, r.kmKept != null ? t('Saved. The van keeps its {km} km, and your fleet manager is told about the lower number.', { km: r.kmKept.toLocaleString(loc()) })
+        : savedText(r.role, r.tour, odometerKm));
       onDone();
     } catch (e) {
       if (e instanceof AiError && e.code === 'out-of-range') setJump(e.message);
@@ -199,6 +205,7 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
             : read.issue ? t('The AI couldn\'t read it: {issue}.', { issue: read.issue }) : t('The AI couldn\'t read it.')}</T>
         </View>
       </Row>
+      {low ? <T color={c.alert}>{t('The dashboard shows less than the van\'s {km} km. Type the km you see on the dashboard.', { km: low.van.toLocaleString(loc()) })}</T> : null}
       <Field label={t('Odometer (km)')} value={form.odo} onChangeText={(x) => setForm((f) => ({ ...f, odo: x }))} keyboardType="number-pad" placeholder={t('For example 48213')} />
       {read.last ? <T v="small">{read.last.byName ? t('Last reading: {km}, {when} ({name}).', { km: kmText(read.last.km), when: fmtWhen(read.last.at), name: read.last.byName })
         : t('Last reading: {km}, {when}.', { km: kmText(read.last.km), when: fmtWhen(read.last.at) })}</T> : null}

@@ -40,6 +40,7 @@ import {
   receiptPrompt, receiptSchema, type BuyKind, type CardRead, type Flag, type Receipt,
 } from './purchases';
 import { joinMail } from './joinmail';
+import { driverLinkIn, ensureDriverLink } from './links';
 import { PER_CONNECTION, PER_DAY, PLANS, SIGNUP_TO, connectionKey, looksAutomated, readSignup, signupMail, welcomeMail } from './website';
 import { afterRefuel, noteDash, startKm, type VanDash } from './vandash';
 import {
@@ -136,6 +137,9 @@ async function guard(req: CallableRequest<{ orgId?: unknown }>, o: { unpaid?: bo
   // model a phone asks for is never used.
   const orgP = ID.test(orgId) ? db().doc(`orgs/${orgId}`).get().then((d) => d.data(), () => undefined) : Promise.resolve(undefined);
   const who = await guardOnly(req, orgP.then((d) => (TIERS.includes(d?.aiTier as Tier) ? (d?.aiTier as Tier) : 'quick')));
+  // A closed company (its only member deleted their account, ROLES.md): read-only for everyone, the app creator too,
+  // until the app creator reopens it (reopenCompany).
+  if ((await orgP)?.closed) throw fail('failed-precondition', 'This company is closed. Only the app creator can reopen it.');
   if (!o.unpaid && req.auth?.token?.creator !== true && (await paymentsBlock(await orgP))) throw fail('failed-precondition', BLOCKED_MESSAGE);
   return who;
 }
@@ -996,14 +1000,14 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
   const out = await db().runTransaction(async (tx) => {
     const snap = await tx.get(iref);
     if (!snap.exists) throw fail('not-found', 'This invite link doesn\'t exist or was cancelled. Ask for a new one.');
-    const i = snap.data() as { orgId: string; orgName: string; role: string; stationId: string; stationName: string; expiresAt: number; usedBy: string | null };
+    const i = snap.data() as { orgId: string; orgName: string; role: string; stationId: string | null; stationName: string; expiresAt: number; usedBy: string | null };
     if (i.usedBy === uid) return { orgId: i.orgId, orgName: i.orgName, role: i.role, stationName: i.stationName, already: true };
     if (i.usedBy) throw fail('failed-precondition', 'This invite link was already used. Each link works for one person; ask for a new one.');
     if (Date.now() > i.expiresAt) throw fail('deadline-exceeded', 'This invite link has expired. Links work for 24 hours; ask for a new one.');
     const mref = db().doc(`orgs/${i.orgId}/members/${uid}`);
     const m = await tx.get(mref);
     if (m.exists) throw fail('already-exists', 'You\'re already in {company}. Ask the fleet owner to change your role or station.', { company: i.orgName });
-    tx.create(mref, { role: i.role, stationIds: [i.stationId], email, name, firstName, lastName, phone, transporterId, joinedAt: Date.now(), invite: token });
+    tx.create(mref, { role: i.role, stationIds: i.role === 'owner' || !i.stationId ? [] : [i.stationId], email, name, firstName, lastName, phone, transporterId, joinedAt: Date.now(), invite: token });
     tx.update(iref, { usedBy: uid, usedByName: name, usedAt: Date.now() });
     tx.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(i.orgId), orgId: i.orgId, email, name, firstName, lastName, phone }, { merge: true });
     return { orgId: i.orgId, orgName: i.orgName, role: i.role, stationName: i.stationName, already: false };
@@ -1014,8 +1018,9 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
 
 /* ---------- 6a. The company's driver link: one link for all drivers, then a fleet manager or owner approves ---------- */
 // Product owner, 2026-11-05: each company has one link its drivers sign up with; they pick their station and an
-// owner or a fleet manager of that station approves them. Until then they're not members and see nothing. Only
-// owners make a new link (the old one stops working). One-time 24-hour links stay for fleet managers.
+// owner or a fleet manager of that station approves them. Until then they're not members and see nothing. Owners
+// and fleet managers make a new link (the old one stops working; product owner, 2026-11-26). One-time 24-hour links
+// stay for fleet managers.
 //   companyLinks/{token}             server only: which company the link is for, and whether it still works
 //   orgs/{org}/links/drivers         the current link, for owners and managers to share
 //   orgs/{org}/joinRequests/{uid}    one request per person: owners and the station's managers, and the person
@@ -1025,7 +1030,6 @@ const REQUEST_AGAIN_HOURS = 24;
 const MAX_PENDING = 200;
 /** A request that ends without the person joining keeps only their name: contact details go. */
 const NO_CONTACT = { phone: '', email: '', transporterId: '' };
-const linkToken = () => randomBytes(24).toString('base64url'); // 32 characters, not guessable
 type JoinStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'expired';
 interface JoinRequest {
   uid: string; email: string; name: string; firstName: string; lastName: string; phone: string; transporterId: string;
@@ -1035,25 +1039,34 @@ interface JoinRequest {
   welcomeAt?: number; welcomed?: boolean;
 }
 
-/** The company's current driver link (made the first time it's asked for). reset: owners only, a new link. */
-export const driverLink = onCallOnce('driverLink', { timeoutSeconds: 30 }, async (req) => {
+// Every company has its driver link from the start (links.ts): owners and fleet managers see it, and both make a new
+// one (product owner, 2026-11-26; blind test, cause 2b). The old one stops at once, for every station, and the
+// company's other owners and managers are told who made the new one.
+export const driverLink = onCallOnce('driverLink', { timeoutSeconds: 30, secrets: [WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   needStaff(who);
   const reset = req.data?.reset === true;
-  if (reset && who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner can make a new driver link.');
-  const cur = db().doc(`orgs/${who.orgId}/links/drivers`);
-  return db().runTransaction(async (tx) => {
-    const c = await tx.get(cur);
-    const had = c.exists ? (c.data() as { token: string; createdAt: number; createdByName: string }) : null;
-    if (had && !reset) return had;
-    const now = Date.now();
-    if (had) tx.set(db().doc(`companyLinks/${had.token}`), { active: false, replacedAt: now, replacedBy: who.uid }, { merge: true });
-    const token = linkToken();
-    const link = { token, createdAt: now, createdBy: who.uid, createdByName: who.name };
-    tx.create(db().doc(`companyLinks/${token}`), { orgId: who.orgId, active: true, ...link });
-    tx.set(cur, link);
-    return link;
-  });
+  const r = await db().runTransaction((tx) => driverLinkIn(tx, who.orgId, { uid: who.uid, name: who.name }, reset));
+  if (reset && r.old) await tellNewLink(who).catch((e) => logger.warn('The new driver link wasn\'t announced', e as Error));
+  return r.link;
+});
+async function tellNewLink(who: Who) {
+  const org = db().doc(`orgs/${who.orgId}`);
+  const [o, staff] = await Promise.all([org.get(), org.collection('members').where('role', 'in', ['owner', 'admin', 'manager']).get()]);
+  const company = String(o.data()?.name || '');
+  return Promise.all(staff.docs.filter((d) => d.id !== who.uid).map((d) => notify(d.id, (lang) => ({
+    title: tr(lang, 'New driver link for {company}', { company }),
+    body: tr(lang, '{name} made a new driver link. The old one no longer works, at any station: share the new one from People.', { name: who.name }),
+    url: '/people', tag: `driverlink-${who.orgId}`,
+  })).catch(() => 0)));
+}
+/** A new company gets its driver link right away (also companies not made by createCompany: demo, older apps). */
+export const driverLinkOnNewCompany = onDocumentCreated({ document: 'orgs/{orgId}', timeoutSeconds: 30, memory: '256MiB' }, async (e) => {
+  const o = e.data?.data();
+  if (!o) return;
+  const by = String(o.createdBy || '');
+  const m = by && ID.test(by) ? (await db().doc(`orgs/${e.params.orgId}/members/${by}`).get()).data() : undefined;
+  await ensureDriverLink(e.params.orgId, { uid: by, name: String(m?.name || '') });
 });
 
 /** What a company's driver link is for: the company and its stations, and where this person stands with it. */
@@ -1284,6 +1297,7 @@ export const createCompany = onCallOnce('createCompany', { timeoutSeconds: 30, s
   b.create(org.collection('stations').doc(), { name: stationName, code: '', createdAt: now });
   b.set(db().doc(`users/${uid}`), { orgIds: FieldValue.arrayUnion(org.id), orgId: org.id, email, name }, { merge: true });
   await b.commit();
+  await ensureDriverLink(org.id, { uid, name }).catch((e) => logger.warn('Driver link not made with the company', e as Error));
   const creators: string[] = ((await db().doc('platform/creators').get()).data()?.uids || []) as string[];
   const until = new Date(billing.trialEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Europe/Berlin' });
   await Promise.all(creators.filter((c) => c !== uid).map((c) => notify(c, {
@@ -2072,6 +2086,18 @@ interface VanDoc {
   dash?: VanDash | null;
 }
 const READ_MAX_AGE = 2 * 3600_000;
+/**
+ * The van's km now: the higher of its record's odometer and its last dashboard photo. It never goes down (product
+ * owner, 2026-11-26; blind test, cause 2b), except by an owner's or the station's fleet manager's correction with a
+ * reason (correctKm), which lowers both.
+ */
+function vanKmOf(van: { dash?: VanDash | null } | undefined, det: { odometerKm?: unknown } | undefined): number | null {
+  const a = typeof det?.odometerKm === 'number' && det.odometerKm > 0 ? det.odometerKm : 0;
+  const b = typeof van?.dash?.km === 'number' && van.dash.km > 0 ? van.dash.km : 0;
+  return Math.max(a, b) || null;
+}
+const KM_LOW = N_('The dashboard shows less than the van\'s {km} km. Type the km you see on the dashboard.');
+const KM_ZERO = N_('The km must be more than 0.');
 const staffAt = (w: Who, stationId: string | null | undefined) => w.role === 'owner' || (w.role === 'manager' && !!stationId && w.stationIds.includes(stationId));
 
 async function dashOn(orgId: string) {
@@ -2139,6 +2165,8 @@ export const readDashboard = onCallOnce('readDashboard', opts(120), async (req) 
   });
   return {
     readId: ref.id, values, confidence, readable, issue, will: ctx.plan.will, tourDriver: staffAt(who, ctx.van.stationId) ? ctx.plan.tourDriver : null, last: ctx.last,
+    // The van's km: a photo read lower is typed by the driver instead (the app asks).
+    vanKm: vanKmOf(ctx.van, (await org.collection('vehicleDetails').doc(vehicleId).get()).data()),
     endsMine: ctx.plan.ends.some((e) => e.tour.driverId === who.uid && e.how === 'photo'),
     // It ends another driver's tour: what drivers are told instead of the name (names.ts).
     endsOther: ctx.plan.ends.some((e) => e.tour.driverId !== who.uid),
@@ -2153,9 +2181,13 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
   if (!ID.test(readId)) throw fail('invalid-argument', 'Take the dashboard photo again.');
   const v = (req.data?.values || {}) as Record<string, unknown>;
   const odometerKm = Math.round(Number(v.odometerKm));
-  if (v.odometerKm == null || v.odometerKm === '' || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) {
+  if (v.odometerKm == null || v.odometerKm === '' || !Number.isFinite(odometerKm) || odometerKm > 3_000_000) {
     throw fail('invalid-argument', 'Enter the odometer reading in km.');
   }
+  if (odometerKm <= 0) throw fail('invalid-argument', KM_ZERO);
+  // The driver typed the km (the photo was read lower than the van's, or they changed it): a lower number is then
+  // saved as they typed it, the van keeps its km and the managers are told.
+  const typed = req.data?.typed === true;
   const pct = (x: unknown, what: string) => {
     if (x == null || x === '') return null;
     const n = Number(x);
@@ -2179,21 +2211,22 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     if (rd.used) throw fail('failed-precondition', 'This photo is already saved.');
     if (Date.now() - rd.at > READ_MAX_AGE) throw fail('failed-precondition', 'This photo is more than two hours old. Take a new one.');
     const { van, open, plan, elsewhere, last } = await readingContext(org, who, rd.vehicleId, (q) => tx.get(q), (r) => tx.get(r));
-    if (last && odometerKm < last.km && !(sure && staffAt(who, van.stationId))) {
-      throw fail('failed-precondition', last.byName ? 'The odometer can\'t go down: it showed {km} km on {day} ({name}). Check the number.' : 'The odometer can\'t go down: it showed {km} km on {day}. Check the number.',
-        { km: Math.round(last.km), day: new Date(last.at).toISOString().slice(0, 10), name: last.byName });
-    }
-    const days = last ? Math.max(1, (Date.now() - last.at) / 86400_000) : 1;
-    if (last && odometerKm - last.km > Math.max(1500, 1200 * days) && !sure) {
-      throw fail('out-of-range', 'That\'s {more} km more than the last reading ({km} km). Check the number, or confirm it\'s right.', { more: Math.round(odometerKm - last.km), km: Math.round(last.km) });
-    }
     const detRef = org.collection('vehicleDetails').doc(rd.vehicleId);
     const det = await tx.get(detRef);
+    // The km never go down (blind test, 26 Nov 2026, cause 2b): lower than the van's is asked again, then kept apart.
+    const vanKm = vanKmOf(van, det.data());
+    const lower = vanKm != null && odometerKm < vanKm;
+    if (lower && !typed) throw fail('failed-precondition', KM_LOW, { km: vanKm });
+    const km = lower ? vanKm! : odometerKm;
+    const days = last ? Math.max(1, (Date.now() - last.at) / 86400_000) : 1;
+    if (!lower && last && odometerKm - last.km > Math.max(1500, 1200 * days) && !sure) {
+      throw fail('out-of-range', 'That\'s {more} km more than the last reading ({km} km). Check the number, or confirm it\'s right.', { more: Math.round(odometerKm - last.km), km: Math.round(last.km) });
+    }
 
     const now = Date.now();
     const reading = org.collection('readings').doc();
     // Who took the photo by account id only: it may end another driver's tour, which that driver reads (names.ts).
-    const point: TourEnd = { readingId: reading.id, at: now, km: odometerKm, fuelPct, batteryPct, by: who.uid };
+    const point: TourEnd = { readingId: reading.id, at: now, km, fuelPct, batteryPct, by: who.uid };
     const facts = { fuel: van.fuel || null, tankL: van.tankL ?? null, batteryKwh: van.batteryKwh ?? null };
     let ended: (TourDoc & { id: string }) | null = null;
     for (const e of plan.ends) {
@@ -2225,18 +2258,32 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
       vehicleId: rd.vehicleId, vehicleName: vanName(van), stationId: van.stationId || null, by: who.uid, byName: who.name,
       driverId: started?.driverId || ended?.driverId || van.assignedTo?.driverId || null, at: now, createdAt: now, path: rd.path,
       ...values, ai, corrected, refuel: ended ? refuel : null, tourId: started?.id || ended?.id || null, endedTourId: ended?.id || null, role,
+      ...(lower ? { kmLower: { typed: odometerKm, kept: km } } : {}),
     });
     tx.update(rref, { used: true, readingId: reading.id, values, corrected });
     // The van's odometer in its record, for the mileage against the contract and the service by distance.
     const today = new Date(now).toISOString().slice(0, 10);
-    if (!det.exists) tx.set(detRef, { stationId: van.stationId || null, createdAt: now, odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
-    else if (Number(det.data()?.odometerKm ?? -1) <= odometerKm) tx.update(detRef, { odometerKm, odometerAt: today });
+    if (!det.exists) tx.set(detRef, { stationId: van.stationId || null, createdAt: now, odometerKm: km, odometerAt: today, updatedAt: now, updatedByName: who.name });
+    else if (!lower && Number(det.data()?.odometerKm ?? -1) <= km) tx.update(detRef, { odometerKm: km, odometerAt: today });
     // On the van for everyone at the station (km, levels, warning lights), and the km of whoever has it.
-    noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km: odometerKm, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, from: 'tour' });
-    return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started };
+    noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, from: 'tour' });
+    return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started, kmKept: lower ? km : null,
+      lowVan: lower ? { name: vanName(van), stationId: van.stationId || null } : null };
   });
-  return out;
+  const { lowVan, ...answer } = out;
+  if (lowVan) await tellKmLower(who, lowVan, odometerKm, out.kmKept!).catch((e) => logger.warn('Lower km not announced', e as Error));
+  return answer;
 });
+
+/** The station's fleet managers (or the owners) hear about km typed lower than the van's, with both numbers. */
+async function tellKmLower(who: Who, van: { name: string; stationId: string | null }, typed: number, kept: number) {
+  const bosses = await bossesOf(who.orgId, van.stationId, 'fuel', who.uid);
+  return tell(bosses, (lang) => ({
+    title: tr(lang, 'Odometer lower than before: {van}', { van: van.name }),
+    body: tr(lang, '{name} typed {km} km; the van had {kept} km and keeps them. Check the odometer, or correct the van\'s km on its page.', { name: who.name, km: typed, kept }),
+    url: '/', tag: `km-${van.name}`,
+  }));
+}
 
 /* ---------- 14. Damage log: new damage and who had the van, for the driver numbers ---------- */
 // Written from each reviewed check (see fleetlog.ts). The app asks for it right after a review is finished; the
@@ -2730,7 +2777,7 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
     // Who has the van by account id only: the buyer reads this record (names.ts).
     vanDriverId: van.assignedTo?.driverId || null,
     notTheirVan: who.role === 'driver' && !!van.assignedTo && van.assignedTo.driverId !== who.uid,
-    dash, lastKm: typeof det?.odometerKm === 'number' ? det.odometerKm : null,
+    dash, lastKm: vanKmOf(van, det),
     card: { needed: !!expected, expected, result: null, read: null, tries: 0, why: null, expired: null, at: null },
     decision: null, receipt: null, parts: [], note: null, flags: [], corrected: [],
     odometerKm: null, fuelPct: null, litres: null, total: null, currency: null, merchant: null, cancel: null,
@@ -2916,7 +2963,13 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const v = (d.values || {}) as Record<string, unknown>;
   const n = (x: unknown) => (x == null || x === '' ? null : Number(x));
   const odometerKm = n(v.odometerKm);
-  if (odometerKm == null || !Number.isFinite(odometerKm) || odometerKm < 0 || odometerKm > 3_000_000) throw fail('invalid-argument', 'Enter the odometer reading in km.');
+  if (odometerKm == null || !Number.isFinite(odometerKm) || odometerKm > 3_000_000) throw fail('invalid-argument', 'Enter the odometer reading in km.');
+  if (odometerKm <= 0) throw fail('invalid-argument', KM_ZERO);
+  // The km never go down: lower than the van's is asked again; typed lower, it's saved with a flag for the manager
+  // and the van keeps its km (noteDash).
+  const vanKm = vanKmOf((await org.collection('vehicles').doc(p.vehicleId).get()).data() as VanDoc | undefined,
+    (await org.collection('vehicleDetails').doc(p.vehicleId).get()).data());
+  if (vanKm != null && odometerKm < vanKm && d.typed !== true) throw fail('failed-precondition', KM_LOW, { km: vanKm });
   const fuelPct = p.kind === 'fuel' ? n(v.fuelPct) : null;
   if (fuelPct != null && (!Number.isFinite(fuelPct) || fuelPct < 0 || fuelPct > 100)) throw fail('invalid-argument', 'The fuel level is a percentage from 0 to 100.');
   const litres = p.kind === 'fuel' ? n(v.litres) : null;
@@ -2928,7 +2981,7 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
   const ai = { odometerKm: p.dash.ai?.odometerKm ?? null, fuelPct: p.dash.ai?.fuelPct ?? null, litres: p.kind === 'fuel' ? fuelLitres(p.receipt.ai, p.vanFuel) : null, total: p.receipt.ai.total };
   const corrected = (Object.keys(vals) as (keyof typeof vals)[]).filter((k) => (k !== 'fuelPct' || p.kind === 'fuel') && (k !== 'litres' || p.kind === 'fuel') && (ai[k] ?? null) !== vals[k]);
   const flags: Flag[] = purchaseFlags({
-    kind: p.kind, byName: p.byName, vanFuel: p.vanFuel, tankL: p.tankL, fuelPct: vals.fuelPct, odometerKm: vals.odometerKm, lastKm: p.lastKm,
+    kind: p.kind, byName: p.byName, vanFuel: p.vanFuel, tankL: p.tankL, fuelPct: vals.fuelPct, odometerKm: vals.odometerKm, lastKm: vanKm ?? p.lastKm,
     litres: vals.litres, total: vals.total, createdAt: p.createdAt, notTheirVan: p.notTheirVan,
     card: p.card.needed ? { needed: true, expected: p.card.expected, result: p.card.result, expired: p.card.expired, plate: p.card.read?.plate || null } : null,
     vanPlate: p.plate, decision: p.decision ? { allow: p.decision.allow, byName: p.decision.byName } : null, receipt: p.receipt.ai,
@@ -3609,7 +3662,13 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB', sec
     throw fail('failed-precondition', 'You own {companies}. Make another person fleet owner there first (People, the person, Role), then delete your account.', { companies: blocked.map((c) => c.name).join(', ') });
   }
   for (const c of plan) {
-    if (c.outcome === 'close') { await endPlan(c.id); await deleteCompany(c.id); continue; }
+    // A demo company they made goes; a real company whose only member they are is closed, with its records kept
+    // (product owner, 2026-11-26; blind test, cause 2b): its plan stops now, and only the app creator sees it.
+    if (c.outcome === 'close') {
+      await endPlan(c.id);
+      if (c.demo) { await deleteCompany(c.id); continue; }
+      await closeCompany(c.id, uid);
+    }
     const org = db().doc(`orgs/${c.id}`);
     const mref = org.collection('members').doc(uid);
     await db().runTransaction(async (tx) => {
@@ -3642,6 +3701,95 @@ export const deleteAccount = onCall({ timeoutSeconds: 300, memory: '512MiB', sec
   await getAuth().deleteUser(uid).catch((e) => { if ((e as { code?: string })?.code !== 'auth/user-not-found') throw e; });
   logger.info('Account deleted', { companies: plan.map((c) => `${c.id}:${c.outcome}`) });
   return { ok: true, closed: plan.filter((c) => c.outcome === 'close').map((c) => c.name) };
+});
+
+/**
+ * Closes a company whose only member deletes their account: marked closed (who, when), read-only for everyone (guard,
+ * firestore.rules notClosed), its driver link and open invites stop. Records stay; photos and videos follow the usual
+ * deletion (media.ts, without the newest walk-around kept). The app creator reopens it (reopenCompany) and makes a
+ * one-time owner link (ownerLink) for its next owner.
+ */
+async function closeCompany(orgId: string, uid: string) {
+  const org = db().doc(`orgs/${orgId}`);
+  const now = Date.now();
+  const [m, link, invites] = await Promise.all([org.collection('members').doc(uid).get(), org.collection('links').doc('drivers').get(),
+    db().collection('invites').where('orgId', '==', orgId).get()]);
+  const b = db().batch();
+  b.update(org, { closed: { at: now, by: uid, byName: String(m.data()?.name || '') } });
+  const token = (link.data() as { token?: string } | undefined)?.token;
+  if (token) b.set(db().doc(`companyLinks/${token}`), { active: false, replacedAt: now, replacedBy: uid }, { merge: true });
+  invites.docs.filter((d) => !d.data().usedBy).forEach((d) => b.delete(d.ref));
+  await b.commit();
+  logger.info('Company closed', { orgId });
+}
+
+/** The app creator reopens a closed company (it has no members: its next owner joins with an owner link). */
+export const reopenCompany = onCallOnce('reopenCompany', { timeoutSeconds: 30 }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const orgId = String(req.data?.orgId || '');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
+  const ref = db().doc(`orgs/${orgId}`);
+  await db().runTransaction(async (tx) => {
+    const o = await tx.get(ref);
+    if (!o.exists) throw fail('not-found', 'Unknown company.');
+    const closed = o.data()?.closed as { at: number } | undefined;
+    if (!closed) throw fail('failed-precondition', 'This company isn\'t closed.');
+    tx.update(ref, { closed: FieldValue.delete(), reopens: FieldValue.arrayUnion({ at: Date.now(), by: req.auth!.uid, closedAt: closed.at }) });
+  });
+  return { ok: true };
+});
+
+/** The app creator's one-time owner link (24 hours, one person) for a company, to give it a (new) fleet owner. */
+export const ownerLink = onCallOnce('ownerLink', { timeoutSeconds: 30 }, async (req) => {
+  if (req.auth?.token?.creator !== true) throw fail('permission-denied', 'Only the app creator can do this.');
+  const orgId = String(req.data?.orgId || '');
+  if (!ID.test(orgId)) throw fail('invalid-argument', 'Unknown company.');
+  const o = await db().doc(`orgs/${orgId}`).get();
+  if (!o.exists) throw fail('not-found', 'Unknown company.');
+  if (o.data()?.closed) throw fail('failed-precondition', 'Reopen the company first.');
+  const now = Date.now();
+  const token = inviteToken();
+  const invite = {
+    token, orgId, orgName: String(o.data()?.name || ''), role: 'owner', stationId: null, stationName: '',
+    createdBy: req.auth!.uid, createdByName: String(req.auth?.token?.name || 'App creator'), createdAt: now, expiresAt: now + INVITE_HOURS * 3600_000,
+    usedBy: null, usedByName: null, usedAt: null,
+  };
+  await db().doc(`invites/${token}`).create(invite);
+  return { invite };
+});
+
+/**
+ * An owner or the station's fleet manager corrects a van's km that are too high (a misread or a typo), with a reason
+ * (product owner, 2026-11-26; blind test, cause 2b). Recorded for good in kmCorrections: old km, new km, who, why.
+ */
+export const correctKm = onCallOnce('correctKm', { timeoutSeconds: 30 }, async (req) => {
+  const who = await guard(req);
+  needStaff(who);
+  const vehicleId = String(req.data?.vehicleId || '');
+  if (!ID.test(vehicleId)) throw fail('invalid-argument', 'Unknown van.');
+  const org = db().doc(`orgs/${who.orgId}`);
+  const vref = org.collection('vehicles').doc(vehicleId), dref = org.collection('vehicleDetails').doc(vehicleId);
+  return db().runTransaction(async (tx) => {
+    const [v, d] = await Promise.all([tx.get(vref), tx.get(dref)]);
+    if (!v.exists) throw fail('not-found', 'Unknown van.');
+    const van = v.data() as VanDoc;
+    needStation(who, van.stationId);
+    const km = Math.round(Number(req.data?.km));
+    if (!Number.isFinite(km) || km > 3_000_000) throw fail('invalid-argument', 'Enter the odometer reading in km.');
+    if (km <= 0) throw fail('invalid-argument', KM_ZERO);
+    const reason = clean(req.data?.reason, 300);
+    if (reason.length < 3) throw fail('invalid-argument', 'Say why the km were wrong.');
+    const from = vanKmOf(van, d.data());
+    if (from == null || km >= from) throw fail('failed-precondition', 'A correction is for km that are too high. Higher km are saved as usual.');
+    const now = Date.now();
+    const today = new Date(now).toISOString().slice(0, 10);
+    if (d.exists) tx.update(dref, { odometerKm: km, odometerAt: today, updatedAt: now, updatedByName: who.name });
+    else tx.set(dref, { stationId: van.stationId || null, createdAt: now, odometerKm: km, odometerAt: today, updatedAt: now, updatedByName: who.name });
+    if (van.dash) tx.update(vref, { 'dash.km': km });
+    const ref = org.collection('kmCorrections').doc();
+    tx.set(ref, { vehicleId, vehicleName: vanName(van), stationId: van.stationId || null, from, to: km, reason, by: who.uid, byName: who.name, at: now });
+    return { id: ref.id, from, to: km };
+  });
 });
 
 /* ---------- 18. Photos and videos: deleted on the 15th for the month before, never while the van is held (media.ts) ---------- */

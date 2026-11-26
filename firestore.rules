@@ -138,7 +138,35 @@ service cloud.firestore {
 
     // What only the server writes on a company: the free trial and plan (billing), the accepted terms, the demo marks,
     // and the vans in use (fleetSize, counted by the server for the plan's limit).
-    function serverOrgKeys() { return ['billing', 'terms', 'demo', 'demoLogins', 'fleetSize']; }
+    // closed / reopens: a company whose only member deleted their account, and the app creator reopening it.
+    function serverOrgKeys() { return ['billing', 'terms', 'demo', 'demoLogins', 'fleetSize', 'closed', 'reopens']; }
+    // Nothing is written in a closed company, by anyone (read-only until the app creator reopens it on the server).
+    function notClosed(orgId) { return get(/databases/$(database)/documents/orgs/$(orgId)).data.get('closed', null) == null; }
+    // Numbers that can't be right (functions/src/numbers.ts and src/lib/numbers.ts hold the same rule).
+    function pos(d, k) { return !(k in d) || d[k] == null || (d[k] is number && d[k] > 0); }
+    function nonNeg(d, k) { return !(k in d) || d[k] == null || (d[k] is number && d[k] >= 0); }
+    function okVanNums(d) {
+      return pos(d, 'tankL') && pos(d, 'batteryKwh') && pos(d, 'rangeKm') && nonNeg(d, 'keys') && nonNeg(d, 'powerKw')
+        && nonNeg(d, 'heightM') && nonNeg(d, 'lengthM') && nonNeg(d, 'grossKg') && nonNeg(d, 'emptyKg') && nonNeg(d, 'payloadKg') && nonNeg(d, 'cargoM3')
+        && (!('modelYear' in d) || d.modelYear == null || (d.modelYear is int && d.modelYear >= 1950 && d.modelYear <= request.time.year() + 1));
+    }
+    function okDetailNums(d) {
+      return pos(d, 'odometerKm') && pos(d, 'kmAtStart') && pos(d, 'kmPerYear') && (!('due' in d) || d.due == null || pos(d.due, 'serviceKm'));
+    }
+    function okCostNums(d) {
+      return nonNeg(d, 'monthly') && nonNeg(d, 'purchasePrice') && nonNeg(d, 'excessPerKm') && nonNeg(d, 'premium') && nonNeg(d, 'deductible');
+    }
+    // The van's km never go down from the app (blind test, 26 Nov 2026, cause 2b): a lower odometer than the record's or
+    // the van's last dashboard photo is refused; an owner or the station's manager corrects too-high km on the server
+    // (correctKm), with a reason.
+    function kmNotDown(orgId, id) {
+      let odo = request.resource.data.get('odometerKm', null);
+      let van = get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id)).data;
+      return odo == null
+        || (resource != null && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['odometerKm']))
+        || ((resource == null || odo >= resource.data.get('odometerKm', 0))
+          && (van.get('dash', null) == null || odo >= van.dash.get('km', 0)));
+    }
     // Room for another van on the company's plan (billing.vans; null or missing: no limit).
     function vanRoom(orgId) {
       let o = get(/databases/$(database)/documents/orgs/$(orgId)).data;
@@ -157,7 +185,7 @@ service cloud.firestore {
         && !request.resource.data.keys().hasAny(serverOrgKeys())
         && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000
         && (creator() || !request.resource.data.keys().hasAny(['aiTier', 'aiCompare']));
-      allow update: if owner(orgId) && request.resource.data.createdBy == resource.data.createdBy
+      allow update: if notClosed(orgId) && owner(orgId) && request.resource.data.createdBy == resource.data.createdBy
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(serverOrgKeys().concat(['createdAt']))
         && (creator() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['aiTier', 'aiCompare']))
         && (!('aiCompare' in request.resource.data) || request.resource.data.aiCompare is bool);
@@ -167,15 +195,20 @@ service cloud.firestore {
         allow read: if member(orgId) || creator();
         // Owners add, rename and remove stations. Whether drivers pick up and drop off vans themselves
         // (selfAssign) is set on the server (setSelfAssign), which records who changed it and when.
-        allow create: if owner(orgId) && !request.resource.data.keys().hasAny(['selfAssign', 'selfAssignBy', 'selfAssignAt']);
-        allow update: if owner(orgId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'code']);
-        allow delete: if owner(orgId);
+        allow create: if notClosed(orgId) && owner(orgId) && !request.resource.data.keys().hasAny(['selfAssign', 'selfAssignBy', 'selfAssignAt']);
+        allow update: if notClosed(orgId) && owner(orgId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'code']);
+        allow delete: if notClosed(orgId) && owner(orgId);
       }
 
       // The company's current driver link, for owners and fleet managers to share. Made by the server (driverLink);
       // only owners make a new one.
       match /links/{id} {
         allow read: if staff(orgId);
+      }
+
+      // Km corrections (correctKm, server only): old km, new km, who and why, for good. Owners and the station's managers.
+      match /kmCorrections/{id} {
+        allow read: if runs(orgId, resource.data.stationId);
       }
 
       // Drivers who signed up with the company's link and wait for approval (one record per person, written by the
@@ -202,13 +235,13 @@ service cloud.firestore {
           || (manager(orgId) && (resource == null || sharesStation(orgId)));
         allow list: if owner(orgId) || (manager(orgId) && sharesStation(orgId));
         // The person who created the company becomes its first owner.
-        allow create: if signedIn() && uid == me() && request.resource.data.role == 'owner'
+        allow create: if notClosed(orgId) && signedIn() && uid == me() && request.resource.data.role == 'owner'
           && get(/databases/$(database)/documents/orgs/$(orgId)).data.createdBy == me();
         // People join through invite links or, for drivers, the company's link once approved (the server adds them).
         // Roles, stations and removals go through the
         // server too (changePerson, removePerson): it ends the person's van assignment so the history stays right.
         // Everyone keeps their own contact details up to date.
-        allow update: if signedIn() && uid == me()
+        allow update: if notClosed(orgId) && signedIn() && uid == me()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'firstName', 'lastName', 'phone', 'transporterId']);
       }
 
@@ -220,11 +253,13 @@ service cloud.firestore {
         // checks for drivers (todo: due now; routines: when each was last done) and its next garage visit drivers may
         // see (garageVisit, from the service appointments) are the server's.
         // Not beyond the vans of the company's plan: then the owner takes the add-on or the next plan (Plan and billing).
-        allow create: if runs(orgId, request.resource.data.stationId)
+        allow create: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
           && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit'])
+          && okVanNums(request.resource.data)
           && (creator() || vanRoom(orgId));
-        allow update: if runs(orgId, resource.data.stationId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit']);
+        allow update: if notClosed(orgId) && runs(orgId, resource.data.stationId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit'])
+          && okVanNums(request.resource.data);
       }
 
       // The business side of a van (doc id = the van's id): contract, insurance, deadlines, odometer, notes.
@@ -233,10 +268,11 @@ service cloud.firestore {
       // Money is not allowed in here: it goes in vehicleCosts, which only owners read.
       match /vehicleDetails/{id} {
         allow read: if runs(orgId, resource.data.stationId);
-        allow create, update: if runs(orgId, request.resource.data.stationId)
+        allow create, update: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
           && request.resource.data.stationId == get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id)).data.get('stationId', null)
           && !request.resource.data.keys().hasAny(['monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible'])
-          && request.resource.data.keys().size() <= 40;
+          && request.resource.data.keys().size() <= 40
+          && okDetailNums(request.resource.data) && kmNotDown(orgId, id);
         // Kept with the van for good, like its history.
       }
 
@@ -244,9 +280,10 @@ service cloud.firestore {
       // insurance premium and deductible. Owners only.
       match /vehicleCosts/{id} {
         allow read: if owner(orgId);
-        allow create, update: if owner(orgId)
+        allow create, update: if notClosed(orgId) && owner(orgId)
           && exists(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(id))
-          && request.resource.data.keys().hasOnly(['createdAt', 'updatedAt', 'updatedByName', 'monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible']);
+          && request.resource.data.keys().hasOnly(['createdAt', 'updatedAt', 'updatedByName', 'monthly', 'purchasePrice', 'excessPerKm', 'premium', 'deductible'])
+          && okCostNums(request.resource.data);
       }
 
       // A fleet file read for adding the whole fleet at once (readFleetFile, addVans): the vans as read, with their
@@ -260,11 +297,11 @@ service cloud.firestore {
       // driver's (the server moves it with them). Licence checks are added only by the server and never changed.
       match /driverRecords/{uid} {
         allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && uid == me());
-        allow create: if runs(orgId, request.resource.data.stationId)
+        allow create: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
           && request.resource.data.stationId in get(/databases/$(database)/documents/orgs/$(orgId)/members/$(uid)).data.get('stationIds', [])
           && !('checks' in request.resource.data)
           && request.resource.data.keys().size() <= 30;
-        allow update: if runs(orgId, resource.data.stationId)
+        allow update: if notClosed(orgId) && runs(orgId, resource.data.stationId)
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['checks', 'stationId'])
           && request.resource.data.keys().size() <= 30;
         // Kept when the driver leaves (the van history keeps their name too).
@@ -274,7 +311,7 @@ service cloud.firestore {
       // managers add and correct them; the driver reads their own. Nobody deletes them.
       match /incidents/{id} {
         allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.driverId == me());
-        allow create: if runs(orgId, request.resource.data.stationId)
+        allow create: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
           && request.resource.data.keys().hasOnly(['driverId', 'driverName', 'vehicleId', 'vehicleName', 'stationId', 'day', 'time', 'kind', 'fineType', 'atFault', 'note', 'by', 'byName', 'createdAt'])
           && request.resource.data.by == me()
           && request.resource.data.driverId is string && request.resource.data.driverId.size() > 0
@@ -282,7 +319,7 @@ service cloud.firestore {
           && request.resource.data.day is string && request.resource.data.day.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
           && request.resource.data.note is string && request.resource.data.note.size() <= 2000
           && request.resource.data.createdAt is int && math.abs(request.resource.data.createdAt - request.time.toMillis()) < 600000;
-        allow update: if runs(orgId, resource.data.stationId)
+        allow update: if notClosed(orgId) && runs(orgId, resource.data.stationId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['driverId', 'driverName', 'vehicleId', 'vehicleName', 'day', 'time', 'kind', 'fineType', 'atFault', 'note', 'updatedAt', 'updatedByName'])
           && request.resource.data.kind in ['accident', 'fine', 'complaint', 'other']
           && request.resource.data.note is string && request.resource.data.note.size() <= 2000;
@@ -356,7 +393,7 @@ service cloud.firestore {
 
       match /walkarounds/{id} {
         allow read: if at(orgId, resource.data.stationId);
-        allow create: if at(orgId, request.resource.data.stationId)
+        allow create: if notClosed(orgId) && at(orgId, request.resource.data.stationId)
           && (request.resource.data.createdBy == me() || creator())
           && !request.resource.data.keys().hasAny(['handover', 'keepMark', 'keepDamage', 'keepUntil', 'mediaDeletedAt', 'cmp']);
         // No edits or deletes: walk-arounds are part of the van's and the driver's history. Only the server marks
@@ -385,7 +422,7 @@ service cloud.firestore {
         // Only the review (and the status it sets) can be written from the app, and only by a manager of the station.
         // A finished review is locked (blind test, 26 Nov 2026, cause 2): nothing changes until someone reopens it
         // ("Change the review"), which only sets it back to waiting and adds who reopened it and when to `reopens`.
-        allow update: if runs(orgId, resource.data.stationId)
+        allow update: if notClosed(orgId) && runs(orgId, resource.data.stationId)
           && ((resource.data.get('status', '') == 'reviewed' && reopened())
             || (resource.data.get('status', '') != 'reviewed'
               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['review', 'status', 'reviewedAt'])));
@@ -402,7 +439,7 @@ service cloud.firestore {
       // them, so what was said about a damage stays with it.
       match /damageNotes/{id} {
         allow read: if runs(orgId, resource.data.stationId);
-        allow create: if runs(orgId, request.resource.data.stationId)
+        allow create: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
           && request.resource.data.keys().hasOnly(['vehicleId', 'stationId', 'damageKey', 'text', 'by', 'byName', 'createdAt'])
           && request.resource.data.by == me()
           && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
@@ -427,7 +464,7 @@ service cloud.firestore {
       // reads them. Owners and managers still tell whether the AI was right when they add a van.
       match /scans/{id} {
         allow read: if creator();
-        allow update: if staff(orgId)
+        allow update: if notClosed(orgId) && staff(orgId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['verdict', 'actual']);
       }
     }

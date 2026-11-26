@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, Share, Text, View } from 'react-native';
 
 import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, SearchBox, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers, peopleScope } from '@/lib/people';
@@ -207,7 +207,9 @@ function StationPeople({ station, members, invites }: { station: Station; member
 
 /**
  * The company's driver link: one link for all drivers. They open it, pick their station and create their account;
- * then a fleet manager of that station or an owner approves them. Only owners make a new link (the old one stops).
+ * then a fleet manager of that station or an owner approves them. Every company has it from the start; owners and
+ * fleet managers share it and make a new one (product owner, 2026-11-26): the screen says first that the old one
+ * stops for every station, and the company's other owners and managers are told who made it.
  */
 function DriverLinkCard() {
   const s = useSession();
@@ -215,14 +217,17 @@ function DriverLinkCard() {
   const orgId = s.org?.id;
   const [link, setLink] = useState<DriverLink | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
-  const [armed, setArmed] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const tried = useRef(false);
   useEffect(() => (orgId && s.mode === 'firebase' ? watchDriverLink(orgId, setLink, () => setLink(null)) : undefined), [orgId, s.mode]);
   const make = async (reset: boolean) => {
     setBusy(true); setErr(null);
-    try { await ai.driverLink({ orgId: orgId!, ...(reset ? { reset: true } : {}) }); setArmed(false); }
+    try { await ai.driverLink({ orgId: orgId!, ...(reset ? { reset: true } : {}) }); setAsking(false); }
     catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t make the link.')); } finally { setBusy(false); }
   };
+  // A company made before every company had its link gets it now, without a button (the server makes it once).
+  useEffect(() => { if (link === null && orgId && !tried.current) { tried.current = true; make(false); } }, [link, orgId]); // eslint-disable-line react-hooks/exhaustive-deps
   if (link === undefined) return null;
   const url = link ? inviteUrl(link.token) : '';
   const share = () => Share.share({
@@ -235,16 +240,25 @@ function DriverLinkCard() {
       {link ? (
         <>
           <T v="small" selectable numberOfLines={2}>{url}</T>
-          <Row>
-            <Button small v="primary" title={t('Share')} onPress={share} />
-            {s.role === 'owner' ? (
-              <Button small v="link" title={armed ? t('Tap again: the old link stops working') : t('Make a new link')} loading={busy}
-                onPress={() => { if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 4000); return; } make(true); }} />
-            ) : null}
-          </Row>
-          <T v="small">{t('Made by {name}, {when}.', { name: link.createdByName, when: fmtWhen(link.createdAt) })}</T>
+          {asking ? (
+            <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+              <T v="medium">{t('Make a new driver link?')}</T>
+              <T>{t('The old link stops working at once, for every station. Drivers who haven\'t signed up yet need the new one. The other owners and fleet managers are told that you made it.')}</T>
+              <Row>
+                <Button small v="danger" title={t('Make a new link')} loading={busy} onPress={() => make(true)} />
+                <Button small v="link" title={t('Cancel')} disabled={busy} onPress={() => setAsking(false)} />
+              </Row>
+            </View>
+          ) : (
+            <Row>
+              <Button small v="primary" title={t('Share')} onPress={share} />
+              <Button small v="link" title={t('Make a new link')} onPress={() => setAsking(true)} />
+            </Row>
+          )}
+          <T v="small">{link.createdByName ? t('Made by {name}, {when}.', { name: link.createdByName, when: fmtWhen(link.createdAt) })
+            : t('Made with the company, {when}.', { when: fmtWhen(link.createdAt) })}</T>
         </>
-      ) : <Button small v="primary" title={t('Make the driver link')} loading={busy} onPress={() => make(false)} />}
+      ) : busy ? <ActivityIndicator color={c.ink} style={{ alignSelf: 'flex-start' }} /> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </Card>
   );
