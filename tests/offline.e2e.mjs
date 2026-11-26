@@ -1148,11 +1148,15 @@ test('cause 3a (1d): a van that got another driver after the photos were taken s
     // Meanwhile the fleet manager gives QUIET 3 to someone else.
     await camGive(CAM_DROP, 'QUIET 3', 'camA3', 'camSomeoneElse', 'Sam Someone');
     await button(page, 'Pick up QUIET 3').click();
-    await page.waitForURL((u) => u.pathname === '/', { timeout: 120_000 });
-    // Nothing happens to the other driver's handover until Dirk says so.
-    await page.locator('text=/upload stopped/ >> visible=true').first().click({ timeout: 180_000 });
-    await visible(page, 'Another driver has this van now. Take it over?').waitFor({ timeout: 30_000 });
+    // The camera says so, with "Take it over" in place of "Try again"; nothing happens to the other handover meanwhile.
+    await visible(page, 'Another driver has this van now. Take it over?').waitFor({ timeout: 180_000 });
+    await button(page, 'Take it over').waitFor({ timeout: 10_000 });
+    assert.equal(await button(page, 'Try again').count(), 0);
     assert.equal((await db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_DROP}`).get()).data().assignedTo.driverId, 'camSomeoneElse');
+    // Closed and opened later from the stopped upload (the strip, then Uploads): taken over there.
+    await button(page, 'Close').click();
+    await page.locator('text=/upload stopped/ >> visible=true').first().click({ timeout: 60_000 });
+    await visible(page, 'Another driver has this van now. Take it over?').waitFor({ timeout: 30_000 });
     await button(page, 'Take it over').click();
     await until(async () => (await db.doc(`orgs/${CAM_ORG}/vehicles/${CAM_DROP}`).get()).data().assignedTo?.driverId === CAM2.uid || null, 180_000, 'the take-over');
     assert.equal((await db.doc(`orgs/${CAM_ORG}/assignments/camA3`).get()).data().endReason, 'taken over');

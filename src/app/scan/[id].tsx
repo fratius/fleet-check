@@ -452,7 +452,10 @@ export default function ScanScreen() {
               </View>
               {job.status === 'failed' && job.walkSaved && job.then ? <Text style={st.note}>{t('The photos are saved as a walk-around.')}</Text> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
+                {/* Another driver has the van now (got it after the photos were taken): the driver says so (cause 3a). */}
+                {job.status === 'failed' && job.then?.fn === 'pickUpVan' && /already-exists/.test(job.errorCode || '')
+                  ? <Btn title={t('Take it over')} kind="marker" onPress={() => outbox.takeOver(job.id)} />
+                  : job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
                 <Btn title={t('Close')} kind={job.status === 'failed' ? 'ghost' : 'outline'} onPress={goAway} />
               </View>
             </>

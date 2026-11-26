@@ -62,11 +62,13 @@ export default function BuyPage() {
   // fleet manager sees it, to allow or refuse it. Once decided it's their own again, to carry on or cancel.
   const decideOwn = !!p && mine && s.tryOut && p.status === 'waiting' && s.runs(p.stationId);
   if (p && (!mine || !isOpenBuy(p) || decideOwn)) return <Screen edges={[]}>{title}<Summary p={p} /></Screen>;
-  if (!van) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{s.loaded.vehicles ? t('This van isn\'t in the fleet any more.') : t('Loading…')}</T></Card></Screen>;
+  // Blind test, 26 Nov 2026, cause 2 (the server refuses both too): drivers refuel and wash while they have a van, and
+  // nobody starts a second one while one waits for a fleet manager's answer. Said first: a driver without a van has no
+  // other van in the app either (cause 3a).
+  if (!p && kind !== 'parts' && s.loaded.vehicles && !mayBuy(s)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('You don\'t have a van. Refuelling and washing are for drivers with a van: ask your fleet manager.')}</T></Card></Screen>;
+  if (!van) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{!s.loaded.vehicles ? t('Loading…') : s.role === 'driver' ? t('You don\'t have this van.') : t('This van isn\'t in the fleet any more.')}</T></Card></Screen>;
   if (kind === 'parts' && !s.runs(van.stationId)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Owners and the station\'s fleet managers buy parts.')}</T></Card></Screen>;
   if (kind === 'fuel' && van.fuel === 'electric') return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Electric vans are charged, not refuelled.')}</T></Card></Screen>;
-  // Blind test, 26 Nov 2026, cause 2 (the server refuses both too): drivers refuel and wash while they have a van, and
-  // nobody starts a second one while one waits for a fleet manager's answer.
   if (!p && kind !== 'parts' && !mayBuy(s)) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('You don\'t have a van. Refuelling and washing are for drivers with a van: ask your fleet manager.')}</T></Card></Screen>;
   const waits = !p ? s.purchases.find((x) => x.by === s.user?.uid && x.status === 'waiting' && Date.now() - x.createdAt < STALE_BUY) : undefined;
   if (waits) {
