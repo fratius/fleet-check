@@ -1165,8 +1165,8 @@ test('cause 2 (A3): after "Finish review" nothing can change until "Change the r
     await button(page, 'Change the review').click();
     await visible(page, 'Review reopened by Rita Manager').waitFor({ timeout: 30_000 });
     await button(page, 'Not damage').waitFor({ timeout: 10_000 });
-    const k = (await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data();
-    assert.equal(k.status, 'submitted');
+    // The screen shows the change at once; the server has it a moment later.
+    const k = await until(async () => { const d = (await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data(); return d.status === 'submitted' ? d : null; }, 30_000, 'the reopening on the server');
     assert.equal(k.reopens.length, 1);
     assert.equal(k.reopens[0].by, RW_MGR.uid);
     assert.ok(Math.abs(k.reopens[0].at - Date.now()) < 120_000);
@@ -1175,7 +1175,7 @@ test('cause 2 (A3): after "Finish review" nothing can change until "Change the r
     await button(page, 'Change the review').waitFor({ timeout: 30_000 });
     assert.equal(await button(page, 'Not damage').count(), 0);
     await visible(page, 'Review reopened by Rita Manager').waitFor({ timeout: 10_000 });
-    assert.equal((await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data().status, 'reviewed');
+    await until(async () => (await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data().status === 'reviewed' || null, 30_000, 'the review finished again on the server');
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });
