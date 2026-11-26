@@ -136,3 +136,12 @@ test('after the backend goes out, Deploy checks the live app as a real member: u
   assert.match(script, /demoLogins/);
   assert.doesNotMatch(script, /createUser\(/);
 });
+
+// Blind test, 26 Nov 2026, cause 2b (B1): every company has its driver link from the start. New ones get it when
+// they're made (the trigger, tested in history.test.mjs); Deploy gives one to the companies made before.
+test('Deploy gives every company made before its driver link', () => {
+  const steps = read('../.github/workflows/deploy.yml').split('\n').filter((l) => /node functions\/scripts\/driver-links\.cjs/.test(l));
+  assert.equal(steps.length, 1, 'the Deploy step that runs functions/scripts/driver-links.cjs');
+  const script = readFileSync(new URL('../functions/scripts/driver-links.cjs', import.meta.url), 'utf8');
+  assert.match(script, /ensureDriverLink/);
+});

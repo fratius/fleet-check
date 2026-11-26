@@ -1206,3 +1206,31 @@ test('cause 2 (A4): drivers without a van see no Refuel or Wash, and Add vehicle
     await button(ada.page, 'Wash').waitFor({ timeout: 10_000 });
   } finally { await ada.ctx.close(); }
 });
+
+// ---------- Blind test, 26 Nov 2026, cause 2b (B1, B2): the driver link on People ----------
+test('cause 2b (B1, B2): a fleet manager sees the driver link with Share and Make a new link; a new one is asked first and replaces the old', async () => {
+  await rwWorld();
+  // Made with the company (the trigger), without anyone asking for it.
+  const first = await until(async () => (await db.doc(`orgs/${RW_ORG}/links/drivers`).get()).data() || null, 60_000, 'the driver link of the company');
+  const { ctx, page, errors } = await rwPage(RW_MGR);
+  try {
+    await page.goto(`${URL0}/people`);
+    await visible(page, 'Driver sign-up link').waitFor({ timeout: 60_000 });
+    await visible(page, first.token).waitFor({ timeout: 30_000 });
+    await button(page, 'Share').waitFor({ timeout: 10_000 });
+    assert.equal(await button(page, 'Make the driver link').count(), 0);
+    await button(page, 'Make a new link').click();
+    await visible(page, 'The old link stops working at once, for every station.').waitFor({ timeout: 10_000 });
+    // Cancel changes nothing.
+    await button(page, 'Cancel').click();
+    assert.equal((await db.doc(`orgs/${RW_ORG}/links/drivers`).get()).data().token, first.token);
+    await button(page, 'Make a new link').click();
+    await visible(page, 'The old link stops working at once, for every station.').waitFor({ timeout: 10_000 });
+    await button(page, 'Make a new link').click();
+    const next = await until(async () => { const l = (await db.doc(`orgs/${RW_ORG}/links/drivers`).get()).data(); return l?.token !== first.token ? l : null; }, 30_000, 'the new link');
+    await visible(page, next.token).waitFor({ timeout: 30_000 });
+    await visible(page, 'Made by Rita Manager').waitFor({ timeout: 10_000 });
+    assert.equal((await db.doc(`companyLinks/${first.token}`).get()).data().active, false);
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
