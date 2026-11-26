@@ -82,6 +82,13 @@ ${PLATE_RULES}
 Set readable to false, and plate to null, if there is no plate or any character can't be read for sure; say why in issue (for example "plate cut off", "too blurred", "glare on the plate").
 confidence: 0 to 1, how sure you are of every character.`;
 }
+/** A walk-around's front and rear photos, or a driver's photo of the plate: the van's number plate (blind test, cause 3a). */
+export function walkPlatePrompt() {
+  return `These are photos of one van, taken by a driver at the van (the front and the rear of a walk-around, or a close photo of its number plate). Read the van's number plate exactly, from whichever photo shows it best. Don't guess characters you can't see.
+${PLATE_RULES}
+Set readable to false, and plate to null, if no photo shows the whole plate clearly; say why in issue (for example "plate dirty", "too dark", "plate not in the photos").
+confidence: 0 to 1, how sure you are of every character.`;
+}
 export const plateSchema = {
   type: 'object',
   additionalProperties: false,

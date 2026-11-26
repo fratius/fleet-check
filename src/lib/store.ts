@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  collection, deleteDoc, doc, limit, onSnapshot, orderBy, query, setDoc, updateDoc, where,
+  collection, deleteDoc, doc, limit, onSnapshot, or, orderBy, query, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
@@ -41,14 +41,17 @@ function aboutWrite(name: string, id: string, data: Record<string, unknown> | nu
  * A company collection. With `stations`, only records of those stations are read: managers and
  * drivers may only query their own stations (the rules check it), owners read everything.
  */
-function fsColl<T extends { id: string }>(orgId: string, name: string, stations: string[] | null = null, mine: string | null = null, mineField = 'driverId'): Coll<T> {
+/** mineField: the field that says it's the person's; with several, the records where any of them does. */
+function fsColl<T extends { id: string }>(orgId: string, name: string, stations: string[] | null = null, mine: string | null = null, mineField: string | string[] = 'driverId'): Coll<T> {
   const f = fb()!;
   const base = collection(f.db, 'orgs', orgId, name);
   return {
     subscribe(cb, onError) {
       if (stations && !stations.length && !mine) { cb([]); return () => {}; }
       const q = mine
-        ? query(base, where(mineField, '==', mine), orderBy('createdAt', 'desc'), limit(500))
+        ? Array.isArray(mineField)
+          ? query(base, or(...mineField.map((f) => where(f, '==', mine))), orderBy('createdAt', 'desc'), limit(500))
+          : query(base, where(mineField, '==', mine), orderBy('createdAt', 'desc'), limit(500))
         : stations
           ? query(base, where('stationId', 'in', stations.slice(0, 30)), orderBy('createdAt', 'desc'), limit(500))
           : query(base, orderBy('createdAt', 'desc'), limit(500));
@@ -161,8 +164,10 @@ export interface Store {
  */
 export function makeStore(orgId: string | null, scope: string[] | null = null, driverId: string | null = null): Store {
   if (fb() && orgId) {
-    return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope),
-      walks: fsColl(orgId, 'walkarounds', scope), checks: fsColl(orgId, 'checks', scope), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), compares: fsColl(orgId, 'compares'), details: fsColl(orgId, 'vehicleDetails', scope),
+    // Drivers: only the van they have, the walk-arounds they took and the checks of their own photos (blind test,
+    // 26 Nov 2026, cause 3a; firestore.rules). The van's earlier walk-arounds and checks: useVanRecords.
+    return { mode: 'firebase', orgId, stations: fsColl(orgId, 'stations'), vehicles: fsColl(orgId, 'vehicles', scope, driverId, 'assignedTo.driverId'),
+      walks: fsColl(orgId, 'walkarounds', scope, driverId, 'createdBy'), checks: fsColl(orgId, 'checks', scope, driverId, ['walkBy', 'createdBy']), scans: fsColl(orgId, 'scans'), usage: fsColl(orgId, 'checkUsage'), compares: fsColl(orgId, 'compares'), details: fsColl(orgId, 'vehicleDetails', scope),
       costs: fsColl(orgId, 'vehicleCosts'), records: fsColl(orgId, 'driverRecords', scope), incidents: fsColl(orgId, 'incidents', scope),
       tours: fsColl(orgId, 'tours', scope, driverId),
       assignments: fsColl(orgId, 'assignments', scope, driverId), videos: fsColl(orgId, 'videos', scope, driverId, 'by'),
@@ -370,6 +375,8 @@ export const ai = {
   removePerson: call<{ orgId: string; uid: string }, { ok: boolean }>('removePerson', 30000),
   setSelfAssign: call<{ orgId: string; stationId: string; on: boolean }, { ok: boolean }>('setSelfAssign', 30000),
   pickUpVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { assignmentId: string; unchanged?: boolean; tookOver?: boolean }>('pickUpVan', 130000),
+  vanByPlate: call<{ orgId: string; plate?: string; path?: string }, { id: string; plate: string; name: string; cls: Vehicle['cls']; make: string | null; model: string | null; fuel: Vehicle['fuel'] | null;
+    roof: string | null; slideL: string | null; slideR: string | null; rear: string | null; stationId: string | null; mine: boolean; taken: boolean; expect: string | null }>('vanByPlate', 70000),
   dropOffVan: call<{ orgId: string; vehicleId: string; walkId?: string; videoId?: string }, { ok: boolean }>('dropOffVan', 130000),
   addHandoverVideo: call<{ orgId: string; assignmentId: string; kind: 'pickup' | 'dropoff'; videoId: string }, { ok: boolean }>('addHandoverVideo', 130000),
   addHandoverPhotos: call<{ orgId: string; assignmentId: string; kind: 'pickup' | 'dropoff'; walkId: string }, { ok: boolean }>('addHandoverPhotos', 70000),

@@ -280,12 +280,15 @@ export function useVanRecords(vehicleId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   const orgId = s.org?.id;
   const scope = s.role === 'owner' ? '*' : s.myStations.map((st) => st.id).join(',');
+  // Drivers read the records of the van they have (blind test, cause 3a); of another van only their own, which the
+  // session has already.
+  const asked = s.role !== 'driver' || s.vehicles.some((v) => v.id === vehicleId);
   useEffect(() => {
-    if (s.mode !== 'firebase' || !orgId || !vehicleId) return;
+    if (s.mode !== 'firebase' || !orgId || !vehicleId || !asked) return;
     setRecs({ walks: null, checks: null }); setError(null);
     return watchVanRecords(orgId, vehicleId, scope === '*' ? null : scope ? scope.split(',') : [], setRecs,
       () => setError(t('Couldn\'t load all of this van\'s records, so only the latest are shown.')));
-  }, [orgId, vehicleId, scope, s.mode]);
+  }, [orgId, vehicleId, scope, s.mode, asked]);
   const walks = recs.walks ?? s.walks.filter((w) => w.vehicleId === vehicleId);
   const checks = recs.checks ?? s.checks.filter((k) => k.vehicleId === vehicleId);
   return { walks, checks, error };

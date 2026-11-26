@@ -65,7 +65,10 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
       {failed && j.walkSaved && j.then ? <T v="small">{t('The photos are saved as a walk-around.')}</T> : null}
       {failed && j.type === 'video' && j.files.every((f) => f.done) && j.then ? <T v="small">{t('The video is uploaded but wasn\'t used.')}</T> : null}
       <Row>
-        {failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
+        {/* Another driver has the van now (got it after the photos were taken): the driver says "take it over" (cause 3a). */}
+        {failed && j.then?.fn === 'pickUpVan' && /already-exists/.test(j.errorCode || '')
+          ? <Button small v="primary" title={t('Take it over')} onPress={() => outbox.takeOver(j.id)} />
+          : failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
         {/* Not while the server is doing it (it would happen anyway), and not for a record write (it shows already). */}
         {(l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
           <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />

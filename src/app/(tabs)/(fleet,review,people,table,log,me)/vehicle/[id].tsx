@@ -358,11 +358,11 @@ export default function VehicleScreen() {
               try { await s.store!.vehicles.remove(v.id); router.back(); } catch { setErr(t('Couldn\'t remove the vehicle.')); }
             }} />
           ) : v.retired ? (
-            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, restore: true }, { title: t('Bring {van} back into the fleet', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }))} />
+            <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, expect: v.assignedTo?.assignmentId ?? null, restore: true }, { title: t('Bring {van} back into the fleet', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }))} />
           ) : (
             <Button v="danger" title={armed === 'retire' ? t('Tap again to retire') : t('Retire van')} loading={busy === 'retire'} onPress={() => {
               if (armed !== 'retire') { arm('retire'); return; }
-              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id }, { title: t('Retire {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
+              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, expect: v.assignedTo?.assignmentId ?? null }, { title: t('Retire {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
             }} />
           )}
         </Row>
@@ -404,7 +404,7 @@ function EditVehicle({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       });
       // Moving to another station ends the van's assignment (its driver stays at theirs): done on the server.
       if (station && station !== v.stationId) {
-        await sendCall('moveVan', { orgId: s.org!.id, vehicleId: v.id, stationId: station }, { title: t('Move {van} to {station}', { van: vanName(v), station: s.stationName(station) }), vehicleId: v.id, vehicleName: vanName(v) });
+        await sendCall('moveVan', { orgId: s.org!.id, vehicleId: v.id, stationId: station, expect: v.assignedTo?.assignmentId ?? null }, { title: t('Move {van} to {station}', { van: vanName(v), station: s.stationName(station) }), vehicleId: v.id, vehicleName: vanName(v) });
       }
       onDone();
     } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save the changes.')); } finally { setBusy(false); }

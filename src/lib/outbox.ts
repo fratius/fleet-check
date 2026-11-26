@@ -60,7 +60,10 @@ export const outbox = new Outbox({
     if (!j.rid) j.rid = newRid();
     const media = j.type === 'walk' ? { walkId: j.id } : { videoId: j.id };
     const base = { orgId: j.orgId, rid: j.rid };
-    if (th.fn === 'pickUpVan') return callServer('pickUpVan', { ...base, vehicleId: j.vehicleId, ...media }, 130000);
+    if (th.fn === 'pickUpVan') {
+      const pick = { ...(th.plate ? { plate: th.plate } : {}), ...(th.takeOver ? { takeOver: true } : {}), ...(th.expect !== undefined ? { expect: th.expect } : {}) };
+      return callServer('pickUpVan', { ...base, vehicleId: j.vehicleId, ...media, ...pick }, 130000);
+    }
     if (th.fn === 'dropOffVan') return callServer('dropOffVan', { ...base, vehicleId: j.vehicleId, ...media }, 130000);
     if (th.fn === 'addHandoverPhotos') return callServer('addHandoverPhotos', { ...base, assignmentId: th.assignmentId, kind: th.kind, walkId: j.id }, 70000);
     if (th.fn === 'addHandoverVideo') return callServer('addHandoverVideo', { ...base, assignmentId: th.assignmentId, kind: th.kind, videoId: j.id }, 130000);
@@ -190,10 +193,13 @@ export function pendingHandover(jobs: Job[], uid: string | null | undefined, veh
   return jobs.find((j) => j.uid === uid && j.vehicleId === vehicleId && j.what === what && (j.assignmentId || null) === (assignmentId || null)) || null;
 }
 
-const thenFor = (what: 'pickup' | 'dropoff' | 'walkaround', assignmentId: string | null, video: boolean): Then | null => {
+/** A driver's pick-up: the plate they gave, and their "take it over" with the handover their screen showed. */
+export interface PickInfo { plate: string; takeOver?: boolean; expect?: string | null }
+const thenFor = (what: 'pickup' | 'dropoff' | 'walkaround', assignmentId: string | null, video: boolean, pick?: PickInfo | null): Then | null => {
   if (what === 'walkaround') return video ? { fn: 'addVanVideo' } : null;
   if (assignmentId) return { fn: video ? 'addHandoverVideo' : 'addHandoverPhotos', assignmentId, kind: what };
-  return { fn: what === 'pickup' ? 'pickUpVan' : 'dropOffVan' };
+  if (what === 'dropoff') return { fn: 'dropOffVan' };
+  return { fn: 'pickUpVan', ...(pick ? { plate: pick.plate, ...(pick.takeOver ? { takeOver: true, expect: pick.expect ?? null } : {}) } : {}) };
 };
 
 /**
@@ -205,6 +211,7 @@ export async function queueWalk(o: {
   meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 | 3 | 4 };
   /** The walk-around's id, made on the phone when the first photo was taken (lib/walkdraft.ts): sent once, whatever is pressed. */
   id?: string;
+  pick?: PickInfo | null;
 }, onPrep?: (done: number, total: number) => void): Promise<string> {
   await ready();
   const id = o.id || newId();
@@ -230,7 +237,7 @@ export async function queueWalk(o: {
   const v = o.v, now = Date.now();
   await outbox.add({
     id, type: 'walk', what: o.what, orgId: o.orgId, uid: o.uid, vehicleId: v.id, vehicleName: v.name, assignmentId: o.assignmentId || null,
-    then: thenFor(o.what, o.assignmentId || null, false), createdAt: now, files, status: 'queued', rid: newRid(),
+    then: thenFor(o.what, o.assignmentId || null, false, o.pick), createdAt: now, files, status: 'queued', rid: newRid(),
     walk: {
       vehicleId: v.id, vehicleName: v.name, cls: v.cls, stationId: v.stationId, source: o.meta.source, createdAt: now, createdBy: o.uid,
       totalMs: o.meta.totalMs, frames: o.meta.frames, taken: o.shots.length, skipped: o.meta.skipped, retakes: o.meta.retakes, photos,
@@ -244,7 +251,7 @@ export async function queueWalk(o: {
 }
 
 /** Keeps a recorded video on the phone and puts it in the outbox with what it's for. Returns the video's id. */
-export async function queueVideo(o: { orgId: string; uid: string; v: Vehicle; rec: Recorded; what: 'pickup' | 'dropoff' | 'walkaround'; assignmentId?: string | null }): Promise<string> {
+export async function queueVideo(o: { orgId: string; uid: string; v: Vehicle; rec: Recorded; what: 'pickup' | 'dropoff' | 'walkaround'; assignmentId?: string | null; pick?: PickInfo | null }): Promise<string> {
   await ready();
   const id = newId();
   const name = `original.${o.rec.ext}`;
@@ -252,7 +259,7 @@ export async function queueVideo(o: { orgId: string; uid: string; v: Vehicle; re
   const key = await keepFile(id, name, o.rec.file ? { blob: o.rec.file } : { uri: o.rec.uri, move: Platform.OS !== 'web' });
   await outbox.add({
     id, type: 'video', what: o.what, orgId: o.orgId, uid: o.uid, vehicleId: o.v.id, vehicleName: o.v.name, assignmentId: o.assignmentId || null,
-    then: thenFor(o.what, o.assignmentId || null, true), createdAt: Date.now(), status: 'queued', rid: newRid(),
+    then: thenFor(o.what, o.assignmentId || null, true, o.pick), createdAt: Date.now(), status: 'queued', rid: newRid(),
     files: [{ key, path: `orgs/${o.orgId}/videos/${o.uid}/${id}/${name}`, mime: o.rec.mime, size: o.rec.size ?? (await keptSize(key)) }],
   });
   return id;

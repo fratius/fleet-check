@@ -102,9 +102,14 @@ export default function Fleet() {
         </Pressable>
       ) : null}
       {!s.staff ? <Notifications prompt /> : null}
-      {!s.staff && !s.myVan && s.mode === 'firebase' && s.myStations.some((st) => st.selfAssign) ? (
-        <Notice text={t('Pick up the van you were told to take: open it below and record a video walking around it (or take its photos). When you bring it back, drop it off the same way.')} />
-      ) : null}
+      {/* Drivers see only their own van (blind test, 26 Nov 2026, cause 3a): another van is picked up by its plate. */}
+      {!s.staff && !s.myVan && s.mode === 'firebase' ? (s.myStations.some((st) => st.selfAssign) ? (
+        <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>
+          <T v="h2" color="#000">{t('Pick up a van')}</T>
+          <T color="#000">{t('Take a photo of the number plate of the van you were told to take, or type it. Then walk around it with the camera.')}</T>
+          <Button v="primary" wide title={t('Pick up a van')} onPress={() => router.push('/pickup')} />
+        </View>
+      ) : <Notice text={t('You don\'t have a van now. Your fleet manager gives you one.')} />) : null}
       {s.mode === 'firebase' && s.user ? (
         <Button small v="link" title={s.staff ? t('Your own van history') : t('Your record, tours and vans')} onPress={() => router.push(`/person/${s.user!.uid}`)} style={{ alignSelf: 'flex-start' }} />
       ) : null}
@@ -120,7 +125,7 @@ export default function Fleet() {
         <T v="hint">{show === 'free' ? t('Every van has a driver.') : show === 'taken' ? t('No van has a driver yet. Open a van to give it to one.') : t('Nothing here.')}</T>
       ) : null}
       {!s.loaded.vehicles ? <ActivityIndicator color={c.ink} style={{ marginTop: 24 }} /> : null}
-      {s.loaded.vehicles && !count ? (
+      {s.loaded.vehicles && !count && s.staff ? (
         <Card dashed>
           {canAdd ? (
             <>
