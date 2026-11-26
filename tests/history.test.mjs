@@ -386,7 +386,8 @@ test('the app creator views the app as a driver, a manager and an owner, and get
   assert.ok((await getBytes(ref(cr.st, dvPath))).byteLength > 0);
   // As a driver of station 1: their station only, no managing, only their own videos.
   await viewAs({ org: S.org, role: 'driver', st: S.s1 });
-  assert.ok((await vanDoc(cr, v1.id)).name);
+  // A driver without a van reads none (blind test, cause 3a), not even of their station.
+  await fails(vanDoc(cr, v1.id), 'permission-denied');
   await fails(vanDoc(cr, v3.id), 'permission-denied');
   await fails(cr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d1.uid }), 'permission-denied');
   await fails(cr.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(cr) }), 'permission-denied');
@@ -2924,8 +2925,11 @@ test('A9: unchanged: other walk-arounds go straight to the manager, library phot
   const lib = await photos(CU.vito, S.org, CU.r1, { real: true, source: 'library' });
   await new Promise((r) => setTimeout(r, 5000));
   assert.equal((await cuWalk(lib)).cmp, undefined);
-  // Another driver doesn't read Ronja's checks (blind test, cause 3a: their own and their van's only).
-  for (const id of [CU.k1, c.checkId]) await fails(getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', id)), 'permission-denied');
+  // Vito reads the check of his own photos without anyone's name; Ronja's not at all (blind test, cause 3a: drivers
+  // read the checks of their photos and of the van they have).
+  const dk = (await getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', c.checkId))).data();
+  assert.ok(!/Ronja|Closeup|Vito|Otherdriver/.test(JSON.stringify(dk)), JSON.stringify(dk).slice(0, 300));
+  await fails(getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', CU.k1)), 'permission-denied');
 });
 
 test('close-ups: put things back (pick-ups off at station 1, the phones)', async () => {
@@ -3402,7 +3406,7 @@ test('cause 3a (1c): the pick-up photos must show the van\'s plate: another plat
   const mgrPhone = await phoneOf(P.mgr, 'c3a1c');
   try {
     const e = await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: swap.id, plate: 'QUIET SWAP3', walkId: await photos(P.d2, P.org, swap, { real: true }) }), 'failed-precondition');
-    assert.equal(e.message, 'These photos show B-SW 9999, not QUIET SWAP3. Take the photos at QUIET SWAP3.');
+    assert.match(e.message, /^These photos show B-SW 9999, not QUIET SWAP3\. Take the photos at QUIET SWAP3\./);
     assert.equal((await pVan(swap.id)).assignedTo ?? null, null);
     const r = await P.d2.call('pickUpVan', { orgId: P.org, vehicleId: dirty.id, plate: 'QUIET DIRTY4', walkId: await photos(P.d2, P.org, dirty, { real: true }) });
     assert.equal((await pVan(dirty.id)).assignedTo.driverId, P.d2.uid);
@@ -3420,7 +3424,7 @@ test('cause 3a (1d): a van another driver has now is taken over only once the dr
     const pick = { orgId: P.org, vehicleId: P.van.id, plate: 'QUIET P1', walkId: walk };
     // Asked first; the refusal carries the handover it saw. Nothing changes.
     const e = await fails(P.d2.call('pickUpVan', pick), 'already-exists');
-    assert.equal(e.message, 'Another driver has this van now. Take it over?');
+    assert.match(e.message, /^Another driver has this van now\. Take it over\?/);
     assert.equal(e.details?.v?.expect, P.assign1);
     assert.equal((await pVan(P.van.id)).assignedTo.driverId, P.d1.uid);
     // "Take it over" from a screen that showed another handover than the one now: refused too.

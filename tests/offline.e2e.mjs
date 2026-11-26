@@ -417,7 +417,11 @@ async function signoutCompany() {
   b.set(db.doc(`orgs/${ORG_S}/members/${m.uid}`), { role: 'manager', stationIds: [ST_S], email: SO_MGR.email, name: SO_MGR.name, joinedAt: now });
   b.set(db.doc(`orgs/${ORG_S}/members/${d.uid}`), { role: 'driver', stationIds: [ST_S], email: SO_DRV.email, name: SO_DRV.name, joinedAt: now });
   b.set(db.doc(`orgs/${ORG_S}/stations/${ST_S}`), { name: 'Main station', code: 'DBE5', createdAt: now });
-  b.set(db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`), { name: 'Van S', plate: 'B-SO 1', cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: ST_S, createdAt: now, createdBy: OWNER.uid, scanId: null });
+  // Dora has the van (drivers see only the van they have: blind test, cause 3a).
+  b.set(db.doc(`orgs/${ORG_S}/vehicles/${VAN_S}`), { name: 'Van S', plate: 'B-SO 1', cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', stationId: ST_S, createdAt: now, createdBy: OWNER.uid, scanId: null,
+    assignedTo: { assignmentId: 'soA1', driverId: d.uid, since: now, kmStart: null, kmEnd: null } });
+  b.set(db.doc(`orgs/${ORG_S}/assignments/soA1`), { vehicleId: VAN_S, vehicleName: 'B-SO 1', plate: 'B-SO 1', driverId: d.uid, driverName: SO_DRV.name, stationId: ST_S, start: now, end: null,
+    startedBy: m.uid, startedByName: SO_MGR.name, endedBy: null, endedByName: null, endReason: null, createdAt: now });
   for (const [u, who] of [[m, SO_MGR], [d, SO_DRV]]) b.set(db.doc(`users/${u.uid}`), { orgIds: [ORG_S], orgId: ORG_S, email: who.email, name: who.name });
   await b.commit();
   SO_MGR.uid = m.uid; SO_DRV.uid = d.uid;

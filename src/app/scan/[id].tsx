@@ -69,6 +69,9 @@ export default function ScanScreen() {
   const own = s.vehicles.find((x) => x.id === id);
   const picking = ho === 'pickup' && !assignment && !own;
   const { pv, err: pickErr } = usePickVan(picking ? id : null, picking ? plate || null : null);
+  // Kept once sent: the van is the driver's soon after, and the camera still goes where a pick-up by plate goes.
+  const byPlate = useRef(false);
+  useEffect(() => { if (picking) byPlate.current = true; }, [picking]);
   const v = own || pv?.van;
   const pick: PickInfo | null = ho === 'pickup' && !assignment && (plate || pv?.plate || own?.plate)
     ? { plate: (plate || pv?.plate || own?.plate)!, ...(takeOver === '1' ? { takeOver: true, expect: expect || null } : {}) } : null;
@@ -154,9 +157,12 @@ export default function ScanScreen() {
     }
     // A pick-up by the plate: to the Vans tab, which shows it on its way and then the van (not back to the plate page,
     // which would offer the same pick-up again).
-    if (picking) { router.dismissTo('/'); return; }
+    if (byPlate.current) {
+      if (router.canGoBack()) { router.back(); setTimeout(() => router.dismissTo('/'), 0); } else router.replace('/');
+      return;
+    }
     if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
-  }, [sent, walkId, ho, id, picking]);
+  }, [sent, walkId, ho, id]);
   // Opening: the draft of this walk-around, if one is kept on the phone, or (a pick-up or drop-off) the one already
   // on its way from this phone (pressed, then the page reloaded).
   useEffect(() => {

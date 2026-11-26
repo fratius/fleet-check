@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 import { takePhoto } from '@/components/dash';
 import { Button, Card, Field, Notice, Plate, Row, Screen, T, useColors } from '@/components/ui';
@@ -27,6 +27,8 @@ export default function PickUp() {
   const [takeOver, setTakeOver] = useState(false);
   const title = <Stack.Screen options={{ title: t('Pick up a van') }} />;
   if (s.staff) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Fleet managers give out vans from the van\'s page.')}</T></Card></Screen>;
+  // Until the session knows whether they have a van (the page opened by its address).
+  if (!s.loaded.vehicles) return <Screen edges={[]}>{title}<ActivityIndicator color={c.ink} /></Screen>;
   if (s.myVan) {
     return <Screen edges={[]}>{title}<Notice text={t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(s.myVan) })} /></Screen>;
   }
@@ -80,7 +82,7 @@ export default function PickUp() {
             <View style={{ gap: 8 }}>
               <Button v="primary" wide title={t('Take the photos to pick it up')} onPress={go} />
               <VideoHandover v={found.van} kind="pickup" title={t('Record a video instead')} wide
-                pick={{ plate: found.plate, ...(takeOver ? { takeOver: true, expect: found.expect } : {}) }} onDone={() => router.replace('/')} />
+                pick={{ plate: found.plate, ...(takeOver ? { takeOver: true, expect: found.expect } : {}) }} onDone={() => router.dismissTo('/')} />
             </View>
           ) : null}
         </Card>
