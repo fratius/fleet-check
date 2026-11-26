@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
@@ -10,16 +10,20 @@ import { F, MARKER, Svg, mmss, hs } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
-import { outbox, queueWalk, useOutbox } from '@/lib/outbox';
+import { outbox, outboxReady, queueWalk, useOutbox } from '@/lib/outbox';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
-import { upright } from '@/lib/images';
+import { newId, upright } from '@/lib/images';
+import { draftKey, dropDraft, keepDraftPhoto, loadDraft, saveDraft, type DraftSlot, type WalkDraft } from '@/lib/walkdraft';
 import { ISSUE_TEXT, checkPhoto } from '@/lib/quality';
 import type { PhotoQuality } from '@/lib/types';
 import { loc, t, tp, lang } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
 
 type Slot = LocalShot | 'skip' | null;
+/** What the camera needs of the navigator: to hold a "back" until the driver chose what happens to the photos. */
+type LeaveEvent = { preventDefault(): void; data: { action: unknown } };
+type Nav = { addListener(type: 'beforeRemove', cb: (e: LeaveEvent) => void): () => void; dispatch(action: never): void };
 
 function Btn({ title, onPress, kind = 'outline', disabled }: { title: string; onPress: () => void; kind?: 'outline' | 'marker' | 'ghost' | 'armed'; disabled?: boolean }) {
   const bg = kind === 'marker' ? MARKER : kind === 'armed' ? '#FF8A80' : 'transparent';
@@ -76,8 +80,9 @@ export default function ScanScreen() {
   const [phase, setPhase] = useState<'aim' | 'review' | 'summary' | 'saving'>('aim');
   const [torch, setTorch] = useState(false);
   const [retakes, setRetakes] = useState(0);
+  const retakesNow = useRef(0);
+  useEffect(() => { retakesNow.current = retakes; }, [retakes]);
   const [fromSummary, setFromSummary] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [busyShot, setBusyShot] = useState(false);
   const [progress, setProgress] = useState('');
   const [saveErr, setSaveErr] = useState<string | null>(null);
@@ -88,6 +93,38 @@ export default function ScanScreen() {
   const live = walkId ? ob.live.get(walkId) : undefined;
   // Through (also when another tab of the web app sent it: then it's just gone from the list).
   const sent = !!walkId && (ob.done.has(walkId) || !job);
+  // The draft on the phone (lib/walkdraft.ts): every used photo is kept at once, so a reload or a closed app loses
+  // nothing, and its id becomes the walk-around's, so it's sent once whatever is pressed (product owner, 2026-11-26).
+  const what = ho || 'walkaround';
+  const dkey = s.mode === 'firebase' && s.user && s.org && id ? draftKey({ uid: s.user.uid, orgId: s.org.id, vehicleId: id, what, assignmentId: assignment || null }) : null;
+  const draft = useRef<WalkDraft | null>(null);
+  const kept = useRef(new Map<number, { key: string; uri: string }>());
+  const keeping = useRef<Promise<void>>(Promise.resolve());
+  // Which draft was looked for (the account may load a moment after the screen).
+  const [restoredFor, setRestoredFor] = useState<string | null>(null);
+  // (The real app looks first; test mode keeps no drafts.)
+  const restored = s.mode !== 'firebase' || !id || (!!dkey && restoredFor === dkey);
+  const [resumed, setResumed] = useState<{ kept: number; dropped: number } | null>(null);
+  // Leaving with photos that aren't sent asks first: send, keep taking, or throw away (nothing is lost silently).
+  const [leave, setLeave] = useState(false);
+  const allowLeave = useRef(false);
+  const leaveAction = useRef<unknown>(null);
+  const nav = useNavigation() as unknown as Nav;
+  const dirty = !walkId && slots.some((x) => !!x && x !== 'skip');
+  const dirtyRef = useRef(false);
+  useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
+  // The iPhone's back swipe and the Android back button ask too. A browser's own back button can't be held (the
+  // navigator lets it through on the web): there, as when the app or tab is closed, the draft keeps every photo and
+  // the camera continues with them next time.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    return nav.addListener('beforeRemove', (e) => {
+      if (allowLeave.current || !dirtyRef.current) return;
+      e.preventDefault();
+      leaveAction.current = e.data.action;
+      setLeave(true);
+    });
+  }, [nav]);
   const t0 = useRef(Date.now());
   const ft0 = useRef(Date.now());
   const totalMs = useRef<number | null>(null);
@@ -97,16 +134,64 @@ export default function ScanScreen() {
   // The space between the header and the controls, measured, so the camera box never covers either.
   const [area, setArea] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
-  // Through: a walk-around opens (in the tab you came from); a pick-up or drop-off goes back to the van.
+  // Through: a walk-around opens (in the tab you came from); a pick-up or drop-off goes back to the van. Opened by a
+  // link or after a reload there is nothing to go back to: then the van's (or walk-around's) page opens instead.
   useEffect(() => {
     if (!sent || !walkId) return;
-    router.back();
-    if (!ho) setTimeout(() => router.push(`/walk/${walkId}`), 0);
-  }, [sent, walkId, ho]);
+    allowLeave.current = true;
+    if (!ho) {
+      if (router.canGoBack()) { router.back(); setTimeout(() => router.push(`/walk/${walkId}`), 0); } else router.replace(`/walk/${walkId}`);
+      return;
+    }
+    if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
+  }, [sent, walkId, ho, id]);
+  // Opening: the draft of this walk-around, if one is kept on the phone, or (a pick-up or drop-off) the one already
+  // on its way from this phone (pressed, then the page reloaded).
+  useEffect(() => {
+    if (!dkey || !frames.length || restored) return;
+    let gone = false;
+    (async () => {
+      await outboxReady();
+      const got = await loadDraft(dkey, frames.length, !!ho);
+      if (gone) return;
+      const busy = ho ? outbox.jobs.find((j) => j.type === 'walk' && j.vehicleId === id && j.what === ho && j.uid === s.user?.uid) : undefined;
+      if (got && (outbox.jobs.some((j) => j.id === got.draft.id) || outbox.done.has(got.draft.id))) {
+        await dropDraft(dkey, got.draft);
+        setWalkId(got.draft.id); setPhase('summary');
+      } else if (got) {
+        draft.current = got.draft;
+        got.slots.forEach((x, k) => { const d = got.draft.slots[k]; if (x && x !== 'skip' && d && d !== 'skip') kept.current.set(d.n, { key: d.key, uri: x.uri }); });
+        setSlots(got.slots); setRetakes(got.draft.retakes);
+        t0.current = Date.now() - (got.draft.elapsedMs || 0); totalMs.current = got.draft.totalMs;
+        const first = got.slots.findIndex((x) => !x);
+        if (first < 0) setPhase('summary'); else setI(first);
+        setResumed({ kept: got.slots.filter((x) => !!x && x !== 'skip').length, dropped: got.dropped });
+      } else if (busy) {
+        setWalkId(busy.id); setPhase('summary');
+      }
+    })().catch((e) => console.warn('Draft not read', e)).finally(() => { if (!gone) setRestoredFor(dkey); });
+    return () => { gone = true; };
+  }, [dkey, frames.length, restored, ho, id, s.user?.uid]);
 
+
+  const goAway = () => {
+    allowLeave.current = true;
+    if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
+  };
 
   if (!v || !sp) {
-    return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={() => router.back()} /></Shell>;
+    return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={goAway} /></Shell>;
+  }
+  if (!restored) return <Shell style={{ justifyContent: 'center' }}><ActivityIndicator color="#fff" /></Shell>;
+  // A pick-up or drop-off the server would refuse says so before any photo (blind tester: a drop-off camera of a van
+  // the driver no longer had took 12 photos and only then refused).
+  if (ho && !assignment && !walkId && s.user) {
+    const me = s.user.uid;
+    const mine = s.vehicles.find((x) => !x.retired && x.assignedTo?.driverId === me);
+    const why = ho === 'dropoff' ? (v.assignedTo?.driverId !== me ? t('You don\'t have this van.') : null)
+      : mine?.id === v.id ? t('You have {van}.', { van: vanName(v) })
+        : mine ? t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(mine) }) : null;
+    if (why) return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{why}</Text><Btn title={t('Close')} onPress={goAway} /></Shell>;
   }
   const f = frames[i];
   const taken = slots.filter((x) => x && x !== 'skip').length;
@@ -121,10 +206,42 @@ export default function ScanScreen() {
     : wide || (i > 0 && frames[i - 1].orient === 'landscape') ? t('Hold the phone upright.') : null;
 
   const close = () => {
-    if (phase === 'summary' || !slots.some(Boolean)) { router.back(); return; }
-    if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
-    router.back();
+    if (!dirty) { goAway(); return; }
+    leaveAction.current = null;
+    setLeave(true);
   };
+  /** Keeps the photos as they are now on the phone (one at a time, in order). */
+  const keep = (next: Slot[]) => {
+    if (!dkey) return;
+    const dk = dkey;
+    keeping.current = keeping.current.then(async () => {
+      if (!draft.current) draft.current = { id: newId(), slots: [], retakes: 0, elapsedMs: 0, totalMs: null, savedAt: Date.now() };
+      const d = draft.current;
+      const out: DraftSlot[] = [];
+      for (const x of next) {
+        if (!x || x === 'skip') { out.push(x); continue; }
+        let k = kept.current.get(x.n);
+        if (!k || k.uri !== x.uri) { k = { key: await keepDraftPhoto(d.id, x.n, x.uri), uri: x.uri }; kept.current.set(x.n, k); }
+        const { uri: _uri, ...rest } = x;
+        out.push({ ...rest, key: k.key });
+      }
+      if (draft.current !== d) return; // sent or thrown away meanwhile
+      draft.current = { ...d, slots: out, retakes: retakesNow.current, elapsedMs: Date.now() - t0.current, totalMs: totalMs.current };
+      await saveDraft(dk, draft.current);
+    }).catch((e) => console.warn('Photo not kept on this phone', e));
+  };
+  const throwAway = async () => {
+    setLeave(false);
+    await keeping.current;
+    const d = draft.current;
+    draft.current = null;
+    if (dkey) await dropDraft(dkey, d).catch(() => {});
+    allowLeave.current = true;
+    const a = leaveAction.current;
+    leaveAction.current = null;
+    if (a) nav.dispatch(a as never); else goAway();
+  };
+  const stay = () => { setLeave(false); leaveAction.current = null; };
   const goTo = (k: number, summary?: boolean) => {
     if (walkId) return; // saved and on its way
     checkSeq.current++; setQuality(null);
@@ -164,14 +281,15 @@ export default function ScanScreen() {
       retakes: prev && prev !== 'skip' ? (prev.retakes || 0) + 1 : 0, q: quality && quality !== 'checking' ? quality : null };
     checkSeq.current++; setQuality(null);
     if (prev && prev !== 'skip') setRetakes((r) => r + 1);
-    const next = slots.slice(); next[i] = shot; setSlots(next); setPending(null);
+    const next = slots.slice(); next[i] = shot; setSlots(next); setPending(null); setResumed(null);
+    keep(next);
     advance(next);
   };
   const retake = () => { checkSeq.current++; setQuality(null); setPending(null); setRetakes((r) => r + 1); setPhase('aim'); };
-  const skip = () => { const next = slots.slice(); next[i] = 'skip'; setSlots(next); advance(next); };
+  const skip = () => { const next = slots.slice(); next[i] = 'skip'; setSlots(next); keep(next); advance(next); };
   const save = async () => {
     const shots = slots.filter((x): x is LocalShot => !!x && x !== 'skip');
-    if (!shots.length) { router.back(); return; }
+    if (!shots.length) { goAway(); return; }
     if (ho && shots.length < frames.length) return;
     if (job) { outbox.retry(job.id); return; }
     setPhase('saving'); setSaveErr(null);
@@ -182,15 +300,23 @@ export default function ScanScreen() {
       setProgress(t('Saving'));
       try {
         const wid = await saveWalk(s.store!, v, s.user?.uid ?? null, shots, meta);
-        router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0);
+        allowLeave.current = true;
+        if (router.canGoBack()) { router.back(); setTimeout(() => router.push(`/walk/${wid}`), 0); } else router.replace(`/walk/${wid}`);
       } catch { setPhase('summary'); setSaveErr(t('Couldn\'t save the photos.')); }
       return;
     }
     // Kept on the phone first (made smaller), then they upload by themselves, with or without a connection.
     setProgress(t('Saving the photos on this phone…'));
     try {
-      setWalkId(await queueWalk({ orgId: s.org!.id, uid: s.user!.uid, v, shots, what: ho || 'walkaround', assignmentId: assignment || null, meta },
-        (d, n) => setProgress(t('Saving {done} of {total} on this phone', { done: d, total: n }))));
+      // Every photo kept first, so the walk-around takes the draft's id: one walk-around, however often this is pressed.
+      await keeping.current;
+      const wid = await queueWalk({ orgId: s.org!.id, uid: s.user!.uid, v, shots, what: ho || 'walkaround', assignmentId: assignment || null, meta, id: draft.current?.id },
+        (d, n) => setProgress(t('Saving {done} of {total} on this phone', { done: d, total: n })));
+      // Now in the outbox with its own copy of the photos: the draft goes.
+      const d = draft.current;
+      draft.current = null;
+      if (dkey) await dropDraft(dkey, d).catch(() => {});
+      setWalkId(wid);
       setPhase('summary');
     } catch {
       setPhase('summary'); setSaveErr(t('Couldn\'t save the photos on this phone. Try again.'));
@@ -199,7 +325,7 @@ export default function ScanScreen() {
   const header = (
     <View style={{ paddingHorizontal: 12, paddingTop: 6, gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Btn title={armed ? t('Tap again to stop') : phase === 'summary' ? t('Done') : t('Close')} kind={armed ? 'armed' : 'outline'} onPress={close} />
+        <Btn title={t('Close')} onPress={close} />
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={st.step} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? vanName(v) : t('{van}, frame {n} of {total}', { van: vanName(v), n: f.n, total: frames.length })}</Text>
           <Text style={st.name} numberOfLines={1}>{phase === 'summary' || phase === 'saving' ? (ho === 'pickup' ? t('Pick-up photos') : ho === 'dropoff' ? t('Drop-off photos') : t('Walk-around done')) : t(f.label)}</Text>
@@ -214,8 +340,28 @@ export default function ScanScreen() {
               borderWidth: k === i && phase !== 'summary' ? 2 : 0, borderColor: '#fff' }} />;
         })}
       </View>
+      {resumed && !walkId ? (
+        <Text style={st.note}>
+          {tp(resumed.kept, 'Continued where you stopped: {n} photo kept.', 'Continued where you stopped: {n} photos kept.')}
+          {resumed.dropped ? ` ${tp(resumed.dropped, '{n} photo was more than two hours old: take it again.', '{n} photos were more than two hours old: take them again.')}` : ''}
+        </Text>
+      ) : null}
     </View>
   );
+  const canSend = ho ? taken === frames.length : taken > 0;
+  const sendTitle = ho ? (assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: vanName(v) }) : t('Drop off {van}', { van: vanName(v) }))
+    : tp(taken, 'Save {n} photo', 'Save {n} photos');
+  const sheet = leave ? (
+    <View style={st.sheetBack}>
+      <View accessibilityViewIsModal style={st.sheet}>
+        <Text style={st.name}>{tp(taken, '{n} photo isn\'t sent yet.', '{n} photos aren\'t sent yet.')}</Text>
+        <Text style={st.note}>{t('Photos you keep stay on this phone, also if the app closes.')}</Text>
+        {canSend ? <Btn title={sendTitle} kind="marker" onPress={() => { stay(); save(); }} /> : null}
+        <Btn title={canSend ? t('Back to the photos') : t('Keep taking photos')} onPress={stay} />
+        <Btn title={tp(taken, 'Throw away {n} photo', 'Throw away {n} photos')} kind="ghost" onPress={throwAway} />
+      </View>
+    </View>
+  ) : null;
 
   if (!perm) return <Shell style={{ justifyContent: 'center' }}><ActivityIndicator color="#fff" /></Shell>;
   if (!perm.granted) {
@@ -224,7 +370,7 @@ export default function ScanScreen() {
         <Text style={st.name}>{t('Camera access')}</Text>
         <Text style={st.msg}>{t('The walk-around uses the camera with an outline to fit the vehicle into.')}</Text>
         <Btn title={perm.canAskAgain ? t('Allow camera') : t('Open Settings to allow the camera')} kind="marker" onPress={() => requestPerm()} />
-        <Btn title={t('Close')} kind="ghost" onPress={() => router.back()} />
+        <Btn title={t('Close')} kind="ghost" onPress={goAway} />
       </Shell>
     );
   }
@@ -271,23 +417,22 @@ export default function ScanScreen() {
               {job.status === 'failed' && job.walkSaved && job.then ? <Text style={st.note}>{t('The photos are saved as a walk-around.')}</Text> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
-                <Btn title={t('Close')} kind={job.status === 'failed' ? 'ghost' : 'outline'} onPress={() => router.back()} />
+                <Btn title={t('Close')} kind={job.status === 'failed' ? 'ghost' : 'outline'} onPress={goAway} />
               </View>
             </>
           ) : phase === 'saving' ? (
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}><ActivityIndicator color={MARKER} /><Text style={st.msg}>{progress}</Text></View>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {ho ? (
-                <Btn title={assignment ? t('Save the pick-up photos') : ho === 'pickup' ? t('Pick up {van}', { van: vanName(v) }) : t('Drop off {van}', { van: vanName(v) })} kind="marker" disabled={taken < frames.length} onPress={save} />
-              ) : taken ? <Btn title={tp(taken, 'Save {n} photo', 'Save {n} photos')} kind="marker" onPress={save} /> : null}
-              <Btn title={t('Discard')} kind="ghost" onPress={() => router.back()} />
+              {ho || taken ? <Btn title={sendTitle} kind="marker" disabled={!canSend} onPress={save} /> : null}
+              <Btn title={t('Discard')} kind="ghost" onPress={close} />
             </View>
           )}
           <Text style={st.note}>{ho ? (ho === 'pickup' ? t('The photos show the van\'s state when you took it, so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.')
             : t('The photos show the van\'s state when you brought it back, so damage that was already there isn\'t put on you. They\'re kept with the van\'s history.'))
             : s.mode === 'firebase' ? t('Photos upload to your company\'s storage, so the walk-around is kept as evidence.') : t('Firebase isn\'t connected yet, so photos stay on this phone.')}</Text>
         </ScrollView>
+        {sheet}
       </Shell>
     );
   }
@@ -347,6 +492,7 @@ export default function ScanScreen() {
         )}
       </View>
       </View>
+      {sheet}
     </Shell>
   );
 }
@@ -366,6 +512,8 @@ const makeSheet = () => StyleSheet.create({
   badge: { position: 'absolute', left: 4, top: 4, backgroundColor: MARKER, borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   badgeT: { fontFamily: F.condBold, fontSize: hs(14), color: '#000' },
   thumbL: { fontFamily: F.cond, fontSize: hs(15), color: '#fff', marginTop: 4 },
+  sheetBack: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.78)', justifyContent: 'flex-end', padding: 16 },
+  sheet: { backgroundColor: '#16181C', borderRadius: 6, padding: 16, gap: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
 });
 
 const sheets = new Map<string, ReturnType<typeof makeSheet>>();

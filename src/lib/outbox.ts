@@ -8,6 +8,7 @@ import { flash } from './flash';
 import { t } from './i18n';
 import { newId, prepare, putBlob } from './images';
 import { dropKept, keepFile, keptBlob, keptSize, sweepKept } from './keep';
+import { pruneDrafts } from './walkdraft';
 import { nap, netKind, retrying } from './net';
 import { Outbox, staleRecord, type Change, type Job, type Live, type OutFile, type Then } from './outboxcore';
 import { AiError, ai, callServer, newRid, setWriter, whyFailed } from './store';
@@ -40,7 +41,17 @@ export const outbox = new Outbox({
     if (again && (await getDocFromServer(r)).exists()) return;
     // Without a connection the write waits in Firestore and goes through when it's back.
     const slow = setTimeout(() => onStall(true), 10_000);
-    try { await setDoc(r, JSON.parse(JSON.stringify(j.walk))); } finally { clearTimeout(slow); onStall(false); }
+    try {
+      await setDoc(r, JSON.parse(JSON.stringify(j.walk)));
+    } catch (e) {
+      // The same walk-around is already there (sent before under the same id, lib/walkdraft.ts): the rules refuse a
+      // second write. Its own record by this person counts as saved; anything else is a real refusal.
+      if ((e as { code?: string })?.code === 'permission-denied') {
+        const there = await getDocFromServer(r).catch(() => null);
+        if (there?.exists() && there.data()?.createdBy === j.uid) return;
+      }
+      throw e;
+    } finally { clearTimeout(slow); onStall(false); }
   },
   async server(j, onStall) {
     if (j.change) return sendChange(j, onStall);
@@ -85,6 +96,8 @@ export const outbox = new Outbox({
 });
 
 let loading: Promise<void> | null = null;
+/** Resolves once the list saved on the phone is read (a screen that must know what's already waiting). */
+export const outboxReady = () => ready();
 /** Reads the list saved on the phone (once). */
 function ready() {
   if (!loading) {
@@ -92,6 +105,7 @@ function ready() {
       const list = JSON.parse(raw || '[]');
       if (Array.isArray(list)) outbox.load(list as Job[]);
       await sweepKept(new Set(outbox.jobs.map((j) => j.id)));
+      await pruneDrafts();
     }).catch(() => {});
   }
   return loading;
@@ -189,9 +203,13 @@ const thenFor = (what: 'pickup' | 'dropoff' | 'walkaround', assignmentId: string
 export async function queueWalk(o: {
   orgId: string; uid: string; v: Vehicle; shots: LocalShot[]; what: 'pickup' | 'dropoff' | 'walkaround'; assignmentId?: string | null;
   meta: { source: 'camera' | 'library'; frames: number; skipped: number; retakes: number; totalMs: number | null; overlay?: 2 | 3 | 4 };
+  /** The walk-around's id, made on the phone when the first photo was taken (lib/walkdraft.ts): sent once, whatever is pressed. */
+  id?: string;
 }, onPrep?: (done: number, total: number) => void): Promise<string> {
   await ready();
-  const id = newId();
+  const id = o.id || newId();
+  // Already on its way or through (a second press, or the same draft after a reload): the same walk-around, not a copy.
+  if (o.id && (outbox.jobs.some((j) => j.id === id) || outbox.done.has(id))) return id;
   const files: OutFile[] = [];
   const photos: Photo[] = [];
   try {

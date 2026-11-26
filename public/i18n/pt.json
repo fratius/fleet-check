@@ -238,6 +238,7 @@
  "Automatic damage comparison is off for this company.": "A comparação automática de danos está desligada nesta empresa.",
  "Back": "Voltar",
  "Back to me": "Voltar ao meu perfil",
+ "Back to the photos": "Voltar às fotos",
  "Back to {title}": "Voltar a {title}",
  "Balanced": "Equilibrado",
  "Battery": "Bateria",
@@ -426,6 +427,10 @@
  "Contact": "Contacto",
  "Continue": "Continuar",
  "Continue in the browser": "Continuar no navegador",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Continuou onde parou: {n} foto guardada.",
+  "other": "Continuou onde parou: {n} fotos guardadas."
+ },
  "Contract": "Contrato",
  "Contract number": "Número do contrato",
  "Contract, start date and, when they leave, the last working day.": "Contrato, data de início e, quando sair, o último dia de trabalho.",
@@ -952,6 +957,7 @@
  "Just looking?": "Só quer experimentar?",
  "Keep filming: at least {n} seconds.": "Continue a filmar: pelo menos {n} segundos.",
  "Keep it": "Manter",
+ "Keep taking photos": "Continuar a tirar fotos",
  "Keeping the photos": "Conservação das fotos",
  "Keeping the video": "Conservação do vídeo",
  "Kept until {date}, 90 days after they were taken.": "Conservação até {date}, 90 dias após a captura.",
@@ -1464,6 +1470,7 @@
  "Photos from the library": "Fotos da galeria",
  "Photos taken": "Fotos tiradas",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "As fotos são enviadas para o armazenamento da sua empresa, para que a volta de inspeção fique guardada como prova.",
+ "Photos you keep stay on this phone, also if the app closes.": "As fotos que guardar ficam neste telemóvel, mesmo que a app feche.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotos, vídeos e alterações são guardados primeiro neste telefone e depois enviados. Sem ligação, aguardam aqui e seguem sozinhos, para que nada tenha de ser feito duas vezes. Mantenha a app aberta ou volte a abri-la mais tarde.",
  "Pick a day: {field}": "Escolher um dia: {field}",
  "Pick a month: {field}": "Escolher um mês: {field}",
@@ -2259,6 +2266,10 @@
  "This walk-around was compared already.": "Esta volta de inspeção já foi comparada.",
  "This walk-around was deleted.": "Esta volta de inspeção foi apagada.",
  "This year": "Este ano",
+ "Throw away {n} photos": {
+  "one": "Descartar {n} foto",
+  "other": "Descartar {n} fotos"
+ },
  "Tick all": "Marcar todas",
  "Tick the vans to add first.": "Marque primeiro as carrinhas a adicionar.",
  "Time": "Hora",
@@ -3071,6 +3082,10 @@
   "one": "{n} foto",
   "other": "{n} fotos"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} foto ainda não foi enviada.",
+  "other": "{n} fotos ainda não foram enviadas."
+ },
  "{n} photos compared": {
   "many": "{n} fotos comparadas",
   "one": "{n} foto comparada",
@@ -3097,6 +3112,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} foto neste tipo de veículo ({cls}).",
   "other": "{n} fotos neste tipo de veículo ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} foto tinha mais de duas horas: tire-a novamente.",
+  "other": "{n} fotos tinham mais de duas horas: tire-as novamente."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} foto, cerca de {min} min.",

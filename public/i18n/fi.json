@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Automaattinen vauriovertailu on pois päältä tässä yrityksessä.",
  "Back": "Takaisin",
  "Back to me": "Takaisin omaan rooliin",
+ "Back to the photos": "Takaisin kuviin",
  "Back to {title}": "Takaisin: {title}",
  "Balanced": "Tasapainoinen",
  "Battery": "Akku",
@@ -419,6 +420,10 @@
  "Contact": "Yhteyshenkilö",
  "Continue": "Jatka",
  "Continue in the browser": "Jatka selaimessa",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Jatkettu siitä, mihin jäit: {n} kuva säilytetty.",
+  "other": "Jatkettu siitä, mihin jäit: {n} kuvaa säilytetty."
+ },
  "Contract": "Sopimus",
  "Contract number": "Sopimusnumero",
  "Contract, start date and, when they leave, the last working day.": "Sopimus, aloituspäivä ja lähtiessä viimeinen työpäivä.",
@@ -943,6 +948,7 @@
  "Just looking?": "Tutustutko vain?",
  "Keep filming: at least {n} seconds.": "Jatka kuvaamista: vähintään {n} sekuntia.",
  "Keep it": "Pidä se",
+ "Keep taking photos": "Jatka kuvaamista",
  "Keeping the photos": "Kuvien säilytys",
  "Keeping the video": "Videon säilytys",
  "Kept until {date}, 90 days after they were taken.": "Säilytetään {date} asti, 90 päivää kuvaamisesta.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Kuvat kuvakirjastosta",
  "Photos taken": "Otetut kuvat",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Kuvat ladataan yrityksesi tallennustilaan, jotta kuvakierros säilyy todisteena.",
+ "Photos you keep stay on this phone, also if the app closes.": "Säilyttämäsi kuvat pysyvät tässä puhelimessa, vaikka sovellus suljettaisiin.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Kuvat, videot ja muutokset tallennetaan ensin tähän puhelimeen ja lähetetään sitten. Ilman yhteyttä ne odottavat täällä ja lähtevät itsestään, joten mitään ei tarvitse tehdä kahdesti. Pidä sovellus auki tai avaa se myöhemmin uudelleen.",
  "Pick a day: {field}": "Valitse päivä: {field}",
  "Pick a month: {field}": "Valitse kuukausi: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Tämä kuvakierros on jo verrattu.",
  "This walk-around was deleted.": "Tämä kuvakierros on poistettu.",
  "This year": "Tämä vuosi",
+ "Throw away {n} photos": {
+  "one": "Poista {n} kuva",
+  "other": "Poista {n} kuvaa"
+ },
  "Tick all": "Valitse kaikki",
  "Tick the vans to add first.": "Valitse ensin lisättävät pakettiautot.",
  "Time": "Aika",
@@ -3032,6 +3043,10 @@
   "one": "{n} kuva",
   "other": "{n} kuvaa"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} kuva ei ole vielä lähetetty.",
+  "other": "{n} kuvaa ei ole vielä lähetetty."
+ },
  "{n} photos compared": {
   "one": "{n} kuva verrattu",
   "other": "{n} kuvaa verrattu"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} kuva tälle tyypille ({cls}).",
   "other": "{n} kuvaa tälle tyypille ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} kuva oli yli kaksi tuntia vanha: ota se uudelleen.",
+  "other": "{n} kuvaa oli yli kaksi tuntia vanhoja: ota ne uudelleen."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} kuva, noin {min} min.",

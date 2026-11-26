@@ -254,6 +254,7 @@
  "Automatic damage comparison is off for this company.": "Samodejna primerjava poškodb je za to podjetje izklopljena.",
  "Back": "Nazaj",
  "Back to me": "Nazaj na moj pogled",
+ "Back to the photos": "Nazaj na fotografije",
  "Back to {title}": "Nazaj na {title}",
  "Balanced": "Uravnotežen",
  "Battery": "Baterija",
@@ -445,6 +446,12 @@
  "Contact": "Kontakt",
  "Continue": "Nadaljuj",
  "Continue in the browser": "Nadaljuj v brskalniku",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Nadaljevano, kjer ste ostali: ohranjena {n} fotografija.",
+  "two": "Nadaljevano, kjer ste ostali: ohranjeni {n} fotografiji.",
+  "few": "Nadaljevano, kjer ste ostali: ohranjene {n} fotografije.",
+  "other": "Nadaljevano, kjer ste ostali: ohranjenih {n} fotografij."
+ },
  "Contract": "Pogodba",
  "Contract number": "Številka pogodbe",
  "Contract, start date and, when they leave, the last working day.": "Pogodba, datum začetka in ob odhodu zadnji delovni dan.",
@@ -987,6 +994,7 @@
  "Just looking?": "Samo gledate?",
  "Keep filming: at least {n} seconds.": "Snemajte naprej: vsaj {n} s.",
  "Keep it": "Obdrži",
+ "Keep taking photos": "Nadaljujte s fotografiranjem",
  "Keeping the photos": "Hramba fotografij",
  "Keeping the video": "Hramba videa",
  "Kept until {date}, 90 days after they were taken.": "Hramba do {date}, 90 dni po nastanku.",
@@ -1512,6 +1520,7 @@
  "Photos from the library": "Fotografije iz galerije",
  "Photos taken": "Posnete fotografije",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotografije se naložijo v shrambo vašega podjetja, da se obhod ohrani kot dokaz.",
+ "Photos you keep stay on this phone, also if the app closes.": "Fotografije, ki jih obdržite, ostanejo v tem telefonu, tudi če se aplikacija zapre.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotografije, videi in spremembe se najprej shranijo na ta telefon, nato se pošljejo. Brez povezave čakajo tukaj in se samodejno pošljejo, zato ni treba ničesar delati dvakrat. Pustite aplikacijo odprto ali jo pozneje znova odprite.",
  "Pick a day: {field}": "Izberite dan: {field}",
  "Pick a month: {field}": "Izberite mesec: {field}",
@@ -2341,6 +2350,12 @@
  "This walk-around was compared already.": "Ta obhod je že primerjan.",
  "This walk-around was deleted.": "Ta obhod je bil izbrisan.",
  "This year": "Letos",
+ "Throw away {n} photos": {
+  "one": "Zavrzi {n} fotografijo",
+  "two": "Zavrzi {n} fotografiji",
+  "few": "Zavrzi {n} fotografije",
+  "other": "Zavrzi {n} fotografij"
+ },
  "Tick all": "Označi vse",
  "Tick the vans to add first.": "Najprej označite kombije za dodajanje.",
  "Time": "Ura",
@@ -3258,6 +3273,12 @@
   "few": "{n} fotografije",
   "other": "{n} fotografij"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotografija še ni poslana.",
+  "two": "{n} fotografiji še nista poslani.",
+  "few": "{n} fotografije še niso poslane.",
+  "other": "{n} fotografij še ni poslanih."
+ },
  "{n} photos compared": {
   "few": "{n} fotografije primerjane",
   "one": "{n} fotografija primerjana",
@@ -3293,6 +3314,12 @@
   "two": "{n} fotografiji za ta {cls}.",
   "few": "{n} fotografije za ta {cls}.",
   "other": "{n} fotografij za ta {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotografija je bila starejša od dveh ur: posnemite jo znova.",
+  "two": "{n} fotografiji sta bili starejši od dveh ur: posnemite ju znova.",
+  "few": "{n} fotografije so bile starejše od dveh ur: posnemite jih znova.",
+  "other": "{n} fotografij je bilo starejših od dveh ur: posnemite jih znova."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotografija, približno {min} min.",

@@ -195,6 +195,17 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - LIMIT 5.22 On the test system the made-up comparison finds nothing new when the van's number plate has the word
   QUIET in it, for example "QUIET 1" (owners and managers can add such a van). The van's name doesn't count. That's
   correct.
+- MUST 5.23 (2026-11-26) Leaving the camera with photos that aren't sent asks first: the top Close button, Discard, the
+  phone's or browser's back. With every photo taken it offers to pick up, drop off or save them now; otherwise to keep
+  taking photos; or to throw them away. Photos are thrown away only when the driver chooses that.
+- MUST 5.24 (2026-11-26) Each photo is kept on the phone as soon as it's used. A reload, a closed app or a restarted
+  phone part-way through opens the walk-around again where it stopped, with the photos already taken ("Continued where
+  you stopped"). For a pick-up or drop-off, photos more than two hours old are left out and taken again.
+- MUST 5.25 (2026-11-26) A walk-around, pick-up or drop-off is saved once, whatever happens: a double tap, pressing
+  again after a reload, a camera page opened by its link, a bad connection. The van shows one walk-around, one handover
+  and one AI check.
+- MUST 5.26 (2026-11-26) As soon as it's sent, the camera moves on to the van (or the walk-around), also when the camera
+  page was opened by its link or after a reload; the button can't be pressed again.
 
 ## 6. Review and the damage record
 

@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Automatisk skadejämförelse är avstängd för det här företaget.",
  "Back": "Tillbaka",
  "Back to me": "Tillbaka till mig",
+ "Back to the photos": "Tillbaka till fotona",
  "Back to {title}": "Tillbaka till {title}",
  "Balanced": "Balanserad",
  "Battery": "Batteri",
@@ -419,6 +420,10 @@
  "Contact": "Kontakt",
  "Continue": "Fortsätt",
  "Continue in the browser": "Fortsätt i webbläsaren",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Fortsatte där du slutade: {n} foto sparat.",
+  "other": "Fortsatte där du slutade: {n} foton sparade."
+ },
  "Contract": "Avtal",
  "Contract number": "Avtalsnummer",
  "Contract, start date and, when they leave, the last working day.": "Avtal, startdatum och, när personen slutar, sista arbetsdagen.",
@@ -943,6 +948,7 @@
  "Just looking?": "Vill du bara titta?",
  "Keep filming: at least {n} seconds.": "Fortsätt filma: minst {n} sekunder.",
  "Keep it": "Behåll den",
+ "Keep taking photos": "Fortsätt fotografera",
  "Keeping the photos": "Lagring av fotona",
  "Keeping the video": "Lagring av videon",
  "Kept until {date}, 90 days after they were taken.": "Sparas till {date}, 90 dagar efter att de togs.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Foton från bildbiblioteket",
  "Photos taken": "Tagna foton",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotona laddas upp till ditt företags lagring, så att fotorundan sparas som bevis.",
+ "Photos you keep stay on this phone, also if the app closes.": "Foton du behåller stannar på den här telefonen, även om appen stängs.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Foton, videor och ändringar sparas först på den här telefonen och skickas sedan. Utan anslutning väntar de här och skickas automatiskt, så inget behöver göras två gånger. Håll appen öppen, eller öppna den igen senare.",
  "Pick a day: {field}": "Välj en dag: {field}",
  "Pick a month: {field}": "Välj en månad: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Den här fotorundan har redan jämförts.",
  "This walk-around was deleted.": "Den här fotorundan har raderats.",
  "This year": "I år",
+ "Throw away {n} photos": {
+  "one": "Kasta {n} foto",
+  "other": "Kasta {n} foton"
+ },
  "Tick all": "Markera alla",
  "Tick the vans to add first.": "Markera först skåpbilarna som ska läggas till.",
  "Time": "Tid",
@@ -3032,6 +3043,10 @@
   "one": "{n} foto",
   "other": "{n} foton"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} foto har inte skickats än.",
+  "other": "{n} foton har inte skickats än."
+ },
  "{n} photos compared": {
   "one": "{n} foto jämfört",
   "other": "{n} foton jämförda"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} foto för den här {cls}.",
   "other": "{n} foton för den här {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} foto var äldre än två timmar: ta om det.",
+  "other": "{n} foton var äldre än två timmar: ta om dem."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} foto, cirka {min} min.",

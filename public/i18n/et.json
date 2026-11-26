@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Automaatne kahjustuste võrdlus on selles ettevõttes välja lülitatud.",
  "Back": "Tagasi",
  "Back to me": "Tagasi enda vaatesse",
+ "Back to the photos": "Tagasi fotode juurde",
  "Back to {title}": "Tagasi: {title}",
  "Balanced": "Tasakaalustatud",
  "Battery": "Aku",
@@ -419,6 +420,10 @@
  "Contact": "Kontakt",
  "Continue": "Jätka",
  "Continue in the browser": "Jätka brauseris",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Jätkad sealt, kus pooleli jäi: {n} foto alles.",
+  "other": "Jätkad sealt, kus pooleli jäi: {n} fotot alles."
+ },
  "Contract": "Leping",
  "Contract number": "Lepingu number",
  "Contract, start date and, when they leave, the last working day.": "Leping, alguskuupäev ja lahkumisel viimane tööpäev.",
@@ -943,6 +948,7 @@
  "Just looking?": "Lihtsalt vaatad?",
  "Keep filming: at least {n} seconds.": "Filmi edasi: vähemalt {n} sekundit.",
  "Keep it": "Jäta alles",
+ "Keep taking photos": "Pildista edasi",
  "Keeping the photos": "Fotode säilitamine",
  "Keeping the video": "Video säilitamine",
  "Kept until {date}, 90 days after they were taken.": "Säilitatakse kuni {date}, 90 päeva pärast jäädvustamist.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Fotod galeriist",
  "Photos taken": "Tehtud fotod",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotod laaditakse üles sinu ettevõtte salvestusruumi, et ringkontroll jääks tõendina alles.",
+ "Photos you keep stay on this phone, also if the app closes.": "Alles jäetud fotod jäävad sellesse telefoni, ka siis, kui rakendus suletakse.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotod, videod ja muudatused salvestatakse kõigepealt sellesse telefoni ja saadetakse siis. Ühenduseta ootavad need siin ja saadetakse ise, nii et midagi ei pea tegema kaks korda. Hoia rakendus lahti või ava see hiljem uuesti.",
  "Pick a day: {field}": "Vali päev: {field}",
  "Pick a month: {field}": "Vali kuu: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "See ülevaatus on juba võrreldud.",
  "This walk-around was deleted.": "See ringkontroll kustutati.",
  "This year": "See aasta",
+ "Throw away {n} photos": {
+  "one": "Loobu {n} fotost",
+  "other": "Loobu {n} fotost"
+ },
  "Tick all": "Märgi kõik",
  "Tick the vans to add first.": "Märgi esmalt lisatavad kaubikud.",
  "Time": "Aeg",
@@ -3032,6 +3043,10 @@
   "one": "{n} foto",
   "other": "{n} fotot"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} foto pole veel saadetud.",
+  "other": "{n} fotot pole veel saadetud."
+ },
  "{n} photos compared": {
   "one": "Võrreldud {n} fotot",
   "other": "Võrreldud {n} fotot"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} foto selle sõiduki ({cls}) jaoks.",
   "other": "{n} fotot selle sõiduki ({cls}) jaoks."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} foto oli üle kahe tunni vana: tee see uuesti.",
+  "other": "{n} fotot olid üle kahe tunni vanad: tee need uuesti."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} foto, umbes {min} min.",

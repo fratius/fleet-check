@@ -243,6 +243,7 @@
  "Automatic damage comparison is off for this company.": "Automatska poređenje oštećenja isključena je za ovu firmu.",
  "Back": "Nazad",
  "Back to me": "Nazad na moj prikaz",
+ "Back to the photos": "Nazad na fotografije",
  "Back to {title}": "Nazad na {title}",
  "Balanced": "Uravnoteženi",
  "Battery": "Baterija",
@@ -432,6 +433,11 @@
  "Contact": "Kontakt",
  "Continue": "Nastavi",
  "Continue in the browser": "Nastavi u pregledaču",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Nastavljeno gde ste stali: zadržana je {n} fotografija.",
+  "few": "Nastavljeno gde ste stali: zadržane su {n} fotografije.",
+  "other": "Nastavljeno gde ste stali: zadržano je {n} fotografija."
+ },
  "Contract": "Ugovor",
  "Contract number": "Broj ugovora",
  "Contract, start date and, when they leave, the last working day.": "Ugovor, datum početka i, pri odlasku, poslednji radni dan.",
@@ -965,6 +971,7 @@
  "Just looking?": "Samo razgledate?",
  "Keep filming: at least {n} seconds.": "Nastavite da snimate: najmanje {n} s.",
  "Keep it": "Zadrži",
+ "Keep taking photos": "Nastavite da snimate",
  "Keeping the photos": "Čuvanje fotografija",
  "Keeping the video": "Čuvanje videa",
  "Kept until {date}, 90 days after they were taken.": "Čuvanje do {date}, 90 dana od snimanja.",
@@ -1482,6 +1489,7 @@
  "Photos from the library": "Fotografije iz galerije",
  "Photos taken": "Snimljene fotografije",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotografije se otpremaju u skladište vaše firme, da bi obilazak ostao sačuvan kao dokaz.",
+ "Photos you keep stay on this phone, also if the app closes.": "Fotografije koje zadržite ostaju na ovom telefonu, čak i ako se aplikacija zatvori.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotografije, video snimci i izmene prvo se čuvaju na ovom telefonu, a zatim se šalju. Bez veze čekaju ovde i šalju se same, pa ništa ne mora da se radi dvaput. Držite aplikaciju otvorenu ili je kasnije ponovo otvorite.",
  "Pick a day: {field}": "Izaberite dan: {field}",
  "Pick a month: {field}": "Izaberite mesec: {field}",
@@ -2288,6 +2296,11 @@
  "This walk-around was compared already.": "Ovaj obilazak je već upoređen.",
  "This walk-around was deleted.": "Ovaj obilazak je obrisan.",
  "This year": "Ove godine",
+ "Throw away {n} photos": {
+  "one": "Odbaci {n} fotografiju",
+  "few": "Odbaci {n} fotografije",
+  "other": "Odbaci {n} fotografija"
+ },
  "Tick all": "Označi sve",
  "Tick the vans to add first.": "Najpre označite kombije za dodavanje.",
  "Time": "Vreme",
@@ -3145,6 +3158,11 @@
   "few": "{n} fotografije",
   "other": "{n} fotografija"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotografija još nije poslata.",
+  "few": "{n} fotografije još nisu poslate.",
+  "other": "{n} fotografija još nije poslato."
+ },
  "{n} photos compared": {
   "few": "{n} fotografije upoređene",
   "one": "{n} fotografija upoređena",
@@ -3174,6 +3192,11 @@
   "one": "{n} fotografija za ovaj {cls}.",
   "few": "{n} fotografije za ovaj {cls}.",
   "other": "{n} fotografija za ovaj {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotografija je bila starija od dva sata: snimite je ponovo.",
+  "few": "{n} fotografije su bile starije od dva sata: snimite ih ponovo.",
+  "other": "{n} fotografija je bilo starije od dva sata: snimite ih ponovo."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotografija, oko {min} min.",

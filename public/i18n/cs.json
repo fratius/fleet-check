@@ -254,6 +254,7 @@
  "Automatic damage comparison is off for this company.": "Automatické porovnání poškození je pro tuto firmu vypnuté.",
  "Back": "Zpět",
  "Back to me": "Zpět na mě",
+ "Back to the photos": "Zpět k fotkám",
  "Back to {title}": "Zpět na {title}",
  "Balanced": "Vyvážený",
  "Battery": "Baterie",
@@ -445,6 +446,12 @@
  "Contact": "Kontakt",
  "Continue": "Pokračovat",
  "Continue in the browser": "Pokračovat v prohlížeči",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Pokračuješ, kde jsi skončil: {n} fotka zůstala.",
+  "few": "Pokračuješ, kde jsi skončil: {n} fotky zůstaly.",
+  "many": "Pokračuješ, kde jsi skončil: {n} fotky zůstalo.",
+  "other": "Pokračuješ, kde jsi skončil: {n} fotek zůstalo."
+ },
  "Contract": "Smlouva",
  "Contract number": "Číslo smlouvy",
  "Contract, start date and, when they leave, the last working day.": "Smlouva, datum nástupu a při odchodu poslední pracovní den.",
@@ -987,6 +994,7 @@
  "Just looking?": "Jen se rozhlížíš?",
  "Keep filming: at least {n} seconds.": "Natáčej dál: aspoň {n} s.",
  "Keep it": "Ponechat",
+ "Keep taking photos": "Fotit dál",
  "Keeping the photos": "Uchování fotek",
  "Keeping the video": "Uchování videa",
  "Kept until {date}, 90 days after they were taken.": "Uchování do {date}, 90 dní od pořízení.",
@@ -1512,6 +1520,7 @@
  "Photos from the library": "Fotky z galerie",
  "Photos taken": "Pořízené fotky",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotky se nahrají do úložiště tvé firmy, takže obchůzka zůstane jako důkaz.",
+ "Photos you keep stay on this phone, also if the app closes.": "Fotky, které si necháš, zůstanou v tomto telefonu, i když se aplikace zavře.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotky, videa a změny se nejdřív uloží v tomto telefonu a pak se odešlou. Bez připojení počkají tady a odešlou se samy, takže nic není potřeba dělat dvakrát. Nech aplikaci otevřenou, nebo ji později znovu otevři.",
  "Pick a day: {field}": "Vybrat den: {field}",
  "Pick a month: {field}": "Vybrat měsíc: {field}",
@@ -2341,6 +2350,12 @@
  "This walk-around was compared already.": "Tato obchůzka už byla porovnána.",
  "This walk-around was deleted.": "Tato obchůzka byla smazána.",
  "This year": "Letos",
+ "Throw away {n} photos": {
+  "one": "Zahodit {n} fotku",
+  "few": "Zahodit {n} fotky",
+  "many": "Zahodit {n} fotky",
+  "other": "Zahodit {n} fotek"
+ },
  "Tick all": "Zaškrtnout vše",
  "Tick the vans to add first.": "Nejdřív zaškrtni dodávky k přidání.",
  "Time": "Čas",
@@ -3258,6 +3273,12 @@
   "many": "{n} fotky",
   "other": "{n} fotek"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} fotka ještě není odeslaná.",
+  "few": "{n} fotky ještě nejsou odeslané.",
+  "many": "{n} fotky ještě není odesláno.",
+  "other": "{n} fotek ještě není odesláno."
+ },
  "{n} photos compared": {
   "few": "{n} fotky porovnány",
   "many": "{n} fotek porovnáno",
@@ -3293,6 +3314,12 @@
   "few": "{n} fotky pro tento typ ({cls}).",
   "many": "{n} fotky pro tento typ ({cls}).",
   "other": "{n} fotek pro tento typ ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} fotka byla starší než dvě hodiny: vyfoť ji znovu.",
+  "few": "{n} fotky byly starší než dvě hodiny: vyfoť je znovu.",
+  "many": "{n} fotky bylo starších než dvě hodiny: vyfoť je znovu.",
+  "other": "{n} fotek bylo starších než dvě hodiny: vyfoť je znovu."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} fotka, asi {min} min.",

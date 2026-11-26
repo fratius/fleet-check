@@ -221,6 +221,7 @@
  "Automatic damage comparison is off for this company.": "So sánh hư hỏng tự động đang tắt cho công ty này.",
  "Back": "Quay lại",
  "Back to me": "Quay về tôi",
+ "Back to the photos": "Quay lại ảnh",
  "Back to {title}": "Quay lại {title}",
  "Balanced": "Cân bằng",
  "Battery": "Pin",
@@ -406,6 +407,9 @@
  "Contact": "Liên hệ",
  "Continue": "Tiếp tục",
  "Continue in the browser": "Tiếp tục trên trình duyệt",
+ "Continued where you stopped: {n} photos kept.": {
+  "other": "Tiếp tục từ chỗ bạn dừng: giữ lại {n} ảnh."
+ },
  "Contract": "Hợp đồng",
  "Contract number": "Số hợp đồng",
  "Contract, start date and, when they leave, the last working day.": "Hợp đồng, ngày bắt đầu và, khi nghỉ việc, ngày làm việc cuối cùng.",
@@ -921,6 +925,7 @@
  "Just looking?": "Chỉ xem thử?",
  "Keep filming: at least {n} seconds.": "Tiếp tục quay: ít nhất {n} giây.",
  "Keep it": "Giữ lại",
+ "Keep taking photos": "Tiếp tục chụp ảnh",
  "Keeping the photos": "Thời gian lưu ảnh",
  "Keeping the video": "Thời gian lưu video",
  "Kept until {date}, 90 days after they were taken.": "Được lưu đến {date}, 90 ngày kể từ lúc ghi lại.",
@@ -1422,6 +1427,7 @@
  "Photos from the library": "Ảnh từ thư viện",
  "Photos taken": "Ảnh đã chụp",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Ảnh được tải lên bộ nhớ lưu trữ của công ty bạn, để lượt chụp quanh xe được giữ làm bằng chứng.",
+ "Photos you keep stay on this phone, also if the app closes.": "Ảnh bạn giữ lại vẫn ở trên điện thoại này, kể cả khi ứng dụng đóng.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Ảnh, video và các thay đổi được lưu trên điện thoại này trước, rồi mới gửi đi. Khi không có kết nối, chúng chờ ở đây và tự gửi đi, nên không việc gì phải làm hai lần. Hãy giữ ứng dụng mở, hoặc mở lại sau.",
  "Pick a day: {field}": "Chọn ngày: {field}",
  "Pick a month: {field}": "Chọn tháng: {field}",
@@ -2182,6 +2188,9 @@
  "This walk-around was compared already.": "Lượt chụp quanh xe này đã được so sánh.",
  "This walk-around was deleted.": "Lượt chụp quanh xe này đã bị xóa.",
  "This year": "Năm nay",
+ "Throw away {n} photos": {
+  "other": "Bỏ {n} ảnh"
+ },
  "Tick all": "Đánh dấu tất cả",
  "Tick the vans to add first.": "Hãy đánh dấu các xe van cần thêm trước.",
  "Time": "Giờ",
@@ -2919,6 +2928,9 @@
  "{n} photos": {
   "other": "{n} ảnh"
  },
+ "{n} photos aren't sent yet.": {
+  "other": "{n} ảnh chưa được gửi."
+ },
  "{n} photos compared": {
   "other": "Đã so sánh {n} ảnh"
  },
@@ -2936,6 +2948,9 @@
  },
  "{n} photos for this {cls}.": {
   "other": "{n} ảnh cho {cls} này."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "other": "{n} ảnh đã quá hai giờ: hãy chụp lại."
  },
  "{n} photos, about {min} min.": {
   "other": "{n} ảnh, khoảng {min} phút."

@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Η αυτόματη σύγκριση ζημιών είναι απενεργοποιημένη για αυτή την εταιρεία.",
  "Back": "Πίσω",
  "Back to me": "Πίσω σε μένα",
+ "Back to the photos": "Πίσω στις φωτογραφίες",
  "Back to {title}": "Πίσω: {title}",
  "Balanced": "Ισορροπημένο",
  "Battery": "Μπαταρία",
@@ -419,6 +420,10 @@
  "Contact": "Επικοινωνία",
  "Continue": "Συνέχεια",
  "Continue in the browser": "Συνέχεια στο πρόγραμμα περιήγησης",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Συνεχίσατε από εκεί που σταματήσατε: κρατήθηκε {n} φωτογραφία.",
+  "other": "Συνεχίσατε από εκεί που σταματήσατε: κρατήθηκαν {n} φωτογραφίες."
+ },
  "Contract": "Σύμβαση",
  "Contract number": "Αριθμός σύμβασης",
  "Contract, start date and, when they leave, the last working day.": "Σύμβαση, ημερομηνία έναρξης και, όταν αποχωρήσει, η τελευταία εργάσιμη ημέρα.",
@@ -943,6 +948,7 @@
  "Just looking?": "Απλώς ρίχνετε μια ματιά;",
  "Keep filming: at least {n} seconds.": "Συνεχίστε τη βιντεοσκόπηση: τουλάχιστον {n} δευτερόλεπτα.",
  "Keep it": "Να μείνει",
+ "Keep taking photos": "Συνέχεια λήψης φωτογραφιών",
  "Keeping the photos": "Διατήρηση των φωτογραφιών",
  "Keeping the video": "Διατήρηση του βίντεο",
  "Kept until {date}, 90 days after they were taken.": "Διατηρούνται έως τις {date}, 90 ημέρες μετά τη λήψη τους.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Φωτογραφίες από τη συλλογή",
  "Photos taken": "Φωτογραφίες που τραβήχτηκαν",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Οι φωτογραφίες ανεβαίνουν στον χώρο αποθήκευσης της εταιρείας σας, ώστε ο περιμετρικός έλεγχος να διατηρείται ως αποδεικτικό.",
+ "Photos you keep stay on this phone, also if the app closes.": "Οι φωτογραφίες που κρατάτε μένουν σε αυτό το κινητό, ακόμα κι αν κλείσει η εφαρμογή.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Οι φωτογραφίες, τα βίντεο και οι αλλαγές αποθηκεύονται πρώτα σε αυτό το τηλέφωνο και μετά στέλνονται. Χωρίς σύνδεση περιμένουν εδώ και στέλνονται μόνα τους, ώστε τίποτα να μη χρειάζεται να γίνει δύο φορές. Κρατήστε την εφαρμογή ανοιχτή ή ανοίξτε τη ξανά αργότερα.",
  "Pick a day: {field}": "Επιλογή ημέρας: {field}",
  "Pick a month: {field}": "Επιλογή μήνα: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Αυτός ο γύρος ελέγχου έχει ήδη συγκριθεί.",
  "This walk-around was deleted.": "Αυτός ο περιμετρικός έλεγχος διαγράφηκε.",
  "This year": "Φέτος",
+ "Throw away {n} photos": {
+  "one": "Διαγραφή {n} φωτογραφίας",
+  "other": "Διαγραφή {n} φωτογραφιών"
+ },
  "Tick all": "Επιλογή όλων",
  "Tick the vans to add first.": "Επιλέξτε πρώτα τα βαν που θα προστεθούν.",
  "Time": "Ώρα",
@@ -3032,6 +3043,10 @@
   "one": "{n} φωτογραφία",
   "other": "{n} φωτογραφίες"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} φωτογραφία δεν έχει σταλεί ακόμα.",
+  "other": "{n} φωτογραφίες δεν έχουν σταλεί ακόμα."
+ },
  "{n} photos compared": {
   "one": "Συγκρίθηκε {n} φωτογραφία",
   "other": "Συγκρίθηκαν {n} φωτογραφίες"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} φωτογραφία για αυτό το {cls}.",
   "other": "{n} φωτογραφίες για αυτό το {cls}."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} φωτογραφία ήταν παλαιότερη από δύο ώρες: τραβήξτε την ξανά.",
+  "other": "{n} φωτογραφίες ήταν παλαιότερες από δύο ώρες: τραβήξτε τις ξανά."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} φωτογραφία, περίπου {min} λεπτά.",

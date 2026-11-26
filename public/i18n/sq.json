@@ -232,6 +232,7 @@
  "Automatic damage comparison is off for this company.": "Krahasimi automatik i dëmtimeve është i çaktivizuar për këtë kompani.",
  "Back": "Kthehu",
  "Back to me": "Kthehu te vetja",
+ "Back to the photos": "Kthehu te fotot",
  "Back to {title}": "Kthehu te {title}",
  "Balanced": "I balancuar",
  "Battery": "Bateria",
@@ -419,6 +420,10 @@
  "Contact": "Kontakti",
  "Continue": "Vazhdo",
  "Continue in the browser": "Vazhdo në shfletues",
+ "Continued where you stopped: {n} photos kept.": {
+  "one": "Vazhdove aty ku ndalove: u ruajt {n} foto.",
+  "other": "Vazhdove aty ku ndalove: u ruajtën {n} foto."
+ },
  "Contract": "Kontrata",
  "Contract number": "Numri i kontratës",
  "Contract, start date and, when they leave, the last working day.": "Kontrata, data e fillimit dhe, kur largohet, dita e fundit e punës.",
@@ -943,6 +948,7 @@
  "Just looking?": "Thjesht po shikon?",
  "Keep filming: at least {n} seconds.": "Vazhdo regjistrimin: të paktën {n} sekonda.",
  "Keep it": "Mbaje",
+ "Keep taking photos": "Vazhdo të bësh foto",
  "Keeping the photos": "Ruajtja e fotove",
  "Keeping the video": "Ruajtja e videos",
  "Kept until {date}, 90 days after they were taken.": "Ruhen deri {date}, 90 ditë pasi u bënë.",
@@ -1452,6 +1458,7 @@
  "Photos from the library": "Foto nga galeria",
  "Photos taken": "Foto të bëra",
  "Photos upload to your company's storage, so the walk-around is kept as evidence.": "Fotot ngarkohen në hapësirën e ruajtjes së kompanisë tënde, që inspektimi përreth të ruhet si provë.",
+ "Photos you keep stay on this phone, also if the app closes.": "Fotot që mban qëndrojnë në këtë telefon, edhe nëse aplikacioni mbyllet.",
  "Photos, videos and changes are saved on this phone first, then sent. Without a connection they wait here and go through by themselves, so nothing has to be done twice. Keep the app open, or open it again later.": "Fotot, videot dhe ndryshimet ruhen fillimisht në këtë telefon, pastaj dërgohen. Pa lidhje ato presin këtu dhe dërgohen vetë, që asgjë të mos bëhet dy herë. Mbaje aplikacionin hapur ose hape përsëri më vonë.",
  "Pick a day: {field}": "Zgjidhni një ditë: {field}",
  "Pick a month: {field}": "Zgjidhni një muaj: {field}",
@@ -2235,6 +2242,10 @@
  "This walk-around was compared already.": "Ky kontroll rreth furgonit është krahasuar tashmë.",
  "This walk-around was deleted.": "Ky inspektim përreth u fshi.",
  "This year": "Këtë vit",
+ "Throw away {n} photos": {
+  "one": "Hidh {n} foto",
+  "other": "Hidh {n} foto"
+ },
  "Tick all": "Shëno të gjitha",
  "Tick the vans to add first.": "Shënoni së pari furgonët që do të shtohen.",
  "Time": "Ora",
@@ -3032,6 +3043,10 @@
   "one": "{n} foto",
   "other": "{n} foto"
  },
+ "{n} photos aren't sent yet.": {
+  "one": "{n} foto nuk është dërguar ende.",
+  "other": "{n} foto nuk janë dërguar ende."
+ },
  "{n} photos compared": {
   "one": "U krahasua {n} foto",
   "other": "U krahasuan {n} foto"
@@ -3055,6 +3070,10 @@
  "{n} photos for this {cls}.": {
   "one": "{n} foto për këtë lloj mjeti ({cls}).",
   "other": "{n} foto për këtë lloj mjeti ({cls})."
+ },
+ "{n} photos were more than two hours old: take them again.": {
+  "one": "{n} foto ishte më e vjetër se dy orë: bëje përsëri.",
+  "other": "{n} foto ishin më të vjetra se dy orë: bëji përsëri."
  },
  "{n} photos, about {min} min.": {
   "one": "{n} foto, rreth {min} min.",
