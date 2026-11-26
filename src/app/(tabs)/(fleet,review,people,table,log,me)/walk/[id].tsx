@@ -51,7 +51,7 @@ export default function WalkScreen() {
       <CompareCard w={w} />
       <DriverCompareCard w={w} />
       <KeepCard kind="walk" id={w.id} createdAt={w.createdAt} stationId={w.stationId} keepUntil={w.keepUntil} keepMark={w.keepMark} keepDamage={w.keepDamage} mediaDeletedAt={w.mediaDeletedAt}
-        newest={w.source === 'camera' && !s.vehicles.find((v) => v.id === w.vehicleId)?.retired
+        newest={w.source === 'camera' && !s.org?.closed && !s.vehicles.find((v) => v.id === w.vehicleId)?.retired
           && !s.walks.some((x) => x.vehicleId === w.vehicleId && x.source === 'camera' && x.createdAt > w.createdAt && x.id !== w.id)} />
       {/* Only the driver who took the photos, or the station's staff, checks them (the server refuses anyone else). */}
       {s.mode === 'firebase' && (gone(w.mediaDeletedAt) || !(s.runs(w.stationId) || s.tryOut || (!!s.user && w.createdBy === s.user.uid))) ? null : s.mode === 'firebase' ? (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, G, Text as SvgText } from 'react-native-svg';
 
@@ -8,8 +8,12 @@ import { COVERAGE, FUEL, GEARBOX, INCLUDED, OWNERSHIP, deadlines, eur, fmtDay, h
 import { DocScan } from '@/components/docscan';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
-import type { Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
+import type { KmCorrection, Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
+import { watchKmCorrections } from '@/lib/people';
+import { sendCall } from '@/lib/outbox';
+import { vanName } from '@/lib/vans';
 import { N_, loc, t, tp } from '@/lib/i18n';
+import { MIN_YEAR, maxYear, numProblem } from '@/lib/numbers';
 
 /**
  * The van's record, organised like the papers that come with a van: what it is, its size, what to do when
@@ -112,9 +116,12 @@ export function show(f: FieldSpec, x: unknown): string {
 }
 
 /** One section: its facts as a label-and-value grid, and an Edit button for those who may change it. */
-export function FactSection({ title, note, fields, values, canEdit, onSave, empty }: {
+export function FactSection({ title, note, fields, values, canEdit, onSave, empty, check, children }: {
   title: string; note?: string; fields: FieldSpec[]; values: Vals | null | undefined; canEdit: boolean;
   onSave: (patch: Vals) => Promise<void>; empty: string;
+  /** What's wrong with the edited values before they're saved, or null. */
+  check?: (out: Vals) => string | null;
+  children?: React.ReactNode;
 }) {
   const c = useColors();
   const [editing, setEditing] = useState(false);
@@ -130,7 +137,7 @@ export function FactSection({ title, note, fields, values, canEdit, onSave, empt
         {canEdit && !editing ? <Button small v="link" title={shown.length ? t('Edit') : t('Add')} onPress={() => setEditing(true)} /> : null}
       </View>
       <View style={{ padding: 12 }}>
-        {editing ? <Editor fields={fields} values={values} onCancel={() => setEditing(false)} onSave={async (p) => { await onSave(p); setEditing(false); }} />
+        {editing ? <Editor fields={fields} values={values} check={check} onCancel={() => setEditing(false)} onSave={async (p) => { await onSave(p); setEditing(false); }} />
           : shown.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, columnGap: 16 }}>
               {shown.map((f) => {
@@ -149,6 +156,7 @@ export function FactSection({ title, note, fields, values, canEdit, onSave, empt
               })}
             </View>
           ) : <T v="hint">{empty}</T>}
+        {children}
       </View>
     </View>
   );
@@ -167,6 +175,11 @@ export function fromInput(f: FieldSpec, raw: unknown): { value: unknown } | { er
     const txt = String(raw ?? '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
     val = txt ? Number(txt) : null;
     if (val != null && !Number.isFinite(val as number)) return { error: t('{field}: enter a number.', { field: t(f.label) }) };
+    // Numbers that can't be right (lib/numbers.ts; the rules refuse them too).
+    const bad = val == null ? null : numProblem(f.key, val as number);
+    if (bad === 'positive') return { error: t('{field}: enter a number more than 0.', { field: t(f.label) }) };
+    if (bad === 'negative') return { error: t('{field} can\'t be less than 0.', { field: t(f.label) }) };
+    if (bad === 'year') return { error: t('Model year: from {min} to {max}.', { min: String(MIN_YEAR), max: String(maxYear()) }) };
   } else if (f.kind === 'day' || f.kind === 'month') {
     val = String(raw ?? '').trim() ? parseDay(String(raw)) : null;
     if (String(raw ?? '').trim() && !val) return { error: t('{field}: enter a date like {example}.', { field: t(f.label), example: f.kind === 'month' ? '03/2027' : '31.03.2027' }) };
@@ -178,7 +191,7 @@ export function fromInput(f: FieldSpec, raw: unknown): { value: unknown } | { er
 }
 
 /** Edits one section. */
-function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; values: Vals | null | undefined; onSave: (patch: Vals) => Promise<void>; onCancel: () => void }) {
+function Editor({ fields, values, onSave, onCancel, check }: { fields: FieldSpec[]; values: Vals | null | undefined; onSave: (patch: Vals) => Promise<void>; onCancel: () => void; check?: (out: Vals) => string | null }) {
   const c = useColors();
   const init: Record<string, unknown> = {};
   for (const f of fields) init[f.key] = toInput(f, get(values, f.key));
@@ -198,6 +211,8 @@ function Editor({ fields, values, onSave, onCancel }: { fields: FieldSpec[]; val
     }
     // A new odometer reading is from today unless another day is given.
     if ('odometerKm' in out && out.odometerKm !== get(values, 'odometerKm') && form.odometerAt === init.odometerAt) out.odometerAt = today();
+    const wrong = check?.(out);
+    if (wrong) { setErr(wrong); return; }
     setBusy(true);
     try { await onSave(out); } catch (e) { setErr(failText(e, 'Saving the details')); } finally { setBusy(false); }
   };
@@ -272,6 +287,8 @@ export function VanRecord({ v }: { v: Vehicle }) {
   const saveBiz = (patch: Vals) => saveDetails(s, v, d, patch);
   const owner = s.role === 'owner';
   const cost = s.costs.find((x) => x.id === v.id);
+  // The van's km now: they never go down, except by a correction with a reason (correctKm).
+  const vanKm = Math.max(d?.odometerKm || 0, v.dash?.km || 0) || null;
   const m = mileage(d, owner ? cost?.excessPerKm : null);
   // What the van costs per kilometre at this pace (the monthly rate only, without fuel and repairs).
   const perKm = owner && m && cost?.monthly && m.perYear > 0 ? (cost.monthly * 12) / m.perYear : null;
@@ -294,7 +311,11 @@ export function VanRecord({ v }: { v: Vehicle }) {
               <T v="small">{owner ? t('Only owners and this station\'s fleet managers see this part; the costs only owners.') : t('Only owners and this station\'s fleet managers see this part.')}</T>
             </View>
           </View>
-          <FactSection title={t('Mileage')} note={s.org?.dashScans ? t('Every dashboard photo updates the odometer.') : undefined} fields={MILEAGE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty={t('Add the odometer reading to follow the mileage.')} />
+          <FactSection title={t('Mileage')} note={s.org?.dashScans ? t('Every dashboard photo updates the odometer.') : undefined} fields={MILEAGE} values={d as unknown as Vals | undefined} canEdit onSave={saveBiz} empty={t('Add the odometer reading to follow the mileage.')}
+            check={(out) => (typeof out.odometerKm === 'number' && vanKm && out.odometerKm < vanKm && out.odometerKm !== d?.odometerKm
+              ? t('The van already has {km} km, and the km never go down. If they\'re wrong, use "Correct the km".', { km: vanKm.toLocaleString(loc()) }) : null)}>
+            <KmCorrections v={v} vanKm={vanKm} />
+          </FactSection>
           {m ? (
             <View style={{ borderWidth: 2, borderColor: m.over != null && m.over > 0 ? c.alert : c.ink, borderRadius: 4, padding: 12, gap: 2, backgroundColor: c.paper }}>
               <T v="medium">{t('At this pace: {km} a year', { km: km(m.perYear) })}</T>
@@ -394,6 +415,58 @@ export function HuSticker({ day, size = 84 }: { day: string; size?: number }) {
         </G>
         <SvgText x={r} y={r + size * 0.11} fontSize={size * 0.3} fontWeight="700" fill={ink} textAnchor="middle">{String(y).slice(2)}</SvgText>
       </Svg>
+    </View>
+  );
+}
+
+/**
+ * Correcting a van's km that are too high (a misread or a typo): owners and the station's fleet managers, with a
+ * reason (product owner, 2026-11-26; blind test, cause 2b). The server lowers them (correctKm) and keeps each
+ * correction for good: old km, new km, who and why, listed here.
+ */
+function KmCorrections({ v, vanKm }: { v: Vehicle; vanKm: number | null }) {
+  const s = useSession();
+  const c = useColors();
+  const [rows, setRows] = useState<KmCorrection[]>([]);
+  const [open, setOpen] = useState(false);
+  const [kmText, setKm] = useState('');
+  const [why, setWhy] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const orgId = s.org?.id;
+  const mine = s.role === 'owner' ? null : s.myStations.map((x) => x.id);
+  useEffect(() => (orgId && s.mode === 'firebase' ? watchKmCorrections(orgId, v.id, mine, setRows) : undefined), [orgId, v.id, s.mode, (mine || []).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (s.mode !== 'firebase' || v.retired) return null;
+  const save = async () => {
+    setErr(null);
+    const n = Number(kmText.replace(/[\s.]/g, '').replace(',', '.'));
+    if (!kmText.trim() || !Number.isFinite(n)) { setErr(t('Enter the odometer reading in km.')); return; }
+    if (n <= 0) { setErr(t('The km must be more than 0.')); return; }
+    if (vanKm && n >= vanKm) { setErr(t('A correction is for km that are too high. Higher km are saved as usual.')); return; }
+    if (why.trim().length < 3) { setErr(t('Say why the km were wrong.')); return; }
+    setBusy(true);
+    try {
+      await sendCall('correctKm', { orgId: orgId!, vehicleId: v.id, km: Math.round(n), reason: why.trim() }, { title: t('Correct the km of {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) });
+      setOpen(false); setKm(''); setWhy('');
+    } catch (e) { setErr(failText(e, 'Correcting the km')); } finally { setBusy(false); }
+  };
+  return (
+    <View style={{ gap: 8, marginTop: 10, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
+      {rows.slice().sort((a, b) => b.at - a.at).map((r) => (
+        <T key={r.id} v="small">{t('Corrected from {from} km to {to} km by {name}, {when}: {reason}', { from: r.from.toLocaleString(loc()), to: r.to.toLocaleString(loc()), name: r.byName, when: fmtDay(new Date(r.at).toISOString().slice(0, 10)), reason: r.reason })}</T>
+      ))}
+      {open ? (
+        <View style={{ gap: 8 }}>
+          <T v="hint">{t('The van has {km} km. Enter the right km and say why the old ones were wrong. Both stay in the van\'s history.', { km: (vanKm || 0).toLocaleString(loc()) })}</T>
+          <Field label={t('Right km')} value={kmText} onChangeText={setKm} keyboardType="number-pad" />
+          <Field label={t('Why they were wrong')} value={why} onChangeText={setWhy} placeholder={t('For example: the dashboard photo was misread')} />
+          {err ? <T v="hint" color={c.alert}>{err}</T> : null}
+          <Row>
+            <Button small v="primary" title={t('Correct the km')} loading={busy} onPress={save} />
+            <Button small v="link" title={t('Cancel')} disabled={busy} onPress={() => { setOpen(false); setErr(null); }} />
+          </Row>
+        </View>
+      ) : vanKm ? <Row><Button small v="link" title={t('Correct the km')} onPress={() => setOpen(true)} /></Row> : null}
     </View>
   );
 }

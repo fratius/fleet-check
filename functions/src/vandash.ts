@@ -55,11 +55,13 @@ export function afterRefuel(fuelPct: number | null, litres: number | null, tankL
  */
 export function noteDash(tx: Transaction, vref: DocumentReference, van: VanNow, d: VanDash) {
   if (van.dash && van.dash.at > d.at) return;
-  const { byName: _n, ...bare } = d;
+  const { byName: _n, ...rest } = d;
+  // The km never go down (blind test, 26 Nov 2026, cause 2b): a lower reading keeps the van's km (correctKm lowers them).
+  const bare = { ...rest, km: Math.max(van.dash?.km ?? 0, d.km) };
   const patch: Record<string, unknown> = { dash: bare };
   const a = van.assignedTo;
   if (a?.assignmentId) {
-    const k = nextKm(a, d.km);
+    const k = nextKm(a, bare.km);
     patch['assignedTo.kmStart'] = k.kmStart;
     patch['assignedTo.kmEnd'] = k.kmEnd;
     tx.update(vref.parent.parent!.collection('assignments').doc(a.assignmentId), { ...k });

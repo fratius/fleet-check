@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Platform, Pressable, View } from 'react-native';
 
 import { AllCompanies, MyCompanies } from '@/components/companies';
+import { CompanyAdmin } from '@/components/closed';
 import { DeleteAccount } from '@/components/deleteaccount';
 import { LegalLinks } from '@/components/legal';
 import { LanguageCard } from '@/components/language';
@@ -72,6 +73,7 @@ export default function Account() {
           <MyCompanies />
           {s.mode === 'firebase' ? <AddCompany /> : null}
           {s.mode === 'firebase' && (s.creator || s.org?.demo) ? <Demo /> : null}
+          {s.creator ? <CompanyAdmin /> : null}
           {s.creator ? <AllCompanies /> : null}
           {s.creator ? <OffersCard /> : null}
         </>

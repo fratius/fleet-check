@@ -51,7 +51,8 @@ export function AllCompanies() {
         <Pressable key={x.id} onPress={() => s.switchOrg(x.id)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 10 : 0 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <T v="medium" numberOfLines={1}>{x.name}</T>
+            <Row gap={6}><T v="medium" numberOfLines={1} style={{ flexShrink: 1 }}>{x.name}</T>{x.closed ? <Pill v="bad" text={t('Closed')} /> : null}</Row>
+            {x.closed ? <T v="small">{t('Closed on {day}: read-only, only you see it.', { day: fmtWhen(x.closed.at).split(',')[0] })}</T> : null}
             <T v="small">{[cnt(x.vans, '{n} van', '{n} vans'), cnt(x.people, '{n} person', '{n} people'), cnt(x.checks, '{n} damage check', '{n} damage checks'), x.createdAt ? t('since {day}', { day: fmtWhen(x.createdAt).split(',')[0] }) : ''].filter(Boolean).join(', ')}</T>
             {/* Signed up by themselves: how long their free trial still runs. */}
             {x.trial.trialEnd && (x.trial.standing === 'trial' || x.trial.standing === 'trial_over') ? (

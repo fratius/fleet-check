@@ -178,6 +178,8 @@ export function makeStore(orgId: string | null, scope: string[] | null = null, d
 
 /** What the server read from a dashboard photo, before the person confirms it. */
 export interface DashRead {
+  /** The van's km now (they never go down): a photo read lower is typed by the driver instead. */
+  vanKm?: number | null;
   readId: string;
   values: DashValues;
   confidence: number | null;
@@ -346,6 +348,8 @@ export const ai = {
   peekInvite: call<{ token: string }, InvitePeek>('peekInvite', 20000),
   acceptInvite: call<{ token: string; details: JoinDetails }, { orgId: string; orgName: string; role: string; stationName: string; already: boolean }>('acceptInvite', 40000),
   driverLink: call<{ orgId: string; reset?: boolean }, DriverLink>('driverLink', 30000),
+  reopenCompany: call<{ orgId: string }, { ok: true }>('reopenCompany', 30000),
+  ownerLink: call<{ orgId: string }, { invite: { token: string; expiresAt: number } }>('ownerLink', 30000),
   requestToJoin: call<{ token: string; stationId: string; details: JoinDetails; lang?: string }, { orgId: string; orgName: string; stationName: string; again: boolean }>('requestToJoin', 40000),
   decideJoinRequest: call<{ orgId: string; uid: string; approve: boolean }, { ok: boolean; approved: boolean }>('decideJoinRequest', 30000),
   withdrawJoinRequest: call<{ orgId: string }, { ok: boolean }>('withdrawJoinRequest', 30000),
@@ -376,8 +380,8 @@ export const ai = {
   submitCheck: call<{ orgId: string; checkId: string; missedNote: string }, { ok: boolean }>('submitCheck', 40000),
   setupStations: call<{ orgId: string }, { done: boolean; stationId?: string }>('setupStations', 130000),
   readDashboard: call<{ orgId: string; vehicleId: string; path: string }, DashRead>('readDashboard', 130000),
-  saveReading: call<{ orgId: string; readId: string; values: DashValues; refuel: { litres: number | null; kwh: number | null; unknown: boolean } | null; sure?: boolean },
-    { readingId: string; tourId: string | null; role: 'start' | 'end' | 'none'; tour: Tour | null }>('saveReading', 40000),
+  saveReading: call<{ orgId: string; readId: string; values: DashValues; refuel: { litres: number | null; kwh: number | null; unknown: boolean } | null; sure?: boolean; typed?: boolean },
+    { readingId: string; tourId: string | null; role: 'start' | 'end' | 'none'; tour: Tour | null; kmKept?: number | null }>('saveReading', 40000),
   recordLicenceCheck: call<{ orgId: string; uid: string; ok: boolean; note: string; day: string }, { ok: boolean }>('recordLicenceCheck', 30000),
   readDocument: call<{ orgId: string; target: 'van' | 'driver'; id: string; paths: string[] }, DocRead>('readDocument', 190000),
   readFleetFile: call<{ orgId: string; paths: string[]; name: string | null }, FleetRead>('readFleetFile', 310000),
@@ -396,7 +400,7 @@ export const ai = {
     card: call<{ orgId: string; action: 'card'; id: string; path?: string; missing?: boolean }, CardAnswer>('purchase', 130000),
     decide: call<{ orgId: string; action: 'decide'; id: string; allow: boolean; note: string }, { ok: boolean; notified: number }>('purchase', 40000),
     receipt: call<{ orgId: string; action: 'receipt'; id: string; path: string; parts?: string[]; note?: string }, { receipt: ReceiptRead; litres: number | null }>('purchase', 130000),
-    finish: call<{ orgId: string; action: 'finish'; id: string; values: { odometerKm: number; fuelPct: number | null; litres: number | null; total: number } }, { flags: Purchase['flags']; notified: number }>('purchase', 60000),
+    finish: call<{ orgId: string; action: 'finish'; id: string; values: { odometerKm: number; fuelPct: number | null; litres: number | null; total: number }; typed?: boolean }, { flags: Purchase['flags']; notified: number }>('purchase', 60000),
     cancel: call<{ orgId: string; action: 'cancel'; id: string; reason?: string }, { ok: boolean }>('purchase', 40000),
     contacts: call<{ orgId: string; action: 'contacts'; id: string }, { people: Contact[] }>('purchase', 40000),
   },

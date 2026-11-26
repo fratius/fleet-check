@@ -36,6 +36,8 @@ export const ACTIONS = {
   setLaunchOffer: { level: 'creator' },
   saveOffer: { level: 'creator' },
   createDemoCompany: { level: 'creator' },
+  reopenCompany: { level: 'creator' },
+  ownerLink: { level: 'creator' },
 
   // About one's own account
   peekInvite: { level: 'self' },
@@ -77,6 +79,7 @@ export const ACTIONS = {
   appointment: { level: 'staff', station: true },
   markDamage: { level: 'staff', station: true },
   driverLink: { level: 'staff' },
+  correctKm: { level: 'staff', station: true, probe: (w) => ({ vehicleId: w.van1, km: 1, reason: 'probe' }) },
 
   // Everyone in the company, drivers included, at their station
   findDamage: { level: 'member', station: true, own: true, probe: (w) => ({ walkId: w.walk1 }) },

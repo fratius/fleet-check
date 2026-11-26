@@ -7,6 +7,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { F, MARKER, fitSize, useColors, useFontsReady, hs } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { UploadsStrip } from '@/components/uploads';
+import { ClosedStrip } from '@/components/closed';
 import { ApkStrip } from '@/components/apkstrip';
 import { BillingGate, BillingStrip, useGate } from '@/components/billinggate';
 import { ViewingStrip } from '@/components/viewas';
@@ -60,7 +61,7 @@ export default function TabsLayout() {
   return (
     // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
     // The Android test version says when a newer one needs a new download (components/apkstrip.tsx).
-    <Tabs tabBar={(props) => <><ApkStrip /><UploadsStrip /><BillingStrip /><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
+    <Tabs tabBar={(props) => <><ApkStrip /><UploadsStrip /><ClosedStrip /><BillingStrip /><ViewingStrip /><BottomTabBar {...props} /></>} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,

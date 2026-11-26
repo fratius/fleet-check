@@ -498,6 +498,74 @@ describe('AI speed and cost: only the app creator', () => {
   test('the check itself stays readable at the station', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`))));
 });
 
+// Blind test, 26 Nov 2026, cause 2b (B3, B6): numbers that can't be right are refused (functions/src/numbers.ts and
+// src/lib/numbers.ts hold the same rule), and the van's km never go down from the app.
+describe('numbers that can\'t be right, and km that go down', () => {
+  const van = (db) => doc(db, `orgs/${O}/vehicles/v1`);
+  const det = (db) => doc(db, `orgs/${O}/vehicleDetails/v1`);
+  const cost = (db) => doc(db, `orgs/${O}/vehicleCosts/v1`);
+  const year = new Date().getUTCFullYear();
+  test('negative keys', () => assertFails(updateDoc(van(as('mgr1')), { keys: -3 })));
+  test('a fuel tank of -80 l or 0', async () => { await assertFails(updateDoc(van(as('mgr1')), { tankL: -80 })); await assertFails(updateDoc(van(as('mgr1')), { tankL: 0 })); });
+  test('a model year of 1066 or after next year', async () => {
+    await assertFails(updateDoc(van(as('mgr1')), { modelYear: 1066 }));
+    await assertFails(updateDoc(van(as('mgr1')), { modelYear: year + 2 }));
+    await assertSucceeds(updateDoc(van(as('mgr1')), { modelYear: year + 1 }));
+  });
+  test('a negative weight or size', () => assertFails(updateDoc(van(as('mgr1')), { heightM: -2.7 })));
+  test('right numbers still go in', () => assertSucceeds(updateDoc(van(as('mgr1')), { keys: 2, tankL: 80, modelYear: 2023, heightM: 2.72 })));
+  test('a new van with negative keys', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v9`), { name: 'Van 9', stationId: S1, createdAt: 9, keys: -1 })));
+  test('an odometer of 0 or less', async () => {
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 0 }, { merge: true }));
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: -5 }, { merge: true }));
+  });
+  test('km at the contract\'s start, km a year and the next service at 0 km', async () => {
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, kmAtStart: 0 }, { merge: true }));
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, kmPerYear: -1 }, { merge: true }));
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, due: { serviceKm: 0 } }, { merge: true }));
+  });
+  test('the odometer goes up, never down', async () => {
+    await assertSucceeds(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 50000 }, { merge: true }));
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 49000 }, { merge: true }));
+    await assertSucceeds(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 50100 }, { merge: true }));
+    // Other changes don't touch it.
+    await assertSucceeds(setDoc(det(as('mgr1')), { stationId: S1, notes: 'Spare key in the office' }, { merge: true }));
+  });
+  test('…and never below the van\'s last dashboard photo', async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), `orgs/${O}/vehicles/v1`), { dash: { km: 61000, at: 1 } }));
+    await assertFails(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 60000 }, { merge: true }));
+    await assertSucceeds(setDoc(det(as('mgr1')), { stationId: S1, odometerKm: 61200 }, { merge: true }));
+  });
+  test('negative money', async () => {
+    await assertFails(setDoc(cost(as('own')), { createdAt: 1, monthly: -840 }));
+    await assertFails(setDoc(cost(as('own')), { createdAt: 1, purchasePrice: -500 }));
+    await assertFails(setDoc(cost(as('own')), { createdAt: 1, purchasePrice: -1 }));
+    await assertSucceeds(setDoc(cost(as('own')), { createdAt: 1, monthly: 840, purchasePrice: 0 }));
+  });
+});
+
+// Blind test, 26 Nov 2026, cause 2b (B7): a closed company is read-only for everyone, the app creator too.
+describe('a closed company', () => {
+  const close = () => env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), `orgs/${O}`), { closed: { at: 5, by: 'own', byName: 'Owner' } }));
+  test('nobody closes or reopens one from the app', async () => {
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}`), { closed: { at: 5, by: 'own' } }));
+    await close();
+    await assertFails(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}`), { closed: null }));
+  });
+  test('its records stay readable for the app creator', async () => { await close(); await assertSucceeds(getDoc(doc(as('boss', { creator: true }), `orgs/${O}/vehicles/v1`))); });
+  test('nothing is written in it: not by the app creator', async () => {
+    await close();
+    await assertFails(updateDoc(doc(as('boss', { creator: true }), `orgs/${O}/vehicles/v1`), { color: 'white' }));
+    await assertFails(setDoc(doc(as('boss', { creator: true }), `orgs/${O}/walkarounds/wc1`), { vehicleId: 'v1', stationId: S1, createdBy: 'boss', createdAt: 9 }));
+  });
+  test('…nor by anyone still on its list', async () => {
+    await close();
+    await assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v1`), { color: 'white' }));
+    await assertFails(updateDoc(doc(as('own'), `orgs/${O}/stations/${S1}`), { name: 'New' }));
+    await assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), review));
+  });
+});
+
 describe('van records: facts for the station, contract and deadlines for owners and managers', () => {
   const det = (db, id) => doc(db, `orgs/${O}/vehicleDetails/${id}`);
   const atS1 = (db) => query(collection(db, `orgs/${O}/vehicleDetails`), where('stationId', 'in', [S1]));

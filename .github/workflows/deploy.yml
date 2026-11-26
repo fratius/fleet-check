@@ -333,6 +333,10 @@ jobs:
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}
         run: node functions/scripts/driver-names.cjs
+      - name: Give every company its driver link (the ones made before every company had one)
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node functions/scripts/driver-links.cjs
       - name: Set the app creator
         env:
           PROJECT: ${{ steps.auth.outputs.project_id }}

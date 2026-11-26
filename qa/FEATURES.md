@@ -237,6 +237,13 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 7.6 Fuel card photos are never kept; only the last 4 digits show.
 - MUST 7.7 (2026-11-26) Drivers without a van don't see Refuel or Wash, and the server refuses them. A driver opening
   Add vehicle by link sees "not available". No second refuel while one is waiting for the manager.
+- MUST 7.8 (2026-11-26) 0 and negative km refused everywhere km is typed or read.
+- MUST 7.9 (2026-11-26) If the AI reads a lower km, the driver is asked to type it. If the typed km is also lower, the
+  van keeps its km and the manager is flagged with both numbers. Otherwise the km never goes down.
+- MUST 7.10 (2026-11-26) An owner or a fleet manager of the station can correct a wrongly high km, with a reason. The
+  history shows old km, new km, who and why.
+- MUST 7.11 (2026-11-26) Impossible numbers are refused with a clear message, on the server too: negative money, keys,
+  litres, tank size; model year before 1950 or after next year.
 
 ## 8. Tours from dashboard photos
 
@@ -372,3 +379,11 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 14.11 (2026-11-26) Guard: one table of every server action and every app write, for each role, at own station,
   another station and another company. The test checks each is allowed or refused as ROLES.md says. A new action
   without a line fails the test. (Scripted; the tester checks what a browser reaches: a refusal, never the data.)
+- MUST 14.12 (2026-11-26) Every company has its driver link from creation; existing companies get one now. Owners and
+  managers see it on People, with Share and Make a new link.
+- MUST 14.13 (2026-11-26) A new link (owner or manager): the screen first says the old link stops for every station;
+  owners and other managers get a notification saying who made it.
+- MUST 14.14 (2026-11-26) The only member deleting their account closes the company instead of deleting it. The
+  subscription stops at once. Only the creator sees it, marked "Closed" and read-only, can reopen it, and can make a
+  one-time owner link. Records stay; photos follow the 30/90-day deletion.
+- MUST 14.15 (2026-11-26) All 31 languages; all existing tests pass.

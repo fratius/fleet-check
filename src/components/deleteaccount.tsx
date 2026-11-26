@@ -46,7 +46,7 @@ export function DeleteAccount() {
           {plan.map((x) => (
             <T key={x.id} v="small" color={x.outcome === 'blocked' ? c.alert : undefined}>
               {x.outcome === 'blocked' ? t('{company}: you\'re its fleet owner. Make another person fleet owner first (People, the person, Role), then come back here.', { company: x.name })
-                : x.outcome === 'close' ? (x.demo ? t('{company}: your demo company is deleted.', { company: x.name }) : t('{company}: you\'re its only member, so the company is deleted with everything in it.', { company: x.name }))
+                : x.outcome === 'close' ? (x.demo ? t('{company}: your demo company is deleted.', { company: x.name }) : t('{company}: you\'re its only member, so the company is closed. Its plan stops now; its records are kept, and nobody can sign in to it.', { company: x.name }))
                   : t('{company}: you leave the company.', { company: x.name })}
             </T>
           ))}

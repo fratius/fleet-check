@@ -337,8 +337,11 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
   const c = useColors();
   const r = p.receipt!.ai;
   const fuel = p.kind === 'fuel';
+  // The dashboard read lower than the van's km (they never go down): the driver types the km instead.
+  const readKm = p.dash.ai?.odometerKm ?? null;
+  const low = readKm != null && p.lastKm != null && readKm < p.lastKm;
   const [form, setForm] = useState(() => ({
-    odo: show(p.dash.ai?.odometerKm), fuel: show(p.dash.ai?.fuelPct),
+    odo: low ? '' : show(readKm), fuel: show(p.dash.ai?.fuelPct),
     litres: show(fuel ? fuelLitres(r, p.vanFuel) : null), total: show(r.total, 2),
   }));
   // The dashboard may still be being read when the receipt is done: fill in what arrives, unless typed over.
@@ -346,19 +349,20 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
   useEffect(() => {
     if (filled.current || !p.dash.done) return;
     filled.current = true;
-    setForm((f) => ({ ...f, odo: f.odo || show(p.dash.ai?.odometerKm), fuel: f.fuel || show(p.dash.ai?.fuelPct) }));
-  }, [p.dash.done, p.dash.ai]);
+    setForm((f) => ({ ...f, odo: f.odo || (low ? '' : show(p.dash.ai?.odometerKm)), fuel: f.fuel || show(p.dash.ai?.fuelPct) }));
+  }, [p.dash.done, p.dash.ai, low]);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     setErr(null);
     const odometerKm = num(form.odo), total = num(form.total), litres = fuel ? num(form.litres) : null, fuelPct = fuel ? num(form.fuel) : null;
     if (odometerKm == null || !Number.isFinite(odometerKm)) { setErr(t('Enter the odometer reading in km.')); return; }
+    if (odometerKm <= 0) { setErr(t('The km must be more than 0.')); return; }
     if (fuel && (litres == null || !(litres > 0))) { setErr(t('Enter the litres from the receipt.')); return; }
-    if (total == null || !Number.isFinite(total)) { setErr(t('Enter the total from the receipt.')); return; }
+    if (total == null || !Number.isFinite(total) || total < 0) { setErr(t('Enter the total from the receipt.')); return; }
     setBusy(t('Saving…'));
     try {
-      await ai.buy.finish({ orgId: s.org!.id, action: 'finish', id: p.id, values: { odometerKm, fuelPct, litres, total } });
+      await ai.buy.finish({ orgId: s.org!.id, action: 'finish', id: p.id, values: { odometerKm, fuelPct, litres, total }, typed: low || odometerKm !== readKm });
     } catch (e) { setErr(errText(e, 'Saving the purchase')); } finally { setBusy(null); }
   };
   return (
@@ -376,6 +380,7 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
         </Row>
         <T v="small">{!r.readable ? (r.issue ? t('The receipt couldn\'t be read: {issue}. Type the numbers from it.', { issue: r.issue }) : t('The receipt couldn\'t be read. Type the numbers from it.'))
           : [r.merchant, [r.date, r.time].filter(Boolean).join(' '), r.cardLast4 ? t('card ending {last4}', { last4: r.cardLast4 }) : r.payment === 'cash' ? t('paid in cash') : ''].filter(Boolean).join(', ')}</T>
+        {low ? <T color={c.alert}>{t('The dashboard shows less than the van\'s {km} km. Type the km you see on the dashboard.', { km: p.lastKm!.toLocaleString(loc()) })}</T> : null}
         <Field label={t('Odometer (km)')} value={form.odo} onChangeText={(x) => setForm((f) => ({ ...f, odo: x }))} keyboardType="number-pad"
           placeholder={p.dash.done ? t('From the dashboard photo') : t('Reading the dashboard…')} />
         {p.lastKm != null ? <T v="small">{t('Last known: {km}.', { km: kmText(p.lastKm) })}</T> : null}

@@ -18,6 +18,11 @@ export const perPhotoCost = (t: Tier) => (4784 * TIER_MODEL[t].inPerM + 150 * TI
 export interface Vehicle {
   id: string;
   name: string;
+  /**
+   * The last km typed lower than the van's (blind test, 26 Nov 2026, cause 2b): the van kept its km; the managers see
+   * it in Review until someone corrects the km. Server only, by account id.
+   */
+  kmLower?: { typed: number; kept: number; at: number; by: string } | null;
   plate: string;
   cls: string;
   roof: 'high' | 'low' | 'unknown';
@@ -831,6 +836,12 @@ export interface Org {
   aiCompare?: boolean;
   /** A demo company full of made-up data. */
   demo?: boolean;
+  /**
+   * Closed: its only member deleted their account (blind test, 26 Nov 2026, cause 2b). Records kept, read-only for
+   * everyone; only the app creator sees it and reopens it (server only, with `reopens`).
+   */
+  closed?: { at: number; by: string; byName?: string } | null;
+  reopens?: { at: number; by: string; closedAt: number }[];
   /** Drivers take a photo of the dashboard at the start and end of each tour (the owner turns it on). */
   dashScans?: boolean;
   dashScansBy?: string;
@@ -918,6 +929,9 @@ export interface InvitePeek {
 
 /** The company's driver link (orgs/{org}/links/drivers), made by the server. */
 export interface DriverLink { token: string; createdAt: number; createdBy: string; createdByName: string }
+
+/** A van's km corrected down by an owner or the station's manager (correctKm, server only): for good. */
+export interface KmCorrection { id: string; vehicleId: string; stationId: string | null; from: number; to: number; reason: string; by: string; byName: string; at: number }
 
 /** A driver who signed up with the company's link (orgs/{org}/joinRequests/{uid}), written by the server. */
 export interface JoinRequest {
