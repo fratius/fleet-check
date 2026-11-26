@@ -1288,6 +1288,12 @@ test('cause 2 (A4): drivers without a van see no Refuel or Wash, and Add vehicle
     // The refuel page by its link says why.
     await ben.page.goto(`${URL0}/buy/new?van=${RW_V2}&kind=fuel`);
     await visible(ben.page, 'You don\'t have a van.').waitFor({ timeout: 60_000 });
+    // Pick-ups are off at his station: the plate page says so before any plate, and the Vans tab says who gives vans.
+    await ben.page.goto(`${URL0}/pickup`);
+    await visible(ben.page, 'At this station your fleet manager gives out the vans.').waitFor({ timeout: 30_000 });
+    assert.equal(await button(ben.page, 'Find the van').count(), 0);
+    await ben.page.goto(`${URL0}/`);
+    await visible(ben.page, 'You don\'t have a van now. Your fleet manager gives you one.').waitFor({ timeout: 30_000 });
     for (const path of ['/add', '/bulk']) {
       await ben.page.goto(URL0 + path);
       await visible(ben.page, 'Not available for drivers').waitFor({ timeout: 60_000 });

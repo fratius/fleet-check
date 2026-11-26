@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { takePhoto } from '@/components/dash';
@@ -25,12 +25,15 @@ export default function PickUp() {
   const [err, setErr] = useState<string | null>(null);
   const [found, setFound] = useState<PickVan | null>(null);
   const [takeOver, setTakeOver] = useState(false);
+  // The lists usually answer within a second; never more than a short wait on a spinner (blind tester, round 2).
+  const [waited, setWaited] = useState(false);
+  useEffect(() => { const h = setTimeout(() => setWaited(true), 4000); return () => clearTimeout(h); }, []);
   const title = <Stack.Screen options={{ title: t('Pick up a van') }} />;
   if (s.staff) return <Screen edges={[]}>{title}<Card dashed><T v="hint">{t('Fleet managers give out vans from the van\'s page.')}</T></Card></Screen>;
   // Until the session knows whether they have a van (the page opened by its address).
-  if (!s.loaded.vehicles || !s.loaded.stations) return <Screen edges={[]}>{title}<ActivityIndicator color={c.ink} /></Screen>;
+  if ((!s.loaded.vehicles || !s.loaded.stations) && !waited) return <Screen edges={[]}>{title}<ActivityIndicator color={c.ink} /></Screen>;
   // Pick-ups by drivers are off at their station: said before any plate (the server refuses it too).
-  if (!s.myVan && !s.myStations.some((st) => st.selfAssign)) {
+  if (!s.myVan && s.myStations.length && !s.myStations.some((st) => st.selfAssign)) {
     return <Screen edges={[]}>{title}<Notice text={t('At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.')} /></Screen>;
   }
   if (s.myVan) {
