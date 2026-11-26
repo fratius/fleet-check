@@ -207,6 +207,9 @@ export function DashReading({ v, onDone }: { v: Vehicle; onDone: () => void }) {
       </Row>
       {low ? <T color={c.alert}>{t('The dashboard shows less than the van\'s {km} km. Type the km you see on the dashboard.', { km: low.van.toLocaleString(loc()) })}</T> : null}
       <Field label={t('Odometer (km)')} value={form.odo} onChangeText={(x) => setForm((f) => ({ ...f, odo: x }))} keyboardType="number-pad" placeholder={t('For example 48213')} />
+      {/* Typed lower than the van's km: said before saving, and after (blind tester, round 2 on #54). */}
+      {read.vanKm != null && num(form.odo) != null && num(form.odo)! > 0 && num(form.odo)! < read.vanKm
+        ? <T v="small" color={c.alert}>{t('Lower than the van\'s {km} km: the van keeps {km} km and your fleet manager is told.', { km: read.vanKm.toLocaleString(loc()) })}</T> : null}
       {read.last ? <T v="small">{read.last.byName ? t('Last reading: {km}, {when} ({name}).', { km: kmText(read.last.km), when: fmtWhen(read.last.at), name: read.last.byName })
         : t('Last reading: {km}, {when}.', { km: kmText(read.last.km), when: fmtWhen(read.last.at) })}</T> : null}
       {ev ? (

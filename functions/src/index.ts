@@ -2269,6 +2269,8 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     else if (!lower && Number(det.data()?.odometerKm ?? -1) <= km) tx.update(detRef, { odometerKm: km, odometerAt: today });
     // On the van for everyone at the station (km, levels, warning lights), and the km of whoever has it.
     noteDash(tx, org.collection('vehicles').doc(rd.vehicleId), van, { km, fuelPct, batteryPct, rangeKm, warnings, at: now, by: who.uid, from: 'tour' });
+    // The managers' flag (Review), with both numbers, by account id only (drivers read the van, names.ts).
+    if (lower) tx.update(org.collection('vehicles').doc(rd.vehicleId), { kmLower: { typed: odometerKm, kept: km, at: now, by: who.uid } });
     return { readingId: reading.id, tourId: started?.id || ended?.id || null, role, tour: ended || started, kmKept: lower ? km : null,
       lowVan: lower ? { name: vanName(van), stationId: van.stationId || null } : null };
   });
@@ -3001,6 +3003,7 @@ async function buyFinish(who: Who, org: R, d: Record<string, unknown>) {
     if (!det.exists) tx.set(detRef, { stationId: p.stationId, createdAt: now, odometerKm: vals.odometerKm, odometerAt: today, updatedAt: now, updatedByName: who.name });
     else if (Number(det.data()?.odometerKm ?? -1) <= vals.odometerKm) tx.update(detRef, { odometerKm: vals.odometerKm, odometerAt: today });
     const read = p.dash.ai;
+    if (van && vanKm != null && vals.odometerKm < vanKm) tx.update(vref, { kmLower: { typed: vals.odometerKm, kept: vanKm, at: now, by: p.by } });
     if (van) noteDash(tx, vref, van, {
       km: vals.odometerKm, fuelPct: p.kind === 'fuel' ? afterRefuel(vals.fuelPct, vals.litres, p.tankL) : read?.fuelPct ?? null,
       batteryPct: read?.batteryPct ?? null, rangeKm: p.kind === 'fuel' ? null : read?.rangeKm ?? null, warnings: read?.warnings || [],
@@ -3787,7 +3790,7 @@ export const correctKm = onCallOnce('correctKm', { timeoutSeconds: 30 }, async (
     const today = new Date(now).toISOString().slice(0, 10);
     if (d.exists) tx.update(dref, { odometerKm: km, odometerAt: today, updatedAt: now, updatedByName: who.name });
     else tx.set(dref, { stationId: van.stationId || null, createdAt: now, odometerKm: km, odometerAt: today, updatedAt: now, updatedByName: who.name });
-    if (van.dash) tx.update(vref, { 'dash.km': km });
+    tx.update(vref, { ...(van.dash ? { 'dash.km': km } : {}), kmLower: FieldValue.delete() });
     const ref = org.collection('kmCorrections').doc();
     tx.set(ref, { vehicleId, vehicleName: vanName(van), stationId: van.stationId || null, from, to: km, reason, by: who.uid, byName: who.name, at: now });
     return { id: ref.id, from, to: km };

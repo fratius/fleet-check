@@ -3195,6 +3195,10 @@ test('cause 2b (B3, B4): 0 km is refused; a lower km is asked again, then kept a
     assert.deepEqual(reading.kmLower, { typed: 48200, kept: 50000 });
     assert.equal((await det()).odometerKm, 50000);
     assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 50000);
+    // The flag the managers see in Review (blind tester, round 2 on #54): on the van, both numbers, who by account id.
+    const flag = (await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower;
+    assert.deepEqual([flag.typed, flag.kept, flag.by], [48200, 50000, P.d1.uid]);
+    await fails(updateDoc(doc(P.mgr.db, 'orgs', P.org, 'vehicles', P.van.id), { kmLower: null }), 'permission-denied');
     const n = await waitFor(async () => ph.notes().find((m) => /Odometer lower/.test(m.title || '')), 'the lower km notification');
     assert.match(n.body, /48200/);
     assert.match(n.body, /50000/);
@@ -3208,6 +3212,7 @@ test('cause 2b (B3, B4): 0 km is refused; a lower km is asked again, then kept a
     await fails(P.d1.call('purchase', { orgId: P.org, action: 'finish', id: b.id, values: values(40000) }), 'failed-precondition');
     const f = await P.d1.call('purchase', { orgId: P.org, action: 'finish', id: b.id, values: values(40000), typed: true });
     assert.ok(f.flags.some((x) => x.key === 'odometer'));
+    assert.deepEqual((({ typed, kept }) => [typed, kept])((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower), [40000, 50000]);
     assert.equal((await det()).odometerKm, 50000);
     assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 50000);
     // Higher is saved as usual.
@@ -3232,6 +3237,8 @@ test('cause 2b (B5): an owner or the station\'s manager corrects km that are too
   assert.deepEqual([c.from, c.to], [before, 48300]);
   assert.equal((await det()).odometerKm, 48300);
   assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().dash.km, 48300);
+  // Corrected: the managers' flag of a lower km goes.
+  assert.equal((await adminDb().doc(`orgs/${P.org}/vehicles/${P.van.id}`).get()).data().kmLower, undefined);
   // The history: the station's manager and the owner read it (as the app asks); drivers and other stations don't.
   const q = (p, st) => getDocs(query(collection(p.db, 'orgs', P.org, 'kmCorrections'), where('vehicleId', '==', P.van.id), ...(st ? [where('stationId', 'in', st)] : [])));
   const rows = (await q(P.mgr, [P.s1])).docs.map((d) => d.data());

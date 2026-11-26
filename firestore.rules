@@ -254,11 +254,11 @@ service cloud.firestore {
         // see (garageVisit, from the service appointments) are the server's.
         // Not beyond the vans of the company's plan: then the owner takes the add-on or the next plan (Plan and billing).
         allow create: if notClosed(orgId) && runs(orgId, request.resource.data.stationId)
-          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit'])
+          && !request.resource.data.keys().hasAny(['assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit', 'kmLower'])
           && okVanNums(request.resource.data)
           && (creator() || vanRoom(orgId));
         allow update: if notClosed(orgId) && runs(orgId, resource.data.stationId)
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit'])
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stationId', 'assignedTo', 'retired', 'retiredAt', 'retiredBy', 'dash', 'todo', 'routines', 'garageVisit', 'kmLower'])
           && okVanNums(request.resource.data);
       }
 

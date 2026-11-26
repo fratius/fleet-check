@@ -4,9 +4,9 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Card, F, MARKER, Pill, Row, Screen, T, fmtWhen, useColors, hs } from '@/components/ui';
-import { useNameOf } from '@/lib/names';
+import { useNameOf, useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
-import { approvedDamage, type Check, type Member, type Tour } from '@/lib/types';
+import { approvedDamage, type Check, type Member, type Tour, type Vehicle } from '@/lib/types';
 import { missingHandovers, type Missing } from '@/lib/videos';
 import { CHECK_MONTHS, fleetDue, fmtDay, peopleDue } from '@/lib/fleet';
 import { apptState, apptWhen, openAppointments, serviceName } from '@/lib/service';
@@ -52,6 +52,8 @@ export default function ReviewQueue() {
   const gaps = s.org?.dashScans ? tourGaps(s.tours.filter((t) => s.runs(t.stationId)), s.assignments.filter((a) => s.runs(a.stationId)), Date.now() - 7 * 86400_000, s.org.dashScansAt || 0) : [];
   // Warning lights on the latest dashboard photo of a van.
   const warn = vanWarnings(s.tours.filter((t) => s.runs(t.stationId)));
+  // Km typed lower than the van's in the last 7 days: the van kept its km (blind test, cause 2b).
+  const lowKm = s.vehicles.filter((v) => v.kmLower && !v.retired && s.runs(v.stationId) && Date.now() - v.kmLower.at < 7 * 86400_000);
   // Inspections, service, tax, insurance and contract ends that are overdue or due soon, and the drivers' licence
   // checks, licences and safety briefings.
   const due = fleetDue(s.vehicles.filter((v) => s.runs(v.stationId)), s.details);
@@ -75,7 +77,7 @@ export default function ReviewQueue() {
   const color = { pump: c.alert, review: MARKER, missing: c.alert, warn: c.warn, chk: c.amber, due: c.amber, buys: c.ink, van: c.ink2, done: c.ok };
   const cats: [Exclude<Cat, 'all'>, string, number][] = [
     ...(pump.length ? [['pump', t('At the pump'), pump.length] as [Exclude<Cat, 'all'>, string, number]] : []),
-    ['review', t('To review'), waiting.length], ['missing', t('Missing proof'), missing.length + gaps.length], ['warn', t('Warning lights'), warn.length],
+    ['review', t('To review'), waiting.length], ['missing', t('Missing proof'), missing.length + gaps.length], ['warn', t('Warning lights'), warn.length + lowKm.length],
     ['chk', t('Checks for drivers'), todo.length + problems.length], ['due', t('Due soon'), appts.length + due.length + pdue.length], ['buys', t('Fuel, wash, parts'), buys.length], ['van', t('At the van'), atVan.length], ['done', t('Reviewed'), done.length],
   ];
   const show = (k: Exclude<Cat, 'all'>) => cat === 'all' || cat === k;
@@ -131,6 +133,12 @@ export default function ReviewQueue() {
         <Section color={c.warn} title={t('Warning lights')} count={warn.length} note={t('Lit on a van\'s latest dashboard photo, in the last 3 days. Check the van before it goes out again.')}>
           {!warn.length ? <Empty text={t('No warning lights on the latest dashboard photos.')} /> : null}
           {warn.map((tour) => <WarnCard key={tour.id} tour={tour} van={s.vanName(tour)} alias={alias(tour.vehicleId)} where={where(tour.stationId)} />)}
+        </Section>
+      ) : null}
+
+      {show('warn') && lowKm.length ? (
+        <Section color={c.warn} title={t('Odometer lower than the van\'s')} count={lowKm.length} note={t('Typed lower than the van\'s km in the last 7 days. The van kept its km: check the odometer, or correct the km on the van\'s page.')}>
+          {lowKm.map((v) => <LowKmCard key={v.id} v={v} />)}
         </Section>
       ) : null}
 
@@ -248,6 +256,22 @@ function Section({ color, title, count, note, children }: { color: string; title
 }
 
 /** An item that needs action: a card with the category's colour down its left edge. */
+/** Km typed lower than the van's: who typed what, and the km the van kept. */
+function LowKmCard({ v }: { v: Vehicle }) {
+  const s = useSession();
+  const whoDid = useWhoDid();
+  const c = useColors();
+  const k = v.kmLower!;
+  const text = t('{name} typed {km} km; the van had {kept} km and keeps them.', { name: whoDid(k.by) || t('A driver'), km: k.typed.toLocaleString(loc()), kept: k.kept.toLocaleString(loc()) });
+  return (
+    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${v.id}`)} label={`${s.vanName(v)}: ${text}`}>
+      <T v="medium">{s.vanName(v)}</T>
+      <T v="small">{text}</T>
+      <T v="small">{fmtWhen(k.at)}</T>
+    </ActionCard>
+  );
+}
+
 function ActionCard({ band, alert, onPress, label, children }: { band: string; alert?: boolean; onPress: () => void; label: string; children: React.ReactNode }) {
   const c = useColors();
   return (

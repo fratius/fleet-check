@@ -18,6 +18,11 @@ export const perPhotoCost = (t: Tier) => (4784 * TIER_MODEL[t].inPerM + 150 * TI
 export interface Vehicle {
   id: string;
   name: string;
+  /**
+   * The last km typed lower than the van's (blind test, 26 Nov 2026, cause 2b): the van kept its km; the managers see
+   * it in Review until someone corrects the km. Server only, by account id.
+   */
+  kmLower?: { typed: number; kept: number; at: number; by: string } | null;
   plate: string;
   cls: string;
   roof: 'high' | 'low' | 'unknown';

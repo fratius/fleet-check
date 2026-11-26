@@ -1234,3 +1234,16 @@ test('cause 2b (B1, B2): a fleet manager sees the driver link with Share and Mak
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });
+
+// Blind tester, round 2 on #54 (F01): the manager saw no flag of a km typed lower than the van's. It's in Review.
+test('cause 2b (B4, F01): a km typed lower than the van\'s shows in the manager\'s Review with both numbers', async () => {
+  await rwWorld();
+  await db.doc(`orgs/${RW_ORG}/vehicles/${RW_V1}`).update({ kmLower: { typed: 48200, kept: 50000, at: Date.now(), by: RW_ADA.uid } });
+  const { ctx, page, errors } = await rwPage(RW_MGR);
+  try {
+    await page.goto(`${URL0}/review`);
+    await visible(page, 'typed 48,200 km; the van had 50,000 km and keeps them.').waitFor({ timeout: 60_000 });
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+  await db.doc(`orgs/${RW_ORG}/vehicles/${RW_V1}`).update({ kmLower: FieldValue.delete() });
+});
