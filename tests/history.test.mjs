@@ -3239,7 +3239,8 @@ test('cause 2b (B5): an owner or the station\'s manager corrects km that are too
   assert.deepEqual([rows[0].from, rows[0].to, rows[0].by, rows[0].byName, rows[0].reason], [before, 48300, P.mgr.uid, 'Mark Manager', 'Misread photo']);
   assert.equal((await q(P.own)).size, 1);
   await fails(q(P.d1, [P.s1]), 'permission-denied');
-  await fails(q(P.mgr2, [P.s2]), 'permission-denied');
+  await fails(q(P.mgr2, [P.s1]), 'permission-denied');
+  assert.equal((await q(P.mgr2, [P.s2])).size, 0);
   await fails(setDoc(doc(P.own.db, 'orgs', P.org, 'kmCorrections', 'fake'), { vehicleId: P.van.id, stationId: P.s1, from: 1, to: 1 }), 'permission-denied');
   // The owner too.
   await P.own.call('correctKm', { orgId: P.org, vehicleId: P.van.id, km: 48250, reason: 'Typo in the service invoice' });

@@ -2219,8 +2219,10 @@ export const saveReading = onCallOnce('saveReading', { timeoutSeconds: 30 }, asy
     if (lower && !typed) throw fail('failed-precondition', KM_LOW, { km: vanKm });
     const km = lower ? vanKm! : odometerKm;
     const days = last ? Math.max(1, (Date.now() - last.at) / 86400_000) : 1;
-    if (!lower && last && odometerKm - last.km > Math.max(1500, 1200 * days) && !sure) {
-      throw fail('out-of-range', 'That\'s {more} km more than the last reading ({km} km). Check the number, or confirm it\'s right.', { more: Math.round(odometerKm - last.km), km: Math.round(last.km) });
+    // A jump far up is checked against the van's km (a reading kept apart lower doesn't count), else the last reading.
+    const from = vanKm ?? last?.km ?? null;
+    if (!lower && last && from != null && odometerKm - from > Math.max(1500, 1200 * days) && !sure) {
+      throw fail('out-of-range', 'That\'s {more} km more than the last reading ({km} km). Check the number, or confirm it\'s right.', { more: Math.round(odometerKm - from), km: Math.round(from) });
     }
 
     const now = Date.now();
