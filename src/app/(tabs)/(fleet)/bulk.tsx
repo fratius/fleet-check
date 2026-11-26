@@ -41,7 +41,17 @@ const SHOWN = 40;
 type Dest = { id: string } | { make: string };
 type Shot = { uri: string; w: number; h: number };
 
+/**
+ * Owners and fleet managers add vans. A driver who opens this page by its link is told it isn't for them (blind test,
+ * 26 Nov 2026, cause 2; the rules and the server refuse them too).
+ */
 export default function AddFleet() {
+  const s = useSession();
+  if (s.role === 'driver') return <Screen edges={[]}><Card dashed><T v="hint">{t('Not available for drivers: only fleet managers and owners add vans.')}</T></Card></Screen>;
+  return <AddFleetPage />;
+}
+
+function AddFleetPage() {
   const s = useSession();
   const c = useColors();
   const [shots, setShots] = useState<Shot[]>([]);

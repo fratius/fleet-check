@@ -41,19 +41,21 @@ function NewCheck({ walkId }: { walkId: string }) {
   const s = useSession();
   const c = useColors();
   const w = s.walks.find((x) => x.id === walkId);
-  const [err, setErr] = useState<string | null>(null);
+  // Only the driver who took the photos, or the station's staff (the server refuses anyone else: needPhotoTaker).
+  const refused = !!w && !!s.user && !s.runs(w.stationId) && !s.tryOut && w.createdBy !== s.user.uid;
+  const [err, setErr] = useState<string | null>(refused ? t('Only the driver who took these photos, or a fleet manager, can do this.') : null);
   const [attempt, setAttempt] = useState(0);
   const t0 = useRef(Date.now());
   const started = useRef(-1);
   useTicker(!err);
   useEffect(() => {
-    if (started.current === attempt || !s.store) return;
+    if (started.current === attempt || !s.store || refused) return;
     started.current = attempt;
     t0.current = Date.now();
     ai.findDamage({ orgId: s.store.orgId, walkId, tier: s.tier })
       .then((r) => router.replace(`/check/${r.checkId}`))
       .catch((e) => setErr(e instanceof AiError ? e.message : t('The check didn\'t finish. Try again.')));
-  }, [s.store, s.tier, walkId, attempt]);
+  }, [s.store, s.tier, walkId, attempt, refused]);
   return (
     <Screen edges={[]}>
       <View style={{ gap: 4 }}>
@@ -61,7 +63,7 @@ function NewCheck({ walkId }: { walkId: string }) {
         <T v="h1">{err ? t('The check didn\'t finish') : w ? tp(w.photos.length, 'Looking for damage in {n} photo', 'Looking for damage in {n} photos') : t('Looking for damage')}</T>
       </View>
       {err ? (
-        <Card><T color={c.alert}>{err}</T><Row><Button v="primary" title={t('Try again')} onPress={() => { setErr(null); setAttempt((a) => a + 1); }} /></Row></Card>
+        <Card><T color={c.alert}>{err}</T>{refused ? null : <Row><Button v="primary" title={t('Try again')} onPress={() => { setErr(null); setAttempt((a) => a + 1); }} /></Row>}</Card>
       ) : (
         <Card>
           <T v="big">{((Date.now() - t0.current) / 1000).toFixed(1)} s</T>
@@ -214,18 +216,30 @@ function CheckView({ id }: { id: string }) {
   const cleared = k.spots.filter((p) => ['dirt', 'reflection', 'no_damage'].includes(p.verdict?.verdict || '')).length;
   const open = n - dmg - cleared;
 
-  const saveReview = async (patch: Partial<Review>, finish?: 'reviewed' | 'submitted') => {
+  // A finished review is locked until someone reopens it (the rules refuse any other change: firestore.rules, reopened()).
+  const edits = reviewer && status === 'submitted';
+  const saveReview = async (patch: Partial<Review>, finish?: 'reviewed') => {
     setErr(null);
+    if (k.status === 'reviewed') return;
     const base: Review = k.review || { decisions: {}, manual: [], by: null, byName: null, at: null };
     const next: Review = { ...base, ...patch };
     const fields: Partial<Check> & { reviewedAt?: number | null } = { review: next };
     if (finish === 'reviewed') { next.by = s.user?.uid || null; next.byName = s.user?.name || null; next.at = Date.now(); fields.status = 'reviewed'; fields.reviewedAt = Date.now(); }
-    if (finish === 'submitted') fields.status = 'submitted';
     try { await s.store!.checks.update(k.id, fields as Partial<Check>); } catch (e) { setErr(failText(e, 'Saving the damage review')); return; }
-    // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
-    if (s.mode === 'firebase' && (finish || k.status === 'reviewed')) {
-      sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) }).catch(() => {});
-    }
+    if (finish) logIt();
+  };
+  // The damage log (new damage and who had the van) follows the review, for the drivers' numbers.
+  const logIt = () => {
+    if (s.mode !== 'firebase') return;
+    sendCall('logReview', { orgId: s.org!.id, checkId: k.id }, { title: t('The damage log for {van}', { van: s.vanName(k) }), vehicleId: k.vehicleId, vehicleName: s.vanName(k) }).catch(() => {});
+  };
+  // "Change the review": back to waiting, with who and when (the only change the rules take on a finished review).
+  const reopen = async () => {
+    setErr(null);
+    const entry = { by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now() };
+    try { await s.store!.checks.update(k.id, { status: 'submitted', reopens: [...(k.reopens || []), entry] } as Partial<Check>); }
+    catch (e) { setErr(failText(e, 'Changing the review')); return; }
+    logIt();
   };
   const decide = (j: number, damage: boolean | null) => {
     const d = { ...decisions };
@@ -256,9 +270,10 @@ function CheckView({ id }: { id: string }) {
   // Who did the check: drivers see only their own (lib/names.ts). The automatic comparison: who took the photos.
   const auto = k.auto === 'compare';
   const by = auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName);
-  // The comparison's close-ups: the driver who took the photos, or the station's staff; never another driver (the
-  // server refuses them too: needCloseupTaker).
-  const shoots = status === 'checking' && (!auto || reviewer || (!!s.user && k.walkBy === s.user.uid));
+  // Close-ups and sending: the driver who took the photos, or the station's staff; never another driver, also not by
+  // the check's link (the server refuses them too: needPhotoTaker). Older checks without walkBy: who ran it.
+  const taker = k.walkBy !== undefined ? k.walkBy : k.createdBy;
+  const shoots = status === 'checking' && (reviewer || s.tryOut || (!!s.user && taker === s.user.uid));
   const mine = auto && !!s.user && k.walkBy === s.user.uid && !reviewer;
   const cst = auto ? closeupState(k) : null;
   const driverSays = !mine || status === 'checking' ? null : [
@@ -291,7 +306,8 @@ function CheckView({ id }: { id: string }) {
         {auto && status === 'checking' && k.closeupBy && shoots ? <T v="small" color={Date.now() > k.closeupBy ? c.alert : undefined}>{Date.now() > k.closeupBy
           ? t('The 30 minutes for close-ups are up: the spots go to your fleet manager now.')
           : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) })}</T> : null}
-        {auto && status === 'checking' && !shoots ? <T v="hint">{t('The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.')}</T> : null}
+        {status === 'checking' && !shoots ? <T v="hint">{t('The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.')}</T> : null}
+        {(k.reopens || []).map((r, x) => <T key={x} v="small">{t('Review reopened by {name}, {when}.', { name: whoDid(r.by, r.byName) || t('the fleet manager'), when: fmtWhen(r.at) })}</T>)}
         <Row>
           <Pill v={status === 'reviewed' ? 'solid' : status === 'submitted' ? 'amber' : 'muted'} text={status === 'reviewed' ? t('Reviewed') : status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
           {s.stations.length > 1 ? <Pill text={s.stationName(k.stationId)} /> : null}
@@ -386,7 +402,7 @@ function CheckView({ id }: { id: string }) {
                 );
               })}
             </View>}
-            {reviewer && status !== 'checking' ? (
+            {edits ? (
               <View style={{ gap: 8, borderTopWidth: 2, borderColor: c.ink, paddingTop: 10 }}>
                 <T v="medium">{t('Your decision')}</T>
                 <Row>
@@ -411,7 +427,7 @@ function CheckView({ id }: { id: string }) {
       {k.notVisible?.length ? <T v="hint">{t('Not visible in these photos: {list}.', { list: k.notVisible.join('; ') })}</T> : null}
       {k.notCompared?.length ? <T v="hint">{t('Not compared: {list}.', { list: gapList(k.notCompared) })}</T> : null}
 
-      {manual.length || (reviewer && status !== 'checking') ? (
+      {manual.length || edits ? (
         <Card>
           <T v="h3">{manual.length ? t('Damage the AI missed ({n})', { n: manual.length }) : t('Damage the AI missed')}</T>
           {manual.map((m, x) => (
@@ -421,12 +437,12 @@ function CheckView({ id }: { id: string }) {
                 {m.note ? <T v="small">{m.note}</T> : null}
                 <T v="small">{t('Added by {name}', { name: m.byName })}</T>
                 {van && s.staff ? <KnownChooser pos={manualPos(van, m.panel)} value={m.known} damages={onRecord} excludeCheck={k.id}
-                  onPick={reviewer && status !== 'checking' ? (key) => setKnownManual(x, key) : undefined} /> : null}
+                  onPick={edits ? (key) => setKnownManual(x, key) : undefined} /> : null}
               </View>
-              {reviewer ? <Button small v="link" title={t('Remove')} onPress={() => saveReview({ manual: manual.filter((_, y) => y !== x) })} /> : null}
+              {edits ? <Button small v="link" title={t('Remove')} onPress={() => saveReview({ manual: manual.filter((_, y) => y !== x) })} /> : null}
             </Row>
           ))}
-          {reviewer && status !== 'checking' ? <AddManual onAdd={(m) => saveReview({ manual: [...manual, { ...m, by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now(),
+          {edits ? <AddManual onAdd={(m) => saveReview({ manual: [...manual, { ...m, by: s.user?.uid || '', byName: s.user?.name || '', at: Date.now(),
             known: van ? likelySame(manualPos(van, m.panel), onRecord, k.id)[0]?.key ?? null : null }] })} /> : null}
           <T v="small">{t('Missed damage is also how we measure what the AI misses.')}</T>
         </Card>
@@ -451,7 +467,7 @@ function CheckView({ id }: { id: string }) {
           <Button v="primary" wide title={t('Finish review')} disabled={!decidedAll} onPress={() => saveReview({}, 'reviewed')} />
         </Card>
       ) : null}
-      {reviewer && status === 'reviewed' ? <Button title={t('Change the review')} onPress={() => saveReview({}, 'submitted')} /> : null}
+      {reviewer && status === 'reviewed' ? <Button title={t('Change the review')} onPress={reopen} /> : null}
     </Screen>
   );
 }

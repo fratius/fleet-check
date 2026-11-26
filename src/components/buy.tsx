@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { dur } from '@/components/history';
 import { Button, F, MARKER, Pill, Row, T, fmtWhen, useColors, type PillV, hs } from '@/components/ui';
-import { useSession } from '@/lib/session';
+import { useSession, type Session } from '@/lib/session';
 import type { BuyKind, Purchase, Vehicle } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 
@@ -98,11 +98,14 @@ export function BuyNow({ v }: { v: Vehicle }) {
   return <View style={{ gap: 10 }}>{asking.map((p) => <WaitingCard key={p.id} p={p} />)}{mine ? <MineCard p={mine} /> : null}</View>;
 }
 
+/** Refuel and wash: owners and fleet managers, and drivers while they have a van (the server refuses the others). */
+export const mayBuy = (s: Pick<Session, 'staff' | 'myVan'>) => s.staff || !!s.myVan;
+
 /** On a van: Refuel, Wash and (owners and the station's managers) Buy parts. */
 export function BuyActions({ v }: { v: Vehicle }) {
   const s = useSession();
   const c = useColors();
-  if (s.mode !== 'firebase' || v.retired || !s.user) return null;
+  if (s.mode !== 'firebase' || v.retired || !s.user || !mayBuy(s)) return null;
   const start = (kind: BuyKind) => router.push({ pathname: '/buy/[id]', params: { id: 'new', van: v.id, kind } });
   return (
     <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 8, backgroundColor: c.paper }}>

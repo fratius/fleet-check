@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 let env;
 const O = 'org1', O2 = 'org2', S1 = 'st1', S2 = 'st2';
@@ -38,6 +38,10 @@ beforeEach(async () => {
     await put(`orgs/${O}/walkarounds/w1`, { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 1 });
     await put(`orgs/${O}/checks/c1`, { vehicleId: 'v1', stationId: S1, status: 'submitted', spots: [], review: null, createdAt: 1 });
     await put(`orgs/${O}/checks/c2`, { vehicleId: 'v2', stationId: S2, status: 'submitted', spots: [], review: null, createdAt: 2 });
+    // A finished review (blind test, 26 Nov 2026, cause 2: locked until someone presses "Change the review").
+    await put(`orgs/${O}/checks/c3`, { vehicleId: 'v1', stationId: S1, status: 'reviewed', spots: [{ photo: 0 }], reviewedAt: 1, createdAt: 3,
+      review: { decisions: { 0: { damage: true, note: '', by: 'mgr1', byName: 'Manager 1', at: 1 } }, manual: [], by: 'mgr1', byName: 'Manager 1', at: 1 },
+      reopens: [{ by: 'own', byName: 'Owner', at: 0 }] });
     await put(`orgs/${O}/scans/sc1`, { predicted: 'suv', verdict: null, actual: null, createdAt: 1 });
     await put(`orgs/${O}/assignments/a1`, { vehicleId: 'v1', driverId: 'drv1', driverName: 'Driver 1', stationId: S1, start: 1, end: null, createdAt: 1 });
     await put(`orgs/${O}/assignments/a2`, { vehicleId: 'v2', driverId: 'drv2', driverName: 'Driver 2', stationId: S2, start: 1, end: 5, createdAt: 1 });
@@ -207,6 +211,51 @@ describe('walk-arounds and checks', () => {
   test('manager cannot change the AI result', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), { spots: [{ x: 1 }] })));
   test('manager cannot review another station', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c2`), review)));
   test('owner reviews any station', () => assertSucceeds(updateDoc(doc(as('own'), `orgs/${O}/checks/c2`), review)));
+});
+
+// Blind test, 26 Nov 2026, cause 2 (A3): after "Finish review" nothing changes until someone presses "Change the
+// review"; that only sets the check back to waiting and adds who reopened it and when.
+describe('a finished damage review is locked until it is reopened', () => {
+  const c3 = (db) => doc(db, `orgs/${O}/checks/c3`);
+  const earlier = { by: 'own', byName: 'Owner', at: 0 };
+  const changed = { review: { decisions: { 0: { damage: false, note: '', by: 'mgr1', byName: 'Manager 1', at: 2 } }, manual: [], by: 'mgr1', byName: 'Manager 1', at: 2 } };
+  const reopen = (by, name, extra = {}) => ({ status: 'submitted', reopens: [earlier, { by, byName: name, at: 5 }], ...extra });
+  test('its manager can\'t change a decision', () => assertFails(updateDoc(c3(as('mgr1')), changed)));
+  test('nor the owner', () => assertFails(updateDoc(c3(as('own')), changed)));
+  test('nor add damage the AI missed', () => assertFails(updateDoc(c3(as('mgr1')), { 'review.manual': [{ panel: 'Rear door', type: 'dent', note: '', by: 'mgr1', byName: 'Manager 1', at: 2 }] })));
+  test('nor finish it again with other decisions', () => assertFails(updateDoc(c3(as('mgr1')), { ...changed, status: 'reviewed', reviewedAt: 2 })));
+  test('its manager reopens it: back to waiting, with who and when', () => assertSucceeds(updateDoc(c3(as('mgr1')), reopen('mgr1', 'Manager 1'))));
+  test('the owner reopens it', () => assertSucceeds(updateDoc(c3(as('own')), reopen('own', 'Owner'))));
+  test('not without saying who and when', () => assertFails(updateDoc(c3(as('mgr1')), { status: 'submitted' })));
+  test('not in someone else\'s name', () => assertFails(updateDoc(c3(as('mgr1')), reopen('own', 'Owner'))));
+  test('not leaving out an earlier reopening', () => assertFails(updateDoc(c3(as('mgr1')), { status: 'submitted', reopens: [{ by: 'mgr1', byName: 'Manager 1', at: 5 }] })));
+  test('not changing the decisions in the same step', () => assertFails(updateDoc(c3(as('mgr1')), reopen('mgr1', 'Manager 1', changed))));
+  test('not to another state', () => assertFails(updateDoc(c3(as('mgr1')), { ...reopen('mgr1', 'Manager 1'), status: 'checking' })));
+  test('not by a driver', () => assertFails(updateDoc(c3(as('drv1')), reopen('drv1', 'Driver 1'))));
+  test('not by a manager of another station', async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), `orgs/${O}/members/mgr2`), { role: 'manager', stationIds: [S2], name: 'Manager 2', email: 'm2@x' }));
+    await assertFails(updateDoc(c3(as('mgr2')), reopen('mgr2', 'Manager 2')));
+  });
+  test('reopened, it can be changed and finished again', async () => {
+    await assertSucceeds(updateDoc(c3(as('mgr1')), reopen('mgr1', 'Manager 1')));
+    await assertSucceeds(updateDoc(c3(as('mgr1')), changed));
+    await assertSucceeds(updateDoc(c3(as('mgr1')), { status: 'reviewed', reviewedAt: 6 }));
+    await assertFails(updateDoc(c3(as('mgr1')), { review: review.review }));
+  });
+  test('the first reopening of a review (no earlier ones)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => updateDoc(doc(ctx.firestore(), `orgs/${O}/checks/c3`), { reopens: deleteField() }));
+    await assertFails(updateDoc(c3(as('mgr1')), { status: 'submitted', reopens: [] }));
+    await assertSucceeds(updateDoc(c3(as('mgr1')), { status: 'submitted', reopens: [{ by: 'mgr1', byName: 'Manager 1', at: 5 }] }));
+  });
+  test('a review still open can\'t write reopenings', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/checks/c1`), { reopens: [{ by: 'mgr1', byName: 'Manager 1', at: 5 }] })));
+});
+
+describe('type scans', () => {
+  test('a driver can\'t mark one', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/scans/sc1`), { verdict: 'correct', actual: 'suv' })));
+  test('nobody changes what the AI said', () => assertFails(updateDoc(doc(as('mgr1'), `orgs/${O}/scans/sc1`), { predicted: 'van' })));
+  test('nobody adds one from the app (only the server)', () => assertFails(setDoc(doc(as('mgr1'), `orgs/${O}/scans/sc9`), { predicted: 'van', createdAt: 2 })));
+  test('nobody deletes one', () => assertFails(deleteDoc(doc(as('own'), `orgs/${O}/scans/sc1`))));
+  test('another company\'s owner can\'t mark one', () => assertFails(updateDoc(doc(as('own2'), `orgs/${O}/scans/sc1`), { verdict: 'correct', actual: 'suv' })));
   test('driver cannot read type scans', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/scans/sc1`))));
   test('manager marks a type scan right or wrong', () => assertSucceeds(updateDoc(doc(as('mgr1'), `orgs/${O}/scans/sc1`), { verdict: 'correct', actual: 'suv' })));
 });

@@ -47,13 +47,22 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    costs and without new stations), approves (or rejects) drivers who signed up for it with the
    company's driver link, and removes drivers there. Cannot add stations or
    managers. **Has the final word on damage**: approves or rejects every spot the AI found, adds damage it
-   missed, finishes the review. Approved damage goes on the van's damage record. **Allows or refuses a refuel or
+   missed, finishes the review. Approved damage goes on the van's damage record. **A finished review is locked**
+   (product owner, 2026-11-26): nothing in it changes until someone presses "Change the review", which sets it back
+   to waiting and is recorded on the check with who and when (`reopens`; the rules take no other change of a
+   reviewed check), so the van's damage record only changes through such a reopening. **Allows or refuses a refuel or
    wash when the fuel card isn't the van's** (never their own), and buys parts for their station's vans.
 4. **Driver** (role `driver`). Scans: sees the vans of their station, does walk-arounds, runs the AI damage
-   check and takes close-ups at the van, then sends the check to the manager. Where the station allows it, picks
+   check and takes close-ups at the van, then sends the check to the manager. **Only on their own photos**
+   (product owner, 2026-11-26): only the driver who took a walk-around's photos, or a fleet manager or owner of its
+   station, starts a damage check on it, adds close-ups or sends it (`needPhotoTaker`); another driver of the
+   station sees the check without its buttons, also by its link, and the server refuses them. Damage from a check is
+   recorded as found by the driver who took the photos (the check's `walkBy`), also when a manager ran it. Where the station allows it, picks
    up and drops off vans themselves (see below). Where the owner turned dashboard photos on, photographs the
    dashboard at the start and end of each tour. Refuels and washes the vans of their station (dashboard photo, the
-   van's fuel card checked from a photo, the receipt). Reads their own record, tours, incidents and refuels. Cannot
+   van's fuel card checked from a photo, the receipt) **while they have a van** (product owner, 2026-11-26: drivers
+   without one see no Refuel or Wash and the server refuses them), and one at a time: not while one waits for a
+   fleet manager's answer. Reads their own record, tours, incidents and refuels. Cannot
    change vans, people, records or reviews, cannot buy parts, and cannot allow their own refuel.
 
 ## How it is built
@@ -405,11 +414,22 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 - **Comments** on a damage: owners and the station's managers write them (`orgs/{org}/damageNotes`); they are
   kept for good, nobody edits or deletes them.
 
+## Who may call what: the permission table (blind test, 26 Nov 2026, cause 2)
+
+`tests/permissions.mjs` lists every server action (callable) and every collection the app may write, with who may:
+the app creator only, anyone about their own account, owners, staff (fleet managers of the station, and owners), or
+everyone in the company at their station, and whether a driver may only do it for their own (photos, handover).
+`tests/permissions.test.mjs` checks the table against the code (a new action or rule without a line fails), and
+`tests/history.test.mjs` ("the permission table") calls every action as each person who must be refused: someone
+outside the company, a driver, a fleet manager, the owner, a manager and a driver of the other station, another
+driver of the same station. A change to who may do something changes this file, the table and the code together.
+
 ## Checklist for every change
 
 - [ ] Which roles see it? Which can change it? Write it down in the PR or commit.
 - [ ] Firestore rules (`firestore.rules`) allow exactly that, scoped by company and station.
 - [ ] Tests in `tests/rules.test.mjs` prove each role's access, including what must fail.
+- [ ] A new server action or app-writable collection has its line in `tests/permissions.mjs`.
 - [ ] Cloud Functions check the role and station (`guard`, `needStaff`, `needStation`) before doing anything.
 - [ ] Screens hide what a role can't do (`s.role`, `s.staff`, `s.runs(stationId)`), but never rely on hiding.
 - [ ] New records that belong to a place carry a `stationId`.

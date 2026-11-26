@@ -332,8 +332,9 @@ export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
   if (!ID.test(walkId)) throw fail('invalid-argument', 'Unknown walk-around.');
   const walk = await db().doc(`orgs/${orgId}/walkarounds/${walkId}`).get();
   if (!walk.exists) throw fail('not-found', 'This walk-around was deleted.');
-  const w = walk.data() as { vehicleId: string; vehicleName: string; cls: string; stationId?: string; photos: { n: number; label: string; path?: string }[] };
+  const w = walk.data() as { vehicleId: string; vehicleName: string; cls: string; stationId?: string; createdBy?: string | null; photos: { n: number; label: string; path?: string }[] };
   needStation(who, w.stationId);
+  needPhotoTaker(who, w.createdBy);
   const photos = (w.photos || []).filter((p) => p.path).slice(0, 30);
   if (!photos.length) throw fail('failed-precondition', 'This walk-around has no uploaded photos.');
   await useAi(who, 'checks');
@@ -376,8 +377,9 @@ export const findDamage = onCallOnce('findDamage', opts(300), async (req) => {
   await pool(spots, 4, async (s, i) => { s.refPath = await save(`orgs/${orgId}/checks/${ref.id}/ref${i + 1}.jpg`, await refCrop(originals[s.photo], s.box)); });
 
   const check = {
-    // Who ran it by account id only: drivers of the station read checks (names.ts).
-    vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt: Date.now(), createdBy: uid,
+    // Who ran it, and whose photos they are (the damage is found by them: lib/damage.ts), by account id only:
+    // drivers of the station read checks (names.ts).
+    vehicleId: w.vehicleId, vehicleName: w.vehicleName, cls: w.cls, walkId, createdAt: Date.now(), createdBy: uid, walkBy: w.createdBy || null,
     stationId: w.stationId || null, status: spots.length ? 'checking' : 'submitted',
     submittedAt: spots.length ? null : Date.now(), review: null,
     tier, model: MODELS[tier].id, photos: photos.length, spots, notVisible: [...notVisible].slice(0, 6), missedNote: '',
@@ -405,10 +407,10 @@ export const checkSpot = onCallOnce('checkSpot', { ...opts(180), secrets: [ANTHR
   const cref = db().doc(`orgs/${orgId}/checks/${checkId}`);
   const snap = await cref.get();
   if (!snap.exists) throw fail('not-found', 'This check was deleted.');
-  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null };
+  const k = snap.data() as { vehicleName: string; cls: string; spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null; createdBy?: string | null };
   needStation(who, k.stationId);
   if (k.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
-  needCloseupTaker(who, k);
+  needPhotoTaker(who, takerOf(k));
   const spot = k.spots?.[j];
   if (!Number.isInteger(j) || !spot) throw fail('invalid-argument', 'Unknown spot.');
   if (!spot.refPath) throw fail('failed-precondition', 'The marked photo for this spot is missing.');
@@ -445,11 +447,17 @@ export const checkSpot = onCallOnce('checkSpot', { ...opts(180), secrets: [ANTHR
   return { verdict, model: a.model, ...(who.creator ? { usage: a.usage, ms: a.usage.ms } : {}) };
 });
 
-/** The comparison's close-ups: whoever took the photos, or the station's staff; not another driver. */
-function needCloseupTaker(who: Who, k: { auto?: string; walkBy?: string | null }) {
-  if (k.auto !== 'compare' || who.role !== 'driver' || who.claim) return;
-  if (k.walkBy !== who.uid) throw fail('permission-denied', 'Only the driver who took these photos can add close-ups.');
+/**
+ * A walk-around's photos and their damage check (blind test, 26 Nov 2026, cause 2): the driver who took the photos, or
+ * the station's staff (needStation before), start the check, add close-ups and send it; never another driver, also
+ * not by the check's link. The app creator trying the app (claim) as a driver isn't held back.
+ */
+function needPhotoTaker(who: Who, takenBy: string | null | undefined) {
+  if (who.role !== 'driver' || who.claim) return;
+  if (!takenBy || takenBy !== who.uid) throw fail('permission-denied', 'Only the driver who took these photos, or a fleet manager, can do this.');
 }
+/** Whose photos a check is about: walkBy (the comparison's checks, and checks since 26 Nov 2026), else who ran it. */
+const takerOf = (k: { walkBy?: string | null; createdBy?: string | null }) => (k.walkBy !== undefined ? k.walkBy : k.createdBy);
 
 /**
  * The comparison's check from the person at the van to the fleet manager. how: 'closeups' (only when every spot has
@@ -529,10 +537,10 @@ export const submitCheck = onCallOnce('submitCheck', { timeoutSeconds: 30, secre
   await db().runTransaction(async (tx) => {
     const cur = await tx.get(cref);
     if (!cur.exists) throw fail('not-found', 'This check was deleted.');
-    const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null };
+    const d = cur.data() as { spots: Spot[]; stationId?: string; status?: string; auto?: string; walkBy?: string | null; createdBy?: string | null };
     needStation(who, d.stationId);
     if (d.status === 'reviewed') throw fail('failed-precondition', 'A manager has already reviewed this check.');
-    needCloseupTaker(who, d);
+    needPhotoTaker(who, takerOf(d));
     auto = d.auto === 'compare' && d.status === 'checking';
     if (auto) return;
     const skipped = { verdict: 'skipped', type: null, sizeCm: null, severity: null, confidence: null, reason: '', closeupBox: null };
@@ -1450,11 +1458,11 @@ export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (
 /** Ends a van assignment when the van moves to another station (the driver stays at theirs). */
 export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req);
-  needStaff(who);
+  // Who may comes first (the permission table, tests/permissions.mjs), then what was sent.
+  if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner moves vans between stations.');
   const vehicleId = String(req.data?.vehicleId || '');
   const stationId = String(req.data?.stationId || '');
   if (!ID.test(vehicleId) || !ID.test(stationId)) throw fail('invalid-argument', 'Unknown van or station.');
-  if (who.role !== 'owner') throw fail('permission-denied', 'Only the fleet owner moves vans between stations.');
   const org = db().doc(`orgs/${who.orgId}`);
   const vref = org.collection('vehicles').doc(vehicleId);
   await db().runTransaction(async (tx) => {
@@ -2636,6 +2644,8 @@ interface BuyDoc {
   parts: string[]; note: string | null; createdAt: number;
 }
 const OPEN_BUY: BuyStatus[] = ['open', 'waiting', 'refused'];
+/** After this an open one counts as left behind (the app's STALE_BUY in components/buy.tsx). */
+const BUY_STALE_MS = 6 * 3600_000;
 const buyPath = (w: Who) => `orgs/${w.orgId}/buys/${w.uid}/`;
 
 /** Who hears about it: the station's fleet managers, or the owners where the station has none (parts: the owners). */
@@ -2688,6 +2698,12 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   needStation(who, van.stationId);
   if (van.retired) throw fail('failed-precondition', 'This van is retired.');
   if (kind === 'fuel' && van.fuel === 'electric') throw fail('failed-precondition', 'Electric vans are charged, not refuelled.');
+  // Drivers refuel and wash only while they have a van (blind test, 26 Nov 2026, cause 2; ROLES.md). Fleet managers
+  // and owners refuel any van of their station.
+  if (who.role === 'driver' && van.assignedTo?.driverId !== who.uid
+    && (await org.collection('vehicles').where('assignedTo.driverId', '==', who.uid).limit(1).get()).empty) {
+    throw fail('permission-denied', 'You don\'t have a van. Refuelling and washing are for drivers with a van: ask your fleet manager.');
+  }
   const det = (await org.collection('vehicleDetails').doc(vehicleId).get()).data() as { fuelCard?: string; odometerKm?: number } | undefined;
   const expected = kind === 'parts' ? null : cardDigits(det?.fuelCard);
   // Named after its dashboard photo, so the same photo sent again (the phone didn't get the answer, maybe while the
@@ -2696,10 +2712,13 @@ async function buyStart(who: Who, org: R, d: Record<string, unknown>) {
   const answer = (x: BuyDoc) => ({ id: ref.id, needsCard: !!x.card.needed, lastKm: x.lastKm ?? null });
   const before = await ref.get();
   if (before.exists && (before.data() as BuyDoc).by === who.uid) return answer(before.data() as BuyDoc);
-  // One at a time: anything this person left half done is closed (and stays in the history).
+  // One at a time: anything this person left half done is closed (and stays in the history). One that waits for a
+  // fleet manager's answer isn't: no second one until it's answered or cancelled (blind test, 26 Nov 2026, cause 2).
   const now = Date.now();
   const left = (await org.collection('purchases').where('by', '==', who.uid).orderBy('createdAt', 'desc').limit(10).get()).docs
     .filter((x) => OPEN_BUY.includes(x.data().status) && x.id !== ref.id);
+  const waits = left.find((x) => x.data().status === 'waiting' && now - Number(x.data().createdAt || 0) < BUY_STALE_MS);
+  if (waits) throw fail('failed-precondition', 'Your fleet manager hasn\'t answered about {van} yet. Wait for the answer, or cancel that one first.', { van: String(waits.data().vehicleName || '') });
   await Promise.all(left.map((x) => x.ref.update({ status: 'cancelled', cancel: { by: who.uid, byName: who.name, at: now, reason: N_('Started another one') }, updatedAt: now })));
 
   // The photo must be there; the AI reads it in a second call (dash) while the driver already takes the card photo.

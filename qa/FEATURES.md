@@ -206,6 +206,9 @@ a decision about what the app must do, so it goes in a pull request of its own t
   and one AI check.
 - MUST 5.26 (2026-11-26) As soon as it's sent, the camera moves on to the van (or the walk-around), also when the camera
   page was opened by its link or after a reload; the button can't be pressed again.
+- MUST 5.27 (2026-11-26) Only the driver who took a walk-around's photos, or a fleet manager or owner of its station,
+  can start a damage check on it, add close-ups or send it. Another driver sees the check but gets no buttons, even by
+  link, and the server refuses.
 
 ## 6. Review and the damage record
 
@@ -216,6 +219,9 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - SHOULD 6.3 Review lists what needs a decision: checks to review, missing handover proof, drivers waiting at the
   pump, warning lights, deadlines due soon, sign-up requests. The tab's badge counts what needs action.
 - SHOULD 6.4 Owners and the station's managers can mark a walk-around or video as damage, and take the mark off.
+- MUST 6.5 (2026-11-26) Damage from a check is recorded as found by the driver who took the photos.
+- MUST 6.6 (2026-11-26) After "Finish review", nothing can change until someone presses "Change the review". The
+  reopening is recorded with who and when, and the van's damage record only changes through such a change.
 
 ## 7. Refuel, wash and parts
 
@@ -229,6 +235,8 @@ a decision about what the app must do, so it goes in a pull request of its own t
   manager and **never block** the driver.
 - MUST 7.5 Every attempt stays on record: finished, refused, cancelled and never finished. Nothing is deleted.
 - MUST 7.6 Fuel card photos are never kept; only the last 4 digits show.
+- MUST 7.7 (2026-11-26) Drivers without a van don't see Refuel or Wash, and the server refuses them. A driver opening
+  Add vehicle by link sees "not available". No second refuel while one is waiting for the manager.
 
 ## 8. Tours from dashboard photos
 
@@ -361,3 +369,6 @@ a decision about what the app must do, so it goes in a pull request of its own t
   appointment can't be given a past day there, and the day a service was done can't be a future one.
 - SHOULD 14.10 The pop-ups work on a phone-sized screen, without a connection, in every language, and right to left in
   Arabic and Persian.
+- MUST 14.11 (2026-11-26) Guard: one table of every server action and every app write, for each role, at own station,
+  another station and another company. The test checks each is allowed or refused as ROLES.md says. A new action
+  without a line fails the test. (Scripted; the tester checks what a browser reaches: a refusal, never the data.)

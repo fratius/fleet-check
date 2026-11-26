@@ -697,7 +697,13 @@ export interface Check {
    * happened since); notCompared: frames that couldn't be compared and why.
    */
   auto?: 'compare';
+  /** Whose photos they are (account id only): the comparison's checks, and every check since 26 Nov 2026. */
   walkBy?: string | null;
+  /**
+   * Each time a finished review was opened again ("Change the review"), who and when (blind test, 26 Nov 2026,
+   * cause 2). Only the rules' reopen step writes it; the review is locked while the check is reviewed.
+   */
+  reopens?: { by: string; byName?: string; at: number }[];
   walkKind?: 'pickup' | 'dropoff' | 'walkaround';
   refWalkIds?: string[];
   refAt?: number | null;

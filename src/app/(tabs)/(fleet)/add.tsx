@@ -16,7 +16,17 @@ import { plateKey, vanName } from '@/lib/vans';
 
 type Shot = { uri: string; w: number; h: number };
 
+/**
+ * Owners and fleet managers add vans. A driver who opens this page by its link is told it isn't for them (blind test,
+ * 26 Nov 2026, cause 2; the rules and the server refuse them too).
+ */
 export default function AddVehicle() {
+  const s = useSession();
+  if (s.role === 'driver') return <Screen edges={[]}><Card dashed><T v="hint">{t('Not available for drivers: only fleet managers and owners add vans.')}</T></Card></Screen>;
+  return <AddVehiclePage />;
+}
+
+function AddVehiclePage() {
   const s = useSession();
   const c = useColors();
   const [shots, setShots] = useState<Shot[]>([]);

@@ -118,6 +118,10 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
     const d = spot != null ? k.review!.decisions[String(spot)] : null;
     const afterWalk = walkById.get(k.walkId) || null;
     const foundAt = afterWalk?.createdAt ?? k.createdAt;
+    // Found by the driver who took the photos, also when a manager ran the check (blind test, 26 Nov 2026, cause 2):
+    // walkBy on the check, else the walk-around's photographer, else (older checks) who ran it. The name the record
+    // carries is only the runner's, so it's used only when they're the same person.
+    const foundById = k.walkBy || afterWalk?.createdBy || k.createdBy || null;
     // The automatic comparison says which walk-around a spot was compared with; otherwise the van's one before.
     const compared = p?.beforeWalkId ? walkById.get(p.beforeWalkId) || null : null;
     const beforeWalk = compared || [...byTime].reverse().find((w) => w.id !== k.walkId && w.createdAt < foundAt - 1000 && usable(w).length) || null;
@@ -143,7 +147,7 @@ export function buildDamages(v: Vehicle, checks: Check[], walks: Walkaround[]): 
       note: (d?.note || m?.note || '').trim(),
       aiReason: p?.verdict?.reason || null,
       first: { key, check: k, spot, manual }, later: [],
-      foundAt, foundById: k.createdBy || null, foundBy: k.createdByName || '',
+      foundAt, foundById, foundBy: foundById && foundById === k.createdBy ? k.createdByName || '' : '',
       approvedBy: d?.byName || m?.byName || k.review!.byName || '', approvedAt: d?.at || m?.at || k.review!.at || null,
       pos, afterWalk, beforeWalk, afterPhoto,
       beforePhoto: sameFrame(beforeWalk, afterPhoto, afterWalk),
