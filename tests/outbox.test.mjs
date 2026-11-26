@@ -142,6 +142,30 @@ test('the server refuses: it stops with the reason, the photos stay uploaded, an
   assert.equal(ob.jobs.length, 0);
 });
 
+// Blind test, 26 Nov 2026, cause 3a (1d): the van got another driver after the photos were taken.
+test('a pick-up refused because another driver has the van now: "Take it over" sends it again with takeOver and the handover the refusal saw', async () => {
+  const taken = () => Object.assign(new Error('Another driver has this van now. Take it over?'), { kind: null, code: 'functions/already-exists', details: { t: 'x', v: { expect: 'a9' } } });
+  const w = world({ server: [taken] });
+  const sent = [];
+  const server = w.ops.server;
+  w.ops.server = async (j) => { sent.push({ ...j.then }); return server(j); };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(walkJob('w9', { then: { fn: 'pickUpVan', plate: 'B-DS 104' } }));
+  await settle(ob);
+  const j = ob.jobs.find((x) => x.id === 'w9');
+  assert.deepEqual([j.status, j.errorCode, j.errorExpect], ['failed', 'functions/already-exists', 'a9']);
+  assert.deepEqual(w.server, [], 'nothing happened');
+  // Not for another kind of job; for this one: once, with the plate kept.
+  ob.takeOver('nope');
+  ob.takeOver('w9');
+  await settle(ob);
+  assert.deepEqual(sent.at(-1), { fn: 'pickUpVan', plate: 'B-DS 104', takeOver: true, expect: 'a9' });
+  assert.deepEqual(w.server, ['pickUpVan:w9']);
+  assert.equal(w.uploads.length, 4, 'the photos aren\'t uploaded again');
+  assert.equal(ob.jobs.length, 0);
+});
+
 test('a slow server is tried a few times, then it stops (and can be tried again)', async () => {
   const w = world({ server: Array(FLAKY_TRIES).fill(flaky) });
   const ob = new Outbox(w.ops);

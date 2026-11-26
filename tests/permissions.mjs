@@ -87,6 +87,7 @@ export const ACTIONS = {
   submitCheck: { level: 'member', station: true, own: true, probe: (w) => ({ checkId: w.check1 }) },
   // The photos or video are checked before the van (pick-ups and drop-offs have their own tests of the station).
   pickUpVan: { level: 'member', station: true, via: ['selfService'] },
+  vanByPlate: { level: 'member', station: true, probe: (w) => ({ plate: 'QUIET P1' }) },
   dropOffVan: { level: 'member', station: true, via: ['selfService'] },
   addHandoverVideo: { level: 'member', station: true, own: true, probe: (w) => ({ assignmentId: w.assign1, kind: 'pickup', videoId: 'probe' }) },
   addHandoverPhotos: { level: 'member', station: true, own: true, probe: (w) => ({ assignmentId: w.assign1, kind: 'pickup', walkId: w.walk1 }) },
@@ -118,3 +119,15 @@ export const WRITES = {
 };
 
 export const LEVELS = ['creator', 'self', 'owner', 'staff', 'member'];
+
+// Blind test, 26 Nov 2026, cause 3 (the guard): every action that gives out, takes over or ends a handover sends what
+// the screen showed (`expect`: the open assignment it saw), and the server refuses it when that changed. A pick-up
+// of a van another driver has needs the driver's "take it over" (takeOver). `app`: where the app sends it.
+export const HANDOVER = {
+  assignVan: { app: ['src/components/history.tsx', 'src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx'] },
+  retireVan: { app: ['src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx'] },
+  moveVan: { app: ['src/app/(tabs)/(fleet,review,people,table,log,me)/vehicle/[id].tsx'] },
+  removePerson: { app: ['src/components/person.tsx'] },
+  changePerson: { app: ['src/components/person.tsx'] },
+  pickUpVan: { app: ['src/lib/outbox.ts'], takeOver: true },
+};

@@ -1,10 +1,11 @@
 // Firestore rules for the roles: app creator, owner, manager, driver. Runs against the Firestore emulator:
 //   npx firebase-tools emulators:exec --only firestore --project demo-fleet "npm --prefix tests test"
 import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, deleteField, doc, getDoc, getDocs, or, orderBy, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 let env;
 const O = 'org1', O2 = 'org2', S1 = 'st1', S2 = 'st2';
@@ -32,7 +33,15 @@ beforeEach(async () => {
     await put(`orgs/${O}/members/drv1`, { role: 'driver', stationIds: [S1], name: 'Driver 1', email: 'd1@x' });
     await put(`orgs/${O}/members/drv2`, { role: 'driver', stationIds: [S2], name: 'Driver 2', email: 'd2@x' });
     await put(`orgs/${O2}/members/own2`, { role: 'owner', stationIds: [], name: 'Owner 2', email: 'o2@x' });
-    await put(`orgs/${O}/vehicles/v1`, { name: 'Van 1', stationId: S1, createdAt: 1 });
+    // Driver 1 has van 1 (assignment a1); van 3 at the same station is free; driver 3 at station 1 has no van.
+    await put(`orgs/${O}/vehicles/v1`, { name: 'Van 1', stationId: S1, createdAt: 1, assignedTo: { assignmentId: 'a1', driverId: 'drv1', since: 1 } });
+    await put(`orgs/${O}/vehicles/v3`, { name: 'Van 3', stationId: S1, createdAt: 3 });
+    await put(`orgs/${O}/members/drv3`, { role: 'driver', stationIds: [S1], name: 'Driver 3', email: 'd3@x' });
+    await put(`orgs/${O}/walkarounds/w9`, { vehicleId: 'v1', stationId: S1, createdBy: 'mgr1', createdAt: 9 });
+    await put(`orgs/${O}/walkarounds/w10`, { vehicleId: 'v3', stationId: S1, createdBy: 'mgr1', createdAt: 10 });
+    await put(`orgs/${O}/walkarounds/w11`, { vehicleId: 'v3', stationId: S1, createdBy: 'drv1', createdAt: 11 });
+    await put(`orgs/${O}/checks/c4`, { vehicleId: 'v3', stationId: S1, walkId: 'w11', walkBy: 'drv1', status: 'submitted', spots: [], review: null, createdAt: 4 });
+    await put(`orgs/${O}/checks/c5`, { vehicleId: 'v3', stationId: S1, walkId: 'w10', walkBy: 'mgr1', createdBy: 'mgr1', status: 'submitted', spots: [], review: null, createdAt: 5 });
     await put(`orgs/${O}/vehicles/v2`, { name: 'Van 2', stationId: S2, createdAt: 2 });
     await put(`orgs/${O2}/vehicles/x1`, { name: 'Other', stationId: 'z', createdAt: 1 });
     await put(`orgs/${O}/walkarounds/w1`, { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 1 });
@@ -114,7 +123,20 @@ describe('reading vans', () => {
   test('manager reads vans of their station', () => assertSucceeds(getDocs(vehiclesAt(as('mgr1'), [S1]))));
   test('manager cannot list every van', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/vehicles`))));
   test('manager cannot read a van of another station', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v2`))));
-  test('driver reads vans of their station', () => assertSucceeds(getDocs(vehiclesAt(as('drv1'), [S1]))));
+  // Drivers see only the van they have (product owner, 2026-11-26; blind test, cause 3a).
+  const myVans = (db, uid) => query(collection(db, `orgs/${O}/vehicles`), where('assignedTo.driverId', '==', uid));
+  test('a driver reads the van they have: in their list and by link', async () => {
+    const got = await assertSucceeds(getDocs(myVans(as('drv1'), 'drv1')));
+    assert.deepEqual(got.docs.map((d) => d.id), ['v1']);
+    await assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`)));
+  });
+  test('a driver cannot list the vans of their station', () => assertFails(getDocs(vehiclesAt(as('drv1'), [S1]))));
+  test('a driver cannot read another van of their station by link', () => assertFails(getDoc(doc(as('drv1'), `orgs/${O}/vehicles/v3`))));
+  test('a driver cannot list another driver\'s van', () => assertFails(getDocs(myVans(as('drv3'), 'drv1'))));
+  test('a driver without a van reads an empty list, and not the van of the driver next to them', async () => {
+    assert.equal((await assertSucceeds(getDocs(myVans(as('drv3'), 'drv3')))).size, 0);
+    await assertFails(getDoc(doc(as('drv3'), `orgs/${O}/vehicles/v1`)));
+  });
   test('driver cannot query another station', () => assertFails(getDocs(vehiclesAt(as('drv1'), [S2]))));
   test('owner of another company sees nothing here', () => assertFails(getDoc(doc(as('own2'), `orgs/${O}/vehicles/v1`))));
   test('app creator reads every company', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/vehicles`))));
@@ -160,6 +182,46 @@ describe('van history', () => {
 });
 
 describe('walk-arounds and checks', () => {
+  // Drivers read the walk-arounds they took and those of the van they have, the checks of their photos and of their
+  // van; nothing else of the station (blind test, cause 3a).
+  const mine = (db, c, f, uid) => query(collection(db, `orgs/${O}/${c}`), where(f, '==', uid));
+  test('a driver reads the walk-arounds they took (their list), and the manager\'s of the van they have', async () => {
+    const got = await assertSucceeds(getDocs(mine(as('drv1'), 'walkarounds', 'createdBy', 'drv1')));
+    assert.deepEqual(got.docs.map((d) => d.id).sort(), ['w1', 'w11']);
+    await assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w9`)));
+  });
+  test('a driver cannot read another walk-around of the station', async () => {
+    await assertFails(getDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w10`)));
+    await assertFails(getDoc(doc(as('drv3'), `orgs/${O}/walkarounds/w1`)));
+    await assertFails(getDocs(query(collection(as('drv1'), `orgs/${O}/walkarounds`), where('stationId', 'in', [S1]))));
+    await assertFails(getDocs(mine(as('drv3'), 'walkarounds', 'createdBy', 'drv1')));
+  });
+  test('a driver reads the checks of their photos (their list) and of the van they have', async () => {
+    const got = await assertSucceeds(getDocs(mine(as('drv1'), 'checks', 'walkBy', 'drv1')));
+    assert.deepEqual(got.docs.map((d) => d.id), ['c4']);
+    await assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`)));
+  });
+  test('the app\'s lists for a driver: checks of their photos or that they ran (older checks have no walkBy), and their van\'s records', async () => {
+    await assertSucceeds(getDocs(query(collection(as('drv1'), `orgs/${O}/checks`), or(where('walkBy', '==', 'drv1'), where('createdBy', '==', 'drv1')))));
+    // The van page (watchVanRecords): the van they have, not another one.
+    const recs = (db, c, v) => query(collection(db, `orgs/${O}/${c}`), where('vehicleId', '==', v), where('stationId', 'in', [S1]));
+    for (const c of ['walkarounds', 'checks']) {
+      await assertSucceeds(getDocs(recs(as('drv1'), c, 'v1')));
+      await assertFails(getDocs(recs(as('drv1'), c, 'v3')));
+      await assertFails(getDocs(recs(as('drv3'), c, 'v1')));
+    }
+  });
+  test('a driver cannot read another check of the station', async () => {
+    await assertFails(getDoc(doc(as('drv1'), `orgs/${O}/checks/c5`)));
+    await assertFails(getDoc(doc(as('drv3'), `orgs/${O}/checks/c1`)));
+    await assertFails(getDoc(doc(as('drv3'), `orgs/${O}/checks/c4`)));
+    await assertFails(getDocs(query(collection(as('drv1'), `orgs/${O}/checks`), where('stationId', 'in', [S1]))));
+  });
+  test('the station\'s manager reads them all; another station\'s driver none', async () => {
+    for (const id of ['w1', 'w9', 'w10', 'w11']) await assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/walkarounds/${id}`)));
+    for (const id of ['c1', 'c4', 'c5']) await assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/checks/${id}`)));
+    await assertFails(getDoc(doc(as('drv2'), `orgs/${O}/walkarounds/w1`)));
+  });
   test('driver saves a walk-around at their station', () => assertSucceeds(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w2`), { vehicleId: 'v1', stationId: S1, createdBy: 'drv1', createdAt: 2 })));
   test('driver cannot save one for another station', () => assertFails(setDoc(doc(as('drv1'), `orgs/${O}/walkarounds/w3`), { vehicleId: 'v2', stationId: S2, createdBy: 'drv1', createdAt: 2 })));
   test('nobody writes a video record from the app, not even the owner', () => assertFails(setDoc(doc(as('own'), `orgs/${O}/videos/x1`), { vehicleId: 'v1', stationId: S1, by: 'own', kind: 'pickup' })));
@@ -283,7 +345,7 @@ describe('people and invites', () => {
   test('A1: a manager lists the people of their own station', async () => {
     const snap = await assertSucceeds(getDocs(peopleAt(as('mgr1'), [S1])));
     const ids = snap.docs.map((d) => d.id).sort();
-    if (ids.join() !== 'drv1,mgr1') throw new Error(`listed ${ids}`);
+    if (ids.join() !== 'drv1,drv3,mgr1') throw new Error(`listed ${ids}`);
   });
   test('A1: a manager reads a driver of their own station', () => assertSucceeds(getDoc(doc(as('mgr1'), `orgs/${O}/members/drv1`))));
   test('A1: a manager can\'t read a driver of another station (phone, email, Transporter ID)', () => assertFails(getDoc(doc(as('mgr1'), `orgs/${O}/members/drv2`))));
@@ -392,7 +454,10 @@ describe('the app creator viewing the app as someone else', () => {
   const C = { creator: true };
   const asDrv = () => as('vdrv', C), asMgr = () => as('vmgr', C), asOwn = () => as('vown', C);
   // As a driver of station 1.
-  test('as a driver: reads the vans of their station', () => assertSucceeds(getDocs(vehiclesAt(asDrv(), [S1]))));
+  test('as a driver: reads the van they have (none), not the station\'s', async () => {
+    await assertSucceeds(getDocs(query(collection(asDrv(), `orgs/${O}/vehicles`), where('assignedTo.driverId', '==', 'vdrv'))));
+    await assertFails(getDocs(vehiclesAt(asDrv(), [S1])));
+  });
   test('as a driver: not another station', () => assertFails(getDocs(vehiclesAt(asDrv(), [S2]))));
   test('as a driver: not every van', () => assertFails(getDocs(collection(asDrv(), `orgs/${O}/vehicles`))));
   test('as a driver: not another company', () => assertFails(getDoc(doc(asDrv(), `orgs/${O2}/vehicles/x1`))));
@@ -434,7 +499,7 @@ describe('the app creator viewing the app as someone else', () => {
   // Anyone else: the switch doesn't exist.
   test('nobody else can set it', () => assertFails(setDoc(doc(as('drv1'), 'users/drv1'), { viewAs: { org: O, role: 'owner', st: null } })));
   test('nobody else gets anything from it', () => assertFails(getDoc(doc(as('drv2'), `orgs/${O}/vehicles/v1`))));
-  test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(vehiclesAt(as('drv2'), [S2]))));
+  test('someone else\'s profile with it stays theirs', () => assertSucceeds(getDocs(query(collection(as('drv2'), `orgs/${O}/vehicles`), where('assignedTo.driverId', '==', 'drv2')))));
 });
 
 describe('checks for drivers', () => {
@@ -495,7 +560,7 @@ describe('AI speed and cost: only the app creator', () => {
   test('type scans (they carry cost): the app creator reads them', () => assertSucceeds(getDocs(collection(as('boss', { creator: true }), `orgs/${O}/scans`))));
   test('type scans: not the fleet owner', () => assertFails(getDoc(doc(as('own'), `orgs/${O}/scans/sc1`))));
   test('type scans: not the manager', () => assertFails(getDocs(collection(as('mgr1'), `orgs/${O}/scans`))));
-  test('the check itself stays readable at the station', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`))));
+  test('the check itself stays readable to the driver who has the van', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/checks/c1`))));
 });
 
 // Blind test, 26 Nov 2026, cause 2b (B3, B6): numbers that can't be right are refused (functions/src/numbers.ts and
@@ -585,7 +650,8 @@ describe('van records: facts for the station, contract and deadlines for owners 
   test('the app creator viewing as a driver can\'t read them', () => assertFails(getDoc(det(as('vdrv', { creator: true }), 'v1'))));
   test('…viewing as a manager can', () => assertSucceeds(getDoc(det(as('vmgr', { creator: true }), 'v1'))));
   test('a manager writes the van\'s facts (VIN, size, breakdown number)', () => assertSucceeds(updateDoc(doc(as('mgr1'), `orgs/${O}/vehicles/v1`), { vin: 'W1V9070001P431208', heightM: 2.72, breakdownPhone: '+49 800 1' })));
-  test('a driver reads them', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`))));
+  test('a driver reads them on the van they have', () => assertSucceeds(getDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`))));
+  test('…not on another van', () => assertFails(getDoc(doc(as('drv3'), `orgs/${O}/vehicles/v1`))));
   test('a driver can\'t change them', () => assertFails(updateDoc(doc(as('drv1'), `orgs/${O}/vehicles/v1`), { vin: 'X' })));
 });
 

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { ACTIONS, LEVELS, WRITES } from './permissions.mjs';
+import { ACTIONS, HANDOVER, LEVELS, WRITES } from './permissions.mjs';
 
 const root = new URL('../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8');
@@ -109,4 +109,26 @@ test('every collection the app may write has a line in the table, and the rules 
 
 test('ROLES.md points to the table', () => {
   assert.match(read('ROLES.md'), /tests\/permissions\.mjs/);
+});
+
+// Blind test, 26 Nov 2026, cause 3: an out-of-date screen never ends someone else's handover by surprise.
+test('every action that gives out, takes over or ends a handover checks what the screen showed, and the app sends it', () => {
+  const wrong = [];
+  for (const [name, h] of Object.entries(HANDOVER)) {
+    const code = actionCode(name);
+    if (!code) { wrong.push(`${name}: not a server action`); continue; }
+    if (!/needSameHandover\(req\.data|'expect' in req\.data/.test(code)) wrong.push(`${name}: doesn't check expect`);
+    if (h.takeOver && !/takeOver !== true/.test(code)) wrong.push(`${name}: doesn't ask for takeOver`);
+    for (const f of h.app) {
+      const app = read(f);
+      const calls = [...app.matchAll(new RegExp(`'${name}', \\{[^}]*\\}`, 'g'))].map((m) => m[0]);
+      if (name === 'pickUpVan') { if (!/expect: th\.expect/.test(app)) wrong.push(`${name}: ${f} doesn't send expect`); continue; }
+      if (!calls.length) wrong.push(`${name}: no call in ${f}`);
+      for (const c of calls) if (!/expect/.test(c)) wrong.push(`${name}: a call in ${f} without expect: ${c.slice(0, 80)}`);
+    }
+  }
+  // Every action that ends an assignment (closeWith) is in the list.
+  const ending = [...src.matchAll(EXPORT)].map((m) => m[1]).filter((n) => /closeWith\(/.test(actionCode(n)) && !['dropOffVan', 'deleteAccount'].includes(n));
+  for (const n of ending) if (!(n in HANDOVER)) wrong.push(`${n} ends a handover: add it to HANDOVER`);
+  assert.deepEqual(wrong, []);
 });
