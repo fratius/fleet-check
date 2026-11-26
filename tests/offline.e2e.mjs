@@ -973,9 +973,12 @@ test('A2: a reload part-way through keeps the photos already taken and goes on w
     await page.close();
     await p2.goto(`${URL0}/scan/${CAM_WALK}`);
     assert.equal((await frameNow(p2)).n, 4);
+    // The note goes once the next photo is taken (blind tester: it stayed until the end).
+    await takePhotos(p2, 1);
+    assert.equal(await p2.locator('text=Continued where you stopped >> visible=true').count(), 0);
     // Thrown away: the next walk-around starts from scratch.
     await button(p2, 'Close').click();
-    await button(p2, 'Throw away 3 photos').click();
+    await button(p2, 'Throw away 4 photos').click();
     await p2.goto(`${URL0}/scan/${CAM_WALK}`);
     assert.equal((await frameNow(p2)).n, 1);
   } finally { await ctx.close(); }
@@ -1021,6 +1024,31 @@ test('A3, A4 (guard): walk-around, pick-up and drop-off from a link, pressed twi
       assert.deepEqual(errors, []);
     } finally { await ctx.close(); }
   }
+});
+
+// Blind tester, round 1 on this pull request (F01): a drop-off camera for a van the driver doesn't have opened, took
+// 12 photos, and only then refused, leaving a stopped upload. It says so before any photo now.
+test('F01: a drop-off of a van the driver doesn\'t have, or a pick-up while holding a van, says so before any photo', async () => {
+  await camWorld();
+  // After the guard test: Dirk dropped off QUIET 3 and has no van; Cara has QUIET 1.
+  const d = await camPage(CAM2);
+  try {
+    await d.page.goto(`${URL0}/scan/${CAM_DROP}?handover=dropoff`);
+    await visible(d.page, 'You don\'t have this van.').waitFor({ timeout: 60_000 });
+    assert.equal(await d.page.getByRole('button', { name: 'Take photo 1', exact: true }).count(), 0, 'no camera');
+  } finally { await d.ctx.close(); }
+  const c = await camPage(CAM1);
+  try {
+    await c.page.goto(`${URL0}/scan/${CAM_PICK}?handover=pickup`);
+    await visible(c.page, 'You have QUIET 1.').waitFor({ timeout: 60_000 });
+    assert.equal(await c.page.getByRole('button', { name: 'Take photo 1', exact: true }).count(), 0, 'no camera');
+    await c.page.goto(`${URL0}/scan/${CAM_WALK}?handover=pickup`);
+    await visible(c.page, 'You have QUIET 1. Drop it off first').waitFor({ timeout: 60_000 });
+    assert.equal(await c.page.getByRole('button', { name: 'Take photo 1', exact: true }).count(), 0, 'no camera');
+    // A plain walk-around of any van of the station still opens the camera.
+    await c.page.goto(`${URL0}/scan/${CAM_WALK}`);
+    assert.equal((await frameNow(c.page)).n, 1);
+  } finally { await c.ctx.close(); }
 });
 
 test('A5: offline, a drop-off waits on the phone and goes through once when the connection is back', async () => {
