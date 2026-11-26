@@ -179,7 +179,7 @@ export function fromInput(f: FieldSpec, raw: unknown): { value: unknown } | { er
     const bad = val == null ? null : numProblem(f.key, val as number);
     if (bad === 'positive') return { error: t('{field}: enter a number more than 0.', { field: t(f.label) }) };
     if (bad === 'negative') return { error: t('{field} can\'t be less than 0.', { field: t(f.label) }) };
-    if (bad === 'year') return { error: t('Model year: from {min} to {max}.', { min: MIN_YEAR, max: maxYear() }) };
+    if (bad === 'year') return { error: t('Model year: from {min} to {max}.', { min: String(MIN_YEAR), max: String(maxYear()) }) };
   } else if (f.kind === 'day' || f.kind === 'month') {
     val = String(raw ?? '').trim() ? parseDay(String(raw)) : null;
     if (String(raw ?? '').trim() && !val) return { error: t('{field}: enter a date like {example}.', { field: t(f.label), example: f.kind === 'month' ? '03/2027' : '31.03.2027' }) };

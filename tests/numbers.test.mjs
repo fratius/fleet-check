@@ -37,3 +37,9 @@ test('firestore.rules checks every one of these fields', () => {
   const rules = read('../firestore.rules');
   for (const k of [...POSITIVE, ...NON_NEGATIVE, 'modelYear']) assert.match(rules, new RegExp(`'${k}'`), k);
 });
+
+// Blind tester, round 1 on #54 (F02): t() writes numbers with the language's separators ("1,950"), so years go in as text.
+test('F02: the model-year message shows the years as years, not as "1,950"', () => {
+  const src = read('../src/components/vanfacts.tsx');
+  assert.match(src, /t\('Model year: from \{min\} to \{max\}\.', \{ min: String\(MIN_YEAR\), max: String\(maxYear\(\)\) \}\)/);
+});
