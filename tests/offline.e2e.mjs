@@ -1072,3 +1072,137 @@ test('A5: offline, a drop-off waits on the phone and goes through once when the 
     assert.equal((await walksOf(CAM_PICK, CAM1.uid)).length, before + 1, 'one walk-around');
   } finally { await ctx.close(); }
 });
+
+// ---------- Blind test, 26 Nov 2026, cause 2: what each role sees (the server refuses the rest: tests/history.test.mjs) ----------
+// A company of its own: a fleet manager, Ada (has van RW 1) and Ben (no van) at one station; Ada's walk-around, her
+// damage check still waiting for close-ups, and a check whose review is finished.
+const RW_ORG = 'rwOrg1', RW_ST = 'rwSt1', RW_V1 = 'rwVan1', RW_V2 = 'rwVan2', RW_W1 = 'rwWalk1', RW_K1 = 'rwCheck1', RW_K2 = 'rwCheck2';
+const RW_MGR = { email: 'rita.rules@example.com', password: 'rules-pass-1', name: 'Rita Manager' };
+const RW_ADA = { email: 'ada.rules@example.com', password: 'rules-pass-2', name: 'Ada Driver' };
+const RW_BEN = { email: 'ben.rules@example.com', password: 'rules-pass-3', name: 'Ben Driver' };
+let rwReady = null;
+function rwWorld() {
+  rwReady ??= (async () => {
+    const now = Date.now();
+    for (const p of [RW_MGR, RW_ADA, RW_BEN]) p.uid = (await auth.createUser({ email: p.email, password: p.password, displayName: p.name })).uid;
+    const b = db.batch();
+    b.set(db.doc(`orgs/${RW_ORG}`), { name: 'Rules DSP', createdBy: OWNER.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+    b.set(db.doc(`orgs/${RW_ORG}/members/${OWNER.uid}`), { role: 'owner', stationIds: [], email: OWNER.email, name: OWNER.name, joinedAt: now });
+    b.set(db.doc(`orgs/${RW_ORG}/stations/${RW_ST}`), { name: 'Rules station', code: 'DRW1', createdAt: now });
+    for (const [p, role] of [[RW_MGR, 'manager'], [RW_ADA, 'driver'], [RW_BEN, 'driver']]) {
+      b.set(db.doc(`orgs/${RW_ORG}/members/${p.uid}`), { role, stationIds: [RW_ST], email: p.email, name: p.name, joinedAt: now });
+      b.set(db.doc(`users/${p.uid}`), { orgIds: [RW_ORG], orgId: RW_ORG, email: p.email, name: p.name });
+    }
+    b.set(db.doc(`orgs/${RW_ORG}/names/${RW_MGR.uid}`), { name: RW_MGR.name, at: now });
+    const van = (plate) => ({ name: '', plate, cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', fuel: 'diesel', stationId: RW_ST, createdAt: now, createdBy: OWNER.uid, scanId: null });
+    b.set(db.doc(`orgs/${RW_ORG}/vehicles/${RW_V1}`), { ...van('RW 1'), assignedTo: { assignmentId: 'rwA1', driverId: RW_ADA.uid, since: now - 3600_000, kmStart: null, kmEnd: null } });
+    b.set(db.doc(`orgs/${RW_ORG}/vehicles/${RW_V2}`), van('RW 2'));
+    b.set(db.doc(`orgs/${RW_ORG}/assignments/rwA1`), {
+      vehicleId: RW_V1, vehicleName: 'RW 1', plate: 'RW 1', driverId: RW_ADA.uid, driverName: RW_ADA.name, stationId: RW_ST, start: now - 3600_000, end: null,
+      startedBy: RW_MGR.uid, startedByName: RW_MGR.name, endedBy: null, endedByName: null, endReason: null, createdAt: now - 3600_000,
+    });
+    b.set(db.doc(`orgs/${RW_ORG}/walkarounds/${RW_W1}`), { vehicleId: RW_V1, vehicleName: 'RW 1', cls: 'large_van', stationId: RW_ST, source: 'camera', createdAt: now - 600_000,
+      createdBy: RW_ADA.uid, totalMs: null, frames: 1, taken: 1, skipped: 0, retakes: 0, photos: [{ n: 1, label: 'Front', w: 900, h: 1200, takenAt: now - 600_000 }] });
+    const spot = { photo: 0, photoLabel: 'Front', box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, conf: 0.8, mightBe: null,
+      closeup: '', refPath: null, closeups: [], verdict: null, feedback: null, markPath: null };
+    const check = { vehicleId: RW_V1, vehicleName: 'RW 1', cls: 'large_van', walkId: RW_W1, createdBy: RW_ADA.uid, walkBy: RW_ADA.uid, stationId: RW_ST,
+      tier: 'quick', model: 'test', photos: 1, spots: [spot], notVisible: [], missedNote: '' };
+    b.set(db.doc(`orgs/${RW_ORG}/checks/${RW_K1}`), { ...check, createdAt: now - 500_000, status: 'checking', submittedAt: null, review: null });
+    b.set(db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`), { ...check, createdAt: now - 400_000, status: 'reviewed', submittedAt: now - 300_000, reviewedAt: now - 200_000,
+      review: { decisions: { 0: { damage: true, note: '', by: RW_MGR.uid, byName: RW_MGR.name, at: now - 200_000, known: null } }, manual: [], by: RW_MGR.uid, byName: RW_MGR.name, at: now - 200_000 } });
+    await b.commit();
+  })();
+  return rwReady;
+}
+async function rwPage(who) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await signIn(page, who);
+  await visible(page, 'Rules DSP').waitFor({ timeout: 60_000 }).catch(() => {});
+  return { ctx, page, errors };
+}
+
+test('cause 2 (A1): another driver sees a damage check of someone else\'s photos without its buttons, also by link', async () => {
+  await rwWorld();
+  const ben = await rwPage(RW_BEN);
+  try {
+    // Ada's walk-around: no "Check for damage" for Ben.
+    await ben.page.goto(`${URL0}/walk/${RW_W1}`);
+    await visible(ben.page, 'RW 1').waitFor({ timeout: 60_000 });
+    await ben.page.waitForTimeout(1500);
+    assert.equal(await button(ben.page, 'Check for damage').count(), 0, 'no Check for damage');
+    // The check's own link starts nothing.
+    await ben.page.goto(`${URL0}/check/new?walk=${RW_W1}`);
+    await visible(ben.page, 'Only the driver who took these photos, or a fleet manager, can do this.').waitFor({ timeout: 60_000 });
+    // Ada's check: he sees it, without close-ups or sending.
+    await ben.page.goto(`${URL0}/check/${RW_K1}`);
+    await visible(ben.page, 'The driver who took these photos takes the close-ups.').waitFor({ timeout: 60_000 });
+    assert.equal(await button(ben.page, 'Take close-ups of 1 spot').count(), 0, 'no close-ups');
+    assert.equal(await button(ben.page, 'Send to the fleet manager').count(), 0, 'no sending');
+    assert.equal((await db.doc(`orgs/${RW_ORG}/checks/${RW_K1}`).get()).data().status, 'checking');
+    assert.deepEqual(ben.errors, []);
+  } finally { await ben.ctx.close(); }
+  // Ada has both.
+  const ada = await rwPage(RW_ADA);
+  try {
+    await ada.page.goto(`${URL0}/check/${RW_K1}`);
+    await button(ada.page, 'Take close-ups of 1 spot').waitFor({ timeout: 60_000 });
+    await button(ada.page, 'Send to the fleet manager').waitFor({ timeout: 10_000 });
+    await ada.page.goto(`${URL0}/walk/${RW_W1}`);
+    await button(ada.page, 'Check for damage again').waitFor({ timeout: 60_000 });
+  } finally { await ada.ctx.close(); }
+});
+
+test('cause 2 (A3): after "Finish review" nothing can change until "Change the review", which is recorded with who and when', async () => {
+  await rwWorld();
+  const { ctx, page, errors } = await rwPage(RW_MGR);
+  try {
+    await page.goto(`${URL0}/check/${RW_K2}`);
+    await button(page, 'Change the review').waitFor({ timeout: 60_000 });
+    for (const label of ['Damage', 'Not damage', 'Add damage the AI missed', 'Finish review']) assert.equal(await button(page, label).count(), 0, `no ${label}`);
+    await button(page, 'Change the review').click();
+    await visible(page, 'Review reopened by Rita Manager').waitFor({ timeout: 30_000 });
+    await button(page, 'Not damage').waitFor({ timeout: 10_000 });
+    const k = (await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data();
+    assert.equal(k.status, 'submitted');
+    assert.equal(k.reopens.length, 1);
+    assert.equal(k.reopens[0].by, RW_MGR.uid);
+    assert.ok(Math.abs(k.reopens[0].at - Date.now()) < 120_000);
+    // Finished again: locked again, the reopening still shown.
+    await button(page, 'Finish review').click();
+    await button(page, 'Change the review').waitFor({ timeout: 30_000 });
+    assert.equal(await button(page, 'Not damage').count(), 0);
+    await visible(page, 'Review reopened by Rita Manager').waitFor({ timeout: 10_000 });
+    assert.equal((await db.doc(`orgs/${RW_ORG}/checks/${RW_K2}`).get()).data().status, 'reviewed');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 2 (A4): drivers without a van see no Refuel or Wash, and Add vehicle by its link is not available to drivers', async () => {
+  await rwWorld();
+  const ben = await rwPage(RW_BEN);
+  try {
+    await ben.page.goto(`${URL0}/vehicle/${RW_V2}`);
+    await visible(ben.page, 'RW 2').waitFor({ timeout: 60_000 });
+    await ben.page.waitForTimeout(1500);
+    assert.equal(await button(ben.page, 'Refuel').count(), 0, 'no Refuel');
+    assert.equal(await button(ben.page, 'Wash').count(), 0, 'no Wash');
+    // The refuel page by its link says why.
+    await ben.page.goto(`${URL0}/buy/new?van=${RW_V2}&kind=fuel`);
+    await visible(ben.page, 'You don\'t have a van.').waitFor({ timeout: 60_000 });
+    for (const path of ['/add', '/bulk']) {
+      await ben.page.goto(URL0 + path);
+      await visible(ben.page, 'Not available for drivers').waitFor({ timeout: 60_000 });
+    }
+    assert.deepEqual(ben.errors, []);
+  } finally { await ben.ctx.close(); }
+  // Ada has a van: she sees both.
+  const ada = await rwPage(RW_ADA);
+  try {
+    await ada.page.goto(`${URL0}/vehicle/${RW_V1}`);
+    await button(ada.page, 'Refuel').waitFor({ timeout: 60_000 });
+    await button(ada.page, 'Wash').waitFor({ timeout: 10_000 });
+  } finally { await ada.ctx.close(); }
+});

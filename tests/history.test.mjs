@@ -23,6 +23,8 @@ import {
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { connectStorageEmulator, getBytes, getStorage, ref, uploadBytes } from 'firebase/storage';
 
+import { ACTIONS } from './permissions.mjs';
+
 const HOST = '127.0.0.1';
 const cfg = { apiKey: 'demo-key', appId: '1:1:web:1', projectId: 'demo-fleet-check', storageBucket: 'demo-fleet-check.appspot.com' };
 let apps = 0;
@@ -2985,4 +2987,142 @@ test('A6: the driver gets a notification when a fleet manager approves them', as
     assert.match(n.body, /approved you/);
     assert.equal((await getDoc(doc(pia.db, 'users', pia.uid))).data().orgIds.includes(S.org), true);
   } finally { await ph.close(); }
+});
+
+// ---------- Blind test, 26 Nov 2026, cause 2: the server checks who may do what (ROLES.md, tests/permissions.mjs) ----------
+// A company of its own, so nothing above changes: an owner, two stations with a fleet manager each, two drivers at
+// station 1 (Dora has van 1) and one at station 2, someone outside the company, Dora's walk-around and a damage check
+// of it.
+const P = {};
+test('cause 2: a company for who may do what: owner, two stations with a manager each, three drivers, a van, a walk-around and its check', async () => {
+  P.own = await person('Paula Owner', `perm.own.${run}@test.dev`);
+  const org = doc(collection(P.own.db, 'orgs'));
+  P.org = org.id;
+  await setDoc(org, { name: 'Permission DSP', createdBy: P.own.uid, createdAt: Date.now(), stationsReady: true });
+  await setDoc(doc(P.own.db, 'orgs', P.org, 'members', P.own.uid), { role: 'owner', stationIds: [], email: '', name: 'Paula Owner', joinedAt: Date.now() });
+  for (const [k, name] of [['s1', 'DPM1'], ['s2', 'DPM2']]) {
+    const r = doc(collection(P.own.db, 'orgs', P.org, 'stations'));
+    await setDoc(r, { name, code: name, createdAt: Date.now() });
+    P[k] = r.id;
+  }
+  const join = async (key, name, role, station) => {
+    const { invites } = await P.own.call('createInvite', { orgId: P.org, role, stationId: P[station], count: 1 });
+    const p = await person(name, `perm.${key}.${run}@test.dev`);
+    const [firstName, lastName] = name.split(' ');
+    await p.call('acceptInvite', { token: invites[0].token, details: { firstName, lastName, phone: '+49 151 9', transporterId: '' } });
+    return p;
+  };
+  P.mgr = await join('mgr', 'Mark Manager', 'manager', 's1');
+  P.mgr2 = await join('mgr2', 'Nina Manager', 'manager', 's2');
+  P.d1 = await join('d1', 'Dora Driver', 'driver', 's1');
+  P.d2 = await join('d2', 'Emil Driver', 'driver', 's1');
+  P.d3 = await join('d3', 'Fritz Driver', 'driver', 's2');
+  P.out = await person('Otto Outsider', `perm.out.${run}@test.dev`);
+  const vr = doc(collection(P.own.db, 'orgs', P.org, 'vehicles'));
+  P.van = { id: vr.id, name: 'QUIET P1', stationId: P.s1 };
+  await setDoc(vr, { name: '', plate: 'QUIET P1', cls: 'van', stationId: P.s1, createdAt: Date.now(), createdBy: P.own.uid });
+  await setDoc(doc(P.own.db, 'orgs', P.org, 'vehicleDetails', vr.id), { stationId: P.s1, createdAt: Date.now(), fuelCard: 'DKV card ending 4471' });
+  P.assign1 = (await P.mgr.call('assignVan', { orgId: P.org, vehicleId: vr.id, driverId: P.d1.uid })).assignmentId;
+  P.walk1 = await photos(P.d1, P.org, P.van);
+  P.check1 = 'permCheck1';
+  await adminDb().doc(`orgs/${P.org}/checks/${P.check1}`).set({
+    vehicleId: vr.id, vehicleName: 'QUIET P1', cls: 'van', walkId: P.walk1, createdAt: Date.now(), createdBy: P.d1.uid, walkBy: P.d1.uid,
+    stationId: P.s1, status: 'checking', submittedAt: null, review: null, tier: 'quick', model: 'test', photos: 3, notVisible: [], missedNote: '',
+    spots: [{ photo: 0, photoLabel: 'Frame 1', box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, conf: 0.8, mightBe: null,
+      closeup: '', refPath: `orgs/${P.org}/checks/${P.check1}/ref1.jpg`, closeups: [], verdict: null, feedback: null, markPath: null }],
+  });
+});
+
+test('cause 2 (A5): the permission table: every server action refuses everyone ROLES.md says may not do it', async () => {
+  // Who must be refused, by the action's level: those below it. With a probe (a real target at station 1): also a
+  // manager and (member actions) a driver of station 2; with "own": another driver of station 1 (Emil).
+  const below = { creator: ['own', 'mgr', 'd1', 'out'], owner: ['mgr', 'd1', 'out'], staff: ['d1', 'out'], member: ['out'] };
+  const w = { org: P.org, s1: P.s1, s2: P.s2, van1: P.van.id, walk1: P.walk1, check1: P.check1, assign1: P.assign1, d1: P.d1.uid, d2: P.d2.uid };
+  const wrong = [];
+  let tried = 0;
+  for (const [name, a] of Object.entries(ACTIONS)) {
+    if (a.level === 'self') continue;
+    const tries = below[a.level].map((k) => [k, 'role']);
+    if (a.probe) {
+      tries.push(['mgr2', 'other station']);
+      if (a.level === 'member') tries.push(['d3', 'other station']);
+      if (a.own) tries.push(['d2', 'not theirs']);
+    }
+    for (const [k, why] of tries) {
+      const p = P[k];
+      tried++;
+      try {
+        await p.call(name, { orgId: P.org, ...(a.probe ? a.probe(w, p.uid) : {}) });
+        wrong.push(`${name} as ${k} (${why}): allowed`);
+      } catch (e) {
+        const code = String(e.code || '').replace(/^functions\//, '');
+        if (code !== 'permission-denied') wrong.push(`${name} as ${k} (${why}): ${code}: ${e.message}`);
+      }
+    }
+  }
+  assert.ok(tried >= 130, `only ${tried} calls tried`);
+  assert.deepEqual(wrong, []);
+});
+
+test('cause 2 (A1, A2): only the driver who took the photos, or the station\'s staff, checks them for damage, adds close-ups and sends the check', async () => {
+  const walk = await photos(P.d1, P.org, P.van, { real: true });
+  const close = async (checkId) => {
+    const path = `orgs/${P.org}/checks/${checkId}/c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
+    await uploadBytes(ref(P.d1.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const check = async (id) => (await adminDb().doc(`orgs/${P.org}/checks/${id}`).get()).data();
+  // Emil (the same station) can't start a check on Dora's photos.
+  await fails(P.d2.call('findDamage', { orgId: P.org, walkId: walk, tier: 'quick' }), 'permission-denied');
+  // Dora's own check: Emil can't add close-ups or send it; Dora can, and so can their manager.
+  const own = await P.d1.call('findDamage', { orgId: P.org, walkId: walk, tier: 'quick' });
+  assert.equal(own.spots.length, 1);
+  assert.equal((await check(own.checkId)).walkBy, P.d1.uid);
+  await fails(P.d2.call('checkSpot', { orgId: P.org, checkId: own.checkId, spot: 0, closeups: [await close(own.checkId)] }), 'permission-denied');
+  await fails(P.d2.call('submitCheck', { orgId: P.org, checkId: own.checkId }), 'permission-denied');
+  assert.equal((await P.d1.call('checkSpot', { orgId: P.org, checkId: own.checkId, spot: 0, closeups: [await close(own.checkId)] })).verdict.verdict, 'damage');
+  await P.mgr.call('submitCheck', { orgId: P.org, checkId: own.checkId });
+  // A2: the manager runs the check on Dora's photos: it is the manager's run, but the photos (and so the damage) are
+  // Dora's, and Dora takes the close-ups.
+  const m = await P.mgr.call('findDamage', { orgId: P.org, walkId: walk, tier: 'quick' });
+  const mk = await check(m.checkId);
+  assert.equal(mk.createdBy, P.mgr.uid);
+  assert.equal(mk.walkBy, P.d1.uid);
+  await fails(P.d2.call('checkSpot', { orgId: P.org, checkId: m.checkId, spot: 0, closeups: [await close(m.checkId)] }), 'permission-denied');
+  await P.d1.call('checkSpot', { orgId: P.org, checkId: m.checkId, spot: 0, closeups: [await close(m.checkId)] });
+  await fails(P.d2.call('submitCheck', { orgId: P.org, checkId: m.checkId }), 'permission-denied');
+  await P.d1.call('submitCheck', { orgId: P.org, checkId: m.checkId });
+  assert.equal((await check(m.checkId)).status, 'submitted');
+  // A driver of the other station: not at all.
+  await fails(P.d3.call('findDamage', { orgId: P.org, walkId: walk, tier: 'quick' }), 'permission-denied');
+});
+
+test('cause 2 (A4): a driver without a van can\'t start a refuel or wash; nobody starts a second one while one waits for the manager', async () => {
+  const shot = async (p) => {
+    const path = `orgs/${P.org}/buys/${p.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}.jpg`;
+    await uploadBytes(ref(p.st, path), jpeg(), { contentType: 'image/jpeg' });
+    return path;
+  };
+  const buy = async (id) => (await adminDb().doc(`orgs/${P.org}/purchases/${id}`).get()).data();
+  // Emil has no van.
+  for (const kind of ['fuel', 'wash']) {
+    const e = await fails(P.d2.call('purchase', { orgId: P.org, action: 'start', kind, vehicleId: P.van.id, path: await shot(P.d2) }), 'permission-denied');
+    assert.match(e.message, /You don't have a van/);
+  }
+  // Dora has van 1. Her refuel stops at the pump (no fuel card) and waits for the manager.
+  const b = await P.d1.call('purchase', { orgId: P.org, action: 'start', kind: 'fuel', vehicleId: P.van.id, path: await shot(P.d1) });
+  assert.equal((await P.d1.call('purchase', { orgId: P.org, action: 'card', id: b.id, missing: true })).result, 'missing');
+  assert.equal((await buy(b.id)).status, 'waiting');
+  // A second one now is refused, and the first keeps waiting for the answer.
+  const e2 = await fails(P.d1.call('purchase', { orgId: P.org, action: 'start', kind: 'wash', vehicleId: P.van.id, path: await shot(P.d1) }), 'failed-precondition');
+  assert.match(e2.message, /hasn't answered/);
+  assert.equal((await buy(b.id)).status, 'waiting');
+  // Once the manager has answered, the next one starts (the refused one is closed, and stays in the history).
+  await P.mgr.call('purchase', { orgId: P.org, action: 'decide', id: b.id, allow: false });
+  const n = await P.d1.call('purchase', { orgId: P.org, action: 'start', kind: 'wash', vehicleId: P.van.id, path: await shot(P.d1) });
+  assert.equal((await buy(b.id)).status, 'cancelled');
+  await P.d1.call('purchase', { orgId: P.org, action: 'cancel', id: n.id });
+  // Fleet managers refuel their station's vans without having one.
+  const mb = await P.mgr.call('purchase', { orgId: P.org, action: 'start', kind: 'fuel', vehicleId: P.van.id, path: await shot(P.mgr) });
+  await P.mgr.call('purchase', { orgId: P.org, action: 'cancel', id: mb.id });
 });

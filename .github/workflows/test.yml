@@ -146,6 +146,10 @@ jobs:
         run: node --import ./tests/alias.mjs --test tests/fleetfile.test.mjs tests/vans.test.mjs
       - name: The automatic damage comparison, before and after the AI's part (functions/src/compare.ts)
         run: node --import ./tests/alias.mjs --test tests/compare.test.mjs
+      - name: Who may call each server action and write each collection (tests/permissions.mjs, ROLES.md)
+        run: node --test tests/permissions.test.mjs
+      - name: A van's damage record and who found each damage (src/lib/damage.ts)
+        run: node --import ./tests/alias.mjs --test tests/damage.test.mjs
       - name: Every list the app asks for has its index (firestore.indexes.json)
         run: node --test tests/indexes.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)
