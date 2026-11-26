@@ -183,6 +183,16 @@ export default function ScanScreen() {
     return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={goAway} /></Shell>;
   }
   if (!restored) return <Shell style={{ justifyContent: 'center' }}><ActivityIndicator color="#fff" /></Shell>;
+  // A pick-up or drop-off the server would refuse says so before any photo (blind tester: a drop-off camera of a van
+  // the driver no longer had took 12 photos and only then refused).
+  if (ho && !assignment && !walkId && s.user) {
+    const me = s.user.uid;
+    const mine = s.vehicles.find((x) => !x.retired && x.assignedTo?.driverId === me);
+    const why = ho === 'dropoff' ? (v.assignedTo?.driverId !== me ? t('You don\'t have this van.') : null)
+      : mine?.id === v.id ? t('You have {van}.', { van: vanName(v) })
+        : mine ? t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(mine) }) : null;
+    if (why) return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{why}</Text><Btn title={t('Close')} onPress={goAway} /></Shell>;
+  }
   const f = frames[i];
   const taken = slots.filter((x) => x && x !== 'skip').length;
 
@@ -271,7 +281,7 @@ export default function ScanScreen() {
       retakes: prev && prev !== 'skip' ? (prev.retakes || 0) + 1 : 0, q: quality && quality !== 'checking' ? quality : null };
     checkSeq.current++; setQuality(null);
     if (prev && prev !== 'skip') setRetakes((r) => r + 1);
-    const next = slots.slice(); next[i] = shot; setSlots(next); setPending(null);
+    const next = slots.slice(); next[i] = shot; setSlots(next); setPending(null); setResumed(null);
     keep(next);
     advance(next);
   };
