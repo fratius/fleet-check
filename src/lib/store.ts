@@ -265,7 +265,9 @@ export type CardAnswer =
 /* ---------- AI, through Cloud Functions so the API key stays on the server ---------- */
 export class AiError extends Error {
   /** 'offline': the request didn't get through (no connection); 'flaky': the server was slow or busy. See lib/net.ts. */
-  constructor(public code: string, message: string, public net: 'offline' | 'flaky' | null = null) { super(message); }
+  constructor(public code: string, message: string, public net: 'offline' | 'flaky' | null = null,
+    /** The server's template and values (a take-over's refusal carries the handover it saw: outbox takeOver). */
+    public details: { t?: unknown; v?: unknown } | null = null) { super(message); }
 }
 /** Sends one call to the server, once (no retry). Errors as AiError; `net` says whether the connection was the problem. */
 export async function callServer<O>(name: string, input: object, timeout = 180000): Promise<O> {
@@ -286,7 +288,7 @@ export async function callServer<O>(name: string, input: object, timeout = 18000
     const net = (code === 'internal' && /\[0\]\s*$/.test(err.message || '')) || stillRunning ? 'offline' : code === 'unavailable' || code === 'deadline-exceeded' ? 'flaky' : null;
     // What the server really said, for whoever looks into it (the person reads the text below).
     if (net !== 'offline') console.warn(`${name} failed:`, code, err.message || '');
-    throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net);
+    throw new AiError(code, net === 'offline' ? t('No connection. Try again when you have a signal.') : msg, net, d || null);
   }
 }
 /** A request id for a call (functions/src/once.ts): the server does a call with the same id only once. */
