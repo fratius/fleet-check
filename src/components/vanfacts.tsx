@@ -11,6 +11,7 @@ import { failText } from '@/lib/store';
 import type { KmCorrection, Vehicle, VehicleCosts, VehicleDetails } from '@/lib/types';
 import { watchKmCorrections } from '@/lib/people';
 import { sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { vanName } from '@/lib/vans';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { MIN_YEAR, maxYear, numProblem } from '@/lib/numbers';
@@ -435,6 +436,8 @@ function KmCorrections({ v, vanKm }: { v: Vehicle; vanKm: number | null }) {
   const [err, setErr] = useState<string | null>(null);
   const orgId = s.org?.id;
   const mine = s.role === 'owner' ? null : s.myStations.map((x) => x.id);
+  // A correction saved on this phone and still waiting (it's at the top of the van page): not offered again (cause 3b).
+  const waiting = useWaitingFor('correctKm', (d) => d.vehicleId === v.id);
   useEffect(() => (orgId && s.mode === 'firebase' ? watchKmCorrections(orgId, v.id, mine, setRows) : undefined), [orgId, v.id, s.mode, (mine || []).join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
   if (s.mode !== 'firebase' || v.retired) return null;
   const save = async () => {
@@ -455,7 +458,7 @@ function KmCorrections({ v, vanKm }: { v: Vehicle; vanKm: number | null }) {
       {rows.slice().sort((a, b) => b.at - a.at).map((r) => (
         <T key={r.id} v="small">{t('Corrected from {from} km to {to} km by {name}, {when}: {reason}', { from: r.from.toLocaleString(loc()), to: r.to.toLocaleString(loc()), name: r.byName, when: fmtDay(new Date(r.at).toISOString().slice(0, 10)), reason: r.reason })}</T>
       ))}
-      {open ? (
+      {waiting ? <Waiting j={waiting} above /> : open ? (
         <View style={{ gap: 8 }}>
           <T v="hint">{t('The van has {km} km. Enter the right km and say why the old ones were wrong. Both stay in the van\'s history.', { km: (vanKm || 0).toLocaleString(loc()) })}</T>
           <Field label={t('Right km')} value={kmText} onChangeText={setKm} keyboardType="number-pad" />

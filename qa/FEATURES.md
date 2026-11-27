@@ -332,6 +332,22 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 11.3 The "No connection" strip never shows on a working connection.
 - SHOULD 11.4 A change that conflicts with one someone else made meanwhile stops with its reason instead of
   overwriting it (for example a van given away offline that someone else gave meanwhile).
+- MUST 11.5 (3b, 27 Nov 2026) Giving a van from an out-of-date screen: nothing changes yet, and the manager is asked
+  "Ali has this van now. Give it to Ben anyway?" (on the screen when online, or on the stopped item when the give
+  waited offline). "Give it anyway" ends Ali's handover, and Ali is told. "Cancel" changes nothing. "Try again" is
+  never offered.
+- MUST 11.6 (3b) A van given out offline survives a reload or app restart. Back online it goes through exactly once,
+  or asks as in 11.5.
+- MUST 11.7 (3b) No button offers the same change twice: while a change waits offline, its button is replaced by
+  "Waiting to be sent". This covers "Cancel the wash" and every other change.
+- MUST 11.8 (3b) The "No connection" strip appears within 10 s of losing the connection. Within 10 s of reconnecting,
+  the strip goes and waiting changes are sent.
+- MUST 11.9 (3b) No old banners: after a retire, move or remove, nothing still says "X has it now"; after a refused
+  waiting change, the van shows who really has it and no "waiting" banner; the van page shows the new state right
+  after a review.
+- MUST 11.10 (3b) Guard: two browsers at once (give, pick-up, drop-off, take-over, review), plus "offline, reload,
+  back online" for each change that can wait. Each ends with the right holder, the right message, and the change done
+  once. (Scripted; the tester tries what a browser can.)
 
 ## 12. Languages
 
@@ -408,3 +424,6 @@ a decision about what the app must do, so it goes in a pull request of its own t
   subscription stops at once. Only the creator sees it, marked "Closed" and read-only, can reopen it, and can make a
   one-time owner link. Records stay; photos follow the 30/90-day deletion.
 - MUST 14.15 (2026-11-26) All 31 languages; all existing tests pass.
+- MUST 14.16 (27 Nov 2026, product owner: "fix the buttons, not wait longer") A button that asks for a second tap
+  ("Tap again to retire", "Tap again: the van becomes free", "Tap again to remove", …) stays that way, with Cancel
+  beside it, until one of the two is tapped. It never goes back by itself, so a slow second tap still does it.

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Button, Card, Field, T, useColors } from '@/components/ui';
+import { Button, Card, ConfirmButton, Field, T, useColors } from '@/components/ui';
 import { t } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { ai } from '@/lib/store';
@@ -19,7 +19,6 @@ export function DeleteAccount() {
   const [plan, setPlan] = useState<AccountCompany[] | null>(null);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   if (s.mode !== 'firebase' || !s.user) return null;
   if (s.creator) return null;
@@ -31,8 +30,7 @@ export function DeleteAccount() {
   const blocked = (plan || []).filter((x) => x.outcome === 'blocked');
   const go = async () => {
     if (!password) { setErr(t('Enter your password.')); return; }
-    if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 4000); return; }
-    setBusy(true); setErr(null); setArmed(false);
+    setBusy(true); setErr(null);
     try { await s.deleteAccount(password); } catch (e) { setErr(authMessage(e)); setBusy(false); }
   };
 
@@ -54,12 +52,12 @@ export function DeleteAccount() {
       ) : err ? null : <T v="small">{t('Loading…')}</T>}
       {plan && !blocked.length ? (
         <>
-          <Field label={t('Password')} value={password} onChangeText={(v) => { setPassword(v); setArmed(false); }} secureTextEntry autoCapitalize="none" autoComplete="current-password" textContentType="password" />
-          <Button v="danger" wide title={armed ? t('Tap again to delete your account for good') : t('Delete my account')} loading={busy} onPress={go} />
+          <Field label={t('Password')} value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete="current-password" textContentType="password" />
+          <ConfirmButton v="danger" wide title={t('Delete my account')} armedTitle={t('Tap again to delete your account for good')} loading={busy} onConfirm={go} />
         </>
       ) : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
-      <Button v="link" small title={t('Cancel')} onPress={() => { setOpen(false); setPassword(''); setErr(null); setArmed(false); }} />
+      <Button v="link" small title={t('Cancel')} onPress={() => { setOpen(false); setPassword(''); setErr(null); }} />
     </Card>
   );
 }

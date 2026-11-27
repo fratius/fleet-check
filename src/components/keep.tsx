@@ -7,6 +7,7 @@ import { damageDeleteFrom, day, deleteFrom, mediaGone } from '@/lib/media';
 import { useSession } from '@/lib/session';
 import { ai, failText } from '@/lib/store';
 import { QUEUED, sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import type { KeepMark } from '@/lib/types';
 
 /** Has the clean-up deleted this record's photos or video (mediaDeletedAt)? False in demo companies and test mode. */
@@ -33,6 +34,8 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
   const [err, setErr] = useState<string | null>(null);
   // Shown until the server's answer arrives with the record.
   const [mine, setMine] = useState<{ mark: KeepMark | null; until: number | null } | null>(null);
+  // Marked (or the mark taken off) on this phone and still waiting, also after a reload: not offered again (cause 3b).
+  const waiting = useWaitingFor('markDamage', (d) => d.kind === kind && d.id === id);
   if (s.mode !== 'firebase') return null;
   const mark = mine ? mine.mark : keepMark || null;
   const until = mine ? mine.until : keepUntil;
@@ -69,7 +72,7 @@ export function KeepCard({ kind, id, createdAt, stationId, keepUntil, keepMark, 
         {newest && !demo ? <T v="small">{t('The newest walk-around of a van keeps its photos until a newer one is taken, so the next one can be compared with it.')}</T> : null}
         {can && !mark ? <T v="small">{t('If they show damage, mark them to keep them until {date}.', { date: day(damageDeleteFrom(createdAt)) })}</T> : null}
       </View>
-      {can ? (mark
+      {can && waiting ? <Waiting j={waiting} /> : can ? (mark
         ? <Button small v="link" title={t('Take the damage mark off')} loading={busy} onPress={() => set(false)} />
         : <Button small title={t('Mark as damage')} loading={busy} onPress={() => set(true)} />) : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}

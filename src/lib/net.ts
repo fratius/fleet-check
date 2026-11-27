@@ -37,8 +37,16 @@ export function netKind(e: unknown): ErrKind {
 
 /* ---------- Waking up when the connection may be back ---------- */
 const wakers = new Set<() => void>();
+// For a while after a wake the connection may still be coming up: tries waiting for it go every 2 s at most then,
+// so a first try that fails doesn't put the next one back to 30 s (blind test, 26 Nov 2026, cause 3b: a retire
+// took 20 s after the connection came back).
+let wokeAt = 0;
+const WAKE_MS = 15_000;
+const WAKE_NAP = 2000;
 /** The connection may be back: tries waiting for it go now. */
-export function wake() { [...wakers].forEach((f) => f()); }
+export function wake() { wokeAt = Date.now(); [...wakers].forEach((f) => f()); }
+/** Was the connection said to be back in the last 15 s? */
+export const awake = () => Date.now() - wokeAt < WAKE_MS;
 export function onWake(f: () => void) { wakers.add(f); return () => { wakers.delete(f); }; }
 if (Platform.OS === 'web') {
   if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('online', wake);
@@ -47,6 +55,7 @@ if (Platform.OS === 'web') {
 }
 /** Waits `ms`, or less if the connection may be back. */
 export function nap(ms: number): Promise<void> {
+  if (Date.now() - wokeAt < WAKE_MS) ms = Math.min(ms, WAKE_NAP);
   return new Promise((resolve) => {
     let off = () => {};
     const done = () => { clearTimeout(timer); off(); resolve(); };

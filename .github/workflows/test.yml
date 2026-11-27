@@ -156,6 +156,10 @@ jobs:
         run: node --test tests/indexes.test.mjs
       - name: View as always has the way back
         run: node --test tests/viewas.test.mjs
+      - name: No change is offered again while it waits on the phone
+        run: node --test tests/waiting.test.mjs
+      - name: A confirmation waits for the second tap, however slow (no timer)
+        run: node --test tests/confirm.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)
         run: node --test tests/deploy.test.mjs
       - name: The blind tester stays blind, and its rules can't change with the app (qa/)

@@ -16,6 +16,7 @@ import { retrying } from '@/lib/net';
 import { useSession } from '@/lib/session';
 import { ai, failText, type DocRead } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import type { Member, Vehicle } from '@/lib/types';
 import { N_, t, tp } from '@/lib/i18n';
 
@@ -92,6 +93,8 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
   const [read, setRead] = useState<DocRead | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [check, setCheck] = useState(false);
+  // A licence check of this person saved on this phone and still waiting (or stopped): not offered again (cause 3b).
+  const checking = useWaitingFor('recordLicenceCheck', (x) => !!m && x.uid === m.uid);
   if (s.mode !== 'firebase') return null;
   const owner = s.role === 'owner';
   const d = v ? s.details.find((x) => x.id === v.id) : undefined;
@@ -157,7 +160,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
       if (v && Object.keys(patch.details).length) await saveDetails(s, v, d, patch.details);
       if (v && owner && Object.keys(patch.costs).length) await saveCosts(s, v, cost, patch.costs);
       if (m && Object.keys(patch.record).length) await saveRecord(s, m, rec, patch.record);
-      if (m && isLicence && check) {
+      if (m && isLicence && check && !checking) {
         await sendCall('recordLicenceCheck', { orgId: s.org!.id, uid: m.uid, ok: true, note: 'Original licence seen and photographed', day: today() },
           { title: t('Licence check of {name}', { name: m.name }), personId: m.uid });
       }
@@ -240,7 +243,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
             {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">{t('Same as saved: {list}.', { list: rs.filter((r) => same(r.now, r.value, r.f)).map((r) => t(r.f.label)).join(', ') })}</T> : null}
           </View>
         ))}
-        {m && isLicence ? (
+        {m && isLicence && checking ? <Waiting j={checking} above /> : m && isLicence ? (
           <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: check }} onPress={() => setCheck(!check)} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
             <Box on={check} />
             <View style={{ flex: 1 }}>

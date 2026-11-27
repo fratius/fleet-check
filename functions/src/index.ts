@@ -1396,11 +1396,20 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
       personOpen = (await tx.get(aCol.where('driverId', '==', driverId).where('end', '==', null))).docs;
     }
     if (driverId && van.assignedTo?.driverId === driverId) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
-    // Sent from a phone that was offline: only if the van still has the driver the person saw (or none), so a
-    // change someone else made meanwhile isn't overwritten.
-    if (req.data && 'expect' in req.data && (van.assignedTo?.assignmentId ?? null) !== (req.data.expect ?? null)) {
-      throw fail('failed-precondition', 'While this was waiting to be sent, someone else changed who has {van}. Check the van and do it again if it\'s still right.', { van: vanName(van) });
+    // From a screen that was out of date (offline, or another manager was quicker): when it would end a handover the
+    // person didn't see, nothing changes and they are asked, naming who has it now (blind test, cause 3b). "Give it
+    // anyway" sends it again with that handover. One that would end nobody's handover just goes through.
+    const cur = van.assignedTo;
+    if (req.data && 'expect' in req.data && cur && cur.assignmentId !== (req.data.expect ?? null)) {
+      const h = await tx.get(org.collection('names').doc(cur.driverId));
+      const holder = (h.data() as { name?: string } | undefined)?.name || '';
+      const vars = { holder, name: person?.name || '', van: vanName(van), expect: cur.assignmentId };
+      // Plain texts, one per case, so each is translated (scripts/i18n.mjs reads fail() with a string).
+      if (!holder) throw driverId ? fail('already-exists', 'Another driver has this van now. Give it to {name} anyway?', vars) : fail('already-exists', 'Another driver has this van now. Make it free anyway?', vars);
+      throw driverId ? fail('already-exists', '{holder} has this van now. Give it to {name} anyway?', vars) : fail('already-exists', '{holder} has this van now. Make it free anyway?', vars);
     }
+    // The driver whose handover this ends (not the one giving it), to tell them.
+    const ended = cur && cur.driverId !== who.uid && cur.driverId !== driverId ? cur.driverId : null;
     // Close the van's current assignment and the person's current one (their other van becomes free).
     if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), closeWith(who, driverId ? 'reassigned' : 'ended'));
     for (const d of personOpen) {
@@ -1409,7 +1418,7 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
       tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
       touched.push((d.data() as Assignment).vehicleId);
     }
-    if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null as string | null }; }
+    if (!driverId || !person) { tx.update(vref, { assignedTo: null }); return { assignmentId: null as string | null, ended, endedVan: vanName(van) }; }
     const now = Date.now();
     const aref = aCol.doc();
     const kmStart = startKm(van.dash, now);
@@ -1421,8 +1430,17 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
     tx.set(aref, a);
     // On the van, which every driver of the station reads: who has it by account id only (names.ts).
     tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId, since: now, kmStart, kmEnd: null } });
-    return { assignmentId: aref.id as string | null, vanName: vanName(van), plate: van.plate || '' };
+    return { assignmentId: aref.id as string | null, vanName: vanName(van), plate: van.plate || '', ended, endedVan: vanName(van) };
   });
+  // The driver who had it hears that it isn't theirs any more, and from whom (their manager), never to whom.
+  if ('ended' in r && r.ended) {
+    const gone = r.ended, van = r.endedVan;
+    await notify(gone, (lang) => ({
+      title: tr(lang, '{van} isn\'t yours any more', { van }),
+      body: driverId ? tr(lang, '{name} gave it to another driver.', { name: who.name }) : tr(lang, '{name} made it free.', { name: who.name }),
+      url: '/', tag: `van-${vehicleId}`,
+    })).catch(() => 0);
+  }
   // The checks due now go with the van to its new driver (section 17).
   if (!('unchanged' in r)) await refreshTodo(org, touched).catch((e) => logger.warn('Checks not worked out', e as Error));
   // Tell the driver on their phone (best effort: the van is theirs either way, and the app shows it too).

@@ -4,10 +4,10 @@ import { Pressable, Switch, View } from 'react-native';
 
 import { takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
-import { Button, Card, Chip, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { UploadRow } from '@/components/uploads';
+import { Button, Card, Chip, ConfirmButton, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { UploadRow, useWaitingFor } from '@/components/uploads';
 import { newId, prepare } from '@/lib/images';
-import { pendingChange, sendCall, useOutbox } from '@/lib/outbox';
+import { sendCall } from '@/lib/outbox';
 import { N_, t, tp } from '@/lib/i18n';
 import { useHolder, useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
@@ -92,7 +92,6 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const doneId = useRef(newId());
-  const ob = useOutbox();
   const late = Date.now() - x.since > 3 * 3600_000;
   const shoot = async () => {
     setErr(null);
@@ -122,7 +121,7 @@ function DueCheck({ v, x, first }: { v: Vehicle; x: RoutineTodo; first: boolean 
     }
   };
   // Answered already and on its way from this phone: shown instead of the buttons.
-  const waiting = pendingChange(ob.jobs, s.user?.uid, (ch) => ch.kind === 'call' && ch.fn === 'routineDone' && ch.data.vehicleId === v.id && ch.data.routineId === x.id);
+  const waiting = useWaitingFor('routineDone', (d) => d.vehicleId === v.id && d.routineId === x.id);
   if (waiting) {
     return (
       <View style={{ gap: 8, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
@@ -201,6 +200,7 @@ export function RoutineList() {
   const c = useColors();
   const vansText = useVansText();
   const [edit, setEdit] = useState<Routine | 'new' | null>(null);
+  const adding = useWaitingFor('routine', (d) => d.action === 'save' && !d.id);
   const may = (r: Routine) => s.role === 'owner' || (!!r.stationId && s.myStations.some((st) => st.id === r.stationId));
   const mine = s.routines.filter((r) => s.role === 'owner' || !r.stationId || s.myStations.some((st) => st.id === r.stationId))
     .sort((a, b) => routineName(a).localeCompare(routineName(b)));
@@ -208,18 +208,32 @@ export function RoutineList() {
     <View style={{ gap: 12 }}>
       <T v="hint">{t('Checks drivers do on their van, like the oil level or the cargo area. The driver who has the van sees what\'s due and ticks it off. They get a reminder after an hour; you hear about it if it\'s still not done after 3 hours, and straight away when a driver finds a problem. Reminders only between 6:00 and 20:00.')}</T>
       {edit === 'new' ? <RoutineEditor onDone={() => setEdit(null)} /> : <Button v="primary" title={t('Add check')} onPress={() => setEdit('new')} style={{ alignSelf: 'flex-start' }} />}
+      {/* A new check saved on this phone and still waiting (cause 3b): shown, so it isn't added twice. */}
+      {adding ? <UploadRow j={adding} /> : null}
       {!mine.length && edit !== 'new' ? <Card dashed><T v="hint">{t('No checks yet. Add one: the suggestions make it a few taps.')}</T></Card> : null}
       {mine.map((r) => (edit !== 'new' && edit?.id === r.id ? <RoutineEditor key={r.id} r={r} onDone={() => setEdit(null)} /> : (
-        <Pressable key={r.id} disabled={!may(r)} onPress={() => setEdit(r)} accessibilityRole="button"
-          style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
-          <Row>
-            <T v="h3" style={{ flex: 1 }}>{routineName(r)}</T>
-            {r.photo ? <Pill text={t('Photo')} /> : null}
-          </Row>
-          <T v="small">{[howText(r), vansText(r)].join('. ')}</T>
-          {!may(r) ? <T v="small">{t('Set by the fleet owner for every station.')}</T> : null}
-        </Pressable>
+        <RoutineRow key={r.id} r={r} may={may(r)} text={[howText(r), vansText(r)].join('. ')} onOpen={() => setEdit(r)} />
       )))}
+    </View>
+  );
+}
+
+/** One check in the list; while a change to it waits on this phone, that shows and it doesn't open (cause 3b). */
+function RoutineRow({ r, may, text, onOpen }: { r: Routine; may: boolean; text: string; onOpen: () => void }) {
+  const c = useColors();
+  const waiting = useWaitingFor('routine', (d) => d.id === r.id);
+  return (
+    <View style={{ gap: 6 }}>
+      <Pressable disabled={!may || !!waiting} onPress={onOpen} accessibilityRole="button"
+        style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
+        <Row>
+          <T v="h3" style={{ flex: 1 }}>{routineName(r)}</T>
+          {r.photo ? <Pill text={t('Photo')} /> : null}
+        </Row>
+        <T v="small">{text}</T>
+        {!may ? <T v="small">{t('Set by the fleet owner for every station.')}</T> : null}
+      </Pressable>
+      {waiting ? <UploadRow j={waiting} /> : null}
     </View>
   );
 }
@@ -239,7 +253,6 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
   const [picked, setPicked] = useState<string[]>(r && Array.isArray(r.vans) ? r.vans : []);
   const [photo, setPhoto] = useState(r?.photo ?? false);
   const [busy, setBusy] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const pool = s.vehicles.filter((v) => !v.retired && (!station || v.stationId === station) && (owner || s.myStations.some((st) => st.id === v.stationId)));
   const suggest = (x: (typeof SUGGESTED)[number]) => { setKey(x.key); setName(t(x.key)); setHow(x.how); setVans(x.vans); setPhoto(x.photo); };
@@ -256,7 +269,6 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
     } catch (e) { setErr(failText(e, 'Saving the check for drivers')); } finally { setBusy(false); }
   };
   const remove = async () => {
-    if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
     setBusy(true); setErr(null);
     try { await sendCall('routine', { orgId: s.org!.id, action: 'delete', id: r!.id }, { title: t('Remove the check "{name}"', { name: routineName(r!) }) }); onDone(); }
     catch (e) { setErr(failText(e, 'Removing the check for drivers')); setBusy(false); }
@@ -307,7 +319,7 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
       <Row>
         <Button v="primary" title={r ? t('Save changes') : t('Add check')} loading={busy} disabled={busy} onPress={save} />
         <Button v="link" title={t('Cancel')} onPress={onDone} />
-        {r ? <Button v="link" title={armed ? t('Tap again to remove') : t('Remove')} onPress={remove} disabled={busy} /> : null}
+        {r ? <ConfirmButton v="link" title={t('Remove')} armedTitle={t('Tap again to remove')} onConfirm={remove} disabled={busy} /> : null}
       </Row>
     </Card>
   );

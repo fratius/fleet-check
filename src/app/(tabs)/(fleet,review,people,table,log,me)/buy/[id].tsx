@@ -11,6 +11,7 @@ import { retrying } from '@/lib/net';
 import { sendCall } from '@/lib/outbox';
 import { useNameOf } from '@/lib/names';
 import { useSession } from '@/lib/session';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ai, failText, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
 import { N_, loc, t } from '@/lib/i18n';
@@ -138,6 +139,8 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
   const [note, setNote] = useState('');
   const [thumbs, setThumbs] = useState<{ dash?: string; receipt?: string }>({});
   const dashAsked = useRef(false);
+  // A cancel of this one waiting on the phone (no connection): not offered again (blind test, cause 3b).
+  const waiting = useWaitingFor('purchase', (d) => d.id === p?.id);
 
   // The dashboard is read in the background; ask again if that never happened (the app was closed, no signal).
   useEffect(() => {
@@ -166,6 +169,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
     </View>
   );
   const errLine = err ? <T v="small" color={c.alert}>{err}</T> : null;
+  if (p && waiting) return <>{head}<Waiting j={waiting} /></>;
 
   /* 1. The dashboard */
   if (!p) {
@@ -418,6 +422,7 @@ function Summary({ p }: { p: Purchase }) {
   const staffHere = s.runs(p.stationId);
   // The buyer whose van went to someone else (drivers see only the van they have): it's theirs to close.
   const lostVan = p.by === s.user?.uid && !s.vehicles.some((v) => v.id === p.vehicleId);
+  const waiting = useWaitingFor('purchase', (d) => d.id === p.id);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -447,7 +452,9 @@ function Summary({ p }: { p: Purchase }) {
         <T v="hint">{p.byName}, {fmtWhen(p.createdAt)}{had ? `. ${t('{name} had the van.', { name: had })}` : ''}</T>
       </View>
 
-      {p.status === 'waiting' && staffHere ? (
+      {/* An answer, a cancel or a close of this one waiting on the phone: shown instead of the buttons (cause 3b). */}
+      {waiting ? <Waiting j={waiting} /> : null}
+      {!waiting && p.status === 'waiting' && staffHere ? (
         <View style={{ borderWidth: 3, borderColor: c.alert, borderRadius: 4, padding: 14, gap: 8, backgroundColor: c.paper }}>
           <Text style={{ fontFamily: F.condBold, fontSize: hs(26), lineHeight: hs(29), color: c.alert }}>{waitingTitle(p)}</Text>
           <T v="medium">{cardLine(p)}</T>
@@ -517,11 +524,11 @@ function Summary({ p }: { p: Purchase }) {
         </Card>
       ) : null}
 
-      {lostVan && isOpenBuy(p) ? (
+      {!waiting && lostVan && isOpenBuy(p) ? (
         <Button small v="link" title={busy || cancelText(p.kind)} onPress={() => act(t('Cancelling…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id },
           { title: cancelText(p.kind), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }))} />
       ) : null}
-      {staffHere && isOpenBuy(p) && p.status !== 'waiting' && p.by !== s.user?.uid ? (
+      {!waiting && staffHere && isOpenBuy(p) && p.status !== 'waiting' && p.by !== s.user?.uid ? (
         <Button small v="link" title={busy || t('Close it (not finished)')} onPress={() => act(t('Closing…'), () => sendCall('purchase', { orgId: s.org!.id, action: 'cancel', id: p.id, reason: 'Not finished' },
           { title: t('Close {name}\'s purchase for {van}', { name: p.byName, van: s.vanName(p) }), vehicleId: p.vehicleId, vehicleName: s.vanName(p) }))} />
       ) : null}

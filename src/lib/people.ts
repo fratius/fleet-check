@@ -61,7 +61,8 @@ export function watchCheck(orgId: string, id: string, cb: (k: Check | null) => v
 /** One person's membership; null once they've left the company. */
 export function watchMember(orgId: string, uid: string, cb: (m: Member | null) => void, onError?: () => void) {
   return onSnapshot(doc(db(), 'orgs', orgId, 'members', uid),
-    (d) => cb(d.exists() ? ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }) : null),
+    // Not on this phone isn't "left the company": only the server says that (blind test, cause 3b, round 2, F05).
+    (d) => { if (!d.exists() && d.metadata.fromCache) return; cb(d.exists() ? ({ uid: d.id, ...(d.data() as Omit<Member, 'uid'>) }) : null); },
     refused('member', onError));
 }
 

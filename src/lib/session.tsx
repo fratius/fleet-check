@@ -6,13 +6,14 @@ import {
 } from 'firebase/auth';
 import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { signupDone, signupIntent } from './billing';
 import { fb } from './firebase';
 import { t } from './i18n';
 import { vanName } from './vans';
 import { useLang } from './lang';
-import { nap, netKind, retrying } from './net';
+import { nap, netKind, retrying, wake } from './net';
 import { clearCaches, keepCachesOf, overlay, readCache, readSession, writeCache, writeSession } from './offline';
 import { outbox, sendWrite, startOutbox } from './outbox';
 import { loadWebUrl } from './people';
@@ -509,13 +510,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Lists the server has answered: the saved copy never goes over them (it may arrive after them).
     const live = new Set<CacheName>();
     let gone = false;
+    // The connection lost while the app is open (blind test, 26 Nov 2026, cause 3b: the strip didn't come): the vans'
+    // list goes back to this phone's copy (Firestore says so once it knows) or the browser says it's offline. Said
+    // after 2 s, so a blip isn't; gone as soon as the server answers again or the browser is back online, and what
+    // waits on the phone is tried at once (wake).
+    let lostTimer: ReturnType<typeof setTimeout> | null = null;
+    let wasLost = false;
+    const lost = () => {
+      if (lostTimer || gone) return;
+      lostTimer = setTimeout(() => {
+        lostTimer = null;
+        if (gone || refused) return;
+        wasLost = true;
+        setOfflineAt((x) => x ?? Date.now());
+      }, 2000);
+    };
+    const back = (live: boolean) => {
+      if (lostTimer) { clearTimeout(lostTimer); lostTimer = null; }
+      if (wasLost && live) wake();
+      wasLost = false;
+      setOfflineAt(null);
+    };
     const take = <T extends { id: string }>(name: CacheName, set: (rows: T[]) => void, done?: () => void) => {
       sets[name] = set as (rows: never[]) => void;
       return (rows: T[], meta?: { fromCache: boolean }) => {
+        if (meta?.fromCache && name === 'vehicles' && liveData.current) lost();
         if (!meta?.fromCache) {
           live.add(name);
           delete saved[name];
-          if (name === 'vehicles') { liveData.current = true; setOfflineAt(null); }
+          if (name === 'vehicles') { liveData.current = true; back(true); }
         }
         now[name] = rows;
         const s0 = saved[name] as T[] | undefined;
@@ -588,7 +611,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       subs.push(store.usage.subscribe((r) => setUsage(r), () => {}));
       if (store.mode === 'firebase') subs.push(store.compares.subscribe((r) => setCompares(r), () => {}));
     } else { setLoaded((l) => ({ ...l, scans: true })); setCompares([]); }
-    return () => { gone = true; subs.forEach((u) => u()); };
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.addEventListener) {
+      const off = () => lost();
+      const on = () => back(false);
+      window.addEventListener('offline', off);
+      window.addEventListener('online', on);
+      subs.push(() => { window.removeEventListener('offline', off); window.removeEventListener('online', on); });
+    }
+    return () => { gone = true; if (lostTimer) clearTimeout(lostTimer); subs.forEach((u) => u()); };
   }, [store, seesAiStats, staff, role, user?.uid, cacheKey]);
   // The saved copy follows the live data (only once the server answered, so an empty start never overwrites it).
   useEffect(() => {

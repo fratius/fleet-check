@@ -11,7 +11,7 @@ import { LanguageCard } from '@/components/language';
 import { ViewAsCard } from '@/components/viewas';
 import { RoutinesCard } from '@/components/routines';
 import { Notifications } from '@/components/pickup';
-import { Button, Card, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
+import { Button, Card, ConfirmButton, Field, Notice, Pill, Row, Screen, Segmented, T, usd, useColors } from '@/components/ui';
 import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
@@ -268,9 +268,7 @@ function Demo() {
   const s = useSession();
   const c = useColors();
   const [busy, setBusy] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [again, setAgain] = useState(false);
   const inDemo = !!s.org?.demo;
   const mine = inDemo && s.org?.createdBy === s.user?.uid;
   const logins = s.org?.demoLogins || [];
@@ -302,14 +300,8 @@ function Demo() {
               ))}
             </View>
           ) : (s.creator ? <T v="hint">{t('This demo was made before demo logins existed. Start it over to get a driver and a fleet manager you can sign in as.')}</T> : null)}
-          {s.creator ? <Button title={again ? t('Tap again: everything in the demo is made new') : t('Start the demo over')} loading={busy} onPress={() => {
-            if (!again) { setAgain(true); setTimeout(() => setAgain(false), 3000); return; }
-            setAgain(false); go(() => s.openDemo(true));
-          }} /> : null}
-          <Button v="danger" title={armed ? t('Tap again to remove the demo company') : t('Remove the demo company')} loading={busy} onPress={() => {
-            if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
-            go(() => s.removeDemo());
-          }} />
+          {s.creator ? <ConfirmButton title={t('Start the demo over')} armedTitle={t('Tap again: everything in the demo is made new')} loading={busy} onConfirm={() => go(() => s.openDemo(true))} /> : null}
+          <ConfirmButton v="danger" title={t('Remove the demo company')} armedTitle={t('Tap again to remove the demo company')} loading={busy} onConfirm={() => go(() => s.removeDemo())} />
         </>
       ) : (
         <>

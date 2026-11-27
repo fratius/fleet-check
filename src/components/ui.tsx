@@ -161,6 +161,26 @@ export function Button({ title, onPress, v = 'secondary', small, wide, disabled,
   );
 }
 
+/**
+ * A button that asks for a second tap before something that isn't undone easily (retire, remove, make free). The first
+ * tap turns it into `armedTitle` with Cancel beside it, and it stays so until one of them is tapped: no time limit, so
+ * a slow second tap never quietly does nothing (blind test, 27 Nov 2026; product owner: "fix the buttons, not wait
+ * longer"). tests/confirm.test.mjs keeps timed confirmations out of the app.
+ */
+export function ConfirmButton({ title, armedTitle, onConfirm, cancelTitle, v = 'secondary', small, wide, loading, disabled, style }: {
+  title: string; armedTitle: string; onConfirm: () => void; cancelTitle?: string; v?: BV; small?: boolean; wide?: boolean; loading?: boolean; disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const [armed, setArmed] = useState(false);
+  if (!armed) return <Button title={title} v={v} small={small} wide={wide} loading={loading} disabled={disabled} style={style} onPress={() => setArmed(true)} />;
+  return (
+    <Row>
+      <Button title={armedTitle} v={v === 'link' || v === 'secondary' ? 'danger' : v} small={small} wide={wide} disabled={disabled} style={style} onPress={() => { setArmed(false); onConfirm(); }} />
+      <Button title={cancelTitle || t('Cancel')} v="link" small onPress={() => setArmed(false)} />
+    </Row>
+  );
+}
+
 export function Card({ children, style, dashed }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; dashed?: boolean }) {
   const c = useColors();
   return <View style={[{ backgroundColor: dashed ? 'transparent' : c.paper, borderWidth: 2, borderStyle: dashed ? 'dashed' : 'solid', borderColor: dashed ? c.ink2 : c.ink, borderRadius: 4, padding: 16, gap: 10 }, style]}>{children}</View>;
