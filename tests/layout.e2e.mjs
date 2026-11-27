@@ -21,7 +21,7 @@ import { layoutProblems } from './layoutcheck.mjs';
 const fnRequire = createRequire(new URL('../functions/package.json', import.meta.url));
 const { initializeApp } = fnRequire('firebase-admin/app');
 const { getAuth } = fnRequire('firebase-admin/auth');
-const { getFirestore } = fnRequire('firebase-admin/firestore');
+const { FieldValue, getFirestore } = fnRequire('firebase-admin/firestore');
 
 const APP_DIR = process.env.APP_DIR || new URL('../dist-e2e', import.meta.url).pathname;
 const PORT = 8098;
@@ -50,16 +50,18 @@ const ORG = 'layoutOrg1', ST = 'layoutSt1', VAN = 'layoutVan1', VAN2 = 'layoutVa
 const OWNER = { email: 'lena.layout@example.com', password: 'layout-pass-1', name: 'Lena Owner' };
 const LONG = { email: 'long.layout@example.com', password: 'layout-pass-2', name: 'Maximilianalexanderwilhelmfriedrich Schwarzenbergerhausen' };
 const EMOJI = { email: 'emoji.layout@example.com', password: 'layout-pass-3', name: '😀 Emma Stone' };
+// An owner of their own for the right-to-left test: it switches the language, which follows the person (their profile).
+const RTL = { email: 'rami.layout@example.com', password: 'layout-pass-4', name: 'Rami Owner' };
 let browser;
 
 before(async () => {
   await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
   const now = Date.now();
-  for (const p of [OWNER, LONG, EMOJI]) p.uid = (await auth.createUser({ email: p.email, password: p.password, displayName: p.name })).uid;
+  for (const p of [OWNER, LONG, EMOJI, RTL]) p.uid = (await auth.createUser({ email: p.email, password: p.password, displayName: p.name })).uid;
   const b = db.batch();
   b.set(db.doc(`orgs/${ORG}`), { name: 'Layout DSP', createdBy: OWNER.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
   b.set(db.doc(`orgs/${ORG}/stations/${ST}`), { name: 'Layout station', code: 'DLY1', createdAt: now });
-  for (const [p, role] of [[OWNER, 'owner'], [LONG, 'driver'], [EMOJI, 'driver']]) {
+  for (const [p, role] of [[OWNER, 'owner'], [LONG, 'driver'], [EMOJI, 'driver'], [RTL, 'owner']]) {
     b.set(db.doc(`orgs/${ORG}/members/${p.uid}`), { role, stationIds: role === 'owner' ? [] : [ST], email: p.email, name: p.name, joinedAt: now });
     b.set(db.doc(`orgs/${ORG}/names/${p.uid}`), { name: p.name, at: now });
     b.set(db.doc(`users/${p.uid}`), { orgIds: [ORG], orgId: ORG, email: p.email, name: p.name });
@@ -99,31 +101,22 @@ const stoppedChange = (uid) => ({
   errorCode: 'permission-denied', change: { kind: 'call', fn: 'assignVan', data: { orgId: ORG, vehicleId: VAN2, driverId: EMOJI.uid, expect: null, rid: 'rlayout1' } },
 });
 
-async function signedIn(code, viewport = { width: 390, height: 844 }) {
+async function signedIn(code, viewport = { width: 390, height: 844 }, who = OWNER) {
   const ctx = await browser.newContext({ viewport, locale: 'en-GB' });
-  // Who changes the language kept on the phone, and when (it turned to English right after signing in).
-  await ctx.addInitScript(() => {
-    const set = Storage.prototype.setItem;
-    Storage.prototype.setItem = function (k, v) {
-      if (k === 'fc.lang') console.log(`fc.lang set to ${v} at ${location.pathname}; focus ${document.activeElement?.getAttribute('role') || document.activeElement?.tagName} "${(document.activeElement?.textContent || '').slice(0, 40)}"; ${new Error().stack.split('\n').slice(2, 7).join(' | ').slice(0, 400)}`);
-      return set.apply(this, [k, v]);
-    };
-  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => { if (/lang|language/i.test(m.text())) console.log(`[${code} console] ${m.text().slice(0, 600)}`); });
   await page.goto(`${URL0}/sign-in`);
-  await page.evaluate(({ l, job }) => { localStorage.setItem('fc.lang', l); localStorage.setItem('fc.outbox.v1', JSON.stringify([job])); }, { l: code, job: stoppedChange(OWNER.uid) });
+  await page.evaluate(({ l, job }) => { localStorage.setItem('fc.lang', l); localStorage.setItem('fc.outbox.v1', JSON.stringify([job])); }, { l: code, job: stoppedChange(who.uid) });
   await page.goto(`${URL0}/sign-in`);
-  await page.locator('input[type=email] >> visible=true').fill(OWNER.email);
-  await page.locator('input[type=password] >> visible=true').fill(OWNER.password);
+  await page.locator('input[type=email] >> visible=true').fill(who.email);
+  await page.locator('input[type=password] >> visible=true').fill(who.password);
   await page.locator('input[type=password] >> visible=true').press('Enter');
   await page.locator('[role=tablist] >> visible=true').last().waitFor({ timeout: 60_000 });
   await page.waitForTimeout(1500);
   // Signed in, the app must still be in the language asked for (and keep it on a reload).
   const shown = await page.evaluate(() => ({ html: document.documentElement.lang, kept: localStorage.getItem('fc.lang') }));
-  const prof = (await db.doc(`users/${OWNER.uid}`).get()).data() || {};
+  const prof = (await db.doc(`users/${who.uid}`).get()).data() || {};
   if (shown.html !== code || shown.kept !== code) console.log(`signed in for ${code}: shown ${shown.html}, kept ${shown.kept}, profile lang ${prof.lang} appLang ${prof.appLang}`);
   return { ctx, page, errors };
 }
@@ -136,7 +129,9 @@ const SCREENS = [
 test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and every button works, the language switch too', async () => {
   for (const code of ['ar', 'fa']) {
     for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
-      const { ctx, page, errors } = await signedIn(code, viewport);
+      // The language chosen in the last round follows the person: back to none, so this phone's choice counts.
+      await db.doc(`users/${RTL.uid}`).set({ lang: FieldValue.delete(), appLang: FieldValue.delete() }, { merge: true });
+      const { ctx, page, errors } = await signedIn(code, viewport, RTL);
       try {
         const wide = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
         assert.ok(wide <= viewport.width + 1, `${code} at ${viewport.width}: the page is ${wide} px wide`);
