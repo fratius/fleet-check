@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
-import { Button, Card, Chip, F, Field, Notice, PageHead, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, Chip, F, Field, Notice, PageHead, Row, Screen, Segmented, T, Tabs, fitSize, fmtWhen, useColors, useFontsReady, hs } from '@/components/ui';
 import { DateField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay, today } from '@/lib/fleet';
@@ -199,10 +199,15 @@ export default function DataScreen() {
 
 function Big({ value, label }: { value: string; label: string }) {
   const c = useColors();
+  const fonts = useFontsReady();
+  const [w, setW] = useState(0);
+  // A long word of the name is drawn a little smaller to fit whole (Russian "происшествия", Bulgarian "електрически"
+  // broke in the middle: blind QA of cause 4, round 1).
+  const size = fitSize(label, F.body, 13, w, { words: true, min: 10, fonts });
   return (
-    <View style={{ width: '33.33%', minWidth: 104, paddingHorizontal: 12, paddingVertical: 10, gap: 1 }}>
+    <View style={{ width: '33.33%', minWidth: 104, paddingHorizontal: 12, paddingVertical: 10, gap: 1 }} onLayout={(e) => setW(e.nativeEvent.layout.width - 24)}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(28), lineHeight: hs(31), color: c.ink, fontVariant: ['tabular-nums'] }}>{value}</Text>
-      <T v="small">{label}</T>
+      <T v="small" style={{ fontSize: size, lineHeight: Math.round(size * 1.38) }}>{label}</T>
     </View>
   );
 }

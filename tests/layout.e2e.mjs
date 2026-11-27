@@ -177,7 +177,8 @@ async function rightToLeftDetails(page, code) {
     assert.ok(seen.mirrored, `${code} ${what}: the back arrow points to the right`);
     assert.deepEqual(seen.off, [], `${code} ${what}: the tabs' names are in the middle of their tabs`);
   }
-  await page.goto(`${URL0}/people`);
+  // The phone number is on the person's page (the People list shows a driver's van instead).
+  await page.goto(`${URL0}/person/${LONG.uid}`);
   await page.locator('text=/0198/ >> visible=true').first().waitFor({ timeout: 30_000 });
   const order = await page.evaluate(() => {
     const w = document.createTreeWalker(document.getElementById('root'), NodeFilter.SHOW_TEXT);
