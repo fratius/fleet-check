@@ -1,6 +1,6 @@
 import { BottomTabBar, Tabs } from 'expo-router/js-tabs';
 import { useState } from 'react';
-import { Text, View, type ColorValue } from 'react-native';
+import { Text, View, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
@@ -58,6 +58,8 @@ export default function TabsLayout() {
   const toFilm = s.assignments.filter((a) => a.end == null && a.driverId === s.user?.uid && needsPickup(a, s.videos, s.walks)).length;
   // A company that waits for its owner's card or plan (payments on): that first, instead of the tabs.
   if (gate) return <BillingGate />;
+  // How many tabs show (for the names beside their icons on a wide screen).
+  const count = 2 + (staff ? 2 : 0) + (staff && s.mode === 'firebase' ? 1 : 0) + (s.seesAiStats ? 1 : 0);
   return (
     // While the app creator views the app as someone else, a strip above the tab bar says so, with the way back.
     // The Android test version says when a newer one needs a new download (components/apkstrip.tsx).
@@ -70,7 +72,7 @@ export default function TabsLayout() {
       // overflow: the first and last tab names reach a little past the screen's edge (TabLabel), which would make the
       // page wider than the screen.
       tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 68 + insets.bottom, overflow: 'hidden' },
-      tabBarLabel: ({ color, children }) => <TabLabel color={color} text={children} />,
+      tabBarLabel: ({ color, children, position }) => <TabLabel color={color} text={children} beside={position === 'beside-icon'} count={count} />,
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: hs(13) },
       sceneStyle: { backgroundColor: c.page },
     }}>
@@ -89,9 +91,17 @@ export default function TabsLayout() {
  * is drawn smaller to fit its tab: phones shrink it themselves, the web measures it (fitSize).
  */
 const TAB_LABEL_MIN = 10;
-function TabLabel({ color, text }: { color: ColorValue; text: string }) {
+function TabLabel({ color, text, beside, count }: { color: ColorValue; text: string; beside: boolean; count: number }) {
   const [w, setW] = useState(0);
   const fonts = useFontsReady();
+  const { width: win } = useWindowDimensions();
+  // A wide screen puts the name beside its icon: in the middle of the bar, as big as the tab's width allows (it was
+  // drawn at 10 px at the top of the bar, partly over the icon: blind QA of cause 4, round 2). The room is the tab's
+  // share of the window less its padding, the icon and the gap.
+  if (beside) {
+    const px = fitSize(text, F.cond, hs(16), win / Math.max(1, count) - 10 - 28 - 10, { min: 12, fonts });
+    return <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: px, color, marginHorizontal: 6, alignSelf: 'center' }}>{text}</Text>;
+  }
   // On one line while it fits at 11 px or more; otherwise a name of several words goes on two lines rather than
   // shrinking further (German and Romanian came out at 9 px: blind test, cause 4.2). A single long word is drawn
   // smaller, never below 10 px.
