@@ -1,4 +1,6 @@
 import { Stack } from 'expo-router';
+import { HeaderBackButton } from 'expo-router/react-navigation';
+import { Platform } from 'react-native';
 
 import { F, useColors, hs } from '@/components/ui';
 import { N_, t } from '@/lib/i18n';
@@ -39,6 +41,11 @@ export default function TabStack({ segment }: { segment: string }) {
       headerTitleStyle: { fontFamily: F.cond, fontSize: hs(21), color: c.ink },
       headerBackTitleStyle: { fontFamily: F.medium, fontSize: 16 },
       contentStyle: { backgroundColor: c.page },
+      // The web's back button says "Back" to screen readers in the app's language (it said "Fleet, back" in English in
+      // every language: blind test, cause 4.4). The phone apps keep their own, which follow the phone's language.
+      ...(Platform.OS === 'web' ? {
+        headerLeft: (p: React.ComponentProps<typeof HeaderBackButton> & { canGoBack?: boolean }) => (p.canGoBack ? <HeaderBackButton {...p} accessibilityLabel={t('Back')} /> : null),
+      } : null),
     }}>
       {/* The first page of the tab has its own big title. */}
       <Stack.Screen name={root.name} options={{ headerShown: false, title: t(root.title) }} />

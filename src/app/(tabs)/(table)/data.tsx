@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
 import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
-import { DateField, TimeField } from '@/components/pickers';
+import { DateField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay, today } from '@/lib/fleet';
 import { watchMembers, peopleScope } from '@/lib/people';
@@ -14,7 +14,7 @@ import { HU_RESULT, apptWhen, serviceName, serviceVanRows, type ServiceVanRow } 
 import type { Member, Purchase, ServiceRecord, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
-import { N_, loc, t } from '@/lib/i18n';
+import { fmtTime, loc, N_, t } from '@/lib/i18n';
 import { vanAlias, vanName } from '@/lib/vans';
 
 /**
@@ -31,7 +31,7 @@ const int = (n: number | null | undefined) => (n == null ? '' : Math.round(n).to
 const one = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 const pct = (n: number | null | undefined) => (n == null ? '' : `${n > 0 ? '+' : ''}${Math.round(n * 100)}%`);
 const eur2 = (n: number | null | undefined) => (n == null ? '' : `€${n.toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-const time = (ms: number | null | undefined) => (ms ? new Date(ms).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) : '');
+const time = (ms: number | null | undefined) => (ms ? fmtTime(ms) : '');
 const sum = <R,>(rows: R[], f: (r: R) => number | null | undefined) => rows.reduce((s, r) => s + (f(r) || 0), 0);
 
 export default function DataScreen() {
@@ -416,8 +416,8 @@ function WhoHad() {
       <Field label={t('Van')} value={q} onChangeText={setQ} placeholder={t('Name or plate')} autoCorrect={false} />
       <Row gap={6}>{list.slice(0, 12).map((x) => <Chip key={x.id} text={x.plate || x.name} on={van === x.id} onPress={() => setVan(x.id)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
-        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} value={at} onChangeText={setAt} /></View>
+        <View style={{ flex: 1, minWidth: DAY_MIN }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: TIME_MIN }}><TimeField label={t('Time')} value={at} onChangeText={setAt} /></View>
       </Row>
       {r && v ? (
         r.at ? (

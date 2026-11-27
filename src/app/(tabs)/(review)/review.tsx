@@ -13,7 +13,7 @@ import { apptState, apptWhen, openAppointments, serviceName } from '@/lib/servic
 import { watchMembers, peopleScope } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
-import { fwd, loc, t, tp } from '@/lib/i18n';
+import { fmtTime, fwd, loc, t, tp } from '@/lib/i18n';
 import { dueOn, routineName } from '@/components/routines';
 import { vanAlias, vanName } from '@/lib/vans';
 
@@ -203,7 +203,7 @@ export default function ReviewQueue() {
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
                 title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }),
-                  k.closeupBy ? t('to the review by {time} at the latest', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : '', where(k.stationId)].filter(Boolean).join(', ')}
+                  k.closeupBy ? t('to the review by {time} at the latest', { time: fmtTime(k.closeupBy) }) : '', where(k.stationId)].filter(Boolean).join(', ')}
                 right={<Pill v="muted" text={tp(k.spots.length, '{done} of {n} spot', '{done} of {n} spots', { done: k.spots.filter((p) => p.verdict).length })} />} />
             ))}
           </List>
@@ -394,7 +394,7 @@ function ListRow({ title, line, right, first, onPress }: { title: string; line: 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <T v="medium" numberOfLines={2}>{title}</T>
+        <T v="medium" numberOfLines={3}>{title}</T>
         <T v="small" numberOfLines={2}>{line}</T>
       </View>
       {right}

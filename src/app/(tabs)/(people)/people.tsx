@@ -11,7 +11,7 @@ import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ROLE_NAME, roleOf, type Assignment, type DriverLink, type Invite, type JoinRequest, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
-import { nameKey, personMatches, vanAlias, vanName } from '@/lib/vans';
+import { initials, nameKey, personMatches, vanAlias, vanName } from '@/lib/vans';
 
 /**
  * Owners: stations, fleet managers and drivers of the whole company, one-time invite links for fleet managers.
@@ -410,7 +410,6 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
   );
 }
 
-const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('') || '?';
 
 /**
  * A fleet manager or owner: a dark badge with a yellow initials square, so the people in charge stand apart from
@@ -429,7 +428,7 @@ function BossRow({ m, label }: { m: Member; label: string }) {
         <Text style={{ fontFamily: F.condBold, fontSize: hs(21), color: '#000' }}>{initials(m.name)}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-        <Text numberOfLines={1} style={{ fontFamily: F.cond, fontSize: hs(22), lineHeight: hs(25), color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
+        <Text numberOfLines={3} style={{ fontFamily: F.cond, fontSize: hs(22), lineHeight: hs(25), color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone || label}</Text>
           {van ? <Plate small text={vanName(van)} /> : null}
@@ -457,7 +456,7 @@ function DriverRow({ m, first }: { m: Member; first: boolean }) {
             <Text style={{ fontFamily: F.cond, fontSize: hs(15), color: c.ink2 }}>{initials(m.name)}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-            <T v="medium" numberOfLines={1}>{me ? t('{name} (you)', { name: m.name }) : m.name}</T>
+            <T v="medium" numberOfLines={3}>{me ? t('{name} (you)', { name: m.name }) : m.name}</T>
             {van ? <Row gap={6}><Plate small text={vanName(van)} />{vanAlias(van) ? <T v="small" numberOfLines={1}>{vanAlias(van)}</T> : null}</Row> : <T v="small">{t('No van')}</T>}
             {due ? <T v="small" color={due.state === 'overdue' ? c.alert : c.amber} numberOfLines={1}>{due.label}: {due.note}</T> : null}
           </View>
@@ -487,7 +486,7 @@ function Former({ members }: { members: Member[] }) {
         <Pressable key={a.driverId} onPress={() => router.push(`/person/${a.driverId}`)}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: i ? 1 : 0, borderColor: c.rule, paddingTop: i ? 8 : 0 }}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <T v="medium" numberOfLines={1}>{a.driverName}</T>
+            <T v="medium" numberOfLines={3}>{a.driverName}</T>
             <T v="small" numberOfLines={1}>{t('Last van: {van}, until {when}', { van: s.vanName(a), when: fmtWhen(a.end) })}</T>
           </View>
           <T v="h3" color={c.ink2}>{fwd()}</T>

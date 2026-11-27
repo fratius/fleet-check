@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
-import { DateField, TimeField } from '@/components/pickers';
+import { DateField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { DueLine, FactSection, type FieldSpec, type Vals } from '@/components/vanfacts';
 import { CHECK_MONTHS, EMPLOYMENT, LICENCE_CLASSES, addMonths, driverDeadlines, fmtDay, lastCheck, parseDay, today } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
@@ -228,8 +228,8 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
       <T v="medium">{prev ? t('Correct the incident') : t('New incident')}</T>
       <Row gap={6}>{(Object.keys(INCIDENT) as IncidentKind[]).map((k) => <Chip key={k} text={t(INCIDENT[k])} on={kind === k} onPress={() => setKind(k)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
-        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} /></View>
+        <View style={{ flex: 1, minWidth: DAY_MIN }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: TIME_MIN }}><TimeField label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} /></View>
       </Row>
       {kind === 'fine' ? <><T v="medium">{t('For')}</T><Row gap={6}>{Object.entries(FINE).map(([k, label]) => <Chip key={k} text={t(label)} on={fineType === k} onPress={() => setFineType(k)} />)}</Row></> : null}
       {kind === 'accident' ? <><T v="medium">{t('Fault')}</T><Row gap={6}>{Object.entries(FAULT).map(([k, label]) => <Chip key={k} text={t(label)} on={atFault === k} onPress={() => setAtFault(k)} />)}</Row></> : null}

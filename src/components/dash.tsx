@@ -14,7 +14,7 @@ import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, failText, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { fmtTime, loc, N_, t, tp } from '@/lib/i18n';
 import { vanName, vanAlias } from '@/lib/vans';
 
 /**
@@ -338,7 +338,7 @@ export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'va
   const s = useSession();
   const c = useColors();
   const open = isOpen(tour);
-  const when = tour.end ? t('{start} to {end}', { start: fmtWhen(tour.startAt), end: new Date(tour.end.at).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : fmtWhen(tour.startAt);
+  const when = tour.end ? t('{start} to {end}', { start: fmtWhen(tour.startAt), end: fmtTime(tour.end.at) }) : fmtWhen(tour.startAt);
   return (
     <View style={{ gap: 2 }}>
       <Row>

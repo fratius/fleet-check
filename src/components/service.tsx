@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { UploadRow, useWaitingFor, Waiting } from '@/components/uploads';
 import { Button, Card, Chip, F, Field, Notice, Pill, Row, T, useColors } from '@/components/ui';
-import { DateField, MonthField, TimeField } from '@/components/pickers';
+import { DateField, MonthField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { DueLine, HuSticker, fromInput, saveDetails, toInput, type FieldSpec } from '@/components/vanfacts';
 import { eur, fmtDay, km, today } from '@/lib/fleet';
 import { N_, t, tp } from '@/lib/i18n';
@@ -437,8 +437,8 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
       </View>
       {kind === 'other' ? <Field label={t('What for')} value={name} onChangeText={setName} maxLength={60} placeholder={t('For example: windscreen, battery, air conditioning')} /> : null}
       <Row>
-        <View style={{ flex: 1, minWidth: 150 }}><DateField label={t('Day')} value={day} onChangeText={setDay} min={today()} /></View>
-        <View style={{ flex: 1, minWidth: 110 }}><TimeField label={t('Time')} value={time} onChangeText={setTime} /></View>
+        <View style={{ flex: 1, minWidth: DAY_MIN }}><DateField label={t('Day')} value={day} onChangeText={setDay} min={today()} /></View>
+        <View style={{ flex: 1, minWidth: TIME_MIN }}><TimeField label={t('Time')} value={time} onChangeText={setTime} /></View>
       </Row>
       <Field label={kind === 'hu' ? t('Inspection centre') : t('Garage')} hint={t('optional')} value={garage} onChangeText={setGarage} maxLength={80} />
       <Field label={t('Notes')} hint={t('optional')} value={note} onChangeText={setNote} maxLength={1000} multiline placeholder={t('For example: booking number, who to ask for, bring the spare key')} />

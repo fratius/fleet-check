@@ -982,6 +982,14 @@ export const peekInvite = onCall({ timeoutSeconds: 15 }, async (req) => {
 });
 
 const clean = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().replace(/\s+/g, ' ').slice(0, n) : '');
+/** The longest first or last name (src/lib/vans.ts has the same): a longer one is refused with a message, never cut
+ * without a word (blind test, 26 Nov 2026, cause 4.3). */
+const NAME_MAX = 40;
+function personNames(d: Record<string, unknown>) {
+  const firstName = clean(d.firstName, 1000), lastName = clean(d.lastName, 1000);
+  if (firstName.length > NAME_MAX || lastName.length > NAME_MAX) throw fail('invalid-argument', 'A first or last name can have at most {n} characters.', { n: NAME_MAX });
+  return { firstName, lastName };
+}
 
 /** Uses an invite link: the signed-in person joins with the link's role and station, with their details. */
 export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, async (req) => {
@@ -991,7 +999,7 @@ export const acceptInvite = onCallOnce('acceptInvite', { timeoutSeconds: 30 }, a
   if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) throw fail('invalid-argument', 'This invite link isn\'t complete. Ask for a new one.');
   const email = String(req.auth?.token?.email || '');
   const d = (req.data?.details || {}) as Record<string, unknown>;
-  const firstName = clean(d.firstName, 40), lastName = clean(d.lastName, 40);
+  const { firstName, lastName } = personNames(d);
   const phone = clean(d.phone, 30), transporterId = clean(d.transporterId, 20).toUpperCase();
   const name = [firstName, lastName].filter(Boolean).join(' ') || String(req.auth?.token?.name || email.split('@')[0] || 'New member');
   if (!firstName || !lastName) throw fail('invalid-argument', 'Enter your first and last name.');
@@ -1123,7 +1131,7 @@ export const requestToJoin = onCallOnce('requestToJoin', { timeoutSeconds: 30, s
   if (!ID.test(stationId)) throw fail('invalid-argument', 'Pick your station.');
   const email = String(req.auth?.token?.email || '');
   const d = (req.data?.details || {}) as Record<string, unknown>;
-  const firstName = clean(d.firstName, 40), lastName = clean(d.lastName, 40);
+  const { firstName, lastName } = personNames(d);
   const phone = clean(d.phone, 30), transporterId = clean(d.transporterId, 20).toUpperCase();
   if (!firstName || !lastName) throw fail('invalid-argument', 'Enter your first and last name.');
   if (phone && !/^[+0-9 ()/-]{6,30}$/.test(phone)) throw fail('invalid-argument', 'That phone number doesn\'t look right.');

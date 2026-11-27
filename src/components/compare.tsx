@@ -4,14 +4,14 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { Button, Card, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { closeupState, cmpStuck, gapList } from '@/lib/compare';
-import { loc, t, tp } from '@/lib/i18n';
+import { fmtTime, loc, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { ai, failText } from '@/lib/store';
 import type { Check, CmpSummary, Walkaround } from '@/lib/types';
 
 /** How long after a walk-around is saved the app waits for the comparison to start before offering to run it. */
 const START_MS = 10 * 60_000;
-const clock = (ms: number) => new Date(ms).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' });
+const clock = (ms: number) => fmtTime(ms);
 
 /**
  * The automatic damage comparison of one walk-around, for owners and the station's fleet managers: running, the

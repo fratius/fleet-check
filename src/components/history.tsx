@@ -96,7 +96,7 @@ export function HistoryRow({ a, show, first }: { a: Assignment; show: 'driver' |
       onPress={() => router.push(show === 'driver' ? `/person/${a.driverId}` : `/vehicle/${a.vehicleId}`)}
       style={{ gap: 3, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <Row>
-        <T v="medium" style={{ flex: 1 }} numberOfLines={1}>{title}</T>
+        <T v="medium" style={{ flex: 1 }} numberOfLines={3}>{title}</T>
         {open ? <Pill v="solid" text={t('Now')} /> : null}
         {canOpen ? <T v="h3" color={c.ink2}>{fwd()}</T> : null}
       </Row>
@@ -232,7 +232,7 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
           <Pressable key={m.uid} disabled={!!busy || current} onPress={() => give(m)} accessibilityRole="button"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 2, borderColor: current ? c.ink : c.rule, borderRadius: 4, padding: 10, opacity: busy && busy !== m.uid ? 0.5 : 1 }}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <T v="medium" numberOfLines={1}>{m === me ? t('{name} (you)', { name: m.name }) : m.name}</T>
+              <T v="medium" numberOfLines={3}>{m === me ? t('{name} (you)', { name: m.name }) : m.name}</T>
               <T v="small" numberOfLines={1}>{[current ? t('Has this van now') : has ? t('Has {van} now', { van: has.name }) : t('No van'), roleOf(m) === 'manager' ? t(ROLE_NAME.manager) : ''].filter(Boolean).join(', ')}</T>
             </View>
             {busy === m.uid ? <T v="small">{t('Saving…')}</T> : !current ? <Pill v={has ? 'amber' : 'good'} text={has ? t('Swap') : t('Give')} /> : null}

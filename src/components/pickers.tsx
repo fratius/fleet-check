@@ -25,6 +25,13 @@ const monthName = (y: number, m: number, style: 'long' | 'short') =>
 const monthTitle = (y: number, m: number) => new Intl.DateTimeFormat(loc(), { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(y, m, 1));
 
 /** A day, typed as 31.03.2027 or picked in a calendar. `min` / `max` ("YYYY-MM-DD"): days outside can't be picked. */
+/**
+ * The least width a day field and a time field need beside each other, so their hints ("DD.MM.YYYY", "NN.HH.ÉÉÉÉ") fit
+ * next to the picker button (they were cut at 140 px: blind test, cause 4.2). Rows of them wrap when there's less room.
+ */
+export const DAY_MIN = 200;
+export const TIME_MIN = 150;
+
 export function DateField({ min, max, ...p }: Base & { min?: string | null; max?: string | null }) {
   const [open, setOpen] = useState(false);
   return (

@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 
 import { fb } from './firebase';
 import { flash } from './flash';
-import { t } from './i18n';
+import { again, source, t, type Source } from './i18n';
 import { newId, prepare, putBlob } from './images';
 import { dropKept, keepFile, keptBlob, keptSize, sweepKept } from './keep';
 import { pruneDrafts } from './walkdraft';
@@ -97,6 +97,7 @@ export const outbox = new Outbox({
   },
   nap,
   awake,
+  source,
 });
 
 let loading: Promise<void> | null = null;
@@ -219,7 +220,7 @@ export function useOutbox(): OutboxView {
 
 /** What it is, for lists: "Pick-up photos of eSprinter 02". */
 export function jobTitle(j: Job) {
-  if (j.type === 'change') return j.title || t('A change');
+  if (j.type === 'change') return j.title ? again(j.title, j.titleSrc as Source | null) : t('A change');
   const van = j.vehicleName;
   if (j.type === 'walk') return j.what === 'pickup' ? t('Pick-up photos of {van}', { van }) : j.what === 'dropoff' ? t('Drop-off photos of {van}', { van }) : t('Walk-around of {van}', { van });
   return j.what === 'pickup' ? t('Pick-up video of {van}', { van }) : j.what === 'dropoff' ? t('Drop-off video of {van}', { van }) : t('Video of {van}', { van });
@@ -393,7 +394,7 @@ export async function send<O = unknown>(o: {
   const orgId = o.orgId || (change.kind === 'call' ? String(change.data.orgId || '') : change.path[0] === 'orgs' ? change.path[1] : '');
   const job: Job = {
     id, type: 'change', what: 'change', orgId, uid, vehicleId: o.vehicleId || '', vehicleName: o.vehicleName || '', assignmentId: null,
-    then: null, createdAt: Date.now(), files, status: 'queued', change, title: o.title, personId: o.personId || null,
+    then: null, createdAt: Date.now(), files, status: 'queued', change, title: o.title, titleSrc: source(o.title), personId: o.personId || null,
   };
   // A write shows on the screen straight away (Firestore keeps it until it's sent); once it reached the server the
   // job is marked as sent, so it's never written again (also after a restart).

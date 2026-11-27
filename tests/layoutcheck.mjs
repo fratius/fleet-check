@@ -4,7 +4,7 @@
 //   - offEdge: text of the app that runs past the screen's edge (not inside a list that scrolls sideways).
 //   - cut: a text of the app (one of its translations) cut short: an ellipsis, or clipped by its box; a search box
 //     whose hint doesn't fit.
-//   - tiny: a text of the app drawn smaller than 11 px.
+//   - tiny: a text of the app drawn smaller than 10 px (the phones' own tab bars use 10 pt for their names).
 //   - english: an English text of the app on a screen in another language, where that language has its own.
 // Names, plates and other data people typed aren't checked for being cut (a long name may end in "…" on a list).
 
@@ -56,7 +56,7 @@ export function layoutProblems({ dict, lang }) {
     // Only the app's own texts are checked for size and cuts (names, plates and what people typed may end in "…").
     if (!own.has(whole)) continue;
     const s = getComputedStyle(el);
-    if (parseFloat(s.fontSize) < 11) say('tiny', whole, `${s.fontSize}`);
+    if (parseFloat(s.fontSize) < 10) say('tiny', whole, `${s.fontSize}`);
     const clipped = (s.textOverflow === 'ellipsis' || s.overflow === 'hidden' || s.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 1;
     if (clipped) say('cut', whole, `${el.scrollWidth} px in ${el.clientWidth} px`);
     if (s.webkitLineClamp && s.webkitLineClamp !== 'none' && el.scrollHeight > el.clientHeight + 1) say('cut', whole, 'lines cut');

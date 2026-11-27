@@ -9,7 +9,7 @@ import { useMediaGone } from '@/components/keep';
 import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV, hs } from '@/components/ui';
 import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { fmtTime, loc, N_, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { day, deleteFrom } from '@/lib/media';
@@ -308,7 +308,7 @@ function CheckView({ id }: { id: string }) {
         <T>{sub}</T>
         {auto && status === 'checking' && k.closeupBy && shoots ? <T v="small" color={Date.now() > k.closeupBy ? c.alert : undefined}>{Date.now() > k.closeupBy
           ? t('The 30 minutes for close-ups are up: the spots go to your fleet manager now.')
-          : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) })}</T> : null}
+          : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: fmtTime(k.closeupBy) })}</T> : null}
         {status === 'checking' && !shoots ? <T v="hint">{t('The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.')}</T> : null}
         {(k.reopens || []).map((r, x) => <T key={x} v="small">{t('Review reopened by {name}, {when}.', { name: whoDid(r.by, r.byName) || t('the fleet manager'), when: fmtWhen(r.at) })}</T>)}
         <Row>

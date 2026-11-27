@@ -68,6 +68,8 @@ export default function TabsLayout() {
       // Room for the icon and the label above the iPhone home bar (the default 49 points cuts the labels off).
       tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 62 + insets.bottom },
       tabBarLabel: ({ color, children }) => <TabLabel color={color} text={children} />,
+      // The whole width of each tab for its name (long names in Danish, Dutch, Greek: blind test, cause 4.2).
+      tabBarItemStyle: { paddingHorizontal: 0 },
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: hs(13) },
       sceneStyle: { backgroundColor: c.page },
     }}>
@@ -85,14 +87,17 @@ export default function TabsLayout() {
  * A tab's name. Tessera is wider than Barlow Condensed, so a long name (German "Bewertung", Danish "Gennemgang")
  * is drawn smaller to fit its tab: phones shrink it themselves, the web measures it (fitSize).
  */
+const TAB_LABEL_MIN = 10;
 function TabLabel({ color, text }: { color: ColorValue; text: string }) {
   const [w, setW] = useState(0);
   useFontsReady();
-  const size = fitSize(text, F.cond, hs(14), w - 4, { min: 9 });
+  // A name of several words goes on two lines rather than shrinking (German and Romanian came out at 9 px: blind test,
+  // cause 4.2); a single long word is drawn smaller, never below 10 px (only the app creator's sixth tab needs that).
+  const size = fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true });
   return (
     <View style={{ alignSelf: 'stretch', alignItems: 'center' }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}
-        style={{ fontFamily: F.cond, fontSize: size, color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
+      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}
+        style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.1), color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
     </View>
   );
 }

@@ -169,9 +169,12 @@ test('cause 4.3: a long name without spaces wraps on the Review card and the Peo
     for (const path of ['/review', '/people', `/vehicle/${VAN}`, `/person/${LONG.uid}`]) {
       await page.goto(`${URL0}${path}`);
       await page.locator(`text=/Maximilian/ >> visible=true`).first().waitFor({ timeout: 30_000 });
-      const off = await page.evaluate(() => [...document.querySelectorAll('#root *')].filter((el) => /Maximilian/.test(el.textContent || '') && !el.children.length)
-        .map((el) => el.getBoundingClientRect()).filter((r) => r.width && (r.right > innerWidth + 1 || r.left < -1)).length);
-      assert.equal(off, 0, `${path}: the long name stays on the screen`);
+      // On the screen, and not cut by its box or an ellipsis: wrapped.
+      const bad = await page.evaluate(() => [...document.querySelectorAll('#root *')].filter((el) => /Maximilian/.test(el.textContent || '') && !el.children.length)
+        .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0; })
+        .map((el) => { const r = el.getBoundingClientRect(); return { off: r.right > innerWidth + 1 || r.left < -1, cut: el.scrollWidth > el.clientWidth + 1, text: el.textContent.slice(0, 60) }; })
+        .filter((x) => x.off || x.cut));
+      assert.deepEqual(bad, [], `${path}: the long name stays on the screen, whole`);
     }
     await page.goto(`${URL0}/people`);
     await page.locator('text=/Emma Stone/ >> visible=true').first().waitFor({ timeout: 30_000 });
