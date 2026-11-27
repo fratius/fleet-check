@@ -1656,9 +1656,13 @@ test('cause 3b (1), online: a give or make-free from a page that missed a change
     await page.goto(`${URL0}/vehicle/${SB_VAN(1)}`);
     await button(page, 'Give to someone else').click();
     await visible(page, SB_DEV.name).waitFor({ timeout: 30_000 });
-    // The page stops hearing about changes (its live updates are cut), so it shows Ben while someone gives the van to Cem.
+    // The page stops hearing about changes, so it shows Ben while someone gives the van to Cem: its live updates are
+    // cut (the stream open now keeps going, so the connection drops for a moment and the new one is refused).
     await page.route('**/google.firestore.v1.Firestore/Listen/**', (r) => r.abort());
-    await page.waitForTimeout(2000);
+    await ctx.setOffline(true);
+    await page.waitForTimeout(1500);
+    await ctx.setOffline(false);
+    await page.waitForTimeout(3000);
     await sbGive(1, SB_CEM, 'sbA1c');
     await visible(page, SB_DEV.name).click();
     await visible(page, 'Cem Driver has this van now. Give it to Dev Driver anyway?').waitFor({ timeout: 60_000 });
