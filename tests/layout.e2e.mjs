@@ -104,6 +104,7 @@ async function signedIn(code, viewport = { width: 390, height: 844 }) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('console', (m) => { if (/lang|language/i.test(m.text())) console.log(`[${code} console] ${m.text().slice(0, 200)}`); });
   await page.goto(`${URL0}/sign-in`);
   await page.evaluate(({ l, job }) => { localStorage.setItem('fc.lang', l); localStorage.setItem('fc.outbox.v1', JSON.stringify([job])); }, { l: code, job: stoppedChange(OWNER.uid) });
   await page.goto(`${URL0}/sign-in`);
@@ -112,6 +113,10 @@ async function signedIn(code, viewport = { width: 390, height: 844 }) {
   await page.locator('input[type=password] >> visible=true').press('Enter');
   await page.locator('[role=tablist] >> visible=true').last().waitFor({ timeout: 60_000 });
   await page.waitForTimeout(1500);
+  // Signed in, the app must still be in the language asked for (and keep it on a reload).
+  const shown = await page.evaluate(() => ({ html: document.documentElement.lang, kept: localStorage.getItem('fc.lang') }));
+  const prof = (await db.doc(`users/${OWNER.uid}`).get()).data() || {};
+  if (shown.html !== code || shown.kept !== code) console.log(`signed in for ${code}: shown ${shown.html}, kept ${shown.kept}, profile lang ${prof.lang} appLang ${prof.appLang}`);
   return { ctx, page, errors };
 }
 
