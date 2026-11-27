@@ -32,11 +32,11 @@ const ROW = 44, HEAD = 64, HEAD_LINES = 3;
  * drawn) wouldn't fit in three lines or would break a word, the sort arrow included (headings were cut in Bulgarian,
  * Croatian, Greek: blind test, cause 4.2).
  */
-export function colWidth(col: { width: number; label: string }): number {
+export function colWidth(col: { width: number; label: string }, fonts?: number): number {
   const px = hs(15);
-  const widest = Math.max(0, ...col.label.split(/\s+/).map((w) => textWidth(w, F.cond, px)));
-  const all = textWidth(`${col.label} ▼`, F.cond, px);
-  return Math.ceil(Math.min(260, Math.max(col.width, widest + textWidth(' ▼', F.cond, px) + 20, all / (HEAD_LINES - 0.6) + 20)));
+  const widest = Math.max(0, ...col.label.split(/\s+/).map((w) => textWidth(w, F.cond, px, fonts)));
+  const all = textWidth(`${col.label} ▼`, F.cond, px, fonts);
+  return Math.ceil(Math.min(260, Math.max(col.width, widest + textWidth(' ▼', F.cond, px, fonts) + 20, all / (HEAD_LINES - 0.8) + 24)));
 }
 
 export function sortRows<R>(rows: R[], cols: Col<R>[], sort: Sort | null): R[] {
@@ -58,8 +58,8 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
   const c = useColors();
   const [limit, setLimit] = useState(60);
   // The headings are measured in the real font once it has loaded (colWidth).
-  useFontsReady();
-  const [first, ...rest] = cols.map((x) => ({ ...x, width: colWidth(x) }));
+  const fonts = useFontsReady();
+  const [first, ...rest] = cols.map((x) => ({ ...x, width: colWidth(x, fonts) }));
   const shown = rows.slice(0, limit);
   const hasTotal = !!totalLabel && cols.some((x) => x.total);
   const head = (col: Col<R>, i: number, frozen: boolean) => {

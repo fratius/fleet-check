@@ -91,15 +91,15 @@ export default function TabsLayout() {
 const TAB_LABEL_MIN = 10;
 function TabLabel({ color, text }: { color: ColorValue; text: string }) {
   const [w, setW] = useState(0);
-  useFontsReady();
+  const fonts = useFontsReady();
   // On one line while it fits at 11 px or more; otherwise a name of several words goes on two lines rather than
   // shrinking further (German and Romanian came out at 9 px: blind test, cause 4.2). A single long word is drawn
   // smaller, never below 10 px.
-  const one = fitSize(text, F.cond, hs(14), w - 4, { min: 1 });
+  const one = fitSize(text, F.cond, hs(14), w - 4, { min: 1, fonts });
   const lines = one < 11 && /\s/.test(text.trim()) ? 2 : 1;
-  const size = lines === 2 ? Math.min(12, fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true })) : Math.max(TAB_LABEL_MIN, one);
+  const size = lines === 2 ? Math.min(12, fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true, fonts })) : Math.max(TAB_LABEL_MIN, one);
   return (
-    <View style={{ alignSelf: 'stretch', alignItems: 'center' }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    <View style={{ alignSelf: 'stretch', alignItems: 'center', marginHorizontal: -3 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Text numberOfLines={lines} adjustsFontSizeToFit minimumFontScale={0.8}
         style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.1), color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
     </View>
