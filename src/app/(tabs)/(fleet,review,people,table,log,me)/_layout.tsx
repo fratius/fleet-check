@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { HeaderBackButton } from 'expo-router/react-navigation';
-import { Platform } from 'react-native';
+import { Platform, Text } from 'react-native';
 
 import { F, useColors, hs } from '@/components/ui';
 import { N_, t } from '@/lib/i18n';
@@ -45,6 +45,10 @@ export default function TabStack({ segment }: { segment: string }) {
       // every language: blind test, cause 4.4). The phone apps keep their own, which follow the phone's language.
       ...(Platform.OS === 'web' ? {
         headerLeft: (p: React.ComponentProps<typeof HeaderBackButton> & { canGoBack?: boolean }) => (p.canGoBack ? <HeaderBackButton {...p} accessibilityLabel={t('Back')} /> : null),
+        // A long title (a person's name without spaces) goes on two lines instead of being cut (cause 4.3).
+        headerTitle: ({ children }: { children: string }) => (
+          <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: F.cond, fontSize: hs(21), lineHeight: hs(23), color: c.ink }}>{children}</Text>
+        ),
       } : null),
     }}>
       {/* The first page of the tab has its own big title. */}

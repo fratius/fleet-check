@@ -66,7 +66,8 @@ export default function TabsLayout() {
       tabBarActiveTintColor: c.ink,
       tabBarInactiveTintColor: c.ink2,
       // Room for the icon and the label above the iPhone home bar (the default 49 points cuts the labels off).
-      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 62 + insets.bottom },
+      // A few more points than one line needs, for a name on two lines (cause 4.2).
+      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 68 + insets.bottom },
       tabBarLabel: ({ color, children }) => <TabLabel color={color} text={children} />,
       // The whole width of each tab for its name (long names in Danish, Dutch, Greek: blind test, cause 4.2).
       tabBarItemStyle: { paddingHorizontal: 0 },
@@ -91,12 +92,15 @@ const TAB_LABEL_MIN = 10;
 function TabLabel({ color, text }: { color: ColorValue; text: string }) {
   const [w, setW] = useState(0);
   useFontsReady();
-  // A name of several words goes on two lines rather than shrinking (German and Romanian came out at 9 px: blind test,
-  // cause 4.2); a single long word is drawn smaller, never below 10 px (only the app creator's sixth tab needs that).
-  const size = fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true });
+  // On one line while it fits at 11 px or more; otherwise a name of several words goes on two lines rather than
+  // shrinking further (German and Romanian came out at 9 px: blind test, cause 4.2). A single long word is drawn
+  // smaller, never below 10 px.
+  const one = fitSize(text, F.cond, hs(14), w - 4, { min: 1 });
+  const lines = one < 11 && /\s/.test(text.trim()) ? 2 : 1;
+  const size = lines === 2 ? Math.min(12, fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true })) : Math.max(TAB_LABEL_MIN, one);
   return (
     <View style={{ alignSelf: 'stretch', alignItems: 'center' }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-      <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.8}
+      <Text numberOfLines={lines} adjustsFontSizeToFit minimumFontScale={0.8}
         style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.1), color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
     </View>
   );

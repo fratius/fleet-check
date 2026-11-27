@@ -31,7 +31,9 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const I18N = new URL('../public/i18n/', import.meta.url).pathname;
 // English and the 31 translations.
-const CODES = ['en', ...readdirSync(I18N).filter((f) => /^[a-z]{2}\.json$/.test(f)).map((f) => f.slice(0, 2)).sort()];
+const ALL = ['en', ...readdirSync(I18N).filter((f) => /^[a-z]{2}\.json$/.test(f)).map((f) => f.slice(0, 2)).sort()];
+// LAYOUT_LANGS=de,ar: only those, to look into a problem on this computer (CI always checks all of them).
+const CODES = process.env.LAYOUT_LANGS ? process.env.LAYOUT_LANGS.split(',') : ALL;
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.webmanifest': 'application/manifest+json', '.ico': 'image/x-icon' };
 const server = createServer((req, res) => {
@@ -73,7 +75,8 @@ before(async () => {
     tier: 'quick', model: 'test', photos: 1, notVisible: [], missedNote: '', createdAt: now - 500_000, status: 'submitted', submittedAt: now - 400_000, review: null,
     spots: [{ photo: 0, photoLabel: 'Front', box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, conf: 0.8, mightBe: null, closeup: '', refPath: null, closeups: [], verdict: null, feedback: null, markPath: null }] });
   await b.commit();
-  browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
+  // CHROME_PATH: a Chrome already on this computer, to run the test without Playwright's own browser.
+  browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', ...(process.env.CHROME_PATH ? ['--no-sandbox'] : [])] });
 });
 
 after(async () => {
@@ -129,6 +132,8 @@ test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and ev
         const box = await tabs.last().boundingBox();
         assert.ok(box && box.x >= 0 && box.x + box.width <= viewport.width + 1, `${code}: the tab bar is on the screen (${JSON.stringify(box)})`);
         await page.goto(`${URL0}/account`);
+        await page.waitForTimeout(2000);
+        assert.equal(await page.evaluate(() => document.documentElement.lang), code, `${code}: still in ${code} after opening Account`);
         await page.locator(`[role=button] >> text="${dictOf(code)['Change language']}" >> visible=true`).first().click({ timeout: 15_000 });
         await page.locator('text="English" >> visible=true').first().click({ timeout: 15_000 });
         await page.locator('text="Account" >> visible=true').first().waitFor({ timeout: 15_000 });
@@ -140,7 +145,7 @@ test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and ev
 });
 
 test('cause 4 guard: the main screens in all 32 languages at phone width: on the screen, nothing off the edge, nothing cut or tiny, no English left', async () => {
-  assert.ok(CODES.length >= 32, `${CODES.length} languages`);
+  assert.ok(process.env.LAYOUT_LANGS || CODES.length >= 32, `${CODES.length} languages`);
   const found = [];
   const queue = [...CODES];
   // Four browsers at a time.
@@ -152,6 +157,9 @@ test('cause 4 guard: the main screens in all 32 languages at phone width: on the
         for (const [name, path] of SCREENS) {
           await page.goto(`${URL0}${path}`);
           await page.waitForTimeout(path.startsWith('/scan') ? 4000 : 2500);
+          // The screen must be in the language asked for; if it isn't, that's one problem, not every text on it.
+          const shown = await page.evaluate(() => ({ html: document.documentElement.lang, kept: localStorage.getItem('fc.lang') }));
+          if (shown.html !== code) { found.push(`${code} ${name}: shown in "${shown.html}" (kept: ${shown.kept})`); continue; }
           const probs = await page.evaluate(layoutProblems, { dict, lang: code });
           for (const p of probs) found.push(`${code} ${name}: ${p}`);
         }
