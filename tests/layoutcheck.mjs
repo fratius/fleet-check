@@ -32,6 +32,16 @@ export function layoutProblems({ dict, lang }) {
     }
   }
   const rtl = document.documentElement.dir === 'rtl';
+  // How wide a text is on its own line in the same font: to tell a size worked out too big from a box too small.
+  const widthOf = (text, s) => {
+    const sp = document.createElement('span');
+    Object.assign(sp.style, { position: 'absolute', left: '0', top: '0', visibility: 'hidden', whiteSpace: 'pre', font: s.font, letterSpacing: s.letterSpacing });
+    sp.textContent = text;
+    document.body.appendChild(sp);
+    const w = sp.getBoundingClientRect().width;
+    sp.remove();
+    return w;
+  };
   const visible = (el) => {
     for (let e = el; e && e !== document.body; e = e.parentElement) {
       const s = getComputedStyle(e);
@@ -74,7 +84,10 @@ export function layoutProblems({ dict, lang }) {
       const rects = [...range.getClientRects()].filter((x) => x.width > 0 && x.height > 0);
       if (rects.length < 2) continue;
       const tops = rects.map((x) => x.top);
-      if (Math.max(...tops) - Math.min(...tops) > Math.min(...rects.map((x) => x.height)) / 2) say('broken', whole, `"${m[0]}" on two lines`);
+      if (Math.max(...tops) - Math.min(...tops) > Math.min(...rects.map((x) => x.height)) / 2) {
+        const s = getComputedStyle(el);
+        say('broken', whole, `"${m[0]}" on two lines: ${Math.round(widthOf(m[0], s))} px wide in ${el.clientWidth} px, ${s.fontSize} ${s.fontFamily.split(',')[0]}`);
+      }
     }
     // Only the app's own texts are checked for size and cuts (names, plates and what people typed may end in "…").
     if (!own.has(whole)) continue;
@@ -85,7 +98,7 @@ export function layoutProblems({ dict, lang }) {
       // What it was drawn in, to tell a size worked out wrong from a font that didn't load.
       const family = s.fontFamily.split(',')[0].trim().replace(/["']/g, '');
       const font = document.fonts && !document.fonts.check(`${s.fontSize} "${family}"`) ? ', font not loaded' : '';
-      say('cut', whole, `${el.scrollWidth} px in ${el.clientWidth} px, ${s.fontSize} ${family}${font}`);
+      say('cut', whole, `${el.scrollWidth} px in ${el.clientWidth} px, ${s.fontSize} ${family}${font}; on its own ${Math.round(widthOf(whole, s))} px`);
     }
     if (s.webkitLineClamp && s.webkitLineClamp !== 'none' && el.scrollHeight > el.clientHeight + 1) say('cut', whole, 'lines cut');
   }

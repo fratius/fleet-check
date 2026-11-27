@@ -5,7 +5,7 @@ import { dur } from '@/components/history';
 import { Button, F, MARKER, Pill, Row, T, fmtWhen, useColors, type PillV, hs } from '@/components/ui';
 import { useSession, type Session } from '@/lib/session';
 import type { BuyKind, Purchase, Vehicle } from '@/lib/types';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { comma, loc, N_, t, tp } from '@/lib/i18n';
 
 /**
  * Refuelling, washing and parts bought for a van. Anyone at the van's station refuels and washes it; owners and the
@@ -68,7 +68,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
   const s = useSession();
   const c = useColors();
   const st = buyState(p);
-  const amount = [p.kind === 'fuel' ? litresText(p.litres) : '', p.total != null ? money(p.total, p.currency) : ''].filter(Boolean).join(', ');
+  const amount = [p.kind === 'fuel' ? litresText(p.litres) : '', p.total != null ? money(p.total, p.currency) : ''].filter(Boolean).join(comma());
   return (
     <Pressable accessibilityRole="button" onPress={() => router.push(`/buy/${p.id}`)}
       style={({ pressed }) => ({ gap: 3, paddingVertical: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, opacity: pressed ? 0.7 : 1 })}>
@@ -77,7 +77,7 @@ export function BuyRow({ p, show, first }: { p: Purchase; show: 'driver' | 'van'
         {amount ? <Text style={{ fontFamily: F.condBold, fontSize: hs(17), color: c.ink, fontVariant: ['tabular-nums'] }}>{amount}</Text> : null}
       </Row>
       <Row gap={6}>
-        <T v="small" style={{ flexShrink: 1 }}>{[fmtWhen(p.createdAt), p.odometerKm != null ? `${p.odometerKm.toLocaleString(loc())} km` : '', p.merchant || ''].filter(Boolean).join(', ')}</T>
+        <T v="small" style={{ flexShrink: 1 }}>{[fmtWhen(p.createdAt), p.odometerKm != null ? `${p.odometerKm.toLocaleString(loc())} km` : '', p.merchant || ''].filter(Boolean).join(comma())}</T>
         {st.key !== 'done' ? <Pill v={st.v} text={st.text} /> : null}
       </Row>
       {p.status === 'done' && p.flags?.length ? <T v="small" color={c.amber}>{p.flags.map((f) => flagText(f)).join(' ')}</T> : null}

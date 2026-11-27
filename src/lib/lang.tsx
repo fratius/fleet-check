@@ -87,14 +87,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.documentElement.lang = shown;
       document.documentElement.dir = LANGS.find((l) => l.code === shown)?.rtl ? 'rtl' : 'ltr';
-      // The pages flip by themselves; the header's back arrow is a picture, so it's turned round here. And a word too
-      // long for its line (a name without spaces, a long German word) breaks instead of running off the screen
+      // The pages flip by themselves (the header's back arrow is turned round where it is made: the tab stacks'
+      // _layout). A word too long for its line (a name without spaces) breaks instead of running off the screen
       // (blind test, cause 4.3).
       if (!document.getElementById('fc-rtl')) {
         const st = document.createElement('style');
         st.id = 'fc-rtl';
         // Tab names are sized to fit whole words instead (fitSize in ui.tsx), so they don't break inside a word.
-        st.textContent = 'html[dir="rtl"] [data-testid="header-back"] img { transform: scaleX(-1); }\n#root div[dir="auto"] { overflow-wrap: anywhere; }\n#root [role="tab"] div[dir="auto"] { overflow-wrap: normal; }';
+        st.textContent = '#root div[dir="auto"] { overflow-wrap: anywhere; }\n#root [role="tab"] div[dir="auto"] { overflow-wrap: normal; }';
         document.head.appendChild(st);
       }
     }

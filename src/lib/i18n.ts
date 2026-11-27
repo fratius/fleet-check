@@ -73,6 +73,10 @@ export const isRtl = () => !!LANGS.find((l) => l.code === current)?.rtl;
 /** The "go on" and "go back" arrows, pointing the way the language reads. */
 export const fwd = () => (isRtl() ? '‹' : '›');
 export const back = () => (isRtl() ? '›' : '‹');
+/** The comma between the parts of a list on screen: "،" in Arabic and Persian (blind QA of cause 4, round 1). */
+export const comma = () => (isRtl() ? '، ' : ', ');
+/** A phone number or other left-to-right text kept in its order inside right-to-left text ("+49 151 …", not "… 151 49+"). */
+export const ltr = (x: string) => (isRtl() && x ? `\u2066${x}\u2069` : x);
 /**
  * For dates and numbers (toLocaleString). Serbian is translated in the Latin script. English is the European kind
  * (25/10/2026, 15:30), never the US one (10/25/2026): the app is for companies in Europe (blind test, cause 4.4).

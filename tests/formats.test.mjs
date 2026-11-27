@@ -95,5 +95,5 @@ test('every search box matches the way names are matched (ı and i, accents), no
 });
 
 test('lists shown on screen are joined with the language\'s own comma ("،" in Arabic and Persian), not a Latin ", "', () => {
-  assert.deepEqual(where(/\.join\(', '\)|\}, \$\{|`, \$\{/, /system-ui/), []);
+  assert.deepEqual(where(/\.join\(', '\)|\}, \$\{|`, \$\{|', ' \+|\+ ', '/, /system-ui/), []);
 });

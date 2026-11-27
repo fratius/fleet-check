@@ -9,7 +9,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 
 import { GONE, photoLookup, photoUrl } from '@/lib/images';
-import { fmtTime, lang, loc, t } from '@/lib/i18n';
+import { comma, fmtTime, lang, loc, t } from '@/lib/i18n';
 
 export const MARKER = '#E2FF1C';
 const LIGHT = { page: '#ECEEF1', paper: '#FFFFFF', ink: '#000000', ink2: '#565C66', rule: '#CDD1D7', alert: '#C42A1F', ok: '#1B7A3B', amber: '#8A5A00', warn: '#D9480F' };
@@ -274,16 +274,51 @@ export function SearchBox({ value, onChange, placeholder, label, caps }: { value
   );
 }
 
+/**
+ * A page's big title with a line under it, and a button beside it. The button goes under the title when a word of the
+ * title wouldn't fit whole beside it (Dutch "Wagenpark" broke into "Wagenpar / k", French "Données" too: blind QA of
+ * cause 4, round 1).
+ */
+export function PageHead({ title, hint, action }: { title: string; hint?: React.ReactNode; action?: React.ReactNode }) {
+  const fonts = useFontsReady();
+  const { width: win } = useWindowDimensions();
+  const word = Math.max(0, ...title.split(/\s+/).map((w) => textWidth(w, F.cond, hs(36), fonts))) + 4;
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+      <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: Math.min(word, win - 36) }}>
+        <T v="h1">{title}</T>
+        {hint}
+      </View>
+      {action}
+    </View>
+  );
+}
+
 export function Segmented<K extends string>({ options, value, onChange, label }: { options: [K, string][]; value: K; onChange: (k: K) => void; label?: string }) {
   const c = useColors();
+  const fonts = useFontsReady();
+  const [room, setRoom] = useState(0);
+  // On the web, every choice keeps its words whole: drawn smaller (not below 11 px) until the longest word of each fits
+  // its part, and no part is squeezed narrower than that word (Finnish "kuukautta" broke in the middle in Account:
+  // blind QA of cause 4, round 1). Names of several words still wrap between words.
+  const base = hs(17);
+  const pad = 12 * 2 + 2;
+  const word = (x: string, px: number) => Math.max(0, ...x.split(/\s+/).map((w) => textWidth(w, F.cond, px, fonts)));
+  const need = (px: number) => options.reduce((sum, [, x]) => sum + word(x, px) + pad, 0);
+  let size = base;
+  if (Platform.OS === 'web' && room > 0) while (size > 11 && need(size) > room) size -= 0.5;
+  const web = Platform.OS === 'web' && room > 0;
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', alignSelf: 'flex-start', maxWidth: '100%' }}>
-      {options.map(([k, t], i) => (
-        <Pressable key={k} accessibilityRole="radio" accessibilityState={{ checked: k === value }} onPress={() => onChange(k)}
-          style={{ paddingHorizontal: 12, minHeight: 40, flexShrink: 1, justifyContent: 'center', backgroundColor: k === value ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink }}>
-          <Text style={{ fontFamily: F.cond, fontSize: hs(17), textAlign: 'center', color: k === value ? c.paper : c.ink }}>{t}</Text>
-        </Pressable>
-      ))}
+    <View style={{ width: '100%' }} onLayout={(e) => setRoom(e.nativeEvent.layout.width)}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', borderWidth: 2, borderColor: c.ink, borderRadius: 4, overflow: 'hidden', alignSelf: 'flex-start', maxWidth: '100%' }}>
+        {options.map(([k, x], i) => (
+          <Pressable key={k} accessibilityRole="radio" accessibilityState={{ checked: k === value }} onPress={() => onChange(k)}
+            style={{ paddingHorizontal: 12, minHeight: 40, flexShrink: 1, justifyContent: 'center', backgroundColor: k === value ? c.ink : c.paper, borderLeftWidth: i ? 2 : 0, borderColor: c.ink,
+              ...(web ? { minWidth: Math.min(room / options.length, word(x, size) + pad + 1) } : null) }}>
+            <Text style={{ fontFamily: F.cond, fontSize: size, textAlign: 'center', color: k === value ? c.paper : c.ink }}>{x}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -383,7 +418,7 @@ export function usd(v: number | null | undefined) {
 export function fmtWhen(ms?: number | null) {
   if (!ms) return '';
   const d = new Date(ms);
-  return d.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + ', ' + fmtTime(ms);
+  return d.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + comma() + fmtTime(ms);
 }
 export const cap = (s: string | null | undefined) => { const t = String(s || ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 
@@ -403,7 +438,9 @@ function TabCell({ label, n, on, first, count, onPress }: { label: string; n: nu
   const size = fitSize(label, F.cond, base, w - 12, { words: true, min: TAB_MIN, fonts });
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={onPress} onLayout={(e) => setW(e.nativeEvent.layout.width)}
-      style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
+      // alignContent: a name on one line sits in the middle also when a tab next to it has two lines and the row is
+      // taller (the names were at the top in Arabic: blind QA of cause 4, round 1).
+      style={{ flex: 1, minHeight: 48, paddingHorizontal: 4, paddingVertical: 4, alignItems: 'center', alignContent: 'center', justifyContent: 'center', flexDirection: 'row', flexWrap: 'wrap', columnGap: 6,
         backgroundColor: on ? c.ink : c.paper, borderLeftWidth: first ? 0 : 2, borderColor: c.ink }}>
       <Text numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}
         style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.12), textAlign: 'center', flexShrink: 1, color: on ? c.paper : c.ink, ...(sideBySide ? null : { flexBasis: '100%' }) }}>{label}</Text>

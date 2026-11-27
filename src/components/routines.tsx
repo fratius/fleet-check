@@ -8,7 +8,7 @@ import { Button, Card, Chip, ConfirmButton, Field, Pill, Row, T, fmtWhen, useCol
 import { UploadRow, useWaitingFor } from '@/components/uploads';
 import { newId, prepare } from '@/lib/images';
 import { sendCall } from '@/lib/outbox';
-import { N_, t, tp } from '@/lib/i18n';
+import { comma, N_, t, tp } from '@/lib/i18n';
 import { useHolder, useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
@@ -62,7 +62,7 @@ function useVansText() {
   return (r: Routine) => {
     const vans = r.vans === 'all' ? t('All vans') : r.vans === 'electric' ? t('Electric vans') : tp(r.vans.length, '{n} van', '{n} vans');
     if (s.stations.length < 2) return vans;
-    return `${vans}, ${r.stationId ? s.stationName(r.stationId) : t('every station')}`;
+    return `${vans}${comma()}${r.stationId ? s.stationName(r.stationId) : t('every station')}`;
   };
 }
 

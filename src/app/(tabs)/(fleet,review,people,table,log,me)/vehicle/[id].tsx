@@ -28,7 +28,7 @@ import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
 import { saveWalk } from '@/lib/walks';
-import { fwd, loc, t, tp } from '@/lib/i18n';
+import { comma, fwd, loc, t, tp } from '@/lib/i18n';
 import { plateKey, vanAlias, vanName } from '@/lib/vans';
 
 export default function VehicleScreen() {
@@ -175,9 +175,9 @@ export default function VehicleScreen() {
       <View style={{ gap: 6 }}>
         {v.plate ? <Plate big text={v.plate} /> : <T v="h1">{vanName(v)}</T>}
         {v.plate || !s.runs(v.stationId) ? null : <T v="hint" color={c.alert}>{t('No number plate yet. Add it under Details: the plate is how this van is shown everywhere.')}</T>}
-        <T v="hint">{[vanAlias(v), makeModel || t(CLS[v.cls].name), s.stations.length > 1 ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
+        <T v="hint">{[vanAlias(v), makeModel || t(CLS[v.cls].name), s.stations.length > 1 ? s.stationName(v.stationId) : ''].filter(Boolean).join(comma())}</T>
         {v.heightM || v.fuel ? <T v="small">{[v.fuel ? { diesel: t('Diesel'), electric: t('Electric'), petrol: t('Petrol'), hybrid: t('Hybrid'), cng: t('Gas') }[v.fuel] : '',
-          v.heightM ? t('{m} m high', { m: v.heightM.toLocaleString(loc(), { maximumFractionDigits: 2 }) }) : ''].filter(Boolean).join(', ')}</T> : null}
+          v.heightM ? t('{m} m high', { m: v.heightM.toLocaleString(loc(), { maximumFractionDigits: 2 }) }) : ''].filter(Boolean).join(comma())}</T> : null}
       </View>
 
       {/* What the dashboard showed last: km, fuel or battery, range, warning lights. */}
@@ -299,12 +299,12 @@ export default function VehicleScreen() {
             <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 4 }}>
               <Row>
                 <T v="h3" style={{ flex: 1 }}>{k.status === 'reviewed'
-                  ? (approved ? [tp(fresh, '{n} new damage', '{n} new damages'), approved > fresh ? tp(approved - fresh, '{n} already on the van', '{n} already on the van') : ''].filter(Boolean).join(', ') : t('No damage'))
+                  ? (approved ? [tp(fresh, '{n} new damage', '{n} new damages'), approved > fresh ? tp(approved - fresh, '{n} already on the van', '{n} already on the van') : ''].filter(Boolean).join(comma()) : t('No damage'))
                   : k.auto ? tp(k.spots.length, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review')
                     : tp(k.spots.length, '{n} spot, {dmg} damage by the AI', '{n} spots, {dmg} damage by the AI', { dmg })}</T>
                 <Pill v={k.status === 'reviewed' ? 'solid' : k.status === 'submitted' ? 'amber' : 'muted'} text={k.status === 'reviewed' ? t('Reviewed') : k.status === 'submitted' ? t('Waiting for review') : t('Close-ups pending')} />
               </Row>
-              <T v="hint">{[(k.auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName)) || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+              <T v="hint">{[(k.auto ? whoDid(k.walkBy) : whoDid(k.createdBy, k.createdByName)) || '', tp(k.photos, '{n} photo', '{n} photos'), s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) : '', fmtWhen(k.createdAt)].filter(Boolean).join(comma())}</T>
             </Pressable>
           );
         })}
@@ -327,7 +327,7 @@ export default function VehicleScreen() {
               w.source === 'library' ? t('from library') : tp(w.retakes, '{n} retake', '{n} retakes'),
               // The automatic comparison, for the station's staff (drivers scan; the fleet manager decides).
               s.staff && w.cmp?.status === 'done' && w.cmp.found + w.cmp.unsure ? tp(w.cmp.found + w.cmp.unsure, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review') : '',
-            ].filter(Boolean).join(', ')}</T>
+            ].filter(Boolean).join(comma())}</T>
           </Pressable>
         ))}
       </View>

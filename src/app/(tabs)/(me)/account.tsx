@@ -16,7 +16,7 @@ import { tokenFrom } from '@/lib/people';
 import { authMessage, useSession } from '@/lib/session';
 import { failText } from '@/lib/store';
 import { ROLE_NAME, TIER_MODEL, TIER_NAME, perPhotoCost, type Tier } from '@/lib/types';
-import { loc, t, tp } from '@/lib/i18n';
+import { comma, loc, t, tp } from '@/lib/i18n';
 import { ADDON_VANS, ALL_PLANS, PLAN_NAME, TERMS_VERSION, standing, type PlanId } from '@/lib/billing';
 import { usePayMode } from '@/components/billinggate';
 import { OffersCard } from '@/components/offers';
@@ -57,7 +57,7 @@ export default function Account() {
         </Row>
         <T v="hint">
           {s.role === 'owner' ? (s.stations.length === 1 ? t('You see and manage all of {station}.', { station: s.stations[0].name }) : tp(s.stations.length, 'You see and manage all {n} station.', 'You see and manage all {n} stations.'))
-            : s.myStations.length ? t('Station: {stations}.', { stations: s.myStations.map((st) => st.name).join(', ') }) : t('Not at a station yet. Ask your fleet manager.')}
+            : s.myStations.length ? t('Station: {stations}.', { stations: s.myStations.map((st) => st.name).join(comma()) }) : t('Not at a station yet. Ask your fleet manager.')}
           {s.role === 'manager' ? ' ' + t('You approve or reject damage found at your station.') : ''}
           {s.role === 'driver' ? ' ' + t('You scan the vans of your station; your fleet manager reviews the damage checks.') : ''}
         </T>

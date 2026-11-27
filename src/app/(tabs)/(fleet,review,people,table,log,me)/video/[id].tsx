@@ -10,7 +10,7 @@ import { useSession } from '@/lib/session';
 import { ai } from '@/lib/store';
 import { VIDEO_TITLE, type Video } from '@/lib/types';
 import { mb, watchVideo } from '@/lib/videos';
-import { t, tp } from '@/lib/i18n';
+import { comma, t, tp } from '@/lib/i18n';
 
 /** One video of a van (pick-up, drop-off or walk-around): the player and what's known about it. */
 export default function VideoScreen() {
@@ -58,7 +58,7 @@ export default function VideoScreen() {
         </Row>
         <T>{v.recordedAt ? t('Recorded by {name}, {when}.', { name: v.byName, when: fmtWhen(v.recordedAt) }) : t('Recorded by {name}.', { name: v.byName })}</T>
         <T v="small">{[t('Uploaded {when}', { when: fmtWhen(v.createdAt) }), v.device || '', v.size ? t('original {size}', { size: mb(v.size) }) : '',
-          v.playSize ? t('playback copy {size}', { size: mb(v.playSize) }) : ''].filter(Boolean).join(', ')}.</T>
+          v.playSize ? t('playback copy {size}', { size: mb(v.playSize) }) : ''].filter(Boolean).join(comma())}.</T>
       </View>
       <KeepCard kind="video" id={v.id} createdAt={v.createdAt} stationId={v.stationId} keepUntil={v.keepUntil} keepMark={v.keepMark} mediaDeletedAt={v.mediaDeletedAt} />
       <Row>

@@ -2,7 +2,7 @@ import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/f
 
 import { fb } from './firebase';
 import { daysTo, deadlines, fmtDay, type Deadline } from './fleet';
-import { N_, t, tp } from './i18n';
+import { comma, N_, t, tp } from './i18n';
 import type { HuResult, ServiceAppointment, ServiceKind, ServiceRecord, Vehicle, VehicleDetails } from './types';
 
 /**
@@ -99,7 +99,7 @@ export function apptState(a: Pick<ServiceAppointment, 'day' | 'time' | 'at'>, no
   return { text: days <= 7 ? tp(days, 'In {n} day', 'In {n} days') : fmtDay(a.day), v: 'default', soon: false, days };
 }
 /** "25 Nov 2026, 09:30". */
-export const apptWhen = (a: Pick<ServiceAppointment, 'day' | 'time'>) => `${fmtDay(a.day)}, ${a.time}`;
+export const apptWhen = (a: Pick<ServiceAppointment, 'day' | 'time'>) => `${fmtDay(a.day)}${comma()}${a.time}`;
 
 /** The van's next garage visit drivers may see, while it's not more than half a day past (vehicles.garageVisit). */
 export const visitOf = (v: Pick<Vehicle, 'garageVisit' | 'retired'>, now = Date.now()) =>

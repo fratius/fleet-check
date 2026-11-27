@@ -10,7 +10,7 @@ import { sendCall } from '@/lib/outbox';
 import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ROLE_NAME, roleOf, type Assignment, type DriverLink, type Invite, type JoinRequest, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
-import { fwd, t, tp } from '@/lib/i18n';
+import { comma, fwd, ltr, t, tp } from '@/lib/i18n';
 import { initials, nameKey, personMatches, vanAlias, vanName } from '@/lib/vans';
 
 /**
@@ -44,7 +44,7 @@ export default function People() {
   const searching = !!nameKey(query);
   const found = searching ? (members || []).filter((m) => personMatches(m, query))
     .sort((a, b) => Number(roleOf(a) !== 'driver') - Number(roleOf(b) !== 'driver') || a.name.localeCompare(b.name)) : [];
-  const stationsOf = (m: Member) => (m.stationIds || []).map((id) => s.stationName(id)).filter(Boolean).join(', ');
+  const stationsOf = (m: Member) => (m.stationIds || []).map((id) => s.stationName(id)).filter(Boolean).join(comma());
 
   return (
     <Screen>
@@ -182,7 +182,7 @@ function StationPeople({ station, members, invites }: { station: Station; member
           <Text style={{ fontFamily: F.condBold, fontSize: hs(30), lineHeight: hs(33), color: c.ink, flexShrink: 1 }}>{station.name}</Text>
           {station.code ? <View style={{ borderWidth: 2, borderColor: c.ink, borderRadius: 3, paddingHorizontal: 6 }}><Text style={{ fontFamily: F.cond, fontSize: hs(15), letterSpacing: 1, color: c.ink }}>{station.code}</Text></View> : null}
         </View>
-        <T v="small">{[tp(managers.length, '{n} fleet manager', '{n} fleet managers'), tp(drivers.length, '{n} driver', '{n} drivers'), tp(vans, '{n} van', '{n} vans')].join(', ')}</T>
+        <T v="small">{[tp(managers.length, '{n} fleet manager', '{n} fleet managers'), tp(drivers.length, '{n} driver', '{n} drivers'), tp(vans, '{n} van', '{n} vans')].join(comma())}</T>
       </View>
 
       <View style={{ gap: 6 }}>
@@ -295,7 +295,7 @@ function JoinRow({ r, first, showStation }: { r: JoinRequest; first: boolean; sh
   return (
     <View style={{ gap: 6, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <T v="medium">{r.name}</T>
-      <T v="small" selectable>{[r.email, r.phone, r.transporterId ? `Transporter ID ${r.transporterId}` : null, showStation ? r.stationName : null, t('asked {when}', { when: fmtWhen(r.createdAt) })].filter(Boolean).join(' · ')}</T>
+      <T v="small" selectable>{[r.email, r.phone && ltr(r.phone), r.transporterId ? `Transporter ID ${r.transporterId}` : null, showStation ? r.stationName : null, t('asked {when}', { when: fmtWhen(r.createdAt) })].filter(Boolean).join(' · ')}</T>
       {r.sameTransporterId ? <T v="small" color={c.amber}>{t('{name} in your company already has this Transporter ID.', { name: r.sameTransporterId })}</T> : null}
       <Row>
         <Button small v="primary" title={t('Approve')} loading={busy === 'yes'} disabled={!!busy} onPress={() => decide(true)} />
@@ -404,7 +404,7 @@ function InviteLinks({ station, role, invites }: { station: Station; role: 'mana
         </View>
         <Button small v="primary" title={role === 'manager' ? tp(count, 'Make a fleet manager link', 'Make {n} fleet manager links') : tp(count, 'Make a driver link', 'Make {n} driver links')} loading={busy} onPress={make} />
       </Row>
-      {used.length ? <T v="small">{t('Used: {list}', { list: used.map((i) => `${i.usedByName || t('someone')} (${fmtWhen(i.usedAt)})`).join(', ') })}</T> : null}
+      {used.length ? <T v="small">{t('Used: {list}', { list: used.map((i) => `${i.usedByName || t('someone')} (${fmtWhen(i.usedAt)})`).join(comma()) })}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
   );
@@ -430,7 +430,7 @@ function BossRow({ m, label }: { m: Member; label: string }) {
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text numberOfLines={3} style={{ fontFamily: F.cond, fontSize: hs(22), lineHeight: hs(25), color: fg }}>{me ? t('{name} (you)', { name: m.name }) : m.name}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone || label}</Text>
+          <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 13, color: sub }}>{m.phone ? ltr(m.phone) : label}</Text>
           {van ? <Plate small text={vanName(van)} /> : null}
         </View>
       </View>

@@ -39,6 +39,9 @@ const PLAIN: Record<string, string> = { ı: 'i', ł: 'l', đ: 'd', ð: 'd', ø: 
 export const nameKey = (x: string | null | undefined) => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
   .replace(/[ıłđðøæœßþħ]/g, (c) => PLAIN[c] || c).replace(/\s+/g, ' ').trim();
 
+/** What a search box shows: the text has what was typed, as names are matched (ı and i, accents, capitals). */
+export const textMatches = (text: string | null | undefined, query: string) => nameKey(text).includes(nameKey(query));
+
 /** The longest first or last name (the server refuses longer ones with a message, never cuts them: cause 4.3). */
 export const NAME_MAX = 40;
 export const nameTooLong = (x: string | null | undefined) => (x || '').trim().length > NAME_MAX;

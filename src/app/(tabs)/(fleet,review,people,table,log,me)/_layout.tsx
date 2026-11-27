@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import { HeaderBackButton } from 'expo-router/react-navigation';
-import { Platform, Text } from 'react-native';
+import { Platform, Text, useWindowDimensions } from 'react-native';
 
-import { F, useColors, hs } from '@/components/ui';
-import { N_, t } from '@/lib/i18n';
+import { F, fitSize, hs, textWidth, useColors, useFontsReady } from '@/components/ui';
+import { N_, isRtl, t } from '@/lib/i18n';
 
 /**
  * Each tab has its own stack, so the tab bar stays at the bottom on every page and each tab remembers where you
@@ -30,6 +30,24 @@ const ROOT: Record<string, { name: string; title: string }> = {
   '(me)': { name: 'account', title: N_('Account') },
 };
 
+/**
+ * A page's title on the web: whole words on up to two lines at the usual size; a longer one (a person's name without
+ * spaces) smaller, on up to three lines, so it is never cut with "…" (blind QA of cause 4, round 1). The room is the
+ * header's width less its back button and edges.
+ */
+function HeaderTitle({ children }: { children: string }) {
+  const c = useColors();
+  const fonts = useFontsReady();
+  const { width: win } = useWindowDimensions();
+  const room = Math.min(win, 1400) - 120;
+  const big = hs(21);
+  const fits = fitSize(children, F.cond, big, room, { words: true, min: 1, fonts }) >= big && textWidth(children, F.cond, big, fonts) <= room * 1.8;
+  const size = fits ? big : 16;
+  return (
+    <Text accessibilityRole="header" numberOfLines={fits ? 2 : 3} style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.1), color: c.ink }}>{children}</Text>
+  );
+}
+
 export default function TabStack({ segment }: { segment: string }) {
   const c = useColors();
   const root = ROOT[segment] || ROOT['(fleet)'];
@@ -44,11 +62,11 @@ export default function TabStack({ segment }: { segment: string }) {
       // The web's back button says "Back" to screen readers in the app's language (it said "Fleet, back" in English in
       // every language: blind test, cause 4.4). The phone apps keep their own, which follow the phone's language.
       ...(Platform.OS === 'web' ? {
-        headerLeft: (p: React.ComponentProps<typeof HeaderBackButton> & { canGoBack?: boolean }) => (p.canGoBack ? <HeaderBackButton {...p} accessibilityLabel={t('Back')} /> : null),
-        // A long title (a person's name without spaces) goes on two lines instead of being cut (cause 4.3).
-        headerTitle: ({ children }: { children: string }) => (
-          <Text accessibilityRole="header" numberOfLines={2} style={{ fontFamily: F.cond, fontSize: hs(21), lineHeight: hs(23), color: c.ink }}>{children}</Text>
-        ),
+        // In Arabic and Persian the arrow is turned round, to point back the way they read (blind QA of cause 4, round 1).
+        headerLeft: (p: React.ComponentProps<typeof HeaderBackButton> & { canGoBack?: boolean }) => (p.canGoBack
+          ? <HeaderBackButton {...p} testID="header-back" accessibilityLabel={t('Back')} style={[p.style, isRtl() ? { transform: [{ scaleX: -1 }] } : null]} /> : null),
+        // A long title (a person's name without spaces) wraps instead of being cut (cause 4.3).
+        headerTitle: ({ children }: { children: string }) => <HeaderTitle>{children}</HeaderTitle>,
       } : null),
     }}>
       {/* The first page of the tab has its own big title. */}

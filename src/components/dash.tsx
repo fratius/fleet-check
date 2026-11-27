@@ -14,7 +14,7 @@ import { useSession } from '@/lib/session';
 import { STALE_TOUR, isOpen } from '@/lib/stats';
 import { AiError, ai, failText, type DashRead } from '@/lib/store';
 import type { DashValues, Tour, Vehicle } from '@/lib/types';
-import { fmtTime, loc, N_, t, tp } from '@/lib/i18n';
+import { comma, fmtTime, loc, N_, t, tp } from '@/lib/i18n';
 import { vanName, vanAlias } from '@/lib/vans';
 
 /**
@@ -92,7 +92,7 @@ export function TourCard({ v, compact }: { v: Vehicle; compact?: boolean }) {
         <Text style={{ fontFamily: F.condBold, fontSize: hs(compact ? 22 : 26), lineHeight: compact ? 25 : 29, color: '#000', flexShrink: 1 }}>{title}</Text>
         {!starting ? <View style={{ borderWidth: 1.5, borderColor: '#000', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }}><Text style={{ fontFamily: F.medium, fontSize: 13, color: '#000' }}>{t('On tour {time}', { time: dur(Date.now() - it.mine!.startAt) })}</Text></View> : null}
       </Row>
-      {compact ? <T v="medium" color="#000">{vanName(v)}{vanAlias(v) ? `, ${vanAlias(v)}` : ''}</T> : null}
+      {compact ? <T v="medium" color="#000">{vanName(v)}{vanAlias(v) ? `${comma()}${vanAlias(v)}` : ''}</T> : null}
       <T v="body" color="#000">{line}</T>
       {open ? <DashReading v={v} onDone={() => setOpen(false)} /> : <Button v="primary" wide title={starting ? t('Photo of the dashboard') : t('End-of-tour photo')} onPress={() => setOpen(true)} />}
     </View>
@@ -325,7 +325,7 @@ export function VanNow({ v }: { v: Vehicle }) {
       </Row>
       {d.warnings.length ? (
         <View style={{ borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 10, gap: 2, backgroundColor: c.paper }}>
-          <T v="medium" color={c.alert}>{tp(d.warnings.length, 'Warning light: {lights}', 'Warning lights: {lights}', { lights: d.warnings.map((w) => t(w)).join(', ') })}</T>
+          <T v="medium" color={c.alert}>{tp(d.warnings.length, 'Warning light: {lights}', 'Warning lights: {lights}', { lights: d.warnings.map((w) => t(w)).join(comma()) })}</T>
           <T v="small">{t('Check the van before it goes out again.')}</T>
         </View>
       ) : <T v="small">{t('No warning lights.')}</T>}
@@ -347,7 +347,7 @@ export function TourLine({ t: tour, show: who }: { t: Tour; show: 'driver' | 'va
       </Row>
       <T v="small">{[when,
         tour.per100 != null ? per100Text(tour.per100, tour.unit) : '', tour.endedHow === 'next' ? t('no end photo (estimated)') : tour.endedHow === 'none' ? t('no end photo') : '',
-        tour.warnings?.length ? t('warning: {lights}', { lights: tour.warnings.map((w) => t(w)).join(', ') }) : ''].filter(Boolean).join(', ')}</T>
+        tour.warnings?.length ? t('warning: {lights}', { lights: tour.warnings.map((w) => t(w)).join(comma()) }) : ''].filter(Boolean).join(comma())}</T>
     </View>
   );
 }

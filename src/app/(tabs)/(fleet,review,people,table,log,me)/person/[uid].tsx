@@ -16,7 +16,7 @@ import { watchMember } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { driverRows } from '@/lib/stats';
 import { ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member } from '@/lib/types';
-import { loc, t, tp } from '@/lib/i18n';
+import { comma, loc, ltr, t, tp } from '@/lib/i18n';
 import { vanAlias, vanName } from '@/lib/vans';
 
 /**
@@ -68,7 +68,7 @@ export default function PersonScreen() {
   const openRow = rows.find((a) => a.end == null);
   const rights = member ? manageRights(s, member) : { canEdit: false, canRemove: false };
   const canGive = !!member && !!r && r !== 'owner' && (member.stationIds || []).some((id) => s.runs(id));
-  const stationNames = (member?.stationIds || []).map((id) => s.stationName(id)).join(', ');
+  const stationNames = (member?.stationIds || []).map((id) => s.stationName(id)).join(comma());
   const rec = me && !s.staff ? s.myRecord : s.records.find((x) => x.id === uid);
   const due = driverDeadlines(rec, s.org?.licenceCheckMonths || CHECK_MONTHS).filter((x) => x.state !== 'ok');
   // Someone who left: a placeholder member so the record and incidents still show (read-only).
@@ -87,7 +87,7 @@ export default function PersonScreen() {
           {due.length ? <Pill v={due.some((x) => x.state === 'overdue') ? 'bad' : 'amber'} text={due.length === 1 ? `${due[0].label}: ${due[0].note}` : tp(due.length, '{n} thing due', '{n} things due')} /> : null}
           {stationNames ? <T v="hint">{stationNames}</T> : null}
         </Row>
-        {member ? <T v="hint" selectable>{[member.phone, member.transporterId ? t('Transporter ID {id}', { id: member.transporterId }) : '', member.email].filter(Boolean).join(', ')}</T> : null}
+        {member ? <T v="hint" selectable>{[member.phone && ltr(member.phone), member.transporterId ? t('Transporter ID {id}', { id: member.transporterId }) : '', member.email].filter(Boolean).join(comma())}</T> : null}
         {member === undefined ? <T v="hint">{t('Loading…')}</T> : null}
         {member === null ? <T v="hint">{t('{name} is no longer in {company}. Their van history, tours and record stay.', { name, company: s.org?.name || '' })}</T> : null}
       </View>
@@ -100,7 +100,7 @@ export default function PersonScreen() {
             <Pressable onPress={() => router.push(`/vehicle/${van.id}`)} style={{ gap: 4 }}>
               <T v="h2">{vanName(van)} ›</T>
               {/* The plate is the van's name (lib/vans.ts): its own name and model under it, not the plate again. */}
-              {vanAlias(van) || van.make || van.model ? <T v="small">{[vanAlias(van), [van.make, van.model].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</T> : null}
+              {vanAlias(van) || van.make || van.model ? <T v="small">{[vanAlias(van), [van.make, van.model].filter(Boolean).join(' ')].filter(Boolean).join(comma())}</T> : null}
               <T v="hint">{sinceText(van.assignedTo!.since)}</T>
             </Pressable>
           ) : openRow ? (

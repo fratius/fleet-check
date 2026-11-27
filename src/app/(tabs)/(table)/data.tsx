@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { DataTable, sortRows, type Col, type Sort } from '@/components/table';
-import { Button, Card, Chip, F, Field, Notice, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, Chip, F, Field, Notice, PageHead, Row, Screen, Segmented, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
 import { DateField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { usePeriodData } from '@/lib/data';
 import { CHECK_MONTHS, FUEL, daysTo, fmtDay, parseDay, today } from '@/lib/fleet';
@@ -14,8 +14,8 @@ import { HU_RESULT, apptWhen, serviceName, serviceVanRows, type ServiceVanRow } 
 import type { Member, Purchase, ServiceRecord, Tour } from '@/lib/types';
 import { BUY_NAME, buyState } from '@/components/buy';
 import { saveXlsx, type Cell, type Sheet } from '@/lib/xlsx';
-import { fmtTime, loc, N_, t } from '@/lib/i18n';
-import { vanAlias, vanName } from '@/lib/vans';
+import { comma, fmtTime, loc, N_, t } from '@/lib/i18n';
+import { textMatches, vanAlias, vanName } from '@/lib/vans';
 
 /**
  * The fleet in numbers, like a spreadsheet: drivers, tours and vans for a period, sortable by any column, with a
@@ -86,7 +86,8 @@ export default function DataScreen() {
 
   if (!s.staff) return <Screen><T v="h1">{t('Data')}</T><Card dashed><T v="hint">{t('Fleet managers and owners see the fleet in numbers.')}</T></Card></Screen>;
 
-  const match = (x: string) => !q.trim() || x.toLowerCase().includes(q.trim().toLowerCase());
+  // As names are matched everywhere: "yilmaz" finds Yılmaz (blind QA of cause 4, round 1).
+  const match = (x: string) => !q.trim() || textMatches(x, q);
   const dCols = driverCols(c, multi && !station, s.stationName);
   const tCols = tourCols(c, multi && !station, s.stationName, s.vanName);
   const vCols = vanCols(c, multi && !station, s.stationName, owner);
@@ -132,13 +133,9 @@ export default function DataScreen() {
 
   return (
     <Screen wide>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <T v="h1">{t('Data')}</T>
-          <T v="hint">{owner ? t('Your drivers, tours and vans in numbers.') : t('{stations}: drivers, tours and vans in numbers.', { stations: s.myStations.map((st) => st.name).join(', ') })}</T>
-        </View>
-        <Button small title={saving ? t('Making the file…') : t('Download for Excel')} loading={saving} onPress={download} />
-      </View>
+      <PageHead title={t('Data')}
+        hint={<T v="hint">{owner ? t('Your drivers, tours and vans in numbers.') : t('{stations}: drivers, tours and vans in numbers.', { stations: s.myStations.map((st) => st.name).join(comma()) })}</T>}
+        action={<Button small title={saving ? t('Making the file…') : t('Download for Excel')} loading={saving} onPress={download} />} />
       {err ? <Notice tone="bad" text={err} /> : null}
       {data.error ? <Notice tone="bad" text={data.error} /> : null}
 
@@ -264,7 +261,7 @@ function tourCols(c: C, station: boolean, stationName: (id: string | null) => st
       text: (r) => (r.refuel?.litres ? `${one(r.refuel.litres)} l` : r.refuel?.unknown ? t('yes, amount unknown') : r.refuel ? t('no') : '') },
     { key: 'endPhoto', label: t('End photo'), width: 86, align: 'left', get: ended, tone: (r) => (r.endedHow === 'next' || r.endedHow === 'none' ? c.amber : undefined) },
     // The warning lights are named as the AI read them (not translated).
-    { key: 'warnings', label: t('Warning lights'), width: 150, align: 'left', get: (r) => (r.warnings || []).map((w) => t(w)).join(', '), tone: (r) => (r.warnings?.length ? c.warn : undefined) },
+    { key: 'warnings', label: t('Warning lights'), width: 150, align: 'left', get: (r) => (r.warnings || []).map((w) => t(w)).join(comma()), tone: (r) => (r.warnings?.length ? c.warn : undefined) },
   ];
   const order = ['driver', 'date', 'van', 'km', 'per100', 'used', 'refuel', 'endPhoto', 'warnings', 'hours', 'end', 'startKm'];
   cols.sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
@@ -286,9 +283,9 @@ function vanCols(c: C, station: boolean, stationName: (id: string | null) => str
     { key: 'per100', label: t('per 100 km'), width: 84, get: (v) => (v.per100 == null ? null : Math.round(v.per100 * 10) / 10), text: (v) => (v.per100 == null ? '' : `${one(v.per100)} ${v.unit === 'kwh' ? 'kWh' : 'l'}`) },
     { key: 'vs', label: t('vs same model'), width: 84, get: (v) => v.vsModel, text: (v) => pct(v.vsModel), tone: (v) => vsTone(c, v.vsModel) },
     { key: 'damage', label: t('New damage'), width: 74, get: (v) => v.damage, tone: (v) => (v.damage ? c.alert : undefined), total: (vs) => int(sum(vs, (v) => v.damage)) },
-    { key: 'warnings', label: t('Warning lights'), width: 140, align: 'left', get: (v) => v.warnings.map((w) => t(w)).join(', '), tone: (v) => (v.warnings.length ? c.warn : undefined) },
+    { key: 'warnings', label: t('Warning lights'), width: 140, align: 'left', get: (v) => v.warnings.map((w) => t(w)).join(comma()), tone: (v) => (v.warnings.length ? c.warn : undefined) },
     { key: 'noEnd', label: t('Tours without end photo'), width: 96, get: (v) => v.noEndPhoto },
-    { key: 'due', label: t('Next deadline'), width: 190, align: 'left', get: (v) => v.nextDue?.days ?? null, text: (v) => (v.nextDue ? `${t(v.nextDue.label)}, ${t(v.nextDue.note)}` : ''),
+    { key: 'due', label: t('Next deadline'), width: 190, align: 'left', get: (v) => v.nextDue?.days ?? null, text: (v) => (v.nextDue ? `${t(v.nextDue.label)}${comma()}${t(v.nextDue.note)}` : ''),
       tone: (v) => (v.nextDue?.state === 'overdue' ? c.alert : v.nextDue?.state === 'soon' ? c.amber : undefined) },
   ];
   const order = ['name', 'km', 'per100', 'vs', 'damage', 'warnings', 'due', 'tours', 'drivers', 'noEnd', 'odo', 'alias', 'model', 'fuel'];
@@ -342,10 +339,10 @@ function serviceVanCols(c: C, station: boolean, stationName: (id: string | null)
   const cols: Col<ServiceVanRow>[] = [
     { key: 'name', label: t('Van'), width: 140, align: 'left', get: (v) => vanName(v), text: (v) => (v.retired ? t('{name} (retired)', { name: vanName(v) }) : vanName(v)) },
     // Sorted by days left; vans without a date last.
-    { key: 'hu', label: t('TÜV'), width: 150, align: 'left', get: (v) => v.hu?.days ?? 99999, text: (v) => (v.hu?.day ? `${fmtDay(v.hu.day, true)}, ${v.hu.note}` : t('no date')), tone: (v) => (v.hu ? tone(v.hu) : c.ink2) },
-    { key: 'next', label: t('Next service'), width: 190, align: 'left', get: (v) => v.next?.days ?? (v.next ? -1 : 99999), text: (v) => (v.next ? `${v.next.label}${v.next.day ? `, ${fmtDay(v.next.day)}` : ''}, ${v.next.note}` : ''), tone: (v) => tone(v.next) },
-    { key: 'appt', label: t('Appointment'), width: 200, align: 'left', get: (v) => v.appt?.at ?? 1e15, text: (v) => (v.appt ? `${apptWhen(v.appt)}, ${serviceName(v.appt)}` : ''), tone: (v) => (v.appt && v.appt.at <= Date.now() ? c.alert : undefined) },
-    { key: 'last', label: t('Last service'), width: 200, align: 'left', get: (v) => v.last?.day ?? '', text: (v) => (v.last ? `${fmtDay(v.last.day)}, ${serviceName(v.last)}` : '') },
+    { key: 'hu', label: t('TÜV'), width: 150, align: 'left', get: (v) => v.hu?.days ?? 99999, text: (v) => (v.hu?.day ? `${fmtDay(v.hu.day, true)}${comma()}${v.hu.note}` : t('no date')), tone: (v) => (v.hu ? tone(v.hu) : c.ink2) },
+    { key: 'next', label: t('Next service'), width: 190, align: 'left', get: (v) => v.next?.days ?? (v.next ? -1 : 99999), text: (v) => (v.next ? `${v.next.label}${v.next.day ? `${comma()}${fmtDay(v.next.day)}` : ''}${comma()}${v.next.note}` : ''), tone: (v) => tone(v.next) },
+    { key: 'appt', label: t('Appointment'), width: 200, align: 'left', get: (v) => v.appt?.at ?? 1e15, text: (v) => (v.appt ? `${apptWhen(v.appt)}${comma()}${serviceName(v.appt)}` : ''), tone: (v) => (v.appt && v.appt.at <= Date.now() ? c.alert : undefined) },
+    { key: 'last', label: t('Last service'), width: 200, align: 'left', get: (v) => v.last?.day ?? '', text: (v) => (v.last ? `${fmtDay(v.last.day)}${comma()}${serviceName(v.last)}` : '') },
     { key: 'lastKm', label: t('km then'), width: 84, get: (v) => v.last?.km ?? null, text: (v) => int(v.last?.km) },
     { key: 'n', label: t('Entries in period'), width: 84, get: (v) => v.n, total: (vs) => int(sum(vs, (v) => v.n)) },
     { key: 'cost', label: t('Cost in period'), width: 100, get: (v) => v.cost, text: (v) => (v.cost ? eur2(v.cost) : ''), total: (vs) => eur2(sum(vs, (v) => v.cost)) },
@@ -402,7 +399,7 @@ function WhoHad() {
   const [at, setAt] = useState('12:00');
   const [q, setQ] = useState('');
   const vans = s.vehicles.filter((v) => s.runs(v.stationId)).sort((a, b) => vanName(a).localeCompare(vanName(b)));
-  const list = q.trim() ? vans.filter((v) => `${v.name} ${v.plate}`.toLowerCase().includes(q.trim().toLowerCase())) : vans;
+  const list = q.trim() ? vans.filter((v) => textMatches(`${v.name} ${v.plate}`, q)) : vans;
   const d = parseDay(day);
   // A day ahead has no answer yet (typed; the calendar doesn't offer one).
   const ahead = !!d && d > today();

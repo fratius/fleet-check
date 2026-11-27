@@ -14,7 +14,7 @@ import { useSession } from '@/lib/session';
 import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ai, failText, type Contact } from '@/lib/store';
 import type { BuyKind, Purchase, ReceiptRead, Vehicle } from '@/lib/types';
-import { N_, loc, t } from '@/lib/i18n';
+import { comma, loc, N_, t } from '@/lib/i18n';
 import { vanAlias, vanName } from '@/lib/vans';
 
 /**
@@ -165,7 +165,7 @@ function Flow({ van, kind, p, onStarted }: { van: Vehicle; kind: BuyKind; p: Pur
   const head = (
     <View style={{ gap: 6 }}>
       <T v="h1">{buyTitle(kind, vanName(van))}</T>
-      {vanAlias(van) || s.stations.length > 1 ? <T v="hint">{[vanAlias(van), s.stations.length > 1 ? s.stationName(van.stationId) : ''].filter(Boolean).join(', ')}</T> : null}
+      {vanAlias(van) || s.stations.length > 1 ? <T v="hint">{[vanAlias(van), s.stations.length > 1 ? s.stationName(van.stationId) : ''].filter(Boolean).join(comma())}</T> : null}
     </View>
   );
   const errLine = err ? <T v="small" color={c.alert}>{err}</T> : null;
@@ -388,7 +388,7 @@ function Confirm({ van, p, thumbs, needsCard, onCancel, cancelBusy }: { van: Veh
           <ZoomPhoto src={thumbs.receipt || p.receipt!.path} style={{ width: 90, height: 120 }} caption={t('Receipt')} contentFit="cover" />
         </Row>
         <T v="small">{!r.readable ? (r.issue ? t('The receipt couldn\'t be read: {issue}. Type the numbers from it.', { issue: r.issue }) : t('The receipt couldn\'t be read. Type the numbers from it.'))
-          : [r.merchant, [r.date, r.time].filter(Boolean).join(' '), r.cardLast4 ? t('card ending {last4}', { last4: r.cardLast4 }) : r.payment === 'cash' ? t('paid in cash') : ''].filter(Boolean).join(', ')}</T>
+          : [r.merchant, [r.date, r.time].filter(Boolean).join(' '), r.cardLast4 ? t('card ending {last4}', { last4: r.cardLast4 }) : r.payment === 'cash' ? t('paid in cash') : ''].filter(Boolean).join(comma())}</T>
         {low ? <T color={c.alert}>{t('The dashboard shows less than the van\'s {km} km. Type the km you see on the dashboard.', { km: p.lastKm!.toLocaleString(loc()) })}</T> : null}
         <Field label={t('Odometer (km)')} value={form.odo} onChangeText={(x) => setForm((f) => ({ ...f, odo: x }))} keyboardType="number-pad"
           placeholder={p.dash.done ? t('From the dashboard photo') : t('Reading the dashboard…')} />
@@ -497,7 +497,7 @@ function Summary({ p }: { p: Purchase }) {
         {p.decision ? <Line when={p.decision.at} text={decisionText(p.decision)} /> : null}
         {p.note ? <Line when={p.receipt?.at || null} text={t('Why: {note}', { note: p.note })} /> : null}
         {p.receipt ? <Line when={p.receipt.at} text={t('Receipt photographed.')} /> : null}
-        {p.status === 'done' ? <Line when={p.doneAt} text={p.corrected?.length ? t('Saved; typed in by hand: {fields}.', { fields: p.corrected.map((k) => (FIELD[k] ? t(FIELD[k]) : k)).join(', ') }) : t('Saved.')} /> : null}
+        {p.status === 'done' ? <Line when={p.doneAt} text={p.corrected?.length ? t('Saved; typed in by hand: {fields}.', { fields: p.corrected.map((k) => (FIELD[k] ? t(FIELD[k]) : k)).join(comma()) }) : t('Saved.')} /> : null}
         {p.cancel ? <Line when={p.cancel.at} text={p.cancel.reason ? t('Cancelled by {name}: {reason}', { name: p.cancel.byName, reason: t(p.cancel.reason) }) : t('Cancelled by {name}.', { name: p.cancel.byName })} /> : null}
         {isOpenBuy(p) && p.status !== 'waiting' ? <Line when={null} text={Date.now() - p.createdAt > STALE_BUY ? t('Never finished.') : t('Still going on.')} /> : null}
       </Card>
@@ -517,7 +517,7 @@ function Summary({ p }: { p: Purchase }) {
           <T v="h3">{t('On the receipt')}</T>
           {p.receipt.ai.items.map((i, k) => (
             <Row key={k} style={{ flexWrap: 'nowrap' }}>
-              <T v="body" style={{ flex: 1 }}>{i.description}{i.quantity != null && i.unit ? `, ${i.quantity.toLocaleString(loc())} ${i.unit}` : ''}</T>
+              <T v="body" style={{ flex: 1 }}>{i.description}{i.quantity != null && i.unit ? `${comma()}${i.quantity.toLocaleString(loc())} ${i.unit}` : ''}</T>
               <T v="medium">{i.total != null ? money(i.total, p.receipt!.ai.currency) : ''}</T>
             </Row>
           ))}

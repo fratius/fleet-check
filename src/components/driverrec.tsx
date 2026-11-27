@@ -12,7 +12,7 @@ import { ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { useWaitingFor, useWaitingWrites, Waiting } from '@/components/uploads';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { comma, loc, N_, t, tp } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
 
 /**
@@ -176,7 +176,7 @@ function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] 
               {canAdd && !pending.has(i.id) ? <T v="small" style={{ textDecorationLine: 'underline' }}>{t('Edit')}</T> : null}
             </Row>
             {pending.has(i.id) ? <T v="small">{t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.')}</T> : null}
-            <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(', ')}</T>
+            <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(comma())}</T>
             {i.note ? <T v="body">{i.note}</T> : null}
             <T v="small">{i.updatedByName ? t('Added by {name}, changed by {by}', { name: i.byName, by: i.updatedByName }) : t('Added by {name}', { name: i.byName })}</T>
           </Pressable>

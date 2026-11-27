@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
-import { Button, Card, Chip, Notice, Pill, Plate, Row, Screen, SearchBox, Svg, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, Notice, PageHead, Pill, Plate, Row, Screen, SearchBox, Svg, T, fmtWhen, useColors } from '@/components/ui';
 import { sinceText } from '@/components/history';
 import { Notifications, PickupRequest, usePickupRequest } from '@/components/pickup';
 import { TourCard, kmText } from '@/components/dash';
@@ -14,7 +14,7 @@ import { isOpen } from '@/lib/stats';
 import { CLS, makeSpec, silhouetteSVG } from '@/lib/frames';
 import { useHolder, useWhoDid } from '@/lib/names';
 import { deadlines } from '@/lib/fleet';
-import { fwd, t, tp } from '@/lib/i18n';
+import { comma, fwd, t, tp } from '@/lib/i18n';
 import { apptState, visitOf } from '@/lib/service';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME, newDamage, type Check } from '@/lib/types';
@@ -46,7 +46,7 @@ export default function Fleet() {
   const count = active.length;
   const canAdd = s.staff && (s.role === 'owner' || s.myStations.some((st) => s.runs(st.id)));
   const where = s.mode === 'local' ? t('Test mode, saved on this phone')
-    : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : tp(s.stations.length, '{n} station', '{n} stations')) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
+    : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : tp(s.stations.length, '{n} station', '{n} stations')) : s.myStations.map((st) => st.name).join(comma())].filter(Boolean).join(comma());
 
   // The driver's last van, when the fleet manager or owner gave it to someone else or made it free in the last day.
   const lastMine = s.staff ? null : s.assignments.filter((a) => a.driverId === s.user?.uid).sort((a, b) => (b.end ?? Infinity) - (a.end ?? Infinity))[0];
@@ -63,13 +63,9 @@ export default function Fleet() {
 
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-        <View style={{ flex: 1 }}>
-          <T v="h1">{s.staff ? t('Fleet') : t('Vans')}</T>
-          <T v="hint">{where}{s.loaded.vehicles ? `, ${tp(count, '{n} van', '{n} vans')}` : ''}</T>
-        </View>
-        {canAdd ? <Button small title={t('Add vehicle')} onPress={() => router.push('/add')} /> : null}
-      </View>
+      <PageHead title={s.staff ? t('Fleet') : t('Vans')}
+        hint={<T v="hint">{where}{s.loaded.vehicles ? `${comma()}${tp(count, '{n} van', '{n} vans')}` : ''}</T>}
+        action={canAdd ? <Button small title={t('Add vehicle')} onPress={() => router.push('/add')} /> : null} />
       {/* Search: the list follows each letter typed. */}
       {s.loaded.vehicles && here.length ? (
         <SearchBox value={query} onChange={setQuery} placeholder={t('Search by plate or fleet number')} label={t('Search vans')} caps />
@@ -96,7 +92,7 @@ export default function Fleet() {
         <Pressable onPress={() => router.push(`/vehicle/${s.myVan!.id}`)}
           style={touring ? { backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 14, gap: 4 } : { backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 4 }}>
           <T v="medium" color={touring ? undefined : '#000'}>{t('Your van')}</T>
-          <T v="h2" color={touring ? undefined : '#000'}>{vanName(s.myVan)}{vanAlias(s.myVan) ? `, ${vanAlias(s.myVan)}` : ''} {fwd()}</T>
+          <T v="h2" color={touring ? undefined : '#000'}>{vanName(s.myVan)}{vanAlias(s.myVan) ? `${comma()}${vanAlias(s.myVan)}` : ''} {fwd()}</T>
           <T v="small" color={touring ? undefined : '#000'}>{sinceText(s.myVan.assignedTo!.since)}</T>
           <Row>
             <ScanChoice v={s.myVan} small onMarker={!touring} />
@@ -148,7 +144,7 @@ export default function Fleet() {
               </Row>
             </>
           ) : (
-            <T v="hint">{s.myStations.length ? t('No vans at {stations} yet. Your fleet manager adds them.', { stations: s.myStations.map((st) => st.name).join(', ') })
+            <T v="hint">{s.myStations.length ? t('No vans at {stations} yet. Your fleet manager adds them.', { stations: s.myStations.map((st) => st.name).join(comma()) })
               : t('You\'re signed in as {role} but not at a station yet. Ask your fleet manager to add you to one.', { role: t(ROLE_NAME[s.role || 'driver']) })}</T>
           )}
         </Card>
@@ -161,35 +157,40 @@ export default function Fleet() {
         const damages = s.checks.filter((x) => x.vehicleId === v.id).reduce((n, x) => n + newDamage(x).length, 0);
         // Inspections, service, tax, insurance and contract end: owners and managers only.
         const due = s.runs(v.stationId) && !v.retired ? deadlines(v, s.details.find((d) => d.id === v.id)).filter((x) => x.state !== 'ok') : [];
+        const badges = [
+            tracking && !v.retired && !v.assignedTo ? <Pill key="p0" v="good" text={t('Free')} /> : null,
+            v.retired ? <Pill key="p1" v="muted" text={t('Retired')} /> : null,
+            !tracking && v.assignedTo?.driverId === s.user?.uid ? <Pill key="p2" v="solid" text={t('Your van')} /> : null,
+            !tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill key="p3" v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? t('In use') : t('Free')} /> : null,
+            k?.status === 'submitted' ? <Pill key="p4" v="amber" text={t('Waiting for review')} /> : null,
+            k?.status === 'checking' ? <Pill key="p5" v="muted" text={t('Close-ups pending')} /> : null,
+            dueOn(v).length ? <Pill key="p6" v="amber" text={tp(dueOn(v).length, '{n} check to do', '{n} checks to do')} /> : null,
+            v.dash?.warnings?.length && Date.now() - v.dash.at < 7 * 86_400_000 ? <Pill key="p7" v="bad" text={tp(v.dash.warnings.length, '{n} warning light', '{n} warning lights')} /> : null,
+            damages ? <Pill key="p8" v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null,
+            visitOf(v) ? <Pill key="p9" v={apptState(visitOf(v)!).soon ? 'amber' : 'muted'} text={t('Garage: {when}', { when: apptState(visitOf(v)!).v === 'bad' ? t('Now') : apptState(visitOf(v)!).text })} /> : null,
+            due[0] ? <Pill key="p10" v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null,
+            due.length > 1 ? <Pill key="p11" v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null,
+        ].filter(Boolean);
         return (
-          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${vanName(v)}, ${t(CLS[v.cls].name)}`} onPress={() => router.push(`/vehicle/${v.id}`)}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, opacity: pressed ? 0.8 : 1 })}>
-            <Svg xml={silhouetteSVG(sp, 104, false, c.ink2)} width={104} height={49} />
-            <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
-              {v.plate ? <Plate text={v.plate} /> : <T v="h3" numberOfLines={2}>{vanName(v)}</T>}
-              {vanAlias(v) || v.make || v.model ? <T v="small" numberOfLines={1}>{[vanAlias(v), [v.make, v.model].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</T> : null}
-              {/* The km on its latest dashboard photo (refuels count too). */}
-              <T v="medium" style={{ fontSize: 15 }}>{[v.dash ? kmText(v.dash.km) : t('No km yet'), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(', ')}</T>
-              {tracking && !v.retired ? (
-                <T v="medium" style={{ fontSize: 14 }} numberOfLines={1}>{v.assignedTo ? `${holder(v)}, ${sinceText(v.assignedTo.since)}` : t('Free')}</T>
-              ) : null}
-              <T v="hint">{last ? (whoDid(last.createdBy) ? t('Last walk-around {when}, by {name}', { when: fmtWhen(last.createdAt), name: whoDid(last.createdBy) }) : t('Last walk-around {when}', { when: fmtWhen(last.createdAt) })) : t('No walk-around yet')}</T>
-              <Row gap={6}>
-                {tracking && !v.retired && !v.assignedTo ? <Pill v="good" text={t('Free')} /> : null}
-                {v.retired ? <Pill v="muted" text={t('Retired')} /> : null}
-                {!tracking && v.assignedTo?.driverId === s.user?.uid ? <Pill v="solid" text={t('Your van')} /> : null}
-                {!tracking && s.mode === 'firebase' && selfOn(v.stationId) && v.assignedTo?.driverId !== s.user?.uid ? <Pill v={v.assignedTo ? 'muted' : 'good'} text={v.assignedTo ? t('In use') : t('Free')} /> : null}
-                {k?.status === 'submitted' ? <Pill v="amber" text={t('Waiting for review')} /> : null}
-                {k?.status === 'checking' ? <Pill v="muted" text={t('Close-ups pending')} /> : null}
-                {dueOn(v).length ? <Pill v="amber" text={tp(dueOn(v).length, '{n} check to do', '{n} checks to do')} /> : null}
-                {v.dash?.warnings?.length && Date.now() - v.dash.at < 7 * 86_400_000 ? <Pill v="bad" text={tp(v.dash.warnings.length, '{n} warning light', '{n} warning lights')} /> : null}
-                {damages ? <Pill v="bad" text={tp(damages, '{n} approved damage', '{n} approved damages')} /> : null}
-                {visitOf(v) ? <Pill v={apptState(visitOf(v)!).soon ? 'amber' : 'muted'} text={t('Garage: {when}', { when: apptState(visitOf(v)!).v === 'bad' ? t('Now') : apptState(visitOf(v)!).text })} /> : null}
-                {due[0] ? <Pill v={due[0].state === 'overdue' ? 'bad' : 'amber'} text={due[0].state === 'overdue' ? t('{label} overdue', { label: t(due[0].label) }) : t('{label} {when}', { label: t(due[0].label), when: t(due[0].note) })} /> : null}
-                {due.length > 1 ? <Pill v="muted" text={tp(due.length - 1, '{n} more due', '{n} more due')} /> : null}
-              </Row>
+          <Pressable key={v.id} accessibilityRole="button" accessibilityLabel={`${vanName(v)}${comma()}${t(CLS[v.cls].name)}`} onPress={() => router.push(`/vehicle/${v.id}`)}
+            style={({ pressed }) => ({ gap: 8, backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, opacity: pressed ? 0.8 : 1 })}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Svg xml={silhouetteSVG(sp, 104, false, c.ink2)} width={104} height={49} />
+              <View style={{ flex: 1, gap: 3, minWidth: 0 }}>
+                {v.plate ? <Plate text={v.plate} /> : <T v="h3" numberOfLines={2}>{vanName(v)}</T>}
+                {vanAlias(v) || v.make || v.model ? <T v="small" numberOfLines={1}>{[vanAlias(v), [v.make, v.model].filter(Boolean).join(' ')].filter(Boolean).join(comma())}</T> : null}
+                {/* The km on its latest dashboard photo (refuels count too). */}
+                <T v="medium" style={{ fontSize: 15 }}>{[v.dash ? kmText(v.dash.km) : t('No km yet'), showStations ? s.stationName(v.stationId) : ''].filter(Boolean).join(comma())}</T>
+                {tracking && !v.retired ? (
+                  // A long name wraps, and "since …" stays (a name without spaces was cut with "…": blind QA of cause 4, round 1).
+                  <T v="medium" style={{ fontSize: 14 }}>{v.assignedTo ? `${holder(v)}${comma()}${sinceText(v.assignedTo.since)}` : t('Free')}</T>
+                ) : null}
+                <T v="hint">{last ? (whoDid(last.createdBy) ? t('Last walk-around {when}, by {name}', { when: fmtWhen(last.createdAt), name: whoDid(last.createdBy) }) : t('Last walk-around {when}', { when: fmtWhen(last.createdAt) })) : t('No walk-around yet')}</T>
+              </View>
+              <T v="h2" color={c.ink2}>{fwd()}</T>
             </View>
-            <T v="h2" color={c.ink2}>{fwd()}</T>
+            {/* The badges under the picture, across the whole card: a long word ("Versicherungsverlängerung") fits whole. */}
+            {badges.length ? <Row gap={6}>{badges}</Row> : null}
           </Pressable>
         );
       })}

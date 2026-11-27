@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Card, F, T, useColors, hs } from '@/components/ui';
-import { LANGS, t } from '@/lib/i18n';
+import { comma, LANGS, t } from '@/lib/i18n';
 import { useLang } from '@/lib/lang';
 
 /** The list of languages, each in its own name, with the phone's language first. */
@@ -51,7 +51,7 @@ export function LanguageCard() {
   return (
     <Card>
       <T v="h3">{t('Language')}</T>
-      <T v="body">{cur ? `${cur.name}${cur.code !== 'en' ? ` (${cur.english})` : ''}` : 'English'}{l.picked ? '' : `, ${t('as on the phone')}`}</T>
+      <T v="body">{cur ? `${cur.name}${cur.code !== 'en' ? ` (${cur.english})` : ''}` : 'English'}{l.picked ? '' : `${comma()}${t('as on the phone')}`}</T>
       <Button small title={t('Change language')} onPress={() => setOpen(true)} />
       <T v="small">{t('Your notifications come in this language too. Names, notes and what the AI wrote stay as they were written.')}</T>
       <LanguageSheet open={open} onClose={() => setOpen(false)} />
