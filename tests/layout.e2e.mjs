@@ -202,7 +202,8 @@ async function desktopTabNames(page, code) {
     const bar = [...document.querySelectorAll('[role=tablist]')].find((l) => l.getBoundingClientRect().top > innerHeight - 120);
     return [...bar.querySelectorAll('[role=tab]')].map((tab) => {
       const icon = tab.querySelector('svg')?.getBoundingClientRect();
-      const name = [...tab.querySelectorAll('div[dir="auto"]')].find((e) => e.textContent.trim());
+      // The name, not the count badge that sits on the icon.
+      const name = [...tab.querySelectorAll('div[dir="auto"]')].find((e) => e.textContent.trim() && !/^[\d٠-٩۰-۹]+\+?$/.test(e.textContent.trim()));
       const n = name.getBoundingClientRect();
       return { text: name.textContent.trim(), px: parseFloat(getComputedStyle(name).fontSize), apart: !icon || n.left >= icon.right - 1 || n.right <= icon.left + 1,
         level: !icon || Math.abs((n.top + n.bottom) / 2 - (icon.top + icon.bottom) / 2) <= 4 };
