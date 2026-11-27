@@ -602,7 +602,8 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
 
   // A4, A5: the calendar opens on this month, yesterday can't be picked; a day next month fills in the field.
   const n = new Date();
-  const label = (d) => new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+  // English dates are the European way round since cause 4.4 ("Thursday 26 November 2026", never the US order).
+  const label = (d) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
   await page.getByRole('button', { name: 'Pick a day: Day' }).click();
   await button(page, 'Today').waitFor({ timeout: 10_000 });
   assert.ok(await page.locator('text=Mon >> visible=true').count(), 'weeks start on Monday');
