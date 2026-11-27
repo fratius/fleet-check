@@ -1334,6 +1334,46 @@ test('cause 3a (F01): a refuel of a van the driver no longer has opens, says so,
   } finally { await ben.ctx.close(); }
 });
 
+// ---------- 27 Nov 2026: the app creator stuck on "The plan has ended" while viewing a company as a manager ----------
+// The product owner opened a company that signed up with Stripe's test keys and looked at it as a manager. Its plan had
+// ended, so the payment screen came instead of the tabs, without the strip that has "Back to me"; View as is kept on the
+// account, so signing out and in led back to the same screen.
+test('the app creator viewing a company whose plan ended as a manager gets back to their own company from that screen', async () => {
+  const now = Date.now();
+  const CR = { email: 'casey.gate@example.com', password: 'gate-pass-1', name: 'Casey Creator' };
+  CR.uid = (await auth.createUser({ email: CR.email, password: CR.password, displayName: CR.name })).uid;
+  await auth.setCustomUserClaims(CR.uid, { creator: true });
+  const own = 'gateOwnOrg', gate = 'gateOrg', gst = 'gateSt';
+  const b = db.batch();
+  // Payments on with Stripe's test keys: companies that signed up through Stripe wait for their plan.
+  b.set(db.doc('config/payments'), { mode: 'test', publishableKey: 'pk_test_gate' });
+  b.set(db.doc(`orgs/${own}`), { name: 'Creator Home', createdBy: CR.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+  b.set(db.doc(`orgs/${own}/members/${CR.uid}`), { role: 'owner', stationIds: [], email: CR.email, name: CR.name, joinedAt: now });
+  b.set(db.doc(`orgs/${gate}`), { name: 'Fairy Test', createdBy: 'someoneElse', createdAt: now - 90 * 86400_000, stationsReady: true, aiTier: 'quick',
+    billing: { via: 'stripe', status: 'canceled', plan: 'pro', interval: 'month', cancelAt: now - 60 * 86400_000, periodEnd: now - 60 * 86400_000 } });
+  b.set(db.doc(`orgs/${gate}/stations/${gst}`), { name: 'Fairy station', code: 'DFT1', createdAt: now });
+  b.set(db.doc(`users/${CR.uid}`), { orgIds: [own], orgId: own, email: CR.email, name: CR.name, viewAs: { org: gate, role: 'manager', st: gst } });
+  await b.commit();
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  try {
+    await signIn(page, CR);
+    await visible(page, 'The plan has ended').waitFor({ timeout: 60_000 });
+    await visible(page, 'Fairy Test').waitFor({ timeout: 10_000 });
+    // The way back is on that screen.
+    await button(page, 'Back to me').click();
+    await until(async () => (await db.doc(`users/${CR.uid}`).get()).data().viewAs == null || null, 60_000, 'View as to end');
+    await visible(page, 'Creator Home').waitFor({ timeout: 60_000 });
+    assert.equal(await visible(page, 'The plan has ended').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally {
+    await ctx.close();
+    await db.doc('config/payments').delete();
+  }
+});
+
 // ---------- Blind test, 26 Nov 2026, cause 2b (B1, B2): the driver link on People ----------
 test('cause 2b (B1, B2): a fleet manager sees the driver link with Share and Make a new link; a new one is asked first and replaces the old', async () => {
   await rwWorld();

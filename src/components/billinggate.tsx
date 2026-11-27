@@ -6,6 +6,7 @@ import { MyCompanies } from '@/components/companies';
 import { DeleteAccount } from '@/components/deleteaccount';
 import { LegalLinks } from '@/components/legal';
 import { PlanSetup } from '@/components/plansetup';
+import { ViewingStrip } from '@/components/viewas';
 import { Button, F, MARKER, Notice, Screen, T, useColors } from '@/components/ui';
 import { blocked, payMode, standing, type PayMode } from '@/lib/billing';
 import { loc, t } from '@/lib/i18n';
@@ -52,6 +53,8 @@ export function BillingGate() {
   const card = st === 'unpaid' || st === 'paused';
   return (
     <Screen>
+      {/* The app creator viewing this company as someone else: the way back (the strip above the tab bar isn't here). */}
+      <ViewingStrip />
       <View style={{ gap: 6, paddingTop: 12 }}>
         <T v="hint">{org.name}</T>
         <T v="h1">{title}</T>
@@ -63,7 +66,7 @@ export function BillingGate() {
             : <PlanSetup org={org} plan={org.billing?.plan} interval={org.billing?.interval} offer={org.billing?.cardLater ? org.billing.offer : null} onDone={(id) => s.switchOrg(id)} />}
       <MyCompanies />
       <Button v="link" title={t('Sign out')} onPress={() => s.signOut()} />
-      <DeleteAccount />
+      {s.viewAs ? null : <DeleteAccount />}
       <LegalLinks />
     </Screen>
   );
