@@ -58,7 +58,12 @@ export function layoutProblems({ dict, lang }) {
     const s = getComputedStyle(el);
     if (parseFloat(s.fontSize) < 10) say('tiny', whole, `${s.fontSize}`);
     const clipped = (s.textOverflow === 'ellipsis' || s.overflow === 'hidden' || s.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 1;
-    if (clipped) say('cut', whole, `${el.scrollWidth} px in ${el.clientWidth} px`);
+    if (clipped) {
+      // What it was drawn in, to tell a size worked out wrong from a font that didn't load.
+      const family = s.fontFamily.split(',')[0].trim().replace(/["']/g, '');
+      const font = document.fonts && !document.fonts.check(`${s.fontSize} "${family}"`) ? ', font not loaded' : '';
+      say('cut', whole, `${el.scrollWidth} px in ${el.clientWidth} px, ${s.fontSize} ${family}${font}`);
+    }
     if (s.webkitLineClamp && s.webkitLineClamp !== 'none' && el.scrollHeight > el.clientHeight + 1) say('cut', whole, 'lines cut');
   }
   // Search boxes and other fields: the hint must fit.
