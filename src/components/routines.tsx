@@ -4,7 +4,7 @@ import { Pressable, Switch, View } from 'react-native';
 
 import { takePhoto } from '@/components/dash';
 import { dur } from '@/components/history';
-import { Button, Card, Chip, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, Card, Chip, ConfirmButton, Field, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { UploadRow, useWaitingFor } from '@/components/uploads';
 import { newId, prepare } from '@/lib/images';
 import { sendCall } from '@/lib/outbox';
@@ -253,7 +253,6 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
   const [picked, setPicked] = useState<string[]>(r && Array.isArray(r.vans) ? r.vans : []);
   const [photo, setPhoto] = useState(r?.photo ?? false);
   const [busy, setBusy] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const pool = s.vehicles.filter((v) => !v.retired && (!station || v.stationId === station) && (owner || s.myStations.some((st) => st.id === v.stationId)));
   const suggest = (x: (typeof SUGGESTED)[number]) => { setKey(x.key); setName(t(x.key)); setHow(x.how); setVans(x.vans); setPhoto(x.photo); };
@@ -270,7 +269,6 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
     } catch (e) { setErr(failText(e, 'Saving the check for drivers')); } finally { setBusy(false); }
   };
   const remove = async () => {
-    if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
     setBusy(true); setErr(null);
     try { await sendCall('routine', { orgId: s.org!.id, action: 'delete', id: r!.id }, { title: t('Remove the check "{name}"', { name: routineName(r!) }) }); onDone(); }
     catch (e) { setErr(failText(e, 'Removing the check for drivers')); setBusy(false); }
@@ -321,7 +319,7 @@ function RoutineEditor({ r, onDone }: { r?: Routine; onDone: () => void }) {
       <Row>
         <Button v="primary" title={r ? t('Save changes') : t('Add check')} loading={busy} disabled={busy} onPress={save} />
         <Button v="link" title={t('Cancel')} onPress={onDone} />
-        {r ? <Button v="link" title={armed ? t('Tap again to remove') : t('Remove')} onPress={remove} disabled={busy} /> : null}
+        {r ? <ConfirmButton v="link" title={t('Remove')} armedTitle={t('Tap again to remove')} onConfirm={remove} disabled={busy} /> : null}
       </Row>
     </Card>
   );

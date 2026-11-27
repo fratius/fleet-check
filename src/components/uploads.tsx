@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Button, F, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
+import { Button, ConfirmButton, F, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
 import { looksOnline, useWaitingCount } from '@/lib/net';
 import { jobTitle, outbox, pendingHandover, useOutbox, type Job } from '@/lib/outbox';
@@ -52,11 +52,8 @@ export function stateText(j: Job, l: Live | undefined, behind = false) {
 export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
   const c = useColors();
   const ob = useOutbox();
-  const [armed, setArmed] = useState(false);
   const l = ob.live.get(j.id);
   const failed = j.status === 'failed';
-  const arm = () => { setArmed(true); setTimeout(() => setArmed(false), 3000); };
-  const remove = () => { if (!armed) { arm(); return; } outbox.remove(j.id); };
   return (
     <View style={[{ gap: 6 }, bare ? null : { borderWidth: 2, borderColor: failed ? c.alert : c.ink, borderRadius: 4, padding: 12, backgroundColor: c.paper }]}>
       <T v="h3">{jobTitle(j)}</T>
@@ -75,7 +72,8 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
         {/* The question about a give that waited ("… Give it anyway?") is answered with Cancel: nothing changes. */}
         {failed && staleGive(j) ? <Button small v="link" title={t('Cancel')} onPress={() => outbox.remove(j.id)} />
           : (l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
-            <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
+            <ConfirmButton small v="link" title={failed ? t('Remove') : t('Cancel')} armedTitle={failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')}
+              cancelTitle={t('Keep it')} onConfirm={() => outbox.remove(j.id)} />
           )}
       </Row>
     </View>

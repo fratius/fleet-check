@@ -6,7 +6,7 @@ import { Pressable, View, type ScrollViewInstance } from 'react-native';
 import { MyHandoverCompare } from '@/components/compare';
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
 import { AnywayAsk, DriverPicker, HistoryList, askAnyway, kmLine, sinceText, useHistory } from '@/components/history';
-import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
+import { Button, Card, Chip, ConfirmButton, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
 import { PickupRequest, usePickupRequest } from '@/components/pickup';
@@ -80,15 +80,13 @@ export default function VehicleScreen() {
   const [takeover, setTakeover] = useState(false);
   // Pick-up or drop-off photos or videos still on their way from this phone (lib/outbox.ts).
   const ob = useOutbox();
-  const [armed, setArmed] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   // "Ali has this van now. Make it free anyway?" when the page was out of date (cause 3b).
   const [ask, setAsk] = useState<{ text: string; expect: string } | null>(null);
-  const arm = (k: string) => { setArmed(k); setTimeout(() => setArmed((a) => (a === k ? null : a)), 3000); };
   const act = async (k: string, fn: () => Promise<unknown>) => {
-    setBusy(k); setErr(null); setArmed(null);
+    setBusy(k); setErr(null);
     try { await fn(); } catch (e) { setErr(failText(e, `The van page (${k})`)); } finally { setBusy(null); }
   };
 
@@ -103,7 +101,7 @@ export default function VehicleScreen() {
   const canSelf = selfOn && !s.runs(v.stationId) && s.myStations.some((st) => st.id === v.stationId);
   // Makes the van free; refused with a question when someone else has it now (the page was out of date).
   const makeFree = async (expect?: string) => {
-    setBusy('end'); setErr(null); setArmed(null);
+    setBusy('end'); setErr(null);
     try {
       await sendCall('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: null, expect: expect !== undefined ? expect : v.assignedTo?.assignmentId ?? null },
         { title: t('Make {van} free', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) });
@@ -262,10 +260,7 @@ export default function VehicleScreen() {
             <Row>
               <Button small v={v.assignedTo ? 'secondary' : 'primary'} title={v.assignedTo ? t('Give to someone else') : t('Give to a driver')} onPress={() => setPicking(true)} />
               {v.assignedTo ? (
-                <Button small v="link" title={armed === 'end' ? t('Tap again: the van becomes free') : t('Make the van free')} loading={busy === 'end'} onPress={() => {
-                  if (armed !== 'end') { arm('end'); return; }
-                  void makeFree();
-                }} />
+                <ConfirmButton small v="link" title={t('Make the van free')} armedTitle={t('Tap again: the van becomes free')} loading={busy === 'end'} onConfirm={() => { void makeFree(); }} />
               ) : null}
             </Row>
           )) : null}
@@ -381,17 +376,14 @@ export default function VehicleScreen() {
         <Row>
           {!v.retired ? <Button title={t('Plate, name and type')} onPress={() => setEditing(true)} /> : null}
           {s.mode === 'local' ? (
-            <Button v="danger" title={armed === 'remove' ? t('Tap again to remove') : t('Remove from fleet')} onPress={async () => {
-              if (armed !== 'remove') { arm('remove'); return; }
-              try { await s.store!.vehicles.remove(v.id); router.back(); } catch { setErr(t('Couldn\'t remove the vehicle.')); }
+            <ConfirmButton v="danger" title={t('Remove from fleet')} armedTitle={t('Tap again to remove')} onConfirm={async () => {
+              try { await s.store!.vehicles.remove(v.id); router.back(); } catch (e) { setErr(failText(e, 'Removing the vehicle')); }
             }} />
           ) : v.retired ? (
             <Button title={t('Bring back into the fleet')} loading={busy === 'retire'} onPress={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, expect: v.assignedTo?.assignmentId ?? null, restore: true }, { title: t('Bring {van} back into the fleet', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }))} />
           ) : (
-            <Button v="danger" title={armed === 'retire' ? t('Tap again to retire') : t('Retire van')} loading={busy === 'retire'} onPress={() => {
-              if (armed !== 'retire') { arm('retire'); return; }
-              act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, expect: v.assignedTo?.assignmentId ?? null }, { title: t('Retire {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
-            }} />
+            <ConfirmButton v="danger" title={t('Retire van')} armedTitle={t('Tap again to retire')} loading={busy === 'retire'}
+              onConfirm={() => act('retire', () => sendCall('retireVan', { orgId: s.org!.id, vehicleId: v.id, expect: v.assignedTo?.assignmentId ?? null }, { title: t('Retire {van}', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }))} />
           )}
         </Row>
       )}

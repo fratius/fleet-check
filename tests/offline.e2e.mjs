@@ -1772,6 +1772,34 @@ test('cause 3b, round 2, F05: a person page opened without a connection never sa
   } finally { await ctx.close(); }
 });
 
+// Blind test, 27 Nov 2026 (cause 3b, rounds 1 and 3): a slow second tap on "Tap again to retire" did nothing, because the
+// button had gone back after 3 s. Product owner: fix the buttons, don't wait longer.
+test('a confirmation waits for the second tap however slow it comes, and Cancel beside it changes nothing', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    // B-SB 1 is Cem's now (the test above).
+    await page.goto(`${URL0}/vehicle/${SB_VAN(1)}`);
+    await button(page, 'Make the van free').click();
+    await page.waitForTimeout(6000);
+    await button(page, 'Tap again: the van becomes free').waitFor({ timeout: 5000 });
+    await button(page, 'Cancel').click();
+    await button(page, 'Make the van free').waitFor({ timeout: 5000 });
+    await page.waitForTimeout(1000);
+    assert.equal((await sbVan(1)).assignedTo?.driverId, SB_CEM.uid, 'Cancel changed nothing');
+    await button(page, 'Make the van free').click();
+    await page.waitForTimeout(6000);
+    await button(page, 'Tap again: the van becomes free').click();
+    await until(async () => (await sbVan(1)).assignedTo == null || null, 30_000, 'the van to become free after a slow second tap');
+    await tab(page, 'Details').click();
+    await button(page, 'Retire van').click();
+    await page.waitForTimeout(6000);
+    await button(page, 'Tap again to retire').click();
+    await until(async () => (await sbVan(1)).retired === true || null, 30_000, 'the retire after a slow second tap');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
 // ---------- 27 Nov 2026: the app creator stuck on "The plan has ended" while viewing a company as a manager ----------
 // The product owner opened a company that signed up with Stripe's test keys and looked at it as a manager. Its plan had
 // ended, so the payment screen came instead of the tabs, without the strip that has "Back to me"; View as is kept on the

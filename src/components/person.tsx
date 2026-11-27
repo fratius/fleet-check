@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Button, Chip, Row, T, useColors } from '@/components/ui';
+import { Chip, ConfirmButton, Row, T, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { t } from '@/lib/i18n';
 import { sendCall } from '@/lib/outbox';
@@ -30,7 +30,6 @@ export function ManagePerson({ m, onDone }: { m: Member; onDone?: () => void }) 
   // The van this person has as this screen shows it (cause 3, the guard): the server refuses if that changed meanwhile.
   const expect = s.vehicles.find((x) => x.assignedTo?.driverId === m.uid)?.assignedTo?.assignmentId ?? null;
   const c = useColors();
-  const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const r = roleOf(m)!;
@@ -61,11 +60,8 @@ export function ManagePerson({ m, onDone }: { m: Member; onDone?: () => void }) 
         </>
       ) : null}
       {canRemove ? (
-        <Button small v="danger" title={armed ? t('Tap again to remove') : t('Remove from {company}', { company: s.org?.name || '' })} loading={busy} onPress={() => {
-          if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
-          setArmed(false);
-          act(() => sendCall('removePerson', { orgId: s.org!.id, uid: m.uid, expect }, { title: t('Remove {name} from {company}', { name: m.name, company: s.org?.name || '' }), personId: m.uid }), true);
-        }} />
+        <ConfirmButton small v="danger" title={t('Remove from {company}', { company: s.org?.name || '' })} armedTitle={t('Tap again to remove')} loading={busy}
+          onConfirm={() => act(() => sendCall('removePerson', { orgId: s.org!.id, uid: m.uid, expect }, { title: t('Remove {name} from {company}', { name: m.name, company: s.org?.name || '' }), personId: m.uid }), true)} />
       ) : null}
       {canRemove ? <T v="small">{van ? t('Their van becomes free; their history, walk-arounds and checks stay.') : t('Their history, walk-arounds and checks stay.')}</T> : null}
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}

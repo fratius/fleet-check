@@ -424,3 +424,6 @@ a decision about what the app must do, so it goes in a pull request of its own t
   subscription stops at once. Only the creator sees it, marked "Closed" and read-only, can reopen it, and can make a
   one-time owner link. Records stay; photos follow the 30/90-day deletion.
 - MUST 14.15 (2026-11-26) All 31 languages; all existing tests pass.
+- MUST 14.16 (27 Nov 2026, product owner: "fix the buttons, not wait longer") A button that asks for a second tap
+  ("Tap again to retire", "Tap again: the van becomes free", "Tap again to remove", …) stays that way, with Cancel
+  beside it, until one of the two is tapped. It never goes back by itself, so a slow second tap still does it.

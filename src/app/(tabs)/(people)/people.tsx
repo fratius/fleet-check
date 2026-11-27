@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Share, Text, View } from 'react-native';
 
-import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, SearchBox, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
+import { Button, Card, ConfirmButton, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, SearchBox, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
@@ -132,7 +132,6 @@ function StationRow({ st, first, vans, people }: { st: Station; first: boolean; 
   const [edit, setEdit] = useState(false);
   const [name, setName] = useState(st.name);
   const [code, setCode] = useState(st.code || '');
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const empty = !vans && !people;
   return (
@@ -154,8 +153,7 @@ function StationRow({ st, first, vans, people }: { st: Station; first: boolean; 
           </View>
           <Button small v="link" title={t('Rename')} onPress={() => setEdit(true)} />
           {empty && s.stations.length > 1 ? (
-            <Button small v="danger" title={armed ? t('Tap again') : t('Remove')} onPress={async () => {
-              if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; }
+            <ConfirmButton small v="danger" title={t('Remove')} armedTitle={t('Tap again')} onConfirm={async () => {
               try { await deleteStation(s.org!.id, st.id); } catch { setErr(t('Couldn\'t remove the station.')); }
             }} />
           ) : null}
@@ -288,7 +286,6 @@ function JoinRow({ r, first, showStation }: { r: JoinRequest; first: boolean; sh
   const s = useSession();
   const c = useColors();
   const [busy, setBusy] = useState<'yes' | 'no' | null>(null);
-  const [armed, setArmed] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const decide = async (approve: boolean) => {
     setBusy(approve ? 'yes' : 'no'); setErr(null);
@@ -302,8 +299,7 @@ function JoinRow({ r, first, showStation }: { r: JoinRequest; first: boolean; sh
       {r.sameTransporterId ? <T v="small" color={c.amber}>{t('{name} in your company already has this Transporter ID.', { name: r.sameTransporterId })}</T> : null}
       <Row>
         <Button small v="primary" title={t('Approve')} loading={busy === 'yes'} disabled={!!busy} onPress={() => decide(true)} />
-        <Button small v="danger" title={armed ? t('Tap again') : t('Reject')} loading={busy === 'no'} disabled={!!busy}
-          onPress={() => { if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 3000); return; } decide(false); }} />
+        <ConfirmButton small v="danger" title={t('Reject')} armedTitle={t('Tap again')} loading={busy === 'no'} disabled={!!busy} onConfirm={() => decide(false)} />
       </Row>
       {err ? <T v="hint" color={c.alert}>{err}</T> : null}
     </View>
