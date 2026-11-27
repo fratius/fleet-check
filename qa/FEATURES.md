@@ -359,6 +359,21 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - SHOULD 12.4 Long words (German, Romanian, Hungarian) don't overflow buttons, tabs or tables.
 - LIMIT 12.5 The translations are AI-made and haven't been checked by native speakers: report broken sentences,
   placeholders like `{name}` shown as text, or English left in a translated screen; not word choice.
+- MUST 12.6 (cause 4, 27 Nov 2026) Arabic and Persian: after signing in, the whole app is on screen and every button
+  works, including the language switch. Text reads right to left. This holds at phone width and on a desktop.
+- MUST 12.7 (cause 4) Nothing cut off at phone width: search boxes and tab labels in German; the People search box in
+  English; the Data tab labels in German and Romanian, at a readable size.
+- MUST 12.8 (cause 4) Long names: a long name without spaces wraps on the Review card and everywhere else names are
+  shown; a name starting with an emoji still gets a proper initials circle; a first or last name longer than 40
+  characters is refused with a message, not cut off without a word.
+- MUST 12.9 (cause 4) No English or foreign formats in a translated screen: the waiting-change card is fully German in
+  German; "back" is read out in the screen's language by screen readers; dates use each language's own format, never
+  a US date like "10/25/2026"; Hungarian has no double full stop; Hindi times don't show English "am/pm"; search finds
+  "Yılmaz" whether you type "yilmaz" or "yılmaz", in every search box.
+- MUST 12.10 (cause 4) Guard: an automatic layout check opens Fleet, a van, Review, People, Data, Account and the camera
+  in all 32 languages at phone width. It fails if the app isn't on screen, anything runs off the edge, or English is
+  left on a translated screen. Names, plates, units and fixed terms like VIN or Transporter ID don't count as English.
+  (Scripted; the tester checks what a person sees.)
 
 ## 13. Account
 
