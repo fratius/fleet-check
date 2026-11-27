@@ -67,10 +67,10 @@ export default function TabsLayout() {
       tabBarInactiveTintColor: c.ink2,
       // Room for the icon and the label above the iPhone home bar (the default 49 points cuts the labels off).
       // A few more points than one line needs, for a name on two lines (cause 4.2).
-      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 68 + insets.bottom },
+      // overflow: the first and last tab names reach a little past the screen's edge (TabLabel), which would make the
+      // page wider than the screen.
+      tabBarStyle: { backgroundColor: c.paper, borderTopColor: c.ink, borderTopWidth: 2, height: 68 + insets.bottom, overflow: 'hidden' },
       tabBarLabel: ({ color, children }) => <TabLabel color={color} text={children} />,
-      // The whole width of each tab for its name (long names in Danish, Dutch, Greek: blind test, cause 4.2).
-      tabBarItemStyle: { paddingHorizontal: 0 },
       tabBarBadgeStyle: { backgroundColor: MARKER, color: '#000', fontFamily: F.cond, fontSize: hs(13) },
       sceneStyle: { backgroundColor: c.page },
     }}>
@@ -99,7 +99,10 @@ function TabLabel({ color, text }: { color: ColorValue; text: string }) {
   const lines = one < 11 && /\s/.test(text.trim()) ? 2 : 1;
   const size = lines === 2 ? Math.min(12, fitSize(text, F.cond, hs(14), w - 4, { min: TAB_LABEL_MIN, words: true, fonts })) : Math.max(TAB_LABEL_MIN, one);
   return (
-    <View style={{ alignSelf: 'stretch', alignItems: 'center', marginHorizontal: -3 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+    // The whole width of the tab and a little of its neighbours' empty edge (each tab keeps 5 px on each side): a long
+    // single word like Danish "Gennemgang" needs about 79 px at 10 px on some systems, and a tab is 78 px wide on a
+    // phone with five tabs (blind test, cause 4.2).
+    <View style={{ alignSelf: 'stretch', alignItems: 'center', marginHorizontal: -7 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <Text numberOfLines={lines} adjustsFontSizeToFit minimumFontScale={0.8}
         style={{ fontFamily: F.cond, fontSize: size, lineHeight: Math.round(size * 1.1), color, textAlign: 'center', marginTop: 2 }}>{text}</Text>
     </View>
