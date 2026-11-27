@@ -101,10 +101,18 @@ const stoppedChange = (uid) => ({
 
 async function signedIn(code, viewport = { width: 390, height: 844 }) {
   const ctx = await browser.newContext({ viewport, locale: 'en-GB' });
+  // Who changes the language kept on the phone, and when (it turned to English right after signing in).
+  await ctx.addInitScript(() => {
+    const set = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (k, v) {
+      if (k === 'fc.lang') console.log(`fc.lang set to ${v} at ${location.pathname}; focus ${document.activeElement?.getAttribute('role') || document.activeElement?.tagName} "${(document.activeElement?.textContent || '').slice(0, 40)}"; ${new Error().stack.split('\n').slice(2, 7).join(' | ').slice(0, 400)}`);
+      return set.apply(this, [k, v]);
+    };
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => { if (/lang|language/i.test(m.text())) console.log(`[${code} console] ${m.text().slice(0, 200)}`); });
+  page.on('console', (m) => { if (/lang|language/i.test(m.text())) console.log(`[${code} console] ${m.text().slice(0, 600)}`); });
   await page.goto(`${URL0}/sign-in`);
   await page.evaluate(({ l, job }) => { localStorage.setItem('fc.lang', l); localStorage.setItem('fc.outbox.v1', JSON.stringify([job])); }, { l: code, job: stoppedChange(OWNER.uid) });
   await page.goto(`${URL0}/sign-in`);
