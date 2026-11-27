@@ -21,13 +21,18 @@ test('the session\'s lists (makeStore in src/lib/store.ts) have their indexes', 
   assert.ok(from > 0 && to > from, 'makeStore was not found in src/lib/store.ts: adapt this test');
   // fsColl(orgId, 'name'[, scope[, driverId[, 'field']]]): with `scope` the list is asked by station, with `driverId`
   // by person (the field, 'driverId' unless named), both newest first (fsColl().subscribe).
-  const calls = [...store.slice(from, to).matchAll(/fsColl\(orgId, '([A-Za-z]+)'(?:, (scope)(?:, (driverId)(?:, '([A-Za-z]+)')?)?)?\)/g)];
+  // The field may be a list (['walkBy', 'createdBy']: records where any of them is the person): an index for each.
+  const calls = [...store.slice(from, to).matchAll(/fsColl\(orgId, '([A-Za-z]+)'(?:, (scope)(?:, (driverId)(?:, ('[A-Za-z.]+'|\[[^\]]+\]))?)?)?\)/g)];
   assert.ok(calls.length >= 16, `only ${calls.length} lists found in makeStore: adapt this test`);
   const missing = [];
   for (const [, coll, scope, mine, field] of calls) {
-    const byStation = [['stationId', A], ['createdAt', D]], byPerson = [[field || 'driverId', A], ['createdAt', D]];
+    const byStation = [['stationId', A], ['createdAt', D]];
     if (scope && !has(coll, byStation)) missing.push(name(coll, byStation));
-    if (mine && !has(coll, byPerson)) missing.push(name(coll, byPerson));
+    const fields = field ? [...field.matchAll(/'([A-Za-z.]+)'/g)].map((m) => m[1]) : ['driverId'];
+    for (const f of fields) {
+      const byPerson = [[f, A], ['createdAt', D]];
+      if (mine && !has(coll, byPerson)) missing.push(name(coll, byPerson));
+    }
   }
   assert.deepEqual(missing, [], 'add these to firestore.indexes.json');
 });

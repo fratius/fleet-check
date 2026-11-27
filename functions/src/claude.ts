@@ -170,7 +170,12 @@ function testAnswer<T>(tier: Tier, parts: Part[], schema: object, prompt = ''): 
     : 'odometerKm' in props
     ? { readable: true, odometerKm: 48213, unit: 'km', fuelPct: 62.5, batteryPct: null, rangeKm: 410, warnings: ['Tyre pressure'], confidence: 0.92, issue: null }
     : 'plate' in props && 'readable' in props
-    ? { readable: true, plate: 'B-FR 1234', confidence: 0.95, issue: null }
+    // A pick-up's photos (index.ts plateOnWalk): the van's own plate, a different one when it says SWAP, none when DIRTY.
+    ? (() => {
+      const want = /\[test-plate: ([^\]]+)\]/.exec(prompt)?.[1];
+      if (want && /dirty/i.test(want)) return { readable: false, plate: null, confidence: 0.2, issue: 'Plate dirty.' };
+      return { readable: true, plate: want ? (/swap/i.test(want) ? 'B-SW 9999' : want) : 'B-FR 1234', confidence: 0.95, issue: null };
+    })()
     : 'spots' in props
     ? { spots: [{ image: 1, box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, confidence: 0.8, mightBe: null, closeup: 'Low, straight on.' }], notVisible: [] }
     // The close-up check of a spot: damage, unless the van's name says SPOTLESS (the tests' close-ups that show none).

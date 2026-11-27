@@ -46,6 +46,10 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - MUST 1.3d (A4) A driver still sees only themselves on the people side.
 - MUST 1.4 A driver sees the vans of their station and **only their own** history, tours, refuels, record and
   incidents. Never another driver's history or record.
+- MUST 1.4a (3a, 26 Nov 2026; product owner: this replaces "sees the vans of their station" in 1.4) A driver sees
+  **only the van they have**, its walk-arounds and damage checks, and the walk-arounds and checks of their own photos.
+  The station's other vans, and other drivers' walk-arounds and checks, aren't listed anywhere, and opened by their
+  address they show "You don't have this van." or "not available", with none of their data.
 - MUST 1.5 A driver can't change vans, people, records or reviews, can't approve anyone or any damage, can't buy
   parts and can't allow their own refuel. Buttons for those aren't shown to a driver, and opening such a page by its
   address doesn't let them do it either.
@@ -128,6 +132,10 @@ a decision about what the app must do, so it goes in a pull request of its own t
 - SHOULD 3.16 People (owners and fleet managers) has a search box at the top that filters as you type: everyone they
   can see whose name has what was typed in that order ("ana p" finds Ana Pop and Ioana Popescu; accents and capitals
   don't matter), or whose Transporter ID or phone number has it. Drivers come first; ✕ brings back the page.
+- MUST 3.17 (3a, 26 Nov 2026) Giving out a van, retiring or moving it, removing a person or moving them to another
+  station, and a driver's pick-up are refused when who has the van changed since the screen showed it (someone else
+  gave it out or picked it up meanwhile): the app says so, and nothing changes until it's done again from what's
+  true now.
 
 ## 4. Drivers pick up and drop off vans themselves
 
@@ -142,6 +150,19 @@ a decision about what the app must do, so it goes in a pull request of its own t
   Vans tab). Managers see in Review when that proof is still missing after 2 hours.
 - SHOULD 4.6 A missing video or photos can be added later: by the station's staff for any handover there, by a
   driver only for their own.
+- MUST 4.7 (3a, 26 Nov 2026) A driver picks up a van by its **number plate**: "Pick up a van" on the Vans tab, then a
+  photo of the plate or the plate typed. The app finds the van at their station, and the pick-up needs that van's plate
+  exactly. A plate that isn't the company's says so. A van without a plate can't be picked up by a driver: the fleet
+  manager or owner gives it out.
+- MUST 4.8 (3a) The pick-up photos must show the van's plate. Photos that show another plate are refused, and the
+  message names both plates. When the plate can't be read on them, the pick-up goes through and the station's fleet
+  manager gets a notification to check it's the right van.
+- MUST 4.9 (3a) A van another driver has, also one they got after the photos were taken, asks "Another driver has
+  this van now. Take it over?" before anything happens, on the plate page or on the stopped upload. Taken over, the
+  other driver gets a notification (without the new driver's name) and the fleet manager is told who took it from whom.
+- LIMIT 4.10 On the test system the AI's reading of plates is made up: on pick-up photos it always reads the van's own
+  plate (so the refusals of 4.8 can't be tried there), and a photo of a plate on "Pick up a van" always reads B-FR 1234.
+  Type the plate instead.
 
 ## 5. Walk-around and the AI damage check
 

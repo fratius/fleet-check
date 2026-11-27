@@ -13,7 +13,12 @@
 export type HandoverKind = 'pickup' | 'dropoff';
 /** The server step after the upload. */
 export type Then =
-  | { fn: 'pickUpVan' | 'dropOffVan' }
+  /**
+   * A pick-up carries the plate the driver gave and, when the van has another driver, their "take it over" and the
+   * handover their screen showed (blind test, 26 Nov 2026, cause 3a; functions pickUpVan).
+   */
+  | { fn: 'pickUpVan'; plate?: string; takeOver?: boolean; expect?: string | null }
+  | { fn: 'dropOffVan' }
   | { fn: 'addHandoverPhotos' | 'addHandoverVideo'; assignmentId: string; kind: HandoverKind }
   | { fn: 'addVanVideo' };
 
@@ -51,6 +56,10 @@ export interface Job {
   status: 'queued' | 'failed';
   /** Why it stopped (in the person's language). */
   error?: string | null;
+  /** The refusal's code (functions/already-exists: another driver has the van now, for a pick-up's "take it over"). */
+  errorCode?: string | null;
+  /** For a take-over: the handover the refusal saw (sent back as `expect`, so a newer one isn't ended by surprise). */
+  errorExpect?: string | null;
   /** A change: what to send, and what it is in the person's words (when it was made). */
   change?: Change;
   title?: string;
@@ -156,6 +165,14 @@ export class Outbox {
     this.emit();
     await this.save();
     this.kick();
+  }
+
+  /** A pick-up that stopped because another driver has the van now: the driver takes it over, and it goes again. */
+  takeOver(id: string) {
+    const j = this.jobs.find((x) => x.id === id);
+    if (!j || j.status !== 'failed' || j.then?.fn !== 'pickUpVan') return;
+    j.then = { fn: 'pickUpVan', plate: j.then.plate, takeOver: true, expect: j.errorExpect ?? null };
+    this.retry(id);
   }
 
   /** A job that stopped: try it again. */
@@ -362,6 +379,9 @@ export class Outbox {
       if (e instanceof Stopped) { l.waiting = false; this.emit(); return; }
       j.status = 'failed';
       j.error = this.ops.message(e);
+      j.errorCode = typeof (e as { code?: unknown } | null)?.code === 'string' ? (e as { code: string }).code : null;
+      const ex = (e as { details?: { v?: { expect?: unknown } } } | null)?.details?.v?.expect;
+      j.errorExpect = typeof ex === 'string' ? ex : null;
       l.waiting = false;
       l.step = null;
       // Files that are up aren't needed on the phone any more.

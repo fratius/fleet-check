@@ -10,7 +10,8 @@ import { F, MARKER, Svg, mmss, hs } from '@/components/ui';
 import { buildFrames, makeSpec, overlaySVG } from '@/lib/frames';
 import { useSession } from '@/lib/session';
 import { flash } from '@/lib/flash';
-import { outbox, outboxReady, queueWalk, useOutbox } from '@/lib/outbox';
+import { outbox, outboxReady, queueWalk, useOutbox, type PickInfo } from '@/lib/outbox';
+import { toVansTab, usePickVan } from '@/lib/pickvan';
 import { isBehind, stateText } from '@/components/uploads';
 import { saveWalk, type LocalShot } from '@/lib/walks';
 import { newId, upright } from '@/lib/images';
@@ -59,12 +60,21 @@ function Shell({ children, style }: { children: React.ReactNode; style?: StylePr
 
 export default function ScanScreen() {
   const st = styles();
-  const { id, handover, assignment } = useLocalSearchParams<{ id: string; handover?: string; assignment?: string }>();
+  const { id, handover, assignment, plate, takeOver, expect } = useLocalSearchParams<{ id: string; handover?: string; assignment?: string; plate?: string; takeOver?: string; expect?: string }>();
   // Picking up or dropping off a van (drivers, where the station allows it) needs every photo of the walk-around.
   // With `assignment`: the pick-up photos of a van a manager gave the driver (the handover already happened).
   const ho = handover === 'pickup' || handover === 'dropoff' ? handover : null;
   const s = useSession();
-  const v = s.vehicles.find((x) => x.id === id);
+  // A driver's pick-up: the van found by its plate (drivers don't see the station's other vans; lib/pickvan.ts).
+  const own = s.vehicles.find((x) => x.id === id);
+  const picking = ho === 'pickup' && !assignment && !own;
+  const { pv, err: pickErr } = usePickVan(picking ? id : null, picking ? plate || null : null);
+  // Kept once sent: the van is the driver's soon after, and the camera still goes where a pick-up by plate goes.
+  const byPlate = useRef(false);
+  useEffect(() => { if (picking) byPlate.current = true; }, [picking]);
+  const v = own || pv?.van;
+  const pick: PickInfo | null = ho === 'pickup' && !assignment && (plate || pv?.plate || own?.plate)
+    ? { plate: (plate || pv?.plate || own?.plate)!, ...(takeOver === '1' ? { takeOver: true, expect: expect || null } : {}) } : null;
   const sp = useMemo(() => (v ? makeSpec(v.cls, v) : null), [v]);
   const frames = useMemo(() => (sp ? buildFrames(sp) : []), [sp]);
   const [perm, requestPerm] = useCameraPermissions();
@@ -136,11 +146,19 @@ export default function ScanScreen() {
   useEffect(() => { if (slots.length !== frames.length) setSlots(frames.map(() => null)); }, [frames, slots.length]);
   // Through: a walk-around opens (in the tab you came from); a pick-up or drop-off goes back to the van. Opened by a
   // link or after a reload there is nothing to go back to: then the van's (or walk-around's) page opens instead.
+  const went = useRef(false);
   useEffect(() => {
-    if (!sent || !walkId) return;
+    if (!sent || !walkId || went.current) return;
+    went.current = true;
     allowLeave.current = true;
     if (!ho) {
       if (router.canGoBack()) { router.back(); setTimeout(() => router.push(`/walk/${walkId}`), 0); } else router.replace(`/walk/${walkId}`);
+      return;
+    }
+    // A pick-up by the plate: to the Vans tab, which shows it on its way and then the van (not back to the plate page,
+    // which would offer the same pick-up again).
+    if (byPlate.current) {
+      if (router.canGoBack()) { router.back(); setTimeout(toVansTab, 0); } else router.replace('/');
       return;
     }
     if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
@@ -176,9 +194,27 @@ export default function ScanScreen() {
 
   const goAway = () => {
     allowLeave.current = true;
-    if (router.canGoBack()) router.back(); else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
+    if (router.canGoBack()) router.back();
+    // A driver has no page for a van that isn't theirs: the Vans tab.
+    else if (s.role === 'driver' && !own) router.replace('/');
+    else router.replace({ pathname: '/vehicle/[id]', params: { id: id! } });
   };
 
+  // Drivers have only their own van in the app (blind test, cause 3a): what the server would refuse is said here, before
+  // the van is looked for.
+  const myVanNow = s.role === 'driver' && s.user ? s.vehicles.find((x) => !x.retired && x.assignedTo?.driverId === s.user!.uid) : undefined;
+  if (s.role === 'driver' && !own && !assignment && !walkId) {
+    const why = ho === 'dropoff' ? t('You don\'t have this van.')
+      : ho === 'pickup' && myVanNow ? t('You have {van}. Drop it off first, with a video or its photos, then you can pick up this one.', { van: vanName(myVanNow) })
+        : ho !== 'pickup' ? t('You don\'t have this van.')
+          : !plate && !pv ? t('Pick up a van by its number plate.') : pickErr;
+    if (why) {
+      return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{why}</Text>
+        {ho === 'pickup' && !myVanNow ? <Btn title={t('Pick up a van')} onPress={() => { allowLeave.current = true; router.replace('/pickup'); }} /> : null}
+        <Btn title={t('Close')} onPress={goAway} /></Shell>;
+    }
+    if (ho === 'pickup' && !pv) return <Shell style={{ justifyContent: 'center' }}><ActivityIndicator color="#fff" /></Shell>;
+  }
   if (!v || !sp) {
     return <Shell style={{ padding: 24, gap: 16, justifyContent: 'center' }}><Text style={st.msg}>{t('This vehicle isn\'t in the fleet any more.')}</Text><Btn title={t('Close')} onPress={goAway} /></Shell>;
   }
@@ -310,7 +346,7 @@ export default function ScanScreen() {
     try {
       // Every photo kept first, so the walk-around takes the draft's id: one walk-around, however often this is pressed.
       await keeping.current;
-      const wid = await queueWalk({ orgId: s.org!.id, uid: s.user!.uid, v, shots, what: ho || 'walkaround', assignmentId: assignment || null, meta, id: draft.current?.id },
+      const wid = await queueWalk({ orgId: s.org!.id, uid: s.user!.uid, v, shots, what: ho || 'walkaround', assignmentId: assignment || null, meta, id: draft.current?.id, pick },
         (d, n) => setProgress(t('Saving {done} of {total} on this phone', { done: d, total: n })));
       // Now in the outbox with its own copy of the photos: the draft goes.
       const d = draft.current;
@@ -416,7 +452,10 @@ export default function ScanScreen() {
               </View>
               {job.status === 'failed' && job.walkSaved && job.then ? <Text style={st.note}>{t('The photos are saved as a walk-around.')}</Text> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
+                {/* Another driver has the van now (got it after the photos were taken): the driver says so (cause 3a). */}
+                {job.status === 'failed' && job.then?.fn === 'pickUpVan' && /already-exists/.test(job.errorCode || '')
+                  ? <Btn title={t('Take it over')} kind="marker" onPress={() => outbox.takeOver(job.id)} />
+                  : job.status === 'failed' ? <Btn title={t('Try again')} kind="marker" onPress={save} /> : null}
                 <Btn title={t('Close')} kind={job.status === 'failed' ? 'ghost' : 'outline'} onPress={goAway} />
               </View>
             </>

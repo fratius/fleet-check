@@ -23,7 +23,7 @@ import {
 import { createDemo, deleteCompany, deleteDemo } from './demo';
 import { fit, markBox, plateCrop, refCrop, type Sent } from './images';
 import { MODELS, TIERS, addUsage, noUsage, round, type Tier, type Usage } from './models';
-import { CLASSES, CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, platePrompt, plateSchema, spotPrompt, spotSchema } from './prompts';
+import { CLASSES, CLASS_IDS, DAMAGE_TYPES, VERDICTS, dashPrompt, dashSchema, findPrompt, findSchema, identifyPrompt, identifySchema, platePrompt, plateSchema, spotPrompt, spotSchema, walkPlatePrompt } from './prompts';
 import { FIRST_RUN, cleanMedia, keepUntil, thisMonthsRun } from './media';
 import { vanName } from './vans';
 import { damageLogFor, modelOf, planReading, tourNumbers, type Fuel, type Refuel, type TourDoc, type TourEnd } from './fleetlog';
@@ -1439,6 +1439,18 @@ export const assignVan = onCallOnce('assignVan', { timeoutSeconds: 30, secrets: 
 });
 
 /** Retires a van (or brings it back). Vans are never deleted: their walk-arounds, checks and history stay. */
+/**
+ * What the screen showed (blind test, 26 Nov 2026, cause 3, the guard): an action that gives out, takes over or ends a
+ * handover sends `expect`, the open assignment it saw (or null). Changed since, it's refused, so a screen that's out
+ * of date never ends someone else's handover by surprise. tests/permissions.mjs (HANDOVER) lists every such action.
+ */
+function needSameHandover(data: unknown, now: string | null | undefined) {
+  const d = data as Record<string, unknown> | null;
+  if (d && 'expect' in d && (now ?? null) !== (d.expect ?? null)) {
+    throw fail('failed-precondition', 'Someone changed who has this van since your screen showed it. Look at it again, then try again.');
+  }
+}
+
 export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (req) => {
   const who = await guard(req, { unpaid: true });
   needStaff(who);
@@ -1452,6 +1464,7 @@ export const retireVan = onCallOnce('retireVan', { timeoutSeconds: 30 }, async (
     if (!v.exists) throw fail('not-found', 'Unknown van.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
     needStation(who, van.stationId);
+    needSameHandover(req.data, van.assignedTo?.assignmentId);
     if (restore) {
       // Back in use: only while the company has a plan, and with room on it.
       const o = (await tx.get(org)).data();
@@ -1483,6 +1496,7 @@ export const moveVan = onCallOnce('moveVan', { timeoutSeconds: 30 }, async (req)
     const [v, st] = await Promise.all([tx.get(vref), tx.get(org.collection('stations').doc(stationId))]);
     if (!v.exists || !st.exists) throw fail('not-found', 'Unknown van or station.');
     const van = v.data() as { stationId?: string; assignedTo?: { assignmentId: string } | null };
+    needSameHandover(req.data, van.assignedTo?.assignmentId);
     if (van.stationId === stationId) return;
     const dref = org.collection('vehicleDetails').doc(vehicleId);
     const details = await tx.get(dref);
@@ -1521,6 +1535,7 @@ export const removePerson = onCallOnce('removePerson', { timeoutSeconds: 30 }, a
       throw fail('permission-denied', 'Fleet managers can only remove drivers of their station.');
     }
     const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+    needSameHandover(req.data, open[0]?.id);
     for (const d of open) {
       tx.update(d.ref, closeWith(who, 'driver removed'));
       tx.update(org.collection('vehicles').doc((d.data() as Assignment).vehicleId), { assignedTo: null });
@@ -1555,6 +1570,7 @@ export const changePerson = onCallOnce('changePerson', { timeoutSeconds: 30 }, a
     const nextRole = role || (p.role === 'admin' ? 'owner' : p.role);
     const nextStations = stationId ? [stationId] : p.stationIds || [];
     const open = (await tx.get(org.collection('assignments').where('driverId', '==', uid).where('end', '==', null))).docs;
+    needSameHandover(req.data, open[0]?.id);
     // Their driver record goes with them, so the new station's managers keep it (and the old one's don't see it).
     const rref = org.collection('driverRecords').doc(uid);
     const rec = await tx.get(rref);
@@ -1712,41 +1728,142 @@ async function useMedia(tx: FirebaseFirestore.Transaction, org: FirebaseFirestor
  * The driver takes this van, with pick-up photos or a video. A van someone else still has in the app (they didn't
  * drop it off) is taken over: their assignment ends with this proof. A driver who has another van drops that off first.
  */
-export const pickUpVan = onCallOnce('pickUpVan', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {
+/**
+ * Drivers pick up a van by its plate (product owner, 2026-11-26; blind test, cause 3a): they photograph it or type it
+ * and the server finds the van. Drivers don't see the station's other vans, so this is how the camera gets the van.
+ * A van without a plate can't be picked up by a driver.
+ */
+export const vanByPlate = onCall({ ...opts(60) }, async (req) => {
+  const who = await guard(req);
+  let plate = cleanPlate(req.data?.plate);
+  if (req.data?.path) {
+    const path = checkPath(req.data.path, `orgs/${who.orgId}/dash/${who.uid}/`);
+    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), 'quick', [{ image: await fit(await download(path), 1600, 1600) }], walkPlatePrompt(), plateSchema, 200);
+    plate = a.obj.readable === false ? null : cleanPlate(a.obj.plate);
+    if (!plate) throw fail('failed-precondition', 'The plate can\'t be read on this photo. Take it again closer, or type it.');
+  }
+  if (!plate) throw fail('invalid-argument', 'Type the van\'s number plate, or take a photo of it.');
+  const all = (await db().collection(`orgs/${who.orgId}/vehicles`).get()).docs;
+  const hit = all.find((d) => !!d.data().plate && normPlate(String(d.data().plate)) === normPlate(plate));
+  if (!hit) throw fail('not-found', 'No van with the plate {plate}. Check the plate, or ask your fleet manager.', { plate });
+  const van = hit.data() as VanDoc & { roof?: string; slideL?: string; slideR?: string; rear?: string; selfAssign?: boolean };
+  needStation(who, van.stationId);
+  if (van.retired) throw fail('failed-precondition', 'This van is retired.');
+  const st = (await db().doc(`orgs/${who.orgId}/stations/${van.stationId}`).get()).data();
+  if (st?.selfAssign !== true) throw fail('failed-precondition', 'At this station your fleet manager gives out the vans. Ask them, or ask them to let drivers pick up vans themselves.');
+  const holder = van.assignedTo?.driverId || null;
+  return {
+    id: hit.id, plate: van.plate, name: van.name || '', cls: van.cls || null, make: van.make || null, model: van.model || null, fuel: van.fuel || null,
+    roof: van.roof || null, slideL: van.slideL || null, slideR: van.slideR || null, rear: van.rear || null, stationId: van.stationId || null,
+    // Another driver has it now (no name: drivers don't see other drivers' names), and what the screen will send back.
+    mine: holder === who.uid, taken: !!holder && holder !== who.uid, expect: van.assignedTo?.assignmentId ?? null,
+  };
+});
+
+/** The van's plate on a pick-up's photos (the front and the rear, by the AI): the same, another one, or unreadable. */
+async function plateOnWalk(orgId: string, walkId: string, plate: string): Promise<{ result: 'same' | 'other' | 'unread'; read: string | null }> {
+  try {
+    const w = (await db().doc(`orgs/${orgId}/walkarounds/${walkId}`).get()).data() as { photos?: { label?: string; path?: string }[] } | undefined;
+    const ps = (w?.photos || []).filter((p) => p.path);
+    const ends = ps.filter((p) => /front|rear|back/i.test(p.label || '') && !/corner|left|right|side/i.test(p.label || ''));
+    const pick = Array.from(new Set([...ends, ps[0], ps[ps.length - 1]].filter(Boolean))).slice(0, 2) as { path: string }[];
+    if (!pick.length) return { result: 'unread', read: null };
+    const imgs = await Promise.all(pick.map(async (p) => fit(await download(p.path), 1600, 1600)));
+    // The emulators' stand-in for the AI answers with the van's own plate (claude.ts testAnswer).
+    const test = process.env.FUNCTIONS_EMULATOR === 'true' ? `\n[test-plate: ${plate}]` : '';
+    const a = await ask<Record<string, unknown>>(ANTHROPIC_API_KEY.value(), 'quick', imgs.map((image, i) => ({ label: `Image ${i + 1}`, image })), walkPlatePrompt() + test, plateSchema, 200);
+    const read = a.obj.readable === false ? null : cleanPlate(a.obj.plate);
+    if (!read) return { result: 'unread', read: null };
+    return { result: normPlate(read) === normPlate(plate) ? 'same' : 'other', read };
+  } catch (e) {
+    logger.warn('Plate on the pick-up photos not read', { message: String((e as Error)?.message || e) });
+    return { result: 'unread', read: null };
+  }
+}
+const TAKEN = N_('Another driver has this van now. Take it over?');
+
+export const pickUpVan = onCallOnce('pickUpVan', { ...opts(120), secrets: [ANTHROPIC_API_KEY, WEBPUSH_KEYS] }, async (req) => {
   const who = await guard(req);
   const vehicleId = String(req.data?.vehicleId || '');
   type Out = { assignmentId: string; unchanged?: true; tookOver?: boolean };
   const again = async (): Promise<Out | null> => { const d = await alreadyDone(who, req.data, 'pickup', vehicleId, { direct: true }); return d ? { assignmentId: d, unchanged: true } : null; };
   return orDone<Out>(again, async () => {
+    // The plate the driver gave (product owner, 2026-11-26): the van's, exactly. No plate, no pick-up by a driver.
+    const before = ID.test(vehicleId) ? (await db().doc(`orgs/${who.orgId}/vehicles/${vehicleId}`).get()).data() as VanDoc | undefined : undefined;
+    // Another station's van: refused as such, before anything about its plate.
+    if (before) needStation(who, before.stationId);
+    if (before && !before.plate) throw fail('failed-precondition', 'This van has no number plate yet. Your fleet manager gives it out.');
+    if (before && normPlate(String(req.data?.plate || '')) !== normPlate(before.plate!)) {
+      throw fail('failed-precondition', 'This isn\'t the plate of this van. Pick up a van by its number plate.');
+    }
     const m = await checkMedia(who, vehicleId, req.data);
+    // The photos must show that plate: another plate is refused; one that can't be read is let through and flagged.
+    const pc = before && m.media.walkId ? await plateOnWalk(who.orgId, m.media.walkId, before.plate!) : null;
+    if (pc?.result === 'other') throw fail('failed-precondition', 'These photos show {read}, not {plate}. Take the photos at {plate}.', { read: pc.read!, plate: before!.plate! });
+    let taken: { driverId: string; name: string } | null = null;
     const out = await db().runTransaction(async (tx) => {
       const { org, vref, van } = await selfService(tx, who, vehicleId);
       if (van.retired) throw fail('failed-precondition', 'This van is retired.');
       if (van.assignedTo?.driverId === who.uid) return { assignmentId: van.assignedTo.assignmentId, unchanged: true };
+      // Another driver has it (maybe since the photos were taken): only after the driver said "take it over", and only
+      // the handover their screen showed (blind test, cause 3a).
       const aCol = org.collection('assignments');
       const mine = (await tx.get(aCol.where('driverId', '==', who.uid).where('end', '==', null))).docs;
       if (mine.length) throw fail('failed-precondition', 'Drop off {van} first, with its photos or a video.', { van: (mine[0].data() as Assignment).vehicleName });
+      // (The refusal carries the handover it saw, which the phone sends back with "Take it over": outbox takeOver.)
+      if (van.assignedTo && req.data?.takeOver !== true) throw fail('already-exists', TAKEN, { expect: van.assignedTo.assignmentId });
+      needSameHandover(req.data, van.assignedTo?.assignmentId);
       const mark = await useMedia(tx, org, who, m, { id: vehicleId, name: vanName(van), stationId: van.stationId });
       // The driver it's taken from reads that assignment: not the name of the driver who took it (names.ts).
-      if (van.assignedTo?.assignmentId) tx.update(aCol.doc(van.assignedTo.assignmentId), { ...closeWith(who, 'taken over', m.media), endedByName: null });
+      if (van.assignedTo?.assignmentId) {
+        const prev = (await tx.get(aCol.doc(van.assignedTo.assignmentId))).data() as Assignment | undefined;
+        if (prev) taken = { driverId: prev.driverId, name: prev.driverName };
+        tx.update(aCol.doc(van.assignedTo.assignmentId), { ...closeWith(who, 'taken over', m.media), endedByName: null });
+      }
       const now = Date.now();
       const aref = aCol.doc();
       const kmStart = startKm(van.dash, now);
-      const a: Assignment & { createdAt: number } = {
+      const a: Assignment & { createdAt: number; plateUnread?: boolean } = {
         vehicleId, vehicleName: vanName(van), plate: van.plate || '', driverId: who.uid, driverName: who.name, stationId: van.stationId || null,
         start: now, end: null, startedBy: who.uid, startedByName: who.name, endedBy: null, endedByName: null, endReason: null, createdAt: now,
         startWalkId: m.media.walkId, endWalkId: null, startVideoId: m.media.videoId, endVideoId: null, kmStart, kmEnd: null,
+        // The plate couldn't be read on the photos: the managers see it (Review) and hear about it.
+        ...(pc?.result === 'unread' ? { plateUnread: true } : {}),
       };
       tx.set(aref, a);
       tx.update(vref, { assignedTo: { assignmentId: aref.id, driverId: who.uid, since: now, kmStart, kmEnd: null } });
       mark('pickup', aref.id);
-      return { assignmentId: aref.id, tookOver: !!van.assignedTo };
+      return { assignmentId: aref.id, tookOver: !!van.assignedTo, van: vanName(van), stationId: van.stationId || null };
     });
-    // The checks due now (section 17), for the driver who just got the van.
-    if (!('unchanged' in out)) await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
+    if (!('unchanged' in out)) {
+      const o = out as { assignmentId: string; tookOver: boolean; van: string; stationId: string | null };
+      // The checks due now (section 17), for the driver who just got the van.
+      await refreshTodo(db().doc(`orgs/${who.orgId}`), [vehicleId]).catch((e) => logger.warn('Checks not worked out', e as Error));
+      await tellPickUp(who, o, taken, pc?.result === 'unread').catch((e) => logger.warn('Pick-up not announced', e as Error));
+      return { assignmentId: o.assignmentId, tookOver: o.tookOver };
+    }
     return out as Out;
   });
 });
+
+/** After a pick-up: the driver it was taken from, and the station's managers (the plate unreadable, a take-over). */
+async function tellPickUp(who: Who, o: { van: string; stationId: string | null; assignmentId: string }, taken: { driverId: string; name: string } | null, unread: boolean) {
+  if (taken && taken.driverId !== who.uid) {
+    await notify(taken.driverId, (lang) => ({
+      title: tr(lang, '{van} was taken over', { van: o.van }),
+      body: tr(lang, 'Another driver picked it up with its photos. If you still have this van, tell your fleet manager.'),
+      url: '/', tag: `takeover-${o.assignmentId}`,
+    })).catch(() => 0);
+  }
+  if (!taken && !unread) return;
+  const bosses = await bossesOf(who.orgId, o.stationId, 'fuel', who.uid);
+  await tell(bosses, (lang) => ({
+    title: taken ? tr(lang, '{van} taken over', { van: o.van }) : tr(lang, 'Plate not read: {van}', { van: o.van }),
+    body: [taken ? tr(lang, '{name} took it over from {other}.', { name: who.name, other: taken.name }) : '',
+      unread ? tr(lang, 'The plate couldn\'t be read on {name}\'s pick-up photos. Check it\'s the right van.', { name: who.name }) : ''].filter(Boolean).join(' '),
+    url: '/', tag: `pickup-${o.assignmentId}`,
+  }));
+}
 
 /** The driver hands back the van they have, with drop-off photos or a video. */
 export const dropOffVan = onCallOnce('dropOffVan', { timeoutSeconds: 120, memory: '2GiB' }, async (req) => {

@@ -159,7 +159,7 @@ test('set up a company: owner, two stations, a manager, three drivers, three van
   S.vans = {};
   for (const [k, st] of [['v1', 's1'], ['v2', 's1'], ['v3', 's2']]) {
     const r = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
-    S.vans[k] = { id: r.id, name: `Van ${k}`, stationId: S[st] };
+    S.vans[k] = { id: r.id, name: `Van ${k}`, stationId: S[st], plate: k.toUpperCase() };
     await setDoc(r, { name: `Van ${k}`, plate: k.toUpperCase(), cls: 'van', stationId: S[st], createdAt: Date.now(), createdBy: S.own.uid });
   }
 });
@@ -212,41 +212,43 @@ test('who reads history: owners everything, managers their station, drivers only
 test('drivers pick up and drop off vans only where the station allows it, and only with every photo', async () => {
   const { v1, v2 } = S.vans;
   // Off by default.
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d2, S.org, v2) }), 'failed-precondition');
   await fails(S.d2.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: true }), 'permission-denied');
   await fails(updateDoc(doc(S.own.db, 'orgs', S.org, 'stations', S.s1), { selfAssign: true }), 'permission-denied');
   await fails(S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s2, on: true }), 'permission-denied');
   await S.mgr.call('setSelfAssign', { orgId: S.org, stationId: S.s1, on: true });
   // Photos are required: all of them, from the camera, by this driver, of this van.
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id }), 'invalid-argument');
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2, { skipped: 1 }) }), 'failed-precondition');
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2, { source: 'library' }) }), 'failed-precondition');
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d1, S.org, v2) }), 'failed-precondition');
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate }), 'invalid-argument');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d2, S.org, v2, { skipped: 1 }) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d2, S.org, v2, { source: 'library' }) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d1, S.org, v2) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
   // Photos kept on the phone without a connection for hours are uploaded fresh, but taken too long ago.
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d2, S.org, v2, { takenAgo: 3 * 3600_000 }) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: await photos(S.d2, S.org, v2, { takenAgo: 3 * 3600_000 }) }), 'failed-precondition');
   // Nobody marks their own photos as a pick-up, or edits them afterwards.
   const forged = doc(collection(S.d2.db, 'orgs', S.org, 'walkarounds'));
   await fails(setDoc(forged, { vehicleId: v2.id, stationId: S.s1, createdBy: S.d2.uid, createdAt: Date.now(), handover: { kind: 'pickup', assignmentId: 'x' } }), 'permission-denied');
   const pick = await photos(S.d2, S.org, v2);
-  const r = await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: pick });
+  const r = await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: pick });
   assert.equal((await vanDoc(S.d2, v2.id)).assignedTo.driverId, S.d2.uid);
   const w = (await getDoc(doc(S.d2.db, 'orgs', S.org, 'walkarounds', pick))).data();
   assert.deepEqual(w.handover, { kind: 'pickup', assignmentId: r.assignmentId });
   await fails(updateDoc(doc(S.d2.db, 'orgs', S.org, 'walkarounds', pick), { handover: null }), 'permission-denied');
   // The phone lost the answer and sends it again (its outbox): answered as done, nothing recorded twice.
-  assert.deepEqual(await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, walkId: pick }), { assignmentId: r.assignmentId, unchanged: true });
+  assert.deepEqual(await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, walkId: pick }), { assignmentId: r.assignmentId, unchanged: true });
   assert.equal((await history(S.own, [where('driverId', '==', S.d2.uid), where('end', '==', null)])).length, 1);
   // The same photos can't be used twice; a driver with a van drops it off before taking another.
   await fails(S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: pick }), 'failed-precondition');
-  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, plate: v1.plate, walkId: await photos(S.d2, S.org, v1) }), 'failed-precondition');
   await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: await photos(S.d1, S.org, v2) }), 'failed-precondition');
   const drop = await photos(S.d2, S.org, v2);
   // Sent twice at once (the phone tried again while the first call was still running): both answered as done, one drop-off.
   const both = await Promise.all([1, 2].map(() => S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop })));
   assert.ok(both.every((x) => x.ok), JSON.stringify(both));
   assert.equal(both.filter((x) => !x.unchanged).length, 1, JSON.stringify(both));
-  assert.equal((await vanDoc(S.d2, v2.id)).assignedTo, null);
+  assert.equal((await vanDoc(S.mgr, v2.id)).assignedTo, null);
+  // Dropped off, it's no longer Erik's: drivers read only the van they have (blind test, cause 3a).
+  await fails(vanDoc(S.d2, v2.id), 'permission-denied');
   assert.deepEqual(await S.d2.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop }), { ok: true, unchanged: true });
   // Someone else's photos are never "already done" for you.
   await fails(S.d1.call('dropOffVan', { orgId: S.org, vehicleId: v2.id, walkId: drop }), 'failed-precondition');
@@ -257,7 +259,10 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   assert.equal(a.endReason, 'dropped off');
   // Taking over a van someone didn't drop off: their assignment ends with the new driver's photos.
   const take = await photos(S.d2, S.org, v1);
-  const t = await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, walkId: take });
+  // Only after the driver said "take it over" (blind test, cause 3a): asked first, nothing changes.
+  await fails(S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, plate: v1.plate, walkId: take }), 'already-exists');
+  assert.equal((await vanDoc(S.mgr, v1.id)).assignedTo.driverId, S.d1.uid);
+  const t = await S.d2.call('pickUpVan', { orgId: S.org, vehicleId: v1.id, plate: v1.plate, walkId: take, takeOver: true });
   // Drivers never see another driver's name: not in the answer, not on the van, not on Dana's ended assignment.
   assert.equal(t.tookOver, true);
   assert.equal(t.tookOverFrom, undefined);
@@ -267,7 +272,9 @@ test('drivers pick up and drop off vans only where the station allows it, and on
   assert.equal(dana.endedBy, S.d2.uid);
   assert.equal(dana.endedByName, null);
   assert.ok(!JSON.stringify(dana).includes('Erik Driver'), JSON.stringify(dana));
-  const taken = await vanDoc(S.d1, v1.id);
+  // Dana no longer reads the van at all; Erik's view of it has no name either.
+  await fails(vanDoc(S.d1, v1.id), 'permission-denied');
+  const taken = await vanDoc(S.d2, v1.id);
   assert.equal(taken.assignedTo.driverId, S.d2.uid);
   assert.ok(!JSON.stringify(taken).includes('Erik Driver') && !JSON.stringify(taken).includes('driverName'), JSON.stringify(taken.assignedTo));
   // The manager still sees who: from the company's names.
@@ -284,13 +291,13 @@ test('pick-up and drop-off with a video instead of photos; a manager adds a miss
   await fails(uploadBytes(ref(S.d1.st, `orgs/${S.org}/videos/${S.d2.uid}/x1/original.mp4`), clip(), { contentType: 'video/mp4' }));
   await fails(uploadBytes(ref(S.d1.st, `orgs/${S.org}/videos/${S.d1.uid}/x2/original.mp4`), new Uint8Array([1, 2, 3]), { contentType: 'image/jpeg' }));
   // Too short, recorded hours ago, or someone else's: refused.
-  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d1, { seconds: 3 }) }), 'failed-precondition');
-  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d1, { recordedHoursAgo: 5 }) }), 'failed-precondition');
-  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: await video(S.d2) }), 'failed-precondition');
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, videoId: await video(S.d1, { seconds: 3 }) }), 'failed-precondition');
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, videoId: await video(S.d1, { recordedHoursAgo: 5 }) }), 'failed-precondition');
+  await fails(S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, videoId: await video(S.d2) }), 'failed-precondition');
   // Picked up with a video.
   const pv = await video(S.d1);
-  const r = await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: pv });
-  assert.deepEqual(await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, videoId: pv }), { assignmentId: r.assignmentId, unchanged: true });
+  const r = await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, videoId: pv });
+  assert.deepEqual(await S.d1.call('pickUpVan', { orgId: S.org, vehicleId: v2.id, plate: v2.plate, videoId: pv }), { assignmentId: r.assignmentId, unchanged: true });
   const a = (await getDoc(doc(S.own.db, 'orgs', S.org, 'assignments', r.assignmentId))).data();
   assert.equal(a.startVideoId, pv);
   assert.equal(a.startWalkId, null);
@@ -379,7 +386,8 @@ test('the app creator views the app as a driver, a manager and an owner, and get
   assert.ok((await getBytes(ref(cr.st, dvPath))).byteLength > 0);
   // As a driver of station 1: their station only, no managing, only their own videos.
   await viewAs({ org: S.org, role: 'driver', st: S.s1 });
-  assert.ok((await vanDoc(cr, v1.id)).name);
+  // A driver without a van reads none (blind test, cause 3a), not even of their station.
+  await fails(vanDoc(cr, v1.id), 'permission-denied');
   await fails(vanDoc(cr, v3.id), 'permission-denied');
   await fails(cr.call('assignVan', { orgId: S.org, vehicleId: v1.id, driverId: S.d1.uid }), 'permission-denied');
   await fails(cr.call('addVanVideo', { orgId: S.org, vehicleId: v3.id, videoId: await video(cr) }), 'permission-denied');
@@ -1323,8 +1331,10 @@ test('service appointments: owners and the station\'s managers book, move and ca
   assert.equal(r.remindAt, a1.remindAt);
   assert.equal((await call(S.own, book)).again, true);
   await fails(call(S.mgr, { ...book, kind: 'tyres' }), 'invalid-argument');
-  // Drivers of the station see on the van that it's booked (unless the appointment says not to): what for, when and
-  // the garage, never the notes. They don't read the appointments themselves.
+  // The driver who has the van sees on it that it's booked (unless the appointment says not to): what for, when and
+  // the garage, never the notes. They don't read the appointments themselves. (Drivers read only the van they have:
+  // blind test, cause 3a. Dana has van 2; she gets this one for the test and van 2 back at the end.)
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: va, driverId: S.d1.uid });
   const visit = async () => (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', va))).data().garageVisit ?? null;
   assert.deepEqual(await visit(), { id: 'apOil', kind: 'service', name: null, day, time: '10:00', at: a1.at, garage: 'Autohaus Ost' });
   assert.ok(!JSON.stringify(await visit()).includes('Jens'));
@@ -1431,6 +1441,7 @@ test('service appointments: owners and the station\'s managers book, move and ca
   assert.equal((await appt(S.own, 'apBrakes')).stationId, S.s2);
   await fails(getDoc(doc(S.mgr.db, 'orgs', S.org, 'serviceAppointments', 'apBrakes')), 'permission-denied');
   await fails(call(S.mgr, { action: 'cancel', id: 'apBrakes' }), 'permission-denied');
+  await S.mgr.call('assignVan', { orgId: S.org, vehicleId: S.vans.v2.id, driverId: S.d1.uid });
 });
 
 test('the company\'s names: owners and managers read them, each person their own, nobody writes them; a name change follows', async () => {
@@ -1488,11 +1499,15 @@ test('names written before go to the company\'s names and out of what drivers re
       { env: { ...process.env, FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST || `${HOST}:8080`, PROJECT: cfg.projectId }, encoding: 'utf8' });
     assert.match(split(), /took names out of \d+ record/);
     // Nothing a driver reads says who else: not on the van, the check, Dana's assignment, refuel, tour or damage log line.
-    const v = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', van.id))).data();
+    // Erik's van and check Dana doesn't read at all (drivers read only the van they have and their own checks: blind
+    // test, cause 3a); the names are out of them all the same.
+    await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'vehicles', van.id)), 'permission-denied');
+    await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', chk.id)), 'permission-denied');
+    const v = (await van.get()).data();
     assert.equal(v.assignedTo.driverId, S.d2.uid);
     assert.equal(v.dash.by, S.d2.uid);
     assert.equal(v.routines.oldOil.by, gone);
-    const k = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', chk.id))).data();
+    const k = (await chk.get()).data();
     assert.equal(k.createdBy, S.d2.uid);
     const x = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'assignments', asg.id))).data();
     assert.equal(x.endedBy, S.d2.uid);
@@ -1520,7 +1535,8 @@ test('drivers read no other driver\'s name anywhere they can read; only their ow
   const me = S.d1;
   const q = (name, ...w) => getDocs(query(collection(me.db, 'orgs', S.org, name), ...w));
   const reads = await Promise.all([
-    q('vehicles', where('stationId', 'in', [S.s1])), q('checks', where('stationId', 'in', [S.s1])), q('walkarounds', where('stationId', 'in', [S.s1])),
+    // The driver's lists (blind test, cause 3a: the van she has, the checks of her photos, the walk-arounds she took).
+    q('vehicles', where('assignedTo.driverId', '==', me.uid)), q('checks', where('walkBy', '==', me.uid)), q('walkarounds', where('createdBy', '==', me.uid)),
     q('assignments', where('driverId', '==', me.uid)), q('tours', where('driverId', '==', me.uid)), q('readings', where('driverId', '==', me.uid)),
     q('readings', where('by', '==', me.uid)), q('purchases', where('by', '==', me.uid)), q('routineDone', where('by', '==', me.uid)),
     q('damageLog', where('driverIds', 'array-contains', me.uid)), q('videos', where('by', '==', me.uid)), q('incidents', where('driverId', '==', me.uid)),
@@ -1529,7 +1545,9 @@ test('drivers read no other driver\'s name anywhere they can read; only their ow
   const docs = reads.flatMap((r) => r.docs.map((d) => [d.ref.path, d.data()]));
   docs.push(['org', (await getDoc(doc(me.db, 'orgs', S.org))).data()]);
   assert.ok(docs.length > 20, `read ${docs.length} records`);
-  // Erik had vans at the same station: his walk-arounds and the van he took over are among them.
+  // The station's lists aren't hers to read any more.
+  for (const c of ['vehicles', 'checks', 'walkarounds']) await fails(q(c, where('stationId', 'in', [S.s1])), 'permission-denied');
+  // Erik took over a van from her: that ended assignment is among what she reads.
   assert.ok(docs.some(([, d]) => d.createdBy === S.d2.uid || d.assignedTo?.driverId === S.d2.uid || d.endedBy === S.d2.uid), 'something Erik did is in what Dana reads');
   for (const [path, d] of docs) {
     const text = JSON.stringify(d);
@@ -1634,8 +1652,9 @@ test('the demo company: only the app creator opens one; a driver login with a va
   assert.ok(mine.some((a) => a.end != null && a.kmEnd > a.kmStart), 'km from and to on the demo driver\'s history');
   const van = { id: open[0].vehicleId, name: open[0].vehicleName, stationId: open[0].stationId };
   await alex.call('dropOffVan', { orgId, vehicleId: van.id, walkId: await photos(alex, orgId, van) });
-  const v = (await getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id))).data();
+  const v = (await getDoc(doc(me.db, 'orgs', orgId, 'vehicles', van.id))).data();
   assert.equal(v.assignedTo, null);
+  await fails(getDoc(doc(alex.db, 'orgs', orgId, 'vehicles', van.id)), 'permission-denied');
   await me.call('deleteDemoCompany', { orgId });
   await fails(person(null, login.email, login.password));
 });
@@ -1997,6 +2016,7 @@ test('drivers sign up with the company\'s link, pick a station, and wait for an 
   assert.equal(r.stationName, 'DXX1');
   assert.equal((await gina.call('peekInvite', { token: link.token })).status, 'pending');
   await fails(getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1]))), 'permission-denied');
+  await fails(getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('assignedTo.driverId', '==', gina.uid))), 'permission-denied');
   await fails(gina.call('assignVan', { orgId: S.org, vehicleId: S.vans.v1.id, driverId: gina.uid }), 'permission-denied');
   const mine = (await getDoc(doc(gina.db, 'orgs', S.org, 'joinRequests', gina.uid))).data();
   assert.equal(mine.status, 'pending');
@@ -2023,7 +2043,9 @@ test('drivers sign up with the company\'s link, pick a station, and wait for an 
   assert.equal(prof.pendingJoin, undefined);
   await fails(S.mgr.call('decideJoinRequest', { orgId: S.org, uid: gina.uid, approve: false }), 'failed-precondition');
   assert.equal((await gina.call('peekInvite', { token: link.token })).status, 'member');
-  assert.equal((await getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1])))).size > 0, true);
+  // A member now: she reads the van she has (none yet), never the station's other vans (blind test, cause 3a).
+  assert.equal((await getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('assignedTo.driverId', '==', gina.uid)))).size, 0);
+  await fails(getDocs(query(collection(gina.db, 'orgs', S.org, 'vehicles'), where('stationId', 'in', [S.s1]))), 'permission-denied');
 
   // The owner rejects Hugo: only his name stays on the request, and he can't ask again the same day.
   await S.own.call('decideJoinRequest', { orgId: S.org, uid: hugo.uid, approve: false });
@@ -2593,9 +2615,8 @@ test('the AI compares every walk-around with the van\'s earlier photos; new dama
     assert.ok(sp.beforeAt <= k.createdAt && k.refAt === sp.beforeAt);
     // The same part of both photos, cut from the full-size photos, for the manager to compare.
     for (const path of [sp.refPath, sp.beforePath]) assert.ok((await getBytes(ref(S.mgr.st, path))).byteLength > 1000, path);
-    // A driver of the station reads the check like any other, without anyone's name.
-    const dk = (await getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', c2.checkId))).data();
-    assert.ok(!/Kim Compare|Dana Driver/.test(JSON.stringify(dk)));
+    // Another driver of the station doesn't read the check (blind test, cause 3a: their own and their van's only).
+    await fails(getDoc(doc(S.d1.db, 'orgs', S.org, 'checks', c2.checkId)), 'permission-denied');
     // The station's manager got a notification that opens the review; not Kim, who took the photos.
     const note = await waitFor(async () => opened().find((m) => m.url === `/check/${c2.checkId}`), 'the notification');
     assert.equal(note.title, 'Possible new damage: CMP 1');
@@ -2712,7 +2733,8 @@ const cuNote = (ph, test, what) => waitFor(async () => ph.notes().find(test), wh
 /** Picks up or drops off a van with every photo, as the app does: the photos say a handover follows. */
 async function handover(p, van, kind) {
   const walkId = await photos(p, S.org, van, { real: true, forHandover: kind });
-  await p.call(kind === 'pickup' ? 'pickUpVan' : 'dropOffVan', { orgId: S.org, vehicleId: van.id, walkId });
+  const plate = (await adminDb().doc(`orgs/${S.org}/vehicles/${van.id}`).get()).data().plate;
+  await p.call(kind === 'pickup' ? 'pickUpVan' : 'dropOffVan', { orgId: S.org, vehicleId: van.id, walkId, ...(kind === 'pickup' ? { plate } : {}) });
   return walkId;
 }
 /** A close-up of a spot, uploaded and checked as the check page does it. */
@@ -2903,11 +2925,11 @@ test('A9: unchanged: other walk-arounds go straight to the manager, library phot
   const lib = await photos(CU.vito, S.org, CU.r1, { real: true, source: 'library' });
   await new Promise((r) => setTimeout(r, 5000));
   assert.equal((await cuWalk(lib)).cmp, undefined);
-  // Another driver reads Ronja's checks without her name (by account id only).
-  for (const id of [CU.k1, c.checkId]) {
-    const dk = (await getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', id))).data();
-    assert.ok(!/Ronja|Closeup|Vito|Otherdriver/.test(JSON.stringify(dk)), id);
-  }
+  // Vito reads the check of his own photos without anyone's name; Ronja's not at all (blind test, cause 3a: drivers
+  // read the checks of their photos and of the van they have).
+  const dk = (await getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', c.checkId))).data();
+  assert.ok(!/Ronja|Closeup|Vito|Otherdriver/.test(JSON.stringify(dk)), JSON.stringify(dk).slice(0, 300));
+  await fails(getDoc(doc(CU.vito.db, 'orgs', S.org, 'checks', CU.k1)), 'permission-denied');
 });
 
 test('close-ups: put things back (pick-ups off at station 1, the phones)', async () => {
@@ -3302,4 +3324,152 @@ test('cause 2b (B7): the only member deleting their account closes the company: 
   assert.deepEqual(m.stationIds, []);
   await fails(nobody.call('acceptInvite', { token: invite.token, details: { firstName: 'Nia', lastName: 'Nobody' } }), 'failed-precondition');
   await updateDoc(doc(next.db, 'orgs', r.orgId, 'vehicles', vr.id), { color: 'white' });
+});
+
+// ---------- Blind test, 26 Nov 2026, cause 3a: drivers see only their own van and pick one up by its plate ----------
+// In the company of cause 2 (Dora has QUIET P1 at station 1, Emil at station 1 has none). The stand-in for the AI reads
+// the van's own plate on pick-up photos, B-SW 9999 when the plate says SWAP and nothing when it says DIRTY
+// (functions/src/claude.ts). Vans written as the server would, so the plan's van count doesn't matter.
+async function plateVan(plate, st = 's1') {
+  const r = adminDb().collection(`orgs/${P.org}/vehicles`).doc();
+  await r.set({ name: plate ? '' : 'Spare van', ...(plate ? { plate } : {}), cls: 'van', stationId: P[st], createdAt: Date.now(), createdBy: P.own.uid });
+  return { id: r.id, name: plate || 'Spare van', stationId: P[st], plate };
+}
+const pVan = async (id) => (await adminDb().doc(`orgs/${P.org}/vehicles/${id}`).get()).data();
+
+test('cause 3a (1a): a driver reads only the van they have, its walk-arounds and checks, and their own; never the station\'s other vans, also by link', async () => {
+  const mgrWalk = await photos(P.mgr, P.org, P.van);
+  const q = (p, c, f) => getDocs(query(collection(p.db, 'orgs', P.org, c), where(f, '==', p.uid)));
+  // Dora has the van: she reads it, its walk-arounds (the manager's too) and its check.
+  assert.equal((await getDoc(doc(P.d1.db, 'orgs', P.org, 'vehicles', P.van.id))).data().plate, 'QUIET P1');
+  for (const w of [P.walk1, mgrWalk]) assert.ok((await getDoc(doc(P.d1.db, 'orgs', P.org, 'walkarounds', w))).exists(), w);
+  assert.ok((await getDoc(doc(P.d1.db, 'orgs', P.org, 'checks', P.check1))).exists());
+  // The app's lists for a driver (src/lib/store.ts): the van they have, the walk-arounds they took, the checks of their photos.
+  assert.deepEqual((await q(P.d1, 'vehicles', 'assignedTo.driverId')).docs.map((d) => d.id), [P.van.id]);
+  assert.ok((await q(P.d1, 'walkarounds', 'createdBy')).docs.some((d) => d.id === P.walk1));
+  assert.ok((await q(P.d1, 'checks', 'walkBy')).docs.some((d) => d.id === P.check1));
+  // Emil, at the same station without a van: nothing of Dora's, not by link, not by the station's lists.
+  for (const [c, id] of [['vehicles', P.van.id], ['walkarounds', P.walk1], ['walkarounds', mgrWalk], ['checks', P.check1]]) {
+    await fails(getDoc(doc(P.d2.db, 'orgs', P.org, c, id)), 'permission-denied');
+  }
+  for (const c of ['vehicles', 'walkarounds', 'checks']) {
+    await fails(getDocs(query(collection(P.d2.db, 'orgs', P.org, c), where('stationId', 'in', [P.s1]))), 'permission-denied');
+  }
+  assert.equal((await q(P.d2, 'vehicles', 'assignedTo.driverId')).size, 0);
+  // The station's manager and the owner read all of it; the other station's manager nothing.
+  for (const p of [P.mgr, P.own]) {
+    assert.ok((await getDocs(query(collection(p.db, 'orgs', P.org, 'vehicles'), where('stationId', 'in', [P.s1])))).docs.some((d) => d.id === P.van.id));
+    for (const [c, id] of [['walkarounds', P.walk1], ['walkarounds', mgrWalk], ['checks', P.check1]]) assert.ok((await getDoc(doc(p.db, 'orgs', P.org, c, id))).exists());
+  }
+  await fails(getDoc(doc(P.mgr2.db, 'orgs', P.org, 'vehicles', P.van.id)), 'permission-denied');
+});
+
+test('cause 3a (1b): drivers pick up a van by its number plate, at their station; a van without a plate only the manager gives out', async () => {
+  await P.mgr.call('setSelfAssign', { orgId: P.org, stationId: P.s1, on: true });
+  P.p2 = await plateVan('QUIET P2');
+  const noPlate = await plateVan(null), other = await plateVan('QUIET S2', 's2');
+  // Typed in any case and spacing: the van, free.
+  const f = await P.d2.call('vanByPlate', { orgId: P.org, plate: ' quiet  p2 ' });
+  assert.deepEqual([f.id, f.plate, f.mine, f.taken, f.expect], [P.p2.id, 'QUIET P2', false, false, null]);
+  // Not in the company, at another station, nothing typed: refused.
+  const nf = await fails(P.d2.call('vanByPlate', { orgId: P.org, plate: 'QUIET P9' }), 'not-found');
+  assert.match(nf.message, /QUIET P9/);
+  await fails(P.d2.call('vanByPlate', { orgId: P.org, plate: 'QUIET S2' }), 'permission-denied');
+  await fails(P.d2.call('vanByPlate', { orgId: P.org, plate: '' }), 'invalid-argument');
+  // Dora's van: taken, with the handover the screen sends back, and never her name.
+  const t = await P.d2.call('vanByPlate', { orgId: P.org, plate: 'QUIET P1' });
+  assert.deepEqual([t.taken, t.mine, t.expect], [true, false, P.assign1]);
+  assert.ok(!/Dora/.test(JSON.stringify(t)), JSON.stringify(t));
+  // The pick-up: the van's plate exactly. None given, or another van's: refused, nothing changes.
+  const walk = await photos(P.d2, P.org, P.p2, { real: true });
+  await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: P.p2.id, walkId: walk }), 'failed-precondition');
+  const e = await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: P.p2.id, plate: 'QUIET P1', walkId: walk }), 'failed-precondition');
+  assert.match(e.message, /isn't the plate of this van/);
+  // No plate on the van: no pick-up by a driver (the manager gives it out). Another station's van: refused as such.
+  const np = await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: noPlate.id, plate: '', walkId: await photos(P.d2, P.org, noPlate) }), 'failed-precondition');
+  assert.match(np.message, /no number plate/);
+  await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: other.id, plate: 'QUIET S2', walkId: walk }), 'permission-denied');
+  assert.equal((await pVan(P.p2.id)).assignedTo ?? null, null);
+  // With its plate (any spacing): picked up; the photos showed it, so nothing is flagged.
+  const r = await P.d2.call('pickUpVan', { orgId: P.org, vehicleId: P.p2.id, plate: 'quiet-p2', walkId: walk });
+  assert.equal((await pVan(P.p2.id)).assignedTo.driverId, P.d2.uid);
+  assert.equal((await adminDb().doc(`orgs/${P.org}/assignments/${r.assignmentId}`).get()).data().plateUnread, undefined);
+  assert.equal((await P.d2.call('vanByPlate', { orgId: P.org, plate: 'QUIET P2' })).mine, true);
+  assert.equal((await getDoc(doc(P.d2.db, 'orgs', P.org, 'vehicles', P.p2.id))).data().plate, 'QUIET P2');
+  // Dropped off: no longer his to read.
+  await P.d2.call('dropOffVan', { orgId: P.org, vehicleId: P.p2.id, walkId: await photos(P.d2, P.org, P.p2) });
+  await fails(getDoc(doc(P.d2.db, 'orgs', P.org, 'vehicles', P.p2.id)), 'permission-denied');
+});
+
+test('cause 3a (1c): the pick-up photos must show the van\'s plate: another plate is refused naming both; unreadable goes through and the manager is told', async () => {
+  const swap = await plateVan('QUIET SWAP3'), dirty = await plateVan('QUIET DIRTY4');
+  const mgrPhone = await phoneOf(P.mgr, 'c3a1c');
+  try {
+    const e = await fails(P.d2.call('pickUpVan', { orgId: P.org, vehicleId: swap.id, plate: 'QUIET SWAP3', walkId: await photos(P.d2, P.org, swap, { real: true }) }), 'failed-precondition');
+    assert.match(e.message, /^These photos show B-SW 9999, not QUIET SWAP3\. Take the photos at QUIET SWAP3\./);
+    assert.equal((await pVan(swap.id)).assignedTo ?? null, null);
+    const r = await P.d2.call('pickUpVan', { orgId: P.org, vehicleId: dirty.id, plate: 'QUIET DIRTY4', walkId: await photos(P.d2, P.org, dirty, { real: true }) });
+    assert.equal((await pVan(dirty.id)).assignedTo.driverId, P.d2.uid);
+    assert.equal((await adminDb().doc(`orgs/${P.org}/assignments/${r.assignmentId}`).get()).data().plateUnread, true);
+    const n = await waitFor(async () => mgrPhone.notes().find((m) => m.title === 'Plate not read: QUIET DIRTY4'), 'the manager\'s notification');
+    assert.equal(n.body, 'The plate couldn\'t be read on Emil Driver\'s pick-up photos. Check it\'s the right van.');
+    await P.d2.call('dropOffVan', { orgId: P.org, vehicleId: dirty.id, walkId: await photos(P.d2, P.org, dirty) });
+  } finally { await mgrPhone.close(); }
+});
+
+test('cause 3a (1d): a van another driver has now is taken over only once the driver says so; that driver and the manager hear about it', async () => {
+  const doraPhone = await phoneOf(P.d1, 'c3a1d'), mgrPhone = await phoneOf(P.mgr, 'c3a1dm');
+  try {
+    const walk = await photos(P.d2, P.org, P.van, { real: true });
+    const pick = { orgId: P.org, vehicleId: P.van.id, plate: 'QUIET P1', walkId: walk };
+    // Asked first; the refusal carries the handover it saw. Nothing changes.
+    const e = await fails(P.d2.call('pickUpVan', pick), 'already-exists');
+    assert.match(e.message, /^Another driver has this van now\. Take it over\?/);
+    assert.equal(e.details?.v?.expect, P.assign1);
+    assert.equal((await pVan(P.van.id)).assignedTo.driverId, P.d1.uid);
+    // "Take it over" from a screen that showed another handover than the one now: refused too.
+    await fails(P.d2.call('pickUpVan', { ...pick, takeOver: true, expect: 'anotherHandover' }), 'failed-precondition');
+    const r = await P.d2.call('pickUpVan', { ...pick, takeOver: true, expect: P.assign1 });
+    assert.equal(r.tookOver, true);
+    P.assign2 = r.assignmentId;
+    const prev = (await adminDb().doc(`orgs/${P.org}/assignments/${P.assign1}`).get()).data();
+    assert.deepEqual([prev.endReason, prev.endedBy, prev.endWalkId], ['taken over', P.d2.uid, walk]);
+    // Dora hears it (without Emil's name); the manager hears who took it from whom.
+    const dn = await waitFor(async () => doraPhone.notes().find((m) => m.title === 'QUIET P1 was taken over'), 'Dora\'s notification');
+    assert.ok(!/Emil/.test(JSON.stringify(dn)), JSON.stringify(dn));
+    const mn = await waitFor(async () => mgrPhone.notes().find((m) => m.title === 'QUIET P1 taken over'), 'the manager\'s notification');
+    assert.equal(mn.body, 'Emil Driver took it over from Dora Driver.');
+    // Dora no longer reads the van, Emil does.
+    await fails(getDoc(doc(P.d1.db, 'orgs', P.org, 'vehicles', P.van.id)), 'permission-denied');
+    assert.equal((await getDoc(doc(P.d2.db, 'orgs', P.org, 'vehicles', P.van.id))).data().assignedTo.driverId, P.d2.uid);
+  } finally { await doraPhone.close(); await mgrPhone.close(); }
+});
+
+test('cause 3a (7): every action that gives out, takes over or ends a handover is refused when who has the van changed since the screen showed it', async () => {
+  const stale = P.assign1;
+  const tries = [
+    ['assignVan', P.mgr, { vehicleId: P.van.id, driverId: P.d1.uid, expect: stale }],
+    ['assignVan', P.mgr, { vehicleId: P.van.id, driverId: null, expect: null }],
+    ['retireVan', P.mgr, { vehicleId: P.van.id, expect: stale }],
+    ['moveVan', P.own, { vehicleId: P.van.id, stationId: P.s2, expect: stale }],
+    ['changePerson', P.own, { uid: P.d2.uid, stationId: P.s2, expect: stale }],
+    ['removePerson', P.mgr, { uid: P.d2.uid, expect: stale }],
+    ['pickUpVan', P.d1, { vehicleId: P.van.id, plate: 'QUIET P1', walkId: await photos(P.d1, P.org, P.van, { real: true }), takeOver: true, expect: stale }],
+  ];
+  const wrong = [];
+  for (const [fn, p, data] of tries) {
+    try { await p.call(fn, { orgId: P.org, ...data }); wrong.push(`${fn}: done`); } catch (e) {
+      const code = String(e.code || '').replace(/^functions\//, '');
+      if (code !== 'failed-precondition' || !/changed/.test(e.message)) wrong.push(`${fn}: ${code}: ${e.message}`);
+    }
+  }
+  assert.deepEqual(wrong, []);
+  assert.equal((await pVan(P.van.id)).assignedTo.assignmentId, P.assign2, 'Emil still has the van');
+  assert.equal((await adminDb().doc(`orgs/${P.org}/members/${P.d2.uid}`).get()).data().stationIds[0], P.s1);
+  // With what the screen shows now: done (the manager ends Emil's handover, then retires the free van and brings it back).
+  await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: null, expect: P.assign2 });
+  assert.equal((await pVan(P.van.id)).assignedTo, null);
+  await P.mgr.call('retireVan', { orgId: P.org, vehicleId: P.van.id, expect: null });
+  await P.mgr.call('retireVan', { orgId: P.org, vehicleId: P.van.id, restore: true, expect: null });
+  assert.ok(!(await pVan(P.van.id)).retired);
 });

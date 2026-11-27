@@ -247,8 +247,15 @@ service cloud.firestore {
 
       // Vans are never deleted (their history must stay): they are retired by the server (retireVan).
       // Who drives a van (assignedTo), retiring and moving between stations are done by the server too.
+      // Drivers see only the van they have (product owner, 2026-11-26; blind test, cause 3a): the station's other vans,
+      // their walk-arounds and checks are for owners and the station's managers. A driver picks up a van by its plate
+      // (the server's vanByPlate), and reads the walk-arounds they took and the checks of their own photos.
+      function heldByMe(orgId, vehicleId) {
+        return get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(vehicleId)).data.get('assignedTo', null) != null
+          && get(/databases/$(database)/documents/orgs/$(orgId)/vehicles/$(vehicleId)).data.assignedTo.driverId == me();
+      }
       match /vehicles/{id} {
-        allow read: if at(orgId, resource.data.stationId);
+        allow read: if runs(orgId, resource.data.stationId) || (member(orgId) && resource.data.assignedTo.driverId == me());
         // Who has it (assignedTo, with their km), its latest dashboard (dash: km, levels, warning lights) and its
         // checks for drivers (todo: due now; routines: when each was last done) and its next garage visit drivers may
         // see (garageVisit, from the service appointments) are the server's.
@@ -392,7 +399,8 @@ service cloud.firestore {
       }
 
       match /walkarounds/{id} {
-        allow read: if at(orgId, resource.data.stationId);
+        allow read: if runs(orgId, resource.data.stationId)
+          || (member(orgId) && (resource.data.createdBy == me() || heldByMe(orgId, resource.data.vehicleId)));
         allow create: if notClosed(orgId) && at(orgId, request.resource.data.stationId)
           && (request.resource.data.createdBy == me() || creator())
           && !request.resource.data.keys().hasAny(['handover', 'keepMark', 'keepDamage', 'keepUntil', 'mediaDeletedAt', 'cmp']);
@@ -418,7 +426,8 @@ service cloud.firestore {
           && after[before.size()].get('byName', '') is string;
       }
       match /checks/{id} {
-        allow read: if at(orgId, resource.data.stationId);
+        allow read: if runs(orgId, resource.data.stationId)
+          || (member(orgId) && (resource.data.get('walkBy', null) == me() || resource.data.get('createdBy', null) == me() || heldByMe(orgId, resource.data.vehicleId)));
         // Only the review (and the status it sets) can be written from the app, and only by a manager of the station.
         // A finished review is locked (blind test, 26 Nov 2026, cause 2): nothing changes until someone reopens it
         // ("Change the review"), which only sets it back to waiting and adds who reopened it and when to `reopens`.

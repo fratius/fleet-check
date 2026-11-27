@@ -52,14 +52,17 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
    to waiting and is recorded on the check with who and when (`reopens`; the rules take no other change of a
    reviewed check), so the van's damage record only changes through such a reopening. **Allows or refuses a refuel or
    wash when the fuel card isn't the van's** (never their own), and buys parts for their station's vans.
-4. **Driver** (role `driver`). Scans: sees the vans of their station, does walk-arounds, runs the AI damage
+4. **Driver** (role `driver`). Scans: sees **only the van they have** (product owner, 2026-11-26: "Hide it"; blind
+   test, cause 3a), its walk-arounds and damage checks, and the walk-arounds and checks of their own photos. The
+   station's other vans and other drivers' walk-arounds and checks are not theirs to read, in the rules
+   (`vehicles`: `assignedTo.driverId`; `walkarounds`: `createdBy` or their van; `checks`: `walkBy`, `createdBy` or
+   their van) and so not by link either. Does walk-arounds of their van, runs the AI damage
    check and takes close-ups at the van, then sends the check to the manager. **Only on their own photos**
    (product owner, 2026-11-26): only the driver who took a walk-around's photos, or a fleet manager or owner of its
-   station, starts a damage check on it, adds close-ups or sends it (`needPhotoTaker`); another driver of the
-   station sees the check without its buttons, also by its link, and the server refuses them. Damage from a check is
+   station, starts a damage check on it, adds close-ups or sends it (`needPhotoTaker`); the server refuses anyone else. Damage from a check is
    recorded as found by the driver who took the photos (the check's `walkBy`), also when a manager ran it. Where the station allows it, picks
    up and drops off vans themselves (see below). Where the owner turned dashboard photos on, photographs the
-   dashboard at the start and end of each tour. Refuels and washes the vans of their station (dashboard photo, the
+   dashboard at the start and end of each tour. Refuels and washes the van they have (dashboard photo, the
    van's fuel card checked from a photo, the receipt) **while they have a van** (product owner, 2026-11-26: drivers
    without one see no Refuel or Wash and the server refuses them), and one at a time: not while one waits for a
    fleet manager's answer. Reads their own record, tours, incidents and refuels. Cannot
@@ -70,8 +73,9 @@ role sees and can do, then enforce it in three places (Firestore rules, Cloud Fu
 - A company has stations (`orgs/{org}/stations`). Every van, walk-around and damage check has a `stationId`.
 - Membership is `orgs/{org}/members/{uid}` with `role` and `stationIds`. People can belong to several companies
   (`users/{uid}.orgIds`).
-- Managers and drivers only query their stations: `where('stationId', 'in', stationIds)`. Owners and the app
-  creator read everything.
+- Managers only query their stations: `where('stationId', 'in', stationIds)`. Drivers query what is theirs: the van
+  they have (`assignedTo.driverId`), the walk-arounds they took (`createdBy`), the checks of their photos (`walkBy`, or
+  `createdBy` for checks before 26 Nov 2026), and their own records. Owners and the app creator read everything.
 - Damage checks are written by the server. From the app, only owners and managers of the station can write the
   `review` and `status` of a check.
 - **Joining is by link only** (product owner, 2026-11-05: drivers sign up with one company link and are approved).
@@ -229,6 +233,20 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 
 - **Off by default.** The owner (any station) or a fleet manager (their station) switches it on under People
   (`setSelfAssign`, which records who changed it and when). Where it's off, only staff hand out vans.
+- **By the number plate** (product owner, 2026-11-26; blind test, cause 3a: a driver who forgot to drop off, then
+  the van was given to someone else). Drivers don't see the station's vans: "Pick up a van" takes a photo of the
+  plate or the plate typed, and the server finds the van at their station (`vanByPlate`). The pick-up sends that plate
+  and the server needs it to be the van's exactly (`pickUpVan`). **No plate, no pick-up by a driver**: a van without
+  one is given out by its fleet manager or owner. The pick-up photos must show that plate (the AI reads the front and
+  rear photos): another plate is refused, naming both; unreadable goes through, marked `plateUnread` on the
+  assignment, and the station's managers are notified.
+- **Taking over needs the driver's yes.** A van another driver has (also one they got after the photos were taken)
+  is refused with "Another driver has this van now. Take it over?" (`already-exists`, with the handover it saw) until
+  the driver says so (`takeOver`), on the plate page or on the stopped upload. Their assignment then ends as taken
+  over; they get a notification without the new driver's name, and the managers are told who took it from whom.
+- **What the screen showed** (`expect`): giving out a van (`assignVan`), retiring or moving it, removing a person or
+  changing their station, and a pick-up send the handover the screen showed, and the server refuses when it changed
+  (`needSameHandover`; tests/permissions.mjs `HANDOVER`).
 - **Pick up and drop off need proof: the photos or a video.** Either every photo of the van's walk-around, taken
   with the camera by that driver, none skipped, uploaded in the last two hours, of that van, used for one handover
   only (marked `handover` on the walk-around by the server); **or one video** walking around the van, recorded by
@@ -289,7 +307,7 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
 
 | Record | Owner | Manager (own station) | Driver | Written by |
 |---|---|---|---|---|
-| Van facts (on the van) | read, write | read, write | read | the app |
+| Van facts (on the van) | read, write | read, write | read, the van they have | the app |
 | Van business record `vehicleDetails` | read, write | read, write | no | the app; odometer also the server |
 | Van costs `vehicleCosts` | read, write | **no** | no | the app |
 | Driver record `driverRecords/{uid}` | read, write | read, write | their own, read only | the app; licence checks only the server |

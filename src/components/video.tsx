@@ -7,7 +7,7 @@ import { VideoRecorder } from '@/components/recorder';
 import { Button, Photo, T, fmtWhen, useColors } from '@/components/ui';
 import { UploadRow } from '@/components/uploads';
 import { photoUrl } from '@/lib/images';
-import { queueVideo, useOutbox } from '@/lib/outbox';
+import { queueVideo, useOutbox, type PickInfo } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
 import { recordVideo, type Recorded } from '@/lib/videos';
@@ -45,8 +45,10 @@ export function VideoRow({ v }: { v: Video }) {
  * at once and goes through the outbox (lib/outbox.ts): it uploads by itself, also without a connection for a while,
  * after leaving the page or closing the app, so it's never recorded twice. While it's on its way this shows how far.
  */
-export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onDone }: {
+export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onDone, pick }: {
   v: Vehicle; kind: Video['kind']; assignmentId?: string; title: string; primary?: boolean; wide?: boolean; onDone?: () => void;
+  /** A driver's pick-up by its plate (lib/pickvan.ts). */
+  pick?: PickInfo | null;
 }) {
   const s = useSession();
   const c = useColors();
@@ -69,7 +71,7 @@ export function VideoHandover({ v, kind, assignmentId, title, primary, wide, onD
       const rec = await record();
       if (!rec) return;
       setStep(t('Saving the video…'));
-      setSent(await queueVideo({ orgId: s.org!.id, uid: s.user!.uid, v, rec, what: kind, assignmentId }));
+      setSent(await queueVideo({ orgId: s.org!.id, uid: s.user!.uid, v, rec, what: kind, assignmentId, pick }));
     } catch (e) {
       setErr(e instanceof Error && e.message === 'camera' ? t('Allow camera access in Settings to record the video.') : t('Couldn\'t save the video on this phone. Record it again.'));
     } finally { setStep(null); }
