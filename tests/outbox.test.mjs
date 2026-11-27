@@ -260,6 +260,42 @@ test('a give refused because someone has the van now: "Give it anyway" sends it 
   assert.equal(ob.jobs.length, 0);
 });
 
+// Blind test, 27 Nov 2026, cause 3b round 2, F01: the strip stayed up to 17 s after the connection came back while a
+// change waited. A change is tried at least every 8 s, and the try right after the connection is back shows as
+// being sent, not as "no connection".
+test('a change without a connection is tried at least every 8 s, and shows as being sent once the connection may be back', async () => {
+  const w = world({ server: [offline, offline, offline, offline, offline, offline] });
+  const naps = [];
+  let back = false;
+  w.ops.nap = async (ms) => { naps.push(ms); if (naps.length === 6) back = true; await new Promise((r) => setTimeout(r, 1)); };
+  w.ops.awake = () => back;
+  const during = [];
+  w.ops.server = async (j) => {
+    during.push(ob.live.get(j.id)?.waiting);
+    const e = w.fail.server.shift();
+    if (e) throw e();
+    return { ok: true };
+  };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c8'));
+  await settle(ob);
+  assert.equal(ob.jobs.length, 0, 'sent');
+  assert.equal(naps.length, 6);
+  assert.ok(naps.every((ms) => ms <= 8000), `naps of at most 8 s: ${naps.join(', ')}`);
+  assert.equal(during.at(-1), false, 'the try after the connection came back shows as being sent');
+  assert.ok(during.slice(1, -1).every((x) => x === true), 'before that, as waiting for the connection');
+  // Photos and videos keep the longer waits (they're big; nobody watches each try).
+  const w2 = world({ server: [offline, offline, offline, offline, offline, offline] });
+  const naps2 = [];
+  w2.ops.nap = async (ms) => { naps2.push(ms); await new Promise((r) => setTimeout(r, 1)); };
+  const ob2 = new Outbox(w2.ops);
+  ob2.start('u1');
+  await ob2.add(walkJob('w8'));
+  await settle(ob2);
+  assert.ok(Math.max(...naps2) > 8000, 'uploads back off further');
+});
+
 test('a change with a photo (a check done with its photo): the photo goes up first, then the change', async () => {
   const w = world();
   const order = [];

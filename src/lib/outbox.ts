@@ -9,7 +9,7 @@ import { t } from './i18n';
 import { newId, prepare, putBlob } from './images';
 import { dropKept, keepFile, keptBlob, keptSize, sweepKept } from './keep';
 import { pruneDrafts } from './walkdraft';
-import { nap, netKind, retrying } from './net';
+import { awake, nap, netKind, retrying } from './net';
 import { Outbox, staleRecord, type Change, type Job, type Live, type OutFile, type Then } from './outboxcore';
 import { AiError, ai, callServer, newRid, setWriter, whyFailed } from './store';
 import type { Photo, Vehicle } from './types';
@@ -96,6 +96,7 @@ export const outbox = new Outbox({
     return whyFailed(e);
   },
   nap,
+  awake,
 });
 
 let loading: Promise<void> | null = null;

@@ -10,7 +10,7 @@ import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
 import { ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
-import { useWaitingFor, Waiting } from '@/components/uploads';
+import { useWaitingFor, useWaitingWrites, Waiting } from '@/components/uploads';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
@@ -154,6 +154,8 @@ function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] 
   const c = useColors();
   const [adding, setAdding] = useState(false);
   const [edit, setEdit] = useState<string | null>(null);
+  // Added or changed on this phone and not sent yet: says so, and isn't changed again until it's through (cause 3b).
+  const pending = useWaitingWrites('incidents');
   const list = (incidents || []).slice().sort((a, b) => b.day.localeCompare(a.day) || b.createdAt - a.createdAt);
   if (!canAdd && !list.length) return null;
   return (
@@ -165,14 +167,15 @@ function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] 
       <View style={{ padding: 12, gap: 10 }}>
         {incidents == null ? <T v="hint">{t('Loading…')}</T> : !list.length ? <T v="hint">{t('Nothing recorded.')}</T> : null}
         {list.map((i, n) => (edit === i.id ? <IncidentForm key={i.id} m={m} prev={i} onDone={() => setEdit(null)} /> : (
-          <Pressable key={i.id} disabled={!canAdd} onPress={() => setEdit(i.id)} accessibilityRole={canAdd ? 'button' : undefined}
+          <Pressable key={i.id} disabled={!canAdd || pending.has(i.id)} onPress={() => setEdit(i.id)} accessibilityRole={canAdd && !pending.has(i.id) ? 'button' : undefined}
             style={{ gap: 2, borderTopWidth: n ? 1 : 0, borderColor: c.rule, paddingTop: n ? 10 : 0 }}>
             <Row>
               <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: i.kind === 'accident' ? c.alert : i.kind === 'fine' ? c.amber : c.ink2 }} />
               <T v="medium" style={{ flex: 1 }}>{i.kind === 'fine' && i.fineType ? t('{kind}: {what}', { kind: t(INCIDENT[i.kind]), what: t(FINE[i.fineType] || i.fineType) })
                 : i.kind === 'accident' && i.atFault ? t('{kind}, {fault}', { kind: t(INCIDENT[i.kind]), fault: t(FAULT[i.atFault] || i.atFault) }) : t(INCIDENT[i.kind])}</T>
-              {canAdd ? <T v="small" style={{ textDecorationLine: 'underline' }}>{t('Edit')}</T> : null}
+              {canAdd && !pending.has(i.id) ? <T v="small" style={{ textDecorationLine: 'underline' }}>{t('Edit')}</T> : null}
             </Row>
+            {pending.has(i.id) ? <T v="small">{t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.')}</T> : null}
             <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(', ')}</T>
             {i.note ? <T v="body">{i.note}</T> : null}
             <T v="small">{i.updatedByName ? t('Added by {name}, changed by {by}', { name: i.byName, by: i.updatedByName }) : t('Added by {name}', { name: i.byName })}</T>

@@ -954,6 +954,8 @@
  "Is it right that there's no vehicle?": "Valóban nincs jármű a képen?",
  "Is {type} the right type?": "Ez a helyes típus: {type}?",
  "It stays in the van's appointments as cancelled.": "Lemondottként megmarad a furgon időpontjai között.",
+ "It was given to another driver.": "Egy másik sofőr kapta meg.",
+ "It was made free.": "Felszabadították.",
  "It's right, save it": "Rendben, mentés",
  "It's the van's card (ending {last4}).": "Ez a furgon kártyája ({last4} végű).",
  "It's the van's card.": "Ez a furgon kártyája.",

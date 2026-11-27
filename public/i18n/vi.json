@@ -931,6 +931,8 @@
  "Is it right that there's no vehicle?": "Có đúng là không có xe không?",
  "Is {type} the right type?": "{type} có đúng loại xe không?",
  "It stays in the van's appointments as cancelled.": "Lịch vẫn nằm trong lịch hẹn của xe van, ở trạng thái đã hủy.",
+ "It was given to another driver.": "Xe đã được giao cho tài xế khác.",
+ "It was made free.": "Xe đã được làm trống.",
  "It's right, save it": "Đúng rồi, lưu lại",
  "It's the van's card (ending {last4}).": "Đây là thẻ của xe van (đuôi {last4}).",
  "It's the van's card.": "Đây là thẻ của xe van.",

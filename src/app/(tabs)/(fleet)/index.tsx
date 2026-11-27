@@ -48,6 +48,10 @@ export default function Fleet() {
   const where = s.mode === 'local' ? t('Test mode, saved on this phone')
     : [s.org?.name, s.role === 'owner' ? (s.stations.length === 1 ? s.stations[0].name : tp(s.stations.length, '{n} station', '{n} stations')) : s.myStations.map((st) => st.name).join(', ')].filter(Boolean).join(', ');
 
+  // The driver's last van, when the fleet manager or owner gave it to someone else or made it free in the last day.
+  const lastMine = s.staff ? null : s.assignments.filter((a) => a.driverId === s.user?.uid).sort((a, b) => (b.end ?? Infinity) - (a.end ?? Infinity))[0];
+  const lostVan = lastMine && lastMine.end != null && Date.now() - lastMine.end < 24 * 3600_000 && lastMine.endedBy !== s.user?.uid
+    && (lastMine.endReason === 'reassigned' || lastMine.endReason === 'ended') ? lastMine : null;
   // A tour of mine still open on a van I no longer have (dropped off before the end photo).
   const myOpen = s.tours.find((x) => isOpen(x) && x.driverId === s.user?.uid && x.vehicleId !== s.myVan?.id);
   const tourElsewhere = myOpen ? s.vehicles.find((v) => v.id === myOpen.vehicleId) || null : null;
@@ -102,6 +106,14 @@ export default function Fleet() {
         </Pressable>
       ) : null}
       {!s.staff ? <Notifications prompt /> : null}
+      {/* Their van given to someone else or made free (in the last day): said here too, not only in a notification,
+          which a phone with notifications off never shows (blind test, 26 Nov 2026, cause 3b). */}
+      {!s.staff && !s.myVan && lostVan ? (
+        <Card>
+          <T v="h3">{t('{van} isn\'t yours any more', { van: s.vanName(lostVan) })}</T>
+          <T v="body">{lostVan.endReason === 'reassigned' ? t('It was given to another driver.') : t('It was made free.')}</T>
+        </Card>
+      ) : null}
       {/* Drivers see only their own van (blind test, 26 Nov 2026, cause 3a): another van is picked up by its plate. */}
       {!s.staff && !s.myVan && s.mode === 'firebase' && s.loaded.vehicles && s.loaded.stations ? (s.myStations.some((st) => st.selfAssign) ? (
         <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8 }}>

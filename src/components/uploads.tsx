@@ -95,6 +95,16 @@ export function useWaitingFor(fn: string, match: (data: Record<string, unknown>)
   return ob.jobs.find((j) => j.uid === s.user?.uid && j.type === 'change' && j.change?.kind === 'call' && j.change.fn === fn && match(j.change.data)) || null;
 }
 /**
+ * Records of `collection` written on this phone and still waiting (no connection): Firestore shows them at once, so
+ * the row says it waits and isn't offered for changing until it's through (blind test, cause 3b, round 2: an incident).
+ */
+export function useWaitingWrites(collection: string): Set<string> {
+  const s = useSession();
+  const ob = useOutbox();
+  return new Set(ob.jobs.filter((j) => j.uid === s.user?.uid && j.type === 'change' && j.change?.kind === 'write' && j.change.path[2] === collection)
+    .map((j) => (j.change?.kind === 'write' ? j.change.path[3] : '')));
+}
+/**
  * In place of a button whose change waits: says so, or what stopped it, with Try again or Remove (UploadRow).
  * `above`: the page already lists it at the top (PendingChanges), so a stopped one points there.
  */

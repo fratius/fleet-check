@@ -977,6 +977,8 @@
  "Is it right that there's no vehicle?": "Est-il exact qu’il n’y a pas de véhicule ?",
  "Is {type} the right type?": "{type} : est-ce le bon type ?",
  "It stays in the van's appointments as cancelled.": "Il reste dans les rendez-vous du fourgon, comme annulé.",
+ "It was given to another driver.": "Il a été remis à un autre chauffeur.",
+ "It was made free.": "Il a été libéré.",
  "It's right, save it": "C’est correct, enregistrer",
  "It's the van's card (ending {last4}).": "C’est la carte du fourgon (se terminant par {last4}).",
  "It's the van's card.": "C’est la carte du fourgon.",

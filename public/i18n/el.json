@@ -954,6 +954,8 @@
  "Is it right that there's no vehicle?": "Είναι σωστό ότι δεν υπάρχει όχημα;",
  "Is {type} the right type?": "Είναι σωστός ο τύπος {type};",
  "It stays in the van's appointments as cancelled.": "Μένει στα ραντεβού του βαν ως ακυρωμένο.",
+ "It was given to another driver.": "Ανατέθηκε σε άλλο οδηγό.",
+ "It was made free.": "Αποδεσμεύτηκε.",
  "It's right, save it": "Σωστό, αποθήκευση",
  "It's the van's card (ending {last4}).": "Είναι η κάρτα του βαν (με κατάληξη {last4}).",
  "It's the van's card.": "Είναι η κάρτα του βαν.",

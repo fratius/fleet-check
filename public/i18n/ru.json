@@ -1000,6 +1000,8 @@
  "Is it right that there's no vehicle?": "Здесь действительно нет автомобиля?",
  "Is {type} the right type?": "Тип «{type}» верный?",
  "It stays in the van's appointments as cancelled.": "Запись остаётся в записях фургона как отменённая.",
+ "It was given to another driver.": "Его выдали другому водителю.",
+ "It was made free.": "Его освободили.",
  "It's right, save it": "Всё верно, сохранить",
  "It's the van's card (ending {last4}).": "Это карта фургона (…{last4}).",
  "It's the van's card.": "Это карта фургона.",

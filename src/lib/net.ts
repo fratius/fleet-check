@@ -45,6 +45,8 @@ const WAKE_MS = 15_000;
 const WAKE_NAP = 2000;
 /** The connection may be back: tries waiting for it go now. */
 export function wake() { wokeAt = Date.now(); [...wakers].forEach((f) => f()); }
+/** Was the connection said to be back in the last 15 s? */
+export const awake = () => Date.now() - wokeAt < WAKE_MS;
 export function onWake(f: () => void) { wakers.add(f); return () => { wakers.delete(f); }; }
 if (Platform.OS === 'web') {
   if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('online', wake);

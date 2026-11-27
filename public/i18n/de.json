@@ -954,6 +954,8 @@
  "Is it right that there's no vehicle?": "Stimmt es, dass kein Fahrzeug zu sehen ist?",
  "Is {type} the right type?": "Ist {type} der richtige Typ?",
  "It stays in the van's appointments as cancelled.": "Er bleibt als abgesagt bei den Terminen des Transporters.",
+ "It was given to another driver.": "Er wurde einem anderen Fahrer gegeben.",
+ "It was made free.": "Er wurde freigegeben.",
  "It's right, save it": "Stimmt, speichern",
  "It's the van's card (ending {last4}).": "Es ist die Karte des Transporters (Endziffern {last4}).",
  "It's the van's card.": "Es ist die Karte des Transporters.",

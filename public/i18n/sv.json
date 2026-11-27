@@ -954,6 +954,8 @@
  "Is it right that there's no vehicle?": "Stämmer det att det inte finns något fordon?",
  "Is {type} the right type?": "Är {type} rätt typ?",
  "It stays in the van's appointments as cancelled.": "Den finns kvar bland skåpbilens bokade tider som avbokad.",
+ "It was given to another driver.": "Den har tilldelats en annan förare.",
+ "It was made free.": "Den har gjorts ledig.",
  "It's right, save it": "Det stämmer, spara",
  "It's the van's card (ending {last4}).": "Det är skåpbilens kort (slutar på {last4}).",
  "It's the van's card.": "Det är skåpbilens kort.",

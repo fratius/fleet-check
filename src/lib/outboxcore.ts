@@ -94,10 +94,18 @@ export interface Ops {
   message(e: unknown): string;
   /** Waits, or less when the connection may be back. */
   nap(ms: number): Promise<void>;
+  /** Did the connection just come back (lib/net.ts wake)? Then a try is shown as sending. */
+  awake?(): boolean;
 }
 
 /** How long to wait before trying again: 2, 4, 8, 16, then every 30 seconds. */
 export const backoff = (n: number) => Math.min(30_000, 2000 * 2 ** Math.max(0, n));
+/**
+ * A change (a give, a retire, a licence check) is small and someone waits to see it go through: tried at least every
+ * 8 s, so it goes within seconds of the connection coming back also where the phone doesn't say so (blind test,
+ * cause 3b: the strip stayed up to 17 s).
+ */
+export const CHANGE_NAP = 8000;
 /** A slow or busy server is tried this many times, then the job stops with its reason (it can be tried again). */
 export const FLAKY_TRIES = 5;
 
@@ -298,6 +306,8 @@ export class Outbox {
     let n = 0, flaky = 0;
     for (;;) {
       if (this.stopped.has(j.id) || j.uid !== this.uid) throw new Stopped();
+      // Tried again right after the connection may be back: shown as being sent, not as "no connection".
+      if (l.waiting && this.ops.awake?.()) { l.waiting = false; this.emit(); }
       try {
         const out = await fn();
         if (l.waiting) { l.waiting = false; this.emit(); }
@@ -307,7 +317,7 @@ export class Outbox {
         const kind = this.ops.errKind(e);
         if (!kind || (kind === 'flaky' && ++flaky >= FLAKY_TRIES)) throw e;
         if (!l.waiting) { l.waiting = true; this.emit(); }
-        await this.ops.nap(backoff(n++));
+        await this.ops.nap(j.type === 'change' ? Math.min(CHANGE_NAP, backoff(n++)) : backoff(n++));
       }
     }
   }
