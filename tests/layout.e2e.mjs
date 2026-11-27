@@ -193,6 +193,25 @@ async function rightToLeftDetails(page, code) {
   assert.ok(order && order.plus < order.last, `${code}: the phone number reads left to right (${JSON.stringify(order)})`);
 }
 
+/**
+ * Blind QA of cause 4, round 2: on a desktop the tab bar puts each tab's name beside its icon; the names were drawn at
+ * 10 px at the top of the bar, partly over the icons.
+ */
+async function desktopTabNames(page, code) {
+  const tabs = await page.evaluate(() => {
+    const bar = [...document.querySelectorAll('[role=tablist]')].find((l) => l.getBoundingClientRect().top > innerHeight - 120);
+    return [...bar.querySelectorAll('[role=tab]')].map((tab) => {
+      const icon = tab.querySelector('svg')?.getBoundingClientRect();
+      const name = [...tab.querySelectorAll('div[dir="auto"]')].find((e) => e.textContent.trim());
+      const n = name.getBoundingClientRect();
+      return { text: name.textContent.trim(), px: parseFloat(getComputedStyle(name).fontSize), apart: !icon || n.left >= icon.right - 1 || n.right <= icon.left + 1,
+        level: !icon || Math.abs((n.top + n.bottom) / 2 - (icon.top + icon.bottom) / 2) <= 4 };
+    });
+  });
+  const bad = tabs.filter((x) => x.px < 12 || !x.apart || !x.level);
+  assert.deepEqual(bad, [], `${code} at desktop width: each tab's name beside its icon, at 12 px or more`);
+}
+
 test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and every button works, the language switch too', async () => {
   for (const code of ['ar', 'fa']) {
     for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
@@ -207,6 +226,7 @@ test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and ev
         const box = await tabs.last().boundingBox();
         assert.ok(box && box.x >= 0 && box.x + box.width <= viewport.width + 1, `${code}: the tab bar is on the screen (${JSON.stringify(box)})`);
         if (viewport.width < 500) await rightToLeftDetails(page, code);
+        else await desktopTabNames(page, code);
         await page.goto(`${URL0}/account`);
         await page.waitForTimeout(2000);
         assert.equal(await page.evaluate(() => document.documentElement.lang), code, `${code}: still in ${code} after opening Account`);
