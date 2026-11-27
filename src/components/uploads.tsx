@@ -68,7 +68,9 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
         {/* Another driver has the van now (got it after the photos were taken): the driver says "take it over" (cause 3a). */}
         {failed && j.then?.fn === 'pickUpVan' && /already-exists/.test(j.errorCode || '')
           ? <Button small v="primary" title={t('Take it over')} onPress={() => outbox.takeOver(j.id)} />
-          : failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
+          // Someone has the van now (a give that waited, cause 3b): "Try again" would only be asked again.
+          : failed && staleGive(j) ? <Button small v="primary" title={j.change?.kind === 'call' && j.change.data.driverId ? t('Give it anyway') : t('Make it free anyway')} onPress={() => outbox.anyway(j.id)} />
+            : failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
         {/* Not while the server is doing it (it would happen anyway), and not for a record write (it shows already). */}
         {(l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
           <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
@@ -76,6 +78,27 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
       </Row>
     </View>
   );
+}
+
+/** A give or make-free refused because someone else has the van now: the server asks "… anyway?" (cause 3b). */
+export const staleGive = (j: Job) => j.change?.kind === 'call' && j.change.fn === 'assignVan' && /already-exists/.test(j.errorCode || '') && typeof j.errorVars?.expect === 'string';
+
+/**
+ * A change made on this phone that still waits (no connection) or stopped, matching `fn` and `match` on what it sends:
+ * the screen shows that in place of the button, so it isn't done twice (blind test, cause 3b; tests/waiting.test.mjs).
+ */
+export function useWaitingFor(fn: string, match: (data: Record<string, unknown>) => boolean = () => true): Job | null {
+  const s = useSession();
+  const ob = useOutbox();
+  return ob.jobs.find((j) => j.uid === s.user?.uid && j.type === 'change' && j.change?.kind === 'call' && j.change.fn === fn && match(j.change.data)) || null;
+}
+/**
+ * In place of a button whose change waits: says so, or what stopped it, with Try again or Remove (UploadRow).
+ * `above`: the page already lists it at the top (PendingChanges), so a stopped one points there.
+ */
+export function Waiting({ j, above }: { j: Job; above?: boolean }) {
+  if (j.status === 'failed') return above ? <T v="hint">{t('This change stopped. See above for why.')}</T> : <UploadRow j={j} />;
+  return <T v="hint">{t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.')}</T>;
 }
 
 /** The photos or video of this van's pick-up or drop-off that are still on their way, in place of the buttons. */

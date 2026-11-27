@@ -8,7 +8,7 @@ import { DriverRecordView } from '@/components/driverrec';
 import { HistoryList, VanPicker, sinceText, useHistory } from '@/components/history';
 import { ManagePerson, manageRights } from '@/components/person';
 import { Button, Card, F, Notice, Pill, Row, Screen, T, Tabs, fmtWhen, useColors, hs } from '@/components/ui';
-import { PendingChanges } from '@/components/uploads';
+import { PendingChanges, useWaitingFor } from '@/components/uploads';
 import { useDriverData } from '@/lib/data';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { useFlash } from '@/lib/flash';
@@ -36,7 +36,11 @@ export default function PersonScreen() {
   const [picking, setPicking] = useState(false);
   const [manage, setManage] = useState(false);
   const [tab, setTab] = useState<'record' | 'tours' | 'vans'>(openTab === 'tours' || openTab === 'vans' ? openTab : 'record');
-  const done = useFlash(`person:${uid}`);
+  // A give waiting on this phone, so its "Saved on this phone" goes once it's sent or stopped (cause 3b).
+  const giving = useWaitingFor('assignVan', (d) => d.driverId === uid);
+  // "Ali has QUEST 4 now" only while Ali still has it (not after a retire, a move or a removal; cause 3b).
+  const done = useFlash(`person:${uid}`, (tag) => (tag === 'queued' ? !!giving && giving.status !== 'failed'
+    : tag.startsWith('a:') ? s.vehicles.some((v) => !v.retired && v.assignedTo?.driverId === uid && v.assignedTo.assignmentId === tag.slice(2)) : true));
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || !uid || !allowed || s.mode !== 'firebase') return;

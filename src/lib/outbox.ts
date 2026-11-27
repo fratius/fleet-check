@@ -137,6 +137,41 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   });
 }
 
+/*
+ * The tabs talk (blind test, cause 3b): a change made in a tab that doesn't run the jobs waits in the shared list like
+ * any other (a reload of that tab doesn't lose it), the tab that runs them says when one went through and with what
+ * answer, and "Try again", "Remove", "Take it over" and "Give it anyway" pressed in another tab are done by it.
+ */
+type Act = 'retry' | 'remove' | 'takeOver' | 'anyway';
+const tabs = Platform.OS === 'web' && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('fratius-outbox') : null;
+/** Went through in the tab that runs the jobs: its answer, for a screen in this tab still waiting for it. */
+const doneElsewhere = new Map<string, unknown>();
+if (tabs) {
+  const own = { retry: outbox.retry.bind(outbox), remove: outbox.remove.bind(outbox), takeOver: outbox.takeOver.bind(outbox), anyway: outbox.anyway.bind(outbox) };
+  for (const op of Object.keys(own) as Act[]) {
+    (outbox as unknown as Record<Act, (id: string) => unknown>)[op] = (id: string) => {
+      if (runner) return own[op](id);
+      tabs.postMessage({ type: 'act', op, id });
+      return undefined;
+    };
+  }
+  const told = new Set<string>();
+  outbox.subscribe(() => {
+    if (!runner) return;
+    for (const id of outbox.done) {
+      if (told.has(id)) continue;
+      told.add(id);
+      try { tabs.postMessage({ type: 'done', id, result: outbox.results.get(id) ?? null }); } catch { tabs.postMessage({ type: 'done', id, result: null }); }
+    }
+  });
+  tabs.onmessage = (e: MessageEvent) => {
+    const m = e.data as { type?: string; op?: Act; id?: string; result?: unknown };
+    if (!m?.id) return;
+    if (m.type === 'act' && runner && m.op && m.op in own) own[m.op](m.id);
+    else if (m.type === 'done' && !runner) { doneElsewhere.set(m.id, m.result); outbox.kick(); }
+  };
+}
+
 /** Starts the uploads of the person signed in (null: none run). Called by the session. */
 export async function startOutbox(uid: string | null) {
   uidNow = uid;
@@ -329,9 +364,9 @@ export async function send<O = unknown>(o: {
     files.push({ key, path: f.path, mime: f.mime, size: await keptSize(key) });
   }
   const change: Change = o.change.kind === 'call' ? { ...o.change, data: { ...o.change.data, rid: (o.change.data.rid as string) || newRid() } } : o.change;
-  // Another tab of the web app sends the jobs: this one sends its change itself, as before (rare: two tabs open).
-  if (!runner && !files.length) {
-    if (change.kind === 'call') return retrying(() => callServer<O>(change.fn, change.data, 180000));
+  // Another tab of the web app sends the jobs: a record write is made here (Firestore keeps it); a call waits in the
+  // shared list like any other and that tab sends it (see "The tabs talk" above).
+  if (!runner && !files.length && change.kind === 'write') {
     const p = startWrite(id, change);
     writing.delete(id);
     await Promise.race([p, new Promise((r) => setTimeout(r, FAST_MS.write))]);
@@ -352,14 +387,17 @@ export async function send<O = unknown>(o: {
     let off = () => {};
     const check = () => {
       if (outbox.done.has(id)) { off(); resolve(outbox.results.get(id) as O); return; }
+      if (doneElsewhere.has(id)) { off(); resolve(doneElsewhere.get(id) as O); doneElsewhere.delete(id); return; }
       const j = outbox.jobs.find((x) => x.id === id);
       if (!j) { off(); resolve(QUEUED); return; }
       if (j.status === 'failed') {
         // Refused while the person waits: shown on the screen as before, not kept as a stopped item.
         off();
         const err = j.error || t('Something went wrong. Try again.');
-        outbox.remove(id).catch(() => {});
-        reject(new AiError('refused', err));
+        // With what the server said (a stale give asks "… anyway?" and names the handover: cause 3b).
+        const code = (j.errorCode || 'refused').replace(/^functions\//, '');
+        void outbox.remove(id)?.catch?.(() => {});
+        reject(new AiError(code, err, null, j.errorVars ? { v: j.errorVars } : null));
         return;
       }
       // No connection, or it waits behind something that has none, or it's slow: carry on, it goes through by itself.

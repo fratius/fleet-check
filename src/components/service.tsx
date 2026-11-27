@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { UploadRow } from '@/components/uploads';
+import { UploadRow, useWaitingFor, Waiting } from '@/components/uploads';
 import { Button, Card, Chip, F, Field, Notice, Pill, Row, T, useColors } from '@/components/ui';
 import { DateField, MonthField, TimeField } from '@/components/pickers';
 import { DueLine, HuSticker, fromInput, saveDetails, toInput, type FieldSpec } from '@/components/vanfacts';
@@ -45,7 +45,7 @@ export function VanService({ v }: { v: Vehicle }) {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState<ServiceKind | 'pick' | null>(null);
   const [fixing, setFixing] = useState<ServiceRecord | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [done, setDone] = useState<{ text: string; queued: boolean } | null>(null);
   // Booking a new appointment ('new') or changing one; filling in the service from one.
   const [booking, setBooking] = useState<ServiceAppointment | 'new' | null>(null);
   const [filling, setFilling] = useState<ServiceAppointment | null>(null);
@@ -74,7 +74,7 @@ export function VanService({ v }: { v: Vehicle }) {
   const busyForm = !!(adding || fixing || booking || filling);
   const saved = (r: unknown, what: string) => {
     setAdding(null); setFixing(null); setBooking(null); setFilling(null);
-    setDone(r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : what);
+    setDone(r === QUEUED ? { text: t('Saved on this phone. It goes through by itself, you don\'t need to do it again.'), queued: true } : { text: what, queued: false });
   };
 
   return (
@@ -92,7 +92,8 @@ export function VanService({ v }: { v: Vehicle }) {
             {next.map((x) => <DueLine key={x.key} x={x} />)}
           </View>
         ) : null}
-        {done ? <Notice text={done} /> : null}
+        {/* "Saved on this phone" only while it still waits (not once it's sent or stopped: cause 3b). */}
+        {done && (!done.queued || [...waiting, ...waitingAppts].some((j) => j.status !== 'failed')) ? <Notice text={done.text} /> : null}
         {firebase && (booked.length || waitingAppts.length) ? (
           <View style={{ gap: 8 }}>
             <T v="h3">{t('Appointments')}</T>
@@ -344,6 +345,8 @@ function wasText(was: NonNullable<ServiceRecord['edits']>[number]['was']) {
 function ServiceRow({ r, first, onFix }: { r: ServiceRecord; first: boolean; onFix?: () => void }) {
   const c = useColors();
   const last = r.edits?.length ? r.edits[r.edits.length - 1] : null;
+  // A correction of it waiting on this phone (listed above): not offered again (cause 3b).
+  const fixing = useWaitingFor('service', (d) => d.id === r.id);
   return (
     <View style={{ paddingVertical: 10, gap: 3, borderTopWidth: first ? 0 : 1, borderColor: c.rule }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
@@ -368,7 +371,7 @@ function ServiceRow({ r, first, onFix }: { r: ServiceRecord; first: boolean; onF
         <T v="small" style={{ flex: 1 }}>{last
           ? t('{name}. Corrected {date} by {who}.', { name: r.byName, date: fmtDay(dayOf(last.at)), who: last.byName })
           : r.byName}</T>
-        {onFix ? <Button small v="link" title={t('Make a correction')} onPress={onFix} /> : null}
+        {onFix && !fixing ? <Button small v="link" title={t('Make a correction')} onPress={onFix} /> : null}
       </Row>
     </View>
   );
@@ -470,6 +473,10 @@ function AppointmentCard({ a, v, canAct, onFill, onMove, onCancelled }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const last = a.changes?.length ? a.changes[a.changes.length - 1] : null;
+  // Moved, cancelled or filled in on this phone and still waiting (listed above): not offered again (cause 3b).
+  const moving = useWaitingFor('appointment', (d) => d.id === a.id);
+  const filled = useWaitingFor('service', (d) => d.appointmentId === a.id);
+  const waiting = moving || filled;
   const cancel = async () => {
     setBusy(true); setErr(null);
     try {
@@ -501,7 +508,7 @@ function AppointmentCard({ a, v, canAct, onFill, onMove, onCancelled }: {
           <Row><Button small v="danger" title={t('Cancel the appointment')} loading={busy} onPress={cancel} /><Button small v="link" title={t('Keep it')} onPress={() => { setAsking(false); setErr(null); }} /></Row>
           <T v="small">{t('It stays in the van\'s appointments as cancelled.')}</T>
         </View>
-      ) : canAct ? (
+      ) : waiting ? <Waiting j={waiting} above /> : canAct ? (
         <Row>
           <Button small v={st.soon ? 'primary' : 'secondary'} title={t('Fill in the service')} onPress={onFill} />
           <Button small v="link" title={t('Move or change')} onPress={onMove} />

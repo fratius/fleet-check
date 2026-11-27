@@ -5,8 +5,9 @@ import { ActivityIndicator, Pressable, Share, Text, View } from 'react-native';
 import { Button, Card, F, Field, MARKER, Notice, Pill, Plate, Row, Screen, SearchBox, Segmented, T, fmtWhen, useColors, hs } from '@/components/ui';
 import { addStation, deleteInvite, deleteStation, inviteUrl, renameStation, watchDriverLink, watchInvites, watchJoinRequests, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
-import { AiError, ai } from '@/lib/store';
+import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ROLE_NAME, roleOf, type Assignment, type DriverLink, type Invite, type JoinRequest, type Member, type Station } from '@/lib/types';
 import { CHECK_MONTHS, driverDeadlines } from '@/lib/fleet';
 import { fwd, t, tp } from '@/lib/i18n';
@@ -334,6 +335,8 @@ function SelfAssign({ station }: { station: Station }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const on = !!station.selfAssign;
+  // Switched from this phone and still waiting (or stopped): not switched again until it's through (cause 3b).
+  const waiting = useWaitingFor('setSelfAssign', (d) => d.stationId === station.id);
   const set = async (next: boolean) => {
     if (next === on) return;
     setBusy(true); setErr(null);
@@ -341,13 +344,15 @@ function SelfAssign({ station }: { station: Station }) {
       await sendCall('setSelfAssign', { orgId: s.org!.id, stationId: station.id, on: next },
         { title: next ? t('Let drivers pick up vans themselves at {station}', { station: station.name }) : t('Stop drivers picking up vans themselves at {station}', { station: station.name }) });
     }
-    catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that.')); } finally { setBusy(false); }
+    catch (e) { setErr(failText(e, 'Switching who hands out the vans')); } finally { setBusy(false); }
   };
   return (
     <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 12, opacity: busy ? 0.6 : 1 }}>
       <T v="h3">{t('Who hands out the vans')}</T>
-      <Segmented label={t('Who hands out the vans')} value={on ? 'drivers' : 'managers'} onChange={(k) => (busy ? null : set(k === 'drivers'))}
-        options={[['managers', t('Fleet managers')], ['drivers', t('Drivers themselves')]]} />
+      {waiting ? <Waiting j={waiting} /> : (
+        <Segmented label={t('Who hands out the vans')} value={on ? 'drivers' : 'managers'} onChange={(k) => (busy ? null : set(k === 'drivers'))}
+          options={[['managers', t('Fleet managers')], ['drivers', t('Drivers themselves')]]} />
+      )}
       <T v="small">{on
         ? t('Drivers pick up and drop off the van they were told to take, with a video or photos. You can still give vans out.')
         : t('Only fleet managers give vans to drivers. Switch if you assign vans elsewhere, like Amazon\'s tools.')}

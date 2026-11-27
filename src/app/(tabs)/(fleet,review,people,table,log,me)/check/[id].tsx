@@ -18,6 +18,7 @@ import { useWhoDid } from '@/lib/names';
 import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { TIER_NAME, type Check, type Review, type Usage, type VerdictKind } from '@/lib/types';
 import { closeupState, gapList } from '@/lib/compare';
 
@@ -102,6 +103,8 @@ function CheckView({ id }: { id: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // Sent from this phone and still waiting (or stopped): not offered again (cause 3b).
+  const waiting = useWaitingFor('submitCheck', (d) => d.checkId === id);
   useTicker(phase === 'running');
 
   if (!k) return <Screen edges={[]}><Card dashed><T v="hint">{s.loaded.checks && older === null ? t('This check isn\'t available.') : t('Loading…')}</T></Card></Screen>;
@@ -455,7 +458,7 @@ function CheckView({ id }: { id: string }) {
           <TextInput multiline value={note ?? k.missedNote ?? ''} onChangeText={setNote} placeholder={t('For example: dent in the right rear door, 3 cm, below the handle')} placeholderTextColor={c.ink2}
             style={{ minHeight: 70, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 10, fontFamily: F.body, fontSize: 16, color: c.ink, textAlignVertical: 'top' }} />
           {n > 0 && open > 0 ? <T v="small">{tp(open, '{n} spot has no close-up yet. You can still send it; the manager decides from the photos.', '{n} spots have no close-up yet. You can still send it; the manager decides from the photos.')}</T> : null}
-          <Button v="primary" wide title={reviewer ? t('Done with close-ups') : t('Send to the fleet manager')} loading={sending} onPress={submit} />
+          {waiting ? <Waiting j={waiting} /> : <Button v="primary" wide title={reviewer ? t('Done with close-ups') : t('Send to the fleet manager')} loading={sending} onPress={submit} />}
         </Card>
       ) : null}
 

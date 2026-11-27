@@ -60,6 +60,8 @@ export interface Job {
   errorCode?: string | null;
   /** For a take-over: the handover the refusal saw (sent back as `expect`, so a newer one isn't ended by surprise). */
   errorExpect?: string | null;
+  /** The server's values with its refusal (a stale give's question: who has the van now, and `expect`). */
+  errorVars?: Record<string, unknown> | null;
   /** A change: what to send, and what it is in the person's words (when it was made). */
   change?: Change;
   title?: string;
@@ -176,6 +178,18 @@ export class Outbox {
   }
 
   /** A job that stopped: try it again. */
+  /**
+   * A give or make-free refused because someone has the van now (blind test, cause 3b): the person says "anyway", and
+   * it goes again, the same request, with the handover the question named.
+   */
+  anyway(id: string) {
+    const j = this.jobs.find((x) => x.id === id);
+    const ex = j?.errorVars?.expect;
+    if (!j || j.status !== 'failed' || j.change?.kind !== 'call' || !/already-exists/.test(j.errorCode || '') || typeof ex !== 'string') return;
+    j.change = { ...j.change, data: { ...j.change.data, expect: ex } };
+    this.retry(id);
+  }
+
   retry(id: string) {
     const j = this.jobs.find((x) => x.id === id);
     if (!j || j.status !== 'failed') return;
@@ -382,6 +396,8 @@ export class Outbox {
       j.errorCode = typeof (e as { code?: unknown } | null)?.code === 'string' ? (e as { code: string }).code : null;
       const ex = (e as { details?: { v?: { expect?: unknown } } } | null)?.details?.v?.expect;
       j.errorExpect = typeof ex === 'string' ? ex : null;
+      const vars = (e as { details?: { v?: unknown } } | null)?.details?.v;
+      j.errorVars = vars && typeof vars === 'object' ? { ...(vars as Record<string, unknown>) } : null;
       l.waiting = false;
       l.step = null;
       // Files that are up aren't needed on the phone any more.

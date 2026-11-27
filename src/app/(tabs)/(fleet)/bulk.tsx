@@ -11,6 +11,7 @@ import { importPhotoPath, pickFleetFile, uploadFleetFile, type Picked } from '@/
 import { N_, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { QUEUED, sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { useSession } from '@/lib/session';
 import { ai, failText, type FleetAdded, type FleetRead, type FleetRow } from '@/lib/store';
 import { plateKey } from '@/lib/vans';
@@ -68,6 +69,8 @@ function AddFleetPage() {
   const [all, setAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState<FleetAdded | 'queued' | null>(null);
+  // This list already saved from this phone and waiting to be sent (or stopped): not saved twice (cause 3b).
+  const waiting = useWaitingFor('addVans', (d) => !!read && d.importId === read.importId);
 
   const owner = s.role === 'owner';
   // Stations this person adds vans to: every station for owners, their own for managers.
@@ -395,8 +398,10 @@ function AddFleetPage() {
       {over && owner && Platform.OS === 'web' ? <Button title={t('Plan and billing')} onPress={() => router.push('/plan')} /> : null}
       {err || problem ? <T v="hint" color={c.alert}>{err || problem}</T> : null}
       {fresh.length && filling.length ? <T v="hint">{tp(filling.length, 'And {n} van already in the fleet gets the details it doesn\'t have yet.', 'And {n} vans already in the fleet get the details they don\'t have yet.')}</T> : null}
-      <Button v="primary" wide loading={saving} disabled={saving || !!problem} onPress={save}
-        title={fresh.length ? tp(fresh.length, 'Add {n} van', 'Add {n} vans') : tp(filling.length, 'Fill in {n} van', 'Fill in {n} vans')} />
+      {waiting ? <Waiting j={waiting} /> : (
+        <Button v="primary" wide loading={saving} disabled={saving || !!problem} onPress={save}
+          title={fresh.length ? tp(fresh.length, 'Add {n} van', 'Add {n} vans') : tp(filling.length, 'Fill in {n} van', 'Fill in {n} vans')} />
+      )}
       <Button v="link" title={t('Upload another list')} onPress={reset} />
     </Screen>
   );

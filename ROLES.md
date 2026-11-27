@@ -246,7 +246,11 @@ For DSPs that assign vans in Amazon's tools and just tell drivers which van to t
   over; they get a notification without the new driver's name, and the managers are told who took it from whom.
 - **What the screen showed** (`expect`): giving out a van (`assignVan`), retiring or moving it, removing a person or
   changing their station, and a pick-up send the handover the screen showed, and the server refuses when it changed
-  (`needSameHandover`; tests/permissions.mjs `HANDOVER`).
+  (`needSameHandover`; tests/permissions.mjs `HANDOVER`). A give or make-free from an out-of-date screen asks instead,
+  naming who has the van now ("Ali has this van now. Give it to Ben anyway?"; the owner or manager doing it sees the
+  name, as always): nothing changes until they say "Give it anyway", which ends that handover as reassigned, and that
+  driver gets a notification ("… isn't yours any more", with the name of the owner or manager who did it). Cancel
+  changes nothing (blind test, 26 Nov 2026, cause 3b).
 - **Pick up and drop off need proof: the photos or a video.** Either every photo of the van's walk-around, taken
   with the camera by that driver, none skipped, uploaded in the last two hours, of that van, used for one handover
   only (marked `handover` on the walk-around by the server); **or one video** walking around the van, recorded by

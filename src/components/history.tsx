@@ -7,11 +7,12 @@ import { watchHistory, watchMembers, peopleScope } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { useHolder, useNameOf } from '@/lib/names';
 import { QUEUED, sendCall } from '@/lib/outbox';
+import { useWaitingFor } from '@/components/uploads';
 import { handoverMedia, needsPickup, noDropoff, stillOut } from '@/lib/videos';
 import { VideoHandover } from '@/components/video';
 import { flash } from '@/lib/flash';
 import { fwd, t, tp } from '@/lib/i18n';
-import { ai, failText } from '@/lib/store';
+import { AiError, ai, failText } from '@/lib/store';
 import { END_REASON, ROLE_NAME, approvedDamage, roleOf, type Assignment, type Member, type Vehicle } from '@/lib/types';
 import { vanName, vanAlias } from '@/lib/vans';
 
@@ -149,6 +150,31 @@ function given(person: string, van: string, r: { notified?: number; unchanged?: 
     : t('{person} has {van} now. Their phone doesn\'t have notifications on, so they\'ll see it, and the request for the pick-up video or photos, when they open the app.', { person, van });
 }
 
+/**
+ * A give or make-free refused because someone else has the van now (the screen was out of date): the server asks
+ * "Ali has this van now. Give it to Ben anyway?" and names the handover it found, which "anyway" sends as `expect`
+ * (blind test, 26 Nov 2026, cause 3b). Null for any other refusal.
+ */
+export function askAnyway(e: unknown): { text: string; expect: string } | null {
+  const v = e instanceof AiError && e.code === 'already-exists' ? (e.details?.v as { expect?: unknown } | undefined) : undefined;
+  return v && typeof v.expect === 'string' ? { text: e instanceof Error ? e.message : '', expect: v.expect } : null;
+}
+/** The question, with "Give it anyway" (or "Make it free anyway") and Cancel. Nothing changes until one is tapped. */
+export function AnywayAsk({ text, free, busy, onAnyway, onCancel }: { text: string; free?: boolean; busy?: boolean; onAnyway: () => void; onCancel: () => void }) {
+  const c = useColors();
+  return (
+    <View style={{ gap: 8, borderWidth: 2, borderColor: c.alert, borderRadius: 4, padding: 10 }}>
+      <T v="medium">{text}</T>
+      <Row>
+        <Button small v="primary" title={free ? t('Make it free anyway') : t('Give it anyway')} loading={busy} disabled={busy} onPress={onAnyway} />
+        <Button small v="link" title={t('Cancel')} onPress={onCancel} />
+      </Row>
+    </View>
+  );
+}
+/** What a give's message is about, so it goes once it isn't so any more (lib/flash.ts): the handover, or the wait. */
+const givenTag = (r: { assignmentId?: string | null } | typeof QUEUED) => (r === QUEUED ? 'queued' : `a:${r.assignmentId ?? ''}`);
+
 /** Owners and managers of the van's station give it to a driver (or a fleet manager) of that station. */
 export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) {
   const s = useSession();
@@ -172,17 +198,27 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
   const me = s.tryOut && s.user && v.stationId && !people.some((m) => m.uid === s.user!.uid)
     ? ({ uid: s.user.uid, name: s.member?.name || s.user.name, email: s.user.email, role: 'driver', stationIds: [v.stationId] } as Member) : null;
   const shown = me ? [me, ...people] : people;
-  const give = async (m: Member) => {
+  const [ask, setAsk] = useState<{ text: string; expect: string; m: Member } | null>(null);
+  // A give of this van still waiting on this phone (or stopped): not made again from here (cause 3b).
+  const waiting = useWaitingFor('assignVan', (d) => d.vehicleId === v.id);
+  const give = async (m: Member, expect?: string) => {
     setBusy(m.uid); setErr(null);
     try {
-      // Kept on the phone and sent by itself without a connection (lib/outbox.ts); only if the van hasn't changed meanwhile.
-      const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: orgId!, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
+      // Kept on the phone and sent by itself without a connection (lib/outbox.ts); only if the van hasn't changed
+      // meanwhile, or "anyway" with the handover the server named.
+      const r = await sendCall<{ notified?: number; unchanged?: boolean; assignmentId?: string | null }>('assignVan', { orgId: orgId!, vehicleId: v.id, driverId: m.uid, expect: expect !== undefined ? expect : v.assignedTo?.assignmentId ?? null },
         { title: t('Give {van} to {name}', { van: vanName(v), name: m.name }), vehicleId: v.id, vehicleName: vanName(v), personId: m.uid });
-      flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
+      flash(`van:${v.id}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid), givenTag(r));
+      setAsk(null);
       onDone();
     }
-    catch (e) { setErr(failText(e, 'Giving the van')); } finally { setBusy(null); }
+    catch (e) {
+      const a = askAnyway(e);
+      if (a) setAsk({ ...a, m }); else { setAsk(null); setErr(failText(e, 'Giving the van')); }
+    } finally { setBusy(null); }
   };
+  if (ask) return <AnywayAsk text={ask.text} busy={!!busy} onAnyway={() => give(ask.m, ask.expect)} onCancel={() => { setAsk(null); onDone(); }} />;
+  if (waiting) return <T v="small">{t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>;
   return (
     <View style={{ gap: 8 }}>
       <T v="medium">{t('Give {van} to', { van: vanName(v) })}</T>
@@ -218,16 +254,25 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
   const vans = s.vehicles
     .filter((v) => !v.retired && (m.stationIds || []).includes(v.stationId || '') && s.runs(v.stationId))
     .sort((a, b) => Number(!!a.assignedTo) - Number(!!b.assignedTo) || vanName(a).localeCompare(vanName(b)));
-  const give = async (v: Vehicle) => {
+  const [ask, setAsk] = useState<{ text: string; expect: string; v: Vehicle } | null>(null);
+  // A van given to this person from this phone, still waiting (or stopped): not given again from here (cause 3b).
+  const waiting = useWaitingFor('assignVan', (d) => d.driverId === m.uid);
+  const give = async (v: Vehicle, expect?: string) => {
     setBusy(v.id); setErr(null);
     try {
-      const r = await sendCall<{ notified?: number; unchanged?: boolean }>('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: m.uid, expect: v.assignedTo?.assignmentId ?? null },
+      const r = await sendCall<{ notified?: number; unchanged?: boolean; assignmentId?: string | null }>('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: m.uid, expect: expect !== undefined ? expect : v.assignedTo?.assignmentId ?? null },
         { title: t('Give {van} to {name}', { van: vanName(v), name: m.name }), vehicleId: v.id, vehicleName: vanName(v), personId: m.uid });
-      flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid));
+      flash(`person:${m.uid}`, r === QUEUED ? t('Saved on this phone. It goes through by itself, you don\'t need to do it again.') : given(m.name, vanName(v), r, m.uid === s.user?.uid), givenTag(r));
+      setAsk(null);
       onDone();
     }
-    catch (e) { setErr(failText(e, 'Giving the van')); } finally { setBusy(null); }
+    catch (e) {
+      const a = askAnyway(e);
+      if (a) setAsk({ ...a, v }); else { setAsk(null); setErr(failText(e, 'Giving the van')); }
+    } finally { setBusy(null); }
   };
+  if (ask) return <AnywayAsk text={ask.text} busy={!!busy} onAnyway={() => give(ask.v, ask.expect)} onCancel={() => { setAsk(null); onDone(); }} />;
+  if (waiting) return <T v="small">{t('Giving {name} a van is waiting to be sent (at the top of this page).', { name: m.name })}</T>;
   return (
     <View style={{ gap: 8 }}>
       <T v="medium">{t('Give {name} a van', { name: m.name })}</T>

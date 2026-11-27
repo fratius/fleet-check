@@ -5,7 +5,8 @@ import { Button, Chip, Row, T, useColors } from '@/components/ui';
 import { useSession } from '@/lib/session';
 import { t } from '@/lib/i18n';
 import { sendCall } from '@/lib/outbox';
-import { AiError } from '@/lib/store';
+import { failText } from '@/lib/store';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import { ROLE_NAME, roleOf, type Member } from '@/lib/types';
 import { vanName } from '@/lib/vans';
 
@@ -35,10 +36,15 @@ export function ManagePerson({ m, onDone }: { m: Member; onDone?: () => void }) 
   const r = roleOf(m)!;
   const { canEdit, canRemove } = manageRights(s, m);
   const van = s.vehicles.find((v) => !v.retired && v.assignedTo?.driverId === m.uid);
+  // A role, station or removal of this person waiting on this phone (or stopped): not offered again (cause 3b).
+  const changing = useWaitingFor('changePerson', (d) => d.uid === m.uid);
+  const removing = useWaitingFor('removePerson', (d) => d.uid === m.uid);
   const act = async (fn: () => Promise<unknown>, done = false) => {
     setErr(null); setBusy(true);
-    try { await fn(); if (done) onDone?.(); } catch (e) { setErr(e instanceof AiError ? e.message : t('Couldn\'t save that change.')); } finally { setBusy(false); }
+    try { await fn(); if (done) onDone?.(); } catch (e) { setErr(failText(e, 'Changing a person')); } finally { setBusy(false); }
   };
+  // The person page lists it at the top (PendingChanges).
+  if (changing || removing) return <Waiting j={(removing || changing)!} above />;
   return (
     <View style={{ gap: 8, paddingBottom: 4, opacity: busy ? 0.6 : 1 }}>
       {canEdit ? (

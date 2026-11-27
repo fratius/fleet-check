@@ -5,7 +5,7 @@ import { Pressable, View, type ScrollViewInstance } from 'react-native';
 
 import { MyHandoverCompare } from '@/components/compare';
 import { DamageBubble, DamageList, useVanRecords } from '@/components/damage';
-import { DriverPicker, HistoryList, kmLine, sinceText, useHistory } from '@/components/history';
+import { AnywayAsk, DriverPicker, HistoryList, askAnyway, kmLine, sinceText, useHistory } from '@/components/history';
 import { Button, Card, Chip, Field, Notice, Pill, Plate, Row, Screen, T, Tabs, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { Deadlines, VanRecord } from '@/components/vanfacts';
 import { Van3D } from '@/components/van3d';
@@ -16,14 +16,14 @@ import { DueChecks, VanRoutines } from '@/components/routines';
 import { BuyActions, BuyNow, BuyRow } from '@/components/buy';
 import { VanService } from '@/components/service';
 import { useHolder, useWhoDid } from '@/lib/names';
-import { HandoverWaiting, PendingChanges } from '@/components/uploads';
+import { HandoverWaiting, PendingChanges, useWaitingFor, Waiting } from '@/components/uploads';
 import { VIDEO_HOW, VideoHandover, VideoRow } from '@/components/video';
 import { ScanChoice } from '@/components/scanchoice';
 import { buildDamages } from '@/lib/damage';
 import { CLASSES, CLS, REAR_PILL, SLIDE_BODIES, attrPills, buildFrames, makeSpec, type RearKind } from '@/lib/frames';
 import { watchDamageNotes } from '@/lib/people';
 import { useFlash } from '@/lib/flash';
-import { pendingChange, pendingHandover, sendCall, useOutbox } from '@/lib/outbox';
+import { pendingHandover, sendCall, useOutbox } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { AiError, ai, failText } from '@/lib/store';
 import { approvedDamage, newDamage, type DamageNote, type Vehicle } from '@/lib/types';
@@ -37,8 +37,14 @@ export default function VehicleScreen() {
   const c = useColors();
   const v = s.vehicles.find((x) => x.id === id);
   const history = useHistory({ vehicleId: id });
-  // "You picked up …" after the camera closes.
-  const done = useFlash(`van:${id}`);
+  // Given to someone, made free, retired or moved from this phone and not sent yet (or stopped): not offered again
+  // (blind test, cause 3b; tests/waiting.test.mjs).
+  const giving = useWaitingFor('assignVan', (d) => d.vehicleId === id);
+  const retiring = useWaitingFor('retireVan', (d) => d.vehicleId === id);
+  const moving = useWaitingFor('moveVan', (d) => d.vehicleId === id);
+  // "You picked up …" after the camera closes, "Ali has … now" after a give: only while it's still so (cause 3b).
+  const done = useFlash(`van:${id}`, (tag) => (tag === 'queued' ? !!giving && giving.status !== 'failed'
+    : tag.startsWith('a:') ? !!v && !v.retired && (v.assignedTo?.assignmentId ?? '') === tag.slice(2) : true));
   const pickup = usePickupRequest(v);
   const whoDid = useWhoDid();
   const holder = useHolder();
@@ -71,6 +77,8 @@ export default function VehicleScreen() {
   const [busy, setBusy] = useState<string | null>(null);
   const [upload, setUpload] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  // "Ali has this van now. Make it free anyway?" when the page was out of date (cause 3b).
+  const [ask, setAsk] = useState<{ text: string; expect: string } | null>(null);
   const arm = (k: string) => { setArmed(k); setTimeout(() => setArmed((a) => (a === k ? null : a)), 3000); };
   const act = async (k: string, fn: () => Promise<unknown>) => {
     setBusy(k); setErr(null); setArmed(null);
@@ -86,13 +94,23 @@ export default function VehicleScreen() {
   // Drivers pick up and drop off vans themselves where the station allows it.
   const selfOn = !!s.stations.find((st) => st.id === v.stationId)?.selfAssign;
   const canSelf = selfOn && !s.runs(v.stationId) && s.myStations.some((st) => st.id === v.stationId);
+  // Makes the van free; refused with a question when someone else has it now (the page was out of date).
+  const makeFree = async (expect?: string) => {
+    setBusy('end'); setErr(null); setArmed(null);
+    try {
+      await sendCall('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: null, expect: expect !== undefined ? expect : v.assignedTo?.assignmentId ?? null },
+        { title: t('Make {van} free', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) });
+      setAsk(null);
+    } catch (e) {
+      const a = askAnyway(e);
+      if (a) setAsk(a); else { setAsk(null); setErr(failText(e, 'The van page (end)')); }
+    } finally { setBusy(null); }
+  };
   const mine = v.assignedTo?.driverId === s.user?.uid;
   const dropping = !!pendingHandover(ob.jobs, s.user?.uid, v.id, 'dropoff');
   const picking2 = !!pendingHandover(ob.jobs, s.user?.uid, v.id, 'pickup');
   // The driver's own van is being dropped off from this phone: this one can be picked up after it (in that order).
   const myVanDropping = !!s.myVan && !!pendingHandover(ob.jobs, s.user?.uid, s.myVan.id, 'dropoff');
-  // Given to someone or made free from this phone, not sent yet: not offered again.
-  const giving = !!pendingChange(ob.jobs, s.user?.uid, (c) => c.kind === 'call' && c.fn === 'assignVan' && c.data.vehicleId === v.id);
   const walks = s.walks.filter((w) => w.vehicleId === v.id);
   const vids = s.videos.filter((x) => x.vehicleId === v.id);
   const checks = s.checks.filter((k) => k.vehicleId === v.id);
@@ -229,15 +247,16 @@ export default function VehicleScreen() {
               </View>
             )
           ) : s.role === 'driver' && !mine ? <T v="small">{t('Your fleet manager gives out the vans at this station.')}</T> : null}
-          {s.runs(v.stationId) && giving ? <T v="small">{t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>
-            : s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : (
+          {s.runs(v.stationId) && giving ? <T v="small">{giving.status === 'failed' ? t('This change stopped. See above for why.') : t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>
+            : s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : ask ? (
+              <AnywayAsk free text={ask.text} busy={busy === 'end'} onAnyway={() => makeFree(ask.expect)} onCancel={() => setAsk(null)} />
+            ) : (
             <Row>
               <Button small v={v.assignedTo ? 'secondary' : 'primary'} title={v.assignedTo ? t('Give to someone else') : t('Give to a driver')} onPress={() => setPicking(true)} />
               {v.assignedTo ? (
                 <Button small v="link" title={armed === 'end' ? t('Tap again: the van becomes free') : t('Make the van free')} loading={busy === 'end'} onPress={() => {
                   if (armed !== 'end') { arm('end'); return; }
-                  act('end', () => sendCall('assignVan', { orgId: s.org!.id, vehicleId: v.id, driverId: null, expect: v.assignedTo?.assignmentId ?? null },
-                    { title: t('Make {van} free', { van: vanName(v) }), vehicleId: v.id, vehicleName: vanName(v) }));
+                  void makeFree();
                 }} />
               ) : null}
             </Row>
@@ -350,7 +369,7 @@ export default function VehicleScreen() {
         </View>
       ) : null}
 
-      {view !== 'details' || !s.runs(v.stationId) ? null : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
+      {view !== 'details' || !s.runs(v.stationId) ? null : retiring || moving ? <Waiting j={(retiring || moving)!} above /> : editing ? <EditVehicle v={v} onDone={() => setEditing(false)} /> : (
         <Row>
           {!v.retired ? <Button title={t('Plate, name and type')} onPress={() => setEditing(true)} /> : null}
           {s.mode === 'local' ? (

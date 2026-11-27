@@ -10,6 +10,7 @@ import { useSession } from '@/lib/session';
 import { whoHad } from '@/lib/stats';
 import { ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
+import { useWaitingFor, Waiting } from '@/components/uploads';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
 import { N_, loc, t, tp } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
@@ -97,6 +98,8 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
   const [err, setErr] = useState<string | null>(null);
   const checks = (rec?.checks || []).slice().sort((a, b) => b.day.localeCompare(a.day) || b.at - a.at);
   const last = lastCheck(rec);
+  // Saved on this phone and still waiting (or stopped): not recorded again until it's through (cause 3b).
+  const waiting = useWaitingFor('recordLicenceCheck', (d) => d.uid === m.uid);
   const save = async () => {
     const d = parseDay(day);
     if (!d) { setErr(t('Enter the day like 22.10.2026.')); return; }
@@ -130,7 +133,7 @@ function LicenceChecks({ m, rec, canCheck, months }: { m: Member; rec: DriverRec
           </View>
         ))}
         {checks.length > 6 ? <T v="small">{tp(checks.length - 6, 'and {n} earlier', 'and {n} earlier')}</T> : null}
-        {canCheck ? (open ? (
+        {canCheck && waiting ? <Waiting j={waiting} above /> : canCheck ? (open ? (
           <View style={{ gap: 8, borderTopWidth: 1, borderColor: c.rule, paddingTop: 10 }}>
             <DateField label={t('Day of the check')} value={day} onChangeText={setDay} max={today()} />
             <Row><Chip text={t('Licence is fine')} on={ok} onPress={() => setOk(true)} /><Chip text={t('Problem')} on={!ok} onPress={() => setOk(false)} /></Row>
