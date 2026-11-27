@@ -9,7 +9,7 @@ import { useMediaGone } from '@/components/keep';
 import { BackBar } from '@/components/nav';
 import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Row, Screen, T, ZoomPhoto, cap, fmtWhen, secs, usd, useColors, type PillV, hs } from '@/components/ui';
 import { buildDamages, likelySame, manualPos, spotPos } from '@/lib/damage';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { comma, fmtTime, loc, N_, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { retrying } from '@/lib/net';
 import { day, deleteFrom } from '@/lib/media';
@@ -175,13 +175,13 @@ function CheckView({ id }: { id: string }) {
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
             {([[p.beforePath, p.beforeAt ? t('Before, {when}', { when: fmtWhen(p.beforeAt) }) : t('Before')], [p.refPath, t('Now')]] as const).map(([src, label]) => (
               <View key={label} style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}, ${label}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />
+                {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}${comma()}${label}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />
                   : <View style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}><T v="hint">{t('No photo')}</T></View>}
                 <T v="small" numberOfLines={2}>{label}</T>
               </View>
             ))}
           </View>
-        ) : <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />}
+        ) : <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}${comma()}${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderColor: c.ink }} contentFit="contain" />}
         <View style={{ gap: 6 }}>
           <T>{k.auto === 'compare' ? t('1. Find the spot in the yellow box (photo: {where}). The AI thinks it may be new since the photo before.', { where: t(p.photoLabel) })
             : t('1. Find the spot in the yellow box.')}{p.closeup ? ' ' + p.closeup : ''}</T>
@@ -308,7 +308,7 @@ function CheckView({ id }: { id: string }) {
         <T>{sub}</T>
         {auto && status === 'checking' && k.closeupBy && shoots ? <T v="small" color={Date.now() > k.closeupBy ? c.alert : undefined}>{Date.now() > k.closeupBy
           ? t('The 30 minutes for close-ups are up: the spots go to your fleet manager now.')
-          : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) })}</T> : null}
+          : t('Take them by {time}. After that the spots go to your fleet manager without close-ups.', { time: fmtTime(k.closeupBy) })}</T> : null}
         {status === 'checking' && !shoots ? <T v="hint">{t('The driver who took these photos takes the close-ups. Then the check comes to the fleet manager.')}</T> : null}
         {(k.reopens || []).map((r, x) => <T key={x} v="small">{t('Review reopened by {name}, {when}.', { name: whoDid(r.by, r.byName) || t('the fleet manager'), when: fmtWhen(r.at) })}</T>)}
         <Row>
@@ -363,7 +363,7 @@ function CheckView({ id }: { id: string }) {
               <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
                 {([[p.beforePath, p.beforeAt ? t('Before, {when}', { when: fmtWhen(p.beforeAt) }) : t('Before')], [p.refPath, t('After, {when}', { when: fmtWhen(walkOfK?.createdAt || k.createdAt) })]] as const).map(([src, label]) => (
                   <View key={label} style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                    {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}, ${label}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
+                    {src ? <ZoomPhoto src={src} caption={`${cap(p.panel)}${comma()}${label}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
                       : <View style={{ width: '100%', aspectRatio: 4 / 3, borderWidth: 2, borderStyle: 'dashed', borderColor: c.ink2, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}><T v="hint">{t('No photo')}</T></View>}
                     <T v="small" numberOfLines={2}>{label}</T>
                   </View>
@@ -376,7 +376,7 @@ function CheckView({ id }: { id: string }) {
                   const label = m === 0 ? (p.markPath ? t('Straight on, damage boxed') : t('Straight on')) : t('Low angle');
                   return (
                     <View key={cp} style={{ flex: 1, minWidth: 0, maxWidth: 220, gap: 3 }}>
-                      <ZoomPhoto src={m === 0 && p.markPath ? p.markPath : cp} caption={`${cap(p.panel)}, ${label.toLocaleLowerCase(loc())}`} style={{ width: '100%', aspectRatio: 3 / 4 }} />
+                      <ZoomPhoto src={m === 0 && p.markPath ? p.markPath : cp} caption={`${cap(p.panel)}${comma()}${label.toLocaleLowerCase(loc())}`} style={{ width: '100%', aspectRatio: 3 / 4 }} />
                       <T v="small" numberOfLines={2}>{label}</T>
                     </View>
                   );
@@ -392,14 +392,14 @@ function CheckView({ id }: { id: string }) {
             {/* Flex 16 : 9 makes the 4:3 crop and the 3:4 close-ups the same height. Tap any photo to see it full screen. */}
             {auto ? null : <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-start' }}>
               <View style={{ flex: 16, minWidth: 0, gap: 3 }}>
-                <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}, ${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
+                <ZoomPhoto src={p.refPath} caption={`${cap(p.panel)}${comma()}${t(p.photoLabel)}`} style={{ width: '100%', aspectRatio: 4 / 3 }} />
                 <T v="small" numberOfLines={2}>{t(p.photoLabel)}</T>
               </View>
               {p.closeups.map((cp, m) => {
                 const label = m === 0 ? (p.markPath ? t('Straight on, damage boxed') : t('Straight on')) : t('Low angle');
                 return (
                   <View key={cp} style={{ flex: 9, minWidth: 0, gap: 3 }}>
-                    <ZoomPhoto src={m === 0 && p.markPath ? p.markPath : cp} caption={`${cap(p.panel)}, ${label.toLocaleLowerCase(loc())}`} style={{ width: '100%', aspectRatio: 3 / 4 }} />
+                    <ZoomPhoto src={m === 0 && p.markPath ? p.markPath : cp} caption={`${cap(p.panel)}${comma()}${label.toLocaleLowerCase(loc())}`} style={{ width: '100%', aspectRatio: 3 / 4 }} />
                     <T v="small" numberOfLines={2}>{label}</T>
                   </View>
                 );

@@ -4,7 +4,7 @@ import { Pressable, View } from 'react-native';
 
 import { Card, Pill, Row, Screen, Segmented, Stat, Stats, T, cap, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
 import { CLS } from '@/lib/frames';
-import { t, tp } from '@/lib/i18n';
+import { comma, t, tp } from '@/lib/i18n';
 import { useSession } from '@/lib/session';
 import { NOT_COMPARED } from '@/lib/compare';
 import { TIER_NAME, aiWasRight, type Check, type Compare, type Scan } from '@/lib/types';
@@ -105,7 +105,7 @@ function Checks({ rows }: { rows: Check[] }) {
           {missed.slice(0, 20).map((k) => (
             <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ borderTopWidth: 1, borderColor: c.rule, paddingTop: 8, gap: 2 }}>
               {k.missedNote ? <T>{k.missedNote}</T> : null}
-              {(k.review?.manual || []).map((m, x) => <T key={x}>{m.panel}: {t(m.type)}{m.note ? `, ${m.note}` : ''}</T>)}
+              {(k.review?.manual || []).map((m, x) => <T key={x}>{m.panel}: {t(m.type)}{m.note ? `${comma()}${m.note}` : ''}</T>)}
               <T v="small">{s.vanName(k)}, {fmtWhen(k.createdAt)}, {shortModel(k.model)}</T>
             </Pressable>
           ))}
@@ -117,7 +117,7 @@ function Checks({ rows }: { rows: Check[] }) {
         return (
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <T v="h3">{tp(k.spots.length, '{van}: {n} spot, {damage} damage', '{van}: {n} spots, {damage} damage', { van: s.vanName(k), damage: dmg })}</T>
-            <T v="hint">{[fmtWhen(k.createdAt), tp(k.photos, '{n} photo', '{n} photos'), t(TIER_NAME[k.tier]), k.pass1 ? secs(k.pass1.ms) : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0))].filter(Boolean).join(', ')}</T>
+            <T v="hint">{[fmtWhen(k.createdAt), tp(k.photos, '{n} photo', '{n} photos'), t(TIER_NAME[k.tier]), k.pass1 ? secs(k.pass1.ms) : '', usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0))].filter(Boolean).join(comma())}</T>
           </Pressable>
         );
       })}
@@ -194,7 +194,7 @@ function Compares({ rows }: { rows: Compare[] }) {
               <Pill v={r.status === 'failed' ? 'bad' : sm?.found ? 'bad' : sm?.unsure ? 'amber' : 'muted'} text={r.status === 'done' ? (sm?.found || sm?.unsure ? tp((sm?.found || 0) + (sm?.unsure || 0), '{n} spot', '{n} spots') : t('No new damage'))
                 : r.status === 'first' ? t('First walk-around') : r.status === 'limit' ? t('Trial limit') : r.status === 'running' ? t('Running') : t('Failed')} />
             </Row>
-            <T v="hint">{[fmtWhen(r.walkAt), sm ? tp(sm.compared, '{n} photo compared', '{n} photos compared') : '', r.serverMs ? secs(r.serverMs) : '', r.cost != null ? usd(r.cost) : '', r.error || ''].filter(Boolean).join(', ')}</T>
+            <T v="hint">{[fmtWhen(r.walkAt), sm ? tp(sm.compared, '{n} photo compared', '{n} photos compared') : '', r.serverMs ? secs(r.serverMs) : '', r.cost != null ? usd(r.cost) : '', r.error || ''].filter(Boolean).join(comma())}</T>
           </Pressable>
         );
       })}
@@ -232,10 +232,10 @@ function Scans({ rows }: { rows: Scan[] }) {
       {rows.slice(0, 50).map((r) => (
         <View key={r.id} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 4 }}>
           <Row>
-            <T v="h3" style={{ flex: 1 }}>{r.predicted && CLS[r.predicted] ? t(CLS[r.predicted].name) : t('Not identified')}{[r.vMake, r.vModel].filter(Boolean).length ? ', ' + [r.vMake, r.vModel].filter(Boolean).join(' ') : ''}</T>
+            <T v="h3" style={{ flex: 1 }}>{r.predicted && CLS[r.predicted] ? t(CLS[r.predicted].name) : t('Not identified')}{[r.vMake, r.vModel].filter(Boolean).length ? comma() + [r.vMake, r.vModel].filter(Boolean).join(' ') : ''}</T>
             {r.verdict ? <Pill v={r.verdict === 'correct' ? 'good' : 'bad'} text={r.verdict === 'correct' ? t('Correct') : r.actual && CLS[r.actual] ? t('Wrong, was {type}', { type: t(CLS[r.actual].lower) }) : t('Wrong')} /> : <Pill v="muted" text={t('Not rated')} />}
           </Row>
-          <T v="hint">{[fmtWhen(r.createdAt), tp(r.photos, '{n} photo', '{n} photos'), t(TIER_NAME[r.tier]), secs(r.ms), usd(r.cost), r.confidence != null ? t('{pct}% sure', { pct: Math.round(r.confidence * 100) }) : ''].filter(Boolean).join(', ')}</T>
+          <T v="hint">{[fmtWhen(r.createdAt), tp(r.photos, '{n} photo', '{n} photos'), t(TIER_NAME[r.tier]), secs(r.ms), usd(r.cost), r.confidence != null ? t('{pct}% sure', { pct: Math.round(r.confidence * 100) }) : ''].filter(Boolean).join(comma())}</T>
         </View>
       ))}
     </>
@@ -266,7 +266,7 @@ function Walks() {
       {rows.slice(0, 50).map((w) => (
         <Pressable key={w.id} onPress={() => router.push(`/walk/${w.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
           <T v="h3">{s.vanName(w)}</T>
-          <T v="hint">{[fmtWhen(w.createdAt), tp(w.frames, '{taken} of {n} photo', '{taken} of {n} photos', { taken: w.taken }), w.totalMs ? mmss(w.totalMs) : '', tp(w.retakes, '{n} retake', '{n} retakes')].filter(Boolean).join(', ')}</T>
+          <T v="hint">{[fmtWhen(w.createdAt), tp(w.frames, '{taken} of {n} photo', '{taken} of {n} photos', { taken: w.taken }), w.totalMs ? mmss(w.totalMs) : '', tp(w.retakes, '{n} retake', '{n} retakes')].filter(Boolean).join(comma())}</T>
         </Pressable>
       ))}
       {s.walks.length > rows.length ? <T v="hint">{tp(s.walks.length - rows.length, '{n} photo set from the library isn\'t counted here.', '{n} photo sets from the library aren\'t counted here.')}</T> : null}

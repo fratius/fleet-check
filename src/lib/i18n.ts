@@ -73,34 +73,86 @@ export const isRtl = () => !!LANGS.find((l) => l.code === current)?.rtl;
 /** The "go on" and "go back" arrows, pointing the way the language reads. */
 export const fwd = () => (isRtl() ? '‹' : '›');
 export const back = () => (isRtl() ? '›' : '‹');
-/** For dates and numbers (toLocaleString). Serbian is translated in the Latin script. */
-export const loc = () => (current === 'sr' ? 'sr-Latn' : current);
+/** The comma between the parts of a list on screen: "،" in Arabic and Persian (blind QA of cause 4, round 1). */
+export const comma = () => (isRtl() ? '، ' : ', ');
+/** A phone number or other left-to-right text kept in its order inside right-to-left text ("+49 151 …", not "… 151 49+"). */
+export const ltr = (x: string) => (isRtl() && x ? `\u2066${x}\u2069` : x);
+/**
+ * For dates and numbers (toLocaleString). Serbian is translated in the Latin script. English is the European kind
+ * (25/10/2026, 15:30), never the US one (10/25/2026): the app is for companies in Europe (blind test, cause 4.4).
+ */
+export const loc = () => (current === 'sr' ? 'sr-Latn' : current === 'en' ? 'en-GB' : current);
+/** A clock time: 24-hour in every language (Hindi showed English "am", cause 4.4). */
+export const TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+export const fmtTime = (ms: number) => new Date(ms).toLocaleTimeString(loc(), TIME);
 /** Switches the texts. The app remounts its screens after this (see lang.tsx). */
 export function applyDict(code: string, d: Dict) { current = code; dict = d; }
 
 /** Marks a text for translation where it can't be translated yet; translate it with t() where it is shown. */
 export const N_ = <S extends string>(s: S): S => s;
 
-/** Fills in {placeholders}; numbers are written the way the language writes them (48.213 in German). */
-const fill = (s: string, v?: Vars) => (v ? s.replace(/\{(\w+)\}/g, (m, k: string) => {
+/**
+ * Fills in {placeholders}; numbers are written the way the language writes them (48.213 in German). A value that ends
+ * in a full stop (a Hungarian or Croatian date, "2026. 10. 25.") takes the sentence's own full stop after it, so the
+ * sentence doesn't end in two (cause 4.4).
+ */
+const fill = (s: string, v?: Vars) => (v ? s.replace(/\{(\w+)\}(\.(?!\.))?/g, (m, k: string, stop: string | undefined) => {
   const x = k in v ? v[k] : null;
-  return x == null ? m : typeof x === 'number' ? x.toLocaleString(loc(), { maximumFractionDigits: 2 }) : String(x);
+  if (x == null) return m;
+  const out = typeof x === 'number' ? x.toLocaleString(loc(), { maximumFractionDigits: 2 }) : String(x);
+  return stop && /[^.]\.$/.test(out) ? out : out + (stop || '');
 }) : s);
+
+/*
+ * Texts kept for later (a change waiting on the phone: its title, why it stopped) are made with t() in the language of
+ * that moment. The texts t() and tp() made last are remembered with their English and values, so such a text can be
+ * shown again in the language chosen since (source() when it's kept, again() when it's shown; cause 4.4: a German
+ * screen showed a waiting change in English).
+ */
+export type Source = { k: string; v?: Record<string, unknown>; one?: string; n?: number };
+const made = new Map<string, Source>();
+const remember = (out: string, src: Source) => {
+  if (made.has(out)) made.delete(out);
+  made.set(out, src);
+  if (made.size > 400) made.delete(made.keys().next().value as string);
+};
+/** The English and values a text was made from by t() or tp(), when it's one of the last ones made; else null. */
+export function source(s: string | null | undefined): Source | null {
+  const src = s ? made.get(s) : undefined;
+  if (!src) return null;
+  // Values that are texts of the app themselves (a role's name) are kept by their English too.
+  const v: Record<string, unknown> = {};
+  for (const [k, x] of Object.entries(src.v || {})) v[k] = typeof x === 'string' && made.has(x) ? { src: source(x) } : x;
+  return { ...src, v };
+}
+/** A kept text in the language chosen now (`src` from source() when it was kept); as it is when there's none. */
+export function again(s: string, src: Source | null | undefined): string {
+  if (!src || typeof src.k !== 'string') return s;
+  const v: Vars = {};
+  for (const [k, x] of Object.entries(src.v || {})) {
+    const inner = x && typeof x === 'object' && 'src' in (x as object) ? (x as { src: Source | null }).src : null;
+    v[k] = inner ? again('', inner) : (x as string | number);
+  }
+  return src.one !== undefined && typeof src.n === 'number' ? tp(src.n, src.one, src.k, v) : t(src.k, v);
+}
 
 /** The text in the chosen language, with {placeholders} filled in. */
 export function t(s: string, v?: Vars): string {
   const e = dict[s];
   const out = typeof e === 'string' ? e || s : e && typeof e === 'object' ? e.other || s : s;
-  return fill(out, v);
+  const r = fill(out, v);
+  remember(r, { k: s, ...(v ? { v } : {}) });
+  return r;
 }
 
 /** A count: tp(3, '{n} photo', '{n} photos') → "3 photos", in each language's own plural forms. {n} is formatted. */
 export function tp(n: number, one: string, other: string, v?: Vars): string {
   const vars: Vars = { n: Number.isFinite(n) ? n.toLocaleString(loc()) : String(n), ...v };
   const e = dict[other];
-  if (e && typeof e === 'object') return fill(e[pluralCat(current, n)] || e.other || other, vars);
-  if (typeof e === 'string' && e) return fill(e, vars);
-  return fill(n === 1 ? one : other, vars);
+  const r = e && typeof e === 'object' ? fill(e[pluralCat(current, n)] || e.other || other, vars)
+    : typeof e === 'string' && e ? fill(e, vars) : fill(n === 1 ? one : other, vars);
+  remember(r, { k: other, one, n, ...(v ? { v } : {}) });
+  return r;
 }
 
 /**

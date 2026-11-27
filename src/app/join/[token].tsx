@@ -11,6 +11,10 @@ import { authMessage, useSession } from '@/lib/session';
 import { AiError, ai } from '@/lib/store';
 import { APP_STORE, GOOGLE_PLAY, androidUrl, appTarget } from '@/lib/stores';
 import { ROLE_NAME, type InvitePeek } from '@/lib/types';
+import { NAME_MAX, nameTooLong } from '@/lib/vans';
+
+/** A first or last name over 40 characters: said under the field and refused (the server refuses it too; cause 4.3). */
+const tooLong = () => t('A first or last name can have at most {n} characters.', { n: NAME_MAX });
 
 /**
  * Where an invite link lands: who invited you and to what, your details, an account, then how to put the
@@ -52,6 +56,7 @@ export default function Join() {
   const join = async () => {
     setErr(null);
     if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
+    if (nameTooLong(first) || nameTooLong(last)) { setErr(tooLong()); return; }
     if (!signedIn) {
       if (!email.trim()) { setErr(t('Enter your email address.')); return; }
       if (password.length < 6) { setErr(t('Use at least 6 characters for the password.')); return; }
@@ -123,8 +128,8 @@ export default function Join() {
 
         <Card>
           <T v="h3">{t('1. Your details')}</T>
-          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
-          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
+          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" error={nameTooLong(first) ? tooLong() : null} />
+          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" error={nameTooLong(last) ? tooLong() : null} />
           <Field label={t('Mobile number')} hint={t('so your manager can reach you')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" textContentType="telephoneNumber" placeholder="+49 170 1234567" />
           {role === 'driver' ? <Field label="Amazon Transporter ID" hint={t('optional')} value={tid} onChangeText={(x) => setTid(x.toUpperCase())} autoCapitalize="characters" autoCorrect={false} /> : null}
         </Card>
@@ -190,6 +195,7 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
     if (busy) return;
     if (!station) { setErr(t('Pick your station.')); return; }
     if (!first.trim() || !last.trim()) { setErr(t('Enter your first and last name.')); return; }
+    if (nameTooLong(first) || nameTooLong(last)) { setErr(tooLong()); return; }
     if (!signedIn) {
       if (!email.trim()) { setErr(t('Enter your email address.')); return; }
       if (password.length < 6) { setErr(t('Use at least 6 characters for the password.')); return; }
@@ -281,8 +287,8 @@ function CompanyJoin({ token, peek, onPeek }: { token: string; peek: InvitePeek;
 
         <Card>
           <T v="h3">{t('2. Your details')}</T>
-          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" />
-          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" />
+          <Field label={t('First name')} value={first} onChangeText={setFirst} autoCapitalize="words" textContentType="givenName" error={nameTooLong(first) ? tooLong() : null} />
+          <Field label={t('Last name')} value={last} onChangeText={setLast} autoCapitalize="words" textContentType="familyName" error={nameTooLong(last) ? tooLong() : null} />
         </Card>
 
         <Card>

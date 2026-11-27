@@ -11,7 +11,7 @@ import { queueVideo, useOutbox, type PickInfo } from '@/lib/outbox';
 import { useSession } from '@/lib/session';
 import { VIDEO_TITLE, type Vehicle, type Video } from '@/lib/types';
 import { recordVideo, type Recorded } from '@/lib/videos';
-import { fwd, N_, t } from '@/lib/i18n';
+import { comma, fwd, N_, t } from '@/lib/i18n';
 
 /** Plays a stored video. */
 export function VideoPlayer({ path, aspect }: { path: string; aspect: number }) {
@@ -32,7 +32,7 @@ export function VideoRow({ v }: { v: Video }) {
       {v.posterPath ? <Photo src={v.posterPath} style={{ width: 54, height: 72 }} /> : <View style={{ width: 54, height: 72, borderRadius: 3, backgroundColor: '#16181C', alignItems: 'center', justifyContent: 'center' }}><T v="h3" color="#fff">▶</T></View>}
       <View style={{ flex: 1, gap: 2 }}>
         <T v="h3">{v.late ? t('{title}, added later', { title: VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video') }) : VIDEO_TITLE[v.kind] ? t(VIDEO_TITLE[v.kind]) : t('Video')}</T>
-        <T v="small">{[v.byName, fmtWhen(v.recordedAt || v.createdAt), `${Math.round(v.durationMs / 1000)} s`].filter(Boolean).join(', ')}</T>
+        <T v="small">{[v.byName, fmtWhen(v.recordedAt || v.createdAt), `${Math.round(v.durationMs / 1000)} s`].filter(Boolean).join(comma())}</T>
       </View>
       <T v="h3" color={c.ink2}>{fwd()}</T>
     </Pressable>

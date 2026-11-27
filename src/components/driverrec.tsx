@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, Chip, F, Field, Row, T, useColors } from '@/components/ui';
-import { DateField, TimeField } from '@/components/pickers';
+import { DateField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { DueLine, FactSection, type FieldSpec, type Vals } from '@/components/vanfacts';
 import { CHECK_MONTHS, EMPLOYMENT, LICENCE_CLASSES, addMonths, driverDeadlines, fmtDay, lastCheck, parseDay, today } from '@/lib/fleet';
 import { DocScan } from '@/components/docscan';
@@ -12,7 +12,7 @@ import { ai, failText } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { useWaitingFor, useWaitingWrites, Waiting } from '@/components/uploads';
 import type { DriverRecord, Incident, IncidentKind, Member } from '@/lib/types';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { comma, loc, N_, t, tp } from '@/lib/i18n';
 import { vanName } from '@/lib/vans';
 
 /**
@@ -176,7 +176,7 @@ function Incidents({ m, incidents, canAdd }: { m: Member; incidents: Incident[] 
               {canAdd && !pending.has(i.id) ? <T v="small" style={{ textDecorationLine: 'underline' }}>{t('Edit')}</T> : null}
             </Row>
             {pending.has(i.id) ? <T v="small">{t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.')}</T> : null}
-            <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(', ')}</T>
+            <T v="small">{[fmtDay(i.day), i.time, s.vanName(i)].filter(Boolean).join(comma())}</T>
             {i.note ? <T v="body">{i.note}</T> : null}
             <T v="small">{i.updatedByName ? t('Added by {name}, changed by {by}', { name: i.byName, by: i.updatedByName }) : t('Added by {name}', { name: i.byName })}</T>
           </Pressable>
@@ -228,8 +228,8 @@ function IncidentForm({ m, prev, onDone }: { m: Member; prev?: Incident; onDone:
       <T v="medium">{prev ? t('Correct the incident') : t('New incident')}</T>
       <Row gap={6}>{(Object.keys(INCIDENT) as IncidentKind[]).map((k) => <Chip key={k} text={t(INCIDENT[k])} on={kind === k} onPress={() => setKind(k)} />)}</Row>
       <Row style={{ alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, minWidth: 140 }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
-        <View style={{ flex: 1, minWidth: 150 }}><TimeField label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} /></View>
+        <View style={{ flex: 1, minWidth: DAY_MIN }}><DateField label={t('Day')} value={day} onChangeText={setDay} max={today()} /></View>
+        <View style={{ flex: 1, minWidth: TIME_MIN }}><TimeField label={t('Time')} hint={t('optional')} value={time} onChangeText={setTime} /></View>
       </Row>
       {kind === 'fine' ? <><T v="medium">{t('For')}</T><Row gap={6}>{Object.entries(FINE).map(([k, label]) => <Chip key={k} text={t(label)} on={fineType === k} onPress={() => setFineType(k)} />)}</Row></> : null}
       {kind === 'accident' ? <><T v="medium">{t('Fault')}</T><Row gap={6}>{Object.entries(FAULT).map(([k, label]) => <Chip key={k} text={t(label)} on={atFault === k} onPress={() => setAtFault(k)} />)}</Row></> : null}

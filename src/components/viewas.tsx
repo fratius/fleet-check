@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { Card, Chip, F, MARKER, Pill, Row, T, useColors, hs } from '@/components/ui';
-import { N_, t, tj } from '@/lib/i18n';
+import { comma, N_, t, tj } from '@/lib/i18n';
 import { authMessage, useSession } from '@/lib/session';
 import { ROLE_NAME, type Role } from '@/lib/types';
 
@@ -97,7 +97,7 @@ export function ViewingStrip() {
   const s = useSession();
   const [busy, setBusy] = useState(false);
   if (!s.viewAs) return null;
-  const who = `${t(ROLE_NAME[s.viewAs.role])}${s.viewAs.st ? `, ${s.stationName(s.viewAs.st)}` : ''}`;
+  const who = `${t(ROLE_NAME[s.viewAs.role])}${s.viewAs.st ? `${comma()}${s.stationName(s.viewAs.st)}` : ''}`;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: MARKER, paddingHorizontal: 14, paddingVertical: 6, borderTopWidth: 2, borderColor: '#000' }}>
       <Pressable accessibilityRole="link" onPress={() => router.navigate('/account')} style={{ flex: 1 }}>

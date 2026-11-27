@@ -108,6 +108,46 @@ jobs:
           grep -m1 -E -A 40 "^\s*not ok" offline.log | grep -vE "^\s*$|duration_ms|^\s*---|^\s*\.\.\." | head -10 | while read -r l; do echo "::warning title=First failure::$l"; done || true
           grep -E "Error|error:" offline.log | grep -v "not ok" | head -10 | while read -r l; do echo "::error title=Offline log::$l"; done || true
 
+  layout:
+    name: Layout in every language
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci && npm ci --prefix tests && bash scripts/ci-functions.sh && npm --prefix functions run build
+      - name: The test browser
+        run: |
+          cd tests
+          npx playwright install --with-deps chromium || {
+            echo "::warning title=Test browser::Ubuntu's package servers didn't answer; using the system packages already on the runner."
+            npx playwright install chromium
+          }
+      - name: The web app for the emulators
+        run: FLEET_EMULATORS=1 npx expo export -p web --output-dir dist-e2e
+      # Blind test, 26 Nov 2026, cause 4: Arabic and Persian on the screen, and the main screens in all 32 languages at
+      # phone width (tests/layout.e2e.mjs, tests/layoutcheck.mjs).
+      - name: The main screens in every language, at phone width (a real browser, the emulators)
+        shell: bash
+        run: |
+          echo "ANTHROPIC_API_KEY=not-used-in-tests" > functions/.secret.local
+          echo "WEBPUSH_KEYS='$(node -e "process.stdout.write(JSON.stringify(require('./functions/node_modules/web-push').generateVAPIDKeys()))")'" >> functions/.secret.local
+          echo "SMTP_URL=none" >> functions/.secret.local
+          echo "STRIPE_SECRET_KEY=not-used-in-tests" >> functions/.secret.local
+          echo "STRIPE_WEBHOOK_SECRET=whsec_not_used_in_tests" >> functions/.secret.local
+          APP_DIR="$PWD/dist-e2e" npx -y "$FIREBASE_TOOLS" emulators:exec --only auth,firestore,functions,storage --project demo-fleet-check "npm --prefix tests run layout" 2>&1 | tee layout.log
+      - name: Show failures
+        if: always()
+        run: |
+          grep -E "^not ok|# (pass|fail)" layout.log | while read -r l; do echo "::notice title=Layout::$l"; done || true
+          grep -E "^Layout problems" -A 400 layout.log | head -400 > layout-problems.txt || true
+          head -60 layout-problems.txt | while read -r l; do echo "::warning title=Layout::$l"; done || true
+
   # The blind tester's brief and setup can't change in the same branch as the app, and the map of what the app must
   # do (qa/FEATURES.md) may only gain lines there (qa/guard.mjs; the Claude Code team's rule that checks can't edit
   # themselves).
@@ -160,6 +200,8 @@ jobs:
         run: node --test tests/waiting.test.mjs
       - name: A confirmation waits for the second tap, however slow (no timer)
         run: node --test tests/confirm.test.mjs
+      - name: Dates, times, sentences, names and search in every language
+        run: node --import ./tests/alias.mjs --test tests/formats.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)
         run: node --test tests/deploy.test.mjs
       - name: The blind tester stays blind, and its rules can't change with the app (qa/)

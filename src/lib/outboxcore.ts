@@ -65,6 +65,12 @@ export interface Job {
   /** A change: what to send, and what it is in the person's words (when it was made). */
   change?: Change;
   title?: string;
+  /**
+   * What the title and the reason it stopped were made from (lib/i18n.ts source()), so they show in the language
+   * chosen later, not the one of the moment they were made (cause 4.4).
+   */
+  titleSrc?: unknown;
+  errorSrc?: unknown;
   /** The person it's about (shown on their page). */
   personId?: string | null;
   /** The request id of the server step of a walk-around or video (functions/src/once.ts). */
@@ -92,6 +98,8 @@ export interface Ops {
   dropFiles(job: Job): Promise<void>;
   errKind(e: unknown): ErrKind;
   message(e: unknown): string;
+  /** What a text of the app was made from, to show it again in another language (lib/i18n.ts source()). */
+  source?(text: string): unknown;
   /** Waits, or less when the connection may be back. */
   nap(ms: number): Promise<void>;
   /** Did the connection just come back (lib/net.ts wake)? Then a try is shown as sending. */
@@ -203,6 +211,7 @@ export class Outbox {
     if (!j || j.status !== 'failed') return;
     j.status = 'queued';
     j.error = null;
+    j.errorSrc = null;
     this.emit();
     this.save();
     this.kick();
@@ -403,6 +412,7 @@ export class Outbox {
       if (e instanceof Stopped) { l.waiting = false; this.emit(); return; }
       j.status = 'failed';
       j.error = this.ops.message(e);
+      j.errorSrc = this.ops.source?.(j.error) ?? null;
       j.errorCode = typeof (e as { code?: unknown } | null)?.code === 'string' ? (e as { code: string }).code : null;
       const ex = (e as { details?: { v?: { expect?: unknown } } } | null)?.details?.v?.expect;
       j.errorExpect = typeof ex === 'string' ? ex : null;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { Button, Card, Pill, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { fwd, t, tp } from '@/lib/i18n';
+import { comma, fwd, t, tp } from '@/lib/i18n';
 import { allCompanies, type CompanyRow } from '@/lib/people';
 import { useSession } from '@/lib/session';
 import { ROLE_NAME } from '@/lib/types';
@@ -53,7 +53,7 @@ export function AllCompanies() {
           <View style={{ flex: 1, minWidth: 0 }}>
             <Row gap={6}><T v="medium" numberOfLines={1} style={{ flexShrink: 1 }}>{x.name}</T>{x.closed ? <Pill v="bad" text={t('Closed')} /> : null}</Row>
             {x.closed ? <T v="small">{t('Closed on {day}: read-only, only you see it.', { day: fmtWhen(x.closed.at).split(',')[0] })}</T> : null}
-            <T v="small">{[cnt(x.vans, '{n} van', '{n} vans'), cnt(x.people, '{n} person', '{n} people'), cnt(x.checks, '{n} damage check', '{n} damage checks'), x.createdAt ? t('since {day}', { day: fmtWhen(x.createdAt).split(',')[0] }) : ''].filter(Boolean).join(', ')}</T>
+            <T v="small">{[cnt(x.vans, '{n} van', '{n} vans'), cnt(x.people, '{n} person', '{n} people'), cnt(x.checks, '{n} damage check', '{n} damage checks'), x.createdAt ? t('since {day}', { day: fmtWhen(x.createdAt).split(',')[0] }) : ''].filter(Boolean).join(comma())}</T>
             {/* Signed up by themselves: how long their free trial still runs. */}
             {x.trial.trialEnd && (x.trial.standing === 'trial' || x.trial.standing === 'trial_over') ? (
               <Row gap={6}>

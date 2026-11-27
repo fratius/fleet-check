@@ -8,7 +8,7 @@ import { Button, Card, Chip, F, Field, MARKER, Notice, Pill, Plate, Row, Screen,
 import { CONTRACT, COSTS, DUE, HELP, INSURANCE, MILEAGE, OTHER, SIZE, VEHICLE, show, type FieldSpec } from '@/components/vanfacts';
 import { CLASSES, CLS } from '@/lib/frames';
 import { importPhotoPath, pickFleetFile, uploadFleetFile, type Picked } from '@/lib/fleetfile';
-import { N_, t, tp } from '@/lib/i18n';
+import { comma, N_, t, tp } from '@/lib/i18n';
 import { newId, prepare, upload } from '@/lib/images';
 import { QUEUED, sendCall } from '@/lib/outbox';
 import { useWaitingFor, Waiting } from '@/components/uploads';
@@ -154,7 +154,7 @@ function AddFleetPage() {
               {d.filled ? <T>{tp(d.filled, '{n} van already in the fleet got the details it didn\'t have yet.', '{n} vans already in the fleet got the details they didn\'t have yet.')}</T> : null}
               {d.unchanged ? <T v="hint">{tp(d.unchanged, '{n} van already in the fleet had everything already.', '{n} vans already in the fleet had everything already.')}</T> : null}
               {d.elsewhere ? <T v="hint">{tp(d.elsewhere, '{n} van is at another station and was left as it is.', '{n} vans are at another station and were left as they are.')}</T> : null}
-              {d.stations.length ? <T>{tp(d.stations.length, 'New station: {names}', 'New stations: {names}', { names: d.stations.join(', ') })}</T> : null}
+              {d.stations.length ? <T>{tp(d.stations.length, 'New station: {names}', 'New stations: {names}', { names: d.stations.join(comma()) })}</T> : null}
               <T v="hint">{t('Give the vans to drivers as usual, from the van or from the person: each handover gets its pick-up photos.')}</T>
             </>
           ) : <T>{t('There\'s no connection. The vans are saved by themselves when it\'s back; the strip at the bottom shows it.')}</T>}
@@ -284,7 +284,7 @@ function AddFleetPage() {
       {read.drivers ? <Notice text={t('The list names drivers. Vans aren\'t given to drivers from a file: give them out as usual, so each handover gets its pick-up photos.')} /> : null}
       {read.notes.map((n) => <T key={n} v="hint">{n}</T>)}
       {read.columns.length ? (
-        <T v="small">{t('Read: {columns}', { columns: read.columns.filter((x) => x.key !== 'driver').map((x) => `${x.heading} → ${labelOf(x.key)}`).join(', ') })}</T>
+        <T v="small">{t('Read: {columns}', { columns: read.columns.filter((x) => x.key !== 'driver').map((x) => `${x.heading} → ${labelOf(x.key)}`).join(comma()) })}</T>
       ) : null}
       {filling.length ? <T v="hint">{t('Vans already in the fleet keep everything they have: they only get the details they don\'t have yet.')}</T> : null}
 

@@ -13,7 +13,7 @@ import { apptState, apptWhen, openAppointments, serviceName } from '@/lib/servic
 import { watchMembers, peopleScope } from '@/lib/people';
 import { tourGaps, vanWarnings, type TourGap } from '@/lib/stats';
 import { BuyRow, WaitingCard } from '@/components/buy';
-import { fwd, loc, t, tp } from '@/lib/i18n';
+import { comma, fmtTime, fwd, loc, t, tp } from '@/lib/i18n';
 import { dueOn, routineName } from '@/components/routines';
 import { vanAlias, vanName } from '@/lib/vans';
 
@@ -95,7 +95,7 @@ export default function ReviewQueue() {
         {cats.map(([k, label, n]) => {
           const on = cat === k;
           return (
-            <Pressable key={k} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${label}, ${n}`} onPress={() => setCat(on ? 'all' : k)}
+            <Pressable key={k} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${label}${comma()}${n}`} onPress={() => setCat(on ? 'all' : k)}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingLeft: 10, paddingRight: 12, borderRadius: 4, borderWidth: 2,
                 borderColor: c.ink, backgroundColor: on ? c.ink : c.paper, opacity: n || on ? 1 : 0.55 }}>
               <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: color[k], borderWidth: k === 'review' ? 1.5 : 0, borderColor: '#000' }} />
@@ -148,12 +148,12 @@ export default function ReviewQueue() {
             {!todo.length && !problems.length ? <T v="hint">{t('Every check is done.')}</T> : null}
             {problems.map((d, i) => (
               <ListRow key={d.id} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: d.vehicleId, tab: 'details' } })}
-                title={`${s.vanName(d)} – ${routineName(d)}`} line={[`${d.byName}: ${d.note || ''}`, fmtWhen(d.at), where(d.stationId)].filter(Boolean).join(', ')}
+                title={`${s.vanName(d)} – ${routineName(d)}`} line={[`${d.byName}: ${d.note || ''}`, fmtWhen(d.at), where(d.stationId)].filter(Boolean).join(comma())}
                 right={<Pill v="bad" text={t('Problem')} />} />
             ))}
             {todo.map(({ v, x }, i) => (
               <ListRow key={`${v.id}-${x.id}`} first={i === 0 && !problems.length} onPress={() => router.push(`/vehicle/${v.id}`)}
-                title={`${vanName(v)} – ${routineName(x)}`} line={[v.assignedTo ? nameOf(v.assignedTo.driverId) || v.assignedTo.driverName || '' : '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(', ')}
+                title={`${vanName(v)} – ${routineName(x)}`} line={[v.assignedTo ? nameOf(v.assignedTo.driverId) || v.assignedTo.driverName || '' : '', t('due since {when}', { when: fmtWhen(x.since) }), where(v.stationId)].filter(Boolean).join(comma())}
                 right={<Pill v={Date.now() - x.since > 3 * 3600_000 ? 'bad' : 'amber'} text={dur(Date.now() - x.since)} />} />
             ))}
           </List>
@@ -169,18 +169,18 @@ export default function ReviewQueue() {
               const st = apptState(a);
               return (
                 <ListRow key={`appt-${a.id}`} first={i === 0} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: a.vehicleId, tab: 'service' } })}
-                  title={`${s.vanName(a)} – ${t('Appointment: {what}', { what: serviceName(a) })}`} line={[apptWhen(a), a.garage || '', where(a.stationId)].filter(Boolean).join(', ')}
+                  title={`${s.vanName(a)} – ${t('Appointment: {what}', { what: serviceName(a) })}`} line={[apptWhen(a), a.garage || '', where(a.stationId)].filter(Boolean).join(comma())}
                   right={<Pill v={st.v === 'default' ? 'amber' : st.v} text={st.text} />} />
               );
             })}
             {pdue.map(({ uid, name, stationId, x }, i) => (
               <ListRow key={`${uid}-${x.key}`} first={i === 0 && !appts.length} onPress={() => router.push({ pathname: '/person/[uid]', params: { uid, tab: 'record' } })}
-                title={`${name} – ${x.label}`} line={[x.day ? fmtDay(x.day) : '', where(stationId)].filter(Boolean).join(', ')}
+                title={`${name} – ${x.label}`} line={[x.day ? fmtDay(x.day) : '', where(stationId)].filter(Boolean).join(comma())}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
             {due.map(({ v, x }, i) => (
               <ListRow key={`${v.id}-${x.key}`} first={i === 0 && !pdue.length && !appts.length} onPress={() => router.push({ pathname: '/vehicle/[id]', params: { id: v.id, tab: ['hu', 'service', 'serviceKm', 'tyres'].includes(x.key) ? 'service' : 'details' } })}
-                title={`${vanName(v)} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(', ')}
+                title={`${vanName(v)} – ${x.label}`} line={[x.day ? fmtDay(x.day, x.key === 'hu') : '', where(v.stationId)].filter(Boolean).join(comma())}
                 right={<Pill v={x.state === 'overdue' ? 'bad' : 'amber'} text={x.note} />} />
             ))}
           </List>
@@ -203,7 +203,7 @@ export default function ReviewQueue() {
             {atVan.map((k, i) => (
               <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
                 title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)} line={[t('started {time} ago', { time: dur(Date.now() - k.createdAt) }),
-                  k.closeupBy ? t('to the review by {time} at the latest', { time: new Date(k.closeupBy).toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) }) : '', where(k.stationId)].filter(Boolean).join(', ')}
+                  k.closeupBy ? t('to the review by {time} at the latest', { time: fmtTime(k.closeupBy) }) : '', where(k.stationId)].filter(Boolean).join(comma())}
                 right={<Pill v="muted" text={tp(k.spots.length, '{done} of {n} spot', '{done} of {n} spots', { done: k.spots.filter((p) => p.verdict).length })} />} />
             ))}
           </List>
@@ -219,7 +219,7 @@ export default function ReviewQueue() {
               return (
                 <ListRow key={k.id} first={i === 0} onPress={() => router.push(`/check/${k.id}`)}
                   title={byOf(k) ? `${byOf(k)} – ${s.vanName(k)}` : s.vanName(k)}
-                  line={[k.review?.byName ? t('reviewed by {name}', { name: k.review.byName }) : '', k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(', ')}
+                  line={[k.review?.byName ? t('reviewed by {name}', { name: k.review.byName }) : '', k.review?.at ? fmtWhen(k.review.at) : '', where(k.stationId)].filter(Boolean).join(comma())}
                   right={<Pill v={n ? 'bad' : 'good'} text={n ? tp(n, '{n} damage', '{n} damages') : t('No damage')} />} />
               );
             })}
@@ -332,7 +332,7 @@ function MissingCard({ m, van, alias, where }: { m: Missing; van: string; alias:
       : a.endReason === 'taken over' ? (ended ? t('Had it until {when}, then {name} took it over', { when: fmtWhen(a.end), name: ended }) : t('Had it until {when}, then another driver took it over', { when: fmtWhen(a.end) }))
         : ended ? t('Had it until {when}, ended by {name}', { when: fmtWhen(a.end), name: ended }) : t('Had it until {when}', { when: fmtWhen(a.end) });
   return (
-    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}, ${problem}: ${van}`}>
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${a.vehicleId}`)} label={`${a.driverName}${comma()}${problem}: ${van}`}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
         {a.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
@@ -341,7 +341,7 @@ function MissingCard({ m, van, alias, where }: { m: Missing; van: string; alias:
         <T v="h3">{van}</T>
         {alias ? <T v="hint">{alias}</T> : null}
       </Row>
-      <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
+      <T v="hint">{[detail, where].filter(Boolean).join(comma())}</T>
     </ActionCard>
   );
 }
@@ -353,7 +353,7 @@ function GapCard({ g, van, alias, where }: { g: TourGap; van: string; alias: str
   const detail = g.kind === 'no-end' ? t('Tour started {when}; the kilometres are an estimate, no fuel figure', { when: fmtWhen(g.at) })
     : g.kind === 'no-start' ? t('Had the van since {when}', { when: fmtWhen(g.at) }) : t('Started {when}, no end photo yet', { when: fmtWhen(g.at) });
   return (
-    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}, ${problem}: ${van}`}>
+    <ActionCard band={c.alert} alert onPress={() => router.push(`/vehicle/${g.vehicleId}`)} label={`${g.driverName}${comma()}${problem}: ${van}`}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
         {g.driverName}<Text style={{ color: c.alert }}>{` – ${problem}`}</Text>
       </Text>
@@ -361,7 +361,7 @@ function GapCard({ g, van, alias, where }: { g: TourGap; van: string; alias: str
         <T v="h3">{van}</T>
         {alias ? <T v="hint">{alias}</T> : null}
       </Row>
-      <T v="hint">{[detail, where].filter(Boolean).join(', ')}</T>
+      <T v="hint">{[detail, where].filter(Boolean).join(comma())}</T>
     </ActionCard>
   );
 }
@@ -371,15 +371,15 @@ function WarnCard({ tour, van, alias, where }: { tour: Tour; van: string; alias:
   const c = useColors();
   const at = tour.end?.at || tour.startAt;
   return (
-    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: van, lights: tour.warnings.map((w) => t(w)).join(', ') })}>
+    <ActionCard band={c.warn} onPress={() => router.push(`/vehicle/${tour.vehicleId}`)} label={t('{van}, warning light: {lights}', { van: van, lights: tour.warnings.map((w) => t(w)).join(comma()) })}>
       <Text style={{ fontFamily: F.condBold, fontSize: hs(21), lineHeight: hs(25), color: c.ink }}>
-        {van}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(', ')}`}</Text>
+        {van}<Text style={{ color: c.warn }}>{` – ${tour.warnings.map((w) => t(w)).join(comma())}`}</Text>
       </Text>
       <Row>
         {alias ? <T v="hint">{alias}</T> : null}
         <Text style={{ fontFamily: F.semi, fontSize: 14, color: c.warn }}>{t('{time} ago', { time: dur(Date.now() - at) })}</Text>
       </Row>
-      <T v="hint">{[tour.end ? t('On {name}\'s end photo, {when}', { name: tour.driverName, when: fmtWhen(at) }) : t('On {name}\'s start photo, {when}', { name: tour.driverName, when: fmtWhen(at) }), where].filter(Boolean).join(', ')}</T>
+      <T v="hint">{[tour.end ? t('On {name}\'s end photo, {when}', { name: tour.driverName, when: fmtWhen(at) }) : t('On {name}\'s start photo, {when}', { name: tour.driverName, when: fmtWhen(at) }), where].filter(Boolean).join(comma())}</T>
     </ActionCard>
   );
 }
@@ -394,7 +394,7 @@ function ListRow({ title, line, right, first, onPress }: { title: string; line: 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderTopWidth: first ? 0 : 1, borderColor: c.rule, paddingTop: first ? 0 : 10 }}>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <T v="medium" numberOfLines={2}>{title}</T>
+        <T v="medium" numberOfLines={3}>{title}</T>
         <T v="small" numberOfLines={2}>{line}</T>
       </View>
       {right}

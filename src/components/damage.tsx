@@ -6,7 +6,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { dur } from '@/components/history';
 import { Button, F, MARKER, Pill, Row, T, ZoomPhoto, cap, fmtWhen, useColors, hs } from '@/components/ui';
 import { cropRegion, likelySame, whoHadIt, type Damage } from '@/lib/damage';
-import { fwd, loc, t, tp } from '@/lib/i18n';
+import { comma, fwd, loc, t, tp } from '@/lib/i18n';
 import { photoUrl } from '@/lib/images';
 import { addDamageNote, watchVanRecords } from '@/lib/people';
 import { useWhoDid } from '@/lib/names';
@@ -88,7 +88,7 @@ function useWho(d: Damage, history: Assignment[] | null, vehicleId: string) {
   const names = [...new Set(during.map((a) => a.driverName))];
   if (d.from == null) return { line: atFound ? t('{name} had the van when it was found.', { name: atFound.driverName }) : t('No earlier photos, so it can\'t be narrowed down.'), people: atFound ? [atFound] : [] };
   if (!names.length) return { line: t('Nobody had the van in that time.'), people: [] };
-  return { line: names.length === 1 ? t('{name} had the van.', { name: names[0] }) : tp(names.length, '{n} driver had the van: {names}.', '{n} drivers had the van: {names}.', { names: names.join(', ') }), people: during };
+  return { line: names.length === 1 ? t('{name} had the van.', { name: names[0] }) : tp(names.length, '{n} driver had the van: {names}.', '{n} drivers had the van: {names}.', { names: names.join(comma()) }), people: during };
 }
 
 /** The bubble on the 3D van: what, when, who, before and after, and the latest comment. */
@@ -205,7 +205,7 @@ function DamageCard({ d, history, notes, vehicleId, stationId, on, onShow }: {
         {d.note ? <T v="small">{t('Manager\'s note: {note}', { note: d.note })}</T> : null}
         {d.aiReason ? <T v="small">{t('AI: {reason}', { reason: d.aiReason })}</T> : null}
         {d.pos.approx ? <T v="small">{t('The dot is placed from the panel name, so its spot on the van is rough.')}</T> : null}
-        {d.later.length ? <T v="small">{t('Seen again: {dates}.', { dates: d.later.map((x) => fmtWhen(x.check.createdAt)).join(', ') })}</T> : null}
+        {d.later.length ? <T v="small">{t('Seen again: {dates}.', { dates: d.later.map((x) => fmtWhen(x.check.createdAt)).join(comma()) })}</T> : null}
       </Section>
 
       {s.staff ? <Notes d={d} notes={notes} vehicleId={vehicleId} stationId={stationId} /> : null}
@@ -305,7 +305,7 @@ export function KnownChooser({ pos, value, damages, excludeCheck, onPick }: {
   const near = likelySame(pos, damages, excludeCheck).slice(0, 3);
   const cur = value ? damages.find((d) => d.key === value || d.later.some((x) => x.key === value)) : null;
   const options = cur && !near.includes(cur) ? [cur, ...near] : near;
-  const label = (d: Damage) => `#${d.no} ${t(d.type)}, ${d.panel}`;
+  const label = (d: Damage) => `#${d.no} ${t(d.type)}${comma()}${d.panel}`;
   return (
     <View style={{ gap: 6, backgroundColor: c.page, borderRadius: 4, padding: 8 }}>
       <T v="small" color={c.ink}>{cur ? t('Already on the van: {damage}, found {when}. It stays one damage, seen again.', { damage: label(cur), when: fmtWhen(cur.foundAt) })

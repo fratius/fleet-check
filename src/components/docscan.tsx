@@ -18,7 +18,7 @@ import { ai, failText, type DocRead } from '@/lib/store';
 import { sendCall } from '@/lib/outbox';
 import { useWaitingFor, Waiting } from '@/components/uploads';
 import type { Member, Vehicle } from '@/lib/types';
-import { N_, t, tp } from '@/lib/i18n';
+import { comma, N_, t, tp } from '@/lib/i18n';
 
 /**
  * Filling in a van's or a driver's record from a photo of a document. The AI says what the document is and reads
@@ -240,7 +240,7 @@ export function DocScan({ target, v, m }: { target: 'van' | 'driver'; v?: Vehicl
             </View>
             {rs.filter((r) => !same(r.now, r.value, r.f)).map((r) => <FoundRow key={r.key} r={r} onToggle={() => setRow(r.key, { on: !r.on })} onInput={(text) => setRow(r.key, { input: text, on: true })} />)}
             {/* What the document says that's already saved, in one line. */}
-            {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">{t('Same as saved: {list}.', { list: rs.filter((r) => same(r.now, r.value, r.f)).map((r) => t(r.f.label)).join(', ') })}</T> : null}
+            {rs.some((r) => same(r.now, r.value, r.f)) ? <T v="small">{t('Same as saved: {list}.', { list: rs.filter((r) => same(r.now, r.value, r.f)).map((r) => t(r.f.label)).join(comma()) })}</T> : null}
           </View>
         ))}
         {m && isLicence && checking ? <Waiting j={checking} above /> : m && isLicence ? (

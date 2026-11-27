@@ -602,17 +602,19 @@ test('dates and times: digits get their dots and colon, the calendar and the clo
 
   // A4, A5: the calendar opens on this month, yesterday can't be picked; a day next month fills in the field.
   const n = new Date();
-  const label = (d) => new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+  // English dates are the European way round since cause 4.4 ("Thursday 26 November 2026", never the US order). Made
+  // by the browser itself: Node's own copy of the date rules puts a comma where Chrome's doesn't.
+  const label = (d) => page.evaluate((ms) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(ms), d);
   await page.getByRole('button', { name: 'Pick a day: Day' }).click();
   await button(page, 'Today').waitFor({ timeout: 10_000 });
   assert.ok(await page.locator('text=Mon >> visible=true').count(), 'weeks start on Monday');
   if (n.getDate() > 1) {
-    const y = page.getByRole('button', { name: label(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate() - 1)), exact: true });
+    const y = page.getByRole('button', { name: await label(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate() - 1)), exact: true });
     assert.equal(await y.getAttribute('aria-disabled'), 'true', 'yesterday can\'t be picked for an appointment');
   }
   await page.getByRole('button', { name: 'Next month' }).click();
   const pick = new Date(Date.UTC(n.getFullYear(), n.getMonth() + 1, 15));
-  await page.getByRole('button', { name: label(pick), exact: true }).click();
+  await page.getByRole('button', { name: await label(pick.getTime()), exact: true }).click();
   const iso = pick.toISOString().slice(0, 10);
   assert.equal(await day.inputValue(), iso.split('-').reverse().join('.'));
 

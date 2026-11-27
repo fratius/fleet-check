@@ -11,7 +11,7 @@ import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
 import { useSession } from '@/lib/session';
 import type { Assignment, Vehicle } from '@/lib/types';
 import { needsPickup } from '@/lib/videos';
-import { N_, t } from '@/lib/i18n';
+import { comma, N_, t } from '@/lib/i18n';
 import { vanName, vanAlias } from '@/lib/vans';
 
 /** The driver's open assignment of this van, when it was given to them and still needs its pick-up photos or video. */
@@ -34,7 +34,7 @@ export function PickupRequest({ v, a, compact }: { v: Vehicle; a: Assignment; co
   return (
     <View style={{ backgroundColor: '#E2FF1C', borderRadius: 4, padding: 14, gap: 8, borderWidth: 2, borderColor: '#000' }}>
       {compact ? <T v="medium" color="#000">{t('{name} gave you a van', { name: a.startedByName })}</T> : null}
-      <T v="h2" color="#000">{compact ? `${vanName(v)}${vanAlias(v) ? `, ${vanAlias(v)}` : ''}` : t('Take the pick-up video or photos')}</T>
+      <T v="h2" color="#000">{compact ? `${vanName(v)}${vanAlias(v) ? `${comma()}${vanAlias(v)}` : ''}` : t('Take the pick-up video or photos')}</T>
       <T v="body" color="#000">
         {t('{name} gave it to you {when} ({time} ago). Before you drive, film it or take its photos, so damage that was already there isn\'t put on you. Your fleet manager sees if they\'re missing.',
           { name: a.startedByName, when: fmtWhen(a.start), time: dur(Date.now() - a.start) })}

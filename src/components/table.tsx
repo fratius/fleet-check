@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { F, MARKER, useColors, hs } from '@/components/ui';
+import { F, MARKER, textWidth, useColors, useFontsReady, hs } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
 
 /**
@@ -25,15 +25,18 @@ export interface Col<R> {
 }
 export interface Sort { key: string; dir: 1 | -1 }
 
-const ROW = 44, HEAD = 56;
+const ROW = 44, HEAD = 64, HEAD_LINES = 3;
 
 /**
- * A column's width: what the screen asks for, made wider when the heading (in the person's language) wouldn't fit in
- * two lines or would break a word. Roughly 7.6 px per letter of the narrow heading font.
+ * A column's width: what the screen asks for, made wider when the heading (in the person's language, measured as it's
+ * drawn) wouldn't fit in three lines or would break a word, the sort arrow included (headings were cut in Bulgarian,
+ * Croatian, Greek: blind test, cause 4.2).
  */
-export function colWidth(col: { width: number; label: string }): number {
-  const word = Math.max(0, ...col.label.split(/\s+/).map((w) => w.length));
-  return Math.min(200, Math.max(col.width, Math.ceil(word * 7.6) + 28, Math.ceil((col.label.length * 7.6) / 2) + 28));
+export function colWidth(col: { width: number; label: string }, fonts?: number): number {
+  const px = hs(15);
+  const widest = Math.max(0, ...col.label.split(/\s+/).map((w) => textWidth(w, F.cond, px, fonts)));
+  const all = textWidth(`${col.label} ▼`, F.cond, px, fonts);
+  return Math.ceil(Math.min(260, Math.max(col.width, widest + textWidth(' ▼', F.cond, px, fonts) + 20, all / (HEAD_LINES - 0.8) + 24)));
 }
 
 export function sortRows<R>(rows: R[], cols: Col<R>[], sort: Sort | null): R[] {
@@ -54,7 +57,9 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
 }) {
   const c = useColors();
   const [limit, setLimit] = useState(60);
-  const [first, ...rest] = cols.map((x) => ({ ...x, width: colWidth(x) }));
+  // The headings are measured in the real font once it has loaded (colWidth).
+  const fonts = useFontsReady();
+  const [first, ...rest] = cols.map((x) => ({ ...x, width: colWidth(x, fonts) }));
   const shown = rows.slice(0, limit);
   const hasTotal = !!totalLabel && cols.some((x) => x.total);
   const head = (col: Col<R>, i: number, frozen: boolean) => {
@@ -63,7 +68,7 @@ export function DataTable<R>({ rows, cols, rowKey, onRow, sort, onSort, totalLab
       <Pressable key={col.key} accessibilityRole="button" accessibilityLabel={t('Sort by {column}', { column: col.label })} onPress={() => onSort({ key: col.key, dir: on ? (sort!.dir === 1 ? -1 : 1) : col.align === 'left' ? 1 : -1 })}
         style={{ width: col.width, height: HEAD, paddingHorizontal: 8, justifyContent: 'flex-end', paddingBottom: 6, alignItems: col.align === 'left' ? 'flex-start' : 'flex-end',
           backgroundColor: on ? MARKER : c.ink, borderLeftWidth: i && !frozen ? 1 : 0, borderColor: c.dark ? '#2A2E35' : '#2A2E35' }}>
-        <Text numberOfLines={2} style={{ fontFamily: F.cond, fontSize: hs(15), lineHeight: hs(17), color: on ? '#000' : c.paper, textAlign: col.align === 'left' ? 'left' : 'right' }}>
+        <Text numberOfLines={HEAD_LINES} style={{ fontFamily: F.cond, fontSize: hs(15), lineHeight: hs(17), color: on ? '#000' : c.paper, textAlign: col.align === 'left' ? 'left' : 'right' }}>
           {col.label}{on ? (sort!.dir === 1 ? ' ▲' : ' ▼') : ''}
         </Text>
       </Pressable>

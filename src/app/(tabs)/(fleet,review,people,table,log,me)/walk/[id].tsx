@@ -5,7 +5,7 @@ import { Pressable, View, useWindowDimensions } from 'react-native';
 import { CompareCard, DriverCompareCard } from '@/components/compare';
 import { KeepCard, useMediaGone } from '@/components/keep';
 import { Button, Card, Screen, ZoomPhoto, Stat, Stats, T, fmtWhen, mmss, secs, usd, useColors } from '@/components/ui';
-import { t, tp } from '@/lib/i18n';
+import { comma, t, tp } from '@/lib/i18n';
 import { useWhoDid } from '@/lib/names';
 import { fetchWalk } from '@/lib/people';
 import { useSession } from '@/lib/session';
@@ -67,7 +67,7 @@ export default function WalkScreen() {
           <Pressable key={k.id} onPress={() => router.push(`/check/${k.id}`)} style={{ backgroundColor: c.paper, borderWidth: 2, borderColor: c.ink, borderRadius: 4, padding: 12, gap: 2 }}>
             <T v="h3">{k.auto ? tp(k.spots.length, 'AI comparison: {n} spot to review', 'AI comparison: {n} spots to review')
               : tp(k.spots.length, 'Check: {n} spot, {dmg} damage', 'Check: {n} spots, {dmg} damage', { dmg })}</T>
-            <T v="hint">{[s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? t('{cost} est.', { cost: usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) }) : '', fmtWhen(k.createdAt)].filter(Boolean).join(', ')}</T>
+            <T v="hint">{[s.seesAiStats && k.pass1 ? t('found in {time}', { time: secs(k.pass1.ms) }) : '', s.seesAiStats && k.pass1 ? t('{cost} est.', { cost: usd((k.pass1?.cost || 0) + (k.pass2?.cost || 0)) }) : '', fmtWhen(k.createdAt)].filter(Boolean).join(comma())}</T>
           </Pressable>
         );
       })}

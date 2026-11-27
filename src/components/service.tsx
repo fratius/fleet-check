@@ -3,10 +3,10 @@ import { Pressable, Text, View } from 'react-native';
 
 import { UploadRow, useWaitingFor, Waiting } from '@/components/uploads';
 import { Button, Card, Chip, F, Field, Notice, Pill, Row, T, useColors } from '@/components/ui';
-import { DateField, MonthField, TimeField } from '@/components/pickers';
+import { DateField, MonthField, TimeField, DAY_MIN, TIME_MIN } from '@/components/pickers';
 import { DueLine, HuSticker, fromInput, saveDetails, toInput, type FieldSpec } from '@/components/vanfacts';
 import { eur, fmtDay, km, today } from '@/lib/fleet';
-import { N_, t, tp } from '@/lib/i18n';
+import { comma, N_, t, tp } from '@/lib/i18n';
 import { newId } from '@/lib/images';
 import { QUEUED, sendCall, useOutbox } from '@/lib/outbox';
 import { ADD_KINDS, BOOK_KINDS, HU_RESULT, REMIND, REMIND_DEFAULT, SERVICE_HINT, SERVICE_NAME, apptState, apptWhen, huDue, openAppointments, readTime, remindLabel, serviceDue, serviceName, visitOf, watchServices } from '@/lib/service';
@@ -353,7 +353,7 @@ function ServiceRow({ r, first, onFix }: { r: ServiceRecord; first: boolean; onF
         <T v="h3" style={{ flex: 1 }}>{serviceName(r)}</T>
         {r.cost != null ? <Text style={{ fontFamily: F.condBold, fontSize: 18, color: c.ink, fontVariant: ['tabular-nums'] }}>{eur2(r.cost)}</Text> : <T v="small">{t('no cost yet')}</T>}
       </View>
-      <T v="small">{[fmtDay(r.day), km(r.km), r.garage || ''].filter(Boolean).join(', ')}</T>
+      <T v="small">{[fmtDay(r.day), km(r.km), r.garage || ''].filter(Boolean).join(comma())}</T>
       {r.kind === 'hu' && r.result ? (
         <Row gap={6}>
           <Pill v={r.result === 'passed' ? 'good' : r.result === 'defects' ? 'amber' : 'bad'} text={t(HU_RESULT[r.result])} />
@@ -420,7 +420,7 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
         title: move ? t('Change the appointment: {what} on {van}', { what, van: vanName(v) }) : t('Appointment: {what} on {van}', { what, van: vanName(v) }),
         vehicleId: v.id, vehicleName: vanName(v),
       });
-      const when = `${fmtDay(dayV)}, ${timeV}`;
+      const when = `${fmtDay(dayV)}${comma()}${timeV}`;
       onDone(r, r !== QUEUED && r?.unchanged ? t('Nothing changed.')
         : r !== QUEUED && remind > 0 && r?.remindAt == null ? t('Booked for {when}. No reminder: that time has already passed.', { when })
           : move ? t('Changed to {when}. What it was before is kept with it.', { when }) : t('Booked for {when}.', { when }));
@@ -437,8 +437,8 @@ function AppointmentForm({ v, appt, onDone, onCancel }: { v: Vehicle; appt?: Ser
       </View>
       {kind === 'other' ? <Field label={t('What for')} value={name} onChangeText={setName} maxLength={60} placeholder={t('For example: windscreen, battery, air conditioning')} /> : null}
       <Row>
-        <View style={{ flex: 1, minWidth: 150 }}><DateField label={t('Day')} value={day} onChangeText={setDay} min={today()} /></View>
-        <View style={{ flex: 1, minWidth: 110 }}><TimeField label={t('Time')} value={time} onChangeText={setTime} /></View>
+        <View style={{ flex: 1, minWidth: DAY_MIN }}><DateField label={t('Day')} value={day} onChangeText={setDay} min={today()} /></View>
+        <View style={{ flex: 1, minWidth: TIME_MIN }}><TimeField label={t('Time')} value={time} onChangeText={setTime} /></View>
       </Row>
       <Field label={kind === 'hu' ? t('Inspection centre') : t('Garage')} hint={t('optional')} value={garage} onChangeText={setGarage} maxLength={80} />
       <Field label={t('Notes')} hint={t('optional')} value={note} onChangeText={setNote} maxLength={1000} multiline placeholder={t('For example: booking number, who to ask for, bring the spare key')} />
@@ -491,7 +491,7 @@ function AppointmentCard({ a, v, canAct, onFill, onMove, onCancelled }: {
         <T v="h3" style={{ flex: 1 }}>{serviceName(a)}</T>
         <Pill v={st.v} text={st.text} />
       </View>
-      <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(a), a.garage || ''].filter(Boolean).join(', ')}</Text>
+      <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(a), a.garage || ''].filter(Boolean).join(comma())}</Text>
       {a.note ? <T v="body">{a.note}</T> : null}
       <T v="small">{a.drivers === false ? t('Drivers don\'t see this appointment.') : t('Drivers see it on the van.')}</T>
       <T v="small">{a.remind === 0 ? t('No reminder.') : a.remindAt ? t('Reminder {when}.', { when: remindLabel(a.remind) }) : a.remindedAt ? t('Reminder sent.') : t('No reminder: that time had already passed.')}</T>
@@ -528,7 +528,7 @@ function PastAppointment({ a, first }: { a: ServiceAppointment; first: boolean }
         <T v="h3" style={{ flex: 1 }}>{serviceName(a)}</T>
         <Pill v={a.status === 'done' ? 'good' : 'muted'} text={a.status === 'done' ? t('Done') : t('Appointment cancelled')} />
       </View>
-      <T v="small">{[apptWhen(a), a.garage || ''].filter(Boolean).join(', ')}</T>
+      <T v="small">{[apptWhen(a), a.garage || ''].filter(Boolean).join(comma())}</T>
       <T v="small">{a.status === 'done'
         ? t('Booked by {name}. Service filled in by {who}.', { name: a.byName, who: a.doneByName || '' })
         : a.reason ? t('Booked by {name}. Cancelled by {who}: {reason}', { name: a.byName, who: a.cancelledByName || '', reason: a.reason })
@@ -553,7 +553,7 @@ export function GarageVisitCard({ v }: { v: Vehicle }) {
         <T v="h3" style={{ flex: 1 }}>{t('Booked at the garage: {what}', { what: serviceName(g) })}</T>
         <Pill v={st.v === 'bad' ? 'amber' : st.v} text={st.v === 'bad' ? t('Now') : st.text} />
       </View>
-      <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(g), g.garage || ''].filter(Boolean).join(', ')}</Text>
+      <Text style={{ fontFamily: F.semi, fontSize: 17, color: c.ink }}>{[apptWhen(g), g.garage || ''].filter(Boolean).join(comma())}</Text>
       <T v="small">{t('The van goes to the garage then. Ask your fleet manager if you have it that day.')}</T>
     </View>
   );

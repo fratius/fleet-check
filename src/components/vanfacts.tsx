@@ -13,7 +13,7 @@ import { watchKmCorrections } from '@/lib/people';
 import { sendCall } from '@/lib/outbox';
 import { useWaitingFor, Waiting } from '@/components/uploads';
 import { vanName } from '@/lib/vans';
-import { N_, loc, t, tp } from '@/lib/i18n';
+import { comma, loc, N_, t, tp } from '@/lib/i18n';
 import { MIN_YEAR, maxYear, numProblem } from '@/lib/numbers';
 
 /**
@@ -110,7 +110,7 @@ export function show(f: FieldSpec, x: unknown): string {
     case 'day': return fmtDay(String(x));
     case 'month': return fmtDay(String(x), true);
     case 'choice': return f.options?.[String(x)] ? t(f.options[String(x)]) : String(x);
-    case 'multi': return (x as string[]).map((k) => (f.options?.[k] ? t(f.options[k]) : k)).join(', ');
+    case 'multi': return (x as string[]).map((k) => (f.options?.[k] ? t(f.options[k]) : k)).join(comma());
     case 'bool': return x ? t(f.options?.yes || 'Yes') : t(f.options?.no || 'No');
     default: return String(x);
   }
@@ -383,7 +383,7 @@ export function DueLine({ x }: { x: Deadline }) {
       <View style={{ width: 10, height: 10, borderRadius: 5, marginTop: 6, backgroundColor: x.state === 'ok' ? 'transparent' : color, borderWidth: 2, borderColor: color }} />
       <View style={{ flex: 1 }}>
         <T v="medium">{x.label}</T>
-        <Text style={{ fontFamily: x.state === 'ok' ? F.body : F.semi, fontSize: 14, color }}>{x.day ? `${fmtDay(x.day, x.key === 'hu')}, ${x.note}` : x.note}</Text>
+        <Text style={{ fontFamily: x.state === 'ok' ? F.body : F.semi, fontSize: 14, color }}>{x.day ? `${fmtDay(x.day, x.key === 'hu')}${comma()}${x.note}` : x.note}</Text>
       </View>
     </View>
   );

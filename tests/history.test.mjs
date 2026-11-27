@@ -1713,6 +1713,9 @@ test('people delete their own account: login and profile go, the company keeps i
   // A driver who has a van.
   const { invites } = await S.own.call('createInvite', { orgId: S.org, role: 'driver', stationId: S.s1, count: 1 });
   const gus = await person('Gus Gone');
+  // A name over 40 characters is refused with a message here too (cause 4.3); the invite still works after.
+  const long = await gus.call('acceptInvite', { token: invites[0].token, details: { firstName: 'Gus', lastName: 'G'.repeat(41), phone: '+49 151 9', transporterId: 'G1' } }).then(() => null, (x) => x);
+  assert.ok(long && /invalid-argument/.test(String(long.code)) && /at most 40 characters/.test(long.message), String(long?.message));
   await gus.call('acceptInvite', { token: invites[0].token, details: { firstName: 'Gus', lastName: 'Gone', phone: '+49 151 9', transporterId: 'G1' } });
   const vr = doc(collection(S.own.db, 'orgs', S.org, 'vehicles'));
   await setDoc(vr, { name: 'Van G', plate: 'GONE1', cls: 'van', stationId: S.s1, createdAt: Date.now(), createdBy: S.own.uid });
@@ -2014,6 +2017,13 @@ test('drivers sign up with the company\'s link, pick a station, and wait for an 
   // Gina picks station 1. Until someone approves, she isn't a member and sees nothing of the company.
   await fails(gina.call('requestToJoin', { token: link.token, stationId: 'nope', details: details('Gina', 'Newdriver') }), 'not-found');
   await fails(gina.call('requestToJoin', { token: link.token, stationId: S.s1, details: { firstName: 'Gina' } }), 'invalid-argument');
+  // Blind test, 26 Nov 2026, cause 4.3: a name over 40 characters is refused with a message, not cut without a word.
+  for (const d of [details('Gina', 'N'.repeat(41)), details('G'.repeat(41), 'Newdriver')]) {
+    const e = await gina.call('requestToJoin', { token: link.token, stationId: S.s1, details: d }).then(() => null, (x) => x);
+    assert.ok(e, 'refused');
+    assert.match(String(e.code), /invalid-argument/);
+    assert.match(e.message, /at most 40 characters/);
+  }
   const r = await gina.call('requestToJoin', { token: link.token, stationId: S.s1, details: details('Gina', 'Newdriver', { transporterId: 'A1' }) });
   assert.equal(r.stationName, 'DXX1');
   assert.equal((await gina.call('peekInvite', { token: link.token })).status, 'pending');

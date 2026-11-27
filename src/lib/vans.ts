@@ -32,8 +32,28 @@ export function vanMatches(v: Named, query: string): boolean {
   return plateKey(v.plate).includes(q) || plateKey(v.name).includes(q);
 }
 
-/** Names as people type them: small letters, no accents (ș, é, ü), single spaces. */
-export const nameKey = (x: string | null | undefined) => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+// Letters that are a letter of their own, not one with an accent, but that people type as the plain one: Turkish ı
+// and İ (a search for "yılmaz" found nobody: blind test, cause 4.4), Polish ł, ø, æ, œ, đ, ß.
+const PLAIN: Record<string, string> = { ı: 'i', ł: 'l', đ: 'd', ð: 'd', ø: 'o', æ: 'ae', œ: 'oe', ß: 'ss', þ: 'th', ħ: 'h' };
+/** Names as people type them: small letters, no accents (ș, é, ü, İ), ı ł ß as i l ss, single spaces. */
+export const nameKey = (x: string | null | undefined) => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  .replace(/[ıłđðøæœßþħ]/g, (c) => PLAIN[c] || c).replace(/\s+/g, ' ').trim();
+
+/** What a search box shows: the text has what was typed, as names are matched (ı and i, accents, capitals). */
+export const textMatches = (text: string | null | undefined, query: string) => nameKey(text).includes(nameKey(query));
+
+/** The longest first or last name (the server refuses longer ones with a message, never cuts them: cause 4.3). */
+export const NAME_MAX = 40;
+export const nameTooLong = (x: string | null | undefined) => (x || '').trim().length > NAME_MAX;
+
+/**
+ * Up to two initials for a person's circle: the first letter of the first two words that start with a letter or a
+ * digit. An emoji or a sign is skipped, never cut in half (an emoji name broke the circle: cause 4.3).
+ */
+export function initials(name: string | null | undefined): string {
+  const firsts = (name || '').split(/\s+/).map((w) => w.match(/[\p{L}\p{N}]/u)?.[0]).filter((c): c is string => !!c);
+  return firsts.slice(0, 2).map((c) => c.toLocaleUpperCase()).join('') || '?';
+}
 
 /**
  * The People search (product owner, 2026-11-23): like the Fleet search, what was typed appears in that order in the

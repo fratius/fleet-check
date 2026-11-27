@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, ConfirmButton, F, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
-import { t, tp } from '@/lib/i18n';
+import { again, t, tp, type Source } from '@/lib/i18n';
 import { looksOnline, useWaitingCount } from '@/lib/net';
 import { jobTitle, outbox, pendingHandover, useOutbox, type Job } from '@/lib/outbox';
 import type { Live } from '@/lib/outboxcore';
@@ -24,7 +24,7 @@ export function isBehind(jobs: Job[], j: Job) {
 
 /** One line: uploading, waiting for the connection, sending, or why it stopped. */
 export function stateText(j: Job, l: Live | undefined, behind = false) {
-  if (j.status === 'failed') return j.error || t('Something went wrong. Try again.');
+  if (j.status === 'failed') return j.error ? again(j.error, j.errorSrc as Source | null) : t('Something went wrong. Try again.');
   if (j.type === 'change') {
     if (!l || !l.step) return behind ? t('Saved on this phone. It goes through after the one before it.') : t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.');
     if (l.waiting) return t('No connection. It\'s saved on this phone and goes through by itself when there\'s a connection.');
