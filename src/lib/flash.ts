@@ -19,8 +19,13 @@ export function flash(key: string, text: string, tag?: string) {
   subs.forEach((f) => f());
 }
 
-/** `holds(tag)`: whether what a tagged message says is still so. Untagged messages stay as long as the page. */
-export function useFlash(key: string, holds?: (tag: string) => boolean): string | null {
+/**
+ * `holds(tag, at)`: whether what a tagged message (shown since `at`) says is still so: true, false (it isn't any more,
+ * for example the van was retired or a change to it was made since: the message goes at once), or null (the page
+ * can't tell: until it first agreed, the message shows for a moment; after that, it goes). Untagged messages stay as
+ * long as the page.
+ */
+export function useFlash(key: string, holds?: (tag: string, at: number) => boolean | null): string | null {
   const [m, setM] = useState<Msg | null>(null);
   // Whether the page's data agreed with the message once: after that, the first time it doesn't, the message goes.
   const seen = useRef(false);
@@ -44,7 +49,8 @@ export function useFlash(key: string, holds?: (tag: string) => boolean): string 
   if (!m) return null;
   if (!m.tag || !holds) return m.text;
   if (gone.current) return null;
-  if (holds(m.tag)) { seen.current = true; return m.text; }
-  if (seen.current || Date.now() - m.at >= LAG) { gone.current = true; return null; }
+  const r = holds(m.tag, m.at);
+  if (r === true) { seen.current = true; return m.text; }
+  if (r === false || seen.current || Date.now() - m.at >= LAG) { gone.current = true; return null; }
   return m.text;
 }

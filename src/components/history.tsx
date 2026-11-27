@@ -218,7 +218,8 @@ export function DriverPicker({ v, onDone }: { v: Vehicle; onDone: () => void }) 
     } finally { setBusy(null); }
   };
   if (ask) return <AnywayAsk text={ask.text} busy={!!busy} onAnyway={() => give(ask.m, ask.expect)} onCancel={() => { setAsk(null); onDone(); }} />;
-  if (waiting) return <T v="small">{t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>;
+  // Not while this picker sends it (it shows "Saving…" on the row, and asks here if the van changed meanwhile).
+  if (waiting && !busy) return <T v="small">{t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>;
   return (
     <View style={{ gap: 8 }}>
       <T v="medium">{t('Give {van} to', { van: vanName(v) })}</T>
@@ -272,7 +273,7 @@ export function VanPicker({ m, onDone }: { m: Member; onDone: () => void }) {
     } finally { setBusy(null); }
   };
   if (ask) return <AnywayAsk text={ask.text} busy={!!busy} onAnyway={() => give(ask.v, ask.expect)} onCancel={() => { setAsk(null); onDone(); }} />;
-  if (waiting) return <T v="small">{t('Giving {name} a van is waiting to be sent (at the top of this page).', { name: m.name })}</T>;
+  if (waiting && !busy) return <T v="small">{t('Giving {name} a van is waiting to be sent (at the top of this page).', { name: m.name })}</T>;
   return (
     <View style={{ gap: 8 }}>
       <T v="medium">{t('Give {name} a van', { name: m.name })}</T>

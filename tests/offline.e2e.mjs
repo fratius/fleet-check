@@ -1562,6 +1562,126 @@ test('cause 3b (5): the van page shows the review right after it is finished, wi
   } finally { await ctx.close(); }
 });
 
+// Blind test round 1 of cause 3b (27 Nov 2026): what the tester found, each as a test first.
+test('cause 3b, round 1, F01: a van made free offline in a second tab, from the person page, waits visibly, survives an offline reload, goes through once', async () => {
+  await sbWorld();
+  const a = await sbPage(SB_MGR);
+  // The second tab of the same browser: the first one sends what waits (the tester had two tabs).
+  const page = await a.ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  try {
+    await page.goto(`${URL0}/person/${SB_DEV.uid}`);
+    await visible(page, 'B-SB 3 ›').click();
+    await button(page, 'Make the van free').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(3000);
+    await a.ctx.setOffline(true);
+    await button(page, 'Make the van free').click();
+    await button(page, 'Tap again: the van becomes free').click();
+    // Waiting, visibly, in place of the button; the strip says there's no connection (not "Sending").
+    await visible(page, 'A change to who has this van is waiting to be sent').waitFor({ timeout: 30_000 });
+    await visible(page, 'Waiting to be sent').waitFor({ timeout: 10_000 });
+    assert.equal(await button(page, 'Make the van free').count(), 0, 'not offered again while it waits');
+    await page.locator('text=/No connection/ >> visible=true').first().waitFor({ timeout: 15_000 });
+    assert.equal(await page.locator('text=/^Sending/ >> visible=true').count(), 0, 'not "Sending" without a connection');
+    // Reloaded without a connection: still there.
+    await page.reload();
+    await visible(page, 'Make B-SB 3 free').waitFor({ timeout: 60_000 });
+    assert.equal(await button(page, 'Make the van free').count(), 0);
+    await a.ctx.setOffline(false);
+    await until(async () => (await sbVan(3)).assignedTo == null || null, 60_000, 'the van to become free');
+    await page.waitForTimeout(3000);
+    const dev = (await db.doc(`orgs/${SB_ORG}/assignments/sbA3`).get()).data();
+    assert.equal(dev.endReason, 'ended');
+    const all = await db.collection(`orgs/${SB_ORG}/assignments`).where('vehicleId', '==', SB_VAN(3)).get();
+    assert.equal(all.size, 1, 'nothing else happened to the van');
+    await until(async () => (await visible(page, 'Make B-SB 3 free').count()) === 0 || null, 30_000, 'the waiting item to go');
+    assert.deepEqual([...errors, ...a.errors], []);
+  } finally { await a.ctx.close(); }
+});
+
+test('cause 3b, round 1, F03: the question about a give that waited has Cancel, which changes nothing', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(2)}`);
+    await button(page, 'Give to someone else').click();
+    await visible(page, SB_BEN.name).waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(3000);
+    await ctx.setOffline(true);
+    await visible(page, SB_BEN.name).click();
+    await visible(page, 'Saved on this phone. It goes through by itself, you don\'t need to do it again.').waitFor({ timeout: 30_000 });
+    await sbGive(2, SB_ALI, 'sbA2b');
+    await ctx.setOffline(false);
+    await visible(page, 'Ali Driver has this van now. Give it to Ben Driver anyway?').waitFor({ timeout: 90_000 });
+    assert.equal(await button(page, 'Remove').count(), 0, 'Cancel, not Remove');
+    assert.equal(await button(page, 'Try again').count(), 0);
+    await button(page, 'Cancel').click();
+    await until(async () => (await visible(page, 'Ali Driver has this van now').count()) === 0 || null, 30_000, 'the question to go');
+    await page.waitForTimeout(3000);
+    assert.equal((await sbVan(2)).assignedTo.driverId, SB_ALI.uid, 'nothing changed');
+    const ben = await db.collection(`orgs/${SB_ORG}/assignments`).where('vehicleId', '==', SB_VAN(2)).where('driverId', '==', SB_BEN.uid).get();
+    assert.equal(ben.size, 0, 'not given to Ben');
+    await visible(page, SB_ALI.name).waitFor({ timeout: 10_000 });
+    assert.equal(await visible(page, 'A change to who has this van').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b, round 1, F02: a fleet manager retiring a van they just gave out: "has it now" goes at the tap, not after a reload', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  const banner = () => page.locator('text=/has B-SB 5 now/ >> visible=true');
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(5)}`);
+    await button(page, 'Give to a driver').click();
+    await visible(page, SB_ALI.name).click();
+    await banner().waitFor({ timeout: 60_000 });
+    await tab(page, 'Details').click();
+    await button(page, 'Retire van').click();
+    await button(page, 'Tap again to retire').click();
+    // Looked at 3 s after the tap, as the tester did: gone, whether or not the server has answered yet.
+    await until(async () => (await banner().count()) === 0 || null, 3000, 'the banner to go within 3 s of the tap');
+    await until(async () => (await sbVan(5)).retired === true || null, 30_000, 'the retire');
+    await page.waitForTimeout(2000);
+    assert.equal(await banner().count(), 0, 'and it doesn\'t come back');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b (1), online: a give or make-free from a page that missed a change asks on the screen; "Give it anyway" goes through, Cancel changes nothing', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(1)}`);
+    await button(page, 'Give to someone else').click();
+    await visible(page, SB_DEV.name).waitFor({ timeout: 30_000 });
+    // The page stops hearing about changes (its live updates are cut), so it shows Ben while someone gives the van to Cem.
+    await page.route('**/google.firestore.v1.Firestore/Listen/**', (r) => r.abort());
+    await page.waitForTimeout(2000);
+    await sbGive(1, SB_CEM, 'sbA1c');
+    await visible(page, SB_DEV.name).click();
+    await visible(page, 'Cem Driver has this van now. Give it to Dev Driver anyway?').waitFor({ timeout: 60_000 });
+    assert.equal((await sbVan(1)).assignedTo.driverId, SB_CEM.uid, 'nothing changed yet');
+    assert.equal(await button(page, 'Try again').count(), 0);
+    await button(page, 'Give it anyway').click();
+    await until(async () => (await sbVan(1)).assignedTo?.driverId === SB_DEV.uid || null, 60_000, 'the van to go to Dev');
+    assert.equal((await db.doc(`orgs/${SB_ORG}/assignments/sbA1c`).get()).data().endReason, 'reassigned');
+    // Still not hearing: someone gives it to Ben, and the manager makes it free from the page that shows Dev.
+    await sbGive(1, SB_BEN, 'sbA1d');
+    await button(page, 'Make the van free').click();
+    await button(page, 'Tap again: the van becomes free').click();
+    await visible(page, 'Ben Driver has this van now. Make it free anyway?').waitFor({ timeout: 60_000 });
+    await button(page, 'Make it free anyway').waitFor({ timeout: 5000 });
+    await button(page, 'Cancel').click();
+    await page.waitForTimeout(3000);
+    assert.equal((await sbVan(1)).assignedTo?.assignmentId, 'sbA1d', 'Cancel changed nothing');
+    assert.equal((await db.doc(`orgs/${SB_ORG}/assignments/sbA1d`).get()).data().end, null);
+    await page.unroute('**/google.firestore.v1.Firestore/Listen/**');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
 // ---------- 27 Nov 2026: the app creator stuck on "The plan has ended" while viewing a company as a manager ----------
 // The product owner opened a company that signed up with Stripe's test keys and looked at it as a manager. Its plan had
 // ended, so the payment screen came instead of the tabs, without the strip that has "Back to me"; View as is kept on the

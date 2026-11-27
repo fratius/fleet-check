@@ -119,6 +119,18 @@ function ready() {
  */
 let uidNow: string | null = null;
 let runner = Platform.OS !== 'web';
+/**
+ * Changes this tab added while another tab runs the jobs, until this tab sees them in the saved list or hears they
+ * went through: two tabs saving the list at the same moment can't drop one (blind test, cause 3b, F01). The tab that
+ * runs the jobs is also told of each one directly ("add" below); a change sent twice is done once (its request id).
+ */
+const addedHere = new Map<string, Job>();
+const withAddedHere = (list: Job[]) => {
+  const ids = new Set(list.map((j) => j.id));
+  for (const id of [...addedHere.keys()]) if (ids.has(id)) addedHere.delete(id);
+  const keep = [...addedHere.values()].filter((j) => !outbox.forgotten.has(j.id));
+  return keep.length ? [...list, ...keep] : list;
+};
 const readStored = async () => { try { const l = JSON.parse((await AsyncStorage.getItem(KEY)) || '[]'); return Array.isArray(l) ? (l as Job[]) : []; } catch { return []; } };
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
   const locks = typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: { request: (name: string, cb: () => Promise<void>) => Promise<void> } }).locks : undefined;
@@ -126,14 +138,18 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
     locks.request('fratius-outbox', async () => {
       runner = true;
       await ready();
-      outbox.replace(await readStored());
+      const stored = await readStored();
+      const all = withAddedHere(stored);
+      addedHere.clear();
+      outbox.replace(all);
+      if (all.length !== stored.length) await AsyncStorage.setItem(KEY, JSON.stringify(all)).catch(() => {});
       outbox.start(uidNow);
       await new Promise<void>(() => {}); // held while this tab is open
     }).catch(() => { runner = true; outbox.start(uidNow); });
   } else runner = true;
   window.addEventListener('storage', (e) => {
     if (e.key !== null && !e.key.endsWith(KEY)) return;
-    readStored().then((list) => { if (runner) { outbox.load(list); outbox.kick(); } else outbox.replace(list); });
+    readStored().then((list) => { if (runner) { outbox.load(list); outbox.kick(); } else outbox.replace(withAddedHere(list)); });
   });
 }
 
@@ -165,10 +181,11 @@ if (tabs) {
     }
   });
   tabs.onmessage = (e: MessageEvent) => {
-    const m = e.data as { type?: string; op?: Act; id?: string; result?: unknown };
+    const m = e.data as { type?: string; op?: Act; id?: string; result?: unknown; job?: Job };
+    if (m?.type === 'add' && m.job?.id) { if (runner) { outbox.load([m.job]); outbox.kick(); } return; }
     if (!m?.id) return;
     if (m.type === 'act' && runner && m.op && m.op in own) own[m.op](m.id);
-    else if (m.type === 'done' && !runner) { doneElsewhere.set(m.id, m.result); outbox.kick(); }
+    else if (m.type === 'done' && !runner) { addedHere.delete(m.id); doneElsewhere.set(m.id, m.result); outbox.kick(); }
   };
 }
 
@@ -381,6 +398,10 @@ export async function send<O = unknown>(o: {
   // job is marked as sent, so it's never written again (also after a restart).
   const written = change.kind === 'write' ? startWrite(id, change) : null;
   await outbox.add(job);
+  if (!runner && tabs && change.kind === 'call') {
+    addedHere.set(id, job);
+    try { tabs.postMessage({ type: 'add', job }); } catch { /* the saved list carries it */ }
+  }
   written?.then(() => outbox.sent(id)).catch(() => {});
   return new Promise((resolve, reject) => {
     const t0 = Date.now();

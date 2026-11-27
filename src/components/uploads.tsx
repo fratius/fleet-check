@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Button, F, MARKER, Row, T, fmtWhen, useColors } from '@/components/ui';
 import { t, tp } from '@/lib/i18n';
-import { useWaitingCount } from '@/lib/net';
+import { looksOnline, useWaitingCount } from '@/lib/net';
 import { jobTitle, outbox, pendingHandover, useOutbox, type Job } from '@/lib/outbox';
 import type { Live } from '@/lib/outboxcore';
 import { useSession } from '@/lib/session';
@@ -26,7 +26,7 @@ export function isBehind(jobs: Job[], j: Job) {
 export function stateText(j: Job, l: Live | undefined, behind = false) {
   if (j.status === 'failed') return j.error || t('Something went wrong. Try again.');
   if (j.type === 'change') {
-    if (!l || !l.step) return behind ? t('Saved on this phone. It goes through after the one before it.') : t('Waiting to send.');
+    if (!l || !l.step) return behind ? t('Saved on this phone. It goes through after the one before it.') : t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.');
     if (l.waiting) return t('No connection. It\'s saved on this phone and goes through by itself when there\'s a connection.');
     if (l.step === 'upload') return t('Uploading the photo…');
     return t('Sending…');
@@ -72,9 +72,11 @@ export function UploadRow({ j, bare }: { j: Job; bare?: boolean }) {
           : failed && staleGive(j) ? <Button small v="primary" title={j.change?.kind === 'call' && j.change.data.driverId ? t('Give it anyway') : t('Make it free anyway')} onPress={() => outbox.anyway(j.id)} />
             : failed ? <Button small v="primary" title={t('Try again')} onPress={() => outbox.retry(j.id)} /> : null}
         {/* Not while the server is doing it (it would happen anyway), and not for a record write (it shows already). */}
-        {(l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
-          <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
-        )}
+        {/* The question about a give that waited ("… Give it anyway?") is answered with Cancel: nothing changes. */}
+        {failed && staleGive(j) ? <Button small v="link" title={t('Cancel')} onPress={() => outbox.remove(j.id)} />
+          : (l?.step === 'server' || j.change?.kind === 'write') && !failed ? null : (
+            <Button small v="link" title={armed ? (failed ? t('Tap again to remove it') : t('Tap again: it won\'t be sent')) : failed ? t('Remove') : t('Cancel')} onPress={remove} />
+          )}
       </Row>
     </View>
   );
@@ -97,7 +99,11 @@ export function useWaitingFor(fn: string, match: (data: Record<string, unknown>)
  * `above`: the page already lists it at the top (PendingChanges), so a stopped one points there.
  */
 export function Waiting({ j, above }: { j: Job; above?: boolean }) {
+  const ob = useOutbox();
+  const l = ob.live.get(j.id);
   if (j.status === 'failed') return above ? <T v="hint">{t('This change stopped. See above for why.')}</T> : <UploadRow j={j} />;
+  // With a connection it's being sent right now (the moment after the tap).
+  if (l?.step && !l.waiting) return <T v="hint">{t('Sending…')}</T>;
   return <T v="hint">{t('Waiting to be sent. It goes through by itself, you don\'t need to do it again.')}</T>;
 }
 
@@ -124,7 +130,8 @@ export function UploadsStrip() {
   const mine = ob.jobs.filter((j) => j.uid === s.user?.uid);
   const failed = mine.filter((j) => j.status === 'failed').length;
   const queued = mine.length - failed;
-  const waiting = others > 0 || mine.some((j) => ob.live.get(j.id)?.waiting);
+  // Also when the app knows it's offline: a tab that doesn't send the jobs itself doesn't see their tries.
+  const waiting = others > 0 || !!s.offlineAt || !looksOnline() || mine.some((j) => ob.live.get(j.id)?.waiting);
   // Opened without a connection: the data is what this phone saw last.
   if (!mine.length && s.offlineAt) {
     return (

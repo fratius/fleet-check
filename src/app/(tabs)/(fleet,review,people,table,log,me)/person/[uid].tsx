@@ -38,9 +38,15 @@ export default function PersonScreen() {
   const [tab, setTab] = useState<'record' | 'tours' | 'vans'>(openTab === 'tours' || openTab === 'vans' ? openTab : 'record');
   // A give waiting on this phone, so its "Saved on this phone" goes once it's sent or stopped (cause 3b).
   const giving = useWaitingFor('assignVan', (d) => d.driverId === uid);
-  // "Ali has QUEST 4 now" only while Ali still has it (not after a retire, a move or a removal; cause 3b).
-  const done = useFlash(`person:${uid}`, (tag) => (tag === 'queued' ? !!giving && giving.status !== 'failed'
-    : tag.startsWith('a:') ? s.vehicles.some((v) => !v.retired && v.assignedTo?.driverId === uid && v.assignedTo.assignmentId === tag.slice(2)) : true));
+  const changing = useWaitingFor('changePerson', (d) => d.uid === uid);
+  const removing = useWaitingFor('removePerson', (d) => d.uid === uid);
+  // "Ali has QUEST 4 now" only while Ali still has it: not after a retire, a move, a removal or another give.
+  const done = useFlash(`person:${uid}`, (tag, at) => {
+    if (tag === 'queued') return !!giving && giving.status !== 'failed' ? true : giving ? false : null;
+    if (!tag.startsWith('a:')) return true;
+    if ([giving, changing, removing].some((j) => j && j.createdAt >= at)) return false;
+    return s.vehicles.some((v) => !v.retired && v.assignedTo?.driverId === uid && v.assignedTo.assignmentId === tag.slice(2)) ? true : null;
+  });
   const orgId = s.org?.id;
   useEffect(() => {
     if (!orgId || !uid || !allowed || s.mode !== 'firebase') return;

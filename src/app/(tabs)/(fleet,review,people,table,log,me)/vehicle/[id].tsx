@@ -43,8 +43,15 @@ export default function VehicleScreen() {
   const retiring = useWaitingFor('retireVan', (d) => d.vehicleId === id);
   const moving = useWaitingFor('moveVan', (d) => d.vehicleId === id);
   // "You picked up …" after the camera closes, "Ali has … now" after a give: only while it's still so (cause 3b).
-  const done = useFlash(`van:${id}`, (tag) => (tag === 'queued' ? !!giving && giving.status !== 'failed'
-    : tag.startsWith('a:') ? !!v && !v.retired && (v.assignedTo?.assignmentId ?? '') === tag.slice(2) : true));
+  // It goes at once when the van is given again, made free, retired or moved from here (also before the server
+  // answers), or the page shows another handover.
+  const done = useFlash(`van:${id}`, (tag, at) => {
+    if (tag === 'queued') return !!giving && giving.status !== 'failed' ? true : giving ? false : null;
+    if (!tag.startsWith('a:')) return true;
+    if ([giving, retiring, moving].some((j) => j && j.createdAt >= at)) return false;
+    if (!v || v.retired) return false;
+    return (v.assignedTo?.assignmentId ?? '') === tag.slice(2) ? true : null;
+  });
   const pickup = usePickupRequest(v);
   const whoDid = useWhoDid();
   const holder = useHolder();
@@ -247,7 +254,8 @@ export default function VehicleScreen() {
               </View>
             )
           ) : s.role === 'driver' && !mine ? <T v="small">{t('Your fleet manager gives out the vans at this station.')}</T> : null}
-          {s.runs(v.stationId) && giving ? <T v="small">{giving.status === 'failed' ? t('This change stopped. See above for why.') : t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>
+          {/* The picker stays while it sends its give (it asks there if the van changed meanwhile). */}
+          {s.runs(v.stationId) && giving && !picking ? <T v="small">{giving.status === 'failed' ? t('This change stopped. See above for why.') : t('A change to who has this van is waiting to be sent (at the top of this page).')}</T>
             : s.runs(v.stationId) ? (picking ? <DriverPicker v={v} onDone={() => setPicking(false)} /> : ask ? (
               <AnywayAsk free text={ask.text} busy={busy === 'end'} onAnyway={() => makeFree(ask.expect)} onCancel={() => setAsk(null)} />
             ) : (
