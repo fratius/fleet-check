@@ -165,6 +165,10 @@ test('cause 4 guard: the main screens in all 32 languages at phone width: on the
         for (const [name, path] of SCREENS) {
           await page.goto(`${URL0}${path}`);
           await page.waitForTimeout(path.startsWith('/scan') ? 4000 : 2500);
+          // As a person sees it: with the app's own fonts loaded (four browsers at once load them slowly here, and
+          // the system's stand-in font is wider), and drawn again after that.
+          await page.waitForFunction(() => document.fonts.status === 'loaded', null, { timeout: 20_000 }).catch(() => {});
+          await page.waitForTimeout(600);
           // The screen must be in the language asked for; if it isn't, that's one problem, not every text on it.
           const shown = await page.evaluate(() => ({ html: document.documentElement.lang, kept: localStorage.getItem('fc.lang') }));
           if (shown.html !== code) { found.push(`${code} ${name}: shown in "${shown.html}" (kept: ${shown.kept})`); continue; }
