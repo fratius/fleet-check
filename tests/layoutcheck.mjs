@@ -6,6 +6,9 @@
 //     whose hint doesn't fit.
 //   - tiny: a text of the app drawn smaller than 10 px (the phones' own tab bars use 10 pt for their names).
 //   - english: an English text of the app on a screen in another language, where that language has its own.
+//   - broken: a word of the app's own texts broken in the middle across two lines ("Versicherungsverlängerung" in a
+//     badge; names may break, they are data).
+//   - comma: in Arabic and Persian, a list joined with the Latin comma "," instead of "،".
 // Names, plates and other data people typed aren't checked for being cut (a long name may end in "…" on a list).
 
 /** `dict`: the language's texts (public/i18n/<code>.json), `lang` its code. Returns the problems found. */
@@ -21,6 +24,14 @@ export function layoutProblems({ dict, lang }) {
     for (const f of forms) if (typeof f === 'string' && !/\{/.test(f)) own.add(f.trim());
     if (lang !== 'en' && !/\{/.test(k) && typeof v === 'string' && v.trim() !== k.trim() && k.trim().length > 3) english.add(k.trim());
   }
+  // The words of the app's own texts (six letters or more), to tell a broken word of the app from a broken name.
+  const words = new Set();
+  for (const v of Object.values(dict || {})) {
+    for (const f of typeof v === 'string' ? [v] : Object.values(v || {})) {
+      if (typeof f === 'string') for (const w of f.replace(/\{\w+\}/g, ' ').match(/\p{L}{6,}/gu) || []) words.add(w);
+    }
+  }
+  const rtl = document.documentElement.dir === 'rtl';
   const visible = (el) => {
     for (let e = el; e && e !== document.body; e = e.parentElement) {
       const s = getComputedStyle(e);
@@ -53,6 +64,18 @@ export function layoutProblems({ dict, lang }) {
     const r = el.getBoundingClientRect();
     if ((r.right > W + 1 || r.left < -1) && !sideways(el)) say('offEdge', whole, `${Math.round(r.left)}–${Math.round(r.right)} px`);
     if (english.has(whole)) say('english', whole);
+    if (rtl && /, /.test(n.textContent)) say('comma', whole);
+    // A word of the app broken across lines: its letters sit on two lines.
+    for (const m of n.textContent.matchAll(/\p{L}{6,}/gu)) {
+      if (!words.has(m[0])) continue;
+      const range = document.createRange();
+      range.setStart(n, m.index);
+      range.setEnd(n, m.index + m[0].length);
+      const rects = [...range.getClientRects()].filter((x) => x.width > 0 && x.height > 0);
+      if (rects.length < 2) continue;
+      const tops = rects.map((x) => x.top);
+      if (Math.max(...tops) - Math.min(...tops) > Math.min(...rects.map((x) => x.height)) / 2) say('broken', whole, `"${m[0]}" on two lines`);
+    }
     // Only the app's own texts are checked for size and cuts (names, plates and what people typed may end in "…").
     if (!own.has(whole)) continue;
     const s = getComputedStyle(el);

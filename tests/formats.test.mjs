@@ -1,6 +1,8 @@
 // Blind test, 26 Nov 2026, cause 4.3 and 4.4: dates, times, sentences, kept texts, names and search in every
 // language. Run: node --import ./tests/alias.mjs --test tests/formats.test.mjs
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { LANG_CODES, TIME, again, applyDict, fmtTime, loc, source, t, tp } from '../src/lib/i18n.ts';
@@ -79,4 +81,19 @@ test('a first or last name over 40 characters is too long (it is refused with a 
   assert.ok(!nameTooLong('x'.repeat(40)));
   assert.ok(nameTooLong('x'.repeat(41)));
   assert.ok(!nameTooLong(`  ${'x'.repeat(40)}  `), 'spaces around don\'t count');
+});
+
+// Blind QA of cause 4, round 1: the Data tab's search missed "Yılmaz" for "yilmaz" (its own lower-casing instead of
+// the app's name matching), and Arabic screens showed lists joined with a Latin "," ("محطتان, 12 فانًا").
+const SRC = new URL('../src/', import.meta.url).pathname;
+const files = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? files(join(d, f)) : /\.tsx?$/.test(f) ? [join(d, f)] : []));
+const where = (re, skip = /$^/) => files(SRC).flatMap((f) => readFileSync(f, 'utf8').split('\n')
+  .flatMap((l, i) => (re.test(l) && !skip.test(l) ? [`${f.slice(SRC.length)}:${i + 1}`] : [])));
+
+test('every search box matches the way names are matched (ı and i, accents), none lower-cases on its own', () => {
+  assert.deepEqual(where(/\.to(Locale)?LowerCase\(\)\.includes\(/), []);
+});
+
+test('lists shown on screen are joined with the language\'s own comma ("،" in Arabic and Persian), not a Latin ", "', () => {
+  assert.deepEqual(where(/\.join\(', '\)|\}, \$\{|`, \$\{/, /system-ui/), []);
 });

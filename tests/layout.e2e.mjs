@@ -47,6 +47,11 @@ const server = createServer((req, res) => {
 // A company with what the main screens show: a van with a driver whose name has no spaces, a free van, a damage check
 // waiting for review by that driver, a driver whose name starts with an emoji, and a change of this phone that stopped.
 const ORG = 'layoutOrg1', ST = 'layoutSt1', VAN = 'layoutVan1', VAN2 = 'layoutVan2', CHECK = 'layoutCheck1';
+// Blind QA of cause 4, round 1: two drivers called Yilmaz, one with the Turkish dotless ı (the Data tab's search
+// missed one of them), a phone number (it read "0198 0000 151 49+" in Arabic), and a deadline whose German name is one
+// long word ("Versicherungsverlängerung" broke in the middle on the Fleet card).
+const YILMAZ = [['lyYilmaz1', 'Ali Yilmaz'], ['lyYilmaz2', 'Ayşe Yılmaz']];
+const PHONE = '+49 151 0000 0198';
 const OWNER = { email: 'lena.layout@example.com', password: 'layout-pass-1', name: 'Lena Owner' };
 const LONG = { email: 'long.layout@example.com', password: 'layout-pass-2', name: 'Maximilianalexanderwilhelmfriedrich Schwarzenbergerhausen' };
 const EMOJI = { email: 'emoji.layout@example.com', password: 'layout-pass-3', name: '😀 Emma Stone' };
@@ -62,10 +67,15 @@ before(async () => {
   b.set(db.doc(`orgs/${ORG}`), { name: 'Layout DSP', createdBy: OWNER.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
   b.set(db.doc(`orgs/${ORG}/stations/${ST}`), { name: 'Layout station', code: 'DLY1', createdAt: now });
   for (const [p, role] of [[OWNER, 'owner'], [LONG, 'driver'], [EMOJI, 'driver'], [RTL, 'owner']]) {
-    b.set(db.doc(`orgs/${ORG}/members/${p.uid}`), { role, stationIds: role === 'owner' ? [] : [ST], email: p.email, name: p.name, joinedAt: now });
+    b.set(db.doc(`orgs/${ORG}/members/${p.uid}`), { role, stationIds: role === 'owner' ? [] : [ST], email: p.email, name: p.name, joinedAt: now, ...(p === LONG ? { phone: PHONE } : null) });
     b.set(db.doc(`orgs/${ORG}/names/${p.uid}`), { name: p.name, at: now });
     b.set(db.doc(`users/${p.uid}`), { orgIds: [ORG], orgId: ORG, email: p.email, name: p.name });
   }
+  for (const [id, name] of YILMAZ) {
+    b.set(db.doc(`orgs/${ORG}/members/${id}`), { role: 'driver', stationIds: [ST], email: `${id}@example.com`, name, joinedAt: now });
+    b.set(db.doc(`orgs/${ORG}/names/${id}`), { name, at: now });
+  }
+  b.set(db.doc(`orgs/${ORG}/vehicleDetails/${VAN}`), { stationId: ST, insuranceRenewal: new Date(now + 25 * 86400_000).toISOString().slice(0, 10) });
   const van = (n) => ({ name: '', plate: `B-LY ${n}`, cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', fuel: 'diesel', stationId: ST, createdAt: now + n, createdBy: OWNER.uid, scanId: null });
   b.set(db.doc(`orgs/${ORG}/vehicles/${VAN}`), { ...van(1), assignedTo: { assignmentId: 'lyA1', driverId: LONG.uid, since: now - 3600_000, kmStart: null, kmEnd: null } });
   b.set(db.doc(`orgs/${ORG}/vehicles/${VAN2}`), van(2));
@@ -126,6 +136,62 @@ const SCREENS = [
   ['the van with the stopped change', `/vehicle/${VAN2}`], ['the camera', `/scan/${VAN2}`],
 ];
 
+/**
+ * Blind QA of cause 4, round 1, in Arabic and Persian: the back arrow points back (to the right); the names of a page's
+ * parts (a van's Damage, Details; a person's Record, Tours) sit in the middle of their tabs, not at the top; a phone
+ * number reads left to right ("+49 151 …", not "… 151 49+").
+ */
+async function rightToLeftDetails(page, code) {
+  const back = dictOf(code).Back;
+  const open = [
+    ['a van', async () => { await page.goto(`${URL0}/`); await page.locator('[role=button][aria-label^="B-LY 1"] >> visible=true').first().click({ timeout: 30_000 }); }],
+    ['a person', async () => { await page.goto(`${URL0}/people`); await page.locator('text=/Maximilian/ >> visible=true').first().click({ timeout: 30_000 }); }],
+  ];
+  for (const [what, go] of open) {
+    await go();
+    await page.locator(`[aria-label="${back}"] >> visible=true`).first().waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(1000);
+    const seen = await page.evaluate((back) => {
+      const b = [...document.querySelectorAll(`[aria-label="${back}"]`)].find((e) => e.getBoundingClientRect().width > 0);
+      // The arrow as drawn: the first picture inside the button, turned round by itself or by anything around it.
+      const pic = [...b.querySelectorAll('*')].find((e) => getComputedStyle(e).backgroundImage !== 'none' || ['IMG', 'svg'].includes(e.tagName));
+      let sign = 1;
+      for (let e = pic; e && e !== document.body; e = e.parentElement) {
+        const t = getComputedStyle(e).transform;
+        if (t && t !== 'none') sign *= Math.sign(new DOMMatrix(t).a) || 1;
+      }
+      // The page's own tabs (not the tab bar at the bottom): each name in the middle of its tab, top to bottom.
+      const off = [];
+      for (const list of document.querySelectorAll('[role=tablist]')) {
+        if (list.getBoundingClientRect().top > innerHeight - 120) continue;
+        for (const tab of list.querySelectorAll('[role=tab]')) {
+          const name = [...tab.querySelectorAll('div[dir="auto"]')].find((e) => e.textContent.trim());
+          if (!name) continue;
+          const a = tab.getBoundingClientRect(), n = name.getBoundingClientRect();
+          const d = Math.abs((n.top + n.bottom) / 2 - (a.top + a.bottom) / 2);
+          if (d > 4) off.push(`"${name.textContent.trim()}" ${Math.round(d)} px from the middle`);
+        }
+      }
+      return { mirrored: sign < 0, off };
+    }, back);
+    assert.ok(seen.mirrored, `${code} ${what}: the back arrow points to the right`);
+    assert.deepEqual(seen.off, [], `${code} ${what}: the tabs' names are in the middle of their tabs`);
+  }
+  await page.goto(`${URL0}/people`);
+  await page.locator('text=/0198/ >> visible=true').first().waitFor({ timeout: 30_000 });
+  const order = await page.evaluate(() => {
+    const w = document.createTreeWalker(document.getElementById('root'), NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const i = n.textContent.indexOf('+49'), j = n.textContent.indexOf('0198');
+      if (i < 0 || j < 0) continue;
+      const at = (k) => { const r = document.createRange(); r.setStart(n, k); r.setEnd(n, k + 1); return r.getBoundingClientRect().left; };
+      return { plus: at(i), last: at(j + 3) };
+    }
+    return null;
+  });
+  assert.ok(order && order.plus < order.last, `${code}: the phone number reads left to right (${JSON.stringify(order)})`);
+}
+
 test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and every button works, the language switch too', async () => {
   for (const code of ['ar', 'fa']) {
     for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
@@ -139,6 +205,7 @@ test('cause 4.1: in Arabic and Persian the signed-in app is on the screen and ev
         const tabs = page.locator('[role=tab] >> visible=true');
         const box = await tabs.last().boundingBox();
         assert.ok(box && box.x >= 0 && box.x + box.width <= viewport.width + 1, `${code}: the tab bar is on the screen (${JSON.stringify(box)})`);
+        if (viewport.width < 500) await rightToLeftDetails(page, code);
         await page.goto(`${URL0}/account`);
         await page.waitForTimeout(2000);
         assert.equal(await page.evaluate(() => document.documentElement.lang), code, `${code}: still in ${code} after opening Account`);
@@ -186,13 +253,18 @@ test('cause 4 guard: the main screens in all 32 languages at phone width: on the
 test('cause 4.3: a long name without spaces wraps on the Review card and the People list; an emoji name gets proper initials', async () => {
   const { ctx, page, errors } = await signedIn('en');
   try {
-    for (const path of ['/review', '/people', `/vehicle/${VAN}`, `/person/${LONG.uid}`]) {
+    // The Fleet card and the person page's title too (blind QA of cause 4, round 1: both ended in "…").
+    for (const path of ['/', '/review', '/people', `/vehicle/${VAN}`, `/person/${LONG.uid}`]) {
       await page.goto(`${URL0}${path}`);
       await page.locator(`text=/Maximilian/ >> visible=true`).first().waitFor({ timeout: 30_000 });
       // On the screen, and not cut by its box or an ellipsis: wrapped.
       const bad = await page.evaluate(() => [...document.querySelectorAll('#root *')].filter((el) => /Maximilian/.test(el.textContent || '') && !el.children.length)
         .filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0; })
-        .map((el) => { const r = el.getBoundingClientRect(); return { off: r.right > innerWidth + 1 || r.left < -1, cut: el.scrollWidth > el.clientWidth + 1, text: el.textContent.slice(0, 60) }; })
+        .map((el) => {
+          const r = el.getBoundingClientRect(), s = getComputedStyle(el);
+          const clips = s.overflow === 'hidden' || s.overflowY === 'hidden' || s.textOverflow === 'ellipsis';
+          return { off: r.right > innerWidth + 1 || r.left < -1, cut: el.scrollWidth > el.clientWidth + 1 || (clips && el.scrollHeight > el.clientHeight + 2), text: el.textContent.slice(0, 60) };
+        })
         .filter((x) => x.off || x.cut));
       assert.deepEqual(bad, [], `${path}: the long name stays on the screen, whole`);
     }
@@ -202,6 +274,25 @@ test('cause 4.3: a long name without spaces wraps on the Review card and the Peo
       .map((el) => el.textContent.trim()));
     assert.ok(circles.includes('ES'), `initials ES among ${JSON.stringify(circles.slice(0, 20))}`);
     assert.ok(!circles.some((x) => /[\uD800-\uDFFF]/.test(x)), 'no half characters');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 4.4: every search box with people in it finds "Yılmaz" and "Yilmaz" whichever way it is typed', async () => {
+  const { ctx, page, errors } = await signedIn('en');
+  try {
+    // People, and the Data tab's driver search (it missed one of them: blind QA of cause 4, round 1).
+    for (const [path, box] of [['/people', () => page.locator('input >> visible=true').first()], ['/data', () => page.getByLabel('Find a driver').first()]]) {
+      await page.goto(`${URL0}${path}`);
+      await box().waitFor({ timeout: 30_000 });
+      for (const q of ['yilmaz', 'yılmaz']) {
+        await box().fill(q);
+        await page.waitForTimeout(1000);
+        for (const [, name] of YILMAZ) {
+          assert.ok(await page.locator(`text="${name}" >> visible=true`).count() > 0, `${path}: "${q}" finds ${name}`);
+        }
+      }
+    }
     assert.deepEqual(errors, []);
   } finally { await ctx.close(); }
 });
