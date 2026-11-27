@@ -235,6 +235,31 @@ test('a change (giving a van) waits without a connection, is sent once, and its 
   assert.deepEqual(w.saves, []);
 });
 
+// Blind test, 26 Nov 2026, cause 3b (1): a give that waited offline while someone else gave the van.
+test('a give refused because someone has the van now: "Give it anyway" sends it again with the handover the question named', async () => {
+  const w = world();
+  const sent = [];
+  let refuse = true;
+  w.ops.server = async (j) => {
+    sent.push({ ...j.change.data });
+    if (refuse) { refuse = false; throw Object.assign(new Error('Ali Driver has this van now. Give it to Ben Driver anyway?'), { kind: null, code: 'already-exists', details: { t: 'x', v: { expect: 'a7' } } }); }
+    return { assignmentId: 'a9' };
+  };
+  const ob = new Outbox(w.ops);
+  ob.start('u1');
+  await ob.add(changeJob('c9', { change: { kind: 'call', fn: 'assignVan', data: { orgId: 'o1', vehicleId: 'v1', driverId: 'ben', expect: null, rid: 'rid-c9c9c9c9' } } }));
+  await settle(ob);
+  const j = ob.jobs.find((x) => x.id === 'c9');
+  assert.deepEqual([j.status, j.errorCode, j.errorVars?.expect], ['failed', 'already-exists', 'a7']);
+  ob.anyway('nope');
+  ob.anyway('c9');
+  await settle(ob);
+  assert.deepEqual(sent.map((d) => d.expect), [null, 'a7']);
+  assert.equal(sent[1].rid, 'rid-c9c9c9c9', 'the same request');
+  assert.deepEqual(ob.results.get('c9'), { assignmentId: 'a9' });
+  assert.equal(ob.jobs.length, 0);
+});
+
 test('a change with a photo (a check done with its photo): the photo goes up first, then the change', async () => {
   const w = world();
   const order = [];

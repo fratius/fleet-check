@@ -1334,6 +1334,234 @@ test('cause 3a (F01): a refuel of a van the driver no longer has opens, says so,
   } finally { await ben.ctx.close(); }
 });
 
+// ---------- Blind test, 26 Nov 2026, cause 3b: what happened meanwhile, offline, in another tab ----------
+// A company of its own: an owner, a fleet manager, drivers Ali, Ben and Cem at station 1, Dev with van B-SB 3 and a
+// refused wash, a second station; vans B-SB 1 to B-SB 5 (B-SB 5 with a damage check waiting for review).
+const SB_ORG = 'sbOrg1', SB_ST = 'sbSt1', SB_ST2 = 'sbSt2', SB_K = 'sbCheck1', SB_BUY = 'sbWash1';
+const SB_VAN = (n) => `sbVan${n}`;
+const SB_OWN = { email: 'sofia.stale@example.com', password: 'stale-pass-1', name: 'Sofia Owner' };
+const SB_MGR = { email: 'max.stale@example.com', password: 'stale-pass-2', name: 'Max Manager' };
+const SB_ALI = { email: 'ali.stale@example.com', password: 'stale-pass-3', name: 'Ali Driver' };
+const SB_BEN = { email: 'ben.stale@example.com', password: 'stale-pass-4', name: 'Ben Driver' };
+const SB_CEM = { email: 'cem.stale@example.com', password: 'stale-pass-5', name: 'Cem Driver' };
+const SB_DEV = { email: 'dev.stale@example.com', password: 'stale-pass-6', name: 'Dev Driver' };
+let sbReady = null;
+function sbWorld() {
+  sbReady ??= (async () => {
+    const now = Date.now();
+    const all = [SB_OWN, SB_MGR, SB_ALI, SB_BEN, SB_CEM, SB_DEV];
+    for (const p of all) p.uid = (await auth.createUser({ email: p.email, password: p.password, displayName: p.name })).uid;
+    const b = db.batch();
+    b.set(db.doc(`orgs/${SB_ORG}`), { name: 'Stale DSP', createdBy: SB_OWN.uid, createdAt: now, stationsReady: true, aiTier: 'quick' });
+    b.set(db.doc(`orgs/${SB_ORG}/stations/${SB_ST}`), { name: 'Stale station', code: 'DSB1', createdAt: now });
+    b.set(db.doc(`orgs/${SB_ORG}/stations/${SB_ST2}`), { name: 'Second station', code: 'DSB2', createdAt: now + 1 });
+    for (const [p, role] of [[SB_OWN, 'owner'], [SB_MGR, 'manager'], [SB_ALI, 'driver'], [SB_BEN, 'driver'], [SB_CEM, 'driver'], [SB_DEV, 'driver']]) {
+      b.set(db.doc(`orgs/${SB_ORG}/members/${p.uid}`), { role, stationIds: role === 'owner' ? [] : [SB_ST], email: p.email, name: p.name, joinedAt: now });
+      b.set(db.doc(`orgs/${SB_ORG}/names/${p.uid}`), { name: p.name, at: now });
+      b.set(db.doc(`users/${p.uid}`), { orgIds: [SB_ORG], orgId: SB_ORG, email: p.email, name: p.name });
+    }
+    const van = (n) => ({ name: '', plate: `B-SB ${n}`, cls: 'large_van', roof: 'high', slideL: 'no', slideR: 'yes', rear: 'barn', fuel: 'diesel', stationId: SB_ST, createdAt: now + n, createdBy: SB_OWN.uid, scanId: null });
+    for (const n of [1, 2, 4, 5]) b.set(db.doc(`orgs/${SB_ORG}/vehicles/${SB_VAN(n)}`), van(n));
+    b.set(db.doc(`orgs/${SB_ORG}/vehicles/${SB_VAN(3)}`), { ...van(3), assignedTo: { assignmentId: 'sbA3', driverId: SB_DEV.uid, since: now - 3600_000, kmStart: null, kmEnd: null } });
+    b.set(db.doc(`orgs/${SB_ORG}/assignments/sbA3`), { vehicleId: SB_VAN(3), vehicleName: 'B-SB 3', plate: 'B-SB 3', driverId: SB_DEV.uid, driverName: SB_DEV.name, stationId: SB_ST,
+      start: now - 3600_000, end: null, startedBy: SB_MGR.uid, startedByName: SB_MGR.name, endedBy: null, endedByName: null, endReason: null, createdAt: now - 3600_000 });
+    // Dev's wash, refused by the manager: Dev cancels it.
+    b.set(db.doc(`orgs/${SB_ORG}/purchases/${SB_BUY}`), {
+      kind: 'wash', status: 'refused', vehicleId: SB_VAN(3), vehicleName: 'B-SB 3', plate: 'B-SB 3', stationId: SB_ST, model: null, vanFuel: 'diesel', tankL: null,
+      by: SB_DEV.uid, byName: SB_DEV.name, role: 'driver', vanDriverId: SB_DEV.uid, notTheirVan: false,
+      dash: { path: `orgs/${SB_ORG}/buys/${SB_DEV.uid}/none.jpg`, at: now - 600_000, ai: null, confidence: null, readable: false, issue: null, done: true }, lastKm: null,
+      card: { needed: false, expected: null, result: null, read: null, tries: 0, why: null, expired: null, at: null },
+      decision: { allow: false, by: SB_MGR.uid, byName: SB_MGR.name, at: now - 500_000, note: '' }, receipt: null, parts: [], note: null, flags: [], corrected: [],
+      odometerKm: null, fuelPct: null, litres: null, total: null, currency: null, merchant: null, cancel: null, createdAt: now - 600_000, updatedAt: now - 500_000, doneAt: null,
+    });
+    // A damage check of B-SB 5 waiting for the manager's review.
+    b.set(db.doc(`orgs/${SB_ORG}/walkarounds/sbWalk5`), { vehicleId: SB_VAN(5), vehicleName: 'B-SB 5', cls: 'large_van', stationId: SB_ST, source: 'camera', createdAt: now - 600_000,
+      createdBy: SB_MGR.uid, totalMs: null, frames: 1, taken: 1, skipped: 0, retakes: 0, photos: [{ n: 1, label: 'Front', w: 900, h: 1200, takenAt: now - 600_000 }] });
+    b.set(db.doc(`orgs/${SB_ORG}/checks/${SB_K}`), { vehicleId: SB_VAN(5), vehicleName: 'B-SB 5', cls: 'large_van', walkId: 'sbWalk5', createdBy: SB_MGR.uid, walkBy: SB_MGR.uid, stationId: SB_ST,
+      tier: 'quick', model: 'test', photos: 1, notVisible: [], missedNote: '', createdAt: now - 500_000, status: 'submitted', submittedAt: now - 400_000, review: null,
+      spots: [{ photo: 0, photoLabel: 'Front', box: [0.3, 0.35, 0.5, 0.5], panel: 'front bumper', type: 'scratch', sizeCm: 6, conf: 0.8, mightBe: null, closeup: '', refPath: null, closeups: [], verdict: null, feedback: null, markPath: null }] });
+    await b.commit();
+  })();
+  return sbReady;
+}
+async function sbPage(who, ctx0) {
+  const ctx = ctx0 || await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-GB' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await signIn(page, who);
+  await visible(page, 'B-SB').waitFor({ timeout: 60_000 }).catch(() => {});
+  return { ctx, page, errors };
+}
+const sbVan = async (n) => (await db.doc(`orgs/${SB_ORG}/vehicles/${SB_VAN(n)}`).get()).data();
+/** Gives a van the way another manager's phone would (the server's record of it), without this page doing anything. */
+async function sbGive(n, p, id) {
+  const now = Date.now();
+  const cur = (await sbVan(n)).assignedTo;
+  if (cur) await db.doc(`orgs/${SB_ORG}/assignments/${cur.assignmentId}`).update({ end: now, endedBy: SB_OWN.uid, endedByName: SB_OWN.name, endReason: 'reassigned' });
+  await db.doc(`orgs/${SB_ORG}/assignments/${id}`).set({ vehicleId: SB_VAN(n), vehicleName: `B-SB ${n}`, plate: `B-SB ${n}`, driverId: p.uid, driverName: p.name, stationId: SB_ST,
+    start: now, end: null, startedBy: SB_OWN.uid, startedByName: SB_OWN.name, endedBy: null, endedByName: null, endReason: null, createdAt: now });
+  await db.doc(`orgs/${SB_ORG}/vehicles/${SB_VAN(n)}`).update({ assignedTo: { assignmentId: id, driverId: p.uid, since: now, kmStart: null, kmEnd: null } });
+}
+
+test('cause 3b (1, 5): a give that waited offline while someone else gave the van asks "Give it anyway?"; nothing changes until then, and nothing says it still waits', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(1)}`);
+    await button(page, 'Give to a driver').click();
+    await visible(page, SB_BEN.name).waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(3000);
+    await ctx.setOffline(true);
+    await visible(page, SB_BEN.name).click();
+    await visible(page, 'Saved on this phone. It goes through by itself, you don\'t need to do it again.').waitFor({ timeout: 30_000 });
+    // Meanwhile another manager gives the van to Ali.
+    await sbGive(1, SB_ALI, 'sbA1');
+    await ctx.setOffline(false);
+    // Back online: asked, on the van's page, with "Give it anyway" in place of "Try again".
+    await visible(page, 'Ali Driver has this van now. Give it to Ben Driver anyway?').waitFor({ timeout: 90_000 });
+    await button(page, 'Give it anyway').waitFor({ timeout: 10_000 });
+    assert.equal(await button(page, 'Try again').count(), 0, 'no "Try again" (it would only be refused again)');
+    assert.equal(await visible(page, 'A change to who has this van is waiting to be sent').count(), 0, 'no "waiting" banner for a stopped change');
+    assert.equal(await visible(page, 'Saved on this phone. It goes through by itself').count(), 0, 'nor "it goes through by itself"');
+    assert.equal((await sbVan(1)).assignedTo.driverId, SB_ALI.uid, 'nothing changed');
+    await visible(page, SB_ALI.name).waitFor({ timeout: 10_000 });
+    await button(page, 'Give it anyway').click();
+    await until(async () => (await sbVan(1)).assignedTo?.driverId === SB_BEN.uid || null, 60_000, 'the van to go to Ben');
+    assert.equal((await db.doc(`orgs/${SB_ORG}/assignments/sbA1`).get()).data().endReason, 'reassigned');
+    const ben = await db.collection(`orgs/${SB_ORG}/assignments`).where('vehicleId', '==', SB_VAN(1)).where('driverId', '==', SB_BEN.uid).get();
+    assert.equal(ben.size, 1, 'given once');
+    await until(async () => (await visible(page, 'Ali Driver has this van now').count()) === 0 || null, 30_000, 'the question to go');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b (2): a van given out offline in a second tab survives a reload of that tab, and goes through once', async () => {
+  await sbWorld();
+  const a = await sbPage(SB_MGR);
+  // The second tab of the same browser (the first one sends what waits).
+  const page = await a.ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(2)}`);
+    await button(page, 'Give to a driver').click();
+    await visible(page, SB_CEM.name).waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(3000);
+    await a.ctx.setOffline(true);
+    await visible(page, SB_CEM.name).click();
+    await visible(page, 'Saved on this phone. It goes through by itself, you don\'t need to do it again.').waitFor({ timeout: 30_000 });
+    await page.reload();
+    // Still waiting after the reload, and not offered again.
+    await visible(page, `Give B-SB 2 to ${SB_CEM.name}`).waitFor({ timeout: 60_000 });
+    assert.equal(await button(page, 'Give to a driver').count(), 0);
+    await a.ctx.setOffline(false);
+    await until(async () => (await sbVan(2)).assignedTo?.driverId === SB_CEM.uid || null, 90_000, 'the give to reach the server');
+    await page.waitForTimeout(3000);
+    const given = await db.collection(`orgs/${SB_ORG}/assignments`).where('vehicleId', '==', SB_VAN(2)).get();
+    assert.equal(given.size, 1, 'once');
+    assert.deepEqual([...errors, ...a.errors], []);
+  } finally { await a.ctx.close(); }
+});
+
+test('cause 3b (3): while "Cancel the wash" waits offline, no button offers it again; back online it is done once', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_DEV);
+  try {
+    await page.goto(`${URL0}/buy/${SB_BUY}`);
+    await button(page, 'Cancel the wash').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(3000);
+    await ctx.setOffline(true);
+    await button(page, 'Cancel the wash').click();
+    await visible(page, 'Waiting to be sent').waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    assert.equal(await button(page, 'Cancel the wash').count(), 0, 'not offered again while it waits');
+    await ctx.setOffline(false);
+    await until(async () => (await db.doc(`orgs/${SB_ORG}/purchases/${SB_BUY}`).get()).data().status === 'cancelled' || null, 60_000, 'the cancel');
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b (4): the "No connection" strip comes within 10 s of losing the connection and goes within 10 s of it coming back; what waited is sent', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    await page.goto(`${URL0}/vehicle/${SB_VAN(4)}`);
+    await tab(page, 'Details').click();
+    await button(page, 'Retire van').waitFor({ timeout: 60_000 });
+    await page.waitForTimeout(3000);
+    await ctx.setOffline(true);
+    let t0 = Date.now();
+    await page.locator('text=/No connection/ >> visible=true').first().waitFor({ timeout: 10_000 });
+    assert.ok(Date.now() - t0 < 10_000);
+    // A change made without the connection waits.
+    await button(page, 'Retire van').click();
+    await button(page, 'Tap again to retire').click();
+    await page.waitForTimeout(3000);
+    await ctx.setOffline(false);
+    t0 = Date.now();
+    await until(async () => (await sbVan(4)).retired === true || null, 10_000, 'the retire within 10 s of the connection coming back');
+    await until(async () => (await page.locator('text=/No connection/ >> visible=true').count()) === 0 || null, 10_000, 'the strip to go within 10 s');
+    // Brought back for the next test.
+    await db.doc(`orgs/${SB_ORG}/vehicles/${SB_VAN(4)}`).update({ retired: false });
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b (5): after a retire or a move, nothing still says who "has it now"', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_OWN);
+  const banner = () => page.locator('text=/has B-SB 4 now/ >> visible=true');
+  try {
+    for (const then of ['retire', 'move']) {
+      await page.goto(`${URL0}/vehicle/${SB_VAN(4)}`);
+      if (then === 'move') {
+        // Back into the fleet after the retire.
+        await tab(page, 'Details').click();
+        await button(page, 'Bring back into the fleet').click();
+        await until(async () => (await sbVan(4)).retired === false || null, 30_000, 'the van back in the fleet');
+        await page.goto(`${URL0}/vehicle/${SB_VAN(4)}`);
+      }
+      await button(page, 'Give to a driver').click();
+      await visible(page, SB_ALI.name).click();
+      await banner().waitFor({ timeout: 60_000 });
+      await tab(page, 'Details').click();
+      if (then === 'retire') {
+        await button(page, 'Retire van').click();
+        await button(page, 'Tap again to retire').click();
+        await until(async () => (await sbVan(4)).retired === true || null, 30_000, 'the retire');
+      } else {
+        await button(page, 'Plate, name and type').click();
+        await visible(page, 'Second station').click();
+        await button(page, 'Save changes').click();
+        await until(async () => (await sbVan(4)).stationId === SB_ST2 || null, 30_000, 'the move');
+      }
+      await until(async () => (await banner().count()) === 0 || null, 15_000, `the "has it now" banner to go after the ${then}`);
+    }
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
+test('cause 3b (5): the van page shows the review right after it is finished, without a reload', async () => {
+  await sbWorld();
+  const { ctx, page, errors } = await sbPage(SB_MGR);
+  try {
+    // The van page seen before the review, then the check.
+    await page.goto(`${URL0}/vehicle/${SB_VAN(5)}`);
+    await visible(page, 'No damage on record').waitFor({ timeout: 60_000 });
+    await page.goto(`${URL0}/check/${SB_K}`);
+    await button(page, 'Damage').click();
+    await button(page, 'Finish review').click();
+    await button(page, 'Change the review').waitFor({ timeout: 30_000 });
+    // To the van the way a manager would: Fleet, then the van.
+    await tab(page, 'Fleet').click();
+    await visible(page, 'B-SB 5').click();
+    await page.locator('text=/front bumper/i >> visible=true').first().waitFor({ timeout: 5_000 });
+    assert.equal(await visible(page, 'No damage on record').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await ctx.close(); }
+});
+
 // ---------- 27 Nov 2026: the app creator stuck on "The plan has ended" while viewing a company as a manager ----------
 // The product owner opened a company that signed up with Stripe's test keys and looked at it as a manager. Its plan had
 // ended, so the payment screen came instead of the tabs, without the strip that has "Back to me"; View as is kept on the

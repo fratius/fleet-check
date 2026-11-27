@@ -1589,10 +1589,12 @@ test('a call sent twice (the phone lost the answer, or sent it again offline) is
   await R(S.mgr, { action: 'delete', id: a.id, rid: r4 });
   assert.deepEqual(await R(S.mgr, { action: 'delete', id: a.id, rid: r4 }), { ok: true });
   assert.equal(await count(), before);
-  // Giving a van, sent from a phone that was offline: refused if someone changed who has it meanwhile.
+  // Giving a van, sent from a phone that was offline: asked first if someone has it meanwhile (cause 3b); when it would
+  // end nobody's handover, it's done.
   const { v3 } = S.vans;
   const now = (await adminDb().doc(`orgs/${S.org}/vehicles/${v3.id}`).get()).data().assignedTo?.assignmentId ?? null;
-  await fails(S.own.call('assignVan', { orgId: S.org, vehicleId: v3.id, driverId: null, expect: now ? null : 'someoneElsesHandover', rid: rid() }), 'failed-precondition');
+  if (now) await fails(S.own.call('assignVan', { orgId: S.org, vehicleId: v3.id, driverId: null, expect: null, rid: rid() }), 'already-exists');
+  else assert.equal((await S.own.call('assignVan', { orgId: S.org, vehicleId: v3.id, driverId: null, expect: 'someoneElsesHandover', rid: rid() })).assignmentId, null);
   // Kept answers are deleted after a week by the daily clean-up.
   const { cleanRequests } = fnRequire('./lib/once.js');
   await adminDb().doc(`users/${S.mgr.uid}/requests/${r1}`).update({ until: Date.now() - 1 });
@@ -3460,7 +3462,9 @@ test('cause 3a (7): every action that gives out, takes over or ends a handover i
   for (const [fn, p, data] of tries) {
     try { await p.call(fn, { orgId: P.org, ...data }); wrong.push(`${fn}: done`); } catch (e) {
       const code = String(e.code || '').replace(/^functions\//, '');
-      if (code !== 'failed-precondition' || !/changed/.test(e.message)) wrong.push(`${fn}: ${code}: ${e.message}`);
+      // Giving or making free asks instead ("… anyway?", cause 3b); the others are refused.
+      const ok = fn === 'assignVan' ? code === 'already-exists' && /anyway\?/.test(e.message) : code === 'failed-precondition' && /changed/.test(e.message);
+      if (!ok) wrong.push(`${fn}: ${code}: ${e.message}`);
     }
   }
   assert.deepEqual(wrong, []);
@@ -3472,4 +3476,35 @@ test('cause 3a (7): every action that gives out, takes over or ends a handover i
   await P.mgr.call('retireVan', { orgId: P.org, vehicleId: P.van.id, expect: null });
   await P.mgr.call('retireVan', { orgId: P.org, vehicleId: P.van.id, restore: true, expect: null });
   assert.ok(!(await pVan(P.van.id)).retired);
+});
+
+// ---------- Blind test, 26 Nov 2026, cause 3b (1): giving a van from an out-of-date screen asks first ----------
+test('cause 3b (1): a give or make-free from an out-of-date screen changes nothing and asks; "anyway" does it, and the driver who had it is told', async () => {
+  const van = async () => (await pVan(P.van.id)).assignedTo;
+  // Dora gets the van; the manager's other screen still shows it free.
+  const a = await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: P.d1.uid, expect: null });
+  const doraPhone = await phoneOf(P.d1, 'c3b1');
+  try {
+    const e = await fails(P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: P.d2.uid, expect: null }), 'already-exists');
+    assert.match(e.message, /^Dora Driver has this van now\. Give it to Emil Driver anyway\?/);
+    assert.equal(e.details?.v?.expect, a.assignmentId, 'the question names the handover it saw');
+    assert.equal((await van()).driverId, P.d1.uid, 'nothing changed');
+    const f = await fails(P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: null, expect: null }), 'already-exists');
+    assert.match(f.message, /^Dora Driver has this van now\. Make it free anyway\?/);
+    assert.equal((await van()).driverId, P.d1.uid, 'nothing changed');
+    // "Give it anyway": sent again with that handover.
+    await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: P.d2.uid, expect: e.details.v.expect });
+    assert.equal((await van()).driverId, P.d2.uid);
+    assert.equal((await adminDb().doc(`orgs/${P.org}/assignments/${a.assignmentId}`).get()).data().endReason, 'reassigned');
+    // Dora hears that the van isn't hers any more, from whom (her manager), not to whom.
+    const n = await waitFor(async () => doraPhone.notes().find((m) => m.title === 'QUIET P1 isn\'t yours any more'), 'Dora\'s notification');
+    assert.equal(n.body, 'Mark Manager gave it to another driver.');
+  } finally { await doraPhone.close(); }
+  // A screen that showed a driver who has since given the van back: nobody's handover ends, so it's done.
+  const emil = (await van()).assignmentId;
+  await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: null, expect: emil });
+  assert.equal(await van(), null);
+  await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: P.d1.uid, expect: emil });
+  assert.equal((await van()).driverId, P.d1.uid);
+  await P.mgr.call('assignVan', { orgId: P.org, vehicleId: P.van.id, driverId: null, expect: (await van()).assignmentId });
 });
