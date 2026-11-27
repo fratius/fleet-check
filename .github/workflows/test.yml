@@ -154,6 +154,8 @@ jobs:
         run: node --import ./tests/alias.mjs --test tests/damage.test.mjs
       - name: Every list the app asks for has its index (firestore.indexes.json)
         run: node --test tests/indexes.test.mjs
+      - name: View as always has the way back
+        run: node --test tests/viewas.test.mjs
       - name: What only the live project needs is set up by Deploy (the emulators don't need it)
         run: node --test tests/deploy.test.mjs
       - name: The blind tester stays blind, and its rules can't change with the app (qa/)
